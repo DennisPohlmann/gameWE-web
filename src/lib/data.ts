@@ -1,0 +1,1618 @@
+import "server-only";
+import { adminQuery, likeOp, query, queryOne, sinceDays, type Param } from "./db";
+import { nowUnix, steamIds } from "./format";
+import { baseGameOf } from "./games";
+
+// All reads of the HLstatsX/gameME tables the collector fills.
+// Times are Unix seconds unless a field says otherwise.
+
+// ---------------------------------------------------------------- helpers
+
+// Per-player totals live in a weekly table plus a monthly archive
+// (hlstats_Players_Weapons + hlstats_Players_Weapons_History_Months, ...).
+// This returns both as one derived table so callers can SUM over it.
+function weeksAndMonths(table: string, cols: string, where: string, params: Param[]) {
+  return {
+    sql: `(SELECT ${cols} FROM hlstats_${table} WHERE ${where}
+           UNION ALL
+           SELECT ${cols} FROM hlstats_${table}_History_Months WHERE ${where})`,
+    params: [...params, ...params],
+  };
+}
+
+function like(s: string): string {
+  return `%${s.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+}
+
+// ---------------------------------------------------------------- games
+
+export type Game = { id: number; code: string; name: string; realgame: string | null };
+
+// hlstats_Games.realgame comes with the collector's init script; in older databases the
+// pages work without it (no game tags) and look again every 5 minutes.
+let realgameCol: { ok: Promise<boolean>; at: number } | undefined;
+async function gameCols() {
+  if (!realgameCol || (Date.now() - realgameCol.at > 300_000 && !(await realgameCol.ok))) {
+    realgameCol = { ok: query(`SELECT realgame FROM hlstats_Games WHERE 1 = 0`).then(() => true, () => false), at: Date.now() };
+  }
+  return `id, TRIM(code) AS code, name, ${(await realgameCol.ok) ? "TRIM(realgame)" : "NULL"} AS realgame`;
+}
+
+const withBase = (g: Game): Game => ({ ...g, realgame: baseGameOf(g.code, g.realgame) });
+
+export async function getGames() {
+  return (await query<Game>(`SELECT ${await gameCols()} FROM hlstats_Games WHERE hidden = '0' ORDER BY display_id, name`)).map(withBase);
+}
+
+// Hidden rankings are left out unless withHidden is set (admins only).
+export async function getGame(code: string, withHidden = false) {
+  const g = await queryOne<Game>(`SELECT ${await gameCols()} FROM hlstats_Games WHERE code = ?${withHidden ? "" : ` AND hidden = '0'`}`, [code]);
+  return g ? withBase(g) : g;
+}
+
+// ---------------------------------------------------------------- servers
+
+export type Server = {
+  serverId: number;
+  address: string;
+  port: number;
+  publicaddress: string;
+  name: string;
+  act_players: number;
+  max_players: number;
+  act_map: string;
+  map_started: number;
+  kills: number;
+  headshots: number;
+  suicides: number;
+  rounds: number;
+  players: number;
+  ct_wins: number;
+  ts_wins: number;
+  bombs_planted: number;
+  bombs_defused: number;
+  country_code: string | null;
+};
+
+// Players online, at most the slots: older collectors kept kicked bots counted
+// (66/48), and hlstats_server_load still holds those spikes.
+const capped = (p: string) => `CASE WHEN ${p}max_players > 0 AND ${p}act_players > ${p}max_players THEN ${p}max_players ELSE ${p}act_players END`;
+
+const serverCols = `serverId, address, port, publicaddress, name, ${capped("")} AS act_players, max_players, act_map,
+  map_started, kills, headshots, suicides, rounds, players, ct_wins, ts_wins, bombs_planted,
+  bombs_defused, country_code`;
+
+export function getServers(game: string) {
+  return query<Server>(
+    `SELECT ${serverCols} FROM hlstats_Servers WHERE game = ? ORDER BY display_id, serverId`,
+    [game],
+  );
+}
+
+export function getServer(id: number) {
+  return queryOne<Server & { game: string }>(
+    `SELECT ${serverCols}, game FROM hlstats_Servers WHERE serverId = ?`,
+    [id],
+  );
+}
+
+// Place of a server among the servers of all visible rankings, by kills
+// (server banner).
+export async function getServerRank(kills: number) {
+  const r = await queryOne<{ n: number }>(
+    `SELECT COUNT(*) + 1 AS n FROM hlstats_Servers s JOIN hlstats_Games g ON g.code = s.game AND g.hidden = '0' WHERE s.kills > ?`,
+    [kills],
+  );
+  return Number(r?.n ?? 1);
+}
+
+export type Totals = { players: number; newPlayers: number; kills: number; headshots: number; servers: number };
+
+export async function getTotals(game: string): Promise<Totals> {
+  const [p, s] = await Promise.all([
+    queryOne<{ players: number; newPlayers: number }>(
+      `SELECT COUNT(*) AS players, COALESCE(SUM(CASE WHEN d.first_connect >= ? THEN 1 ELSE 0 END), 0) AS newPlayers
+       FROM hlstats_Players p LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+       WHERE p.game = ?`,
+      [nowUnix() - 86400, game],
+    ),
+    queryOne<{ kills: number; headshots: number; servers: number }>(
+      `SELECT COALESCE(SUM(kills), 0) AS kills, COALESCE(SUM(headshots), 0) AS headshots, COUNT(*) AS servers
+       FROM hlstats_Servers WHERE game = ?`,
+      [game],
+    ),
+  ]);
+  return {
+    players: p?.players ?? 0,
+    newPlayers: p?.newPlayers ?? 0,
+    kills: s?.kills ?? 0,
+    headshots: s?.headshots ?? 0,
+    servers: s?.servers ?? 0,
+  };
+}
+
+export type LivePlayer = {
+  server_id: number;
+  player_id: number;
+  name: string;
+  team: string;
+  kills: number;
+  deaths: number;
+  headshots: number;
+  shots: number;
+  hits: number;
+  rounds: number;
+  ping: number;
+  connected: number;
+  skill: number;
+  skill_change: number;
+  is_dead: number;
+  position: number | null;
+  is_bot: number;
+  flag: string | null;
+  country: string | null;
+};
+
+// Position is the player's place in the ranking (null for hidden players).
+export function getLivePlayers(game: string, serverId?: number) {
+  const where = serverId ? `l.server_id = ?` : `s.game = ?`;
+  return query<LivePlayer>(
+    `SELECT l.server_id, l.player_id, l.name, l.team, l.kills, l.deaths, l.headshots, l.shots, l.hits,
+            l.rounds, l.ping, l.connected, l.skill, l.skill_change, l.is_dead,
+            CASE WHEN l.unique_id LIKE 'BOT%' THEN 1 ELSE 0 END AS is_bot, loc.flag, loc.country,
+            CASE WHEN p.hideranking = 0 THEN
+              (SELECT COUNT(*) + 1 FROM hlstats_Players r
+               WHERE r.game = p.game AND r.hideranking = 0 AND r.skill > p.skill)
+            END AS position
+     FROM hlstats_Livestats l
+     JOIN hlstats_Servers s ON s.serverId = l.server_id
+     LEFT JOIN hlstats_Players p ON p.playerId = l.player_id
+     LEFT JOIN hlstats_Players_Locations loc ON loc.id = l.cli_location_id
+     WHERE ${where} AND l.player_hidden = 0
+       -- Players hidden from the ranking (e.g. by !hide) stay out; bots stay in.
+       AND (p.hideranking IS NULL OR p.hideranking = 0 OR l.unique_id LIKE 'BOT%')
+     ORDER BY l.team, l.kills DESC, l.skill DESC, l.player_id`,
+    [serverId ?? game],
+  );
+}
+
+// One row per server and 10 minutes (collector 1.5.0): players at that
+// moment (bots included), min/max within the interval, the map and the
+// uptime of the game server in minutes.
+export type LoadPoint = { timestamp: number; act_players: number; min_players: number; max_players: number; uptime: number; map: string | null };
+
+export async function getServerLoad(serverId: number, since: number) {
+  const rows = await query<LoadPoint>(
+    `SELECT l.timestamp, ${capped("l.")} AS act_players, l.min_players, l.max_players, l.uptime, m.map
+     FROM hlstats_server_load l LEFT JOIN hlstats_Maps m ON m.id = l.map
+     WHERE l.server_id = ? AND l.timestamp >= ? ORDER BY l.timestamp`,
+    [serverId, since],
+  );
+  return rows.map((r) => ({
+    ...r,
+    timestamp: Number(r.timestamp),
+    act_players: Number(r.act_players),
+    min_players: Number(r.min_players),
+    max_players: Number(r.max_players),
+    uptime: Number(r.uptime),
+  }));
+}
+
+export type DayPoint = { day: string; players: number; kills: number; headshots: number };
+
+// One entry per UTC day of the last `days` days, oldest first; days without
+// history stay null, so a chart shows the full range from the start.
+export function everyDay(rows: DayPoint[], days: number): { day: string; point: DayPoint | null }[] {
+  const byDay = new Map(rows.map((r) => [String(r.day).slice(0, 10), r]));
+  const today = Math.floor(Date.now() / 86400000);
+  return Array.from({ length: days }, (_, i) => {
+    const day = new Date((today - days + 1 + i) * 86400000).toISOString().slice(0, 10);
+    return { day, point: byDay.get(day) ?? null };
+  });
+}
+
+// Active players and kills per UTC day, from hlstats_Players_History.
+export function getDailyActivity(game: string, days: number) {
+  return query<DayPoint>(
+    `SELECT eventTime AS day, COUNT(*) AS players, SUM(kills) AS kills, SUM(headshots) AS headshots
+     FROM hlstats_Players_History WHERE game = ? AND ${sinceDays("eventTime")}
+     GROUP BY eventTime ORDER BY eventTime`,
+    [game, days],
+  );
+}
+
+// Players online (hlstats_server_load, summed over the ranking's servers),
+// kills and headshots (hlstats_Events_Frags) per 15 minutes of the last days,
+// for the graphs on the start page and a ranking's page. Kept for five minutes per ranking.
+export type HourlyActivity = { start: number; step: number; players: (number | null)[]; kills: number[]; headshots: number[] };
+
+// Seconds per point of these graphs. The collector stores the server load every
+// 10 minutes, so each point holds one or two samples.
+const ACTIVITY_STEP = 900;
+
+const hourlyCache = new Map<string, { at: number; value: Promise<HourlyActivity> }>();
+
+// game null: all rankings together (start page).
+export function getHourlyActivity(game: string | null, days: number): Promise<HourlyActivity> {
+  const key = `${game ?? "*"}|${days}`;
+  const hit = hourlyCache.get(key);
+  if (hit && Date.now() - hit.at < 300_000) return hit.value;
+  if (hourlyCache.size > 100) hourlyCache.clear();
+  const value = loadHourlyActivity(game, days);
+  value.catch(() => hourlyCache.delete(key));
+  hourlyCache.set(key, { at: Date.now(), value });
+  return value;
+}
+
+async function loadHourlyActivity(game: string | null, days: number): Promise<HourlyActivity> {
+  const now = nowUnix();
+  const step = ACTIVITY_STEP;
+  const start = Math.floor((now - days * 86400) / step) * step;
+  const n = Math.floor((now - start) / step) + 1;
+  const [frags, load] = await Promise.all([
+    query<{ h: number; kills: number; headshots: number }>(
+      `SELECT FLOOR(f.timestamp_id / ?) AS h, COUNT(*) AS kills, SUM(f.headshot) AS headshots
+       FROM hlstats_Events_Frags f
+       WHERE ${game === null ? "" : "f.game_id = (SELECT id FROM hlstats_Games WHERE code = ?) AND "}f.timestamp_id >= ?
+       GROUP BY 1`,
+      game === null ? [step, start] : [step, game, start],
+    ),
+    query<{ server_id: number; h: number; p: number }>(
+      `SELECT l.server_id, FLOOR(l.timestamp / ?) AS h, AVG(${capped("l.")}) AS p
+       FROM hlstats_server_load l
+       WHERE ${game === null ? "" : "l.server_id IN (SELECT serverId FROM hlstats_Servers WHERE game = ?) AND "}l.timestamp >= ?
+       GROUP BY 1, 2`,
+      game === null ? [step, start] : [step, game, start],
+    ),
+  ]);
+  const first = start / step;
+  const kills = new Array<number>(n).fill(0);
+  const headshots = new Array<number>(n).fill(0);
+  for (const r of frags) {
+    const i = Number(r.h) - first;
+    if (i >= 0 && i < n) {
+      kills[i] = Number(r.kills);
+      headshots[i] = Number(r.headshots ?? 0);
+    }
+  }
+  const players = new Array<number | null>(n).fill(null);
+  for (const r of load) {
+    const i = Number(r.h) - first;
+    if (i >= 0 && i < n) players[i] = Math.round(((players[i] ?? 0) + Number(r.p)) * 10) / 10;
+  }
+  return { start, step, players, kills, headshots };
+}
+
+// ---------------------------------------------------------------- awards
+
+export type DailyAward = {
+  awardId: number;
+  awardType: "W" | "O";
+  name: string;
+  verb: string;
+  d_winner_id: number | null;
+  d_winner_count: number | null;
+  winnerName: string | null;
+};
+
+export function getDailyAwards(game: string) {
+  return query<DailyAward>(
+    `SELECT a.awardId, a.awardType, a.name, a.verb, a.d_winner_id, a.d_winner_count, d.lastName AS winnerName
+     FROM hlstats_Awards a LEFT JOIN hlstats_Players_Data d ON d.playerId = a.d_winner_id
+     WHERE a.game = ? ORDER BY a.awardType DESC, a.name, a.awardId`,
+    [game],
+  );
+}
+
+export type AwardHistoryRow = {
+  date: string;
+  awardId: number;
+  name: string;
+  verb: string;
+  winner_id: number;
+  winner_count: number;
+  winnerName: string | null;
+};
+
+export async function getAwardHistory(game: string, days: number) {
+  const dates = await query<{ date: string }>(
+    `SELECT DISTINCT h.date FROM hlstats_Awards_History h
+     JOIN hlstats_Awards a ON a.awardId = h.award_id WHERE a.game = ?
+     ORDER BY h.date DESC LIMIT ?`,
+    [game, days],
+  );
+  if (dates.length === 0) return [];
+  return query<AwardHistoryRow>(
+    `SELECT h.date, a.awardId, a.name, a.verb, h.winner_id, h.winner_count, d.lastName AS winnerName
+     FROM hlstats_Awards_History h
+     JOIN hlstats_Awards a ON a.awardId = h.award_id
+     LEFT JOIN hlstats_Players_Data d ON d.playerId = h.winner_id
+     WHERE a.game = ? AND h.date IN (?) ORDER BY h.date DESC, a.awardType DESC, a.name`,
+    [game, dates.map((d) => d.date)],
+  );
+}
+
+// Daily leaders computed from hlstats_Players_History. The collector does not
+// fill hlstats_Awards, so these stand in for gameME's daily awards.
+export const leaderCategories = ["kills", "headshots", "skill_change", "connection_time", "team_kills", "suicides", "deaths"] as const;
+export type LeaderCategory = (typeof leaderCategories)[number];
+export type Leader = { day: string; category: LeaderCategory; playerId: number; name: string | null; value: number };
+
+export async function getDailyLeaders(game: string, days: number): Promise<Leader[]> {
+  const perCategory = await Promise.all(
+    leaderCategories.map((c) =>
+      query<Omit<Leader, "category">>(
+        `SELECT h.eventTime AS day, h.playerId, d.lastName AS name, h.${c} AS value
+         FROM hlstats_Players_History h
+         JOIN (SELECT eventTime, MAX(${c}) AS m FROM hlstats_Players_History
+               WHERE game = ? AND ${sinceDays("eventTime")} GROUP BY eventTime) x
+           ON x.eventTime = h.eventTime AND h.${c} = x.m
+         JOIN hlstats_Players p ON p.playerId = h.playerId AND p.hideranking = 0
+         LEFT JOIN hlstats_Players_Data d ON d.playerId = h.playerId
+         WHERE h.game = ? AND x.m > 0 ORDER BY h.eventTime DESC, h.playerId`,
+        [game, days - 1, game],
+      ).then((rows) => {
+        // Ties: the first player per day wins.
+        const seen = new Set<string>();
+        return rows.filter((r) => !seen.has(r.day) && seen.add(r.day)).map((r) => ({ ...r, category: c }));
+      }),
+    ),
+  );
+  return perCategory.flat();
+}
+
+// ---------------------------------------------------------------- players
+
+export type RankingRow = {
+  playerId: number;
+  name: string | null;
+  skill: number;
+  last_event: number;
+  first_connect: number | null;
+  connection_time: number;
+  kills: number;
+  deaths: number;
+  headshots: number;
+  shots: number;
+  hits: number;
+  flag: string | null;
+  country: string | null;
+  // Place in the whole ranking; only filled in a country or city ranking.
+  globalRank?: number;
+};
+
+export const rankingSorts = {
+  skill: "p.skill",
+  name: "d.lastName",
+  activity: "p.last_event",
+  time: "p.connection_time",
+  kills: "p.kills",
+  deaths: "p.deaths",
+  kpd: "p.kills * 1.0 / GREATEST(p.deaths, 1)",
+  hs: "p.headshots",
+  hpk: "p.headshots * 1.0 / GREATEST(p.kills, 1)",
+  acc: "p.hits * 1.0 / GREATEST(p.shots, 1)",
+  new: "d.first_connect",
+} as const;
+export type RankingSort = keyof typeof rankingSorts;
+
+export async function getRanking(opts: {
+  game: string;
+  sort: RankingSort;
+  asc: boolean;
+  search: string;
+  limit: number;
+  offset: number;
+  // Only players from this country (two-letter code) and/or city.
+  country?: string;
+  city?: string;
+}) {
+  const where = [`p.game = ?`, `p.hideranking = 0`];
+  const params: Param[] = [opts.game];
+  if (opts.search) {
+    where.push(`d.lastName ${likeOp()} ?`);
+    params.push(like(opts.search));
+  }
+  if (opts.country) {
+    where.push(`LOWER(l.flag) = ?`);
+    params.push(opts.country);
+  }
+  if (opts.city) {
+    where.push(`LOWER(l.city) = ?`);
+    params.push(opts.city.toLowerCase());
+  }
+  const local = !!(opts.country || opts.city);
+  const from = `FROM hlstats_Players p
+    LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+    LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
+    WHERE ${where.join(" AND ")}`;
+  const order = `${rankingSorts[opts.sort]} ${opts.asc ? "ASC" : "DESC"}, p.playerId`;
+  const [rows, count] = await Promise.all([
+    query<RankingRow>(
+      `SELECT p.playerId, d.lastName AS name, p.skill, p.last_event, d.first_connect, p.connection_time,
+              p.kills, p.deaths, p.headshots, p.shots, p.hits, l.flag, l.country
+              ${local ? `, (SELECT COUNT(*) + 1 FROM hlstats_Players r WHERE r.game = p.game AND r.hideranking = 0 AND r.skill > p.skill) AS globalRank` : ""}
+       ${from} ORDER BY ${order} LIMIT ? OFFSET ?`,
+      [...params, opts.limit, opts.offset],
+    ),
+    queryOne<{ n: number }>(`SELECT COUNT(*) AS n ${from}`, params),
+  ]);
+  return { rows, total: count?.n ?? 0 };
+}
+
+// ---------------------------------------------------------------- countries and cities
+
+// Countries and cities with ranked players, most players first (for the
+// selects above the ranking).
+export type PlaceOption = { code: string; name: string; city: string; players: number };
+
+// Counted over all players of a ranking, so kept for five minutes.
+const countryCache = new Map<string, { at: number; value: Promise<PlaceOption[]> }>();
+
+export function getCountryOptions(game: string): Promise<PlaceOption[]> {
+  const hit = countryCache.get(game);
+  if (hit && Date.now() - hit.at < 300_000) return hit.value;
+  if (countryCache.size > 100) countryCache.clear();
+  const value = loadCountryOptions(game);
+  value.catch(() => countryCache.delete(game));
+  countryCache.set(game, { at: Date.now(), value });
+  return value;
+}
+
+function loadCountryOptions(game: string): Promise<PlaceOption[]> {
+  return placeOptions(
+    `SELECT LOWER(l.flag) AS code, MAX(l.country) AS name, '' AS city, COUNT(*) AS players
+     FROM hlstats_Players p
+     JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+     JOIN hlstats_Players_Locations l ON l.id = d.location_id
+     WHERE p.game = ? AND p.hideranking = 0 AND l.flag <> ''
+     GROUP BY LOWER(l.flag) ORDER BY players DESC, code LIMIT 300`,
+    [game],
+  );
+}
+
+export async function getCityOptions(game: string, country: string): Promise<PlaceOption[]> {
+  return placeOptions(
+    `SELECT LOWER(l.flag) AS code, MAX(l.country) AS name, l.city, COUNT(*) AS players
+     FROM hlstats_Players p
+     JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+     JOIN hlstats_Players_Locations l ON l.id = d.location_id
+     WHERE p.game = ? AND p.hideranking = 0 AND l.city <> '' AND l.flag <> ''${country ? " AND LOWER(l.flag) = ?" : ""}
+     GROUP BY LOWER(l.flag), l.city ORDER BY players DESC, l.city LIMIT 500`,
+    country ? [game, country] : [game],
+  );
+}
+
+async function placeOptions(sql: string, params: Param[]) {
+  const rows = await query<PlaceOption>(sql, params);
+  return rows.map((r) => ({ ...r, players: Number(r.players) }));
+}
+
+// Ranking of countries or cities: summed and averaged player values.
+export type PlaceRow = PlaceOption & {
+  skill: number;
+  avgSkill: number;
+  kills: number;
+  deaths: number;
+  headshots: number;
+  connection_time: number;
+  last_event: number;
+};
+
+export const placeSorts = {
+  players: "players",
+  skill: "skill",
+  avg: "avgSkill",
+  kills: "kills",
+  deaths: "deaths",
+  kpd: "kills * 1.0 / GREATEST(deaths, 1)",
+  hpk: "headshots * 1.0 / GREATEST(kills, 1)",
+  time: "connection_time",
+  name: "name",
+} as const;
+export type PlaceSort = keyof typeof placeSorts;
+
+export async function getPlaceRanking(opts: {
+  game: string;
+  cities: boolean;
+  country: string;
+  sort: PlaceSort;
+  asc: boolean;
+  limit: number;
+  offset: number;
+}) {
+  const where = [`p.game = ?`, `p.hideranking = 0`, `l.flag <> ''`];
+  const params: Param[] = [opts.game];
+  if (opts.cities) where.push(`l.city <> ''`);
+  if (opts.country) {
+    where.push(`LOWER(l.flag) = ?`);
+    params.push(opts.country);
+  }
+  const group = opts.cities ? `LOWER(l.flag), l.city` : `LOWER(l.flag)`;
+  const inner = `SELECT LOWER(l.flag) AS code, MAX(l.country) AS name, ${opts.cities ? "l.city" : "''"} AS city,
+      COUNT(*) AS players, SUM(p.skill) AS skill, ROUND(AVG(p.skill)) AS avgSkill,
+      SUM(p.kills) AS kills, SUM(p.deaths) AS deaths, SUM(p.headshots) AS headshots,
+      SUM(p.connection_time) AS connection_time, MAX(p.last_event) AS last_event
+    FROM hlstats_Players p
+    JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+    JOIN hlstats_Players_Locations l ON l.id = d.location_id
+    WHERE ${where.join(" AND ")} GROUP BY ${group}`;
+  const order = `${placeSorts[opts.sort]} ${opts.asc ? "ASC" : "DESC"}, code, city`;
+  const [rows, count] = await Promise.all([
+    query<PlaceRow>(`SELECT * FROM (${inner}) x ORDER BY ${order} LIMIT ? OFFSET ?`, [...params, opts.limit, opts.offset]),
+    queryOne<{ n: number }>(`SELECT COUNT(*) AS n FROM (${inner}) x`, params),
+  ]);
+  return { rows: rows.map((r) => ({ ...r, players: Number(r.players), skill: Number(r.skill), avgSkill: Number(r.avgSkill), kills: Number(r.kills), deaths: Number(r.deaths), headshots: Number(r.headshots), connection_time: Number(r.connection_time) })), total: Number(count?.n ?? 0) };
+}
+
+export type PlayerDetail = {
+  playerId: number;
+  game: string;
+  game_id: number;
+  name: string | null;
+  skill: number;
+  last_skill_change: number;
+  last_event: number;
+  connection_time: number;
+  kills: number;
+  deaths: number;
+  suicides: number;
+  headshots: number;
+  shots: number;
+  hits: number;
+  rounds: number;
+  wins: number;
+  losses: number;
+  team_kills: number;
+  kill_streak: number;
+  kill_assists: number;
+  kills_assisted: number;
+  survived_count: number;
+  hideranking: number;
+  clan: number;
+  clanTag: string | null;
+  clanName: string | null;
+  first_connect: number | null;
+  last_connect: number | null;
+  total_connects: number | null;
+  average_ping: number | null;
+  homepage: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  flag: string | null;
+  uniqueId: string | null;
+};
+
+export async function getPlayer(id: number): Promise<PlayerDetail | undefined> {
+  // Players that went inactive are moved to hlstats_PlayersInactive.
+  for (const table of ["hlstats_Players", "hlstats_PlayersInactive"]) {
+    const row = await queryOne<PlayerDetail>(
+      `SELECT p.playerId, TRIM(p.game) AS game, p.game_id, d.lastName AS name, p.skill, p.last_skill_change,
+              p.last_event, p.connection_time, p.kills, p.deaths, p.suicides, p.headshots, p.shots, p.hits,
+              p.rounds, p.wins, p.losses, p.team_kills, p.kill_streak, p.kill_assists, p.kills_assisted,
+              p.survived_count, p.hideranking, p.clan,
+              c.tag AS clanTag, c.name AS clanName,
+              d.first_connect, d.last_connect, d.total_connects, d.average_ping, d.homepage,
+              l.city, l.state, l.country, l.flag,
+              (SELECT u.uniqueId FROM hlstats_PlayerUniqueIds u WHERE u.playerId = p.playerId LIMIT 1) AS uniqueId
+       FROM ${table} p
+       LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+       LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
+       LEFT JOIN hlstats_Clans c ON c.clanId = p.clan
+       WHERE p.playerId = ?`,
+      [id],
+    );
+    if (row) return row;
+  }
+  return undefined;
+}
+
+export async function getRankedCount(game: string) {
+  const r = await queryOne<{ n: number }>(`SELECT COUNT(*) AS n FROM hlstats_Players WHERE game = ? AND hideranking = 0`, [game]);
+  return Number(r?.n ?? 0);
+}
+
+export async function getPlayerPosition(game: string, skill: number) {
+  const r = await queryOne<{ n: number }>(
+    `SELECT COUNT(*) + 1 AS n FROM hlstats_Players WHERE game = ? AND hideranking = 0 AND skill > ?`,
+    [game, skill],
+  );
+  return r?.n ?? null;
+}
+
+export type HistoryDay = {
+  eventTime: string;
+  skill: number;
+  skill_change: number;
+  kills: number;
+  deaths: number;
+  headshots: number;
+  shots: number;
+  hits: number;
+  rounds: number;
+  wins: number;
+  survived_count: number;
+  kill_assists: number;
+  connection_time: number;
+};
+
+export function getPlayerHistory(id: number, days: number) {
+  return query<HistoryDay>(
+    `SELECT eventTime, skill, skill_change, kills, deaths, headshots, shots, hits, rounds, wins, survived_count,
+            kill_assists, connection_time FROM hlstats_Players_History
+     WHERE playerId = ? AND ${sinceDays("eventTime")} ORDER BY eventTime`,
+    [id, days],
+  );
+}
+
+export type PlayerName = {
+  name: string;
+  connection_time: number;
+  lastuse: string | null;
+  numuses: number;
+  kills: number;
+  deaths: number;
+  headshots: number;
+  shots: number;
+  hits: number;
+};
+
+export function getPlayerNames(id: number) {
+  return query<PlayerName>(
+    `SELECT name, connection_time, lastuse, numuses, kills, deaths, headshots, shots, hits
+     FROM hlstats_PlayerNames WHERE playerId = ? ORDER BY lastuse DESC LIMIT 20`,
+    [id],
+  );
+}
+
+export type PlayerWeapon = {
+  weaponId: number;
+  code: string;
+  name: string;
+  kills: number;
+  deaths: number;
+  headshots: number;
+  shots: number;
+  hits: number;
+  damage: number;
+  head: number;
+  chest: number;
+  stomach: number;
+  leftarm: number;
+  rightarm: number;
+  leftleg: number;
+  rightleg: number;
+};
+
+export function getPlayerWeapons(id: number) {
+  const src = weeksAndMonths(
+    "Players_Weapons",
+    "weapon_id, kills, deaths, headshots, shots, hits, damage, head, chest, stomach, leftarm, rightarm, leftleg, rightleg",
+    "player_id = ?",
+    [id],
+  );
+  return query<PlayerWeapon>(
+    `SELECT w.weaponId, w.code, w.name, SUM(x.kills) AS kills, SUM(x.deaths) AS deaths,
+            SUM(x.headshots) AS headshots, SUM(x.shots) AS shots, SUM(x.hits) AS hits, SUM(x.damage) AS damage,
+            SUM(x.head) AS head, SUM(x.chest) AS chest, SUM(x.stomach) AS stomach, SUM(x.leftarm) AS leftarm,
+            SUM(x.rightarm) AS rightarm, SUM(x.leftleg) AS leftleg, SUM(x.rightleg) AS rightleg
+     FROM ${src.sql} x JOIN hlstats_Weapons w ON w.weaponId = x.weapon_id
+     GROUP BY w.weaponId, w.code, w.name ORDER BY kills DESC, shots DESC, w.weaponId`,
+    src.params,
+  );
+}
+
+export type PlayerMap = { id: number; map: string; kills: number; deaths: number; headshots: number };
+
+// Per-map kills and deaths from hlstats_Events_Frags (hlstats_Players_Maps is
+// not filled by the collector).
+export function getPlayerMaps(id: number) {
+  return query<PlayerMap>(
+    `SELECT m.id, m.map, SUM(x.k) AS kills, SUM(x.d) AS deaths, SUM(x.hs) AS headshots
+     FROM (SELECT map, 1 AS k, 0 AS d, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS hs FROM hlstats_Events_Frags WHERE killerId = ?
+           UNION ALL
+           SELECT map, 0, 1, 0 FROM hlstats_Events_Frags WHERE victimId = ?) x
+     JOIN hlstats_Maps m ON m.id = x.map
+     GROUP BY m.id, m.map ORDER BY kills DESC, deaths DESC, m.id LIMIT 25`,
+    [id, id],
+  );
+}
+
+export type PlayerTeamRow = { id: number; name: string; joined: number };
+
+// How often the player joined each team, from hlstats_Events_ChangeTeam.
+export function getPlayerTeams(id: number) {
+  return query<PlayerTeamRow>(
+    `SELECT t.teamId AS id, t.name, COUNT(*) AS joined
+     FROM hlstats_Events_ChangeTeam e JOIN hlstats_Teams t ON t.teamId = e.team
+     WHERE e.playerId = ? GROUP BY t.teamId, t.name ORDER BY joined DESC, t.teamId`,
+    [id],
+  );
+}
+
+export type PlayerAction = { id: number; description: string; count: number; points: number };
+
+export function getPlayerActions(id: number) {
+  const src = weeksAndMonths("Players_Actions", "action_id, count, points", "player_id = ?", [id]);
+  return query<PlayerAction>(
+    `SELECT a.id, a.description, SUM(x.count) AS count, SUM(x.points) AS points
+     FROM ${src.sql} x JOIN hlstats_Actions a ON a.id = x.action_id
+     GROUP BY a.id, a.description ORDER BY count DESC, a.id`,
+    src.params,
+  );
+}
+
+export type Frag = {
+  timestamp_id: number;
+  killerId: number;
+  victimId: number;
+  killerName: string | null;
+  victimName: string | null;
+  weapon: string | null;
+  headshot: number;
+  map: string | null;
+};
+
+export function getPlayerFrags(id: number, limit: number) {
+  return query<Frag>(
+    `SELECT f.timestamp_id, f.killerId, f.victimId, kd.lastName AS killerName, vd.lastName AS victimName,
+            w.name AS weapon, f.headshot, m.map
+     FROM ((SELECT * FROM hlstats_Events_Frags WHERE killerId = ? ORDER BY timestamp_id DESC LIMIT ?)
+           UNION ALL
+           (SELECT * FROM hlstats_Events_Frags WHERE victimId = ? ORDER BY timestamp_id DESC LIMIT ?)) f
+     LEFT JOIN hlstats_Players_Data kd ON kd.playerId = f.killerId
+     LEFT JOIN hlstats_Players_Data vd ON vd.playerId = f.victimId
+     LEFT JOIN hlstats_Weapons w ON w.weaponId = f.weapon
+     LEFT JOIN hlstats_Maps m ON m.id = f.map
+     ORDER BY f.timestamp_id DESC LIMIT ?`,
+    [id, limit, id, limit, limit],
+  );
+}
+
+export type Opponent = { playerId: number; name: string | null; kills: number; headshots: number };
+
+export function getOpponents(id: number, as: "victims" | "killers") {
+  const [me, other] = as === "victims" ? ["killerId", "victimId"] : ["victimId", "killerId"];
+  return query<Opponent>(
+    `SELECT f.${other} AS playerId, d.lastName AS name, COUNT(*) AS kills, SUM(CASE WHEN f.headshot > 0 THEN 1 ELSE 0 END) AS headshots
+     FROM hlstats_Events_Frags f LEFT JOIN hlstats_Players_Data d ON d.playerId = f.${other}
+     WHERE f.${me} = ? AND f.${other} <> f.${me}
+     GROUP BY f.${other}, d.lastName ORDER BY kills DESC, f.${other} LIMIT 10`,
+    [id],
+  );
+}
+
+export type KillStat = { playerId: number; name: string | null; kills: number; deaths: number; headshots: number; hideranking: number; position: number | null };
+
+// Player kill statistics as on gameME: everyone this player killed at least
+// `min` times, with the kills against and deaths by each, and the other
+// player's position in the ranking (none when hidden).
+export async function getPlayerKillStats(id: number, min = 5, limit = 50) {
+  const rows = await query<KillStat>(
+    `SELECT x.*, CASE WHEN x.hideranking = 0
+              THEN (SELECT COUNT(*) + 1 FROM hlstats_Players r WHERE r.game = x.game AND r.hideranking = 0 AND r.skill > x.skill)
+            END AS position
+     FROM (SELECT o.playerId, d.lastName AS name, SUM(o.k) AS kills, SUM(o.d) AS deaths, SUM(o.hs) AS headshots,
+                  p.hideranking, p.skill, p.game
+           FROM (SELECT victimId AS playerId, 1 AS k, 0 AS d, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS hs
+                 FROM hlstats_Events_Frags WHERE killerId = ? AND victimId <> killerId
+                 UNION ALL
+                 SELECT killerId AS playerId, 0 AS k, 1 AS d, 0 AS hs
+                 FROM hlstats_Events_Frags WHERE victimId = ? AND victimId <> killerId) o
+           JOIN hlstats_Players p ON p.playerId = o.playerId
+           LEFT JOIN hlstats_Players_Data d ON d.playerId = o.playerId
+           GROUP BY o.playerId, d.lastName, p.hideranking, p.skill, p.game
+           HAVING SUM(o.k) >= ?) x
+     ORDER BY x.kills DESC, x.playerId LIMIT ?`,
+    [id, id, min, limit],
+  );
+  return rows.map((r) => ({
+    ...r,
+    playerId: Number(r.playerId),
+    kills: Number(r.kills),
+    deaths: Number(r.deaths),
+    headshots: Number(r.headshots),
+    hideranking: Number(r.hideranking),
+    position: r.position === null || r.position === undefined ? null : Number(r.position),
+  }));
+}
+
+export type PlayerAward = { code: string; name: string; verb: string; date: string; winner_count: number };
+
+export function getPlayerAwards(id: number) {
+  return query<PlayerAward>(
+    `SELECT a.code, a.name, a.verb, h.date, h.winner_count FROM hlstats_Awards_History h
+     JOIN hlstats_Awards a ON a.awardId = h.award_id
+     WHERE h.winner_id = ? ORDER BY h.date DESC LIMIT 20`,
+    [id],
+  );
+}
+
+export type RankDef = { name: string; minimum: number };
+
+export function getRankDefinitions(game: string) {
+  return query<RankDef>(
+    `SELECT name, minimum FROM hlstats_Definition_Ranks_Ribbons
+     WHERE game_code = ? AND definition_type LIKE 'rank%' ORDER BY minimum`,
+    [game],
+  );
+}
+
+// ---------------------------------------------------------------- chat
+
+export type ChatRow = {
+  timestamp_id: number;
+  playerId: number;
+  name: string | null;
+  message_mode: number;
+  message: string;
+  server: string | null;
+};
+
+// Chat is personal data: read with the admin database user (the public one
+// may have no access), and shown publicly only when gamewe_chat_public is on.
+function chatWhere(opts: { game?: string; playerId?: number; serverId?: number; search?: string }) {
+  const where: string[] = [];
+  const params: Param[] = [];
+  if (opts.game) {
+    where.push(`c.game_id = (SELECT id FROM hlstats_Games WHERE code = ?)`);
+    params.push(opts.game);
+  }
+  if (opts.playerId) {
+    where.push(`c.playerId = ?`);
+    params.push(opts.playerId);
+  }
+  if (opts.serverId) {
+    where.push(`c.server_id = ?`);
+    params.push(opts.serverId);
+  }
+  if (opts.search) {
+    where.push(`(c.message ${likeOp()} ? OR d.lastName ${likeOp()} ?)`);
+    params.push(like(opts.search), like(opts.search));
+  }
+  return { where, params };
+}
+
+export async function getChat(opts: { game?: string; playerId?: number; serverId?: number; search?: string; limit: number; offset: number }) {
+  const { where, params } = chatWhere(opts);
+  return adminQuery<ChatRow>(
+    `SELECT c.timestamp_id, c.playerId, d.lastName AS name, c.message_mode, c.message, s.name AS server
+     FROM hlstats_Events_Chat c
+     LEFT JOIN hlstats_Players_Data d ON d.playerId = c.playerId
+     LEFT JOIN hlstats_Servers s ON s.serverId = c.server_id
+     ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
+     ORDER BY c.timestamp_id DESC LIMIT ? OFFSET ?`,
+    [...params, opts.limit, opts.offset],
+  );
+}
+
+// Number of chat lines for the same filter (pager).
+export async function countChat(opts: { game?: string; playerId?: number; serverId?: number; search?: string }) {
+  const { where, params } = chatWhere(opts);
+  const [r] = await adminQuery<{ n: number | string }>(
+    `SELECT COUNT(*) AS n FROM hlstats_Events_Chat c
+     ${opts.search ? "LEFT JOIN hlstats_Players_Data d ON d.playerId = c.playerId" : ""}
+     ${where.length ? `WHERE ${where.join(" AND ")}` : ""}`,
+    params,
+  );
+  return Number(r?.n ?? 0);
+}
+
+// ---------------------------------------------------------------- clans
+
+export type ClanRow = {
+  clanId: number;
+  tag: string;
+  name: string;
+  homepage: string;
+  flag: string;
+  members: number;
+  skill: number;
+  kills: number;
+  deaths: number;
+  headshots: number;
+  connection_time: number;
+  last_event: number;
+};
+
+const clanAgg = `COUNT(p.playerId) AS members, ROUND(AVG(p.skill)) AS skill, SUM(p.kills) AS kills,
+  SUM(p.deaths) AS deaths, SUM(p.headshots) AS headshots, SUM(p.connection_time) AS connection_time,
+  MAX(p.last_event) AS last_event`;
+
+export function getClans(game: string, limit: number, offset: number) {
+  return query<ClanRow>(
+    `SELECT c.clanId, c.tag, c.name, c.homepage, c.flag, ${clanAgg}
+     FROM hlstats_Clans c JOIN hlstats_Players p ON p.clan = c.clanId AND p.hideranking = 0
+     WHERE c.game = ? GROUP BY c.clanId, c.tag, c.name, c.homepage, c.flag
+     HAVING COUNT(p.playerId) >= 2 ORDER BY skill DESC, c.clanId LIMIT ? OFFSET ?`,
+    [game, limit, offset],
+  );
+}
+
+export async function countClans(game: string) {
+  const r = await queryOne<{ n: number | string }>(
+    `SELECT COUNT(*) AS n FROM (SELECT c.clanId FROM hlstats_Clans c JOIN hlstats_Players p ON p.clan = c.clanId AND p.hideranking = 0
+     WHERE c.game = ? GROUP BY c.clanId HAVING COUNT(p.playerId) >= 2) x`,
+    [game],
+  );
+  return Number(r?.n ?? 0);
+}
+
+export function getClan(id: number) {
+  return queryOne<ClanRow & { game: string }>(
+    `SELECT c.clanId, c.tag, c.name, c.homepage, c.flag, TRIM(c.game) AS game, ${clanAgg}
+     FROM hlstats_Clans c LEFT JOIN hlstats_Players p ON p.clan = c.clanId AND p.hideranking = 0
+     WHERE c.clanId = ? GROUP BY c.clanId, c.tag, c.name, c.homepage, c.flag, c.game`,
+    [id],
+  );
+}
+
+export function getClanMembers(id: number) {
+  return query<RankingRow>(
+    `SELECT p.playerId, d.lastName AS name, p.skill, p.last_event, d.first_connect, p.connection_time,
+            p.kills, p.deaths, p.headshots, p.shots, p.hits, l.flag, l.country
+     FROM hlstats_Players p
+     LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+     LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
+     WHERE p.clan = ? AND p.hideranking = 0 ORDER BY p.skill DESC`,
+    [id],
+  );
+}
+
+// ---------------------------------------------------------------- weapons, actions, maps, teams
+
+export type WeaponRow = { weaponId: number; code: string; name: string; modifier: number; kills: number; headshots: number };
+
+export function getWeapons(game: string) {
+  return query<WeaponRow>(
+    `SELECT weaponId, code, name, modifier, kills, headshots FROM hlstats_Weapons
+     WHERE game = ? AND kills > 0 ORDER BY kills DESC, weaponId`,
+    [game],
+  );
+}
+
+export function getWeapon(game: string, code: string) {
+  return queryOne<WeaponRow>(
+    `SELECT weaponId, code, name, modifier, kills, headshots FROM hlstats_Weapons WHERE game = ? AND code = ?`,
+    [game, code],
+  );
+}
+
+export type TopRow = { playerId: number; name: string | null; a: number; b: number; c: number; d: number };
+
+// Best players for one weapon: a = kills, b = headshots, c = shots, d = hits.
+export function getWeaponTop(weaponId: number) {
+  const src = weeksAndMonths("Players_Weapons", "player_id, kills, headshots, shots, hits", "weapon_id = ?", [weaponId]);
+  return query<TopRow>(
+    `SELECT x.player_id AS playerId, d.lastName AS name, SUM(x.kills) AS a, SUM(x.headshots) AS b,
+            SUM(x.shots) AS c, SUM(x.hits) AS d
+     FROM ${src.sql} x
+     JOIN hlstats_Players p ON p.playerId = x.player_id AND p.hideranking = 0
+     LEFT JOIN hlstats_Players_Data d ON d.playerId = x.player_id
+     GROUP BY x.player_id, d.lastName HAVING SUM(x.kills) > 0 ORDER BY a DESC, x.player_id LIMIT 50`,
+    src.params,
+  );
+}
+
+export type ActionRow = {
+  id: number;
+  code: string;
+  description: string;
+  reward_player: number;
+  reward_team: number;
+  team: string;
+  count: number;
+};
+
+export function getActions(game: string) {
+  return query<ActionRow>(
+    `SELECT id, code, description, reward_player, reward_team, team, count FROM hlstats_Actions
+     WHERE game = ? AND count > 0 ORDER BY count DESC, id`,
+    [game],
+  );
+}
+
+export function getAction(id: number) {
+  return queryOne<ActionRow & { game: string }>(
+    `SELECT id, code, description, reward_player, reward_team, team, count, TRIM(game) AS game
+     FROM hlstats_Actions WHERE id = ?`,
+    [id],
+  );
+}
+
+// Best players for one action: a = count, b = points.
+export function getActionTop(actionId: number) {
+  const src = weeksAndMonths("Players_Actions", "player_id, count, points", "action_id = ?", [actionId]);
+  return query<TopRow>(
+    `SELECT x.player_id AS playerId, d.lastName AS name, SUM(x.count) AS a, SUM(x.points) AS b, 0 AS c, 0 AS d
+     FROM ${src.sql} x
+     JOIN hlstats_Players p ON p.playerId = x.player_id AND p.hideranking = 0
+     LEFT JOIN hlstats_Players_Data d ON d.playerId = x.player_id
+     GROUP BY x.player_id, d.lastName ORDER BY a DESC, x.player_id LIMIT 50`,
+    src.params,
+  );
+}
+
+export type MapRow = {
+  id: number;
+  map: string;
+  kills: number;
+  headshots: number;
+  teamkills: number;
+  teama_wins: number;
+  teamb_wins: number;
+  played: number;
+  play_time: number;
+  rounds: number;
+};
+
+const mapCols = `id, map, kills, headshots, teamkills, teama_wins, teamb_wins, played, play_time, rounds`;
+
+export function getMaps(game: string) {
+  return query<MapRow>(
+    `SELECT ${mapCols} FROM hlstats_Maps WHERE game = ? AND (kills > 0 OR played > 0) ORDER BY kills DESC, id`,
+    [game],
+  );
+}
+
+export function getMap(id: number) {
+  return queryOne<MapRow & { game: string }>(`SELECT ${mapCols}, TRIM(game) AS game FROM hlstats_Maps WHERE id = ?`, [id]);
+}
+
+// Best players on one map over the last `days` days, from hlstats_Events_Frags:
+// a = kills, b = deaths, c = headshots.
+export function getMapTop(mapId: number, days: number) {
+  const since = nowUnix() - days * 86400;
+  return query<TopRow>(
+    `SELECT x.playerId, d.lastName AS name, SUM(x.k) AS a, SUM(x.dd) AS b, SUM(x.hs) AS c, 0 AS d
+     FROM (SELECT killerId AS playerId, 1 AS k, 0 AS dd, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS hs FROM hlstats_Events_Frags
+           WHERE timestamp_id >= ? AND map = ?
+           UNION ALL
+           SELECT victimId, 0, 1, 0 FROM hlstats_Events_Frags WHERE timestamp_id >= ? AND map = ?) x
+     JOIN hlstats_Players p ON p.playerId = x.playerId AND p.hideranking = 0
+     LEFT JOIN hlstats_Players_Data d ON d.playerId = x.playerId
+     GROUP BY x.playerId, d.lastName HAVING SUM(x.k) > 0 ORDER BY a DESC, x.playerId LIMIT 50`,
+    [since, mapId, since, mapId],
+  );
+}
+
+export type TeamRow = {
+  id: number;
+  joined: number;
+  code: string;
+  name: string;
+  time_played: number;
+  kills: number;
+  deaths: number;
+  headshots: number;
+  wins: number;
+  losses: number;
+  rounds: number;
+};
+
+export function getTeams(game: string) {
+  return query<TeamRow>(
+    `SELECT t.teamId AS id, t.code, t.name, t.time_played, t.kills, t.deaths, t.headshots, t.wins, t.losses,
+            t.rounds, (SELECT COUNT(*) FROM hlstats_Events_ChangeTeam e WHERE e.team = t.teamId) AS joined
+     FROM hlstats_Teams t WHERE t.game = ? AND t.hidden = '0' ORDER BY joined DESC, t.time_played DESC, t.teamId`,
+    [game],
+  );
+}
+
+export function getRoles(game: string) {
+  return query<TeamRow>(
+    `SELECT roleId AS id, code, name, time_played, kills, deaths, headshots, wins, losses, rounds, 0 AS joined
+     FROM hlstats_Roles WHERE game = ? AND hidden = '0' ORDER BY time_played DESC`,
+    [game],
+  );
+}
+
+// ---------------------------------------------------------------- start page: rankings
+
+// A ranking is one hlstats_Games row: the servers with that game code share
+// one player ranking (gameME calls them rankings, HLstatsX games).
+export type RankingOverview = {
+  code: string;
+  name: string;
+  realgame: string | null;
+  actPlayers: number;
+  maxPlayers: number;
+  servers: number;
+  topPlayerId: number | null;
+  topPlayerName: string | null;
+  topPlayerFlag: string | null;
+  topPlayerCountry: string | null;
+  topClanId: number | null;
+  topClanTag: string | null;
+};
+
+export async function getRankingOverview(): Promise<RankingOverview[]> {
+  const [games, servers, tops, clans] = await Promise.all([
+    getGames(),
+    query<{ game: string; act: number; max: number; n: number }>(
+      `SELECT TRIM(game) AS game, COALESCE(SUM(${capped("")}), 0) AS act, COALESCE(SUM(max_players), 0) AS max, COUNT(*) AS n
+       FROM hlstats_Servers GROUP BY game`,
+    ),
+    // Best player per ranking: highest skill, ties by lowest id.
+    query<{ game: string; playerId: number; name: string | null; flag: string | null; country: string | null }>(
+      `SELECT TRIM(p.game) AS game, p.playerId, d.lastName AS name, l.flag, l.country
+       FROM hlstats_Players p
+       JOIN (SELECT game, MAX(skill) AS m FROM hlstats_Players WHERE hideranking = 0 GROUP BY game) x
+         ON x.game = p.game AND x.m = p.skill
+       LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+       LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
+       WHERE p.hideranking = 0 ORDER BY p.playerId`,
+    ),
+    // Best clan per ranking: highest average skill with at least two members.
+    query<{ game: string; clanId: number; tag: string; skill: number }>(
+      `SELECT TRIM(c.game) AS game, c.clanId, c.tag, AVG(p.skill) AS skill
+       FROM hlstats_Clans c JOIN hlstats_Players p ON p.clan = c.clanId AND p.hideranking = 0
+       GROUP BY c.game, c.clanId, c.tag HAVING COUNT(p.playerId) >= 2
+       ORDER BY skill DESC, c.clanId`,
+    ),
+  ]);
+  // A ranking without servers is only a template (e.g. the seeded css, tf).
+  return games.filter((g) => servers.some((x) => x.game === g.code)).map((g) => {
+    const s = servers.find((x) => x.game === g.code);
+    const p = tops.find((x) => x.game === g.code);
+    const c = clans.find((x) => x.game === g.code);
+    return {
+      code: g.code,
+      name: g.name,
+      realgame: g.realgame,
+      actPlayers: s?.act ?? 0,
+      maxPlayers: s?.max ?? 0,
+      servers: s?.n ?? 0,
+      topPlayerId: p?.playerId ?? null,
+      topPlayerName: p?.name ?? null,
+      topPlayerFlag: p?.flag ?? null,
+      topPlayerCountry: p?.country ?? null,
+      topClanId: c?.clanId ?? null,
+      topClanTag: c?.tag ?? null,
+    };
+  });
+}
+
+export type SiteTotals = { players: number; clans: number; games: number; servers: number; kills: number; deaths: number; headshots: number };
+
+export async function getSiteTotals(): Promise<SiteTotals> {
+  const r = await queryOne<SiteTotals>(
+    `SELECT (SELECT COUNT(*) FROM hlstats_Players) AS players,
+            (SELECT COUNT(*) FROM hlstats_Clans) AS clans,
+            (SELECT COUNT(*) FROM hlstats_Games g WHERE g.hidden = '0' AND EXISTS (SELECT 1 FROM hlstats_Servers s WHERE s.game = g.code)) AS games,
+            (SELECT COUNT(*) FROM hlstats_Servers) AS servers`,
+  );
+  // Kills, deaths and headshots of the visible rankings.
+  const k = await queryOne<{ kills: number | string | null; deaths: number | string | null; headshots: number | string | null }>(
+    `SELECT SUM(p.kills) AS kills, SUM(p.deaths) AS deaths, SUM(p.headshots) AS headshots
+     FROM hlstats_Players p JOIN hlstats_Games g ON g.code = p.game AND g.hidden = '0'`,
+  );
+  const base = r ?? { players: 0, clans: 0, games: 0, servers: 0 };
+  return { ...base, kills: Number(k?.kills ?? 0), deaths: Number(k?.deaths ?? 0), headshots: Number(k?.headshots ?? 0) };
+}
+
+// Active players per UTC day over all rankings.
+export function getDailyActivityAll(days: number) {
+  return query<DayPoint>(
+    `SELECT eventTime AS day, COUNT(DISTINCT playerId) AS players, SUM(kills) AS kills, SUM(headshots) AS headshots
+     FROM hlstats_Players_History WHERE ${sinceDays("eventTime")}
+     GROUP BY eventTime ORDER BY eventTime`,
+    [days],
+  );
+}
+
+// ---------------------------------------------------------------- misc
+
+export type MiscStats = {
+  countries: { flag: string; country: string; n: number }[];
+  connectsPerDay: { day: string; n: number }[];
+  weekdays: { connects: number; seconds: number }[]; // index 0 = Monday
+  connectTypes: { type: number; n: number }[];
+};
+
+// Countries of the ranked players, connects per day and per weekday.
+export async function getMiscStats(game: string, days: number): Promise<MiscStats> {
+  const now = Math.floor(Date.now() / 1000);
+  const yearAgo = now - 365 * 86400;
+  const gameId = `(SELECT id FROM hlstats_Games WHERE code = ?)`;
+  const [countries, connects, history, types] = await Promise.all([
+    query<{ flag: string | null; country: string | null; n: number }>(
+      `SELECT l.flag, l.country, COUNT(*) AS n
+       FROM hlstats_Players p
+       JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+       LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
+       WHERE p.game = ? AND p.hideranking = 0
+       GROUP BY l.flag, l.country ORDER BY n DESC`,
+      [game],
+    ),
+    query<{ d: number; n: number }>(
+      `SELECT FLOOR(c.timestamp_id / 86400) AS d, COUNT(*) AS n
+       FROM hlstats_Events_Connects c
+       WHERE c.game_id = ${gameId} AND c.timestamp_id >= ?
+       GROUP BY FLOOR(c.timestamp_id / 86400) ORDER BY d`,
+      [game, yearAgo],
+    ),
+    query<{ day: string; secs: number }>(
+      `SELECT eventTime AS day, SUM(connection_time) AS secs
+       FROM hlstats_Players_History WHERE game = ? AND ${sinceDays("eventTime")}
+       GROUP BY eventTime`,
+      [game, 365],
+    ),
+    query<{ type: number; n: number }>(
+      `SELECT d.connect_type AS type, COUNT(*) AS n
+       FROM hlstats_Players p JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+       WHERE p.game = ? AND d.connect_type > 0
+       GROUP BY d.connect_type ORDER BY n DESC`,
+      [game],
+    ),
+  ]);
+  const isoDay = (unixDay: number) => new Date(unixDay * 86400000).toISOString().slice(0, 10);
+  // 1970-01-01 was a Thursday (index 3 with Monday = 0).
+  const weekdays = Array.from({ length: 7 }, () => ({ connects: 0, seconds: 0 }));
+  for (const c of connects) weekdays[(Number(c.d) + 3) % 7].connects += Number(c.n);
+  for (const h of history) {
+    const d = typeof h.day === "string" ? h.day.slice(0, 10) : new Date(h.day).toISOString().slice(0, 10);
+    weekdays[(new Date(`${d}T00:00:00Z`).getUTCDay() + 6) % 7].seconds += Number(h.secs);
+  }
+  const first = Math.floor(now / 86400) - days + 1;
+  const byDay = new Map(connects.map((c) => [Number(c.d), Number(c.n)]));
+  return {
+    countries: countries.map((c) => ({ flag: (c.flag ?? "").trim(), country: (c.country ?? "").trim(), n: Number(c.n) })),
+    connectsPerDay: Array.from({ length: days }, (_, i) => ({ day: isoDay(first + i), n: byDay.get(first + i) ?? 0 })),
+    weekdays,
+    connectTypes: types.map((t) => ({ type: Number(t.type), n: Number(t.n) })),
+  };
+}
+
+// Country flag of each player (from the latest connect's GeoIP location).
+export async function getPlayerFlags(ids: number[]) {
+  const uniq = [...new Set(ids.filter((x) => x > 0))];
+  if (!uniq.length) return new Map<number, { flag: string; country: string }>();
+  // Bots get the code "bot": Flag shows the BOT tag in the flag's place.
+  const rows = await query<{ playerId: number; flag: string | null; country: string | null; bot: number }>(
+    `SELECT p.playerId, l.flag, l.country,
+            CASE WHEN EXISTS (SELECT 1 FROM hlstats_PlayerUniqueIds u WHERE u.playerId = p.playerId AND u.uniqueId LIKE 'BOT%') THEN 1 ELSE 0 END AS bot
+     FROM hlstats_Players p
+     LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+     LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
+     WHERE p.playerId IN (?)`,
+    [uniq],
+  );
+  return new Map(
+    rows
+      .filter((r) => Number(r.bot) || r.flag)
+      .map((r) => [Number(r.playerId), Number(r.bot) ? { flag: "bot", country: "Bot" } : { flag: r.flag as string, country: r.country ?? "" }]),
+  );
+}
+
+// Country of each clan: the most common country among its members (ties by
+// country code), from their latest connect's GeoIP location.
+export async function getClanFlags(ids: number[]) {
+  const uniq = [...new Set(ids.filter((x) => x > 0))];
+  const out = new Map<number, { flag: string; country: string }>();
+  if (!uniq.length) return out;
+  const rows = await query<{ clan: number; flag: string; country: string | null; n: number }>(
+    `SELECT p.clan, l.flag, MAX(l.country) AS country, COUNT(*) AS n
+     FROM hlstats_Players p
+     JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+     JOIN hlstats_Players_Locations l ON l.id = d.location_id
+     WHERE p.clan IN (?) AND p.hideranking = 0 AND l.flag IS NOT NULL AND l.flag <> ''
+     GROUP BY p.clan, l.flag`,
+    [uniq],
+  );
+  const best = new Map<number, { flag: string; country: string; n: number }>();
+  for (const r of rows) {
+    const id = Number(r.clan);
+    const n = Number(r.n);
+    const b = best.get(id);
+    if (!b || n > b.n || (n === b.n && r.flag < b.flag)) best.set(id, { flag: r.flag, country: r.country ?? "", n });
+  }
+  for (const [id, b] of best) out.set(id, { flag: b.flag, country: b.country });
+  return out;
+}
+
+export type MapPlayer = {
+  playerId: number;
+  name: string | null;
+  skill: number;
+  kills: number;
+  deaths: number;
+  last_event: number;
+  flag: string | null;
+  country: string | null;
+  city: string | null;
+  lat: number;
+  lng: number;
+};
+
+// Players of a ranking with a known location, most recently active first,
+// for the player map. Only the GeoIP city point is used, never an address.
+// place: only players of that country and/or city (country or city ranking).
+// order "skill": the best players of the ranking; "recent": the most recently active.
+export async function getMapPlayers(
+  game: string,
+  limit: number,
+  place: { country?: string; city?: string } = {},
+  order: "skill" | "recent" = "recent",
+): Promise<MapPlayer[]> {
+  const params: Param[] = [game];
+  let where = "";
+  if (place.country) {
+    where += " AND LOWER(l.flag) = ?";
+    params.push(place.country);
+  }
+  if (place.city) {
+    where += " AND LOWER(l.city) = ?";
+    params.push(place.city.toLowerCase());
+  }
+  const rows = await query<Omit<MapPlayer, "lat" | "lng"> & { lat: string; lng: string }>(
+    `SELECT p.playerId, d.lastName AS name, p.skill, p.kills, p.deaths, p.last_event, l.flag, l.country, l.city, l.lat, l.lng
+     FROM hlstats_Players p
+     JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+     JOIN hlstats_Players_Locations l ON l.id = d.location_id
+     WHERE p.game = ? AND p.hideranking = 0 AND l.lat <> '' AND l.lng <> ''${where}
+     ORDER BY ${order === "skill" ? "p.skill DESC" : "p.last_event DESC"}, p.playerId LIMIT ?`,
+    [...params, limit],
+  );
+  return rows.map(mapRow).filter(onMap);
+}
+
+// Players online right now on the servers of a ranking, at the GeoIP city of
+// their current connection (or their last known one), for the map on the
+// servers page.
+export async function getLiveMapPlayers(game: string): Promise<(MapPlayer & { server: string })[]> {
+  const rows = await query<Omit<MapPlayer, "lat" | "lng"> & { lat: string; lng: string; server: string }>(
+    `SELECT p.playerId, COALESCE(d.lastName, lv.name) AS name, p.skill, p.kills, p.deaths, p.last_event,
+            l.flag, l.country, l.city, l.lat, l.lng, s.name AS server
+     FROM hlstats_Livestats lv
+     JOIN hlstats_Servers s ON s.serverId = lv.server_id
+     JOIN hlstats_Players p ON p.playerId = lv.player_id
+     LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+     JOIN hlstats_Players_Locations l ON l.id = CASE WHEN lv.cli_location_id > 0 THEN lv.cli_location_id ELSE d.location_id END
+     WHERE s.game = ? AND lv.player_hidden = 0 AND p.hideranking = 0 AND lv.unique_id NOT LIKE 'BOT%'
+       AND l.lat <> '' AND l.lng <> ''
+     ORDER BY p.skill DESC, p.playerId`,
+    [game],
+  );
+  return rows.map(mapRow).filter(onMap);
+}
+
+function mapRow<R extends { playerId: number; skill: number; kills: number; deaths: number; last_event: number; lat: string; lng: string }>(r: R) {
+  return { ...r, playerId: Number(r.playerId), skill: Number(r.skill), kills: Number(r.kills), deaths: Number(r.deaths), last_event: Number(r.last_event), lat: Number(r.lat), lng: Number(r.lng) };
+}
+
+function onMap(r: { lat: number; lng: number }) {
+  return Number.isFinite(r.lat) && Number.isFinite(r.lng) && Math.abs(r.lat) <= 90 && Math.abs(r.lng) <= 180 && (r.lat !== 0 || r.lng !== 0);
+}
+
+// ---------------------------------------------------------------- bans page
+
+// Players on the bans page: ranked ones (hideranking 0) and those the
+// collector marked as banned (hideranking 2). Players an admin hid
+// (hideranking 1) never appear.
+export type BanPlayer = {
+  playerId: number;
+  name: string | null;
+  flag: string | null;
+  country: string | null;
+  uniqueId: string;
+  skill: number;
+  kills: number;
+  deaths: number;
+  headshots: number;
+  shots: number;
+  hits: number;
+  last_event: number;
+  hideranking: number;
+};
+
+const banPlayerSql = `SELECT p.playerId, d.lastName AS name, l.flag, l.country, u.uniqueId,
+    p.skill, p.kills, p.deaths, p.headshots, p.shots, p.hits, p.last_event, p.hideranking
+  FROM hlstats_PlayerUniqueIds u
+  JOIN hlstats_Players p ON p.playerId = u.playerId AND p.hideranking IN (0, 2)
+  LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+  LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id`;
+
+// Players the collector marked as banned (permanent engine ban or VAC
+// disconnect, collector 1.6), newest activity first.
+export function getBannedPlayers(game: string, limit: number) {
+  return query<BanPlayer>(`${banPlayerSql} WHERE p.game = ? AND p.hideranking = 2 ORDER BY p.last_event DESC LIMIT ?`, [game, limit]);
+}
+
+// Ban records with type, date and reason (hlstats_Players_Bans, collector
+// 1.7). Empty when the table does not exist yet.
+export type BanRecord = { playerId: number; ban_type: string; length_minutes: number; reason: string | null; banned_at: number };
+
+export async function getBanRecords(game: string, limit: number): Promise<BanRecord[]> {
+  try {
+    return await query<BanRecord>(
+      `SELECT b.player_id AS playerId, b.ban_type, b.length_minutes, b.reason, b.banned_at
+       FROM hlstats_Players_Bans b WHERE b.game = ? ORDER BY b.banned_at DESC LIMIT ?`,
+      [game, limit],
+    );
+  } catch {
+    return [];
+  }
+}
+
+// The players of the given ids, as shown on the bans page.
+export async function getBanPlayers(ids: number[]): Promise<Map<number, BanPlayer>> {
+  const uniq = [...new Set(ids.filter((x) => x > 0))];
+  if (!uniq.length) return new Map();
+  const rows = await query<BanPlayer>(`${banPlayerSql} WHERE p.playerId IN (?)`, [uniq]);
+  return new Map(rows.map((r) => [Number(r.playerId), r]));
+}
+
+// The most recently active ranked players, for the VAC check.
+export function getRecentPlayers(game: string, limit: number) {
+  return query<BanPlayer>(`${banPlayerSql} WHERE p.game = ? ORDER BY p.last_event DESC LIMIT ?`, [game, limit]);
+}
+
+// Ranked players of a game by SteamID64. The collector stores the ID as
+// "1:123", "STEAM_0:1:123", "[U:1:246]" or the SteamID64 itself.
+export async function getPlayersBySteam(game: string, steam64s: string[]): Promise<Map<string, BanPlayer>> {
+  const base = 76561197960265728n;
+  const forms = new Map<string, string>();
+  for (const s of new Set(steam64s)) {
+    if (!/^7656119\d{10}$/.test(s)) continue;
+    const acc = BigInt(s) - base;
+    const y = acc % 2n;
+    const z = acc / 2n;
+    for (const f of [`${y}:${z}`, `STEAM_0:${y}:${z}`, `STEAM_1:${y}:${z}`, `[U:1:${acc}]`, `U:1:${acc}`, s]) forms.set(f, s);
+  }
+  const out = new Map<string, BanPlayer>();
+  const all = [...forms.keys()];
+  for (let i = 0; i < all.length; i += 1000) {
+    const rows = await query<BanPlayer>(`${banPlayerSql} WHERE u.game = ? AND u.uniqueId IN (?)`, [game, all.slice(i, i + 1000)]);
+    for (const r of rows) {
+      const s = forms.get(r.uniqueId);
+      if (s) out.set(s, r);
+    }
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------- search
+
+export type SearchIn = "names" | "uniqueid" | "clans";
+
+export type SearchHit = {
+  game: string;
+  playerId: number;
+  name: string | null;
+  // The used name that matched, when it is not the current one.
+  alias: string | null;
+  flag: string | null;
+  country: string | null;
+  skill: number;
+  kills: number;
+  deaths: number;
+  last_event: number;
+};
+
+export type ClanHit = { game: string; clanId: number; tag: string; name: string; members: number; skill: number | null };
+
+const SEARCH_LIMIT = 100;
+
+// Search across the visible rankings (game "" = all), as on gameME's search
+// page: all names a player used, a Steam ID in any of its forms (exact, so
+// the IDs cannot be listed by a partial search), or clan tag and name.
+// Hidden and banned players are not found.
+export async function searchPlayers(q: string, by: "names" | "uniqueid", game: string): Promise<SearchHit[]> {
+  const where = [`p.hideranking = 0`, `g.hidden = '0'`];
+  const params: Param[] = [];
+  if (game) {
+    where.push(`p.game = ?`);
+    params.push(game);
+  }
+  let match: string;
+  if (by === "uniqueid") {
+    const ids = steamIds(q.trim());
+    if (!ids) return [];
+    const acc = BigInt(ids.steam64) - 76561197960265728n;
+    const y = acc % 2n;
+    const z = acc / 2n;
+    match = `p.playerId IN (SELECT u.playerId FROM hlstats_PlayerUniqueIds u WHERE u.uniqueId IN (?))`;
+    params.unshift([`${y}:${z}`, `STEAM_0:${y}:${z}`, `STEAM_1:${y}:${z}`, `[U:1:${acc}]`, `U:1:${acc}`, ids.steam64]);
+    return query<SearchHit>(
+      `SELECT TRIM(p.game) AS game, p.playerId, d.lastName AS name, NULL AS alias, l.flag, l.country, p.skill, p.kills, p.deaths, p.last_event
+       FROM hlstats_Players p JOIN hlstats_Games g ON g.code = p.game
+       LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+       LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
+       WHERE ${match} AND ${where.join(" AND ")} ORDER BY p.skill DESC LIMIT ?`,
+      [...params, SEARCH_LIMIT],
+    );
+  }
+  const rows = await query<SearchHit>(
+    `SELECT TRIM(p.game) AS game, p.playerId, d.lastName AS name, MIN(n.name) AS alias, l.flag, l.country, p.skill, p.kills, p.deaths, p.last_event
+     FROM hlstats_PlayerNames n
+     JOIN hlstats_Players p ON p.playerId = n.playerId
+     JOIN hlstats_Games g ON g.code = p.game
+     LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+     LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
+     WHERE n.name ${likeOp()} ? AND ${where.join(" AND ")}
+     GROUP BY p.game, p.playerId, d.lastName, l.flag, l.country, p.skill, p.kills, p.deaths, p.last_event
+     ORDER BY p.skill DESC LIMIT ?`,
+    [like(q), ...params, SEARCH_LIMIT],
+  );
+  return rows.map((r) => ({ ...r, alias: r.alias && r.alias !== r.name ? r.alias : null }));
+}
+
+export function searchClans(q: string, game: string): Promise<ClanHit[]> {
+  return query<ClanHit>(
+    `SELECT TRIM(c.game) AS game, c.clanId, c.tag, c.name, COUNT(p.playerId) AS members, ROUND(AVG(p.skill)) AS skill
+     FROM hlstats_Clans c
+     JOIN hlstats_Games g ON g.code = c.game AND g.hidden = '0'
+     LEFT JOIN hlstats_Players p ON p.clan = c.clanId AND p.hideranking = 0
+     WHERE (c.tag ${likeOp()} ? OR c.name ${likeOp()} ?)${game ? " AND c.game = ?" : ""}
+     GROUP BY c.game, c.clanId, c.tag, c.name
+     HAVING COUNT(p.playerId) > 0
+     ORDER BY members DESC, c.clanId LIMIT ?`,
+    [like(q), like(q), ...(game ? [game] : []), SEARCH_LIMIT],
+  );
+}
+
+// ---------------------------------------------------------------- help
+
+export type HelpAction = {
+  game: string;
+  code: string;
+  description: string | null;
+  reward_player: number;
+  reward_team: number;
+  team: string;
+  teamName: string | null;
+  for_PlayerActions: string;
+  for_PlayerPlayerActions: string;
+  for_TeamActions: string;
+  for_WorldActions: string;
+};
+
+export type HelpWeapon = { game: string; code: string; name: string; modifier: number };
+
+// Point bonuses and weapon modifiers of the visible rankings (game "" = all)
+// for the help page.
+export function getHelpActions(game: string) {
+  return query<HelpAction>(
+    `SELECT TRIM(a.game) AS game, a.code, a.description, a.reward_player, a.reward_team, a.team, t.name AS teamName,
+            a.for_PlayerActions, a.for_PlayerPlayerActions, a.for_TeamActions, a.for_WorldActions
+     FROM hlstats_Actions a
+     JOIN hlstats_Games g ON g.code = a.game AND g.hidden = '0'
+     LEFT JOIN hlstats_Teams t ON t.game = a.game AND t.code = a.team AND a.team <> ''
+     WHERE ${game ? "a.game = ?" : "1 = 1"}
+     ORDER BY g.display_id, g.name, a.description, a.code`,
+    game ? [game] : [],
+  );
+}
+
+export function getHelpWeapons(game: string) {
+  return query<HelpWeapon>(
+    `SELECT TRIM(w.game) AS game, w.code, w.name, w.modifier
+     FROM hlstats_Weapons w
+     JOIN hlstats_Games g ON g.code = w.game AND g.hidden = '0'
+     WHERE ${game ? "w.game = ?" : "1 = 1"}
+     ORDER BY g.display_id, g.name, w.name, w.code`,
+    game ? [game] : [],
+  );
+}
+
+// The collector's point settings (defaults as in collector 1.6).
+export async function getPointSettings() {
+  const defs = { gamewe_start_skill: 1000, gamewe_kill_points: 5, gamewe_headshot_bonus: 0, gamewe_suicide_penalty: 5, gamewe_teamkill_penalty: 10, gamewe_rank_bots: 0 };
+  const rows = await query<{ keyname: string; value: string }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [Object.keys(defs)]);
+  const out = { ...defs };
+  for (const r of rows) {
+    const n = Number.parseInt(r.value, 10);
+    if (r.keyname in out && Number.isFinite(n) && n >= 0) out[r.keyname as keyof typeof defs] = n;
+  }
+  return out;
+}
+
+// Best players of a ranking for the sitemap (visible ones only).
+export function getSitemapPlayers(game: string, limit: number) {
+  return query<{ playerId: number; last_event: number }>(
+    `SELECT playerId, last_event FROM hlstats_Players WHERE game = ? AND hideranking = 0 ORDER BY skill DESC, playerId LIMIT ?`,
+    [game, limit],
+  );
+}

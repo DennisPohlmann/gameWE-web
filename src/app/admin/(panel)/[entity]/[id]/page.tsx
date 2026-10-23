@@ -1,0 +1,232 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { assignServersAction, deleteAction, moveServerAction, saveAction } from "../../../actions";
+import { allServers, rankingBaseGames } from "@/lib/admin-rankings";
+import { gameKind, sameBaseGame } from "@/lib/games";
+import { Section } from "@/components/ui";
+import { getRow, optionList, withColumns } from "@/lib/admin-data";
+import { optionInfo } from "@/lib/option-help";
+import { RankBadge, rankName } from "@/components/badges";
+import { getEntity } from "@/lib/admin-entities";
+import { adminDict } from "@/lib/admin-i18n";
+import { requireAdmin } from "@/lib/auth";
+import { fill, getAdminLang } from "@/lib/i18n";
+
+type SP = Promise<Record<string, string | undefined>>;
+
+export default async function EntityEdit({ params, searchParams }: { params: Promise<{ entity: string; id: string }>; searchParams: SP }) {
+  const { entity, id: rawId } = await params;
+  const found = getEntity(entity);
+  if (!found) notFound();
+  const e = await withColumns(found);
+  await requireAdmin(e.minLevel);
+  const id = decodeURIComponent(rawId);
+  const isNew = id === "new";
+  if (isNew && !e.canCreate) notFound();
+  const row = isNew ? {} : await getRow(e, id);
+  if (!row) notFound();
+  const lang = await getAdminLang();
+  const a = adminDict(lang);
+  const sp = await searchParams;
+  const optionSets = Object.fromEntries(
+    await Promise.all(
+      [...new Set(e.fields.map((f) => f.options).filter((o): o is "games" | "clans" => typeof o === "string"))].map(
+        async (k) => [k, await optionList(k)] as const,
+      ),
+    ),
+  );
+  const badField = e.fields.find((f) => f.name === sp.field);
+  const error =
+    sp.error === "field"
+      ? fill(a.invalidField, { f: badField?.label[lang] ?? sp.field ?? "" })
+      : sp.error === "db"
+        ? fill(a.dbWriteError, { msg: sp.msg ?? "" })
+        : sp.error === "self"
+          ? a.notSelf
+          : sp.error === "mismatch"
+            ? a.gameMismatch
+            : null;
+
+  return (
+    <>
+      <p>
+        <Link href={`/admin/${e.key}`}>← {a.back}</Link>
+      </p>
+      <h1>
+        {e.label[lang]}: {isNew ? a.new : id}
+      </h1>
+      {e.key === "options" && !isNew ? <OptionHelp id={id} lang={lang} a={a} /> : null}
+      {e.key === "games" && !e.fields.some((f) => f.name === "realgame") ? <p className="notice error">{a.realgameMissing}</p> : null}
+      {e.key === "ranks" && !isNew && typeof (row as Record<string, unknown>).name === "string" ? (
+        <p className="lead admin-rank">
+          <RankBadge name={String((row as Record<string, unknown>).name)} size={36} />
+          {rankName(String((row as Record<string, unknown>).name))}
+        </p>
+      ) : null}
+      {sp.saved ? <p className="notice">{a.saved}</p> : null}
+      {error ? <p className="notice error">{error}</p> : null}
+      <Section title={isNew ? a.new : a.edit}>
+        <form action={saveAction} className="form">
+          <input type="hidden" name="__entity" value={e.key} />
+          <input type="hidden" name="__id" value={id} />
+          {e.fields.filter((f) => isNew || !f.virtual).map((f) => {
+            const value = (row as Record<string, string | number | null>)[f.name];
+            const locked = f.readonly || (f.createOnly && !isNew);
+            const opts = Array.isArray(f.options)
+              ? f.options.map(([v, l]): [string, string] => [v, typeof l === "string" ? l : l[lang]])
+              : f.options
+                ? optionSets[f.options]
+                : null;
+            return (
+              <label key={f.name}>
+                {f.label[lang]}
+                {opts && !locked ? (
+                  <select name={f.name} defaultValue={value === null || value === undefined ? "" : String(value)} required={f.required}>
+                    {!f.required || value === undefined ? <option value="" /> : null}
+                    {opts.map(([v, l]) => (
+                      <option key={v} value={v}>
+                        {l}
+                      </option>
+                    ))}
+                  </select>
+                ) : f.type === "password" ? (
+                  <input name={f.name} type="password" autoComplete="new-password" minLength={10} required={isNew} />
+                ) : f.type === "secret" ? (
+                  <input
+                    name={f.name}
+                    type="password"
+                    autoComplete="off"
+                    maxLength={f.max}
+                    placeholder={(row as Record<string, unknown>)[`${f.name}__set`] ? "••••••••" : ""}
+                  />
+                ) : (
+                  <input
+                    name={f.name}
+                    defaultValue={value === null || value === undefined ? "" : String(value)}
+                    type={f.type === "number" ? "number" : "text"}
+                    inputMode={f.type === "decimal" ? "decimal" : undefined}
+                    required={f.required && !locked}
+                    readOnly={locked}
+                    maxLength={f.max}
+                  />
+                )}
+                {f.help ? <small className="muted">{f.help[lang]}</small> : null}
+              </label>
+            );
+          })}
+          <button type="submit" className="button">
+            {a.save}
+          </button>
+        </form>
+      </Section>
+      {!isNew && e.key === "games" ? <RankingServers gameId={id} code={String((row as Record<string, unknown>).code ?? "").trim()} lang={lang} /> : null}
+      {!isNew && e.canDelete ? (
+        <Section title={a.delete}>
+          <form action={deleteAction} className="form">
+            <input type="hidden" name="__entity" value={e.key} />
+            <input type="hidden" name="__id" value={id} />
+            <label className="check">
+              <input type="checkbox" name="confirm" value="1" required /> {a.deleteConfirm}
+            </label>
+            <button type="submit" className="button danger">
+              {a.delete}
+            </button>
+          </form>
+        </Section>
+      ) : null}
+    </>
+  );
+}
+
+// Servers of a ranking, and a form to move other servers into it.
+async function RankingServers({ gameId, code, lang }: { gameId: string; code: string; lang: "de" | "en" }) {
+  const a = adminDict(lang);
+  const [servers, games, bases] = await Promise.all([allServers(), optionList("games"), rankingBaseGames()]);
+  // Servers only move between rankings of the same base game.
+  const base = bases.get(code) ?? null;
+  const fits = (c: string) => sameBaseGame(bases.get(c) ?? null, base);
+  const gameName = (c: string) => gameKind(bases.get(c))?.short ?? "?";
+  const targets = games.filter(([c]) => c !== code && fits(c));
+  const mine = servers.filter((s) => s.game === code);
+  const others = servers.filter((s) => s.game !== code);
+  return (
+    <Section title={a.rankingServers}>
+      {mine.length ? (
+        <table>
+          <tbody>
+            {mine.map((s) => (
+              <tr key={s.serverId}>
+                <td>
+                  <Link href={`/admin/servers/${s.serverId}`}>{s.name || `${s.address}:${s.port}`}</Link>
+                </td>
+                <td className="muted">
+                  {s.address}:{s.port}
+                </td>
+                <td>
+                  {targets.length ? (
+                    <form action={moveServerAction} className="inline-form">
+                      <input type="hidden" name="__id" value={gameId} />
+                      <input type="hidden" name="server" value={s.serverId} />
+                      <select name="target" aria-label={a.rankingRemoveTo} defaultValue="">
+                        <option value="" disabled>
+                          {a.rankingRemoveTo} …
+                        </option>
+                        {targets.map(([v, l]) => (
+                          <option key={v} value={v}>
+                            {l}
+                          </option>
+                        ))}
+                      </select>{" "}
+                      <button type="submit" className="button">
+                        {a.rankingRemove}
+                      </button>
+                    </form>
+                  ) : null}
+                </td>
+              </tr>
+            ))}
+            <tr>
+              <td colSpan={3}>
+                <small className="muted">{a.rankingRemoveHint}</small>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      ) : (
+        <p>{a.rankingNoServers}</p>
+      )}
+      {others.length ? (
+        <form action={assignServersAction} className="form box">
+          <input type="hidden" name="__id" value={gameId} />
+          <b>{a.rankingAddServers}</b>
+          {others.map((s) => (
+            <label key={s.serverId} className="check">
+              <input type="checkbox" name="server" value={s.serverId} disabled={!fits(s.game)} /> {s.name || `${s.address}:${s.port}`}{" "}
+              <span className="muted">
+                ({a.rankingNow}: {s.game}, {gameName(s.game)}
+                {fits(s.game) ? "" : ` · ${a.gameOther}`})
+              </span>
+            </label>
+          ))}
+          <small className="muted">{a.rankingMoveHint}</small>
+          <button type="submit" className="button">
+            {a.rankingAssign}
+          </button>
+        </form>
+      ) : null}
+    </Section>
+  );
+}
+
+// Meaning of an option above its form (Erweitert: alle Optionen).
+function OptionHelp({ id, lang, a }: { id: string; lang: "de" | "en"; a: ReturnType<typeof adminDict> }) {
+  const info = optionInfo(id);
+  if (!info) return <p className="lead">{a.optUnknown}</p>;
+  return (
+    <p className="lead">
+      <b>{info.label[lang]}</b>
+      {info.help ? <> · {info.help[lang]}</> : null}
+      {info.group ? <> · {fill(a.optInSettings, { g: info.group[lang] })}</> : null}
+    </p>
+  );
+}

@@ -1,0 +1,32 @@
+"use client";
+
+import { useRef, useState, type PointerEvent, type ReactNode } from "react";
+
+// Hover box for server-rendered graphics: an element inside with a data-tip
+// attribute shows that text next to the pointer (lines split at "\n").
+export function HoverTip({ children, className }: { children: ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [tip, setTip] = useState<{ text: string; left: number; top: number; flip: boolean } | null>(null);
+  const onMove = (e: PointerEvent<HTMLDivElement>) => {
+    const box = ref.current;
+    const el = e.target instanceof Element ? e.target.closest("[data-tip]") : null;
+    if (!box || !el || !box.contains(el)) return setTip(null);
+    const r = box.getBoundingClientRect();
+    const left = e.clientX - r.left;
+    setTip({ text: el.getAttribute("data-tip") ?? "", left, top: e.clientY - r.top - 12, flip: left > r.width / 2 });
+  };
+  const [head, ...rest] = (tip?.text ?? "").split("\n");
+  return (
+    <div ref={ref} className={`hover-tip${className ? ` ${className}` : ""}`} onPointerMove={onMove} onPointerDown={onMove} onPointerLeave={() => setTip(null)}>
+      {children}
+      {tip?.text ? (
+        <div className={`chart-tip${tip.flip ? " flip" : ""}`} style={{ left: tip.left, top: tip.top }} role="status">
+          <b>{head}</b>
+          {rest.map((l, i) => (
+            <span key={i}>{l}</span>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}

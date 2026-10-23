@@ -1,0 +1,356 @@
+import { GAME_KINDS } from "./games";
+
+// What the admin area can edit. Each entity is one table; the generic list,
+// edit and save code in app/admin works from these definitions only, so
+// table and column names never come from the request.
+
+export type L = { de: string; en: string };
+
+export type Field = {
+  name: string;
+  label: L;
+  type: "text" | "number" | "decimal" | "flag" | "bool" | "select" | "password" | "secret" | "textarea";
+  // The column may be missing in older databases; then the field is left out
+  // (see withColumns in admin-data.ts).
+  optional?: boolean;
+  // flag = enum('0','1') column, bool = tinyint 0/1 column.
+  // password = stored as a hash; secret = stored as is but never read back into a page.
+  options?: [string, L | string][] | "games" | "clans";
+  inList?: boolean;
+  required?: boolean;
+  readonly?: boolean; // shown, never written
+  virtual?: boolean; // form only, not a column (handled by the entity's own code)
+  createOnly?: boolean; // written on create, read-only afterwards
+  help?: L;
+  max?: number;
+  min?: number;
+  maxValue?: number;
+  pattern?: RegExp;
+};
+
+export type Entity = {
+  key: string;
+  table: string;
+  pk: string;
+  pkIsText?: boolean;
+  label: L;
+  help?: L;
+  fields: Field[];
+  order: string;
+  search?: string[];
+  gameColumn?: string; // filter the list by game
+  fixed?: Record<string, string>; // column values always set and filtered on
+  join?: string; // extra read-only columns for the list, see players
+  joinCols?: string;
+  canCreate: boolean;
+  canDelete: boolean;
+  minLevel?: number;
+  // Rows whose key starts with one of these (any case) are never listed,
+  // read, created, changed or deleted here, e.g. the TOTP secrets and the
+  // TeamSpeak query password in Options.
+  hiddenPrefix?: string[];
+};
+
+const yesNo: [string, L][] = [
+  ["0", { de: "Nein", en: "No" }],
+  ["1", { de: "Ja", en: "Yes" }],
+];
+
+const gameField: Field = { name: "game", label: { de: "Rangliste", en: "Ranking" }, type: "select", options: "games", inList: true, required: true };
+
+export const entities: Entity[] = [
+  {
+    key: "options",
+    table: "hlstats_Options",
+    pk: "keyname",
+    pkIsText: true,
+    label: { de: "Erweitert: alle Optionen", en: "Advanced: all options" },
+    help: {
+      de: "Alle Einträge aus hlstats_Options als Rohwerte, mit ihrer Bedeutung. Die meisten stellst du bequemer unter Einstellungen ein; hier stehen auch veraltete und eigene Schlüssel. Der Collector liest die Werte jede Minute neu, ungültige Werte ersetzt er durch den Standard.",
+      en: "All rows of hlstats_Options as raw values, with their meaning. Most are easier to set under Settings; old and custom keys are listed here too. The collector re-reads them every minute and replaces invalid values with the default.",
+    },
+    fields: [
+      { name: "keyname", label: { de: "Schlüssel", en: "Key" }, type: "text", inList: true, required: true, createOnly: true, max: 128 },
+      { name: "value", label: { de: "Wert", en: "Value" }, type: "text", inList: true, max: 255 },
+    ],
+    order: "keyname",
+    search: ["keyname", "value"],
+    canCreate: true,
+    canDelete: true,
+    hiddenPrefix: ["gamewe_totp", "gamewe_ts_query_password", "gamewe_metrics_token"],
+  },
+  {
+    key: "games",
+    table: "hlstats_Games",
+    pk: "id",
+    label: { de: "Ranglisten", en: "Rankings" },
+    help: {
+      de: "Eine Rangliste ist eine Sammlung von Servern mit einem gemeinsamen Ranking, z. B. „Assault“ mit fünf Assault-Servern oder „GunGame“ mit zwei GunGame-Servern. Lege sie hier an und ordne ihr danach die Server zu. Ranglisten ohne Server erscheinen nicht auf der Startseite und dienen als Vorlagen.",
+      en: "A ranking is a set of servers sharing one player ranking, e.g. \"Assault\" with five assault servers or \"GunGame\" with two gungame servers. Create it here, then assign the servers. Rankings without servers are not shown on the start page and serve as templates.",
+    },
+    fields: [
+      { name: "code", label: { de: "Kürzel", en: "Code" }, type: "text", inList: true, required: true, createOnly: true, max: 10, pattern: /^[a-z0-9_]+$/, help: { de: "Kurz, nur a–z, 0–9 und _, z. B. assault oder gungame. Steht in der URL und lässt sich später nicht ändern.", en: "Short, only a–z, 0–9 and _, e.g. assault or gungame. Used in the URL and cannot be changed later." } },
+      { name: "template", label: { de: "Vorlage", en: "Template" }, type: "select", options: "games", virtual: true, createOnly: true, help: { de: "Übernimmt Waffen, Aktionen, Teams, Rollen, Awards, Ränge und Ribbons aus dieser Rangliste bzw. diesem Spiel (z. B. css für Counter-Strike: Source, csgo für Counter-Strike: Global Offensive, cstrike für Counter-Strike 1.6).", en: "Copies weapons, actions, teams, roles, awards, ranks and ribbons from this ranking or game (e.g. css for Counter-Strike: Source, csgo for Counter-Strike: Global Offensive, cstrike for Counter-Strike 1.6)." } },
+      {
+        name: "realgame",
+        label: { de: "Spiel", en: "Game" },
+        type: "select",
+        optional: true,
+        options: [["", { de: "– wie die Vorlage –", en: "– as the template –" }], ...Object.entries(GAME_KINDS).map(([k, g]): [string, string] => [k, `${g.name} (${k})${g.limited ? " – eingeschränkt / limited" : ""}`])],
+        inList: true,
+        help: {
+          de: "Das Spiel hinter der Rangliste. Der Collector liest daraus das Logformat, die Webseite zeigt es als Kennzeichen an. Leer lassen übernimmt es aus der Vorlage.",
+          en: "The game behind the ranking. The collector reads the log format from it, the website shows it as a tag. Left empty, it is taken from the template.",
+        },
+      },
+      { name: "name", label: { de: "Name", en: "Name" }, type: "text", inList: true, required: true, max: 255 },
+      { name: "hidden", label: { de: "Ausgeblendet", en: "Hidden" }, type: "flag", options: yesNo, inList: true },
+      { name: "display_id", label: { de: "Reihenfolge", en: "Order" }, type: "number", inList: true },
+    ],
+    order: "display_id, name",
+    canCreate: true,
+    canDelete: false,
+    minLevel: 100,
+  },
+  {
+    key: "servers",
+    table: "hlstats_Servers",
+    pk: "serverId",
+    label: { de: "Server", en: "Servers" },
+    help: {
+      de: "Der Collector nimmt nur Logs von Servern an, die hier eingetragen sind, und liest die Liste jede Minute neu. Auf dem Gameserver: logaddress_add <Collector-IP>:41337.",
+      en: "The collector only accepts logs from servers listed here and re-reads the list every minute. On the game server: logaddress_add <collector IP>:41337.",
+    },
+    fields: [
+      { name: "name", label: { de: "Name", en: "Name" }, type: "text", inList: true, required: true, max: 255 },
+      { name: "address", label: { de: "IP-Adresse", en: "IP address" }, type: "text", inList: true, required: true, max: 32, pattern: /^(\d{1,3}\.){3}\d{1,3}$|^[0-9a-fA-F:]+$/, help: { de: "Eine IP-Adresse, kein Hostname.", en: "An IP address, not a host name." } },
+      { name: "port", label: { de: "Port", en: "Port" }, type: "number", inList: true, required: true, min: 1, maxValue: 65535, help: { de: "Spiel- und RCON-Port des Servers.", en: "Game and RCON port of the server." } },
+      { ...gameField, help: { de: "Die Rangliste bestimmt das Spiel: erst unter Ranglisten das Spiel der Rangliste wählen, dann den Server ihr zuordnen. Nur Ranglisten desselben Spiels sind erlaubt.", en: "The ranking decides the game: first choose the ranking's game under Rankings, then assign the server to it. Only rankings of the same game are allowed." } },
+      { name: "rcon_password", label: { de: "RCON-Passwort", en: "RCON password" }, type: "secret", max: 128, help: { de: "Für die Antworten auf !rank, !top10 usw. Leer lassen, um es nicht zu ändern. Ein einzelnes Minus (-) löscht es.", en: "For replies to !rank, !top10 etc. Leave empty to keep it. A single minus (-) clears it." } },
+      { name: "publicaddress", label: { de: "Öffentliche Adresse", en: "Public address" }, type: "text", max: 255, help: { de: "Wird statt IP:Port angezeigt, z. B. ein Hostname.", en: "Shown instead of IP:port, e.g. a host name." } },
+      { name: "max_players", label: { de: "Max. Spieler", en: "Max players" }, type: "number" },
+      { name: "display_id", label: { de: "Reihenfolge", en: "Order" }, type: "number", inList: true },
+    ],
+    order: "display_id, serverId",
+    search: ["name", "address"],
+    canCreate: true,
+    canDelete: true,
+    minLevel: 100,
+  },
+  {
+    key: "players",
+    table: "hlstats_Players",
+    pk: "playerId",
+    label: { de: "Spieler", en: "Players" },
+    help: {
+      de: "Der Name kommt aus dem Spiel und wird vom Collector bei jeder Verbindung aktualisiert.",
+      en: "The name comes from the game and is updated by the collector on every connect.",
+    },
+    join: "LEFT JOIN hlstats_Players_Data d ON d.playerId = t.playerId",
+    joinCols: "d.lastName AS lastName",
+    fields: [
+      { name: "lastName", label: { de: "Name", en: "Name" }, type: "text", inList: true, readonly: true },
+      { name: "game", label: { de: "Rangliste", en: "Ranking" }, type: "text", inList: true, readonly: true },
+      { name: "skill", label: { de: "Punkte", en: "Points" }, type: "number", inList: true },
+      {
+        name: "hideranking",
+        label: { de: "Aus Rangliste ausblenden", en: "Hide from ranking" },
+        type: "select",
+        options: [
+          ["0", { de: "Nein, sichtbar", en: "No, visible" }],
+          ["1", { de: "Ja (Admin oder Bot)", en: "Yes (admin or bot)" }],
+          ["2", { de: "Ja, gebannt", en: "Yes, banned" }],
+          ["3", { de: "Ja, vom Spieler selbst", en: "Yes, by the player" }],
+        ],
+        inList: true,
+      },
+      { name: "clan", label: { de: "Clan", en: "Clan" }, type: "select", options: "clans" },
+    ],
+    order: "t.skill DESC",
+    search: ["d.lastName"],
+    gameColumn: "game",
+    canCreate: false,
+    canDelete: false,
+  },
+  {
+    key: "clans",
+    table: "hlstats_Clans",
+    pk: "clanId",
+    label: { de: "Clans", en: "Clans" },
+    help: {
+      de: "Mitglieder ordnest du unter Spieler zu. Der Collector erkennt Clan-Tags nicht automatisch.",
+      en: "Assign members under Players. The collector does not detect clan tags.",
+    },
+    fields: [
+      { name: "tag", label: { de: "Tag", en: "Tag" }, type: "text", inList: true, required: true, max: 128 },
+      { name: "name", label: { de: "Name", en: "Name" }, type: "text", inList: true, max: 255 },
+      { name: "homepage", label: { de: "Homepage", en: "Homepage" }, type: "text", max: 255 },
+      gameField,
+    ],
+    order: "tag",
+    search: ["tag", "name"],
+    gameColumn: "game",
+    canCreate: true,
+    canDelete: true,
+  },
+  {
+    key: "weapons",
+    table: "hlstats_Weapons",
+    pk: "weaponId",
+    label: { de: "Waffen", en: "Weapons" },
+    help: {
+      de: "Der Faktor multipliziert die Punkte für einen Kill mit dieser Waffe. Neue Waffen legt der Collector beim ersten Kill an.",
+      en: "The modifier multiplies the points for a kill with this weapon. The collector creates new weapons on their first kill.",
+    },
+    fields: [
+      { name: "code", label: { de: "Code", en: "Code" }, type: "text", inList: true, required: true, createOnly: true, max: 128 },
+      { name: "name", label: { de: "Name", en: "Name" }, type: "text", inList: true, required: true, max: 255 },
+      { name: "modifier", label: { de: "Faktor", en: "Modifier" }, type: "decimal", inList: true },
+      gameField,
+    ],
+    order: "code",
+    search: ["code", "name"],
+    gameColumn: "game",
+    canCreate: true,
+    canDelete: false,
+  },
+  {
+    key: "actions",
+    table: "hlstats_Actions",
+    pk: "id",
+    label: { de: "Aktionen", en: "Actions" },
+    help: {
+      de: "Bonuspunkte für Ereignisse wie Bombe gelegt oder Runde gewonnen. Der Code muss dem Trigger im Server-Log entsprechen.",
+      en: "Bonus points for events such as bomb planted or round won. The code must match the trigger in the server log.",
+    },
+    fields: [
+      { name: "code", label: { de: "Code", en: "Code" }, type: "text", inList: true, required: true, max: 128 },
+      { name: "description", label: { de: "Beschreibung", en: "Description" }, type: "text", inList: true, max: 255 },
+      { name: "reward_player", label: { de: "Bonus Spieler", en: "Player reward" }, type: "number", inList: true },
+      { name: "reward_team", label: { de: "Bonus Team", en: "Team reward" }, type: "number", inList: true },
+      { name: "team", label: { de: "Team", en: "Team" }, type: "text", max: 128 },
+      { name: "for_PlayerActions", label: { de: "Spieler-Aktion", en: "Player action" }, type: "flag", options: yesNo },
+      { name: "for_PlayerPlayerActions", label: { de: "Spieler-gegen-Spieler-Aktion", en: "Player-vs-player action" }, type: "flag", options: yesNo },
+      { name: "for_TeamActions", label: { de: "Team-Aktion", en: "Team action" }, type: "flag", options: yesNo },
+      { name: "for_WorldActions", label: { de: "Welt-Aktion", en: "World action" }, type: "flag", options: yesNo },
+      gameField,
+    ],
+    order: "code",
+    search: ["code", "description"],
+    gameColumn: "game",
+    canCreate: true,
+    canDelete: true,
+  },
+  {
+    key: "teams",
+    table: "hlstats_Teams",
+    pk: "teamId",
+    label: { de: "Teams", en: "Teams" },
+    fields: [
+      { name: "code", label: { de: "Code", en: "Code" }, type: "text", inList: true, required: true, createOnly: true, max: 128 },
+      { name: "name", label: { de: "Name", en: "Name" }, type: "text", inList: true, required: true, max: 255 },
+      { name: "hidden", label: { de: "Ausgeblendet", en: "Hidden" }, type: "flag", options: yesNo, inList: true },
+      gameField,
+    ],
+    order: "code",
+    gameColumn: "game",
+    canCreate: true,
+    canDelete: false,
+  },
+  {
+    key: "roles",
+    table: "hlstats_Roles",
+    pk: "roleId",
+    label: { de: "Rollen", en: "Roles" },
+    fields: [
+      { name: "code", label: { de: "Code", en: "Code" }, type: "text", inList: true, required: true, createOnly: true, max: 128 },
+      { name: "name", label: { de: "Name", en: "Name" }, type: "text", inList: true, required: true, max: 255 },
+      { name: "hidden", label: { de: "Ausgeblendet", en: "Hidden" }, type: "flag", options: yesNo, inList: true },
+      gameField,
+    ],
+    order: "code",
+    gameColumn: "game",
+    canCreate: true,
+    canDelete: true,
+  },
+  {
+    key: "awards",
+    table: "hlstats_Awards",
+    pk: "awardId",
+    label: { de: "Awards", en: "Awards" },
+    help: {
+      de: "Award-Definitionen wie bei gameME. Die Tagesgewinner auf der Webseite werden aus den Tageswerten berechnet; diese Liste ergänzt sie.",
+      en: "Award definitions as in gameME. The daily winners on the website are computed from daily totals; this list adds to them.",
+    },
+    fields: [
+      { name: "awardType", label: { de: "Art", en: "Type" }, type: "select", options: [["W", { de: "Waffe", en: "Weapon" }], ["O", { de: "Aktion/Sonstiges", en: "Action/other" }]], inList: true, required: true },
+      { name: "code", label: { de: "Code (Waffe/Aktion)", en: "Code (weapon/action)" }, type: "text", inList: true, required: true, max: 128 },
+      { name: "name", label: { de: "Name", en: "Name" }, type: "text", inList: true, required: true, max: 255 },
+      { name: "verb", label: { de: "Einheit", en: "Verb" }, type: "text", max: 255, help: { de: "z. B. \"Kills mit AK47\"", en: "e.g. \"kills with ak47\"" } },
+      gameField,
+    ],
+    order: "awardType, name",
+    search: ["code", "name"],
+    gameColumn: "game",
+    canCreate: true,
+    canDelete: true,
+  },
+  {
+    key: "ranks",
+    table: "hlstats_Definition_Ranks_Ribbons",
+    pk: "id",
+    label: { de: "Ränge", en: "Ranks" },
+    help: {
+      de: "Ränge nach Anzahl Kills, angezeigt im Spielerprofil.",
+      en: "Ranks by number of kills, shown in the player profile.",
+    },
+    // As HLstatsX:CE stores them (lib/awards.ts reads the same rows).
+    fixed: { definition_type: "ranks", restriction_type: "kills" },
+    fields: [
+      {
+        name: "name",
+        label: { de: "Name", en: "Name" },
+        type: "text",
+        inList: true,
+        required: true,
+        max: 128,
+        help: {
+          de: "Platzhalter wie {LANG_RANG_PVT} (Private) oder {LANG_RANG_GEN} (General) zeigen den Rang mit passendem Abzeichen; jeder andere Text wird so angezeigt, mit einem Abzeichen aus den Anfangsbuchstaben.",
+          en: "Placeholders such as {LANG_RANG_PVT} (Private) or {LANG_RANG_GEN} (General) show the rank with its insignia; any other text is shown as it is, with a badge of its initials.",
+        },
+      },
+      { name: "minimum", label: { de: "Ab Kills", en: "From kills" }, type: "number", inList: true, required: true },
+      { name: "game_code", label: { de: "Rangliste", en: "Ranking" }, type: "select", options: "games", inList: true, required: true },
+      { name: "code", label: { de: "Code (optional)", en: "Code (optional)" }, type: "text", max: 128, help: { de: "Aus HLstatsX übernommen, gameWE nutzt ihn nicht.", en: "Taken over from HLstatsX, gameWE does not use it." } },
+      { name: "img_file", label: { de: "Bilddatei (alt)", en: "Image file (legacy)" }, type: "text", max: 128, help: { de: "Aus HLstatsX übernommen, gameWE zeichnet die Abzeichen selbst und nutzt die Datei nicht.", en: "Taken over from HLstatsX; gameWE draws the insignia itself and does not use the file." } },
+    ],
+    order: "game_code, minimum",
+    gameColumn: "game_code",
+    canCreate: true,
+    canDelete: true,
+  },
+  {
+    key: "users",
+    table: "hlstats_Users",
+    pk: "username",
+    pkIsText: true,
+    label: { de: "Benutzer", en: "Users" },
+    help: {
+      de: "Stufe 100 = Admin (alles), 80 = eingeschränkt (keine Spiele, Server und Benutzer).",
+      en: "Level 100 = admin (everything), 80 = restricted (no games, servers or users).",
+    },
+    fields: [
+      { name: "username", label: { de: "Benutzername", en: "User name" }, type: "text", inList: true, required: true, createOnly: true, max: 128 },
+      { name: "password", label: { de: "Passwort", en: "Password" }, type: "password", help: { de: "Leer lassen, um es nicht zu ändern. Mindestens 10 Zeichen.", en: "Leave empty to keep it. At least 10 characters." } },
+      { name: "acclevel", label: { de: "Stufe", en: "Level" }, type: "select", options: [["100", "100 Admin"], ["80", "80"]], inList: true, required: true },
+    ],
+    order: "username",
+    canCreate: true,
+    canDelete: true,
+    minLevel: 100,
+  },
+];
+
+export function getEntity(key: string): Entity | undefined {
+  return entities.find((e) => e.key === key);
+}

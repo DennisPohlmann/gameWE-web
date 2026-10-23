@@ -1,0 +1,45 @@
+/* gameWE template "blue": like orange, with a blue page */
+html[data-skin] {
+  --page: #1f6fc2;
+  --page-pattern: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.06) 0 1px, transparent 1px 3px);
+  --surface: #121212;
+  --surface-2: #1e1e1e;
+  --panel: #1b1b1b;
+  --row-group: #2a2a2a;
+  --border: #333333;
+  --text: #ffffff;
+  --soft: #dddddd;
+  --th-text: #eeeeee;
+  --th-bg: #121212;
+  --muted: #b5b5b5;
+  --accent: #3d9bff;
+  --accent-text: #8cc4ff;
+  --good: #4cc38a;
+  --bad: #ff4d4d;
+  --series-2: #5aa9ff;
+  --line-bg: #ffffff;
+  --line-text: #000000;
+  --grid: #333333;
+  --grid-2: #444444;
+  --bar-bg: #333333;
+  --bar-border: #555555;
+  --band: #1c1c1c;
+  --band-odd: #262626;
+  --input-bg: #ffffff;
+  --input-text: #000000;
+  --input-border: #777777;
+  --header-bg: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 3px), linear-gradient(#4a4a4a, #262626);
+  --header-border: #919191;
+  --logo-text: #ffffff;
+  --tab-bg: linear-gradient(#a8a8a8, #5d5d5d);
+  --tab-hover: linear-gradient(#bdbdbd, #707070);
+  --tab-border: #8a8a8a;
+  --tab-text: #ffffff;
+  --tab-shadow: 0 1px 0 #333;
+  --bullet: radial-gradient(circle at 35% 30%, #666, #222);
+  --sec-icon: radial-gradient(circle at 35% 30%, #777, #2a2a2a);
+  --title-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  --error-bg: #5a1010;
+  --error-text: #ffffff;
+  color-scheme: dark;
+}

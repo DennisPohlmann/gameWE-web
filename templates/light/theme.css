@@ -1,0 +1,45 @@
+/* gameWE template "light": light grey page, white boxes, strong borders */
+html[data-skin] {
+  --page: #dde2e8;
+  --page-pattern: none;
+  --surface: #ffffff;
+  --surface-2: #eef1f5;
+  --panel: #f1f3f6;
+  --row-group: #dfe4ea;
+  --border: #aeb6c0;
+  --text: #14181d;
+  --soft: #2b3139;
+  --th-text: #14181d;
+  --th-bg: #e3e7ec;
+  --muted: #4c535d;
+  --accent: #c95c00;
+  --accent-text: #9a4500;
+  --good: #13703f;
+  --bad: #b71c1c;
+  --series-2: #2f7dc0;
+  --line-bg: #ffffff;
+  --line-text: #14181d;
+  --grid: #d3d8de;
+  --grid-2: #b9c0c8;
+  --bar-bg: #dfe3e8;
+  --bar-border: #a7afb9;
+  --band: #f3f5f7;
+  --band-odd: #e6e9ed;
+  --input-bg: #ffffff;
+  --input-text: #000000;
+  --input-border: #9aa2ac;
+  --header-bg: linear-gradient(#ffffff, #dfe4ea);
+  --header-border: #aeb6c0;
+  --logo-text: #1f2328;
+  --tab-bg: linear-gradient(#ffffff, #d3d9e0);
+  --tab-hover: linear-gradient(#ffffff, #e2e7ec);
+  --tab-border: #a7afb9;
+  --tab-text: #1f2328;
+  --tab-shadow: none;
+  --bullet: radial-gradient(circle at 35% 30%, #f29a4a, #c25e00);
+  --sec-icon: radial-gradient(circle at 35% 30%, #c4c9cf, #7d848c);
+  --title-shadow: none;
+  --error-bg: #fde8e8;
+  --error-text: #8a1111;
+  color-scheme: light;
+}

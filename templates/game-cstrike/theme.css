@@ -1,0 +1,45 @@
+/* gameWE template "game-cstrike": olive green like the old Steam/VGUI menus */
+html[data-skin] {
+  --page: #4c5844;
+  --page-pattern: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.07) 0 1px, transparent 1px 3px);
+  --surface: #3e4637;
+  --surface-2: #465040;
+  --panel: #434c3b;
+  --row-group: #56604d;
+  --border: #7d8770;
+  --text: #eef0e6;
+  --soft: #d8dccb;
+  --th-text: #f2e9a6;
+  --th-bg: #363d30;
+  --muted: #b4baa6;
+  --accent: #c4b550;
+  --accent-text: #e6d878;
+  --good: #8fd18a;
+  --bad: #ff7a6a;
+  --series-2: #8fb6e0;
+  --line-bg: #ffffff;
+  --line-text: #000000;
+  --grid: #5a6450;
+  --grid-2: #6c7660;
+  --bar-bg: #56604d;
+  --bar-border: #7d8770;
+  --band: #3e4637;
+  --band-odd: #465040;
+  --input-bg: #ffffff;
+  --input-text: #000000;
+  --input-border: #777777;
+  --header-bg: linear-gradient(#5a6a50, #3e4637);
+  --header-border: #8c9682;
+  --logo-text: #f2e9a6;
+  --tab-bg: linear-gradient(#6e7a62, #4c5844);
+  --tab-hover: linear-gradient(#7e8a72, #56624e);
+  --tab-border: #8c9682;
+  --tab-text: #f2f2e6;
+  --tab-shadow: 0 1px 0 #2a2f25;
+  --bullet: radial-gradient(circle at 35% 30%, #e6d878, #8a7e30);
+  --sec-icon: radial-gradient(circle at 35% 30%, #8c9682, #3e4637);
+  --title-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  --error-bg: #5a1010;
+  --error-text: #ffffff;
+  color-scheme: dark;
+}

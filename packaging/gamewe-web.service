@@ -1,0 +1,28 @@
+[Unit]
+Description=gameWE web frontend
+After=network-online.target mariadb.service mysql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=gamewe
+Group=gamewe
+WorkingDirectory=/opt/gamewe/web
+EnvironmentFile=/etc/gamewe/web/web.env
+Environment=NODE_ENV=production
+Environment=HOSTNAME=127.0.0.1
+Environment=PORT=3000
+# Puts BASE_PATH from web.env into the prebuilt files (root: /opt is read-only for the service).
+ExecStartPre=+/bin/sh /opt/gamewe/web/scripts/set-base-path.sh "${BASE_PATH}" /opt/gamewe/web
+ExecStart=/usr/bin/node -r /opt/gamewe/web/scripts/access-log.cjs /opt/gamewe/web/server.js
+Restart=on-failure
+RestartSec=5
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/gamewe/web/.next/cache
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,45 @@
+/* gameWE template "game-csgo": cool blue-grey with gold */
+html[data-skin] {
+  --page: #1e2a36;
+  --page-pattern: none;
+  --surface: #121a22;
+  --surface-2: #1a242e;
+  --panel: #16202a;
+  --row-group: #243240;
+  --border: #2f3f4f;
+  --text: #eef3f7;
+  --soft: #cdd8e2;
+  --th-text: #f0c75e;
+  --th-bg: #0f161d;
+  --muted: #93a4b4;
+  --accent: #e0b04a;
+  --accent-text: #f0c75e;
+  --good: #5fd08a;
+  --bad: #ff5a5a;
+  --series-2: #5aa9ff;
+  --line-bg: #ffffff;
+  --line-text: #000000;
+  --grid: #253341;
+  --grid-2: #344556;
+  --bar-bg: #253341;
+  --bar-border: #425567;
+  --band: #151e27;
+  --band-odd: #1b2631;
+  --input-bg: #ffffff;
+  --input-text: #000000;
+  --input-border: #777777;
+  --header-bg: linear-gradient(#2c3d4e, #141d26);
+  --header-border: #4a5e72;
+  --logo-text: #f0c75e;
+  --tab-bg: linear-gradient(#3c5064, #223040);
+  --tab-hover: linear-gradient(#4a6074, #2a3a4c);
+  --tab-border: #4a5e72;
+  --tab-text: #ffffff;
+  --tab-shadow: 0 1px 0 #0b1015;
+  --bullet: radial-gradient(circle at 35% 30%, #f0c75e, #8a6418);
+  --sec-icon: radial-gradient(circle at 35% 30%, #5a7088, #1c2733);
+  --title-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  --error-bg: #5a1010;
+  --error-text: #ffffff;
+  color-scheme: dark;
+}

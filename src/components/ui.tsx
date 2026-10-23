@@ -1,0 +1,309 @@
+import Link from "next/link";
+import type { ReactNode } from "react";
+import { AutoForm } from "@/components/auto-form";
+import { basePath } from "@/lib/base-path";
+import { FLAG_CODES } from "@/lib/flag-codes";
+import { flagEmoji } from "@/lib/format";
+import { gameKind } from "@/lib/games";
+
+// flag: the player's country (getPlayerFlags), shown before the name.
+export function PlayerLink({
+  game,
+  id,
+  name,
+  flag,
+}: {
+  game: string;
+  id: number;
+  name: string | null;
+  flag?: { flag: string; country: string } | null;
+}) {
+  return (
+    <>
+      {flag ? (
+        <>
+          <Flag code={flag.flag} title={flag.country} />{" "}
+        </>
+      ) : null}
+      <Link className="player" href={`/${game}/players/${id}`}>
+        {name || `#${id}`}
+      </Link>
+    </>
+  );
+}
+
+// Flat country flag (SVG from public/flags) with a light gloss, the same look
+// as the language flags; codes without an SVG fall back to the emoji.
+export function Flag({ code, title }: { code: string | null | undefined; title?: string | null }) {
+  const c = (code ?? "").trim().toLowerCase();
+  if (c === "bot") return <span className="bot-tag" title="Bot">BOT</span>;
+  if (FLAG_CODES.has(c)) {
+    const label = title ?? c.toUpperCase();
+    return <span className="flag flag-svg" role="img" title={label} aria-label={label} style={{ backgroundImage: `url(${basePath}/flags/${c}.svg)` }} />;
+  }
+  const f = flagEmoji(c);
+  return f ? (
+    <span className="flag" title={title ?? undefined} aria-label={title ?? undefined}>
+      {f}
+    </span>
+  ) : null;
+}
+
+// Small tag with the ranking's base game, e.g. "CS:GO"; long shows the full name.
+export function GameTag({ realgame, long = false }: { realgame: string | null | undefined; long?: boolean }) {
+  const k = gameKind(realgame);
+  return k ? (
+    <span className={`game-tag ${k.engine}`} title={k.name}>
+      {long ? k.name : k.short}
+    </span>
+  ) : null;
+}
+
+// Horizontal bar for a share 0..1.
+// label: the value as text, in a fixed-width right-aligned slot after the
+// bar, so bars line up whatever the number is (98 % vs. 100 %).
+export function Bar({
+  value,
+  green = false,
+  wide = false,
+  activity = false,
+  label,
+}: {
+  value: number | null;
+  green?: boolean;
+  wide?: boolean;
+  // Red to green by value (player activity).
+  activity?: boolean;
+  label?: ReactNode;
+}) {
+  const v = Math.max(0, Math.min(1, value ?? 0));
+  const bar = (
+    <span className={`bar${green ? " green" : ""}${wide ? " wide" : ""}`} aria-hidden="true">
+      <span style={{ width: `${(v * 100).toFixed(1)}%`, background: activity ? activityColor(v) : undefined }} />
+    </span>
+  );
+  return label === undefined ? (
+    bar
+  ) : (
+    <span className="meter">
+      {bar}
+      <span className="meter-val">{label}</span>
+    </span>
+  );
+}
+
+// Percentage as gameME shows it in tables: a bar with the rounded value in
+// it, the exact value (one decimal) on hover. Green from 30 %, yellow below.
+// tone "share": a blue bar for a share of a total (kills %, headshots %).
+// Activity colour: red at 0 %, through yellow, to green at 100 %.
+export function activityColor(v: number): string {
+  const h = Math.round(120 * Math.max(0, Math.min(1, v)));
+  return `linear-gradient(rgba(255, 255, 255, 0.35), rgba(0, 0, 0, 0.15)), hsl(${h} 80% 45%)`;
+}
+
+export function PctBar({ value, lang, tone }: { value: number | null; lang: string; tone?: "share" | "activity" }) {
+  // No basis (e.g. no shots): empty, as gameME shows it.
+  if (value === null) return null;
+  const v = Math.max(0, Math.min(1, value));
+  const pct = value * 100;
+  const exact = `${pct.toLocaleString(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
+  return (
+    <span className={`pbar${tone ? ` ${tone}` : v >= 0.3 ? " good" : v > 0 ? " low" : ""}`} title={exact}>
+      <span className="pbar-fill" style={{ width: `${(v * 100).toFixed(1)}%`, background: tone === "activity" ? activityColor(v) : undefined }} />
+      <span className="pbar-text">{Math.round(pct)}%</span>
+    </span>
+  );
+}
+
+export function Section({ title, aside, children }: { title: ReactNode; aside?: ReactNode; children: ReactNode }) {
+  return (
+    <section className="section">
+      <header className="section-head">
+        <h2>{title}</h2>
+        {aside ? <div className="section-aside">{aside}</div> : null}
+      </header>
+      {children}
+    </section>
+  );
+}
+
+export function TableWrap({ children }: { children: ReactNode }) {
+  return <div className="table-wrap">{children}</div>;
+}
+
+export function Empty({ children }: { children: ReactNode }) {
+  return <p className="empty">{children}</p>;
+}
+
+// Label/value table as on gameME's info pages, with an optional title row.
+export function Stats({ items, title }: { items: [ReactNode, ReactNode][]; title?: ReactNode }) {
+  return (
+    <table className="stats">
+      {title ? (
+        <thead>
+          <tr>
+            <th colSpan={2}>{title}</th>
+          </tr>
+        </thead>
+      ) : null}
+      <tbody>
+        {items.map(([k, v], i) => (
+          <tr key={i}>
+            <td className="stats-key">{k}{k ? ":" : ""}</td>
+            <td>{v}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+// Builds a URL to the current page with some query params replaced.
+export function withParams(base: string, params: Record<string, string | number | undefined>, change: Record<string, string | number | undefined>) {
+  const merged = { ...params, ...change };
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(merged)) {
+    if (v !== undefined && v !== "" && v !== null) qs.set(k, String(v));
+  }
+  const s = qs.toString();
+  return s ? `${base}?${s}` : base;
+}
+
+export function SortTh({
+  label,
+  sortKey,
+  current,
+  asc,
+  base,
+  params,
+  className,
+}: {
+  label: ReactNode;
+  sortKey: string;
+  current: string;
+  asc: boolean;
+  base: string;
+  params: Record<string, string | number | undefined>;
+  className?: string;
+}) {
+  const active = current === sortKey;
+  const href = withParams(base, params, { sort: sortKey, dir: active && !asc ? "asc" : undefined, page: undefined });
+  return (
+    <th className={className} aria-sort={active ? (asc ? "ascending" : "descending") : undefined}>
+      <Link href={href} className={active ? "sort active" : "sort"}>
+        {label}
+        {active ? (asc ? " ▲" : " ▼") : ""}
+      </Link>
+    </th>
+  );
+}
+
+// Paging below a table. With `total` it is the full bar: a page field, the
+// rows per page (when `rows` is given), the number of entries and pages,
+// and back/forward.
+export function Pager({
+  base,
+  params,
+  page,
+  pages,
+  hasNext,
+  total,
+  rows,
+  locale,
+  labels,
+}: {
+  base: string;
+  params: Record<string, string | number | undefined>;
+  page: number;
+  pages?: number;
+  hasNext?: boolean;
+  total?: number;
+  rows?: { value: number; options: number[] };
+  locale?: string;
+  labels: { prev: string; next: string; page: string; goTo?: string; showRows?: string; entriesOnPages?: string };
+}) {
+  const next = pages !== undefined ? page < pages : !!hasNext;
+  if (total !== undefined && pages !== undefined && labels.goTo && labels.entriesOnPages) {
+    const hidden = Object.entries(params).filter(([k, v]) => v !== undefined && v !== "" && k !== "page" && k !== "rows");
+    return (
+      <nav className="pager pager-full" aria-label={labels.page}>
+        <AutoForm action={base} className="pager-form">
+          {hidden.map(([k, v]) => (
+            <input key={k} type="hidden" name={k} value={String(v)} />
+          ))}
+          <label>
+            {labels.goTo} <input type="number" name="page" min={1} max={pages} defaultValue={page} className="pager-page" />
+          </label>
+          {rows ? (
+            <label>
+              {labels.showRows}{" "}
+              <select name="rows" defaultValue={String(rows.value)}>
+                {rows.options.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          <noscript>
+            <button type="submit">OK</button>
+          </noscript>
+        </AutoForm>
+        <span className="pager-count">{labels.entriesOnPages.replace("{n}", total.toLocaleString(locale)).replace("{p}", pages.toLocaleString(locale))}</span>
+        <span className="pager-arrows">
+          {page > 1 ? (
+            <Link href={withParams(base, params, { page: page - 1 > 1 ? page - 1 : undefined })} aria-label={labels.prev}>
+              ◀
+            </Link>
+          ) : (
+            <span className="disabled">◀</span>
+          )}
+          {next ? (
+            <Link href={withParams(base, params, { page: page + 1 })} aria-label={labels.next}>
+              ▶
+            </Link>
+          ) : (
+            <span className="disabled">▶</span>
+          )}
+        </span>
+      </nav>
+    );
+  }
+  if (page <= 1 && !next) return null;
+  return (
+    <nav className="pager" aria-label={labels.page}>
+      {page > 1 ? (
+        <Link href={withParams(base, params, { page: page - 1 > 1 ? page - 1 : undefined })}>← {labels.prev}</Link>
+      ) : (
+        <span className="disabled">← {labels.prev}</span>
+      )}
+      <span>
+        {labels.page} {page}
+        {pages !== undefined ? ` / ${pages}` : ""}
+      </span>
+      {next ? (
+        <Link href={withParams(base, params, { page: page + 1 })}>{labels.next} →</Link>
+      ) : (
+        <span className="disabled">{labels.next} →</span>
+      )}
+    </nav>
+  );
+}
+
+// Rows per page a visitor can pick, besides the configured page size.
+export const ROW_OPTIONS = [25, 50, 100, 250];
+
+export function rowsParam(v: string | string[] | undefined, fallback: number): number {
+  const n = Number.parseInt(Array.isArray(v) ? v[0] : (v ?? ""), 10);
+  return ROW_OPTIONS.includes(n) ? n : fallback;
+}
+
+export function pageParam(v: string | string[] | undefined): number {
+  const n = Number.parseInt(Array.isArray(v) ? v[0] : (v ?? ""), 10);
+  return Number.isFinite(n) && n > 1 ? n : 1;
+}
+
+export function strParam(v: string | string[] | undefined): string {
+  return (Array.isArray(v) ? v[0] : v ?? "").trim().slice(0, 64);
+}

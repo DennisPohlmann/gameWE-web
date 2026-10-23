@@ -1,0 +1,42 @@
+// The base games a ranking can be (hlstats_Games.realgame, as in HLstatsX:CE).
+// A ranking such as "assault" has realgame "css"; the collector reads the log
+// format from it, the website shows the game's name and short tag.
+
+// limited: the collector records kills, connects and teams, but has no
+// template definitions (weapons, actions, awards) for it yet.
+export type GameKind = { name: string; short: string; engine: "goldsrc" | "source"; limited?: boolean };
+
+export const GAME_KINDS: Record<string, GameKind> = {
+  css: { name: "Counter-Strike: Source", short: "CS:S", engine: "source" },
+  csgo: { name: "Counter-Strike: Global Offensive", short: "CS:GO", engine: "source" },
+  cstrike: { name: "Counter-Strike 1.6", short: "CS 1.6", engine: "goldsrc" },
+  tf: { name: "Team Fortress 2", short: "TF2", engine: "source" },
+  tfc: { name: "Team Fortress Classic", short: "TFC", engine: "goldsrc" },
+  hl2mp: { name: "Half-Life 2 Deathmatch", short: "HL2DM", engine: "source" },
+  valve: { name: "Half-Life Deathmatch", short: "HLDM", engine: "goldsrc" },
+  dods: { name: "Day of Defeat: Source", short: "DoD:S", engine: "source" },
+  dod: { name: "Day of Defeat", short: "DoD", engine: "goldsrc" },
+  ns: { name: "Natural Selection", short: "NS", engine: "goldsrc" },
+  l4d: { name: "Left 4 Dead", short: "L4D", engine: "source", limited: true },
+  l4d2: { name: "Left 4 Dead 2", short: "L4D2", engine: "source", limited: true },
+  insurgency: { name: "Insurgency", short: "INS", engine: "source", limited: true },
+};
+
+export function gameKind(realgame: string | null | undefined): GameKind | null {
+  return GAME_KINDS[(realgame ?? "").trim().toLowerCase()] ?? null;
+}
+
+// Base game of a ranking: its realgame, else the code itself when that is a
+// base game (the seeded rankings css, tf …), else unknown.
+export function baseGameOf(code: string | null | undefined, realgame: string | null | undefined): string | null {
+  const r = (realgame ?? "").trim().toLowerCase();
+  if (GAME_KINDS[r]) return r;
+  const c = (code ?? "").trim().toLowerCase();
+  return GAME_KINDS[c] ? c : null;
+}
+
+// Servers of different base games must not share a ranking (different log
+// formats, weapons and actions). Unknown games are not blocked.
+export function sameBaseGame(a: string | null, b: string | null): boolean {
+  return !a || !b || a === b;
+}
