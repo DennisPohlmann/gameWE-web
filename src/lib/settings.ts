@@ -51,7 +51,7 @@ export type Settings = {
   // Latest events on a ranking's start page: live (new ones flow in),
   // static (as of loading the page) or off.
   gameEvents: "live" | "static" | "off";
-  // Game designs (templates/game-*) on the pages of a game.
+  // Game designs (templates/game-*) on the pages of a game; off unless set to "1".
   gameSkins: boolean;
   // Look of the site: dark (default), light, orange and others.
   // Template id (folder in templates/); see lib/templates.ts.
@@ -158,7 +158,7 @@ export async function getSettings(): Promise<Settings> {
     sigBrand: o.gamewe_sig_brand?.trim() || o.sitename?.trim() || config.siteName,
     chatPublic: o.gamewe_chat_public?.trim() === "1",
     gameEvents: o.gamewe_game_events?.trim() === "static" ? "static" : o.gamewe_game_events?.trim() === "off" ? "off" : "live",
-    gameSkins: o.gamewe_game_skins?.trim() !== "0",
+    gameSkins: o.gamewe_game_skins?.trim() === "1",
     mapLive: o.gamewe_map_live?.trim() !== "0",
     mapPlayers: o.gamewe_map_players?.trim() !== "0",
     mapStyle: mapStyleId(o.gamewe_map_style),

@@ -41,7 +41,7 @@ are used.
 
 Folders named `game-<game>` (`game-css`, `game-cstrike`, `game-tf`,
 `game-hl2mp`, `game-dods`, `game-csgo`) are game designs. With the
-setting "Game designs" on (default), the pages of a ranking use the design of
+setting "Game designs" on (off by default), the pages of a ranking use the design of
 its game (`hlstats_Games.realgame`, else the ranking code), the rest of the
 site keeps the main template. A game design can also be chosen as the main
 template.

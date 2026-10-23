@@ -70,7 +70,7 @@ export const settingGroups: SettingGroup[] = [
         key: "gamewe_game_skins",
         label: { de: "Spiel-Designs", en: "Game designs" },
         type: "bool",
-        def: "1",
+        def: "0",
         help: {
           de: "Ja: die Seiten eines Spiels nutzen das Template game-<Spiel>, wenn es eins gibt (z. B. game-tf).",
           en: "Yes: a game's pages use the template game-<game> when there is one (e.g. game-tf).",
