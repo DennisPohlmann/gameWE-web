@@ -1,4 +1,4 @@
-import { LineChart } from "@/components/chart";
+import { BarChart, LineChart } from "@/components/chart";
 import { LiveTable, ServerTable } from "@/components/live";
 import { Rich } from "@/components/rich";
 import { Section } from "@/components/ui";
@@ -50,12 +50,22 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
   const hourDates = hourly.kills.map((_, i) =>
     dateFmt.format((hourly.start + i * hourly.step) * 1000),
   );
-  // The four 15-minute charts start where players, kills or headshots were
-  // first recorded and share one left edge, so they stay aligned.
+  // Kills and headshots per day of the last 14 days, summed from the
+  // 15-minute values by the same local days as the date axis; quiet days
+  // stay in as 0.
+  const daily: { day: string; kills: number; headshots: number }[] = [];
+  hourDates.forEach((day, i) => {
+    if (daily.at(-1)?.day !== day) daily.push({ day, kills: 0, headshots: 0 });
+    daily.at(-1)!.kills += hourly.kills[i];
+    daily.at(-1)!.headshots += hourly.headshots[i];
+  });
+  const days = daily.slice(-14);
+  // The running totals start where players, kills or headshots were first
+  // recorded; all three charts share one left edge, so they stay aligned.
   const killsTotal = running(hourly.kills, Number(totals.kills));
   const headshotsTotal = running(hourly.headshots, Number(totals.headshots));
   const trendTrim = [hourly.players, hourly.kills, hourly.headshots];
-  const trendMax = Math.max(0, ...killsTotal, ...headshotsTotal, ...hourly.kills, ...hourly.players.map((v) => v ?? 0));
+  const trendMax = Math.max(0, ...killsTotal, ...headshotsTotal, ...days.map((d) => d.kills));
   const since = nowUnix() - 86400;
   const loads = await Promise.all(servers.map((s) => getServerLoad(s.serverId, since)));
   // With several servers, the list of all of them and one graph of all of
@@ -127,33 +137,17 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
       <Section title={t.trend14d}>
         {hourly.players.some((v) => v !== null) || hourly.kills.some((v) => v > 0) ? (
           <>
-            {/* Per 15 minutes, each with a title and its legend; the labels
-                mark midnight of each day. */}
-            <LineChart
-              locale={lang}
-              ariaLabel={t.trendPlayersTitle}
-              title={t.trendPlayersTitle}
-              labels={hourLabels}
-              dates={hourDates}
-              tips={hourTips}
-              hourly
-              trimBy={trendTrim}
-              alignTo={trendMax}
-              series={[{ label: t.playersOnline, values: hourly.players, className: "s1" }]}
-            />
-            <LineChart
+            {/* Per day, then the running totals per 15 minutes, each with a
+                title and its legend; the labels mark midnight of each day. */}
+            <BarChart
               locale={lang}
               ariaLabel={t.trendKillsTitle}
               title={t.trendKillsTitle}
-              labels={hourLabels}
-              dates={hourDates}
-              tips={hourTips}
-              hourly
-              trimBy={trendTrim}
               alignTo={trendMax}
+              labels={days.map((d) => d.day)}
               series={[
-                { label: t.kills, values: hourly.kills, className: "s2" },
-                { label: t.headshotsLabel, values: hourly.headshots, className: "s3" },
+                { label: t.kills, values: days.map((d) => d.kills), className: "s2" },
+                { label: t.headshotsLabel, values: days.map((d) => d.headshots), className: "s3" },
               ]}
             />
             {/* Running totals: today's totals minus what came after each point. */}
@@ -183,7 +177,6 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
               alignTo={trendMax}
               series={[{ label: t.headshotsLabel, values: headshotsTotal, className: "s3" }]}
             />
-            <p className="muted">{t.trendHourly}</p>
           </>
         ) : (
           <>

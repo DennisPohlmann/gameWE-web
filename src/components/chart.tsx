@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState, type PointerEvent } from "react";
+import { useLayoutEffect, useRef, useState, type PointerEvent, type RefObject } from "react";
 
 // SVG line chart. Rendered on the server; in the browser, moving the mouse
 // (or a finger) over it marks the nearest point in time and shows the
@@ -61,20 +61,7 @@ export function LineChart({
   // instead of the legend below (only with more than one line).
   title?: string;
 }) {
-  const [hover, setHover] = useState<{ i: number; left: number; top: number; flip: boolean } | null>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
-  const figRef = useRef<HTMLElement>(null);
-  const tipRef = useRef<HTMLDivElement>(null);
-  // The hover box sits beside the guide line, flipped to its left on the
-  // right half, and is pushed back inside the chart where it would stick out.
-  useLayoutEffect(() => {
-    const tip = tipRef.current;
-    const fig = figRef.current;
-    if (!hover || !tip || !fig) return;
-    const w = tip.offsetWidth;
-    const want = hover.flip ? hover.left - 12 - w : hover.left + 12;
-    tip.style.left = `${Math.max(0, Math.min(fig.clientWidth - w, want))}px`;
-  }, [hover]);
+  const { hover, setHover, svgRef, figRef, tipRef } = useHoverBox();
   // While a graph is still filling up (e.g. load recorded since two days),
   // it starts at the first point with data instead of an empty left part.
   const trim = trimBy ?? allSeries.map((s) => s.values);
@@ -91,21 +78,8 @@ export function LineChart({
   const dates = allDates?.slice(first, end);
   const n = labels.length;
   if (n < 2) return null;
-  const all = series.flatMap((s) => s.values).filter((v): v is number => v !== null);
-  const lowest = all.length ? Math.min(...all) : 0;
-  const lo = fromZero ? Math.min(0, ...all) : lowest - (Math.max(lowest + 2, ...all) - lowest) * 0.05;
-  const hi = Math.max(fromZero ? 2 : lowest + 2, ...all);
-  // Ticks at round whole numbers (1, 2, 2.5 or 5 times a power of ten),
-  // about four steps from bottom to top; counts never go below 0.
-  const step = niceStep((hi - lo) / 4);
-  const min = lowest >= 0 ? Math.max(0, Math.floor(lo / step) * step) : Math.floor(lo / step) * step;
-  const max = Math.ceil(hi / step) * step;
-  const ticks = Array.from({ length: Math.round((max - min) / step) + 1 }, (_, i) => min + i * step);
-  // Left margin as wide as the longest tick label (about 6.5 units per
-  // character at the axis font size), at least the old 40.
-  const tickText = (t: number) => t.toLocaleString(locale);
-  const longest = Math.max(...ticks.map((t) => tickText(t).length), alignTo === undefined ? 0 : tickText(Math.ceil(alignTo)).length);
-  const pad = { top: 12, right: 24, bottom: dates ? 36 : 22, left: Math.max(40, Math.ceil(12 + longest * 6.5)) };
+  const { min, max, ticks, tickText, left } = yScale(series.flatMap((s) => s.values), fromZero, locale, alignTo);
+  const pad = { top: 12, right: 24, bottom: dates ? 36 : 22, left };
   const plotW = width - pad.left - pad.right;
   const x = (i: number) => pad.left + (i * plotW) / (n - 1);
   const gap = plotW / (n - 1);
@@ -120,9 +94,6 @@ export function LineChart({
   const hourStride = hourly ? [1, 2, 3, 6, 12].find((h) => (h * plotW) / (n - 1) >= 30) : undefined;
   const showLabel = (l: string, i: number) =>
     hourly ? hourStride !== undefined && l !== "" && Number.parseInt(l, 10) % hourStride === 0 : sparseLabels ? l !== "" : i % every === 0 || i === n - 1;
-  // All charts show counts (players, kills, headshots, connects); players
-  // online are averages per time slot, so the hover box rounds them.
-  const fmt = (v: number) => Math.round(v).toLocaleString(locale);
 
   const onMove = (e: PointerEvent<SVGRectElement>) => {
     const svg = svgRef.current;
@@ -141,18 +112,7 @@ export function LineChart({
   const shown = hover ? series.filter((s) => s.values[hover.i] !== null && s.values[hover.i] !== undefined) : [];
   return (
     <figure className="chart" ref={figRef}>
-      {title ? (
-        <figcaption className="chart-head">
-          <span className="chart-title">{title}</span>
-          <span className="legend">
-            {series.map((s) => (
-              <span key={s.label}>
-                <i className={`swatch line ${s.className}`} /> {s.label}
-              </span>
-            ))}
-          </span>
-        </figcaption>
-      ) : null}
+      {title ? <ChartHead title={title} series={series} swatch="line" /> : null}
       <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={ariaLabel}>
         {ticks.map((t, i) => (
           <g key={i}>
@@ -220,29 +180,199 @@ export function LineChart({
         />
       </svg>
       {hover && shown.length ? (
-        <div ref={tipRef} className="chart-tip" style={{ top: hover.top }} role="status">
-          <b>{tips?.[hover.i] || labels[hover.i]}</b>
-          {/* One row per line: colour, name (shortened when too long), value
-              right-aligned in its own column. */}
-          {shown.map((s) => (
-            <span key={s.label} className="tip-row">
-              <i className={`swatch ${s.className}`} />
-              <span className="tip-name">{s.label}</span>
-              <b>{fmt(s.values[hover.i]!)}</b>
-            </span>
-          ))}
-        </div>
+        <ChartTip tipRef={tipRef} top={hover.top} head={tips?.[hover.i] || labels[hover.i]} series={shown} i={hover.i} locale={locale} />
       ) : null}
-      {!title && series.length > 1 ? (
-        <figcaption className="legend">
-          {series.map((s) => (
-            <span key={s.label}>
-              <i className={`swatch ${s.className}`} /> {s.label}
-            </span>
-          ))}
-        </figcaption>
-      ) : null}
+      {!title && series.length > 1 ? <figcaption className="legend">{legendItems(series, "")}</figcaption> : null}
     </figure>
+  );
+}
+
+// Bar chart with a group of bars per label (e.g. kills and headshots per
+// day), with the same axis, margins, title row and hover box as LineChart.
+export function BarChart({
+  labels,
+  series,
+  height = 160,
+  width = 1000,
+  ariaLabel,
+  locale,
+  alignTo,
+  title,
+}: {
+  labels: string[];
+  series: { label: string; values: number[]; className: string }[];
+  height?: number;
+  width?: number;
+  ariaLabel: string;
+  locale?: string;
+  alignTo?: number;
+  title?: string;
+}) {
+  const { hover, setHover, svgRef, figRef, tipRef } = useHoverBox();
+  const n = labels.length;
+  if (!n) return null;
+  const { min, max, ticks, tickText, left } = yScale(series.flatMap((s) => s.values), true, locale, alignTo);
+  const pad = { top: 12, right: 24, bottom: 22, left };
+  const plotW = width - pad.left - pad.right;
+  const slot = plotW / n;
+  // Bars of a group side by side in the middle 70 % of their slot.
+  const barW = (slot * 0.7) / Math.max(1, series.length);
+  const cx = (i: number) => pad.left + (i + 0.5) * slot;
+  const y = (v: number) => pad.top + (1 - (v - min) / (max - min || 1)) * (height - pad.top - pad.bottom);
+  const base = y(min);
+  // A label needs about 60 units of room.
+  const every = Math.max(1, Math.ceil(60 / slot));
+
+  const onMove = (e: PointerEvent<SVGRectElement>) => {
+    const svg = svgRef.current;
+    const fig = figRef.current;
+    if (!svg || !fig) return;
+    const r = svg.getBoundingClientRect();
+    const f = fig.getBoundingClientRect();
+    const sx = ((e.clientX - r.left) / r.width) * width;
+    const i = Math.max(0, Math.min(n - 1, Math.floor((sx - pad.left) / slot)));
+    const left = r.left - f.left + (cx(i) / width) * r.width;
+    const top = r.top - f.top + (y(Math.max(...series.map((s) => s.values[i]))) / height) * r.height;
+    setHover({ i, left, top, flip: left > f.width / 2 });
+  };
+
+  return (
+    <figure className="chart" ref={figRef}>
+      {title ? <ChartHead title={title} series={series} swatch="bar" /> : null}
+      <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={ariaLabel}>
+        {ticks.map((t, i) => (
+          <g key={i}>
+            <line className="grid" x1={pad.left} x2={width - pad.right} y1={y(t)} y2={y(t)} />
+            <text className="axis" x={pad.left - 6} y={y(t) + 4} textAnchor="end">
+              {tickText(t)}
+            </text>
+          </g>
+        ))}
+        {hover ? <rect className="bar-hover" x={pad.left + hover.i * slot} y={pad.top} width={slot} height={base - pad.top} /> : null}
+        {labels.map((l, i) => (
+          <g key={i}>
+            {series.map((s, k) => (
+              <rect
+                key={s.label}
+                className={`col ${s.className}`}
+                x={cx(i) - (barW * series.length) / 2 + k * barW}
+                y={y(s.values[i])}
+                width={Math.max(1, barW - 1)}
+                height={base - y(s.values[i])}
+              />
+            ))}
+            {i % every === 0 ? (
+              <text className="axis day" x={cx(i)} y={height - 6} textAnchor="middle">
+                {l}
+              </text>
+            ) : null}
+          </g>
+        ))}
+        <rect
+          className="hover-area"
+          x={pad.left}
+          y={0}
+          width={plotW}
+          height={height}
+          onPointerMove={onMove}
+          onPointerDown={onMove}
+          onPointerLeave={() => setHover(null)}
+        />
+      </svg>
+      {hover ? <ChartTip tipRef={tipRef} top={hover.top} head={labels[hover.i]} series={series} i={hover.i} locale={locale} /> : null}
+      {!title && series.length > 1 ? <figcaption className="legend">{legendItems(series, "")}</figcaption> : null}
+    </figure>
+  );
+}
+
+// State of the hover box. It sits beside the guide line, flipped to its left
+// on the right half, and is pushed back inside the chart where it would
+// stick out.
+function useHoverBox() {
+  const [hover, setHover] = useState<{ i: number; left: number; top: number; flip: boolean } | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const figRef = useRef<HTMLElement>(null);
+  const tipRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const tip = tipRef.current;
+    const fig = figRef.current;
+    if (!hover || !tip || !fig) return;
+    const w = tip.offsetWidth;
+    const want = hover.flip ? hover.left - 12 - w : hover.left + 12;
+    tip.style.left = `${Math.max(0, Math.min(fig.clientWidth - w, want))}px`;
+  }, [hover]);
+  return { hover, setHover, svgRef, figRef, tipRef };
+}
+
+// Value axis: ticks at round whole numbers (1, 2, 2.5 or 5 times a power of
+// ten), about four steps from bottom to top; counts never go below 0. The
+// left margin is as wide as the longest tick label (about 6.5 units per
+// character at the axis font size), at least 40.
+function yScale(values: (number | null)[], fromZero: boolean, locale: string | undefined, alignTo: number | undefined) {
+  const all = values.filter((v): v is number => v !== null);
+  const lowest = all.length ? Math.min(...all) : 0;
+  const lo = fromZero ? Math.min(0, ...all) : lowest - (Math.max(lowest + 2, ...all) - lowest) * 0.05;
+  const hi = Math.max(fromZero ? 2 : lowest + 2, ...all);
+  const step = niceStep((hi - lo) / 4);
+  const min = lowest >= 0 ? Math.max(0, Math.floor(lo / step) * step) : Math.floor(lo / step) * step;
+  const max = Math.ceil(hi / step) * step;
+  const ticks = Array.from({ length: Math.round((max - min) / step) + 1 }, (_, i) => min + i * step);
+  const tickText = (t: number) => t.toLocaleString(locale);
+  const longest = Math.max(...ticks.map((t) => tickText(t).length), alignTo === undefined ? 0 : tickText(Math.ceil(alignTo)).length);
+  return { min, max, ticks, tickText, left: Math.max(40, Math.ceil(12 + longest * 6.5)) };
+}
+
+type Named = { label: string; className: string };
+
+// Legend entries; "line" draws a short line with a dot, like a chart line.
+function legendItems(series: Named[], swatch: "line" | "bar" | "") {
+  return series.map((s) => (
+    <span key={s.label}>
+      <i className={`swatch ${swatch} ${s.className}`} /> {s.label}
+    </span>
+  ));
+}
+
+// Title row above a chart with the legend on the right.
+function ChartHead({ title, series, swatch }: { title: string; series: Named[]; swatch: "line" | "bar" }) {
+  return (
+    <figcaption className="chart-head">
+      <span className="chart-title">{title}</span>
+      <span className="legend">{legendItems(series, swatch)}</span>
+    </figcaption>
+  );
+}
+
+// Hover box: the time or day, then one row per series: colour, name
+// (shortened when too long), value right-aligned in its own column. All
+// charts show counts; players online are averages per time slot, so the
+// values are rounded.
+function ChartTip({
+  tipRef,
+  top,
+  head,
+  series,
+  i,
+  locale,
+}: {
+  tipRef: RefObject<HTMLDivElement | null>;
+  top: number;
+  head: string;
+  series: (Named & { values: (number | null)[] })[];
+  i: number;
+  locale?: string;
+}) {
+  return (
+    <div ref={tipRef} className="chart-tip" style={{ top }} role="status">
+      <b>{head}</b>
+      {series.map((s) => (
+        <span key={s.label} className="tip-row">
+          <i className={`swatch ${s.className}`} />
+          <span className="tip-name">{s.label}</span>
+          <b>{Math.round(s.values[i]!).toLocaleString(locale)}</b>
+        </span>
+      ))}
+    </div>
   );
 }
 
