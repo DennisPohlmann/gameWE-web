@@ -666,13 +666,13 @@ td.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9e
 .chart-tip {
   position: absolute;
   z-index: 5;
-  transform: translate(12px, -50%);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 120px;
-  max-width: 280px;
-  padding: 6px 9px;
+  transform: translateY(-50%);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 2px 6px;
+  min-width: 140px;
+  max-width: min(420px, 90vw);
+  padding: 6px 10px;
   background: rgba(20, 20, 20, 0.92);
   color: #fff;
   border: 1px solid #555;
@@ -683,9 +683,11 @@ td.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9e
   white-space: nowrap;
   pointer-events: none;
 }
-.chart-tip.flip { transform: translate(calc(-100% - 12px), -50%); }
-.chart-tip b:first-child { color: var(--accent-text, #ffb066); }
-.chart-tip .swatch { vertical-align: middle; margin-right: 2px; }
+.chart-tip > b:first-child { grid-column: 1 / -1; color: var(--accent-text, #ffb066); }
+.chart-tip .tip-row { display: contents; }
+.chart-tip .swatch { align-self: center; }
+.chart-tip .tip-name { overflow: hidden; text-overflow: ellipsis; }
+.chart-tip .tip-row b { padding-left: 8px; text-align: right; font-variant-numeric: tabular-nums; }
 
 /* ---------------------------------------------------------------- voice server box */
 

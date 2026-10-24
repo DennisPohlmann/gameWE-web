@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type PointerEvent } from "react";
+import { useLayoutEffect, useRef, useState, type PointerEvent } from "react";
 
 // SVG line chart. Rendered on the server; in the browser, moving the mouse
 // (or a finger) over it marks the nearest point in time and shows the
@@ -51,6 +51,17 @@ export function LineChart({
   const [hover, setHover] = useState<{ i: number; left: number; top: number; flip: boolean } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const figRef = useRef<HTMLElement>(null);
+  const tipRef = useRef<HTMLDivElement>(null);
+  // The hover box sits beside the guide line, flipped to its left on the
+  // right half, and is pushed back inside the chart where it would stick out.
+  useLayoutEffect(() => {
+    const tip = tipRef.current;
+    const fig = figRef.current;
+    if (!hover || !tip || !fig) return;
+    const w = tip.offsetWidth;
+    const want = hover.flip ? hover.left - 12 - w : hover.left + 12;
+    tip.style.left = `${Math.max(0, Math.min(fig.clientWidth - w, want))}px`;
+  }, [hover]);
   // While a graph is still filling up (e.g. load recorded since two days),
   // it starts at the first point with data instead of an empty left part.
   const first = !trimStart ? 0 : Math.min(
@@ -179,11 +190,15 @@ export function LineChart({
         />
       </svg>
       {hover && shown.length ? (
-        <div className={`chart-tip${hover.flip ? " flip" : ""}`} style={{ left: hover.left, top: hover.top }} role="status">
+        <div ref={tipRef} className="chart-tip" style={{ top: hover.top }} role="status">
           <b>{tips?.[hover.i] || labels[hover.i]}</b>
+          {/* One row per line: colour, name (shortened when too long), value
+              right-aligned in its own column. */}
           {shown.map((s) => (
-            <span key={s.label}>
-              <i className={`swatch ${s.className}`} /> {s.label}: <b>{fmt(s.values[hover.i]!)}</b>
+            <span key={s.label} className="tip-row">
+              <i className={`swatch ${s.className}`} />
+              <span className="tip-name">{s.label}</span>
+              <b>{fmt(s.values[hover.i]!)}</b>
             </span>
           ))}
         </div>
