@@ -3,12 +3,10 @@ import Link from "next/link";
 import { AutoForm } from "@/components/auto-form";
 import { Rich } from "@/components/rich";
 import { Empty, PctBar, Section, SortTh, TableWrap, strParam } from "@/components/ui";
-import { Weapon } from "@/components/weapon";
 import { noAutofill } from "@/lib/autofill";
-import { getGame, getWeapons, type WeaponRow } from "@/lib/data";
+import { getWeapons, type WeaponRow } from "@/lib/data";
 import { fmtNum, ratio } from "@/lib/format";
 import { fill, getDict } from "@/lib/i18n";
-import { weaponImages } from "@/lib/weapons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getDict()).t.weapons };
@@ -31,8 +29,7 @@ export default async function WeaponsPage({ params, searchParams }: { params: Pr
   const { game } = await params;
   const sp = await searchParams;
   const { lang, t } = await getDict();
-  const [rows, g] = await Promise.all([getWeapons(game), getGame(game, true)]);
-  const images = weaponImages(g?.realgame);
+  const rows = await getWeapons(game);
   const rawSort = strParam(sp.sort);
   const sort = Object.hasOwn(SORTS, rawSort) ? rawSort : "kills";
   // Names read best A to Z, numbers biggest first; ?dir=asc flips it.
@@ -99,7 +96,7 @@ export default async function WeaponsPage({ params, searchParams }: { params: Pr
                     <td className="rank">{i + 1}</td>
                     <td>
                       <Link className="player" href={`/${game}/weapons/${encodeURIComponent(w.code)}`}>
-                        <Weapon set={images} code={w.code} name={w.name} />
+                        {w.name}
                       </Link>
                     </td>
                     <td className="num hide-sm">{fmtNum(Number(w.modifier), lang, 2)}</td>

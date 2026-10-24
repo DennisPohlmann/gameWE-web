@@ -45,14 +45,6 @@ settings: [CONFIG.md](CONFIG.md).
 | `/robots.txt`, `/sitemap.xml` | for search engines, see [CONFIG.md](CONFIG.md#search-engines-and-sharing) |
 | `/admin` | admin area |
 
-The weapon lists (weapon list, weapon page, weapon table of the player
-profile) show each weapon as an image, with the name as tooltip and alt text;
-everywhere else (kills, events, awards, help) weapons stay names. The images
-come from HLstatsX: Community Edition for CS:S, CS:GO, CS 1.6, TF2, TFC, HL2DM,
-HLDM, DoD:S, DoD, NS, L4D, L4D2 and Insurgency, with the names that were drawn
-into them taken out; a weapon without an image (or of another game) is shown
-by its name.
-
 A ranking is a row of `hlstats_Games` that you create in the admin area
 (Rankings, e.g. "Assault"), optionally copying weapons, actions, teams, roles,
 awards and ranks from an existing ranking. Servers are assigned on the

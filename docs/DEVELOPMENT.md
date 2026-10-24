@@ -14,16 +14,6 @@ npm run dev                    # http://localhost:3000
 Translations: [src/translations/README.md](../src/translations/README.md);
 design templates: [templates/README.md](../templates/README.md).
 
-Weapon images: `public/weapons/<base game>/<code>.webp` and their size list
-`src/lib/weapon-images.ts` are generated from an HLstatsX: Community Edition
-checkout and committed; the script takes the weapon names out of the images
-and leaves out the ones listed in its `SKIP`. Re-run after the images change:
-
-```bash
-git clone --depth 1 https://github.com/NomisCZ/hlstatsx-community-edition /tmp/hlx
-node scripts/import-weapon-images.mjs /tmp/hlx
-```
-
 ## Build and check
 
 ```bash

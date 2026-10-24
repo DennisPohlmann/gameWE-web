@@ -7,8 +7,6 @@ import { SortableTable } from "@/components/sortable-table";
 import { RankBadge, Ribbon, RibbonLevel, rankName, ribbonClassName } from "@/components/badges";
 import { Radar, Spark, TrendChart } from "@/components/graphics";
 import { Hitbox } from "@/components/hitbox";
-import { Weapon } from "@/components/weapon";
-import { weaponImages } from "@/lib/weapons";
 import { SigCode } from "@/components/sig-code";
 import { ZONES } from "@/lib/zones";
 import { awardValue, getAwards, getPlayerRibbons, getRanks, getRibbonClasses, rankFor, ribbonFor, ribbonProgress } from "@/lib/awards";
@@ -22,7 +20,6 @@ import { getSettings } from "@/lib/settings";
 import { placeHref } from "@/components/ranking";
 import {
   getChat,
-  getGame,
   getOpponents,
   getPlayerKillStats,
   getPlayer,
@@ -115,7 +112,6 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const hs14 = last14.reduce((s, h) => s + h.headshots, 0);
   const isBot = (p.uniqueId ?? "").startsWith("BOT");
   const fav = weapons[0];
-  const images = weaponImages((await getGame(game, true))?.realgame);
   const rank = rankFor(p.kills, ranks);
   const rankProgress = rank && rank.next !== null ? (p.kills - rank.minimum) / (rank.next - rank.minimum) : 1;
   // City and country link to the ranking of that place.
@@ -509,7 +505,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                   values: [w.name, w.shots, w.hits, w.damage, w.kills, w.deaths, kpd(w.kills, w.deaths), w.headshots, hpk, acc, dph, spk],
                   cells: [
                     <Link key="n" href={`/${game}/weapons/${encodeURIComponent(w.code)}`}>
-                      <Weapon set={images} code={w.code} name={w.name} />
+                      {w.name}
                     </Link>,
                     fmtNum(w.shots, lang),
                     fmtNum(w.hits, lang),
