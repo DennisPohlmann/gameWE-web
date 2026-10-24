@@ -103,7 +103,7 @@ export function GameEventsLive({
   if (!rows.length) return <p className="lead">{labels.noData}</p>;
   return (
     <TableWrap>
-      {/* Time as wide as its text, event takes the rest, server and map clipped. */}
+      {/* Time as wide as its text, event takes the rest, server and map in full. */}
       <table className={`game-events${live ? " live" : ""}`}>
         <thead>
           <tr>
@@ -119,11 +119,9 @@ export function GameEventsLive({
               <td className="muted nowrap ev-time">{fmtDateTime(e.ts, lang)}</td>
               <td className="wrap-cell">{text(e)}</td>
               {withServer ? (
-                <td className="hide-sm muted" title={e.server || undefined}>
-                  <span className="ev-clip ev-clip-server">{e.server || "-"}</span>
-                </td>
+                <td className="hide-sm muted ev-name">{e.server || "-"}</td>
               ) : null}
-              <td className="hide-sm muted" title={e.map ?? undefined}><span className="ev-clip">{e.map ?? "-"}</span></td>
+              <td className="hide-sm muted ev-name">{e.map ?? "-"}</td>
             </tr>
           ))}
         </tbody>
