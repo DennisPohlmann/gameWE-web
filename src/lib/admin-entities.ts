@@ -60,26 +60,6 @@ const gameField: Field = { name: "game", label: { de: "Rangliste", en: "Ranking"
 
 export const entities: Entity[] = [
   {
-    key: "options",
-    table: "hlstats_Options",
-    pk: "keyname",
-    pkIsText: true,
-    label: { de: "Erweitert: alle Optionen", en: "Advanced: all options" },
-    help: {
-      de: "Alle Einträge aus hlstats_Options als Rohwerte, mit ihrer Bedeutung. Die meisten stellst du bequemer unter Einstellungen ein; hier stehen auch veraltete und eigene Schlüssel. Der Collector liest die Werte jede Minute neu, ungültige Werte ersetzt er durch den Standard.",
-      en: "All rows of hlstats_Options as raw values, with their meaning. Most are easier to set under Settings; old and custom keys are listed here too. The collector re-reads them every minute and replaces invalid values with the default.",
-    },
-    fields: [
-      { name: "keyname", label: { de: "Schlüssel", en: "Key" }, type: "text", inList: true, required: true, createOnly: true, max: 128 },
-      { name: "value", label: { de: "Wert", en: "Value" }, type: "text", inList: true, max: 255 },
-    ],
-    order: "keyname",
-    search: ["keyname", "value"],
-    canCreate: true,
-    canDelete: true,
-    hiddenPrefix: ["gamewe_totp", "gamewe_ts_query_password", "gamewe_metrics_token"],
-  },
-  {
     key: "games",
     table: "hlstats_Games",
     pk: "id",

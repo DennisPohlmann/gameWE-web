@@ -8,7 +8,7 @@ import { adminDict } from "@/lib/admin-i18n";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { fill, getAdminLang, getDict } from "@/lib/i18n";
 
-// Menu groups: Website (settings, all options, chat), Rankings & statistics,
+// Menu groups: Website (settings, chat, IPs), Rankings & statistics,
 // Access (users).
 const RANKING_ENTITIES = ["games", "servers", "players", "clans", "weapons", "actions", "teams", "roles", "awards", "ranks"];
 
@@ -36,7 +36,6 @@ export default async function PanelLayout({ children }: { children: ReactNode })
         <nav>
           <span className="admin-group">{a.navWebsite}</span>
           <Link href="/admin/settings">{a.settings}</Link>
-          {entityLink("options")}
           <Link href="/admin/chat">{t.chat}</Link>
           <Link href="/admin/ips">{a.ips}</Link>
           <span className="admin-group">{a.navRankings}</span>

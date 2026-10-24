@@ -5,7 +5,6 @@ import { allServers, rankingBaseGames } from "@/lib/admin-rankings";
 import { gameKind, sameBaseGame } from "@/lib/games";
 import { Section } from "@/components/ui";
 import { getRow, optionList, withColumns } from "@/lib/admin-data";
-import { optionInfo } from "@/lib/option-help";
 import { RankBadge, rankName } from "@/components/badges";
 import { getEntity } from "@/lib/admin-entities";
 import { adminDict } from "@/lib/admin-i18n";
@@ -55,7 +54,6 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
       <h1>
         {e.label[lang]}: {isNew ? a.new : id}
       </h1>
-      {e.key === "options" && !isNew ? <OptionHelp id={id} lang={lang} a={a} /> : null}
       {e.key === "games" && !e.fields.some((f) => f.name === "realgame") ? <p className="notice error">{a.realgameMissing}</p> : null}
       {e.key === "ranks" && !isNew && typeof (row as Record<string, unknown>).name === "string" ? (
         <p className="lead admin-rank">
@@ -215,18 +213,5 @@ async function RankingServers({ gameId, code, lang }: { gameId: string; code: st
         </form>
       ) : null}
     </Section>
-  );
-}
-
-// Meaning of an option above its form (Erweitert: alle Optionen).
-function OptionHelp({ id, lang, a }: { id: string; lang: "de" | "en"; a: ReturnType<typeof adminDict> }) {
-  const info = optionInfo(id);
-  if (!info) return <p className="lead">{a.optUnknown}</p>;
-  return (
-    <p className="lead">
-      <b>{info.label[lang]}</b>
-      {info.help ? <> · {info.help[lang]}</> : null}
-      {info.group ? <> · {fill(a.optInSettings, { g: info.group[lang] })}</> : null}
-    </p>
   );
 }

@@ -1,5 +1,6 @@
 import "server-only";
 import type { Entity, Field } from "./admin-entities";
+import { HIDDEN_OPTION_PREFIXES, allSettings } from "./admin-settings";
 import { hashPassword } from "./auth";
 import { adminExec, adminInsert, adminQuery, likeOp, type Param } from "./db";
 
@@ -21,6 +22,17 @@ function hasColumn(table: string, column: string) {
     columnCache.set(key, hit);
   }
   return hit;
+}
+
+// hlstats_Options rows without a field on the settings page; secrets
+// (HIDDEN_OPTION_PREFIXES) are left out in SQL, so they are never read.
+export async function rawOptions(): Promise<{ keyname: string; value: string }[]> {
+  const hidden = HIDDEN_OPTION_PREFIXES.map((p) => `LOWER(LEFT(keyname, ${p.length})) <> ?`).join(" AND ");
+  const rows = await adminQuery<{ keyname: string; value: string | null }>(
+    `SELECT keyname, value FROM hlstats_Options WHERE keyname NOT IN (?) AND ${hidden} ORDER BY keyname`,
+    [allSettings.map((s) => s.key), ...HIDDEN_OPTION_PREFIXES],
+  );
+  return rows.map((r) => ({ keyname: r.keyname, value: r.value ?? "" }));
 }
 
 // The entity without the optional fields whose column the database lacks

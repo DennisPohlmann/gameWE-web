@@ -19,6 +19,9 @@ export type Setting = {
   // Shown only while the setting `key` has `value` (e.g. TeamSpeak fields
   // only when TeamSpeak is chosen as voice server).
   show?: { key: string; value: string };
+  // Old keys the website does not need: written only when filled in or
+  // already stored, so saving the page creates no empty rows.
+  optional?: boolean;
 };
 
 export type SettingGroup = { title: L; help?: L; items: Setting[] };
@@ -334,9 +337,81 @@ export const settingGroups: SettingGroup[] = [
       { key: "gamewe_log_lines", label: { de: "Jede Logzeile ins Journal schreiben", en: "Write every log line to the journal" }, type: "bool", def: "1" },
     ],
   },
+  {
+    title: { de: "Ältere Optionen", en: "Older options" },
+    help: {
+      de: "Schlüssel aus HLstatsX:CE und älteren gameWE-Versionen. Die Webseite braucht sie nicht; sie bleiben für eigene Erweiterungen und ältere Collector-Installationen einstellbar. Leere Felder legen keinen Eintrag an.",
+      en: "Keys from HLstatsX:CE and older gameWE versions. The website does not need them; they stay settable for own extensions and older collector installations. Empty fields create no row.",
+    },
+    items: [
+      { key: "contact", label: { de: "Kontaktangabe (E-Mail oder URL)", en: "Contact (e-mail or URL)" }, type: "text", def: "", optional: true, help: { de: "Aus HLstatsX:CE. Text oder leer.", en: "From HLstatsX:CE. Text or empty." } },
+      {
+        key: "siteurl",
+        label: { de: "Basis-URL der Seite (HLstatsX)", en: "Base URL of the site (HLstatsX)" },
+        type: "text",
+        def: "",
+        optional: true,
+        help: { de: "URL oder leer. Für den Link des Seitennamens gilt „Link des Seitennamens“ unter Webseite.", en: "URL or empty. The site name link is \"Link of the site name\" under Website." },
+      },
+      {
+        key: "gamewe_default_game",
+        label: { de: "Spiel, das zuerst gezeigt wird (alt)", en: "Game shown first (old)" },
+        type: "game",
+        def: "",
+        optional: true,
+        help: { de: "Aus älteren Versionen; die aktuelle Webseite wertet ihn nicht aus.", en: "From older versions; the current website does not use it." },
+      },
+      {
+        key: "gamewe_geoip_db",
+        label: { de: "GeoIP-Datenbank (veraltet)", en: "GeoIP database (obsolete)" },
+        type: "text",
+        def: "",
+        optional: true,
+        help: {
+          de: "Pfad einer .mmdb auf dem Collector-Rechner. Gilt nur, wenn die config.yaml des Collectors kein geoip.path hat und der Wert nicht der alte Standard /var/lib/gamewe/GeoLite2-City.mmdb ist.",
+          en: "Path of an .mmdb on the collector's machine. Used only when the collector's config.yaml has no geoip.path and the value is not the old default /var/lib/gamewe/GeoLite2-City.mmdb.",
+        },
+      },
+    ],
+  },
 ];
 
 export const allSettings = settingGroups.flatMap((g) => g.items);
+
+// hlstats_Options rows that are never listed or written as raw values:
+// TOTP secrets of the admin users and the secrets of the form above.
+export const HIDDEN_OPTION_PREFIXES = ["gamewe_totp", "gamewe_ts_query_password", "gamewe_metrics_token"];
+// Written by the collector, shown read-only.
+export const READONLY_OPTIONS = ["gamewe_heartbeat"];
+
+// Meaning of known keys that have no field above (raw list of the settings page).
+export const RAW_OPTION_HELP: Record<string, L> = {
+  gamewe_heartbeat: {
+    de: "Schreibt der Collector jede Minute (Unix-Zeit seiner letzten Runde); keine Einstellung.",
+    en: "Written by the collector every minute (Unix time of its last poll); not a setting.",
+  },
+  gamewe_ignore_bots: {
+    de: "Veraltet, ersetzt durch „Bots ranken“ unter Collector. Ein Collector-Update löscht den Schlüssel.",
+    en: "Obsolete, replaced by \"Rank bots\" under Collector. A collector update deletes the key.",
+  },
+  gamewe_daily_awards: {
+    de: "Veraltet, ersetzt durch features.daily_awards in der config.yaml. Ein Collector-Update löscht den Schlüssel.",
+    en: "Obsolete, replaced by features.daily_awards in config.yaml. A collector update deletes the key.",
+  },
+};
+
+const settingKeys = new Set(allSettings.map((s) => s.key.toLowerCase()));
+
+export function hiddenOption(key: string): boolean {
+  const k = key.toLowerCase();
+  return HIDDEN_OPTION_PREFIXES.some((p) => k.startsWith(p));
+}
+
+// A key that may be created as a raw value: well-formed, not secret, no
+// field of its own and not written by the collector.
+export function rawKeyAllowed(key: string): boolean {
+  return /^[A-Za-z0-9_.-]{1,128}$/.test(key) && !hiddenOption(key) && !settingKeys.has(key.toLowerCase()) && !READONLY_OPTIONS.includes(key);
+}
 
 // A header link from the two form fields: "" when both are empty, null when
 // only one is filled in or the address is not a web address or site path.

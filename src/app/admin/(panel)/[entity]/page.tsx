@@ -4,8 +4,6 @@ import { notFound } from "next/navigation";
 import { Empty, GameTag, Pager, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
 import { localeOf } from "@/lib/format";
 import { listRows, optionList, withColumns } from "@/lib/admin-data";
-import { optionInfo } from "@/lib/option-help";
-import { fill } from "@/lib/i18n";
 import { allServers, rankingBaseGames } from "@/lib/admin-rankings";
 import { RankBadge, rankName } from "@/components/badges";
 import { getEntity, type Field } from "@/lib/admin-entities";
@@ -87,7 +85,6 @@ export default async function EntityList({ params, searchParams }: { params: Pro
                     ))}
                     {gameCol ? <th>{a.baseGame}</th> : null}
                     {e.key === "games" ? <th className="num">{a.serverCount}</th> : null}
-                    {e.key === "options" ? <th>{a.optMeaning}</th> : null}
                     <th />
                   </tr>
                 </thead>
@@ -121,7 +118,6 @@ export default async function EntityList({ params, searchParams }: { params: Pro
                           )}
                         </td>
                       ) : null}
-                      {e.key === "options" ? <td className="opt-help">{optionText(String(r.__pk), lang, a)}</td> : null}
                       <td className="num">
                         <Link href={`${base}/${encodeURIComponent(String(r.__pk))}`}>{a.edit}</Link>
                       </td>
@@ -168,17 +164,4 @@ function show(f: Field, v: string | number | null, lang: "de" | "en") {
     if (o) return typeof o[1] === "string" ? o[1] : o[1][lang];
   }
   return String(v);
-}
-
-// Label, help and where to set an option (Erweitert: alle Optionen).
-function optionText(key: string, lang: "de" | "en", a: ReturnType<typeof adminDict>) {
-  const info = optionInfo(key);
-  if (!info) return <span className="muted">{a.optUnknown}</span>;
-  return (
-    <>
-      <b>{info.label[lang]}</b>
-      {info.help ? <span className="muted"> · {info.help[lang]}</span> : null}
-      {info.group ? <span className="muted"> · {fill(a.optInSettings, { g: info.group[lang] })}</span> : null}
-    </>
-  );
 }

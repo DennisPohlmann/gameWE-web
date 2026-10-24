@@ -3,12 +3,12 @@
 import { redirect } from "next/navigation";
 import { sourcebansBase } from "@/lib/sourcebans";
 import { getEntity } from "@/lib/admin-entities";
-import { deleteRow, getRow, InputError, optionList, saveRow, withColumns } from "@/lib/admin-data";
+import { deleteRow, getRow, InputError, optionList, rawOptions, saveRow, withColumns } from "@/lib/admin-data";
 import { allServers, assignServers, copyDefinitions, rankingBaseGames } from "@/lib/admin-rankings";
 import { baseGameOf, sameBaseGame } from "@/lib/games";
-import { allSettings, linkValue } from "@/lib/admin-settings";
+import { READONLY_OPTIONS, allSettings, linkValue, rawKeyAllowed } from "@/lib/admin-settings";
 import { LEVEL_ADMIN, adminSecret, cancelPendingLogin, changePassword, login, loginCode, logout, requireAdmin } from "@/lib/auth";
-import { adminExec, upsert } from "@/lib/db";
+import { adminExec, adminQuery, upsert } from "@/lib/db";
 import { imageUrl, invalidateSettings } from "@/lib/settings";
 import { listTemplates } from "@/lib/templates";
 import { jobsAvailable, queueReset } from "@/lib/reset";
@@ -159,6 +159,15 @@ export async function deleteAction(form: FormData) {
 export async function saveSettingsAction(form: FormData) {
   await requireAdmin();
   const values: [string, string][] = [];
+  // Rows that exist now: optional settings are only written when filled in
+  // or already stored; raw values only for rows without a field.
+  const stored = new Set(
+    (await adminQuery<{ keyname: string }>(`SELECT keyname FROM hlstats_Options WHERE keyname IN (?)`, [allSettings.filter((s) => s.optional).map((s) => s.key)])).map(
+      (r) => r.keyname,
+    ),
+  );
+  const raw = await rawOptions();
+  const rawKeys = new Set(raw.map((r) => r.keyname));
   for (const s of allSettings) {
     if (s.type === "link") {
       const v = linkValue(String(form.get(`${s.key}__label`) ?? ""), String(form.get(`${s.key}__url`) ?? ""));
@@ -218,12 +227,39 @@ export async function saveSettingsAction(form: FormData) {
       if (!base) redirect(`/admin/settings?field=${s.key}`);
       values.push([s.key, base]);
       continue;
+    } else if (s.optional && !v && !stored.has(s.key)) {
+      continue;
     }
     values.push([s.key, v]);
+  }
+  // Other keys (raw values): the form sends each key with its index; only
+  // keys that exist as raw rows are written or deleted.
+  const removed: string[] = [];
+  for (const [name, entry] of form.entries()) {
+    const m = /^raw_key_(\d{1,4})$/.exec(name);
+    if (!m) continue;
+    const key = String(entry);
+    if (!rawKeys.has(key) || READONLY_OPTIONS.includes(key)) continue;
+    if (form.get(`raw_del_${m[1]}`) === "1") {
+      removed.push(key);
+      continue;
+    }
+    const v = String(form.get(`raw_val_${m[1]}`) ?? "");
+    if (v.length > 255 || /[\r\n]/.test(v)) redirect(`/admin/settings?field=${encodeURIComponent(`raw:${key}`)}`);
+    values.push([key, v]);
+  }
+  const newKey = String(form.get("raw_new_key") ?? "").trim();
+  if (newKey) {
+    const v = String(form.get("raw_new_val") ?? "");
+    if (!rawKeyAllowed(newKey) || rawKeys.has(newKey) || v.length > 255 || /[\r\n]/.test(v)) redirect("/admin/settings?field=raw_new");
+    const exists = await adminQuery(`SELECT keyname FROM hlstats_Options WHERE keyname = ?`, [newKey]);
+    if (exists.length) redirect("/admin/settings?field=raw_new");
+    values.push([newKey, v]);
   }
   for (const [k, v] of values) {
     await adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [k, v]);
   }
+  for (const k of removed) await adminExec(`DELETE FROM hlstats_Options WHERE keyname = ?`, [k]);
   invalidateSettings();
   redirect("/admin/settings?saved=1");
 }

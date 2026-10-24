@@ -20,6 +20,13 @@ const nextConfig: NextConfig = {
   // Keep mysql2 as a real package in the standalone output, so
   // scripts/create-admin.mjs can use it on the server too.
   serverExternalPackages: ["mysql2", "pg"],
+  // The old raw list "Advanced: all options" is part of the settings page now.
+  async redirects() {
+    return [
+      { source: "/admin/options", destination: "/admin/settings", permanent: true },
+      { source: "/admin/options/:path*", destination: "/admin/settings", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

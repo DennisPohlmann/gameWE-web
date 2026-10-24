@@ -1,8 +1,8 @@
 import { saveSettingsAction } from "../../actions";
 import { Section } from "@/components/ui";
-import { optionList } from "@/lib/admin-data";
+import { optionList, rawOptions } from "@/lib/admin-data";
 import { adminDict } from "@/lib/admin-i18n";
-import { allSettings, settingGroups } from "@/lib/admin-settings";
+import { RAW_OPTION_HELP, READONLY_OPTIONS, allSettings, settingGroups } from "@/lib/admin-settings";
 import { requireAdmin } from "@/lib/auth";
 import { adminQuery } from "@/lib/db";
 import { fill, getAdminLang } from "@/lib/i18n";
@@ -14,12 +14,13 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const lang = await getAdminLang();
   const a = adminDict(lang);
   const sp = await searchParams;
-  const [rows, games, templates] = await Promise.all([
+  const [rows, games, templates, raw] = await Promise.all([
     adminQuery<{ keyname: string; value: string }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [
       allSettings.map((s) => s.key),
     ]),
     optionList("games"),
     listTemplates(),
+    rawOptions(),
   ]);
   const values: Record<string, string> = Object.fromEntries(rows.map((r) => [r.keyname, r.value]));
   // Older installations have no voice type yet: preselect what is set up.
@@ -34,12 +35,14 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     })
     .join("\n");
   const bad = allSettings.find((s) => s.key === sp.field);
+  const badRaw = sp.field?.startsWith("raw:") ? sp.field.slice(4) : sp.field === "raw_new" ? a.rawNewKey : null;
 
   return (
     <>
       <h1>{a.settings}</h1>
       {sp.saved ? <p className="notice">{a.saved}</p> : null}
       {bad ? <p className="notice error">{fill(a.invalidField, { f: bad.label[lang] })}</p> : null}
+      {badRaw ? <p className="notice error">{fill(a.invalidField, { f: badRaw })}</p> : null}
       {css ? <style>{css}</style> : null}
       <form action={saveSettingsAction}>
         {settingGroups.map((g) => (
@@ -129,6 +132,47 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             </div>
           </Section>
         ))}
+        <Section title={a.rawTitle}>
+          <div className="form settings-grid">
+            <p className="settings-help">{a.rawHelp}</p>
+            {raw.length ? null : <p className="settings-help">{a.rawNone}</p>}
+            {raw.map((r, i) => {
+              const help = RAW_OPTION_HELP[r.keyname]?.[lang] ?? a.rawUnknown;
+              if (READONLY_OPTIONS.includes(r.keyname)) {
+                return (
+                  <label key={r.keyname}>
+                    <code>{r.keyname}</code>
+                    <input value={r.value} readOnly aria-readonly="true" />
+                    <small className="muted">
+                      {a.rawReadonly} {help}
+                    </small>
+                  </label>
+                );
+              }
+              return (
+                <div key={r.keyname}>
+                  <label>
+                    <code>{r.keyname}</code>
+                    <input type="hidden" name={`raw_key_${i}`} value={r.keyname} />
+                    <input name={`raw_val_${i}`} defaultValue={r.value} maxLength={255} />
+                    <small className="muted">{help}</small>
+                  </label>
+                  <label className="check">
+                    <input type="checkbox" name={`raw_del_${i}`} value="1" /> {a.rawDelete}
+                  </label>
+                </div>
+              );
+            })}
+            <label>
+              {a.rawNewKey}
+              <span className="link-fields">
+                <input name="raw_new_key" placeholder={a.rawNewKey} aria-label={a.rawNewKey} maxLength={128} pattern="[A-Za-z0-9_.\-]{1,128}" />
+                <input name="raw_new_val" placeholder={a.rawNewValue} aria-label={a.rawNewValue} maxLength={255} />
+              </span>
+              <small className="muted">{a.rawNewHelp}</small>
+            </label>
+          </div>
+        </Section>
         <p className="settings-save">
           <button type="submit" className="button">
             {a.save}
