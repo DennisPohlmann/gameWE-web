@@ -385,13 +385,18 @@ td.radar-cell { width: 45%; text-align: center; vertical-align: middle; }
 .radar-total { fill: rgba(140, 170, 255, 0.28); stroke: #8ca0ff; stroke-width: 1.5; }
 .radar-current { fill: rgba(255, 128, 0, 0.35); stroke: var(--accent); stroke-width: 1.5; }
 .radar-label { fill: var(--soft); font-size: 10px; }
-.spark { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
-.spark b { padding: 1px 4px; border-radius: 3px; font-size: 10px; color: #fff; }
-.spark .sp-total { background: #555; }
-.spark .sp-current { background: #2f7dc0; }
-.spark .sp-min { background: #c03030; }
-.spark .sp-max { background: #2e9e2e; }
-.spark svg polyline { fill: none; stroke: var(--soft); stroke-width: 1.2; }
+.spark { display: block; width: 240px; max-width: 100%; height: auto; overflow: visible; }
+.spark .sp-pill text { fill: #fff; font-size: 10px; font-weight: bold; font-variant-numeric: tabular-nums; }
+.spark .sp-total rect { fill: #555; }
+.spark .sp-current rect { fill: #2f7dc0; }
+.spark .sp-bad rect, .spark .sp-dot.sp-bad { fill: #c03030; }
+.spark .sp-good rect, .spark .sp-dot.sp-good { fill: #2e9e2e; }
+.spark .sp-frame { fill: var(--band); stroke: var(--grid-2); stroke-width: 1; }
+.spark .sp-ref-total { stroke: #8a8a8a; stroke-width: 1; stroke-dasharray: 2 2; }
+.spark .sp-ref-current { stroke: #5aa9ff; stroke-width: 1; }
+.spark .sp-line { fill: none; stroke: var(--soft); stroke-width: 1.2; stroke-linejoin: round; }
+.spark .sp-one { fill: var(--soft); }
+.spark .sp-dot { stroke: var(--band); stroke-width: 0.8; }
 .trend { width: 100%; max-width: 640px; height: auto; display: block; margin: 0 auto; }
 .trend .grid { stroke: var(--grid); }
 .trend .axis { fill: var(--muted); font-size: 10px; }
@@ -522,8 +527,6 @@ a.button { display: inline-block; text-decoration: none; }
   .avatar-none { font-size: 36px; }
   td.radar-cell { width: auto; }
   .radar { width: 100%; max-width: 220px; height: auto; }
-  .spark { flex-wrap: wrap; white-space: normal; }
-  .spark svg { display: none; }
 }
 
 /* ---------------------------------------------------------------- admin */
@@ -930,6 +933,6 @@ html[data-os] .game-tag, html[data-os] h3 .game-tag,
 html[data-os] .hl-badge, html[data-os] .help-type, html[data-os] .help-tile span,
 html[data-os] .admin-version, html[data-os] .admin-nav .admin-group,
 html[data-os] .decorated-rank, html[data-os] .ribbon-level,
-html[data-os] .spark b { font-size: 11px; }
+html[data-os] .spark .sp-pill text { font-size: 11px; }
 html[data-os] .hs { font-size: 10px; }
 html[data-os] .sig-code { font: 11px ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }

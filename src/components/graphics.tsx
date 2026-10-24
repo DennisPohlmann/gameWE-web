@@ -47,51 +47,83 @@ export function Radar({ axes, labels }: { axes: RadarAxis[]; labels: { total: st
   );
 }
 
-// gameME's value pill: total | current | sparkline | min | max.
+// gameME's value strip as one fixed-size graphic, the same width in every row:
+// total | current | daily values | min | max. The graph scales the days, the
+// total (grey, dashed) and current (blue) lines and the worst/best day dots
+// to one range. With lowerIsBetter (shots per kill) min is the good value, so
+// the green and red swap.
 export function Spark({
   values,
   total,
   current,
-  min,
-  max,
+  fmt,
   titles,
+  lowerIsBetter = false,
 }: {
   values: number[];
-  total: string;
-  current: string;
-  min: string;
-  max: string;
-  titles: { total: string; current: string; min: string; max: string };
+  total: number | null;
+  current: number | null;
+  fmt: (v: number | null) => string;
+  titles: { total: string; current: string; min: string; max: string; days: string };
+  lowerIsBetter?: boolean;
 }) {
-  if (!values.length) return <b className="spark-plain">{total}</b>;
-  const w = 80;
-  const h = 16;
-  const lo = Math.min(...values);
-  const hi = Math.max(...values);
-  const pts =
-    values.length > 1
-      ? values.map((v, i) => `${((i * w) / (values.length - 1)).toFixed(1)},${(h - 2 - ((v - lo) / (hi - lo || 1)) * (h - 4)).toFixed(1)}`).join(" ")
-      : "";
+  const W = 240;
+  const H = 18;
+  const pill = 40;
+  const g = { x: 88, w: 64, y: 2, h: 14 };
+  const ok = (v: number | null): v is number => v !== null && Number.isFinite(v);
+  const min = values.length ? Math.min(...values) : null;
+  const max = values.length ? Math.max(...values) : null;
+  const good = "sp-good";
+  const bad = "sp-bad";
+  const pills = [
+    { x: 0, cls: "sp-total", label: titles.total, v: total },
+    { x: 43, cls: "sp-current", label: titles.current, v: current },
+    { x: 157, cls: lowerIsBetter ? good : bad, label: titles.min, v: min },
+    { x: 200, cls: lowerIsBetter ? bad : good, label: titles.max, v: max },
+  ];
+  const all = [...values, total, current].filter(ok);
+  const lo = all.length ? Math.min(...all) : 0;
+  const hi = all.length ? Math.max(...all) : 0;
+  const y = (v: number) => (hi > lo ? g.y + g.h - 2 - ((v - lo) / (hi - lo)) * (g.h - 4) : g.y + g.h / 2);
+  const x = (i: number) => (values.length > 1 ? g.x + 4 + (i * (g.w - 8)) / (values.length - 1) : g.x + g.w / 2);
+  const pts = values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const iMin = min === null ? -1 : values.indexOf(min);
+  const iMax = max === null ? -1 : values.indexOf(max);
+  const ref = (v: number | null, cls: string, label: string) =>
+    ok(v) ? (
+      <line className={cls} x1={g.x + 1} x2={g.x + g.w - 1} y1={y(v)} y2={y(v)}>
+        <title>{`${label}: ${fmt(v)}`}</title>
+      </line>
+    ) : null;
+  const dot = (i: number, cls: string, label: string) =>
+    i < 0 || values.length < 2 ? null : (
+      <circle className={cls} cx={x(i)} cy={y(values[i])} r={2}>
+        <title>{`${label}: ${fmt(values[i])}`}</title>
+      </circle>
+    );
   return (
-    <span className="spark">
-      <b className="sp-total" title={titles.total}>
-        {total}
-      </b>
-      <b className="sp-current" title={titles.current}>
-        {current}
-      </b>
-      {pts ? (
-        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
-          <polyline points={pts} />
-        </svg>
-      ) : null}
-      <b className="sp-min" title={titles.min}>
-        {min}
-      </b>
-      <b className="sp-max" title={titles.max}>
-        {max}
-      </b>
-    </span>
+    <svg className="spark" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={pills.map((p) => `${p.label}: ${fmt(p.v)}`).join(", ")}>
+      {pills.map((p) => (
+        <g key={p.x} className={`sp-pill ${p.cls}`}>
+          <title>{`${p.label}: ${fmt(p.v)}`}</title>
+          <rect x={p.x} y={1} width={pill} height={H - 2} rx={3} />
+          <text x={p.x + pill / 2} y={H / 2} dominantBaseline="central" textAnchor="middle">
+            {fmt(p.v)}
+          </text>
+        </g>
+      ))}
+      <g className="sp-graph">
+        <title>{titles.days}</title>
+        <rect className="sp-frame" x={g.x} y={g.y - 1} width={g.w} height={g.h + 2} rx={2} />
+        {ref(total, "sp-ref-total", titles.total)}
+        {ref(current, "sp-ref-current", titles.current)}
+        {values.length > 1 ? <polyline className="sp-line" points={pts} /> : null}
+        {values.length === 1 ? <circle className="sp-one" cx={x(0)} cy={y(values[0])} r={2} /> : null}
+        {iMin !== iMax ? dot(iMin, `sp-dot ${pills[2].cls}`, titles.min) : null}
+        {iMin !== iMax ? dot(iMax, `sp-dot ${pills[3].cls}`, titles.max) : null}
+      </g>
+    </svg>
   );
 }
 

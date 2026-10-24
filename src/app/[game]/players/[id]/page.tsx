@@ -143,7 +143,8 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const accDays = daily((h) => (h.shots ? h.hits / h.shots : null));
   const spkNow = kills14 ? sum14("shots") / kills14 : null;
   const spkDays = daily((h) => (h.kills && h.shots ? h.shots / h.kills : null));
-  const sparkTitles = { total: t.total, current: `${t.current} ${t.last14}`, min: t.min, max: t.max };
+  const days14 = t.last14.replace(/^\*\s*/, "");
+  const sparkTitles = { total: t.total, current: `${t.current} (${days14})`, min: `${t.min} (${t.last30})`, max: `${t.max} (${t.last30})`, days: t.last30 };
   const n2 = (v: number | null) => fmtNum(v, lang, 2);
   const pc = (v: number | null) => fmtPct(v, lang);
   const kpm = (kills: number, secs: number) => (secs > 0 ? kills / (secs / 60) : 0);
@@ -269,13 +270,13 @@ export default async function PlayerPage({ params, searchParams }: Props) {
               <tr>
                 <td className="stats-key">{t.kpdLong}:</td>
                 <td>
-                  <Spark values={kpdDays} total={n2(kpd(p.kills, p.deaths))} current={n2(kpdNow)} min={n2(kpdDays.length ? Math.min(...kpdDays) : null)} max={n2(kpdDays.length ? Math.max(...kpdDays) : null)} titles={sparkTitles} />
+                  <Spark values={kpdDays} total={kpd(p.kills, p.deaths)} current={kpdNow} fmt={n2} titles={sparkTitles} />
                 </td>
               </tr>
               <tr>
                 <td className="stats-key">{t.hpkLong}:</td>
                 <td>
-                  <Spark values={hpkDays} total={pc(ratio(p.headshots, p.kills))} current={pc(hpkNow)} min={pc(hpkDays.length ? Math.min(...hpkDays) : null)} max={pc(hpkDays.length ? Math.max(...hpkDays) : null)} titles={sparkTitles} />
+                  <Spark values={hpkDays} total={ratio(p.headshots, p.kills)} current={hpkNow} fmt={pc} titles={sparkTitles} />
                 </td>
               </tr>
               <tr>
@@ -294,11 +295,11 @@ export default async function PlayerPage({ params, searchParams }: Props) {
               <Row4 k={t.teamkills} v={fmtNum(p.team_kills, lang)} />
               <Row4
                 k={t.acc}
-                v={<Spark values={accDays} total={pc(ratio(p.hits, p.shots))} current={pc(accNow)} min={pc(accDays.length ? Math.min(...accDays) : null)} max={pc(accDays.length ? Math.max(...accDays) : null)} titles={sparkTitles} />}
+                v={<Spark values={accDays} total={ratio(p.hits, p.shots)} current={accNow} fmt={pc} titles={sparkTitles} />}
               />
               <Row4
                 k={t.shotsPerKill}
-                v={<Spark values={spkDays} total={n2(p.kills && p.shots ? p.shots / p.kills : null)} current={n2(spkNow)} min={n2(spkDays.length ? Math.min(...spkDays) : null)} max={n2(spkDays.length ? Math.max(...spkDays) : null)} titles={sparkTitles} />}
+                v={<Spark values={spkDays} total={p.kills && p.shots ? p.shots / p.kills : null} current={spkNow} fmt={n2} titles={sparkTitles} lowerIsBetter />}
               />
               <Row4 k={t.killStreak} v={fmtNum(p.kill_streak, lang)} />
             </tbody>
