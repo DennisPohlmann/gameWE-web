@@ -12,6 +12,7 @@ import {
   getCityOptions,
   getCountryOptions,
   getMapPlayers,
+  getMapServers,
   getPlaceRanking,
   getRanking,
   placeSorts,
@@ -19,7 +20,7 @@ import {
   type PlaceSort,
   type RankingSort,
 } from "@/lib/data";
-import { mapMarkers } from "@/lib/map-markers";
+import { mapMarkers, serverMarkers } from "@/lib/map-markers";
 import { fmtNum, localeOf } from "@/lib/format";
 import { fill, getDict } from "@/lib/i18n";
 
@@ -75,7 +76,7 @@ export default async function PlayersPage({
   const { pageSize, activityDays, mapPlayers: showMap, mapStyle } = await getSettings();
   const limit = rowsParam(sp.rows, pageSize);
 
-  const [{ rows, total }, places, mapPlayers, countries, cities] = await Promise.all([
+  const [{ rows, total }, places, mapPlayers, mapServers, countries, cities] = await Promise.all([
     placeList
       ? { rows: [], total: 0 }
       : getRanking({
@@ -101,10 +102,12 @@ export default async function PlayersPage({
       : null,
     // The map follows the filter: the players of one country or city.
     showMap ? getMapPlayers(game, mapAll ? MAP_ALL_LIMIT : MAP_LIMIT, placeList && placeType === "countryinfo" ? {} : { country, city }, "skill") : [],
+    showMap ? getMapServers(game) : [],
     getCountryOptions(game),
     placeType === "cityinfo" ? getCityOptions(game, country) : [],
   ]);
   const markers = mapMarkers(mapPlayers, game, t, lang);
+  const serverPins = serverMarkers(mapServers, game, t);
   const pages = Math.max(1, Math.ceil((places ? places.total : total) / limit));
   const base = `/${game}/players`;
   const keep = {
@@ -181,12 +184,14 @@ export default async function PlayersPage({
           <div className="box">
             <PlayerMap
               markers={markers}
+              servers={serverPins}
               style={mapStyle}
             />
             <p className="muted">
               {fill(mapAll ? t.playerMapHint : t.playerMapHintTop, {
                 n: fmtNum(markers.length, lang),
               })}
+              {serverPins.length ? ` ${t.playerMapServers}` : null}
             </p>
           </div>
         </Section>

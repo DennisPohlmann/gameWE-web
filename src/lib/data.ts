@@ -1459,6 +1459,34 @@ async function withRanks<R extends MapPlayer>(game: string, rows: R[]): Promise<
   return rows.map((r) => ({ ...r, rank: pos.get(`${game}|${r.skill}`) }));
 }
 
+export type MapServer = {
+  serverId: number;
+  name: string;
+  address: string;
+  port: number;
+  publicaddress: string;
+  act_map: string;
+  city: string;
+  country_name: string;
+  country_code: string;
+  lat: number;
+  lng: number;
+};
+
+// Game servers of a ranking at the GeoIP location the collector stores for
+// their address (hlstats_Servers lat/lng, a city or only a country's centre).
+// Servers without one (LAN address, no GeoIP database) are left out.
+export async function getMapServers(game: string): Promise<MapServer[]> {
+  const rows = await query<Omit<MapServer, "lat" | "lng"> & { lat: string; lng: string }>(
+    `SELECT serverId, name, address, port, publicaddress, act_map, city, country_name, country_code, lat, lng
+     FROM hlstats_Servers WHERE game = ? AND lat <> '' AND lng <> '' ORDER BY display_id, serverId`,
+    [game],
+  );
+  return rows
+    .map((r) => ({ ...r, serverId: Number(r.serverId), port: Number(r.port), lat: Number(r.lat), lng: Number(r.lng) }))
+    .filter(onMap);
+}
+
 function mapRow<R extends { playerId: number; skill: number; kills: number; deaths: number; last_event: number; lat: string; lng: string }>(r: R) {
   return { ...r, playerId: Number(r.playerId), skill: Number(r.skill), kills: Number(r.kills), deaths: Number(r.deaths), last_event: Number(r.last_event), lat: Number(r.lat), lng: Number(r.lng) };
 }

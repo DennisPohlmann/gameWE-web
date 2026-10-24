@@ -108,7 +108,13 @@ website therefore computes some things itself:
   players of that place. Hovering a player shows name, city and country,
   rank (the same position as on the ranking and the player page: 1 + ranked
   players with more points, hidden players not counted), points, kills, K/D
-  and the server or last connect.
+  and the server or last connect. Both maps also show the ranking's game
+  servers as squares at the location the collector stores for their address
+  (`hlstats_Servers` `lat`/`lng` from GeoIP: a city, or only the country's
+  centre when GeoIP knows no city); hovering shows name, city and country,
+  address (the public address if set, as in the server list) and the
+  current map, a click opens the server page. Servers without a location
+  (LAN address, no GeoIP database, rows imported without one) are left out.
 - **SourceBans** (bans page): the public ban list
   (`index.php?p=banlist&page=N`) of the address under Settings → Bans is
   read every 30 minutes, at most 100 pages, one after another. Both the

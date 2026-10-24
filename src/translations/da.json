@@ -441,6 +441,7 @@
   "heatTipKills": "{n} drab herfra",
   "heatNone": "Ingen positioner endnu. Collectoren gemmer dem for Source-spil (GoldSrc-logs har ingen).",
   "playerMapHintTop": "De {n} bedste spillere på denne liste med kendt placering (by via GeoIP). Hold musen over et billede for detaljer, klik for at åbne profilen.",
+  "playerMapServers": "Firkanterne er denne ranglistes spilservere (placering via GeoIP); hold musen over for navn, adresse og bane, klik for at åbne serveren.",
   "mapTop10": "Top 10",
   "mapAllPlayers": "Alle spillere",
   "helpStartPoints": "Startpoint",

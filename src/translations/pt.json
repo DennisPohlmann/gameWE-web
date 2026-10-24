@@ -441,6 +441,7 @@
   "heatTipKills": "{n} abates daqui",
   "heatNone": "Ainda sem posições. O collector guarda-as para jogos Source (os logs GoldSrc não as têm).",
   "playerMapHintTop": "Os {n} melhores jogadores desta lista com local conhecido (cidade por GeoIP). Passe o rato sobre uma imagem para detalhes, clique para abrir o perfil.",
+  "playerMapServers": "Os quadrados são os servidores de jogo deste ranking (local por GeoIP); passe o rato por cima para nome, endereço e mapa, clique para abrir o servidor.",
   "mapTop10": "Top 10",
   "mapAllPlayers": "Todos os jogadores",
   "helpStartPoints": "Pontos iniciais",

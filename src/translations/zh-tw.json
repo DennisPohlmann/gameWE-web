@@ -441,6 +441,7 @@
   "heatTipKills": "從此處擊殺 {n} 次",
   "heatNone": "尚無位置資料。collector 為 Source 遊戲儲存位置（GoldSrc 日誌沒有位置）。",
   "playerMapHintTop": "此列表中位置已知的前 {n} 名玩家（GeoIP 城市）。滑鼠懸停頭像查看詳情，點擊開啟資料。",
+  "playerMapServers": "方塊是此排名的遊戲伺服器（GeoIP 位置）；滑鼠懸停查看名稱、位址和地圖，點擊開啟伺服器。",
   "mapTop10": "前 10 名",
   "mapAllPlayers": "所有玩家",
   "helpStartPoints": "初始分數",

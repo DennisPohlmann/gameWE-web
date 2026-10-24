@@ -443,6 +443,7 @@
   "heatTipKills": "{n} Kills von hier",
   "heatNone": "Noch keine Positionen. Der Collector speichert sie für Source-Spiele (GoldSrc-Logs haben keine).",
   "playerMapHintTop": "Die {n} besten Spieler dieser Liste mit bekanntem Ort (Stadt per GeoIP). Mit der Maus über ein Bild für Details, Klick öffnet das Profil.",
+  "playerMapServers": "Die Quadrate sind die Gameserver dieser Rangliste (Ort per GeoIP); mit der Maus darüber für Name, Adresse und Map, Klick öffnet den Server.",
   "mapTop10": "Top 10",
   "mapAllPlayers": "Alle Spieler",
   "helpStartPoints": "Startpunkte",

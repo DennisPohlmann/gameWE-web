@@ -18,10 +18,16 @@ export type MapMarker = {
   lines: string[];
 };
 
+// A game server at its GeoIP location: drawn as a square, not an avatar.
+export type ServerMarker = Omit<MapMarker, "avatar" | "initial">;
+
+const NO_SERVERS: ServerMarker[] = [];
+
 // OpenStreetMap with one Steam avatar per player at their GeoIP city. Players
 // from the same city are spread in a spiral around it so all stay visible.
 // style: a key of mapStyles, or "auto" (OpenStreetMap, dark on dark designs).
-export function PlayerMap({ markers, style }: { markers: MapMarker[]; style: string }) {
+// servers: the ranking's game servers, as squares under the players.
+export function PlayerMap({ markers, servers = NO_SERVERS, style }: { markers: MapMarker[]; servers?: ServerMarker[]; style: string }) {
   const el = useRef<HTMLDivElement>(null);
   useEffect(() => {
     let map: import("leaflet").Map | undefined;
@@ -33,16 +39,31 @@ export function PlayerMap({ markers, style }: { markers: MapMarker[]; style: str
       el.current.classList.toggle("map-dark", !!tiles.dark);
       L.tileLayer(tiles.url, { maxZoom: tiles.maxZoom, attribution: tiles.attribution, subdomains: tiles.subdomains ?? "abc" }).addTo(map);
       const seen = new Map<string, number>();
-      const points: [number, number][] = [];
-      for (const m of markers) {
+      // Spiral around the city in screen pixels, so it works at every zoom.
+      // Servers come first, so they keep the middle of their city.
+      const spread = (m: { lat: number; lng: number }) => {
         const key = `${m.lat},${m.lng}`;
         const n = seen.get(key) ?? 0;
         seen.set(key, n + 1);
-        // Spiral around the city in screen pixels, so it works at every zoom.
         const r = n ? 17 * Math.sqrt(n) : 0;
         const a = n * 2.4;
-        const dx = Math.round(r * Math.cos(a));
-        const dy = Math.round(r * Math.sin(a));
+        return [Math.round(r * Math.cos(a)), Math.round(r * Math.sin(a))];
+      };
+      for (const m of servers) {
+        const [dx, dy] = spread(m);
+        const icon = L.divIcon({
+          className: "map-server",
+          html: `<a href="${esc(m.href)}" aria-label="${esc(m.name)}"></a>`,
+          iconSize: [16, 16],
+          iconAnchor: [8 - dx, 8 - dy],
+        });
+        L.marker([m.lat, m.lng], { icon, zIndexOffset: -1000 })
+          .bindTooltip(tip(m), { direction: "top", offset: [dx, dy - 8] })
+          .addTo(map);
+      }
+      const points: [number, number][] = [];
+      for (const m of markers) {
+        const [dx, dy] = spread(m);
         const pos: [number, number] = [m.lat, m.lng];
         points.push(pos);
         const icon = L.divIcon({
@@ -55,12 +76,11 @@ export function PlayerMap({ markers, style }: { markers: MapMarker[]; style: str
         });
         // No title: the browser's own tooltip would repeat the name under ours.
         L.marker(pos, { icon })
-          .bindTooltip(
-            m.lines
-              .map((l, i) => (i ? esc(l) : `<b>${m.flag ? `<span class="flag flag-svg" style="background-image:url('${esc(m.flag)}')"></span>` : ""}${esc(l)}</b>`))
-              .join("<br>"), { direction: "top", offset: [dx, dy - 14] })
+          .bindTooltip(tip(m), { direction: "top", offset: [dx, dy - 14] })
           .addTo(map);
       }
+      // Without players, the map shows where the servers are.
+      if (!points.length) for (const m of servers) points.push([m.lat, m.lng]);
       if (points.length > 1) map.fitBounds(L.latLngBounds(points), { padding: [60, 60], maxZoom: 6 });
       else map.setView(points[0] ?? [51, 10], points.length ? 6 : 4);
     });
@@ -68,8 +88,15 @@ export function PlayerMap({ markers, style }: { markers: MapMarker[]; style: str
       gone = true;
       map?.remove();
     };
-  }, [markers, style]);
+  }, [markers, servers, style]);
   return <div ref={el} className="player-map" />;
+}
+
+// Hover box: first line bold with the flag, then the details.
+function tip(m: { lines: string[]; flag?: string }) {
+  return m.lines
+    .map((l, i) => (i ? esc(l) : `<b>${m.flag ? `<span class="flag flag-svg" style="background-image:url('${esc(m.flag)}')"></span>` : ""}${esc(l)}</b>`))
+    .join("<br>");
 }
 
 function esc(s: string) {

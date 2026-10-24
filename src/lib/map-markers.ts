@@ -1,7 +1,7 @@
 import "server-only";
-import type { MapMarker } from "@/components/player-map";
+import type { MapMarker, ServerMarker } from "@/components/player-map";
 import { basePath } from "./base-path";
-import type { MapPlayer } from "./data";
+import type { MapPlayer, MapServer } from "./data";
 import { FLAG_CODES } from "./flag-codes";
 import { flagEmoji, fmtDate, fmtNum, kpd } from "./format";
 import type { Dict, Lang } from "./i18n";
@@ -26,6 +26,30 @@ export function mapMarkers(players: (MapPlayer & { server?: string | null })[], 
         [p.city, p.country].filter(Boolean).join(", "),
         `${p.rank ? `${t.rank}: ${fmtNum(p.rank, lang)} · ` : ""}${t.points}: ${fmtNum(p.skill, lang)} · ${t.kills}: ${fmtNum(p.kills, lang)} · ${t.kpd}: ${kpd(p.kills, p.deaths).toFixed(2)}`,
         p.server ? `${t.server}: ${p.server}` : `${t.lastConnect}: ${fmtDate(p.last_event, lang)}`,
+      ].filter(Boolean),
+    };
+  });
+}
+
+// Markers for the game servers on the player map: link to the server page
+// and the hover lines (name, place, address as in the server list, map).
+export function serverMarkers(servers: MapServer[], game: string, t: Dict): ServerMarker[] {
+  return servers.map((s) => {
+    const name = s.name || `${s.address}:${s.port}`;
+    const code = (s.country_code ?? "").trim().toLowerCase();
+    const svg = FLAG_CODES.has(code);
+    return {
+      id: s.serverId,
+      name,
+      href: `${basePath}/${game}/servers/${s.serverId}`,
+      lat: s.lat,
+      lng: s.lng,
+      flag: svg ? `${basePath}/flags/${code}.svg` : undefined,
+      lines: [
+        svg ? name : `${flagEmoji(code)} ${name}`.trim(),
+        [s.city, s.country_name].filter(Boolean).join(", "),
+        `${t.address}: ${s.publicaddress || `${s.address}:${s.port}`}`,
+        s.act_map ? `${t.map}: ${s.act_map}` : "",
       ].filter(Boolean),
     };
   });

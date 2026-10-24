@@ -3,13 +3,13 @@ import { LiveTable, ServerTable } from "@/components/live";
 import { Rich } from "@/components/rich";
 import { Section } from "@/components/ui";
 import { ServerLoadChart } from "@/components/graphics";
-import { everyDay, getDailyActivity, getHourlyActivity, getLivePlayers, getLiveMapPlayers, getServerLoad, getServers, getTotals } from "@/lib/data";
+import { everyDay, getDailyActivity, getHourlyActivity, getLivePlayers, getLiveMapPlayers, getMapServers, getServerLoad, getServers, getTotals } from "@/lib/data";
 import { dateFormat, fmtNum, fmtPct, localeOf, nowUnix, ratio } from "@/lib/format";
 import { fill, getDict } from "@/lib/i18n";
 import { AwardBoard } from "@/components/award-board";
 import { GameEvents } from "@/components/game-events";
 import { PlayerMap } from "@/components/player-map";
-import { mapMarkers } from "@/lib/map-markers";
+import { mapMarkers, serverMarkers } from "@/lib/map-markers";
 import { getSettings } from "@/lib/settings";
 
 const BUCKET = 900;
@@ -21,15 +21,17 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
   const { game } = await params;
   const { lang, t } = await getDict();
   const { mapLive, mapStyle } = await getSettings();
-  const [servers, totals, live, activityRows, hourly, mapPlayers] = await Promise.all([
+  const [servers, totals, live, activityRows, hourly, mapPlayers, mapServers] = await Promise.all([
     getServers(game),
     getTotals(game),
     getLivePlayers(game),
     getDailyActivity(game, 14),
     getHourlyActivity(game, 14),
     mapLive ? getLiveMapPlayers(game) : [],
+    mapLive ? getMapServers(game) : [],
   ]);
   const markers = mapMarkers(mapPlayers, game, t, lang);
+  const serverPins = serverMarkers(mapServers, game, t);
   const activity = everyDay(activityRows, 14);
   const dayLabel = (d: string) => d.slice(8, 10) + "." + d.slice(5, 7) + ".";
   const tipFmt = dateFormat(localeOf(lang), { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
@@ -65,8 +67,11 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
   const liveMap = mapLive ? (
     <div className="box">
       <h4 className="map-title">{t.playerMapLive}</h4>
-      <PlayerMap markers={markers} style={mapStyle} />
-      <p className="muted">{markers.length ? fill(t.playerMapLiveHint, { n: String(markers.length) }) : t.playerMapLiveEmpty}</p>
+      <PlayerMap markers={markers} servers={serverPins} style={mapStyle} />
+      <p className="muted">
+        {markers.length ? fill(t.playerMapLiveHint, { n: String(markers.length) }) : t.playerMapLiveEmpty}
+        {serverPins.length ? ` ${t.playerMapServers}` : null}
+      </p>
     </div>
   ) : null;
   const head = (

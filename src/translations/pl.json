@@ -441,6 +441,7 @@
   "heatTipKills": "{n} zabójstw stąd",
   "heatNone": "Brak jeszcze pozycji. Collector zapisuje je dla gier Source (logi GoldSrc ich nie mają).",
   "playerMapHintTop": "{n} najlepszych graczy z tej listy ze znaną lokalizacją (miasto wg GeoIP). Najedź na obrazek, by zobaczyć szczegóły, kliknij, by otworzyć profil.",
+  "playerMapServers": "Kwadraty to serwery gry tego rankingu (lokalizacja wg GeoIP); najedź, by zobaczyć nazwę, adres i mapę, kliknij, by otworzyć serwer.",
   "mapTop10": "Top 10",
   "mapAllPlayers": "Wszyscy gracze",
   "helpStartPoints": "Punkty startowe",

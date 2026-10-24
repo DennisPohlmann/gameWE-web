@@ -656,6 +656,9 @@ table.spaced { margin-top: 10px; }
 .map-avatar img { position: absolute; top: 0; left: 0; object-fit: cover; opacity: 0; transition: opacity 0.2s; }
 .map-avatar img.ok { opacity: 1; }
 .map-avatar:hover { z-index: 1000 !important; }
+/* Game servers: squares, unlike the round player avatars. */
+.map-server a { display: block; width: 16px; height: 16px; box-sizing: border-box; border: 2px solid #fff; border-radius: 2px; background: #d9531e; box-shadow: 0 0 0 1px #333, 0 1px 3px rgba(0, 0, 0, 0.5); }
+.map-server:hover { z-index: 1000 !important; }
 .leaflet-tooltip { font: 11px/1.4 Verdana, Arial, sans-serif; }
 
 /* Base game of a ranking (CS:GO, TF2, CS 1.6 …), coloured by engine. */
