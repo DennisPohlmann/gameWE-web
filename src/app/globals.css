@@ -653,6 +653,7 @@ td.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9e
 .chart .hover-area { fill: transparent; cursor: crosshair; touch-action: pan-y; }
 .chart .guide, .load-chart .guide { stroke: #888; stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; pointer-events: none; }
 .chart .dot.small { stroke: #fff; stroke-width: 1; pointer-events: none; }
+.chart .dot.small.dense { stroke: none; }
 .chart .dot.hot { stroke: #fff; stroke-width: 2; pointer-events: none; filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5)); }
 .chart .bar-day .hover { fill: transparent; }
 .chart .bar-day:hover .hover { fill: rgba(0, 0, 0, 0.05); }

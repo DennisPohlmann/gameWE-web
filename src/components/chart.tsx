@@ -9,10 +9,6 @@ import { useRef, useState, type PointerEvent } from "react";
 // null leaves a gap, e.g. days before the first data.
 type Series = { label: string; values: (number | null)[]; className: string };
 
-// Up to this many points, every point gets a dot; denser (hourly) charts
-// show dots only at the hovered point.
-const DOTS_UP_TO = 62;
-
 export function LineChart({
   labels: allLabels,
   tips: allTips,
@@ -82,6 +78,9 @@ export function LineChart({
   const max = Math.ceil(hi / step) * step;
   const plotW = width - pad.left - pad.right;
   const x = (i: number) => pad.left + (i * plotW) / (n - 1);
+  const gap = plotW / (n - 1);
+  const dotR = Math.max(1, Math.min(2.5, gap / 3));
+  const dense = gap < 6;
   const y = (v: number) => pad.top + (1 - (v - min) / (max - min || 1)) * (height - pad.top - pad.bottom);
   const ticks = Array.from({ length: Math.round((max - min) / step) + 1 }, (_, i) => min + i * step);
   const every = Math.max(1, Math.ceil(n / 6));
@@ -158,13 +157,13 @@ export function LineChart({
             ),
           ),
         )}
-        {n <= DOTS_UP_TO
-          ? series.map((s) =>
-              s.values.map((v, i) =>
-                v === null ? null : <circle key={`${s.label}-d${i}`} className={`dot small ${s.className}`} cx={x(i)} cy={y(v)} r={2.5} />,
-              ),
-            )
-          : null}
+        {/* Every point gets a dot; on dense charts (14 days per quarter hour)
+            they shrink to the room between two points and lose the white edge. */}
+        {series.map((s) =>
+          s.values.map((v, i) =>
+            v === null ? null : <circle key={`${s.label}-d${i}`} className={`dot small${dense ? " dense" : ""} ${s.className}`} cx={x(i)} cy={y(v)} r={dotR} />,
+          ),
+        )}
         {hover
           ? shown.map((s) => <circle key={`${s.label}-h`} className={`dot hot ${s.className}`} cx={x(hover.i)} cy={y(s.values[hover.i]!)} r={5} />)
           : null}
