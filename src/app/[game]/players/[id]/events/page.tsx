@@ -3,17 +3,12 @@ import Form from "next/form";
 import type { ReactNode } from "react";
 import { HistoryFrame, loadHistoryPlayer } from "@/components/player-history";
 import { Empty, Pager, PlayerLink, ROW_OPTIONS, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
-import { Weapon } from "@/components/weapon";
 import { noAutofill } from "@/lib/autofill";
 import { fmtDateTime, localeOf } from "@/lib/format";
-import { getGame, getPlayerFlags } from "@/lib/data";
+import { getPlayerFlags } from "@/lib/data";
 import { EVENT_KINDS, countPlayerEvents, getPlayerEvents, type EventKind } from "@/lib/history";
 import { fill, getDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
-import { weaponImages } from "@/lib/weapons";
-
-// Events whose {x} is the weapon.
-const WEAPON_KINDS: ReadonlySet<EventKind> = new Set(["kill", "death", "suicide", "teamkill"]);
 
 type Props = { params: Promise<{ game: string; id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -33,27 +28,19 @@ export default async function EventsPage({ params, searchParams }: Props) {
   const type = strParam(sp.type) as EventKind;
   const kinds = EVENT_KINDS.includes(type) ? [type] : [...EVENT_KINDS];
   const [rows, total] = await Promise.all([getPlayerEvents(p.playerId, kinds, limit, (page - 1) * limit), countPlayerEvents(p.playerId, kinds)]);
-  const [flags, g] = await Promise.all([getPlayerFlags(rows.map((r) => r.other)), getGame(game, true)]);
-  const images = weaponImages(g?.realgame);
+  const flags = await getPlayerFlags(rows.map((r) => r.other));
   const base = `/${game}/players/${p.playerId}/events`;
 
-  // The sentence of an event, with the other player as a link and the
-  // weapon of kills and deaths as its image.
+  // The sentence of an event, with the other player as a link.
   const text = (e: (typeof rows)[number]): ReactNode => {
-    const armed = WEAPON_KINDS.has(e.kind) && !!(e.text || e.code);
-    const tpl = fill(t.evText[e.kind], { x: armed ? "\u0001" : e.text || e.code || "?", n: e.num, old: e.text, new: e.code, p: "\u0000" });
+    const tpl = fill(t.evText[e.kind], { x: e.text || e.code || "?", n: e.num, old: e.text, new: e.code, p: "\u0000" });
+    const [before, after] = tpl.split("\u0000");
     const head = e.kind === "kill" || e.kind === "death" ? (e.num ? <span className="hs" title="Headshot">HS</span> : null) : null;
     return (
       <>
-        {tpl.split(/(\u0000|\u0001)/).map((part, i) =>
-          part === "\u0000" ? (
-            <PlayerLink key={i} game={game} id={e.other} name={e.otherName} flag={flags.get(e.other)} />
-          ) : part === "\u0001" ? (
-            <Weapon key={i} set={images} code={e.code} name={e.text} height={20} />
-          ) : (
-            part
-          ),
-        )}
+        {before}
+        {after !== undefined ? <PlayerLink game={game} id={e.other} name={e.otherName} flag={flags.get(e.other)} /> : null}
+        {after}
         {head ? <> {head}</> : null}
       </>
     );

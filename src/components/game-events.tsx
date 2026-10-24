@@ -1,9 +1,8 @@
 import { GameEventsLive } from "@/components/game-events-live";
 import { Section } from "@/components/ui";
-import { getGame, getPlayerFlags } from "@/lib/data";
+import { getPlayerFlags } from "@/lib/data";
 import { getGameEvents, hasEventServer } from "@/lib/history";
 import { getSettings } from "@/lib/settings";
-import { weaponImages } from "@/lib/weapons";
 import type { Dict, Lang } from "@/lib/i18n";
 
 // The latest events of a ranking on its start page: "X killed Y with Z",
@@ -15,7 +14,6 @@ export async function GameEvents({ game, t, lang }: { game: string; t: Dict; lan
   const rows = await getGameEvents(game, 10);
   const withServer = await hasEventServer();
   const flags = await getPlayerFlags(rows.flatMap((r) => [r.actor, r.other]));
-  const weapons = weaponImages((await getGame(game, true))?.realgame);
   return (
     <Section title={t.recentEvents}>
       <GameEventsLive
@@ -25,7 +23,6 @@ export async function GameEvents({ game, t, lang }: { game: string; t: Dict; lan
         withServer={withServer}
         initial={rows}
         initialFlags={Object.fromEntries(flags)}
-        weapons={weapons}
         labels={{ time: t.time, eventText: t.eventText, server: t.server, map: t.map, noData: t.noData, evText: t.evText }}
       />
     </Section>

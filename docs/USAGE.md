@@ -45,11 +45,12 @@ settings: [CONFIG.md](CONFIG.md).
 | `/robots.txt`, `/sitemap.xml` | for search engines, see [CONFIG.md](CONFIG.md#search-engines-and-sharing) |
 | `/admin` | admin area |
 
-Weapons are shown as images wherever they appear (weapon list and page, player
-profile and recent kills, event history, live events, weapon awards, help), with
-the name as tooltip and alt text. The images come from HLstatsX: Community
-Edition for CS:S, CS:GO, CS 1.6, TF2, TFC, HL2DM, HLDM, DoD:S, DoD, NS, L4D,
-L4D2 and Insurgency; a weapon without an image (or of another game) is shown
+The weapon lists (weapon list, weapon page, weapon table of the player
+profile) show each weapon as an image, with the name as tooltip and alt text;
+everywhere else (kills, events, awards, help) weapons stay names. The images
+come from HLstatsX: Community Edition for CS:S, CS:GO, CS 1.6, TF2, TFC, HL2DM,
+HLDM, DoD:S, DoD, NS, L4D, L4D2 and Insurgency, with the names that were drawn
+into them taken out; a weapon without an image (or of another game) is shown
 by its name.
 
 A ranking is a row of `hlstats_Games` that you create in the admin area
@@ -71,6 +72,9 @@ website therefore computes some things itself:
   website computes today's leaders, and yesterday's winners while nothing is
   stored, from the same sources (`hlstats_Events_Frags`,
   `hlstats_Events_PlayerActions`, `hlstats_Players_History`).
+  The calendar under `?view=history` links the days up to the last day with
+  stored winners (yesterday while none are stored); today and later days are
+  greyed out, and a `?date=` after that day shows the last day instead.
 - **Ribbons** count a player's wins per award in `hlstats_Awards_History`;
   the classes (bronze, silver, gold) come from
   `hlstats_Definition_Ribbons_Classes`.

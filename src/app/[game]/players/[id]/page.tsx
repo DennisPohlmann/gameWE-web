@@ -222,7 +222,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
               <Row k={t.avgPing} v={p.average_ping ? `${p.average_ping} ms` : "-"} span />
               <Row
                 k={t.favWeapon}
-                v={fav ? <Link href={`/${game}/weapons/${encodeURIComponent(fav.code)}`}><Weapon set={images} code={fav.code} name={fav.name} /></Link> : "-"}
+                v={fav ? <Link href={`/${game}/weapons/${encodeURIComponent(fav.code)}`}>{fav.name}</Link> : "-"}
                 span
               />
             </tbody>
@@ -652,7 +652,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                         )}
                       </td>
                       <td>
-                        {f.weapon || f.weaponCode ? <Weapon set={images} code={f.weaponCode} name={f.weapon} height={20} /> : "-"}
+                        {f.weapon ?? "-"}
                         {f.headshot ? <span className="hs" title="Headshot">HS</span> : null}
                       </td>
                       <td className="hide-sm">{f.map ?? "-"}</td>

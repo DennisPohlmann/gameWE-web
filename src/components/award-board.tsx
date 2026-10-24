@@ -1,15 +1,12 @@
 import Link from "next/link";
 import { Empty, PlayerLink, Section, TableWrap } from "@/components/ui";
-import { Weapon, type WeaponSet } from "@/components/weapon";
 import { awardValue, getAwardBoard, getAwardDay } from "@/lib/awards";
 import { fmtDuration, fmtNum, localeOf } from "@/lib/format";
-import { getGame } from "@/lib/data";
 import { fill, type Dict, type Lang } from "@/lib/i18n";
-import { weaponImages } from "@/lib/weapons";
 
 // All awards of a ranking with yesterday's winner and today's leader.
 export async function AwardBoard({ game, t, lang }: { game: string; t: Dict; lang: Lang }) {
-  const [{ day, rows, flags }, images] = await Promise.all([getAwardBoard(game), awardImages(game)]);
+  const { day, rows, flags } = await getAwardBoard(game);
   const val = (a: (typeof rows)[number], v: number) => awardValue(a, v, (n) => fmtNum(n, lang), fmtDuration);
   return (
     <Section title={t.dailyAwards}>
@@ -27,7 +24,7 @@ export async function AwardBoard({ game, t, lang }: { game: string; t: Dict; lan
               {rows.map((a) => (
                 <tr key={a.awardId}>
                   <td>
-                    <AwardName game={game} a={a} images={images} />
+                    <Link href={`/${game}/awards?view=ribbons&award=${a.awardId}`}>{a.name}</Link>
                   </td>
                   <td>
                     {a.winner ? (
@@ -64,7 +61,7 @@ export async function AwardBoard({ game, t, lang }: { game: string; t: Dict; lan
 
 // The winners of one chosen day (calendar on the awards page).
 export async function AwardDayTable({ game, day, t, lang }: { game: string; day: string; t: Dict; lang: Lang }) {
-  const [{ rows, flags }, images] = await Promise.all([getAwardDay(game, day), awardImages(game)]);
+  const { rows, flags } = await getAwardDay(game, day);
   const val = (a: (typeof rows)[number], v: number) => awardValue(a, v, (n) => fmtNum(n, lang), fmtDuration);
   const title = new Date(`${day}T00:00:00Z`).toLocaleDateString(localeOf(lang), { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
   return (
@@ -84,7 +81,7 @@ export async function AwardDayTable({ game, day, t, lang }: { game: string; day:
                 return (
                   <tr key={a.awardId}>
                     <td>
-                      <AwardName game={game} a={a} images={images} />
+                      <Link href={`/${game}/awards?view=ribbons&award=${a.awardId}`}>{a.name}</Link>
                     </td>
                     <td>
                       {a.winner ? (
@@ -106,23 +103,5 @@ export async function AwardDayTable({ game, day, t, lang }: { game: string; day:
         <Empty>{t.notAwarded}</Empty>
       )}
     </Section>
-  );
-}
-
-const awardImages = async (game: string) => weaponImages((await getGame(game, true))?.realgame);
-
-// A weapon award (type W, its code is the weapon's) shows the weapon's image
-// in front of its name.
-function AwardName({ game, a, images }: { game: string; a: { awardId: number; awardType: string; code: string; name: string }; images: WeaponSet | null }) {
-  const weapon = a.awardType === "W" && images && Object.hasOwn(images.sizes, a.code.trim().toLowerCase());
-  return (
-    <Link href={`/${game}/awards?view=ribbons&award=${a.awardId}`}>
-      {weapon ? (
-        <>
-          <Weapon set={images} code={a.code} name={a.name} height={20} />{" "}
-        </>
-      ) : null}
-      {a.name}
-    </Link>
   );
 }
