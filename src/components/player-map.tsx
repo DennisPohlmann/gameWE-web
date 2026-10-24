@@ -23,6 +23,12 @@ export type ServerMarker = Omit<MapMarker, "avatar" | "initial">;
 
 const NO_SERVERS: ServerMarker[] = [];
 
+// Two rack units with a status light and a slot each, drawn in currentColor.
+const SERVER_ICON =
+  '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
+  '<rect x="3" y="3.5" width="18" height="7" rx="2"/><rect x="3" y="13.5" width="18" height="7" rx="2"/>' +
+  '<path d="M12 7h5M12 17h5"/><circle cx="7" cy="7" r="1" fill="currentColor"/><circle cx="7" cy="17" r="1" fill="currentColor"/></svg>';
+
 // OpenStreetMap with one Steam avatar per player at their GeoIP city. Players
 // from the same city are spread in a spiral around it so all stay visible.
 // style: a key of mapStyles, or "auto" (OpenStreetMap, dark on dark designs).
@@ -53,12 +59,13 @@ export function PlayerMap({ markers, servers = NO_SERVERS, style }: { markers: M
         const [dx, dy] = spread(m);
         const icon = L.divIcon({
           className: "map-server",
-          html: `<a href="${esc(m.href)}" aria-label="${esc(m.name)}"></a>`,
-          iconSize: [16, 16],
-          iconAnchor: [8 - dx, 8 - dy],
+          // Same size as the player avatars, with a server rack inside.
+          html: `<a href="${esc(m.href)}" aria-label="${esc(m.name)}">${SERVER_ICON}</a>`,
+          iconSize: [30, 30],
+          iconAnchor: [15 - dx, 15 - dy],
         });
         L.marker([m.lat, m.lng], { icon, zIndexOffset: -1000 })
-          .bindTooltip(tip(m), { direction: "top", offset: [dx, dy - 8] })
+          .bindTooltip(tip(m), { direction: "top", offset: [dx, dy - 14] })
           .addTo(map);
       }
       const points: [number, number][] = [];
