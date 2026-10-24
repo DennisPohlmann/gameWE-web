@@ -69,8 +69,11 @@ export function LineChart({
   if (n < 2) return null;
   const all = series.flatMap((s) => s.values).filter((v): v is number => v !== null);
   const lowest = all.length ? Math.min(...all) : 0;
-  const max = Math.max(fromZero ? 2 : lowest + 2, ...all);
-  const min = fromZero ? Math.min(0, ...all) : Math.floor(lowest - (max - lowest) * 0.05);
+  const min = fromZero ? Math.floor(Math.min(0, ...all)) : Math.floor(lowest - (Math.max(lowest + 2, ...all) - lowest) * 0.05);
+  // Whole numbers on all three ticks: the top is rounded up so that the
+  // middle tick lands on an integer too.
+  let max = Math.ceil(Math.max(fromZero ? 2 : lowest + 2, ...all));
+  if ((max - min) % 2) max++;
   const plotW = width - pad.left - pad.right;
   const x = (i: number) => pad.left + (i * plotW) / (n - 1);
   const y = (v: number) => pad.top + (1 - (v - min) / (max - min || 1)) * (height - pad.top - pad.bottom);
@@ -83,7 +86,9 @@ export function LineChart({
   const hourStride = hourly ? [1, 2, 3, 6, 12].find((h) => (h * plotW) / (n - 1) >= 30) : undefined;
   const showLabel = (l: string, i: number) =>
     hourly ? hourStride !== undefined && l !== "" && Number.parseInt(l, 10) % hourStride === 0 : sparseLabels ? l !== "" : i % every === 0 || i === n - 1;
-  const fmt = (v: number) => v.toLocaleString(locale, { maximumFractionDigits: 1 });
+  // All charts show counts (players, kills, headshots, connects); players
+  // online are averages per time slot, so the hover box rounds them.
+  const fmt = (v: number) => Math.round(v).toLocaleString(locale);
 
   const onMove = (e: PointerEvent<SVGRectElement>) => {
     const svg = svgRef.current;
@@ -107,7 +112,7 @@ export function LineChart({
           <g key={i}>
             <line className="grid" x1={pad.left} x2={width - pad.right} y1={y(t)} y2={y(t)} />
             <text className="axis" x={pad.left - 6} y={y(t) + 4} textAnchor="end">
-              {Math.round(t).toLocaleString(locale)}
+              {t.toLocaleString(locale)}
             </text>
           </g>
         ))}
