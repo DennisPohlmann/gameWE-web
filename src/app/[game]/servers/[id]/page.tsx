@@ -49,7 +49,7 @@ export default async function ServerPage({ params }: Props) {
         <ShareBar labels={{ share: t.shareThis, copy: t.shareCopy, copied: t.copied, email: t.shareEmail }} />
       </div>
       <Section title={t.liveView}>
-        <ServerTable game={game} servers={[s]} t={t} />
+        <ServerTable game={game} servers={[s]} t={t} lang={lang} />
         {load24.length > 1 ? (
           <div className="box">
             <p className="load-head">

@@ -3,6 +3,7 @@ import { LineChart } from "@/components/chart";
 import { Pie, WeekdayBars } from "@/components/graphics";
 import { Flag, Section } from "@/components/ui";
 import Link from "next/link";
+import { ServerFlag } from "@/components/live";
 import { SigCode } from "@/components/sig-code";
 import { getMiscStats, getServers } from "@/lib/data";
 import { imageStyles } from "@/lib/image-theme";
@@ -107,6 +108,7 @@ export default async function MiscPage({ params }: { params: Promise<{ game: str
         {servers.map((s) => (
           <div key={s.serverId} className="box banner-box">
             <h3>
+              <ServerFlag code={s.country_code} lang={lang} />
               <Link href={`/${game}/servers/${s.serverId}`}>{s.name || `${s.address}:${s.port}`}</Link>
             </h3>
             <SigCode

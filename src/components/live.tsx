@@ -1,13 +1,14 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { botProfiles, type LivePlayer, type Server } from "@/lib/data";
-import { fmtDuration, fmtNum, fmtPct, nowUnix, ratio } from "@/lib/format";
+import { countryName, fmtDuration, fmtNum, fmtPct, nowUnix, ratio } from "@/lib/format";
 import type { Dict, Lang } from "@/lib/i18n";
 import { Flag } from "./ui";
 
 // Server rows as on gameME: name, address (steam://connect), map, map time,
-// players. `head` is an optional first header row spanning the table.
-export function ServerTable({ game, servers, head, t }: { game: string; servers: Server[]; head?: ReactNode; t: Dict }) {
+// players. `head` is an optional first header row spanning the table. The
+// flag of the server's country stands before its name.
+export function ServerTable({ game, servers, head, t, lang }: { game: string; servers: Server[]; head?: ReactNode; t: Dict; lang: Lang }) {
   const now = nowUnix();
   return (
     <div className="table-wrap">
@@ -41,6 +42,7 @@ export function ServerTable({ game, servers, head, t }: { game: string; servers:
             return (
               <tr key={s.serverId} className="server-line">
                 <td className="wrap-cell">
+                  <ServerFlag code={s.country_code} lang={lang} />
                   <Link className="srv" href={`/${game}/servers/${s.serverId}`}>
                     {s.name || addr}
                   </Link>
@@ -61,6 +63,18 @@ export function ServerTable({ game, servers, head, t }: { game: string; servers:
         </tbody>
       </table>
     </div>
+  );
+}
+
+// Flag of a server's country (hlstats_Servers.country_code) with the country
+// name as title; nothing for an empty or unknown code.
+export function ServerFlag({ code, lang }: { code: string | null | undefined; lang: Lang }) {
+  const name = countryName(code, lang);
+  if (!name) return null;
+  return (
+    <>
+      <Flag code={code} title={name} />{" "}
+    </>
   );
 }
 

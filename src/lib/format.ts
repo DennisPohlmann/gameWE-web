@@ -69,6 +69,19 @@ export function flagEmoji(code: string | null | undefined): string {
   return String.fromCodePoint(...[...c].map((ch) => 0x1f1e6 + ch.charCodeAt(0) - 65));
 }
 
+// Country name of a two-letter code in the page language, e.g. a server's
+// country_code; empty for an unknown code.
+export function countryName(code: string | null | undefined, lang: Lang): string {
+  const c = (code ?? "").trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(c)) return "";
+  try {
+    const name = new Intl.DisplayNames([locales[lang]], { type: "region" }).of(c);
+    return name && name !== c ? name : "";
+  } catch {
+    return "";
+  }
+}
+
 // "STEAM_0:1:123" or "1:123" -> Steam IDs. Bots and unknown formats return null.
 // CS:GO logs "[U:1:123]" or a SteamID64 instead, so those work too.
 export function steamIds(uniqueId: string | null | undefined) {

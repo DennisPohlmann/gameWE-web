@@ -16,8 +16,8 @@ settings: [CONFIG.md](CONFIG.md).
 | URL | Content |
 |-----|---------|
 | `/` | all rankings with players online, best player (Steam picture, flag) and clan (flag of its members' most common country), load of the last 30 days |
-| `/<game>` | a ranking: servers, live players per server by team, daily awards, activity |
-| `/<game>/servers/<id>` | one server: live view with bots and flags, load graph of the last 24 hours (players, maps, uptime), counters, chat |
+| `/<game>` | a ranking: servers (flag of the server's country), live players per server by team, daily awards, activity |
+| `/<game>/servers/<id>` | one server: live view with the server's country flag, bots and flags, load graph of the last 24 hours (players, maps, uptime), counters, chat |
 | `/<game>/players` | ranking (sortable, search), `?view=new` for new players; country and city rankings with gameME's links: `?type=countryinfo` (all countries), `?type=countryinfo&valuecountry=de` (players of a country), `?type=cityinfo[&valuecountry=de]` (cities), `?type=cityinfo&valuecountry=de&valuecity=berlin` (players of a city; `valuecity` alone also works but joins cities of the same name) |
 | `/<game>/players/<id>` | player profile: Steam avatar and data, summary with radar and trend pills, player trend, rank and career, ribbons, forum signature, hitbox, weapons, maps, opponents |
 | `/<game>/clans`, `/<game>/clans/<id>` | clans and members |
@@ -31,7 +31,7 @@ settings: [CONFIG.md](CONFIG.md).
 | `/<game>/players/<id>/awards` | awards the player won: summary and list by date |
 | `/<game>/players/<id>/chat` | the player's chat messages |
 | `/<game>/chat` | chat log with search |
-| `/<game>/misc` | player countries, weekdays, connects per day, connect methods |
+| `/<game>/misc` | player countries, weekdays, connects per day, connect methods, server banners |
 | `/<game>/bans` | ban list like gameME's: players the collector marked as banned from the server logs (VAC kick, permanent server ban; `hideranking = 2`), bans from SourceBans (reason, length, date) and, with `STEAM_API_KEY`, VAC/game bans from Steam; points, K/D, HS/kill and accuracy per player. `hlstats_Players_Bans` adds type, date and reason for log bans. |
 | `/search` | search players by name or Steam ID and clans by tag or name (`?q=...&st=names\|steam\|clans&game=<code>`) |
 | `/help` | help: how points are calculated (with the current settings), actions, weapon modifiers, chat commands |

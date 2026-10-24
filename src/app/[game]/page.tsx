@@ -81,7 +81,7 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
       <Section title={t.participatingServers}>
         {multi ? (
           <>
-            <ServerTable game={game} servers={servers} t={t} head={head} />
+            <ServerTable game={game} servers={servers} t={t} lang={lang} head={head} />
             {liveMap}
             {combined ? (
               <div className="box">
@@ -95,7 +95,7 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
           if (multi && !players.length && loads[i].length < 2) return null;
           return (
             <div key={s.serverId} className="server-margin">
-              <ServerTable game={game} servers={[s]} t={t} head={multi ? undefined : head} />
+              <ServerTable game={game} servers={[s]} t={t} lang={lang} head={multi ? undefined : head} />
               {multi ? null : liveMap}
               {!multi && combined ? (
                 <div className="box">
