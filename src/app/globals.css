@@ -615,10 +615,12 @@ table.spaced { margin-top: 10px; }
 .player-map { height: 420px; width: 100%; border: 1px solid #aaa; background: #fff; }
 .player-map.map-dark { background: #1d1f22; }
 .map-dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.85); }
-.map-avatar a { display: block; width: 30px; height: 30px; text-decoration: none; }
+.map-avatar a { position: relative; display: block; width: 30px; height: 30px; text-decoration: none; }
 .map-avatar img,
 .map-avatar span { display: block; width: 30px; height: 30px; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px #555, 0 1px 3px rgba(0, 0, 0, 0.5); background: #666; }
 .map-avatar span { color: #fff; font: bold 13px/26px Verdana, sans-serif; text-align: center; }
+.map-avatar img { position: absolute; top: 0; left: 0; object-fit: cover; opacity: 0; transition: opacity 0.2s; }
+.map-avatar img.ok { opacity: 1; }
 .map-avatar:hover { z-index: 1000 !important; }
 .leaflet-tooltip { font: 11px/1.4 Verdana, Arial, sans-serif; }
 

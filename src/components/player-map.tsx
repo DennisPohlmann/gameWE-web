@@ -47,7 +47,9 @@ export function PlayerMap({ markers, style }: { markers: MapMarker[]; style: str
         points.push(pos);
         const icon = L.divIcon({
           className: "map-avatar",
-          html: `<a href="${esc(m.href)}"><img src="${esc(m.avatar)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${esc(m.initial)}'}))"></a>`,
+          // The initial shows until the avatar has loaded, then the avatar fades
+          // in over it; if it does not load, the initial stays.
+          html: `<a href="${esc(m.href)}"><span>${esc(m.initial)}</span><img src="${esc(m.avatar)}" alt="" loading="lazy" onload="this.classList.add('ok')" onerror="this.remove()"></a>`,
           iconSize: [30, 30],
           iconAnchor: [15 - dx, 15 - dy],
         });
