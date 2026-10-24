@@ -11,14 +11,16 @@ import { CLASSIC_STYLE, imageTheme, parseImageFile } from "@/lib/image-theme";
 const W = 560;
 const H = 95;
 // Side panel with the graph; the info area right of it (frame and padding
-// off) holds the name over its whole width and below it the columns address
-// and players, port, map (the rest of the width) and status, with the logo
-// in the bottom right corner next to the status.
+// off) holds the name over its whole width and below it three columns:
+// address over players, port over status, and map (the rest of the width)
+// over the logo in the bottom right corner. The first two columns are only
+// as wide as their content plus GAP, so port and status sit right next to
+// the address; ADDR caps the address column (a long host name gets an
+// ellipsis, 255.255.255.255 still fits).
 const SIDE = 128;
 const INFO = W - 2 - SIDE - 16;
-const COL1 = 112;
-const COL2 = 46;
-const COL3 = INFO - COL1 - COL2;
+const GAP = 12;
+const ADDR = 140;
 
 // Server banner, 560x95: file "<serverId>.png" in the classic grey look,
 // "<serverId>-<template>.png" in a design template's colours. Name with flag,
@@ -47,10 +49,11 @@ export async function serverBanner(file: string, code: string | null) {
 
   const label = { display: "flex", fontSize: 9, fontWeight: 700, color: th.accent, letterSpacing: 0.3 } as const;
   const value = { display: "block", fontSize: 13, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } as const;
-  const cell = (w: number, l: string, v: React.ReactNode, color?: string) => (
-    <div style={{ display: "flex", flexDirection: "column", width: w, overflow: "hidden" }}>
+  // Sized to its content, at most maxWidth (then with an ellipsis).
+  const cell = (l: string, v: React.ReactNode, color?: string, maxWidth = INFO) => (
+    <div style={{ display: "flex", flexDirection: "column", minWidth: 0, maxWidth, overflow: "hidden" }}>
       <div style={label}>{l}</div>
-      <div style={{ ...value, width: w - 6, color: color ?? th.text }}>{v}</div>
+      <div style={{ ...value, maxWidth, color: color ?? th.text }}>{v}</div>
     </div>
   );
 
@@ -109,22 +112,26 @@ export async function serverBanner(file: string, code: string | null) {
               <span style={{ ...value, width: flag ? INFO - 21 : INFO }}>{s.name || addr}</span>
             </div>
           </div>
-          <div style={{ display: "flex" }}>
-            {cell(COL1, "IP ADDRESS:", ip)}
-            {cell(COL2, "PORT:", port)}
-            {cell(COL3, "CURRENT MAP:", s.act_map || "-")}
-          </div>
-          <div style={{ display: "flex", alignItems: "flex-end" }}>
-            <div style={{ display: "flex", alignItems: "center", width: COL1 + COL2 }}>
-              {pie}
-              <div style={{ display: "flex", marginLeft: 5 }}>{cell(COL1 - 29, "PLAYERS:", `${act}/${max}`)}</div>
-            </div>
-            {cell(64, "STATUS:", online ? "Online" : "Offline", online ? th.good : th.bad)}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", width: COL3 - 64 }}>
-              <div style={{ display: "flex", fontSize: 13, fontWeight: 800, color: th.text }}>
-                game<span style={{ color: th.accent }}>WE</span>
+          <div style={{ display: "flex", height: 54 }}>
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", maxWidth: ADDR, marginRight: GAP }}>
+              {cell("IP ADDRESS:", ip, undefined, ADDR)}
+              <div style={{ display: "flex", alignItems: "center" }}>
+                {pie}
+                <div style={{ display: "flex", marginLeft: 5 }}>{cell("PLAYERS:", `${act}/${max}`)}</div>
               </div>
-              <div style={{ display: "flex", fontSize: 8, color: th.muted, maxWidth: COL3 - 64, overflow: "hidden", whiteSpace: "nowrap" }}>{host}</div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", marginRight: GAP }}>
+              {cell("PORT:", port)}
+              {cell("STATUS:", online ? "Online" : "Offline", online ? th.good : th.bad)}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1, minWidth: 0 }}>
+              {cell("CURRENT MAP:", s.act_map || "-")}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                <div style={{ display: "flex", fontSize: 13, fontWeight: 800, color: th.text }}>
+                  game<span style={{ color: th.accent }}>WE</span>
+                </div>
+                <div style={{ display: "flex", fontSize: 8, color: th.muted, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>{host}</div>
+              </div>
             </div>
           </div>
         </div>
