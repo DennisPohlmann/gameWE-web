@@ -664,8 +664,32 @@ table.spaced { margin-top: 10px; }
 .map-avatar img.ok { opacity: 1; }
 .map-avatar:hover { z-index: 1000 !important; }
 /* Game servers: squares, unlike the round player avatars. */
-.map-server a { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: 2px solid #fff; border-radius: 7px; color: #fff; background: linear-gradient(#e8743a, #c2461a); box-shadow: 0 0 0 1px #555, 0 1px 3px rgba(0, 0, 0, 0.5); }
+.map-server a { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: 2px solid #fff; border-radius: 7px; color: #fff; background: linear-gradient(#4b5666, #232a33); box-shadow: 0 0 0 1px #555, 0 1px 3px rgba(0, 0, 0, 0.5); }
 .map-server svg { display: block; }
+/* Status lights: green while the server is online (load samples of the last
+   30 minutes), red when not. Both beat like a heart ("ba-dum", then a pause)
+   with a soft glow in time, offline more slowly. Only opacity and scale are
+   animated, so it stays cheap. */
+.map-server a { position: relative; --led: #ff5a4f; --glow: rgba(255, 70, 60, 0.6); --beat: 2.2s; }
+.map-server.on a { --led: #6dff8a; --glow: rgba(80, 230, 110, 0.65); --beat: 1.3s; }
+.map-server .led { fill: var(--led); stroke: none; transform-box: fill-box; transform-origin: center; animation: led-beat var(--beat) ease-out infinite; }
+.map-server a::after { content: ""; position: absolute; inset: -4px; border-radius: 10px; box-shadow: 0 0 8px 2px var(--glow); pointer-events: none; animation: glow-beat var(--beat) ease-out infinite; }
+@keyframes led-beat {
+  0%, 38%, 100% { opacity: 0.4; transform: scale(1); }
+  8% { opacity: 1; transform: scale(1.35); }
+  16% { opacity: 0.55; transform: scale(1); }
+  25% { opacity: 0.9; transform: scale(1.2); }
+}
+@keyframes glow-beat {
+  0%, 38%, 100% { opacity: 0.15; }
+  8% { opacity: 0.95; }
+  16% { opacity: 0.35; }
+  25% { opacity: 0.7; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .map-server .led, .map-server a::after { animation: none; }
+  .map-server a::after { opacity: 0.6; }
+}
 .map-server:hover { z-index: 1000 !important; }
 .leaflet-tooltip { font: 11px/1.4 Verdana, Arial, sans-serif; }
 

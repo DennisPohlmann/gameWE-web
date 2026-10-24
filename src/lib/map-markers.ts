@@ -44,6 +44,7 @@ export function serverMarkers(servers: MapServer[], game: string, t: Dict): Serv
       href: `${basePath}/${game}/servers/${s.serverId}`,
       lat: s.lat,
       lng: s.lng,
+      online: s.online,
       flag: svg ? `${basePath}/flags/${code}.svg` : undefined,
       lines: [
         svg ? name : `${flagEmoji(code)} ${name}`.trim(),

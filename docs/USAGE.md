@@ -113,7 +113,11 @@ website therefore computes some things itself:
   (`hlstats_Servers` `lat`/`lng` from GeoIP: a city, or only the country's
   centre when GeoIP knows no city); hovering shows name, city and country,
   address (the public address if set, as in the server list) and the
-  current map, a click opens the server page. Servers without a location
+  current map, a click opens the server page. The status lights in the
+  square beat like a heart (double beat, then a pause): green while the
+  server is online (load samples of the last 30 minutes, as on the server
+  banner), red and slower when not; with reduced motion set in the system
+  they stay lit without beating. Servers without a location
   (LAN address, no GeoIP database, rows imported without one) are left out.
 - **SourceBans** (bans page): the public ban list
   (`index.php?p=banlist&page=N`) of the address under Settings → Bans is

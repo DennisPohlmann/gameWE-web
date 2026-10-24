@@ -19,15 +19,15 @@ export type MapMarker = {
 };
 
 // A game server at its GeoIP location: drawn as a square, not an avatar.
-export type ServerMarker = Omit<MapMarker, "avatar" | "initial">;
+export type ServerMarker = Omit<MapMarker, "avatar" | "initial"> & { online?: boolean };
 
 const NO_SERVERS: ServerMarker[] = [];
 
-// Two rack units with a status light and a slot each, drawn in currentColor.
+// Two rack units with a status light (.led, coloured in CSS) and a slot each.
 const SERVER_ICON =
   '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
   '<rect x="3" y="3.5" width="18" height="7" rx="2"/><rect x="3" y="13.5" width="18" height="7" rx="2"/>' +
-  '<path d="M12 7h5M12 17h5"/><circle cx="7" cy="7" r="1" fill="currentColor"/><circle cx="7" cy="17" r="1" fill="currentColor"/></svg>';
+  '<path d="M12 7h5M12 17h5"/><circle class="led" cx="7" cy="7" r="1.8"/><circle class="led" cx="7" cy="17" r="1.8"/></svg>';
 
 // OpenStreetMap with one Steam avatar per player at their GeoIP city. Players
 // from the same city are spread in a spiral around it so all stay visible.
@@ -58,7 +58,7 @@ export function PlayerMap({ markers, servers = NO_SERVERS, style }: { markers: M
       for (const m of servers) {
         const [dx, dy] = spread(m);
         const icon = L.divIcon({
-          className: "map-server",
+          className: m.online ? "map-server on" : "map-server",
           // Same size as the player avatars, with a server rack inside.
           html: `<a href="${esc(m.href)}" aria-label="${esc(m.name)}">${SERVER_ICON}</a>`,
           iconSize: [30, 30],

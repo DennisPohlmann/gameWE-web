@@ -1526,19 +1526,23 @@ export type MapServer = {
   country_code: string;
   lat: number;
   lng: number;
+  // Online while the collector keeps writing load samples (every 10
+  // minutes), as on the server banner.
+  online: boolean;
 };
 
 // Game servers of a ranking at the GeoIP location the collector stores for
 // their address (hlstats_Servers lat/lng, a city or only a country's centre).
 // Servers without one (LAN address, no GeoIP database) are left out.
 export async function getMapServers(game: string): Promise<MapServer[]> {
-  const rows = await query<Omit<MapServer, "lat" | "lng"> & { lat: string; lng: string }>(
-    `SELECT serverId, name, address, port, publicaddress, act_map, city, country_name, country_code, lat, lng
-     FROM hlstats_Servers WHERE game = ? AND lat <> '' AND lng <> '' ORDER BY display_id, serverId`,
-    [game],
+  const rows = await query<Omit<MapServer, "lat" | "lng" | "online"> & { lat: string; lng: string; online: number }>(
+    `SELECT s.serverId, s.name, s.address, s.port, s.publicaddress, s.act_map, s.city, s.country_name, s.country_code, s.lat, s.lng,
+            CASE WHEN EXISTS (SELECT 1 FROM hlstats_server_load l WHERE l.server_id = s.serverId AND l.timestamp >= ?) THEN 1 ELSE 0 END AS online
+     FROM hlstats_Servers s WHERE s.game = ? AND s.lat <> '' AND s.lng <> '' ORDER BY s.display_id, s.serverId`,
+    [nowUnix() - 1800, game],
   );
   return rows
-    .map((r) => ({ ...r, serverId: Number(r.serverId), port: Number(r.port), lat: Number(r.lat), lng: Number(r.lng) }))
+    .map((r) => ({ ...r, serverId: Number(r.serverId), port: Number(r.port), lat: Number(r.lat), lng: Number(r.lng), online: Number(r.online) === 1 }))
     .filter(onMap);
 }
 
