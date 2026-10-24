@@ -81,7 +81,9 @@ website therefore computes some things itself:
   point to `hlstats_Players_Locations`. The footer shows the credit the
   GeoIP database requires (setting "GeoIP credit": `dbip`, `maxmind` or empty).
 - **Bots** appear in the live view with a BOT tag; new bots
-  are hidden from rankings unless "Rank bots" is on.
+  are hidden from rankings unless "Rank bots" is on. While it is off, bot
+  names are plain text everywhere (no link to a profile) and a bot's
+  profile pages and `/api/v1/players/<id>` answer 404.
 - **Server load graph** reads `hlstats_server_load` (one row per server and
   10 minutes).
 - **Player events** never read the IP address of `hlstats_Events_Connects`.

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Form from "next/form";
 import Link from "next/link";
 import { Empty, PlayerLink, Section, TableWrap, strParam } from "@/components/ui";
-import { getGames, searchClans, searchPlayers, type ClanHit, type SearchHit, type SearchIn } from "@/lib/data";
+import { getGames, searchClans, searchPlayers, unlinkedBots, type ClanHit, type SearchHit, type SearchIn } from "@/lib/data";
 import { fmtNum, kpd } from "@/lib/format";
 import { fill, getDict } from "@/lib/i18n";
 
@@ -35,6 +35,7 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
     else players = await searchPlayers(q, by, game);
   }
   const found = players.length + clans.length;
+  const bots = await unlinkedBots(players.map((p) => Number(p.playerId)));
   const labels: Record<SearchIn, string> = { names: t.searchNames, uniqueid: t.searchSteam, clans: t.searchClans };
 
   return (
@@ -144,7 +145,7 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
                   {players.map((p) => (
                     <tr key={`${p.game}-${p.playerId}`}>
                       <td>
-                        <PlayerLink game={p.game} id={Number(p.playerId)} name={p.name} flag={p.flag ? { flag: p.flag, country: p.country ?? "" } : null} />
+                        <PlayerLink game={p.game} id={Number(p.playerId)} name={p.name} flag={p.flag ? { flag: p.flag, country: p.country ?? "" } : null} plain={bots.has(Number(p.playerId))} />
                         {p.alias ? (
                           <span className="muted small">
                             {" "}

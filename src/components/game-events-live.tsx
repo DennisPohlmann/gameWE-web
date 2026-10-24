@@ -7,7 +7,7 @@ import { fmtDateTime } from "@/lib/format";
 import type { GameEvent } from "@/lib/history";
 import type { Lang } from "@/translations/languages";
 
-type Flags = Record<number, { flag: string; country: string }>;
+type Flags = Record<number, { flag: string; country: string; nolink?: boolean }>;
 type Labels = { time: string; eventText: string; server: string; map: string; noData: string; evText: Record<string, string> };
 
 const POLL_MS = 4_000;

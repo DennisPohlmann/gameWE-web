@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { adminQuery, likeOp, query, queryOne, sinceDays, type Param } from "./db";
 import { addDays, dayOf, siteDay } from "./day";
 import { nowUnix, steamIds } from "./format";
@@ -1278,7 +1279,7 @@ export async function getMiscStats(game: string, days: number): Promise<MiscStat
 // Country flag of each player (from the latest connect's GeoIP location).
 export async function getPlayerFlags(ids: number[]) {
   const uniq = [...new Set(ids.filter((x) => x > 0))];
-  if (!uniq.length) return new Map<number, { flag: string; country: string }>();
+  if (!uniq.length) return new Map<number, PlayerFlag>();
   // Bots get the code "bot": Flag shows the BOT tag in the flag's place.
   const rows = await query<{ playerId: number; flag: string | null; country: string | null; bot: number }>(
     `SELECT p.playerId, l.flag, l.country,
@@ -1289,11 +1290,37 @@ export async function getPlayerFlags(ids: number[]) {
      WHERE p.playerId IN (?)`,
     [uniq],
   );
-  return new Map(
+  const nolink = !(await botProfiles());
+  return new Map<number, PlayerFlag>(
     rows
       .filter((r) => Number(r.bot) || r.flag)
-      .map((r) => [Number(r.playerId), Number(r.bot) ? { flag: "bot", country: "Bot" } : { flag: r.flag as string, country: r.country ?? "" }]),
+      .map((r) => [Number(r.playerId), Number(r.bot) ? { flag: "bot", country: "Bot", nolink } : { flag: r.flag as string, country: r.country ?? "" }]),
   );
+}
+
+// nolink: a bot without a profile (see botProfiles), shown as plain text.
+export type PlayerFlag = { flag: string; country: string; nolink?: boolean };
+
+// Bots have a profile only while the collector ranks them (gamewe_rank_bots).
+// Otherwise their names are plain text and their profile pages answer 404.
+export const botProfiles = cache(async () => Boolean((await getPointSettings()).gamewe_rank_bots));
+
+export const isBotId = (uniqueId: string | null | undefined) => (uniqueId ?? "").toUpperCase().startsWith("BOT");
+
+// A player (getPlayer) whose profile answers 404: a bot while bots have none.
+export async function noProfile(p: { uniqueId: string | null }) {
+  return isBotId(p.uniqueId) && !(await botProfiles());
+}
+
+// The bots among the ids that get no link (empty while bots have profiles).
+export async function unlinkedBots(ids: number[]) {
+  const uniq = [...new Set(ids.filter((x) => x > 0))];
+  if (!uniq.length || (await botProfiles())) return new Set<number>();
+  const rows = await query<{ playerId: number }>(
+    `SELECT DISTINCT playerId FROM hlstats_PlayerUniqueIds WHERE playerId IN (?) AND uniqueId LIKE 'BOT%'`,
+    [uniq],
+  );
+  return new Set(rows.map((r) => Number(r.playerId)));
 }
 
 // Country of each clan: the most common country among its members (ties by

@@ -31,6 +31,6 @@ IP addresses, RCON passwords or other admin data.
 | `/api/v1/rankings/<game>/servers` | servers of a ranking with the players online (name, team, points, kills; bots without an id) |
 | `/api/v1/rankings/<game>/servers/<id>` | one server of that ranking |
 | `/api/v1/servers` | all servers |
-| `/api/v1/players/<id>` | a player's profile values and rank |
+| `/api/v1/players/<id>` | a player's profile values and rank (404 for hidden players, and for bots while "Rank bots" is off) |
 
 Unknown rankings, servers and players give `404` with `{"error":"not found"}`.

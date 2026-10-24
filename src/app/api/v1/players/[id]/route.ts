@@ -1,15 +1,15 @@
 import { api } from "@/lib/api";
-import { getPlayer, getPlayerPosition } from "@/lib/data";
+import { getPlayer, getPlayerPosition, noProfile } from "@/lib/data";
 import { activity } from "@/lib/format";
 import { getSettings } from "@/lib/settings";
 
-// Public summary of one player; hidden players answer 404.
+// Public summary of one player; hidden players and bots without a profile answer 404.
 export function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   return api(async () => {
     const { id } = await params;
     if (!/^\d{1,10}$/.test(id)) return null;
     const p = await getPlayer(Number(id));
-    if (!p || p.hideranking) return null;
+    if (!p || p.hideranking || (await noProfile(p))) return null;
     const [rank, { activityDays }] = await Promise.all([getPlayerPosition(p.game, p.skill), getSettings()]);
     return {
       id: p.playerId,

@@ -26,6 +26,7 @@ import {
   getPlayerActions,
   getPlayerAwards,
   getPlayerFlags,
+  noProfile,
   getPlayerFrags,
   getPlayerHistory,
   getPlayerMaps,
@@ -47,7 +48,7 @@ function playerId(raw: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const id = playerId((await params).id);
   const p = id ? await getPlayer(id) : undefined;
-  if (!p) return { title: `#${id}` };
+  if (!p || (await noProfile(p))) return { title: `#${id}` };
   const [{ lang, t }, { siteName }, position, image] = await Promise.all([
     getDict(),
     getSettings(),
@@ -67,7 +68,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const id = playerId(raw);
   if (!id) notFound();
   const p = await getPlayer(id);
-  if (!p) notFound();
+  if (!p || (await noProfile(p))) notFound();
   if (p.game !== game) redirect(`/${p.game}/players/${id}`);
 
   const { lang, t } = await getDict();

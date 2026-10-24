@@ -1,6 +1,6 @@
 import { Flag, PctBar, PlayerLink, SortTh, TableWrap } from "@/components/ui";
 import Link from "next/link";
-import type { PlaceRow, RankingRow } from "@/lib/data";
+import { unlinkedBots, type PlaceRow, type RankingRow } from "@/lib/data";
 import { activity, fmtDate, fmtDuration, fmtNum, fmtPct, kpd, ratio } from "@/lib/format";
 import type { Dict, Lang } from "@/lib/i18n";
 
@@ -8,7 +8,7 @@ type SortProps = { current: string; asc: boolean; base: string; params: Record<s
 
 // Player table used by the ranking and the clan page. Without `sort` the
 // headers are plain text.
-export function RankingTable({
+export async function RankingTable({
   game,
   rows,
   firstRank,
@@ -38,6 +38,7 @@ export function RankingTable({
     ) : (
       <th className={cls}>{label}</th>
     );
+  const bots = await unlinkedBots(rows.map((r) => r.playerId));
   return (
     <TableWrap>
       <table>
@@ -65,7 +66,7 @@ export function RankingTable({
                 {showRank ? <td className="rank">{fmtNum(firstRank + i, lang)}</td> : null}
                 <td>
                   <Flag code={r.flag} title={r.country} />
-                  <PlayerLink game={game} id={r.playerId} name={r.name} />
+                  <PlayerLink game={game} id={r.playerId} name={r.name} plain={bots.has(r.playerId)} />
                 </td>
                 {showGlobalRank ? <td className="num hide-sm">{fmtNum(Number(r.globalRank ?? 0), lang)}</td> : null}
                 <td className="num">{fmtNum(r.skill, lang)}</td>

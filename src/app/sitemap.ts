@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getGames, getSitemapPlayers } from "@/lib/data";
+import { getGames, getSitemapPlayers, unlinkedBots } from "@/lib/data";
 import { getSettings } from "@/lib/settings";
 import { statsOrigin } from "@/lib/site-url";
 
@@ -18,7 +18,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   for (const g of games) {
     for (const sec of SECTIONS) out.push({ url: `${origin}/${g.code}${sec}`, changeFrequency: "hourly", priority: sec ? 0.7 : 0.9 });
     const players = await getSitemapPlayers(g.code, 200).catch(() => []);
+    const bots = await unlinkedBots(players.map((p) => p.playerId)).catch(() => new Set<number>());
     for (const p of players) {
+      if (bots.has(p.playerId)) continue;
       out.push({ url: `${origin}/${g.code}/players/${p.playerId}`, lastModified: p.last_event ? new Date(Number(p.last_event) * 1000) : undefined, changeFrequency: "daily", priority: 0.5 });
     }
   }

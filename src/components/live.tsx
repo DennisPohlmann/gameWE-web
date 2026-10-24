@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import type { LivePlayer, Server } from "@/lib/data";
+import { botProfiles, type LivePlayer, type Server } from "@/lib/data";
 import { fmtDuration, fmtNum, fmtPct, nowUnix, ratio } from "@/lib/format";
 import type { Dict, Lang } from "@/lib/i18n";
 import { Flag } from "./ui";
@@ -66,7 +66,8 @@ export function ServerTable({ game, servers, head, t }: { game: string; servers:
 
 // Players on one server, coloured by team like gameME's live stats: the first
 // team blue, the second red, everyone else (spectators, unassigned) grey.
-export function LiveTable({ game, players, t, lang }: { game: string; players: LivePlayer[]; t: Dict; lang: Lang }) {
+export async function LiveTable({ game, players, t, lang }: { game: string; players: LivePlayer[]; t: Dict; lang: Lang }) {
+  const botLinks = await botProfiles();
   const teams = new Map<string, LivePlayer[]>();
   for (const p of players) {
     const k = p.team || "";
@@ -110,9 +111,13 @@ export function LiveTable({ game, players, t, lang }: { game: string; players: L
                   <td className="wrap-cell">
                     {/* Bots get their tag where players have the flag, so the names line up. */}
                     {p.is_bot ? <span className="bot-tag">BOT</span> : p.flag ? <Flag code={p.flag} title={p.country} /> : <span className="flag-gap" />}{" "}
-                    <Link href={`/${game}/players/${p.player_id}`} className={p.is_dead ? "dead" : undefined}>
-                      {p.name || `#${p.player_id}`}
-                    </Link>
+                    {p.is_bot && !botLinks ? (
+                      <span className={p.is_dead ? "dead" : undefined}>{p.name || `#${p.player_id}`}</span>
+                    ) : (
+                      <Link href={`/${game}/players/${p.player_id}`} className={p.is_dead ? "dead" : undefined}>
+                        {p.name || `#${p.player_id}`}
+                      </Link>
+                    )}
                   </td>
                   <td className="right frag">{p.kills}</td>
                   <td className="center frag">:</td>

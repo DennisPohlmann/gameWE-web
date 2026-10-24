@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { getPlayer } from "@/lib/data";
+import { getPlayer, noProfile } from "@/lib/data";
 import { getPlayerAwardWins, getPlayerChatCount } from "@/lib/history";
 import type { Dict } from "@/lib/i18n";
 import { currentAdmin } from "@/lib/auth";
@@ -20,7 +20,7 @@ export async function loadHistoryPlayer(game: string, raw: string, tab: HistoryT
   const id = Number.parseInt(raw, 10);
   if (!Number.isSafeInteger(id) || id <= 0) notFound();
   const p = await getPlayer(id);
-  if (!p) notFound();
+  if (!p || (await noProfile(p))) notFound();
   if (tab === "chat" || tab === "ips") {
     const access = await historyAccess();
     if (!access[tab]) notFound();

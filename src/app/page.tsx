@@ -4,7 +4,7 @@ import { Flag, GameTag } from "@/components/ui";
 import { basePath } from "@/lib/base-path";
 import { LineChart } from "@/components/chart";
 import { Rich } from "@/components/rich";
-import { everyDay, getClanFlags, getDailyActivityAll, getHourlyActivity, getPlayer, getRankingOverview, getSiteTotals } from "@/lib/data";
+import { everyDay, getClanFlags, getDailyActivityAll, getHourlyActivity, getPlayer, getRankingOverview, getSiteTotals, unlinkedBots } from "@/lib/data";
 import { fmtNum, localeOf, steamIds } from "@/lib/format";
 import { getSteamProfile } from "@/lib/steam";
 import { fill, getDict } from "@/lib/i18n";
@@ -21,9 +21,10 @@ export default async function Home() {
   }
   const [rankings, totals, rows, hourly] = data;
   // Steam picture of each ranking's top player and the country of its top clan.
-  const [avatars, clanFlags] = await Promise.all([
+  const [avatars, clanFlags, bots] = await Promise.all([
     Promise.all(rankings.map((r) => (r.topPlayerId ? smallAvatar(r.topPlayerId) : null))),
     getClanFlags(rankings.map((r) => r.topClanId ?? 0)).catch(() => new Map<number, { flag: string; country: string }>()),
+    unlinkedBots(rankings.map((r) => r.topPlayerId ?? 0)).catch(() => new Set<number>()),
   ]);
   const perHour = hourly.players.some((v) => v !== null);
   // Hourly graph: a label at local midnight every few days.
@@ -96,7 +97,11 @@ export default async function Home() {
                         <>
                           <MiniAvatar src={avatars[i]} fallback={`${basePath}/avatar-unknown.svg`} />
                           <Flag code={r.topPlayerFlag} title={r.topPlayerCountry} />{" "}
-                          <Link href={`/${r.code}/players/${r.topPlayerId}`}>{r.topPlayerName || `#${r.topPlayerId}`}</Link>
+                          {bots.has(r.topPlayerId) ? (
+                            r.topPlayerName || `#${r.topPlayerId}`
+                          ) : (
+                            <Link href={`/${r.code}/players/${r.topPlayerId}`}>{r.topPlayerName || `#${r.topPlayerId}`}</Link>
+                          )}
                         </>
                       ) : (
                         "-"

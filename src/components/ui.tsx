@@ -7,16 +7,19 @@ import { flagEmoji } from "@/lib/format";
 import { gameKind } from "@/lib/games";
 
 // flag: the player's country (getPlayerFlags), shown before the name.
+// plain (or flag.nolink): a bot without a profile, the name without a link.
 export function PlayerLink({
   game,
   id,
   name,
   flag,
+  plain = false,
 }: {
   game: string;
   id: number;
   name: string | null;
-  flag?: { flag: string; country: string } | null;
+  flag?: { flag: string; country: string; nolink?: boolean } | null;
+  plain?: boolean;
 }) {
   return (
     <>
@@ -25,9 +28,13 @@ export function PlayerLink({
           <Flag code={flag.flag} title={flag.country} />{" "}
         </>
       ) : null}
-      <Link className="player" href={`/${game}/players/${id}`}>
-        {name || `#${id}`}
-      </Link>
+      {plain || flag?.nolink ? (
+        <span className="player">{name || `#${id}`}</span>
+      ) : (
+        <Link className="player" href={`/${game}/players/${id}`}>
+          {name || `#${id}`}
+        </Link>
+      )}
     </>
   );
 }
