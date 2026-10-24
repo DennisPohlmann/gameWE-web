@@ -122,9 +122,9 @@ export function PctBar({ value, lang, tone }: { value: number | null; lang: stri
   );
 }
 
-export function Section({ title, aside, children }: { title: ReactNode; aside?: ReactNode; children: ReactNode }) {
+export function Section({ id, title, aside, children }: { id?: string; title: ReactNode; aside?: ReactNode; children: ReactNode }) {
   return (
-    <section className="section">
+    <section className="section" id={id}>
       <header className="section-head">
         <h2>{title}</h2>
         {aside ? <div className="section-aside">{aside}</div> : null}

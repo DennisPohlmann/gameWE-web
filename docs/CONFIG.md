@@ -10,10 +10,11 @@ Everything else is set in the admin area (Admin → Settings) and stored in
 ## Contents
 
 1. [Database, time zone and designs](#database-time-zone-and-designs)
-2. [Languages](#languages)
-3. [Search engines and sharing](#search-engines-and-sharing)
-4. [Voice server](#voice-server)
-5. [Access log](#access-log)
+2. [Header links](#header-links)
+3. [Languages](#languages)
+4. [Search engines and sharing](#search-engines-and-sharing)
+5. [Voice server](#voice-server)
+6. [Access log](#access-log)
 
 ## Database, time zone and designs
 
@@ -45,6 +46,34 @@ TLS to the database is off by default (`DB_TLS=off`, `disable` works too).
 With `DB_TLS=required` the server certificate is verified (CA file in
 `DB_TLS_CA` for a private CA) and the connection never falls back to
 plaintext; `skip-verify` encrypts without checking the certificate.
+
+## Header links
+
+Admin → Settings → Header links shows all tabs at the top of the site as one
+numbered list in the order the header uses. Move an entry with its arrows or
+drag it by its handle; the order is saved with the settings.
+
+- **Home**: name and address can be changed; both are optional (empty name:
+  the translated "Home", empty address: the start page of the statistics).
+- **Search, Help, Licenses**: built in, can only be moved.
+- **SourceBans**: listed only while an address is set under Settings → Bans,
+  can only be moved. It is left out of the header when an own link already
+  points to that address or is called "SourceBans".
+- **Own links** (up to 6): name and address; `https://…` (or just
+  `www.example.org`) opens in a new tab, a path such as `/forum` in the same
+  tab. "Add own link" puts a new one at the end, ✕ removes it on saving.
+
+Stored in `hlstats_Options`: `gamewe_header_order` (comma-separated ids
+`home`, `search`, `help`, `licenses`, `sourcebans`, `link1` … `link6`),
+`gamewe_header_home` (`Name|URL`, both parts optional) and `gamewe_link_1` …
+`gamewe_link_6` (`Name|URL`). Without `gamewe_header_order`, as on older
+installations, the order is Home, Search, Help, Licenses, SourceBans, then
+the own links by number; ids missing from a stored order are added in that
+order, unknown ones are ignored. Existing links keep their number and data.
+
+Every section of the settings page has its own Save button. All of them save
+the whole page, so changes in other sections are never lost; the page then
+returns to the section whose button was pressed.
 
 ## Languages
 

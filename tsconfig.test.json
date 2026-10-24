@@ -1,0 +1,16 @@
+{
+  // Compiles tests/ (and what they import) to plain JS for `npm test`, so the
+  // tests run on every Node version without type stripping.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "strict": true,
+    "skipLibCheck": true,
+    "rewriteRelativeImportExtensions": true,
+    "rootDir": ".",
+    "outDir": "out/tests",
+    "types": ["node"]
+  },
+  "include": ["tests/**/*.ts"]
+}

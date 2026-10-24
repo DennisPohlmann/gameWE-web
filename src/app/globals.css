@@ -561,7 +561,28 @@ a.button { display: inline-block; text-decoration: none; }
 .form.settings-grid { max-width: none; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 12px 24px; align-items: start; }
 .settings-grid .settings-help { grid-column: 1 / -1; margin: 0; color: var(--muted); }
 .link-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 6px; }
-.settings-save { margin: 12px 0 0; }
+.settings-save { margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.settings-save .notice { margin: 0; }
+.section:target, .section:has(.settings-save .notice) { scroll-margin-top: 8px; }
+/* Admin settings: the header tabs as one ordered list. */
+.hl-editor { grid-column: 1 / -1; }
+.hl-list { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 6px; max-width: 760px; }
+.hl-row { border: 1px solid var(--border); background: var(--surface-2); color: var(--text); padding: 6px 8px; display: grid; gap: 6px; }
+.hl-row.dragging { opacity: 0.5; }
+.hl-row.invalid { border-color: var(--bad); }
+.hl-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.hl-grip { cursor: grab; color: var(--muted); font-size: 14px; user-select: none; padding: 0 2px; }
+.hl-pos { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border-radius: 11px; background: var(--tab-bg); color: var(--tab-text); border: 1px solid var(--tab-border); font-weight: bold; }
+.hl-name { color: var(--text); }
+.hl-badge { font-size: 10px; padding: 1px 6px; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); }
+.hl-badge-edit { border-style: dashed; }
+.hl-actions { margin-left: auto; display: flex; gap: 4px; }
+.hl-actions .button { padding: 1px 7px; }
+.hl-actions .button:disabled { opacity: 0.4; cursor: default; }
+.hl-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 6px; }
+.hl-fields label { display: grid; gap: 3px; }
+.hl-hint, .hl-error { grid-column: 1 / -1; }
+.hl-error { color: var(--error-text); }
 
 .login { max-width: 380px; margin: 30px auto; }
 .login h1 { margin-bottom: 10px; text-shadow: var(--title-shadow); }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { getSettings, titleTemplate } from "@/lib/settings";
+import { headerTabs } from "@/lib/header-links";
 import { getDict } from "@/lib/i18n";
 import { localeOf } from "@/lib/format";
 import { statsOrigin } from "@/lib/site-url";
@@ -56,7 +57,7 @@ export async function generateMetadata(): Promise<Metadata> {
 // the languages, optional logo, content, footer.
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const { lang, t } = await getDict();
-  const { siteName, siteUrl, logoUrl, headerLogo, links, geoipCredit, skin, sourcebansUrl } = await getSettings();
+  const { siteName, siteUrl, logoUrl, headerLogo, links, headerHome, headerOrder, geoipCredit, skin, sourcebansUrl } = await getSettings();
   const [games, template, voice] = await Promise.all([getGames().catch(() => []), resolveTemplate(skin), getVoiceBox()]);
   const sections = {
     "": t.servers,
@@ -95,21 +96,20 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             )}
           </Link>
           <nav className="tabs-top" aria-label={siteName}>
-            <Link href="/">{t.contents}</Link>
-            <Link href="/search">{t.searchTitle}</Link>
-            <Link href="/help">{t.help}</Link>
-            <Link href="/licenses">{t.licenses}</Link>
-            {/* SourceBans as a tab, unless a header link already points there. */}
-            {sourcebansUrl && !links.some((l) => l.url.replace(/\/?(index\.php)?$/i, "/") === sourcebansUrl || /^sourcebans$/i.test(l.label)) ? (
-              <a href={sourcebansUrl} target="_blank" rel="noopener">
-                SourceBans
-              </a>
-            ) : null}
-              {links.map((l) => (
-                <a key={l.label + l.url} href={l.url} {...(l.url.startsWith("/") ? {} : { target: "_blank", rel: "noopener" })}>
-                  {l.label}
+            {headerTabs(
+              { order: headerOrder, home: headerHome, links, sourcebansUrl },
+              { home: t.contents, search: t.searchTitle, help: t.help, licenses: t.licenses },
+            ).map((tab) =>
+              tab.kind === "page" ? (
+                <Link key={tab.id} href={tab.href}>
+                  {tab.label}
+                </Link>
+              ) : (
+                <a key={tab.id} href={tab.href} {...(tab.kind === "external" ? { target: "_blank", rel: "noopener" } : {})}>
+                  {tab.label}
                 </a>
-              ))}
+              ),
+            )}
           </nav>
         </header>
         <div className="nav-bar">

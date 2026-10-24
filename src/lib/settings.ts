@@ -3,11 +3,13 @@ import { config } from "./config";
 import { query } from "./db";
 import { mapStyleId } from "./map-styles";
 import { sourcebansBase } from "./sourcebans";
+import { LINK_SLOTS, type HeaderLink, type TabId, headerOrder, parseHome, parseLink, safeUrl } from "./header-links";
+
+export { LINK_SLOTS, safeUrl };
+export type { HeaderLink };
 
 // Site settings: hlstats_Options (editable in the admin area) wins over the
 // environment. Cached for 30 seconds per server process.
-
-export type HeaderLink = { label: string; url: string };
 
 // Search engine keywords when none are set in the admin area.
 export const SEO_KEYWORDS = "game server statistics, player ranking, stats, awards, counter-strike, gameWE";
@@ -40,8 +42,13 @@ export type Settings = {
   // also {ranking}. See titleTemplate().
   titleFormat: string;
   titleFormatRanking: string;
-  // Tabs in the header, from gamewe_link_1 .. gamewe_link_6 ("Label|URL").
-  links: HeaderLink[];
+  // Own tabs in the header by slot, from gamewe_link_1 .. gamewe_link_6
+  // ("Label|URL"); null for an empty slot. See lib/header-links.ts.
+  links: (HeaderLink | null)[];
+  // Home tab (gamewe_header_home, empty parts: defaults) and the order of
+  // all tabs (gamewe_header_order).
+  headerHome: HeaderLink;
+  headerOrder: TabId[];
   // Credit line for the GeoIP database the collector uses.
   geoipCredit: "dbip" | "maxmind" | "";
   // Text bottom right on the forum signature (default: the site name).
@@ -65,14 +72,7 @@ export type Settings = {
   sourcebansUrl: string;
 };
 
-export const LINK_SLOTS = 6;
 const linkKeys = Array.from({ length: LINK_SLOTS }, (_, i) => `gamewe_link_${i + 1}`);
-
-// Only http(s) URLs and site paths, so a setting cannot inject javascript: links.
-export function safeUrl(v: string | undefined): string {
-  const s = (v ?? "").trim();
-  return /^(https?:\/\/|\/)/i.test(s) ? s : "";
-}
 
 // Image addresses from the settings: http(s) URL or a path on this host.
 // No protocol-relative "//host", no quotes, spaces or angle brackets.
@@ -103,12 +103,6 @@ export function titleTemplate(format: string, vars: Record<string, string>): { t
   return { template: fill("%s"), default: base || vars.site || "" };
 }
 
-function parseLink(v: string | undefined): HeaderLink | null {
-  const [label, url] = (v ?? "").split("|").map((x) => x.trim());
-  const safe = safeUrl(url);
-  return label && safe ? { label, url: safe } : null;
-}
-
 let cache: { at: number; value: Settings } | null = null;
 
 function positive(v: string | undefined, fallback: number, max: number) {
@@ -131,7 +125,7 @@ export async function getSettings(): Promise<Settings> {
   try {
     const rows = await query<{ keyname: string; value: string }>(
       `SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`,
-      [["sitename", "MinActivity", "gamewe_page_size", "gamewe_site_url", "gamewe_logo_url", "gamewe_header_logo", "gamewe_favicon", "gamewe_apple_icon", "gamewe_title_format", "gamewe_title_ranking", "gamewe_geoip_credit", "gamewe_sig_brand", "gamewe_chat_public", "gamewe_game_events", "gamewe_skin", "gamewe_game_skins", "gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_sourcebans_url", "gamewe_seo_description", "gamewe_seo_keywords", "gamewe_seo_image", "gamewe_seo_index", "gamewe_seo_twitter", ...linkKeys]],
+      [["sitename", "MinActivity", "gamewe_page_size", "gamewe_site_url", "gamewe_logo_url", "gamewe_header_logo", "gamewe_favicon", "gamewe_apple_icon", "gamewe_title_format", "gamewe_title_ranking", "gamewe_geoip_credit", "gamewe_sig_brand", "gamewe_chat_public", "gamewe_game_events", "gamewe_skin", "gamewe_game_skins", "gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_sourcebans_url", "gamewe_seo_description", "gamewe_seo_keywords", "gamewe_seo_image", "gamewe_seo_index", "gamewe_seo_twitter", "gamewe_header_home", "gamewe_header_order", ...linkKeys]],
     );
     o = Object.fromEntries(rows.map((r) => [r.keyname, r.value]));
   } catch {
@@ -153,7 +147,9 @@ export async function getSettings(): Promise<Settings> {
     appleIcon: imageUrl(o.gamewe_apple_icon),
     titleFormat: titleFormat(o.gamewe_title_format, TITLE_FORMAT),
     titleFormatRanking: titleFormat(o.gamewe_title_ranking, TITLE_FORMAT_RANKING),
-    links: linkKeys.map((k) => parseLink(o[k])).filter((l): l is HeaderLink => l !== null),
+    links: linkKeys.map((k) => parseLink(o[k])),
+    headerHome: parseHome(o.gamewe_header_home),
+    headerOrder: headerOrder(o.gamewe_header_order),
     geoipCredit: geoip(o.gamewe_geoip_credit),
     sigBrand: o.gamewe_sig_brand?.trim() || o.sitename?.trim() || config.siteName,
     chatPublic: o.gamewe_chat_public?.trim() === "1",

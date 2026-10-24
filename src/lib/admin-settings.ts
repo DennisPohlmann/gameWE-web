@@ -1,5 +1,9 @@
 import type { L } from "./admin-entities";
 import { FLAG_CODES } from "./flag-codes";
+import { LINK_SLOTS } from "./header-links";
+
+// Header links: validation and order live in lib/header-links.ts.
+export { homeValue, linkValue } from "./header-links";
 
 // Typed form for the hlstats_Options keys the website and the collector read.
 // The collector's keys and defaults are documented in collector/docs/CONFIG.md.
@@ -10,7 +14,10 @@ export type Setting = {
   // "link": two fields, name and URL, stored as "Name|URL".
   // "template": a folder from templates/ (lib/templates.ts).
   // "secret": never shown again; an empty field keeps the stored value.
-  type: "text" | "number" | "bool" | "game" | "choice" | "link" | "template" | "secret";
+  // "home": the Home tab, "Label|URL" with optional parts; "order": the
+  // order of the header tabs (lib/header-links.ts). Both, like "link", are
+  // edited in the header links list of the group with `id: "header"`.
+  type: "text" | "number" | "bool" | "game" | "choice" | "link" | "template" | "secret" | "home" | "order";
   // For "choice": value and label of each option.
   choices?: [string, L][];
   def: string;
@@ -25,7 +32,9 @@ export type Setting = {
   optional?: boolean;
 };
 
-export type SettingGroup = { title: L; help?: L; items: Setting[] };
+// `id` is the anchor of the group's section (the save buttons under each
+// section come back to it).
+export type SettingGroup = { id: string; title: L; help?: L; items: Setting[] };
 
 const TS = { key: "gamewe_voice_type", value: "teamspeak" };
 
@@ -49,6 +58,7 @@ const DISCORD = { key: "gamewe_voice_type", value: "discord" };
 
 export const settingGroups: SettingGroup[] = [
   {
+    id: "website",
     title: { de: "Webseite", en: "Website" },
     items: [
       { key: "sitename", label: { de: "Seitentitel", en: "Site title" }, type: "text", def: "", help: { de: "Name der Seite, z. B. der Clan-Name.", en: "Name of the site, e.g. the clan name." } },
@@ -153,6 +163,7 @@ export const settingGroups: SettingGroup[] = [
     ],
   },
   {
+    id: "maps",
     title: { de: "Spielerkarten", en: "Player maps" },
     help: {
       de: "Weltkarten mit dem Steam-Bild jedes Spielers an seinem GeoIP-Ort. Die Kartenkacheln lädt der Browser des Besuchers direkt beim Anbieter.",
@@ -184,6 +195,7 @@ export const settingGroups: SettingGroup[] = [
     ],
   },
   {
+    id: "bans",
     title: { de: "Bans", en: "Bans" },
     help: {
       de: "Die Seite „Bans“ eines Spiels zeigt Spieler der Rangliste mit VAC- oder Spiel-Bans (braucht STEAM_API_KEY) und mit Bans aus SourceBans. Sie erscheint, sobald eins von beiden eingerichtet ist.",
@@ -203,6 +215,7 @@ export const settingGroups: SettingGroup[] = [
     ],
   },
   {
+    id: "seo",
     title: { de: "Suchmaschinen (SEO)", en: "Search engines (SEO)" },
     help: {
       de: "Beschreibung und Bild für Google & Co. und für Link-Vorschauen in Facebook, WhatsApp, Discord usw. Jede Seite bekommt ihren eigenen Titel, eine kanonische Adresse und steht in /sitemap.xml.",
@@ -217,6 +230,7 @@ export const settingGroups: SettingGroup[] = [
     ],
   },
   {
+    id: "voice",
     title: { de: "Voiceserver", en: "Voice server" },
     help: {
       de: "Kasten oben auf jeder Seite mit dem TeamSpeak- oder Discord-Server der Community. Erst die Art wählen, dann erscheinen die passenden Felder. TeamSpeak: Die Personenzahl liest die Webseite jede Minute über die ServerQuery. Discord: Gezählt wird über das Server-Widget (Servereinstellungen → Widget → Server-Widget aktivieren).",
@@ -296,19 +310,21 @@ export const settingGroups: SettingGroup[] = [
     ],
   },
   {
+    id: "header",
     title: { de: "Links im Kopf", en: "Header links" },
-    help: {
-      de: "Name und Adresse, z. B. „Forum“ und „https://example.org“. Ein Link erscheint nur, wenn beides ausgefüllt ist; „www.example.org“ wird zu https://www.example.org.",
-      en: "Name and address, e.g. \"Forum\" and \"https://example.org\". A link is shown only when both are filled in; \"www.example.org\" becomes https://www.example.org.",
-    },
-    items: Array.from({ length: 6 }, (_, i) => ({
-      key: `gamewe_link_${i + 1}`,
-      label: { de: `Link ${i + 1}`, en: `Link ${i + 1}` },
-      type: "link" as const,
-      def: "",
-    })),
+    items: [
+      { key: "gamewe_header_order", label: { de: "Reihenfolge der Links", en: "Order of the links" }, type: "order", def: "" },
+      { key: "gamewe_header_home", label: { de: "Startseite", en: "Home" }, type: "home", def: "" },
+      ...Array.from({ length: LINK_SLOTS }, (_, i) => ({
+        key: `gamewe_link_${i + 1}`,
+        label: { de: `Eigener Link ${i + 1}`, en: `Own link ${i + 1}` },
+        type: "link" as const,
+        def: "",
+      })),
+    ],
   },
   {
+    id: "points",
     title: { de: "Punkte (Collector)", en: "Points (collector)" },
     help: {
       de: "Der Collector übernimmt Änderungen innerhalb einer Minute. Bereits vergebene Punkte bleiben unverändert.",
@@ -324,6 +340,7 @@ export const settingGroups: SettingGroup[] = [
     ],
   },
   {
+    id: "collector",
     title: { de: "Collector", en: "Collector" },
     items: [
       { key: "gamewe_rank_bots", label: { de: "Bots ranken (in Ranglisten und Awards)", en: "Rank bots (in rankings and awards)" }, type: "bool", def: "0", help: { de: "Bots werden immer erfasst und auf den Serverseiten mit ihren Stats gezeigt. Nein: sie erscheinen nicht in Ranglisten und Awards, ihre Namen sind nicht verlinkt und ihre Profilseiten antworten 404. Gilt für neu erfasste Bots; bestehende sind einzeln unter Spieler änderbar.", en: "Bots are always recorded and shown with their stats on the server pages. No: they stay out of rankings and awards, their names are not linked and their profile pages answer 404. Applies to newly recorded bots; existing ones can be changed under Players." } },
@@ -361,6 +378,7 @@ export const settingGroups: SettingGroup[] = [
     ],
   },
   {
+    id: "older",
     title: { de: "Ältere Optionen", en: "Older options" },
     help: {
       de: "Schlüssel aus HLstatsX:CE und älteren gameWE-Versionen. Die Webseite braucht sie nicht; sie bleiben für eigene Erweiterungen und ältere Collector-Installationen einstellbar. Leere Felder legen keinen Eintrag an.",
@@ -436,21 +454,3 @@ export function rawKeyAllowed(key: string): boolean {
   return /^[A-Za-z0-9_.-]{1,128}$/.test(key) && !hiddenOption(key) && !settingKeys.has(key.toLowerCase()) && !READONLY_OPTIONS.includes(key);
 }
 
-// A header link from the two form fields: "" when both are empty, null when
-// only one is filled in or the address is not a web address or site path.
-export function linkValue(label: string, url: string): string | null {
-  const name = label.trim();
-  let u = url.trim();
-  if (!name && !u) return "";
-  if (!name || !u || name.includes("|") || name.length > 60) return null;
-  if (u.startsWith("/")) return /^\/[^\s|]*$/.test(u) && !u.startsWith("//") ? `${name}|${u}` : null;
-  if (!/^https?:\/\//i.test(u)) u = `https://${u}`;
-  try {
-    const parsed = new URL(u);
-    const hostOk = /^([a-z0-9-]+\.)+[a-z]{2,}$/i.test(parsed.hostname) || /^\d{1,3}(\.\d{1,3}){3}$/.test(parsed.hostname);
-    if (!hostOk || u.includes("|") || /\s/.test(u)) return null;
-    return `${name}|${u}`;
-  } catch {
-    return null;
-  }
-}

@@ -19,6 +19,7 @@ design templates: [templates/README.md](../templates/README.md).
 ```bash
 npm ci
 npm run lint    # type check (tsc)
+npm test        # unit tests in tests/ (compiled to out/tests, node --test)
 npm run build
 ```
 
@@ -35,7 +36,7 @@ make image      # local Docker image gamewe-web:<version>
 The version comes from a `v*` git tag on HEAD, otherwise from `VERSION`.
 
 GitHub Actions (`.github/workflows/build.yml`) builds and checks every push
-to `main` (type check, build, tar.gz as a workflow artifact) and publishes the
+to `main` (type check, tests, build, tar.gz as a workflow artifact) and publishes the
 container image `ghcr.io/dennispohlmann/gamewe-web` with the tag `edge`.
 
 ## Releases
