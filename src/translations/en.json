@@ -225,6 +225,8 @@
   "names": "Names",
   "lastUse": "Last used",
   "recentKills": "Recent kills and deaths",
+  "liveData": "Live data",
+  "liveUpdates": "Live updates",
   "victims": "Top victims",
   "killers": "Top killers",
   "dph": "DPH",

@@ -103,7 +103,9 @@ while the page is open), "Async" (`static`: only the latest ones as of
 loading the page) or "Off" (`off`: the section is not shown). The live
 tables ask `/<game>/events-feed` and `/<game>/players/<id>/kills-feed`
 every 4 seconds while the tab is visible; both answer 404 unless their
-setting is "Sync". The player feed is kept for 3 seconds per player and
+setting is "Sync". On the player page the heading then says "(Live data)"
+and a switch top right pauses the updates (no requests while paused; the
+choice is kept in the browser). The player feed is kept for 3 seconds per player and
 allows 60 requests per client IP and minute.
 
 ## Voice server

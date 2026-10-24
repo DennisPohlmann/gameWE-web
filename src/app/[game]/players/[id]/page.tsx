@@ -619,17 +619,16 @@ export default async function PlayerPage({ params, searchParams }: Props) {
       </div>
 
       {frags.length && settings.playerEvents !== "off" ? (
-        <Section title={t.recentKills}>
-          <PlayerFragsLive
-            game={game}
-            playerId={id}
-            lang={lang}
-            live={settings.playerEvents === "live"}
-            initial={frags}
-            initialFlags={Object.fromEntries(frags.flatMap((f) => [f.victimId, f.killerId]).flatMap((x) => (flags.has(x) ? [[x, flags.get(x)!]] : [])))}
-            labels={{ date: t.date, kills: t.kills, weapons: t.weapons, map: t.map, killed: t.killed, killedBy: t.killedBy }}
-          />
-        </Section>
+        <PlayerFragsLive
+          title={t.recentKills}
+          game={game}
+          playerId={id}
+          lang={lang}
+          live={settings.playerEvents === "live"}
+          initial={frags}
+          initialFlags={Object.fromEntries(frags.flatMap((f) => [f.victimId, f.killerId]).flatMap((x) => (flags.has(x) ? [[x, flags.get(x)!]] : [])))}
+          labels={{ date: t.date, kills: t.kills, weapons: t.weapons, map: t.map, killed: t.killed, killedBy: t.killedBy, liveData: t.liveData, liveUpdates: t.liveUpdates }}
+        />
       ) : null}
 
       <div className="grid-2">
