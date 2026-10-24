@@ -219,6 +219,9 @@ td.rank { color: var(--muted); width: 1%; text-align: right; }
    pictures centred in a narrow column of their own. */
 th.barcell, td.barcell { text-align: center; width: 1%; }
 td.barcell .meter { justify-content: center; }
+/* Column only as wide as its content, same space left and right (game tag). */
+th.fit, td.fit { width: 1%; padding-left: 8px; padding-right: 8px; }
+td.fit .game-tag { margin-left: 0; }
 td.wrap-cell, th.wrap-cell { white-space: normal; min-width: 120px; }
 th a.sort { text-decoration: none; }
 th button.sort { padding: 0; font: inherit; color: var(--th-text); background: none; border: 0; cursor: pointer; text-decoration: none; }

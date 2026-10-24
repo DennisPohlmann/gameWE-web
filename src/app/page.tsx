@@ -56,7 +56,7 @@ export default async function Home() {
               <thead>
                 <tr>
                   <th colSpan={2}>{t.ranking}</th>
-                  <th className="hide-sm">{t.baseGame}</th>
+                  <th className="hide-sm fit">{t.baseGame}</th>
                   <th className="num">{t.players}</th>
                   <th>{t.topPlayer}</th>
                   <th className="hide-sm">{t.topClan}</th>
@@ -80,7 +80,7 @@ export default async function Home() {
                         {t.clans}
                       </Link>
                     </td>
-                    <td className="hide-sm">
+                    <td className="hide-sm fit">
                       <GameTag realgame={r.realgame} long />
                     </td>
                     <td className="num">
