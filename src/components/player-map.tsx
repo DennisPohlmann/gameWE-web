@@ -49,11 +49,12 @@ export function PlayerMap({ markers, style }: { markers: MapMarker[]; style: str
           className: "map-avatar",
           // The initial shows until the avatar has loaded, then the avatar fades
           // in over it; if it does not load, the initial stays.
-          html: `<a href="${esc(m.href)}"><span>${esc(m.initial)}</span><img src="${esc(m.avatar)}" alt="" loading="lazy" onload="this.classList.add('ok')" onerror="this.remove()"></a>`,
+          html: `<a href="${esc(m.href)}" aria-label="${esc(m.name)}"><span>${esc(m.initial)}</span><img src="${esc(m.avatar)}" alt="" loading="lazy" onload="this.classList.add('ok')" onerror="this.remove()"></a>`,
           iconSize: [30, 30],
           iconAnchor: [15 - dx, 15 - dy],
         });
-        L.marker(pos, { icon, title: m.name })
+        // No title: the browser's own tooltip would repeat the name under ours.
+        L.marker(pos, { icon })
           .bindTooltip(
             m.lines
               .map((l, i) => (i ? esc(l) : `<b>${m.flag ? `<span class="flag flag-svg" style="background-image:url('${esc(m.flag)}')"></span>` : ""}${esc(l)}</b>`))
