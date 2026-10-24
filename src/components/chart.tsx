@@ -25,6 +25,8 @@ export function LineChart({
   fromZero = true,
   dates: allDates,
   hourly = false,
+  trimStart = true,
+  dots = false,
 }: {
   labels: string[];
   // Time of each point for the hover box (e.g. "Mo 20.10. 14:00");
@@ -47,13 +49,18 @@ export function LineChart({
   // Labels are the hour of each point ("14:00"): only every 1, 2, 3, 6 or 12
   // hours, whatever fits, or none when even 12 hours are too narrow.
   hourly?: boolean;
+  // false: always show the whole range, even when it begins with zeros
+  // (e.g. connects per day, where a quiet day is a real 0).
+  trimStart?: boolean;
+  // Always a small dot at every point, also on dense (quarter-hourly) charts.
+  dots?: boolean;
 }) {
   const [hover, setHover] = useState<{ i: number; left: number; top: number; flip: boolean } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const figRef = useRef<HTMLElement>(null);
   // While a graph is still filling up (e.g. load recorded since two days),
   // it starts at the first point with data instead of an empty left part.
-  const first = Math.min(
+  const first = !trimStart ? 0 : Math.min(
     Math.max(0, allLabels.length - 2),
     Math.max(0, allLabels.findIndex((_, i) => allSeries.some((s) => (s.values[i] ?? 0) !== 0))),
   );
@@ -69,15 +76,17 @@ export function LineChart({
   if (n < 2) return null;
   const all = series.flatMap((s) => s.values).filter((v): v is number => v !== null);
   const lowest = all.length ? Math.min(...all) : 0;
-  const min = fromZero ? Math.floor(Math.min(0, ...all)) : Math.floor(lowest - (Math.max(lowest + 2, ...all) - lowest) * 0.05);
-  // Whole numbers on all three ticks: the top is rounded up so that the
-  // middle tick lands on an integer too.
-  let max = Math.ceil(Math.max(fromZero ? 2 : lowest + 2, ...all));
-  if ((max - min) % 2) max++;
+  const lo = fromZero ? Math.min(0, ...all) : lowest - (Math.max(lowest + 2, ...all) - lowest) * 0.05;
+  const hi = Math.max(fromZero ? 2 : lowest + 2, ...all);
+  // Ticks at round whole numbers (1, 2, 2.5 or 5 times a power of ten),
+  // about four steps from bottom to top.
+  const step = niceStep((hi - lo) / 4);
+  const min = Math.floor(lo / step) * step;
+  const max = Math.ceil(hi / step) * step;
   const plotW = width - pad.left - pad.right;
   const x = (i: number) => pad.left + (i * plotW) / (n - 1);
   const y = (v: number) => pad.top + (1 - (v - min) / (max - min || 1)) * (height - pad.top - pad.bottom);
-  const ticks = [min, (min + max) / 2, max];
+  const ticks = Array.from({ length: Math.round((max - min) / step) + 1 }, (_, i) => min + i * step);
   const every = Math.max(1, Math.ceil(n / 6));
   // First point of each day; a date needs about 70 units of room.
   const dayStarts = dates ? dates.flatMap((d, i) => (i === 0 || d !== dates[i - 1] ? [i] : [])) : [];
@@ -152,7 +161,7 @@ export function LineChart({
             ),
           ),
         )}
-        {n <= DOTS_UP_TO
+        {dots || n <= DOTS_UP_TO
           ? series.map((s) =>
               s.values.map((v, i) =>
                 v === null ? null : <circle key={`${s.label}-d${i}`} className={`dot small ${s.className}`} cx={x(i)} cy={y(v)} r={2.5} />,
@@ -194,6 +203,16 @@ export function LineChart({
       ) : null}
     </figure>
   );
+}
+
+// Smallest round whole number at least raw: 1, 2, 2.5 or 5 times a power of
+// ten (2.5 only from 25 on, so it stays whole).
+function niceStep(raw: number): number {
+  if (raw <= 1) return 1;
+  const p = 10 ** Math.floor(Math.log10(raw));
+  const f = raw / p;
+  const m = f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 && p >= 10 ? 2.5 : f <= 5 ? 5 : 10;
+  return m * p;
 }
 
 // Index runs of consecutive non-null values.

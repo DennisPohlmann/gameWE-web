@@ -46,7 +46,9 @@ export default async function MiscPage({ params }: { params: Promise<{ game: str
               </tr>
             </tbody>
           </table>
-          <table className="stats spaced">
+        </div>
+        <div>
+          <table className="stats">
             <thead>
               <tr>
                 <th>{t.weekdaysSummary}</th>
@@ -60,33 +62,6 @@ export default async function MiscPage({ params }: { params: Promise<{ game: str
                   ) : (
                     empty
                   )}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div>
-          <table className="stats">
-            <thead>
-              <tr>
-                <th>{t.connects}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>
-                  {m.connectsPerDay.some((d) => d.n) ? (
-                    <LineChart
-                      width={600}
-                      locale={lang}
-                      ariaLabel={t.connectsCaption}
-                      labels={m.connectsPerDay.map((d) => `${d.day.slice(8, 10)}.${d.day.slice(5, 7)}.`)}
-                      series={[{ label: t.connects, values: m.connectsPerDay.map((d) => d.n), className: "s1" }]}
-                    />
-                  ) : (
-                    empty
-                  )}
-                  <p className="small center">{t.connectsCaption}</p>
                 </td>
               </tr>
             </tbody>
@@ -110,6 +85,21 @@ export default async function MiscPage({ params }: { params: Promise<{ game: str
           ) : null}
         </div>
       </div>
+    </Section>
+    {/* Full width like the other trend charts; every day of the range, quiet days as 0. */}
+    <Section title={t.connects}>
+      {m.connectsPerDay.some((d) => d.n) ? (
+        <LineChart
+          locale={lang}
+          ariaLabel={t.connectsCaption}
+          trimStart={false}
+          labels={m.connectsPerDay.map((d) => `${d.day.slice(8, 10)}.${d.day.slice(5, 7)}.`)}
+          series={[{ label: t.connects, values: m.connectsPerDay.map((d) => d.n), className: "s1" }]}
+        />
+      ) : (
+        empty
+      )}
+      <p className="legend">{t.connectsCaption}</p>
     </Section>
     {/* Banner of every server of this ranking, with its code (also on each server page). */}
     {servers.length ? (
