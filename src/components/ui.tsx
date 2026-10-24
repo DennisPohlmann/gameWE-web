@@ -83,7 +83,7 @@ export function Bar({
   activity?: boolean;
   label?: ReactNode;
 }) {
-  const v = Math.max(0, Math.min(1, value ?? 0));
+  const v = value !== null && Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
   const bar = (
     <span className={`bar${green ? " green" : ""}${wide ? " wide" : ""}`} aria-hidden="true">
       <span style={{ width: `${(v * 100).toFixed(1)}%`, background: activity ? activityColor(v) : undefined }} />
@@ -109,10 +109,10 @@ export function activityColor(v: number): string {
 }
 
 export function PctBar({ value, lang, tone }: { value: number | null; lang: string; tone?: "share" | "activity" }) {
-  // No basis (e.g. no shots): empty, as gameME shows it.
-  if (value === null) return null;
-  const v = Math.max(0, Math.min(1, value));
-  const pct = value * 100;
+  // No basis (e.g. no kills, no shots): an empty bar at 0 %, not a blank cell.
+  const n = value !== null && Number.isFinite(value) ? value : 0;
+  const v = Math.max(0, Math.min(1, n));
+  const pct = n * 100;
   const exact = `${pct.toLocaleString(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
   return (
     <span className={`pbar${tone ? ` ${tone}` : v >= 0.3 ? " good" : v > 0 ? " low" : ""}`} title={exact}>
