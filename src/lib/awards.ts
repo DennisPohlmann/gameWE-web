@@ -100,15 +100,19 @@ async function computeDayNow(game: string, day: string, awards: Award[]): Promis
         )
       : [],
     actions.length
-      ? query<Row>(
-          `SELECT ac.code, e.playerId, d.lastName AS name, COUNT(*) AS value
-           FROM hlstats_Events_PlayerActions e
-           JOIN hlstats_Actions ac ON ac.id = e.actionId
-           JOIN hlstats_Players p ON p.playerId = e.playerId AND p.hideranking = 0
-           LEFT JOIN hlstats_Players_Data d ON d.playerId = e.playerId
-           WHERE e.timestamp_id >= ? AND e.timestamp_id < ? AND ac.game = ? AND ac.code IN (?)
-           GROUP BY ac.code, e.playerId, d.lastName
-           ORDER BY ac.code, COUNT(*) DESC, e.playerId`,
+      ? // Counted per action and player first, then joined: the day's events
+        // are many, the players few. (game, code) is unique in hlstats_Actions.
+        query<Row>(
+          `SELECT ac.code, x.playerId, d.lastName AS name, x.value
+           FROM (SELECT e.actionId, e.playerId, COUNT(*) AS value
+                 FROM hlstats_Events_PlayerActions e
+                 WHERE e.timestamp_id >= ? AND e.timestamp_id < ?
+                   AND e.actionId IN (SELECT id FROM hlstats_Actions WHERE game = ? AND code IN (?))
+                 GROUP BY e.actionId, e.playerId) x
+           JOIN hlstats_Actions ac ON ac.id = x.actionId
+           JOIN hlstats_Players p ON p.playerId = x.playerId AND p.hideranking = 0
+           LEFT JOIN hlstats_Players_Data d ON d.playerId = x.playerId
+           ORDER BY ac.code, x.value DESC, x.playerId`,
           [start, end, game, actions],
         )
       : [],
@@ -126,17 +130,19 @@ async function computeDayNow(game: string, day: string, awards: Award[]): Promis
       ),
     ).then((r) => r.flat()),
     // Lowest average ping wins; the value is the rounded average in ms.
+    // Averaged per player first, then joined (one sample per player and minute).
     awards.some(isLatency)
       ? query<Row>(
-          `SELECT 'latency' AS code, e.playerId, d.lastName AS name, ROUND(AVG(e.ping)) AS value
-           FROM hlstats_Events_Latency e
-           JOIN hlstats_Players p ON p.playerId = e.playerId AND p.hideranking = 0
-           LEFT JOIN hlstats_Players_Data d ON d.playerId = e.playerId
-           WHERE e.timestamp_id >= ? AND e.timestamp_id < ? AND p.game = ? AND e.ping > 0
-           GROUP BY e.playerId, d.lastName
-           HAVING COUNT(*) >= ?
-           ORDER BY AVG(e.ping), e.playerId LIMIT 1`,
-          [start, end, game, LATENCY_MIN_SAMPLES],
+          `SELECT 'latency' AS code, x.playerId, d.lastName AS name, ROUND(x.ping) AS value
+           FROM (SELECT e.playerId, AVG(e.ping) AS ping
+                 FROM hlstats_Events_Latency e
+                 WHERE e.timestamp_id >= ? AND e.timestamp_id < ? AND e.ping > 0
+                 GROUP BY e.playerId
+                 HAVING COUNT(*) >= ?) x
+           JOIN hlstats_Players p ON p.playerId = x.playerId AND p.hideranking = 0 AND p.game = ?
+           LEFT JOIN hlstats_Players_Data d ON d.playerId = x.playerId
+           ORDER BY x.ping, x.playerId LIMIT 1`,
+          [start, end, LATENCY_MIN_SAMPLES, game],
         ).then((r) => r.map((x) => ({ ...x, value: Math.max(1, Number(x.value)) })))
       : [],
   ]);
