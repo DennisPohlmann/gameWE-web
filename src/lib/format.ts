@@ -2,9 +2,28 @@ import { LANGUAGES, type Lang } from "@/translations/languages";
 
 const locales = Object.fromEntries(LANGUAGES.map((l) => [l.code, l.locale])) as Record<Lang, string>;
 
+// toLocaleString builds a new formatter on every call, which costs about
+// 0.3 ms; the charts format thousands of times per page. These keep one
+// formatter per locale and options.
+const formatters = new Map<string, Intl.DateTimeFormat | Intl.NumberFormat>();
+
+export function dateFormat(locale: string, opts: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+  const key = `d|${locale}|${JSON.stringify(opts)}`;
+  let f = formatters.get(key) as Intl.DateTimeFormat | undefined;
+  if (!f) formatters.set(key, (f = new Intl.DateTimeFormat(locale, opts)));
+  return f;
+}
+
+export function numberFormat(locale: string, opts: Intl.NumberFormatOptions = {}): Intl.NumberFormat {
+  const key = `n|${locale}|${JSON.stringify(opts)}`;
+  let f = formatters.get(key) as Intl.NumberFormat | undefined;
+  if (!f) formatters.set(key, (f = new Intl.NumberFormat(locale, opts)));
+  return f;
+}
+
 export function fmtNum(n: number | null | undefined, lang: Lang, digits = 0): string {
   if (n === null || n === undefined || !Number.isFinite(n)) return "-";
-  return n.toLocaleString(locales[lang], { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  return numberFormat(locales[lang], { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(n);
 }
 
 export function ratio(a: number, b: number): number | null {
@@ -33,12 +52,12 @@ export function fmtDuration(seconds: number | null | undefined): string {
 
 export function fmtDateTime(unix: number | null | undefined, lang: Lang): string {
   if (!unix) return "-";
-  return new Date(unix * 1000).toLocaleString(locales[lang], { dateStyle: "medium", timeStyle: "short" });
+  return dateFormat(locales[lang], { dateStyle: "medium", timeStyle: "short" }).format(unix * 1000);
 }
 
 export function fmtDate(unix: number | null | undefined, lang: Lang): string {
   if (!unix) return "-";
-  return new Date(unix * 1000).toLocaleDateString(locales[lang], { dateStyle: "medium" });
+  return dateFormat(locales[lang], { dateStyle: "medium" }).format(unix * 1000);
 }
 
 export function nowUnix(): number {

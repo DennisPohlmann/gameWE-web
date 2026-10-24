@@ -26,6 +26,37 @@ function like(s: string): string {
   return `%${s.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 }
 
+// Place in the ranking (1 + players with more points) for each game and skill,
+// keyed "game|skill". One pass over a ranking's players per 100 skills instead
+// of one COUNT per row, which scans the ranking again for every row.
+async function rankPositions(players: { game: string; skill: number }[]): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  const byGame = new Map<string, Set<number>>();
+  for (const p of players) {
+    const skills = byGame.get(p.game) ?? new Set<number>();
+    skills.add(Number(p.skill));
+    byGame.set(p.game, skills);
+  }
+  const jobs: Promise<void>[] = [];
+  for (const [game, set] of byGame) {
+    const all = [...set];
+    for (let i = 0; i < all.length; i += 100) {
+      const skills = all.slice(i, i + 100);
+      jobs.push(
+        queryOne<Record<string, number | string | null>>(
+          `SELECT ${skills.map((_, j) => `SUM(CASE WHEN skill > ? THEN 1 ELSE 0 END) AS s${j}`).join(", ")}
+           FROM hlstats_Players WHERE game = ? AND hideranking = 0`,
+          [...skills, game],
+        ).then((r) => {
+          skills.forEach((skill, j) => out.set(`${game}|${skill}`, Number(r?.[`s${j}`] ?? 0) + 1));
+        }),
+      );
+    }
+  }
+  await Promise.all(jobs);
+  return out;
+}
+
 // ---------------------------------------------------------------- games
 
 export type Game = { id: number; code: string; name: string; realgame: string | null };
@@ -146,16 +177,14 @@ export type LivePlayer = {
 };
 
 // Position is the player's place in the ranking (null for hidden players).
-export function getLivePlayers(game: string, serverId?: number) {
+export async function getLivePlayers(game: string, serverId?: number): Promise<LivePlayer[]> {
   const where = serverId ? `l.server_id = ?` : `s.game = ?`;
-  return query<LivePlayer>(
+  type Row = Omit<LivePlayer, "position"> & { rankHidden: number | null; rankGame: string | null; rankSkill: number | null };
+  const rows = await query<Row>(
     `SELECT l.server_id, l.player_id, l.name, l.team, l.kills, l.deaths, l.headshots, l.shots, l.hits,
             l.rounds, l.ping, l.connected, l.skill, l.skill_change, l.is_dead,
             CASE WHEN l.unique_id LIKE 'BOT%' THEN 1 ELSE 0 END AS is_bot, loc.flag, loc.country,
-            CASE WHEN p.hideranking = 0 THEN
-              (SELECT COUNT(*) + 1 FROM hlstats_Players r
-               WHERE r.game = p.game AND r.hideranking = 0 AND r.skill > p.skill)
-            END AS position
+            p.hideranking AS rankHidden, p.game AS rankGame, p.skill AS rankSkill
      FROM hlstats_Livestats l
      JOIN hlstats_Servers s ON s.serverId = l.server_id
      LEFT JOIN hlstats_Players p ON p.playerId = l.player_id
@@ -166,6 +195,12 @@ export function getLivePlayers(game: string, serverId?: number) {
      ORDER BY l.team, l.kills DESC, l.skill DESC, l.player_id`,
     [serverId ?? game],
   );
+  const ranked = (r: Row) => r.rankGame !== null && r.rankSkill !== null && Number(r.rankHidden) === 0;
+  const pos = await rankPositions(rows.filter(ranked).map((r) => ({ game: r.rankGame as string, skill: Number(r.rankSkill) })));
+  return rows.map(({ rankHidden, rankGame, rankSkill, ...r }) => ({
+    ...r,
+    position: ranked({ rankHidden, rankGame, rankSkill, ...r }) ? (pos.get(`${rankGame}|${Number(rankSkill)}`) ?? null) : null,
+  }));
 }
 
 // One row per server and 10 minutes (collector 1.5.0): players at that
@@ -419,16 +454,22 @@ export async function getRanking(opts: {
     LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
     WHERE ${where.join(" AND ")}`;
   const order = `${rankingSorts[opts.sort]} ${opts.asc ? "ASC" : "DESC"}, p.playerId`;
+  // Both joins match at most one row, so without a filter on them the count
+  // needs hlstats_Players only.
+  const countFrom = opts.search || local ? from : `FROM hlstats_Players p WHERE ${where.join(" AND ")}`;
   const [rows, count] = await Promise.all([
     query<RankingRow>(
       `SELECT p.playerId, d.lastName AS name, p.skill, p.last_event, d.first_connect, p.connection_time,
               p.kills, p.deaths, p.headshots, p.shots, p.hits, l.flag, l.country
-              ${local ? `, (SELECT COUNT(*) + 1 FROM hlstats_Players r WHERE r.game = p.game AND r.hideranking = 0 AND r.skill > p.skill) AS globalRank` : ""}
        ${from} ORDER BY ${order} LIMIT ? OFFSET ?`,
       [...params, opts.limit, opts.offset],
     ),
-    queryOne<{ n: number }>(`SELECT COUNT(*) AS n ${from}`, params),
+    queryOne<{ n: number }>(`SELECT COUNT(*) AS n ${countFrom}`, params),
   ]);
+  if (local) {
+    const pos = await rankPositions(rows.map((r) => ({ game: opts.game, skill: r.skill })));
+    for (const r of rows) r.globalRank = pos.get(`${opts.game}|${Number(r.skill)}`);
+  }
   return { rows, total: count?.n ?? 0 };
 }
 
@@ -766,11 +807,15 @@ export type Opponent = { playerId: number; name: string | null; kills: number; h
 
 export function getOpponents(id: number, as: "victims" | "killers") {
   const [me, other] = as === "victims" ? ["killerId", "victimId"] : ["victimId", "killerId"];
+  // Counted first, then the names of the ten joined (not of every frag).
   return query<Opponent>(
-    `SELECT f.${other} AS playerId, d.lastName AS name, COUNT(*) AS kills, SUM(CASE WHEN f.headshot > 0 THEN 1 ELSE 0 END) AS headshots
-     FROM hlstats_Events_Frags f LEFT JOIN hlstats_Players_Data d ON d.playerId = f.${other}
-     WHERE f.${me} = ? AND f.${other} <> f.${me}
-     GROUP BY f.${other}, d.lastName ORDER BY kills DESC, f.${other} LIMIT 10`,
+    `SELECT x.playerId, d.lastName AS name, x.kills, x.headshots
+     FROM (SELECT f.${other} AS playerId, COUNT(*) AS kills, SUM(CASE WHEN f.headshot > 0 THEN 1 ELSE 0 END) AS headshots
+           FROM hlstats_Events_Frags f
+           WHERE f.${me} = ? AND f.${other} <> f.${me}
+           GROUP BY f.${other} ORDER BY kills DESC, f.${other} LIMIT 10) x
+     LEFT JOIN hlstats_Players_Data d ON d.playerId = x.playerId
+     ORDER BY x.kills DESC, x.playerId`,
     [id],
   );
 }
@@ -781,32 +826,32 @@ export type KillStat = { playerId: number; name: string | null; kills: number; d
 // `min` times, with the kills against and deaths by each, and the other
 // player's position in the ranking (none when hidden).
 export async function getPlayerKillStats(id: number, min = 5, limit = 50) {
-  const rows = await query<KillStat>(
-    `SELECT x.*, CASE WHEN x.hideranking = 0
-              THEN (SELECT COUNT(*) + 1 FROM hlstats_Players r WHERE r.game = x.game AND r.hideranking = 0 AND r.skill > x.skill)
-            END AS position
-     FROM (SELECT o.playerId, d.lastName AS name, SUM(o.k) AS kills, SUM(o.d) AS deaths, SUM(o.hs) AS headshots,
-                  p.hideranking, p.skill, p.game
+  // Summed per opponent first, then joined: the joins and the positions
+  // (rankPositions) only for the rows shown.
+  const rows = await query<Omit<KillStat, "position"> & { skill: number; game: string }>(
+    `SELECT o.playerId, d.lastName AS name, o.kills, o.deaths, o.headshots, p.hideranking, p.skill, p.game
+     FROM (SELECT u.playerId, SUM(u.k) AS kills, SUM(u.d) AS deaths, SUM(u.hs) AS headshots
            FROM (SELECT victimId AS playerId, 1 AS k, 0 AS d, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS hs
                  FROM hlstats_Events_Frags WHERE killerId = ? AND victimId <> killerId
                  UNION ALL
                  SELECT killerId AS playerId, 0 AS k, 1 AS d, 0 AS hs
-                 FROM hlstats_Events_Frags WHERE victimId = ? AND victimId <> killerId) o
-           JOIN hlstats_Players p ON p.playerId = o.playerId
-           LEFT JOIN hlstats_Players_Data d ON d.playerId = o.playerId
-           GROUP BY o.playerId, d.lastName, p.hideranking, p.skill, p.game
-           HAVING SUM(o.k) >= ?) x
-     ORDER BY x.kills DESC, x.playerId LIMIT ?`,
+                 FROM hlstats_Events_Frags WHERE victimId = ? AND victimId <> killerId) u
+           GROUP BY u.playerId
+           HAVING SUM(u.k) >= ?) o
+     JOIN hlstats_Players p ON p.playerId = o.playerId
+     LEFT JOIN hlstats_Players_Data d ON d.playerId = o.playerId
+     ORDER BY o.kills DESC, o.playerId LIMIT ?`,
     [id, id, min, limit],
   );
-  return rows.map((r) => ({
+  const pos = await rankPositions(rows.filter((r) => Number(r.hideranking) === 0));
+  return rows.map(({ skill, game, ...r }) => ({
     ...r,
     playerId: Number(r.playerId),
     kills: Number(r.kills),
     deaths: Number(r.deaths),
     headshots: Number(r.headshots),
     hideranking: Number(r.hideranking),
-    position: r.position === null || r.position === undefined ? null : Number(r.position),
+    position: Number(r.hideranking) === 0 ? (pos.get(`${game}|${Number(skill)}`) ?? null) : null,
   }));
 }
 

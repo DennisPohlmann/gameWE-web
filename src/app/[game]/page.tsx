@@ -4,7 +4,7 @@ import { Rich } from "@/components/rich";
 import { Section } from "@/components/ui";
 import { ServerLoadChart } from "@/components/graphics";
 import { everyDay, getDailyActivity, getHourlyActivity, getLivePlayers, getLiveMapPlayers, getServerLoad, getServers, getTotals } from "@/lib/data";
-import { fmtNum, fmtPct, localeOf, nowUnix, ratio } from "@/lib/format";
+import { dateFormat, fmtNum, fmtPct, localeOf, nowUnix, ratio } from "@/lib/format";
 import { fill, getDict } from "@/lib/i18n";
 import { AwardBoard } from "@/components/award-board";
 import { GameEvents } from "@/components/game-events";
@@ -32,10 +32,12 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
   const markers = mapMarkers(mapPlayers, game, t, lang);
   const activity = everyDay(activityRows, 14);
   const dayLabel = (d: string) => d.slice(8, 10) + "." + d.slice(5, 7) + ".";
+  const tipFmt = dateFormat(localeOf(lang), { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  const dateFmt = dateFormat(localeOf(lang), { weekday: "short", day: "2-digit", month: "2-digit" });
   // Graph per 15 minutes: a label at each local midnight.
   // Hover text of each point, e.g. "Mo., 20.10., 14:00".
   const hourTips = hourly.kills.map((_, i) =>
-    new Date((hourly.start + i * hourly.step) * 1000).toLocaleString(localeOf(lang), { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }),
+    tipFmt.format((hourly.start + i * hourly.step) * 1000),
   );
   // Hour of each point ("14:00") and its day ("Do., 23.10."): the chart shows
   // a line and the date at midnight and the times as far as they fit.
@@ -44,7 +46,7 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
     return d.getMinutes() === 0 ? `${String(d.getHours()).padStart(2, "0")}:00` : "";
   });
   const hourDates = hourly.kills.map((_, i) =>
-    new Date((hourly.start + i * hourly.step) * 1000).toLocaleDateString(localeOf(lang), { weekday: "short", day: "2-digit", month: "2-digit" }),
+    dateFmt.format((hourly.start + i * hourly.step) * 1000),
   );
   const since = nowUnix() - 86400;
   const loads = await Promise.all(servers.map((s) => getServerLoad(s.serverId, since)));
@@ -219,8 +221,10 @@ function combinedLoad(servers: { name: string }[], loads: { timestamp: number; a
     const vals = perServer.map((v) => v[i]).filter((x): x is number => x !== null);
     return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) * 10) / 10 : null;
   });
-  const labels = Array.from({ length: n }, (_, i) => new Date((start + i * BUCKET) * 1000).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" }));
-  const dates = Array.from({ length: n }, (_, i) => new Date((start + i * BUCKET) * 1000).toLocaleDateString(lang, { weekday: "short", day: "2-digit", month: "2-digit" }));
+  const timeFmt = dateFormat(lang, { hour: "2-digit", minute: "2-digit" });
+  const dayFmt = dateFormat(lang, { weekday: "short", day: "2-digit", month: "2-digit" });
+  const labels = Array.from({ length: n }, (_, i) => timeFmt.format((start + i * BUCKET) * 1000));
+  const dates = Array.from({ length: n }, (_, i) => dayFmt.format((start + i * BUCKET) * 1000));
   return {
     labels,
     dates,

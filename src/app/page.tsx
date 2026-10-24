@@ -5,7 +5,7 @@ import { basePath } from "@/lib/base-path";
 import { LineChart } from "@/components/chart";
 import { Rich } from "@/components/rich";
 import { everyDay, getClanFlags, getDailyActivityAll, getHourlyActivity, getPlayer, getRankingOverview, getSiteTotals, unlinkedBots } from "@/lib/data";
-import { fmtNum, localeOf, steamIds } from "@/lib/format";
+import { dateFormat, fmtNum, localeOf, steamIds } from "@/lib/format";
 import { getSteamProfile } from "@/lib/steam";
 import { fill, getDict } from "@/lib/i18n";
 
@@ -27,10 +27,12 @@ export default async function Home() {
     unlinkedBots(rankings.map((r) => r.topPlayerId ?? 0)).catch(() => new Set<number>()),
   ]);
   const perHour = hourly.players.some((v) => v !== null);
+  const tipFmt = dateFormat(localeOf(lang), { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  const dateFmt = dateFormat(localeOf(lang), { weekday: "short", day: "2-digit", month: "2-digit" });
   // Hourly graph: a label at local midnight every few days.
   // Hover text of each hour, e.g. "Mo., 20.10., 14:00".
   const hourTips = hourly.players.map((_, i) =>
-    new Date((hourly.start + i * hourly.step) * 1000).toLocaleString(localeOf(lang), { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }),
+    tipFmt.format((hourly.start + i * hourly.step) * 1000),
   );
   // Hour of each point ("14:00") and its day ("Do., 23.10."): the chart shows
   // a line and the date at midnight and the times as far as they fit.
@@ -39,7 +41,7 @@ export default async function Home() {
     return d.getMinutes() === 0 ? `${String(d.getHours()).padStart(2, "0")}:00` : "";
   });
   const hourDates = hourly.players.map((_, i) =>
-    new Date((hourly.start + i * hourly.step) * 1000).toLocaleDateString(localeOf(lang), { weekday: "short", day: "2-digit", month: "2-digit" }),
+    dateFmt.format((hourly.start + i * hourly.step) * 1000),
   );
   const activity = everyDay(rows, 30);
   const online = rankings.reduce((n, r) => n + r.actPlayers, 0);
