@@ -441,7 +441,7 @@ For monitoring, `/-/metrics` gives Prometheus metrics once a token is set
 | Admin area says it is locked | `ADMIN_SECRET` is missing or shorter than 32 characters. |
 | Admin cookie is not kept, login loops | The proxy does not pass `X-Forwarded-Proto https`, or the site is opened over plain http. |
 | Redirect loop under a sub path | `location /stats/` with a trailing slash; use `location /stats`. |
-| Times are off by hours | `TZ` is not set (the container is UTC otherwise). |
+| Times are off by hours, or the date (awards, "yesterday") changes only at 01:00/02:00 | `TZ` is not set (the container is UTC otherwise). Web and collector need the same `TZ`. |
 | A ranking shows no game, or the game cannot be chosen | The database was not created with the current collector init script (column `hlstats_Games.realgame` missing). Create it again with the init script, then set the game under Admin → Rankings. Servers take the game of their ranking. |
 | "Reset ranking" shows a hint | It needs collector 0.1.0 or newer and a database created with its init script (table `hlstats_gamewe_jobs`). |
 

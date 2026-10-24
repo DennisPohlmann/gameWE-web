@@ -1,5 +1,6 @@
 import "server-only";
 import { adminQuery, likeOp, query, queryOne, sinceDays, type Param } from "./db";
+import { addDays, dayOf, siteDay } from "./day";
 import { nowUnix, steamIds } from "./format";
 import { baseGameOf } from "./games";
 
@@ -200,18 +201,18 @@ export async function getServerLoad(serverId: number, since: number) {
 
 export type DayPoint = { day: string; players: number; kills: number; headshots: number };
 
-// One entry per UTC day of the last `days` days, oldest first; days without
-// history stay null, so a chart shows the full range from the start.
+// One entry per day (site's time zone) of the last `days` days, oldest first;
+// days without history stay null, so a chart shows the full range from the start.
 export function everyDay(rows: DayPoint[], days: number): { day: string; point: DayPoint | null }[] {
   const byDay = new Map(rows.map((r) => [String(r.day).slice(0, 10), r]));
-  const today = Math.floor(Date.now() / 86400000);
+  const today = siteDay();
   return Array.from({ length: days }, (_, i) => {
-    const day = new Date((today - days + 1 + i) * 86400000).toISOString().slice(0, 10);
+    const day = addDays(today, i - days + 1);
     return { day, point: byDay.get(day) ?? null };
   });
 }
 
-// Active players and kills per UTC day, from hlstats_Players_History.
+// Active players and kills per day, from hlstats_Players_History.
 export function getDailyActivity(game: string, days: number) {
   return query<DayPoint>(
     `SELECT eventTime AS day, COUNT(*) AS players, SUM(kills) AS kills, SUM(headshots) AS headshots
@@ -1192,7 +1193,7 @@ export async function getSiteTotals(): Promise<SiteTotals> {
   return { ...base, kills: Number(k?.kills ?? 0), deaths: Number(k?.deaths ?? 0), headshots: Number(k?.headshots ?? 0) };
 }
 
-// Active players per UTC day over all rankings.
+// Active players per day over all rankings.
 export function getDailyActivityAll(days: number) {
   return query<DayPoint>(
     `SELECT eventTime AS day, COUNT(DISTINCT playerId) AS players, SUM(kills) AS kills, SUM(headshots) AS headshots
@@ -1226,11 +1227,13 @@ export async function getMiscStats(game: string, days: number): Promise<MiscStat
        GROUP BY l.flag, l.country ORDER BY n DESC`,
       [game],
     ),
-    query<{ d: number; n: number }>(
-      `SELECT FLOOR(c.timestamp_id / 86400) AS d, COUNT(*) AS n
+    // Per hour, so the hours can be put into the days of the site's time zone
+    // (exact for zones with whole-hour offsets).
+    query<{ h: number; n: number }>(
+      `SELECT FLOOR(c.timestamp_id / 3600) AS h, COUNT(*) AS n
        FROM hlstats_Events_Connects c
        WHERE c.game_id = ${gameId} AND c.timestamp_id >= ?
-       GROUP BY FLOOR(c.timestamp_id / 86400) ORDER BY d`,
+       GROUP BY FLOOR(c.timestamp_id / 3600) ORDER BY h`,
       [game, yearAgo],
     ),
     query<{ day: string; secs: number }>(
@@ -1247,19 +1250,26 @@ export async function getMiscStats(game: string, days: number): Promise<MiscStat
       [game],
     ),
   ]);
-  const isoDay = (unixDay: number) => new Date(unixDay * 86400000).toISOString().slice(0, 10);
-  // 1970-01-01 was a Thursday (index 3 with Monday = 0).
+  // Monday = 0.
+  const weekday = (day: string) => (new Date(`${day}T00:00:00Z`).getUTCDay() + 6) % 7;
   const weekdays = Array.from({ length: 7 }, () => ({ connects: 0, seconds: 0 }));
-  for (const c of connects) weekdays[(Number(c.d) + 3) % 7].connects += Number(c.n);
+  const byDay = new Map<string, number>();
+  for (const c of connects) {
+    const d = dayOf(Number(c.h) * 3600);
+    byDay.set(d, (byDay.get(d) ?? 0) + Number(c.n));
+  }
+  for (const [d, n] of byDay) weekdays[weekday(d)].connects += n;
   for (const h of history) {
     const d = typeof h.day === "string" ? h.day.slice(0, 10) : new Date(h.day).toISOString().slice(0, 10);
-    weekdays[(new Date(`${d}T00:00:00Z`).getUTCDay() + 6) % 7].seconds += Number(h.secs);
+    weekdays[weekday(d)].seconds += Number(h.secs);
   }
-  const first = Math.floor(now / 86400) - days + 1;
-  const byDay = new Map(connects.map((c) => [Number(c.d), Number(c.n)]));
+  const today = siteDay();
   return {
     countries: countries.map((c) => ({ flag: (c.flag ?? "").trim(), country: (c.country ?? "").trim(), n: Number(c.n) })),
-    connectsPerDay: Array.from({ length: days }, (_, i) => ({ day: isoDay(first + i), n: byDay.get(first + i) ?? 0 })),
+    connectsPerDay: Array.from({ length: days }, (_, i) => {
+      const day = addDays(today, i - days + 1);
+      return { day, n: byDay.get(day) ?? 0 };
+    }),
     weekdays,
     connectTypes: types.map((t) => ({ type: Number(t.type), n: Number(t.n) })),
   };

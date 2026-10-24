@@ -1,5 +1,6 @@
 import "server-only";
 import { getPlayerFlags } from "./data";
+import { dayRange, siteDay } from "./day";
 import { query } from "./db";
 
 // Daily awards, ribbons and ranks, as on gameME.
@@ -52,11 +53,6 @@ export function getAwards(game: string) {
   );
 }
 
-// UTC day "YYYY-MM-DD", `offset` days from today.
-export function utcDay(offset = 0): string {
-  return new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10);
-}
-
 type Row = { code: string; playerId: number; name: string | null; value: number };
 
 // Best player per award code; rows come ordered by code, value desc, playerId.
@@ -69,14 +65,13 @@ function best(rows: Row[], awards: Award[], kind: (a: Award) => boolean): AwardW
   });
 }
 
-// The winners of one UTC day, computed from the events of that day.
+// The winners of one day (in the site's time zone), computed from the events of that day.
 export function computeDay(game: string, day: string, awards: Award[]): Promise<Map<number, AwardWin>> {
-  return cached(`day:${game}:${day}`, day === utcDay() ? TODAY_TTL : TTL, () => computeDayNow(game, day, awards));
+  return cached(`day:${game}:${day}`, day === siteDay() ? TODAY_TTL : TTL, () => computeDayNow(game, day, awards));
 }
 
 async function computeDayNow(game: string, day: string, awards: Award[]): Promise<Map<number, AwardWin>> {
-  const start = Math.floor(Date.parse(`${day}T00:00:00Z`) / 1000);
-  const end = start + 86400;
+  const [start, end] = dayRange(day);
   const isPlayer = (a: Award) => a.code in PLAYER_AWARDS;
   const weapons = awards.filter((a) => a.awardType === "W" && !isPlayer(a)).map((a) => a.code);
   const actions = awards.filter((a) => a.awardType !== "W" && !isPlayer(a)).map((a) => a.code);
@@ -154,7 +149,7 @@ export type AwardBoardRow = Award & { winner?: AwardWin; leader?: AwardWin };
 // One past day's winners (stored, else computed from the events of that day).
 export async function getAwardDay(game: string, day: string) {
   const awards = await getAwards(game);
-  const winners = day === utcDay() ? await computeDay(game, day, awards) : await storedOrComputed(game, day, awards);
+  const winners = day === siteDay() ? await computeDay(game, day, awards) : await storedOrComputed(game, day, awards);
   const flags = await getPlayerFlags([...winners.values()].map((w) => w.playerId));
   return { day, flags, rows: awards.map((a): AwardBoardRow => ({ ...a, winner: winners.get(a.awardId) })) };
 }
@@ -196,8 +191,8 @@ function mostDecorated(game: string, limit: number) {
 // Yesterday's winners (stored, else computed) and today's leaders.
 export async function getAwardBoard(game: string) {
   const awards = await getAwards(game);
-  const yesterday = utcDay(-1);
-  const [stored, today] = await Promise.all([storedDay(game, yesterday), computeDay(game, utcDay(), awards)]);
+  const yesterday = siteDay(-1);
+  const [stored, today] = await Promise.all([storedDay(game, yesterday), computeDay(game, siteDay(), awards)]);
   const winners = stored.size ? stored : await computeDay(game, yesterday, awards);
   const flags = await getPlayerFlags([...winners.values(), ...today.values()].map((w) => w.playerId));
   return {

@@ -20,9 +20,9 @@ import {
   reachedClass,
   ribbonFor,
   ribbonProgress,
-  utcDay,
 } from "@/lib/awards";
 import { getPlayerFlags } from "@/lib/data";
+import { siteDay } from "@/lib/day";
 import { activity, fmtDuration, fmtNum, fmtPct, localeOf } from "@/lib/format";
 import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
@@ -82,8 +82,8 @@ type P = { game: string; t: Dict; lang: Lang };
 // Award history: a month calendar to pick a past day and that day's winners
 // (yesterday when no day is picked).
 async function History({ game, t, lang, date, month }: P & { date: string; month: string }) {
-  const today = utcDay();
-  const yesterday = utcDay(-1);
+  const today = siteDay();
+  const yesterday = siteDay(-1);
   const valid = (d: string) =>
     /^\d{4}-\d\d-\d\d$/.test(d) && d >= "2000-01-01" && d < today && !Number.isNaN(Date.parse(`${d}T00:00:00Z`)) && new Date(`${d}T00:00:00Z`).toISOString().startsWith(d);
   const day = valid(date) ? date : yesterday;

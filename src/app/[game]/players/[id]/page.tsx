@@ -10,6 +10,7 @@ import { Hitbox } from "@/components/hitbox";
 import { SigCode } from "@/components/sig-code";
 import { ZONES } from "@/lib/zones";
 import { awardValue, getAwards, getPlayerRibbons, getRanks, getRibbonClasses, rankFor, ribbonFor, ribbonProgress } from "@/lib/awards";
+import { siteDay } from "@/lib/day";
 import { getSteamProfile } from "@/lib/steam";
 import { PlayerLinks, historyAccess } from "@/components/player-history";
 import { signatureUrl } from "@/lib/site-url";
@@ -104,7 +105,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   // Hidden players stay out of the list; bots are shown with their tag.
   const killList = killStats.filter((o) => o.hideranking === 0 || flags.get(o.playerId)?.flag === "bot");
 
-  const last14 = history.filter((h) => h.eventTime >= new Date(Date.now() - 13 * 86400000).toISOString().slice(0, 10));
+  const last14 = history.filter((h) => h.eventTime >= siteDay(-13));
   const kills14 = last14.reduce((s, h) => s + h.kills, 0);
   const hs14 = last14.reduce((s, h) => s + h.headshots, 0);
   const isBot = (p.uniqueId ?? "").startsWith("BOT");

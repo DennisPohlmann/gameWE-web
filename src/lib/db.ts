@@ -1,4 +1,5 @@
 import "server-only";
+import { siteDay } from "./day";
 import { env } from "./env";
 import { readFileSync } from "node:fs";
 import mysql from "mysql2/promise";
@@ -26,11 +27,13 @@ const isPg = () => dialect() === "postgres";
 
 // ---------------------------------------------------------------- SQL helpers
 
-// "column >= <first day of the last n UTC days>", for DATE columns.
+// "column >= <first day of the last n days>", for DATE columns. Today is the
+// site's day (TZ, see day.ts), not the database's.
 export function sinceDays(column: string): string {
+  const today = siteDay();
   return isPg()
-    ? `${column} >= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date - CAST(? AS integer)`
-    : `${column} >= UTC_DATE() - INTERVAL ? DAY`;
+    ? `${column} >= DATE '${today}' - CAST(? AS integer)`
+    : `${column} >= DATE '${today}' - INTERVAL ? DAY`;
 }
 
 // Case-insensitive LIKE. MariaDB's collations already ignore case.

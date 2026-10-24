@@ -191,8 +191,9 @@ npm run dev                    # http://localhost:3000
 ## Configuration
 
 All settings are environment variables, see `.env.example`. `TZ` (e.g.
-`Europe/Berlin`) sets the time zone of all times on the site; without it the
-Docker image shows UTC. `TEMPLATES_DIR` adds a folder of your own design
+`Europe/Berlin`) sets the time zone of all times on the site and when a day
+starts (awards, daily charts); without it the Docker image uses UTC. Set the
+collector to the same zone. `TEMPLATES_DIR` adds a folder of your own design
 templates (see [templates/README.md](templates/README.md)). `DB_TYPE` selects the database: `mariadb` (default,
 also for MySQL) or `postgres`. `DB_PORT`
 defaults to 3306 or 5432 accordingly. Both use the same table and column
