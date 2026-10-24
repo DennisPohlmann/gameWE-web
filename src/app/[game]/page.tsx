@@ -61,7 +61,7 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
   });
   const days = daily.slice(-14);
   // The running totals start where players, kills or headshots were first
-  // recorded; all three charts share one left edge, so they stay aligned.
+  // recorded; both charts share one left edge, so they stay aligned.
   const killsTotal = running(hourly.kills, Number(totals.kills));
   const headshotsTotal = running(hourly.headshots, Number(totals.headshots));
   const trendTrim = [hourly.players, hourly.kills, hourly.headshots];
@@ -153,29 +153,18 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
             {/* Running totals: today's totals minus what came after each point. */}
             <LineChart
               locale={lang}
-              ariaLabel={t.trendKillsTotal}
-              title={t.trendKillsTotal}
+              ariaLabel={t.trendTotals}
+              title={t.trendTotals}
               labels={hourLabels}
               dates={hourDates}
               tips={hourTips}
               hourly
-              fromZero={false}
               trimBy={trendTrim}
               alignTo={trendMax}
-              series={[{ label: t.kills, values: killsTotal, className: "s2" }]}
-            />
-            <LineChart
-              locale={lang}
-              ariaLabel={t.trendHeadshotsTotal}
-              title={t.trendHeadshotsTotal}
-              labels={hourLabels}
-              dates={hourDates}
-              tips={hourTips}
-              hourly
-              fromZero={false}
-              trimBy={trendTrim}
-              alignTo={trendMax}
-              series={[{ label: t.headshotsLabel, values: headshotsTotal, className: "s3" }]}
+              series={[
+                { label: t.kills, values: killsTotal, className: "s2" },
+                { label: t.headshotsLabel, values: headshotsTotal, className: "s3" },
+              ]}
             />
           </>
         ) : (
