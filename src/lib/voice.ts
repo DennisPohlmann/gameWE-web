@@ -193,11 +193,23 @@ export type VoiceChannel = {
   children: VoiceChannel[];
 };
 
+export type VoiceOs = "Linux" | "Windows" | "FreeBSD" | "macOS" | "";
+
+function osName(platform: string | undefined): VoiceOs {
+  const p = (platform ?? "").toLowerCase();
+  if (p.includes("freebsd")) return "FreeBSD";
+  if (p.includes("linux")) return "Linux";
+  if (p.includes("windows")) return "Windows";
+  if (p.includes("mac") || p.includes("darwin")) return "macOS";
+  return "";
+}
+
 export type VoiceInfo = {
   uptime: number | null;
   created: number | null;
   version: string;
-  platform: string;
+  // From virtualserver_platform; "" when unknown.
+  os: VoiceOs;
   clientConnections: number | null;
   queryConnections: number | null;
   securityLevel: number | null;
@@ -274,7 +286,7 @@ async function loadDetail(o: Record<string, string>): Promise<VoiceDetail | null
     uptime: num(si, "virtualserver_uptime"),
     created: num(si, "virtualserver_created"),
     version: text(si.virtualserver_version, 60),
-    platform: text(si.virtualserver_platform, 40),
+    os: osName(si.virtualserver_platform),
     clientConnections: num(si, "virtualserver_client_connections"),
     queryConnections: num(si, "virtualserver_query_client_connections"),
     securityLevel: num(si, "virtualserver_needed_identity_security_level"),

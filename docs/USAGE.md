@@ -35,7 +35,7 @@ settings: [CONFIG.md](CONFIG.md).
 | `/<game>/bans` | ban list like gameME's: players the collector marked as banned from the server logs (VAC kick, permanent server ban; `hideranking = 2`), bans from SourceBans (reason, length, date) and, with `STEAM_API_KEY`, VAC/game bans from Steam; points, K/D, HS/kill and accuracy per player. `hlstats_Players_Bans` adds type, date and reason for log bans. |
 | `/search` | search players by name or Steam ID and clans by tag or name (`?q=...&st=names\|steam\|clans&game=<code>`) |
 | `/help` | help: how points are calculated (with the current settings), actions, weapon modifiers, chat commands |
-| `/voice` | detail page of the TeamSpeak server from the voice server box (click its name): channel tree with the people online (names can be hidden in the admin settings), server data (uptime, connections, security level, ping, version, host banner URL), traffic and the welcome message; live from the ServerQuery, kept for a minute; 404 unless TeamSpeak is the voice server |
+| `/voice` | detail page of the TeamSpeak server from the voice server box (click its name): channel tree with the people online (names can be hidden in the admin settings), server info (operating system with a small symbol, uptime, users, connections, security level, ping, version, host banner URL), traffic and the welcome message; live from the ServerQuery, kept for a minute; 404 unless TeamSpeak is the voice server |
 | `/licenses` | licenses of the software, data, map tiles, flags and fonts gameWE uses |
 | `/<game>/events-feed` | the latest 10 events of a ranking as JSON (live box on the start page; 404 unless the admin setting "Latest events" is live) |
 | `/api/v1/...` | public JSON API, see [INTERFACE.md](INTERFACE.md) |

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Empty, Flag, Section, Stats } from "@/components/ui";
 import { fmtDateTime, fmtDuration, fmtNum } from "@/lib/format";
 import { getDict, type Dict, type Lang } from "@/lib/i18n";
-import { getVoiceDetail, type VoiceChannel } from "@/lib/voice";
+import { getVoiceDetail, type VoiceChannel, type VoiceOs } from "@/lib/voice";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [{ t }, v] = await Promise.all([getDict(), getVoiceDetail()]);
@@ -37,69 +37,116 @@ export default async function VoicePage() {
             [t.voiceType, box.type],
             [t.address, <a key="a" href={box.link}>{box.address}</a>],
             [t.password, box.password || "-"],
-            [t.voiceUsersOnline, `${n(box.clients)}${box.max !== null ? `/${fmtNum(box.max, lang)}` : ""}`],
           ]}
         />
       </Section>
       {!v.ok ? (
         <Empty>{t.voiceUnavailable}</Empty>
       ) : (
-        <div className="cont-2">
-          <Section title={t.channels}>
-            <div className="box voice-tree">
-              {v.channels.length ? <Channels list={v.channels} t={t} /> : <Empty>{t.noData}</Empty>}
-              {box.clients === 0 ? <p className="muted">{t.voiceNobody}</p> : null}
-              {!v.showClients ? <p className="muted">{t.voiceNamesHidden}</p> : null}
+        <Section title={t.voiceServerInfo}>
+          <div className="cont-2">
+            <div>
+              <table className="stats">
+                <thead>
+                  <tr>
+                    <th>{t.channels}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="voice-tree">
+                      {v.channels.length ? <Channels list={v.channels} t={t} /> : <span className="muted">{t.noData}</span>}
+                      {box.clients === 0 ? <p className="muted">{t.voiceNobody}</p> : null}
+                      {!v.showClients ? <p className="muted">{t.voiceNamesHidden}</p> : null}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-          </Section>
-          <div>
             {info ? (
-              <>
-                <Section title={t.voiceServerData}>
-                  <Stats
-                    items={[
-                      [t.uptime, info.uptime === null ? "-" : fmtDuration(info.uptime)],
-                      [t.channels, n(box.channels)],
-                      [t.voiceClientConnections, n(info.clientConnections)],
-                      [t.voiceQueryConnections, n(info.queryConnections)],
-                      [t.voiceSecurityLevel, n(info.securityLevel)],
-                      [t.voicePing, info.ping === null ? "-" : `${fmtNum(info.ping, lang)} ms`],
-                      [t.voicePacketLoss, info.packetLoss === null ? "-" : `${fmtNum(info.packetLoss * 100, lang, 2)} %`],
-                      [t.voiceVersion, [info.version, info.platform].filter(Boolean).join(" · ") || "-"],
-                      [t.voiceCreated, info.created ? fmtDateTime(info.created, lang) : "-"],
-                      [
-                        t.voiceBannerUrl,
-                        info.bannerUrl ? (
-                          <a key="b" href={info.bannerUrl} target="_blank" rel="nofollow noopener noreferrer">
-                            {info.bannerUrl}
-                          </a>
-                        ) : (
-                          "-"
-                        ),
-                      ],
-                    ]}
-                  />
-                </Section>
-                <Section title={t.voiceTraffic}>
-                  <Stats
-                    items={[
-                      [t.voiceInPerSec, bytes(info.bandwidthIn, lang, "/s")],
-                      [t.voiceOutPerSec, bytes(info.bandwidthOut, lang, "/s")],
-                      [t.voiceInTotal, bytes(info.bytesIn, lang)],
-                      [t.voiceOutTotal, bytes(info.bytesOut, lang)],
-                    ]}
-                  />
-                </Section>
+              <div className="voice-side">
+                <Stats
+                  title={t.voiceServerInfo}
+                  items={[
+                    [t.voiceOs, info.os ? <OsName key="os" os={info.os} /> : "-"],
+                    [t.uptime, info.uptime === null ? "-" : fmtDuration(info.uptime)],
+                    [t.channels, n(box.channels)],
+                    [t.voiceUsersOnline, `${n(box.clients)}${box.max !== null ? `/${fmtNum(box.max, lang)}` : ""}`],
+                    [t.voiceClientConnections, n(info.clientConnections)],
+                    [t.voiceQueryConnections, n(info.queryConnections)],
+                    [t.voiceSecurityLevel, n(info.securityLevel)],
+                    [t.voicePing, info.ping === null ? "-" : `${fmtNum(info.ping, lang)} ms`],
+                    [t.voicePacketLoss, info.packetLoss === null ? "-" : `${fmtNum(info.packetLoss * 100, lang, 2)} %`],
+                    [t.voiceVersion, info.version || "-"],
+                    [t.voiceCreated, info.created ? fmtDateTime(info.created, lang) : "-"],
+                    [
+                      t.voiceBannerUrl,
+                      info.bannerUrl ? (
+                        <a key="b" href={info.bannerUrl} target="_blank" rel="nofollow noopener noreferrer">
+                          {info.bannerUrl}
+                        </a>
+                      ) : (
+                        "-"
+                      ),
+                    ],
+                  ]}
+                />
+                <Stats
+                  title={t.voiceTraffic}
+                  items={[
+                    [t.voiceInPerSec, bytes(info.bandwidthIn, lang, "/s")],
+                    [t.voiceOutPerSec, bytes(info.bandwidthOut, lang, "/s")],
+                    [t.voiceInTotal, bytes(info.bytesIn, lang)],
+                    [t.voiceOutTotal, bytes(info.bytesOut, lang)],
+                  ]}
+                />
                 {info.welcome ? (
-                  <Section title={t.description}>
-                    <div className="box voice-welcome">{info.welcome}</div>
-                  </Section>
+                  <table className="stats">
+                    <thead>
+                      <tr>
+                        <th>{t.description}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="voice-welcome">{info.welcome}</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 ) : null}
-              </>
+              </div>
             ) : null}
           </div>
-        </div>
+        </Section>
       )}
+    </>
+  );
+}
+
+// Operating system of the server with a small symbol (drawn here, no logos).
+function OsName({ os }: { os: VoiceOs }) {
+  const icon =
+    os === "Windows" ? (
+      <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" className="os-icon">
+        <path fill="#3c8de0" d="M1 2.5l6-.9V7.5H1zM8 1.4l7-1v7.1H8zM1 8.5h6v5.9l-6-.9zM8 8.5h7v7.1l-7-1z" />
+      </svg>
+    ) : os === "Linux" ? (
+      <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" className="os-icon">
+        <ellipse cx="8" cy="9.5" rx="5" ry="6" fill="#222" stroke="#ccc" strokeWidth="0.8" />
+        <ellipse cx="8" cy="11" rx="3" ry="3.8" fill="#eee" />
+        <circle cx="6.5" cy="6" r="0.9" fill="#fff" />
+        <circle cx="9.5" cy="6" r="0.9" fill="#fff" />
+        <path d="M6.6 7.6h2.8L8 9z" fill="#f5b400" />
+      </svg>
+    ) : os === "FreeBSD" ? (
+      <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" className="os-icon">
+        <circle cx="8" cy="9" r="6" fill="#ab2b28" />
+        <path d="M2.5 5.5L1 1l4 2.5zM13.5 5.5L15 1l-4 2.5z" fill="#ab2b28" />
+      </svg>
+    ) : null;
+  return (
+    <>
+      {os} {icon}
     </>
   );
 }
@@ -123,7 +170,7 @@ function Channels({ list, t }: { list: VoiceChannel[]; t: Dict }) {
         <li key={c.id}>
           {c.spacer ? (
             <div className={`voice-spacer ${c.spacer}`} aria-hidden={c.spacer === "repeat" || undefined}>
-              {c.spacer === "repeat" ? c.name.repeat(Math.ceil(200 / Math.max(1, c.name.length))) : c.name}
+              {c.spacer === "repeat" ? c.name.repeat(Math.ceil(400 / Math.max(1, c.name.length))) : c.name}
             </div>
           ) : (
             <div className="voice-channel" title={c.topic || undefined}>
