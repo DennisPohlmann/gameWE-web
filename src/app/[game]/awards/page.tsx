@@ -7,6 +7,7 @@ import { RankBadge, Ribbon, RibbonLevel, rankName, ribbonClassName } from "@/com
 import { Bar, Empty, Pager, PlayerLink, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
 import {
   getAwardDays,
+  getLastAwardDay,
   getAwards,
   getMostDecorated,
   getRankCounts,
@@ -79,20 +80,24 @@ export default async function AwardsPage({ params, searchParams }: { params: Pro
 
 type P = { game: string; t: Dict; lang: Lang };
 
-// Award history: a month calendar to pick a past day and that day's winners
-// (yesterday when no day is picked).
+// Award history: a month calendar to pick a past day and that day's winners.
+// Days can be picked up to the last day with stored awards (yesterday while
+// none are stored); today and later have no awards yet. Without a date, or
+// with one after that day, the last day is shown.
 async function History({ game, t, lang, date, month }: P & { date: string; month: string }) {
   const today = siteDay();
   const yesterday = siteDay(-1);
+  const stored = await getLastAwardDay(game);
+  const last = stored && stored < today ? stored : yesterday;
   const valid = (d: string) =>
-    /^\d{4}-\d\d-\d\d$/.test(d) && d >= "2000-01-01" && d < today && !Number.isNaN(Date.parse(`${d}T00:00:00Z`)) && new Date(`${d}T00:00:00Z`).toISOString().startsWith(d);
-  const day = valid(date) ? date : yesterday;
-  const mon = /^\d{4}-(0[1-9]|1[0-2])$/.test(month) && month >= "2000-01" && month <= today.slice(0, 7) ? month : day.slice(0, 7);
-  const stored = await getAwardDays(game, mon);
+    /^\d{4}-\d\d-\d\d$/.test(d) && d >= "2000-01-01" && d <= last && !Number.isNaN(Date.parse(`${d}T00:00:00Z`)) && new Date(`${d}T00:00:00Z`).toISOString().startsWith(d);
+  const day = valid(date) ? date : last;
+  const mon = /^\d{4}-(0[1-9]|1[0-2])$/.test(month) && month >= "2000-01" && month <= last.slice(0, 7) ? month : day.slice(0, 7);
+  const days = await getAwardDays(game, mon);
   return (
     <div className="awards-daily">
       <div className="block">
-        <AwardCalendar base={`/${game}/awards?view=history`} month={mon} selected={day} today={today} stored={stored} t={t} locale={localeOf(lang)} />
+        <AwardCalendar base={`/${game}/awards?view=history`} month={mon} selected={day} today={today} last={last} stored={days} t={t} locale={localeOf(lang)} />
       </div>
       <AwardDayTable game={game} day={day} t={t} lang={lang} />
     </div>

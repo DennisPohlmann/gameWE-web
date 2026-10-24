@@ -2,12 +2,14 @@ import Link from "next/link";
 import type { Dict } from "@/lib/i18n";
 
 // Month calendar of the daily awards, as on gameME: week numbers, one link
-// per day up to today; days with stored winners are marked.
+// per day up to `last` (the last day with awards); later days, today among
+// them, are greyed out. Days with stored winners are marked, today framed.
 export function AwardCalendar({
   base,
   month,
   selected,
   today,
+  last,
   stored,
   t,
   locale,
@@ -17,6 +19,8 @@ export function AwardCalendar({
   month: string;
   selected: string;
   today: string;
+  // "YYYY-MM-DD", the last day that can be picked.
+  last: string;
   stored: Set<string>;
   t: Dict;
   locale: string;
@@ -43,7 +47,7 @@ export function AwardCalendar({
           ‹
         </Link>{" "}
         <b>{title}</b>{" "}
-        {next <= today.slice(0, 7) ? (
+        {next <= last.slice(0, 7) ? (
           <Link href={`${base}${sep}month=${next}`} aria-label={t.nextMonth} rel="nofollow">
             ›
           </Link>
@@ -71,7 +75,7 @@ export function AwardCalendar({
                 const cls = [day === selected ? "sel" : "", stored.has(day) ? "has" : "", day === today ? "today" : ""].filter(Boolean).join(" ");
                 return (
                   <td key={j} className={cls || undefined}>
-                    {day <= today ? (
+                    {day <= last ? (
                       <Link href={`${base}${sep}date=${day}`} rel="nofollow">
                         {d}
                       </Link>

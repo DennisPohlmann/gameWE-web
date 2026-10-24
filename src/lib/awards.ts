@@ -169,6 +169,17 @@ export async function getAwardDays(game: string, month: string): Promise<Set<str
   return new Set(rows.map((r) => String(r.date).slice(0, 10)));
 }
 
+// Latest day (YYYY-MM-DD) with stored winners, in the collector's zone like
+// the stored days; null when nothing is stored yet.
+export async function getLastAwardDay(game: string): Promise<string | null> {
+  const rows = await query<{ date: string | null }>(
+    `SELECT MAX(h.date) AS date FROM hlstats_Awards_History h JOIN hlstats_Awards a ON a.awardId = h.award_id WHERE a.game = ?`,
+    [game],
+  );
+  const d = rows[0]?.date;
+  return d ? String(d).slice(0, 10) : null;
+}
+
 // Players with the most award wins (gameME's "Most Decorated Players").
 export function getMostDecorated(game: string, limit: number) {
   return cached(`decorated:${game}:${limit}`, TTL, () => mostDecorated(game, limit));
