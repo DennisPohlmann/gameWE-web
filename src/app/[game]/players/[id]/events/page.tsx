@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { HistoryFrame, loadHistoryPlayer } from "@/components/player-history";
 import { Empty, Pager, PlayerLink, ROW_OPTIONS, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
 import { Weapon } from "@/components/weapon";
+import { noAutofill } from "@/lib/autofill";
 import { fmtDateTime, localeOf } from "@/lib/format";
 import { getGame, getPlayerFlags } from "@/lib/data";
 import { EVENT_KINDS, countPlayerEvents, getPlayerEvents, type EventKind } from "@/lib/history";
@@ -61,7 +62,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
   return (
     <HistoryFrame game={game} id={p.playerId} name={p.name} t={t} tab="events">
       <Form className="search" action={base}>
-        <select name="type" defaultValue={kinds.length === 1 ? type : ""} aria-label={t.eventType}>
+        <select {...noAutofill} name="type" defaultValue={kinds.length === 1 ? type : ""} aria-label={t.eventType}>
           <option value="">{t.allTypes}</option>
           {EVENT_KINDS.filter((k) => k !== "playeraction").map((k) => (
             <option key={k} value={k}>

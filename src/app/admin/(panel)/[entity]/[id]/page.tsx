@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { assignServersAction, deleteAction, moveServerAction, saveAction } from "../../../actions";
 import { allServers, rankingBaseGames } from "@/lib/admin-rankings";
+import { noAutofill } from "@/lib/autofill";
 import { gameKind, sameBaseGame } from "@/lib/games";
 import { Section } from "@/components/ui";
 import { getRow, optionList, withColumns } from "@/lib/admin-data";
@@ -79,7 +80,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
               <label key={f.name}>
                 {f.label[lang]}
                 {opts && !locked ? (
-                  <select name={f.name} defaultValue={value === null || value === undefined ? "" : String(value)} required={f.required}>
+                  <select {...noAutofill} name={f.name} defaultValue={value === null || value === undefined ? "" : String(value)} required={f.required}>
                     {!f.required || value === undefined ? <option value="" /> : null}
                     {opts.map(([v, l]) => (
                       <option key={v} value={v}>
@@ -88,17 +89,18 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
                     ))}
                   </select>
                 ) : f.type === "password" ? (
-                  <input name={f.name} type="password" autoComplete="new-password" minLength={10} required={isNew} />
+                  <input {...noAutofill} name={f.name} type="password" minLength={10} required={isNew} />
                 ) : f.type === "secret" ? (
                   <input
+                    {...noAutofill}
                     name={f.name}
                     type="password"
-                    autoComplete="off"
                     maxLength={f.max}
                     placeholder={(row as Record<string, unknown>)[`${f.name}__set`] ? "••••••••" : ""}
                   />
                 ) : (
                   <input
+                    {...noAutofill}
                     name={f.name}
                     defaultValue={value === null || value === undefined ? "" : String(value)}
                     type={f.type === "number" ? "number" : "text"}
@@ -165,7 +167,7 @@ async function RankingServers({ gameId, code, lang }: { gameId: string; code: st
                     <form action={moveServerAction} className="inline-form">
                       <input type="hidden" name="__id" value={gameId} />
                       <input type="hidden" name="server" value={s.serverId} />
-                      <select name="target" aria-label={a.rankingRemoveTo} defaultValue="">
+                      <select {...noAutofill} name="target" aria-label={a.rankingRemoveTo} defaultValue="">
                         <option value="" disabled>
                           {a.rankingRemoveTo} …
                         </option>

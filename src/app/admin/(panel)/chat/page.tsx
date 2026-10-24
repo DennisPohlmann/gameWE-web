@@ -1,6 +1,7 @@
 import Form from "next/form";
 import Link from "next/link";
 import { Empty, Pager, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
+import { noAutofill } from "@/lib/autofill";
 import { localeOf } from "@/lib/format";
 import { optionList } from "@/lib/admin-data";
 import { adminDict } from "@/lib/admin-i18n";
@@ -35,7 +36,7 @@ export default async function AdminChat({ searchParams }: { searchParams: Promis
         title={t.chat}
         aside={
           <Form className="search" action={base}>
-            <select name="game" defaultValue={game} aria-label={a.allGames}>
+            <select {...noAutofill} name="game" defaultValue={game} aria-label={a.allGames}>
               <option value="">{a.allGames}</option>
               {games.map(([v, l]) => (
                 <option key={v} value={v}>
@@ -44,7 +45,7 @@ export default async function AdminChat({ searchParams }: { searchParams: Promis
               ))}
             </select>
             {player ? <input type="hidden" name="player" value={player} /> : null}
-            <input type="search" name="q" defaultValue={q} placeholder={t.search} aria-label={t.search} />
+            <input {...noAutofill} type="search" name="q" defaultValue={q} placeholder={t.search} aria-label={t.search} />
             <button type="submit">{a.filter}</button>
           </Form>
         }

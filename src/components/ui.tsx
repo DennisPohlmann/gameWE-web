@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AutoForm } from "@/components/auto-form";
+import { noAutofill } from "@/lib/autofill";
 import { basePath } from "@/lib/base-path";
 import { FLAG_CODES } from "@/lib/flag-codes";
 import { gameKind } from "@/lib/games";
@@ -238,12 +239,12 @@ export function Pager({
             <input key={k} type="hidden" name={k} value={String(v)} />
           ))}
           <label>
-            {labels.goTo} <input type="number" name="page" min={1} max={pages} defaultValue={page} className="pager-page" />
+            {labels.goTo} <input {...noAutofill} type="number" name="page" min={1} max={pages} defaultValue={page} className="pager-page" />
           </label>
           {rows ? (
             <label>
               {labels.showRows}{" "}
-              <select name="rows" defaultValue={String(rows.value)}>
+              <select {...noAutofill} name="rows" defaultValue={String(rows.value)}>
                 {rows.options.map((n) => (
                   <option key={n} value={n}>
                     {n}

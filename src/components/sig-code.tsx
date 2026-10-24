@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { noAutofill } from "@/lib/autofill";
 
 // A generated picture (forum signature, server banner) with its code: the
 // style (one per design template, the site's own first) and the format
@@ -48,7 +49,7 @@ export function SigCode({
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img className="sig" src={img} alt={alt} width={width} height={height} />
       <div className="sig-codes-bar">
-        <select value={style} onChange={(e) => setStyle(e.target.value)} aria-label={labels.style}>
+        <select {...noAutofill} value={style} onChange={(e) => setStyle(e.target.value)} aria-label={labels.style}>
           <option value="">{labels.standard}</option>
           {styles.map((s) => (
             <option key={s.id} value={s.id}>
@@ -56,7 +57,7 @@ export function SigCode({
             </option>
           ))}
         </select>
-        <select value={kind} onChange={(e) => setKind(e.target.value)} aria-label={labels.format}>
+        <select {...noAutofill} value={kind} onChange={(e) => setKind(e.target.value)} aria-label={labels.format}>
           {Object.entries(codes).map(([k, [label]]) => (
             <option key={k} value={k}>
               {label}
@@ -67,7 +68,7 @@ export function SigCode({
           {copied ? labels.copied : labels.copy}
         </button>
       </div>
-      <textarea className="sig-code" readOnly rows={2} value={code} onFocus={(e) => e.currentTarget.select()} />
+      <textarea {...noAutofill} className="sig-code" readOnly rows={2} value={code} onFocus={(e) => e.currentTarget.select()} />
     </div>
   );
 }

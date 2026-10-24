@@ -4,6 +4,7 @@ import { AutoForm } from "@/components/auto-form";
 import { Rich } from "@/components/rich";
 import { Empty, PctBar, Section, SortTh, TableWrap, strParam } from "@/components/ui";
 import { Weapon } from "@/components/weapon";
+import { noAutofill } from "@/lib/autofill";
 import { getGame, getWeapons, type WeaponRow } from "@/lib/data";
 import { fmtNum, ratio } from "@/lib/format";
 import { fill, getDict } from "@/lib/i18n";
@@ -62,7 +63,7 @@ export default async function WeaponsPage({ params, searchParams }: { params: Pr
       title={t.weapons}
       aside={
         <AutoForm action={base} className="search">
-          <select name="sort" defaultValue={sort} aria-label={t.sortBy}>
+          <select {...noAutofill} name="sort" defaultValue={sort} aria-label={t.sortBy}>
             {sortNames.map(([k, label]) => (
               <option key={k} value={k}>
                 {t.sortBy}: {label}

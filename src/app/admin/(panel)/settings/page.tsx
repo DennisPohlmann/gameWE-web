@@ -4,6 +4,7 @@ import { optionList, rawOptions } from "@/lib/admin-data";
 import { adminDict } from "@/lib/admin-i18n";
 import { RAW_OPTION_HELP, READONLY_OPTIONS, allSettings, settingGroups } from "@/lib/admin-settings";
 import { requireAdmin } from "@/lib/auth";
+import { noAutofill } from "@/lib/autofill";
 import { adminQuery } from "@/lib/db";
 import { fill, getAdminLang } from "@/lib/i18n";
 import { listTemplates } from "@/lib/templates";
@@ -55,14 +56,15 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                   <label key={s.key} data-show={s.show ? `${s.show.key}=${s.show.value}` : undefined}>
                     {s.label[lang]}
                     {s.type === "bool" ? (
-                      <select name={s.key} defaultValue={v === "1" ? "1" : "0"}>
+                      <select {...noAutofill} name={s.key} defaultValue={v === "1" ? "1" : "0"}>
                         <option value="0">{lang === "de" ? "Nein" : "No"}</option>
                         <option value="1">{lang === "de" ? "Ja" : "Yes"}</option>
                       </select>
                     ) : s.type === "link" ? (
                       <span className="link-fields">
-                        <input name={`${s.key}__label`} defaultValue={v.split("|")[0] ?? ""} placeholder={lang === "de" ? "Name" : "Name"} aria-label={`${s.label[lang]}: Name`} maxLength={60} />
+                        <input {...noAutofill} name={`${s.key}__label`} defaultValue={v.split("|")[0] ?? ""} placeholder={lang === "de" ? "Name" : "Name"} aria-label={`${s.label[lang]}: Name`} maxLength={60} />
                         <input
+                          {...noAutofill}
                           name={`${s.key}__url`}
                           defaultValue={v.split("|").slice(1).join("|")}
                           placeholder="https://example.org"
@@ -72,7 +74,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                         />
                       </span>
                     ) : s.type === "choice" ? (
-                      <select name={s.key} defaultValue={v}>
+                      <select {...noAutofill} name={s.key} defaultValue={v}>
                         {s.choices?.map(([c, l]) => (
                           <option key={c} value={c}>
                             {l[lang]}
@@ -80,7 +82,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                         ))}
                       </select>
                     ) : s.type === "template" ? (
-                      <select name={s.key} defaultValue={v}>
+                      <select {...noAutofill} name={s.key} defaultValue={v}>
                         {templates.some((t) => t.id === v) ? null : <option value={v}>{v} (?)</option>}
                         {templates.map((t) => (
                           <option key={t.id} value={t.id}>
@@ -91,9 +93,9 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                     ) : s.type === "secret" ? (
                       <span className="link-fields">
                         <input
+                          {...noAutofill}
                           name={s.key}
                           type="password"
-                          autoComplete="new-password"
                           placeholder={values[s.key] ? a.secretSet : a.secretEmpty}
                           maxLength={255}
                         />
@@ -104,7 +106,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                         ) : null}
                       </span>
                     ) : s.type === "game" ? (
-                      <select name={s.key} defaultValue={v}>
+                      <select {...noAutofill} name={s.key} defaultValue={v}>
                         <option value="">-</option>
                         {games.map(([code, name]) => (
                           <option key={code} value={code}>
@@ -114,6 +116,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                       </select>
                     ) : (
                       <input
+                        {...noAutofill}
                         name={s.key}
                         defaultValue={v}
                         type={s.type === "number" ? "number" : "text"}
@@ -142,7 +145,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                 return (
                   <label key={r.keyname}>
                     <code>{r.keyname}</code>
-                    <input value={r.value} readOnly aria-readonly="true" />
+                    <input {...noAutofill} value={r.value} readOnly aria-readonly="true" />
                     <small className="muted">
                       {a.rawReadonly} {help}
                     </small>
@@ -154,7 +157,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                   <label>
                     <code>{r.keyname}</code>
                     <input type="hidden" name={`raw_key_${i}`} value={r.keyname} />
-                    <input name={`raw_val_${i}`} defaultValue={r.value} maxLength={255} />
+                    <input {...noAutofill} name={`raw_val_${i}`} defaultValue={r.value} maxLength={255} />
                     <small className="muted">{help}</small>
                   </label>
                   <label className="check">
@@ -166,8 +169,8 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             <label>
               {a.rawNewKey}
               <span className="link-fields">
-                <input name="raw_new_key" placeholder={a.rawNewKey} aria-label={a.rawNewKey} maxLength={128} pattern="[A-Za-z0-9_.\-]{1,128}" />
-                <input name="raw_new_val" placeholder={a.rawNewValue} aria-label={a.rawNewValue} maxLength={255} />
+                <input {...noAutofill} name="raw_new_key" placeholder={a.rawNewKey} aria-label={a.rawNewKey} maxLength={128} pattern="[A-Za-z0-9_.\-]{1,128}" />
+                <input {...noAutofill} name="raw_new_val" placeholder={a.rawNewValue} aria-label={a.rawNewValue} maxLength={255} />
               </span>
               <small className="muted">{a.rawNewHelp}</small>
             </label>

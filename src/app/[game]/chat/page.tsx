@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Form from "next/form";
 import { notFound } from "next/navigation";
 import { Empty, Pager, PlayerLink, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
+import { noAutofill } from "@/lib/autofill";
 import { getSettings } from "@/lib/settings";
 import { countChat, getChat, getPlayerFlags } from "@/lib/data";
 import { fmtDateTime, localeOf } from "@/lib/format";
@@ -34,7 +35,7 @@ export default async function ChatPage({
       title={t.chat}
       aside={
         <Form className="search" action={base} role="search">
-          <input type="search" name="q" defaultValue={q} placeholder={t.search} aria-label={t.search} />
+          <input {...noAutofill} type="search" name="q" defaultValue={q} placeholder={t.search} aria-label={t.search} />
           <button type="submit">{t.search}</button>
         </Form>
       }

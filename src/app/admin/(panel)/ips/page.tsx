@@ -4,6 +4,7 @@ import { Empty, Pager, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam, st
 import { optionList } from "@/lib/admin-data";
 import { adminDict } from "@/lib/admin-i18n";
 import { requireAdmin } from "@/lib/auth";
+import { noAutofill } from "@/lib/autofill";
 import { fmtDateTime, fmtNum, localeOf } from "@/lib/format";
 import { countIps, searchIps } from "@/lib/history";
 import { fill, getDict } from "@/lib/i18n";
@@ -39,7 +40,7 @@ export default async function AdminIps({ searchParams }: { searchParams: Promise
         title={a.ips}
         aside={
           <Form className="search" action={base}>
-            <select name="game" defaultValue={game} aria-label={a.allGames}>
+            <select {...noAutofill} name="game" defaultValue={game} aria-label={a.allGames}>
               <option value="">{a.allGames}</option>
               {games.map(([v, l]) => (
                 <option key={v} value={v}>
@@ -47,7 +48,7 @@ export default async function AdminIps({ searchParams }: { searchParams: Promise
                 </option>
               ))}
             </select>
-            <select name="days" defaultValue={days ? String(days) : ""} aria-label={a.ipsPeriod}>
+            <select {...noAutofill} name="days" defaultValue={days ? String(days) : ""} aria-label={a.ipsPeriod}>
               <option value="">{a.ipsAllTime}</option>
               {PERIODS.map((n) => (
                 <option key={n} value={n}>
@@ -55,7 +56,7 @@ export default async function AdminIps({ searchParams }: { searchParams: Promise
                 </option>
               ))}
             </select>
-            <input type="search" name="q" defaultValue={q} placeholder={t.search} aria-label={t.search} maxLength={100} />
+            <input {...noAutofill} type="search" name="q" defaultValue={q} placeholder={t.search} aria-label={t.search} maxLength={100} />
             <button type="submit">{a.filter}</button>
           </Form>
         }

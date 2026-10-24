@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { noAutofill } from "@/lib/autofill";
 import { ZONES, type Zone } from "@/lib/zones";
 export type HitboxWeapon = { name: string; hits: Record<Zone, number> };
 
@@ -81,7 +82,7 @@ export function Hitbox({
     <form method="get" className="hb-picker">
       <label>
         <span>{labels.weapon}</span>
-        <select name="hw" value={sel} onChange={(e) => setSel(Number(e.target.value))}>
+        <select {...noAutofill} name="hw" value={sel} onChange={(e) => setSel(Number(e.target.value))}>
           {weapons.map((x, i) => (
             <option key={`${i}-${x.name}`} value={i}>
               {x.name}

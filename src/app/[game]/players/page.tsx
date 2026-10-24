@@ -4,6 +4,7 @@ import Link from "next/link";
 import { PlaceTable, RankingTable } from "@/components/ranking";
 import { PlaceSelect } from "@/components/place-select";
 import { Empty, Flag, Pager, Section, pageParam, strParam, ROW_OPTIONS, rowsParam } from "@/components/ui";
+import { noAutofill } from "@/lib/autofill";
 import { getSettings } from "@/lib/settings";
 import { AutoForm } from "@/components/auto-form";
 import { PlayerMap } from "@/components/player-map";
@@ -132,12 +133,12 @@ export default async function PlayersPage({
   const placeForm = (
     // Keyed by the filter, so the selects show it again after a change.
     <PlaceSelect key={`${placeType}|${country}|${city}`} action={base}>
-      <select name="type" defaultValue={placeType} aria-label={t.rankingType}>
+      <select {...noAutofill} name="type" defaultValue={placeType} aria-label={t.rankingType}>
         <option value="">{t.playerRanking}</option>
         <option value="countryinfo">{t.countryRanking}</option>
         <option value="cityinfo">{t.cityRanking}</option>
       </select>
-      <select name="valuecountry" defaultValue={country} aria-label={t.placeCountry}>
+      <select {...noAutofill} name="valuecountry" defaultValue={country} aria-label={t.placeCountry}>
         <option value="">{t.allCountries}</option>
         {countries.map((c) => (
           <option key={c.code} value={c.code}>
@@ -146,7 +147,7 @@ export default async function PlayersPage({
         ))}
       </select>
       {placeType === "cityinfo" ? (
-        <select name="valuecity" defaultValue={city && (country ? city : "")} aria-label={t.placeCity}>
+        <select {...noAutofill} name="valuecity" defaultValue={city && (country ? city : "")} aria-label={t.placeCity}>
           <option value="">{t.allCities}</option>
           {cityOptions.map((c) => (
             <option key={c.value} value={c.value}>
@@ -167,7 +168,7 @@ export default async function PlayersPage({
           aside={
             <AutoForm action={base} className="search">
               {Object.entries(keep).map(([k, v]) => (k !== "map" && v ? <input key={k} type="hidden" name={k} value={v} /> : null))}
-              <select name="map" defaultValue={mapAll ? "all" : "top"} aria-label={t.playerMap}>
+              <select {...noAutofill} name="map" defaultValue={mapAll ? "all" : "top"} aria-label={t.playerMap}>
                 <option value="top">{t.mapTop10}</option>
                 <option value="all">{t.mapAllPlayers}</option>
               </select>
@@ -210,6 +211,7 @@ export default async function PlayersPage({
           <Form className="search" action={base} role="search">
             {view ? <input type="hidden" name="view" value={view} /> : null}
             <input
+              {...noAutofill}
               type="search"
               name="q"
               defaultValue={q}

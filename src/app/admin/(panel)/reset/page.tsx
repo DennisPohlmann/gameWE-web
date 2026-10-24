@@ -4,6 +4,7 @@ import { AutoRefresh } from "@/components/auto-refresh";
 import { Section, TableWrap } from "@/components/ui";
 import { optionList } from "@/lib/admin-data";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
+import { noAutofill } from "@/lib/autofill";
 import { getAdminLang } from "@/lib/i18n";
 import { collectorRunning, getJob, jobsAvailable, recentJobs, type ResetJob } from "@/lib/reset";
 
@@ -131,7 +132,7 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
           {!running ? <p className="settings-help notice error">{t.noCollector}</p> : null}
           <label>
             {t.ranking}
-            <select name="game" defaultValue={sp.game ?? ""} required>
+            <select {...noAutofill} name="game" defaultValue={sp.game ?? ""} required>
               <option value="">-</option>
               {games.map(([code, name]) => (
                 <option key={code} value={code}>
@@ -151,7 +152,7 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
           </fieldset>
           <label>
             {t.confirm}
-            <input name="confirm" autoComplete="off" required maxLength={32} />
+            <input {...noAutofill} name="confirm" required maxLength={32} />
           </label>
           <div>
             <button type="submit" className="button danger">

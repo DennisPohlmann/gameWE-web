@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { AutoForm } from "@/components/auto-form";
 import { HeatmapView } from "@/components/heatmap";
 import { Empty, PlayerLink, Section, Stats, TableWrap, strParam } from "@/components/ui";
+import { noAutofill } from "@/lib/autofill";
 import { getMap, getMapTop, getPlayerFlags } from "@/lib/data";
 import { fmtDuration, fmtNum, fmtPct, kpd, ratio } from "@/lib/format";
 import { getHeatmap, type HeatWho } from "@/lib/heatmap";
@@ -61,7 +62,7 @@ export default async function MapPage({ params, searchParams }: Props) {
               {heat ? fill(who === "victim" ? t.heatHintDeaths : t.heatHintKills, { n: fmtNum(heat.total, lang) }) : t.heatNone}
             </p>
             <AutoForm action={base} className="search">
-              <select name="pos" defaultValue={who === "killer" ? "killer" : ""} aria-label={t.heatmap}>
+              <select {...noAutofill} name="pos" defaultValue={who === "killer" ? "killer" : ""} aria-label={t.heatmap}>
                 <option value="">{t.heatDeaths}</option>
                 <option value="killer">{t.heatKills}</option>
               </select>

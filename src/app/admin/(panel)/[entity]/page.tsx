@@ -2,6 +2,7 @@ import Form from "next/form";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Empty, GameTag, Pager, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
+import { noAutofill } from "@/lib/autofill";
 import { localeOf } from "@/lib/format";
 import { listRows, optionList, withColumns } from "@/lib/admin-data";
 import { allServers, rankingBaseGames } from "@/lib/admin-rankings";
@@ -59,7 +60,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
           e.gameColumn || e.search ? (
             <Form className="search" action={base}>
               {e.gameColumn ? (
-                <select name="game" defaultValue={game} aria-label={a.allGames}>
+                <select {...noAutofill} name="game" defaultValue={game} aria-label={a.allGames}>
                   <option value="">{a.allGames}</option>
                   {games.map(([v, l]) => (
                     <option key={v} value={v}>
@@ -68,7 +69,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
                   ))}
                 </select>
               ) : null}
-              {e.search ? <input type="search" name="q" defaultValue={q} aria-label={a.filter} /> : null}
+              {e.search ? <input {...noAutofill} type="search" name="q" defaultValue={q} aria-label={a.filter} /> : null}
               <button type="submit">{a.filter}</button>
             </Form>
           ) : null

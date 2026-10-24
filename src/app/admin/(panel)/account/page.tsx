@@ -3,6 +3,7 @@ import { QrCode } from "@/components/qr-code";
 import { Section } from "@/components/ui";
 import { adminDict } from "@/lib/admin-i18n";
 import { adminSecret, requireAdmin } from "@/lib/auth";
+import { noAutofill } from "@/lib/autofill";
 import { getAdminLang } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import { otpauthUri, readSecret } from "@/lib/totp";
@@ -74,11 +75,11 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
               <QrCode text={otpauthUri(pending, user.username, issuer)} label={a.totpUri} />
               <label>
                 {a.totpSecret}
-                <input readOnly value={pending.replace(/(.{4})/g, "$1 ").trim()} className="mono" />
+                <input {...noAutofill} readOnly value={pending.replace(/(.{4})/g, "$1 ").trim()} className="mono" />
               </label>
               <label>
                 {a.totpUri}
-                <input readOnly value={otpauthUri(pending, user.username, issuer)} className="mono" />
+                <input {...noAutofill} readOnly value={otpauthUri(pending, user.username, issuer)} className="mono" />
               </label>
               <form action={totpConfirmAction} className="form">
                 <label>

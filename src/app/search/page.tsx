@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Form from "next/form";
 import Link from "next/link";
 import { Empty, PlayerLink, Section, TableWrap, strParam } from "@/components/ui";
+import { noAutofill } from "@/lib/autofill";
 import { getGames, searchClans, searchPlayers, unlinkedBots, type ClanHit, type SearchHit, type SearchIn } from "@/lib/data";
 import { fmtNum, kpd } from "@/lib/format";
 import { fill, getDict } from "@/lib/i18n";
@@ -49,7 +50,7 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
                   <label htmlFor="search-q">{t.searchFor}</label>
                 </td>
                 <td>
-                  <input id="search-q" type="search" name="q" defaultValue={q} maxLength={64} autoFocus={!q} />
+                  <input {...noAutofill} id="search-q" type="search" name="q" defaultValue={q} maxLength={64} autoFocus={!q} />
                 </td>
               </tr>
               <tr>
@@ -57,7 +58,7 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
                   <label htmlFor="search-st">{t.searchIn}</label>
                 </td>
                 <td>
-                  <select id="search-st" name="st" defaultValue={by}>
+                  <select {...noAutofill} id="search-st" name="st" defaultValue={by}>
                     {SEARCH_IN.map((s) => (
                       <option key={s} value={s}>
                         {labels[s]}
@@ -71,7 +72,7 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
                   <label htmlFor="search-game">{t.ranking}</label>
                 </td>
                 <td>
-                  <select id="search-game" name="game" defaultValue={game}>
+                  <select {...noAutofill} id="search-game" name="game" defaultValue={game}>
                     <option value="">{t.searchAllRankings}</option>
                     {games.map((g) => (
                       <option key={g.code} value={g.code}>

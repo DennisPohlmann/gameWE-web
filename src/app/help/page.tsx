@@ -3,6 +3,7 @@ import Form from "next/form";
 import { AutoForm } from "@/components/auto-form";
 import { Bar, Section, TableWrap, strParam } from "@/components/ui";
 import { Weapon } from "@/components/weapon";
+import { noAutofill } from "@/lib/autofill";
 import { getGames, getHelpActions, getHelpWeapons, getPointSettings } from "@/lib/data";
 import { fmtNum } from "@/lib/format";
 import { fill, getDict } from "@/lib/i18n";
@@ -48,7 +49,7 @@ export default async function HelpPage({ searchParams }: { searchParams: SP }) {
   const gameTabs = (anchor: string) =>
     games.length > 1 ? (
       <AutoForm action={`/help#${anchor}`} className="search help-games">
-        <select name="game" defaultValue={game} aria-label={t.ranking}>
+        <select {...noAutofill} name="game" defaultValue={game} aria-label={t.ranking}>
           {games.map((g) => (
             <option key={g.code} value={g.code}>
               {g.name}
@@ -87,7 +88,7 @@ export default async function HelpPage({ searchParams }: { searchParams: SP }) {
         title={t.help}
         aside={
           <Form action="/help" className="search">
-            <select name="game" defaultValue={game} aria-label={t.ranking}>
+            <select {...noAutofill} name="game" defaultValue={game} aria-label={t.ranking}>
               {games.map((g) => (
                 <option key={g.code} value={g.code}>
                   {g.name}
