@@ -273,7 +273,7 @@ export function ServerLoadChart({
   points: { timestamp: number; act_players: number; min_players: number; max_players: number; uptime: number; map: string | null }[];
   slots: number;
   locale: string;
-  labels: { players: string; uptime: string };
+  labels: { players: string; uptime: string; min: string; max: string };
 }) {
   const W = 960;
   const H = 280;
@@ -290,6 +290,10 @@ export function ServerLoadChart({
   const yU = (h: number) => pad.t + (1 - h / maxU) * (H - pad.t - pad.b);
   const hhmm = (ts: number) => new Date(ts * 1000).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
   const upText = (m: number) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}h`;
+  // Players at the sample time; the lowest and highest count within its
+  // 10-minute interval only when they differ.
+  const playersText = (p: { act_players: number; min_players: number; max_players: number }) =>
+    p.min_players === p.max_players ? `${p.act_players}` : `${p.act_players} (${labels.min} ${p.min_players} / ${labels.max} ${p.max_players})`;
 
   // Consecutive points with the same map form one band.
   const bands: { from: number; to: number; map: string }[] = [];
@@ -385,7 +389,7 @@ export function ServerLoadChart({
               <g
                 key={i}
                 className="load-pt"
-                data-tip={`${hhmm(p.timestamp)} · ${p.map ?? "?"}\n${labels.players}: ${p.act_players} (${p.min_players}–${p.max_players})\n${labels.uptime}: ${upText(p.uptime)}`}
+                data-tip={`${hhmm(p.timestamp)} · ${p.map ?? "?"}\n${labels.players}: ${playersText(p)}\n${labels.uptime}: ${upText(p.uptime)}`}
               >
                 <rect className="hover" x={from} y={pad.t} width={Math.max(1, to - from)} height={H - pad.t - pad.b} />
                 <line className="guide" x1={cx} x2={cx} y1={pad.t} y2={H - pad.b} />
