@@ -15,8 +15,8 @@ export type VoiceBox = {
     // "TeamSpeak 3" etc., from the server version; "TeamSpeak" when unknown.
     type: string;
     // Country code for the flag ("" = unknown, placeholder flag; null = no
-    // flag): the admin setting, else the GeoIP country of a game server with
-    // the same IP.
+    // flag, the default): the admin setting, or on "auto" the GeoIP country
+    // of a game server with the same IP.
     country: string | null;
     // What the box shows as address, and where it links to. Both may be
     // set by the admin (gamewe_ts_display, gamewe_ts_link) for a DNS/SRV
@@ -83,12 +83,13 @@ export function tsCountry(v: string): string {
   return /^[a-z]{2}$/.test(s) && FLAG_CODES.has(s) ? s : "";
 }
 
-// The admin's country, else the one the collector found for a game server
-// on the same IP (hlstats_Servers.country_code, shown on public pages too).
+// The admin's country; "auto": the one the collector found for a game
+// server on the same IP (hlstats_Servers.country_code, shown on public pages
+// too). Empty (the default) or "none" (older setting): no flag.
 async function serverCountry(o: Record<string, string>, host: string): Promise<string | null> {
-  if ((o.gamewe_ts_country ?? "").trim() === "none") return null;
-  const set = tsCountry(o.gamewe_ts_country ?? "");
-  if (set || !/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return set;
+  const v = (o.gamewe_ts_country ?? "").trim();
+  if (v !== "auto") return tsCountry(v) || null;
+  if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return "";
   try {
     const rows = await query<{ country_code: string | null }>(
       `SELECT country_code FROM hlstats_Servers WHERE address = ? AND country_code IS NOT NULL AND country_code <> '' LIMIT 1`,

@@ -270,13 +270,13 @@ export const settingGroups: SettingGroup[] = [
         type: "choice",
         def: "",
         choices: [
-          ["", { de: "Automatisch", en: "Automatic" }],
-          ["none", { de: "Keine Flagge", en: "No flag" }],
+          ["", { de: "Keine Flagge", en: "No flag" }],
+          ["auto", { de: "Automatisch", en: "Automatic" }],
           ...countryChoices(),
         ],
         help: {
-          de: "Vor dem Namen im Kasten und auf der Detailseite. Automatisch: das Land eines Spielservers mit derselben IP, sonst eine neutrale Flagge. Keine Flagge: weder Flagge noch Platzhalter.",
-          en: "Before the name in the box and on the detail page. Automatic: the country of a game server on the same IP, else a neutral flag. No flag: neither a flag nor a placeholder.",
+          de: "Vor dem Namen im Kasten und auf der Detailseite. Keine Flagge (Standard): weder Flagge noch Platzhalter. Automatisch: das Land eines Spielservers mit derselben IP, sonst eine neutrale Flagge.",
+          en: "Before the name in the box and on the detail page. No flag (default): neither a flag nor a placeholder. Automatic: the country of a game server on the same IP, else a neutral flag.",
         },
         show: TS,
       },
