@@ -25,9 +25,12 @@ export default async function MiscPage({ params }: { params: Promise<{ game: str
     ...top.map((c) => ({
       label: c.country || t.unknownCountry,
       value: c.n,
-      icon: c.flag ? <Flag code={c.flag} title={c.country} /> : null,
+      // No country yet: the neutral placeholder flag, like in the rankings.
+      icon: <Flag code={c.flag} title={c.country || t.unknownCountry} />,
     })),
-    ...(rest ? [{ label: t.otherCountries, value: rest }] : []),
+    // Several known countries together: an empty gap of a flag's size instead
+    // of the "unknown" placeholder, so the labels stay in line.
+    ...(rest ? [{ label: t.otherCountries, value: rest, icon: <span className="flag flag-blank" aria-hidden /> }] : []),
   ];
   const empty = <p className="empty">{t.noData}</p>;
   return (

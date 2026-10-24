@@ -262,6 +262,7 @@ td.no-lb { border-left: 0; padding-right: 10px; }
 
 a.player { color: var(--text); }
 .flag { margin-right: 2px; }
+.flag-blank { display: inline-block; width: 16px; height: 12px; }
 /* Weapon images (HLstatsX:CE) are drawn for dark backgrounds (white outlines and
    silhouettes), so they sit on a dark chip on every skin; --weapon-bg changes it. */
 .weapon-img { box-sizing: content-box; vertical-align: middle; margin: -2px 0; padding: 1px 4px; border-radius: 3px; background: var(--weapon-bg, #1b1b1b); }
