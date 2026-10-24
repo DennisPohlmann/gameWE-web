@@ -244,6 +244,17 @@ export const settingGroups: SettingGroup[] = [
         show: TS,
       },
       {
+        key: "gamewe_ts_country",
+        label: { de: "Land des TeamSpeak-Servers", en: "Country of the TeamSpeak server" },
+        type: "text",
+        def: "",
+        help: {
+          de: "Zweistelliger Ländercode für die Flagge vor dem Namen, z. B. DE. Leer: das Land eines Spielservers mit derselben IP, sonst eine neutrale Flagge.",
+          en: "Two-letter country code for the flag before the name, e.g. DE. Empty: the country of a game server on the same IP, else a neutral flag.",
+        },
+        show: TS,
+      },
+      {
         key: "gamewe_ts_show_clients",
         label: { de: "Namen der Personen online zeigen", en: "Show the names of the people online" },
         type: "bool",

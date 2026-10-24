@@ -1,6 +1,7 @@
 import "server-only";
 import { Socket } from "node:net";
 import { query } from "./db";
+import { FLAG_CODES } from "./flag-codes";
 
 // Voice server box: either a TeamSpeak 3 server (people online read over its
 // ServerQuery interface) or a Discord server (invite link, people online
@@ -13,6 +14,9 @@ export type VoiceBox = {
     name: string;
     // "TeamSpeak 3" etc., from the server version; "TeamSpeak" when unknown.
     type: string;
+    // Country code for the flag ("" = unknown): the admin setting, else
+    // the GeoIP country of a game server with the same IP.
+    country: string;
     // What the box shows as address, and where it links to. Both may be
     // set by the admin (gamewe_ts_display, gamewe_ts_link) for a DNS/SRV
     // name; the query always uses the real host and ports.
@@ -39,6 +43,7 @@ const KEYS = [
   "gamewe_ts_display",
   "gamewe_ts_link",
   "gamewe_ts_show_clients",
+  "gamewe_ts_country",
   "gamewe_discord_invite",
   "gamewe_discord_guild",
 ] as const;
@@ -69,6 +74,28 @@ export function tsLink(v: string): string {
   if (!hostPort || !tsHost(hostPort[1]) || (hostPort[2] && Number(hostPort[2]) > 65535)) return "";
   if (m[1].toLowerCase() !== "https" && m[3] && m[3] !== "/") return "";
   return s;
+}
+
+// Country of the TeamSpeak server: a two-letter code with a flag.
+export function tsCountry(v: string): string {
+  const s = v.trim().toLowerCase();
+  return /^[a-z]{2}$/.test(s) && FLAG_CODES.has(s) ? s : "";
+}
+
+// The admin's country, else the one the collector found for a game server
+// on the same IP (hlstats_Servers.country_code, shown on public pages too).
+async function serverCountry(o: Record<string, string>, host: string): Promise<string> {
+  const set = tsCountry(o.gamewe_ts_country ?? "");
+  if (set || !/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return set;
+  try {
+    const rows = await query<{ country_code: string | null }>(
+      `SELECT country_code FROM hlstats_Servers WHERE address = ? AND country_code IS NOT NULL AND country_code <> '' LIMIT 1`,
+      [host],
+    );
+    return tsCountry(rows[0]?.country_code ?? "");
+  } catch {
+    return "";
+  }
 }
 
 // The generated connect link for host[:port].
@@ -147,6 +174,7 @@ async function loadTs(host: string, voicePort: number, queryPort: number, o: Rec
   const base = {
     name: (o.gamewe_ts_name ?? "").trim(),
     type: "TeamSpeak",
+    country: await serverCountry(o, host),
     address: tsDisplay(o.gamewe_ts_display ?? "") || real,
     link: tsLink(o.gamewe_ts_link ?? "") || tsDefaultLink(real),
     password: (o.gamewe_ts_password ?? "").trim(),
@@ -251,6 +279,7 @@ async function loadDetail(o: Record<string, string>): Promise<VoiceDetail | null
   const box: VoiceDetail["box"] = {
     name: (o.gamewe_ts_name ?? "").trim() || host,
     type: "TeamSpeak",
+    country: await serverCountry(o, host),
     address: tsDisplay(o.gamewe_ts_display ?? "") || real,
     link: tsLink(o.gamewe_ts_link ?? "") || tsDefaultLink(real),
     password: (o.gamewe_ts_password ?? "").trim(),

@@ -685,7 +685,6 @@ td.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9e
 
 .voice-box table { width: 100%; }
 .voice-icon { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 3px; }
-.voice-icon.ts { background: #2580c3; }
 .voice-icon.discord { background: #5865f2; border-radius: 50%; }
 .voice-box a.voice-name { color: var(--text); }
 

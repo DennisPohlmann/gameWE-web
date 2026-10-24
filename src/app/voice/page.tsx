@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { ServerFlag } from "@/components/live";
 import { Empty, Flag, Section, Stats } from "@/components/ui";
 import { fmtDateTime, fmtDuration, fmtNum } from "@/lib/format";
 import { getDict, type Dict, type Lang } from "@/lib/i18n";
@@ -23,7 +24,8 @@ export default async function VoicePage() {
       <Section
         title={
           <>
-            <span className="voice-icon ts" aria-hidden="true" /> {box.name}
+            <ServerFlag code={box.country} lang={lang} />
+            {box.name}
           </>
         }
         aside={

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { NotOnAdmin } from "./not-on-admin";
+import { ServerFlag } from "./live";
 import { fmtNum } from "@/lib/format";
 import type { Dict, Lang } from "@/lib/i18n";
 import type { VoiceBox as Box } from "@/lib/voice";
@@ -28,7 +29,7 @@ export function VoiceBox({ box, t, lang }: { box: Box; t: Dict; lang: Lang }) {
               {box.ts ? (
                 <tr>
                   <td>
-                    <span className="voice-icon ts" aria-hidden="true" />{" "}
+                    <ServerFlag code={box.ts.country} lang={lang} />
                     <Link href="/voice" className="voice-name">
                       {box.ts.name}
                     </Link>
