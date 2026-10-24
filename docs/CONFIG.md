@@ -73,9 +73,10 @@ instead of address:port (e.g. a DNS name with an SRV record) and a connect
 link that replaces the generated `ts3server://host?port=...` link (only
 `ts3server://`, `teamspeak://` and `https://` with a host name are
 accepted). The query always uses the real address and ports. A flag
-before the name shows the server's country: the optional country code
-setting (e.g. `DE`), else the GeoIP country the collector found for a game
-server on the same IP, else a neutral flag. Discord:
+before the name shows the server's country, chosen in "Flag of the
+TeamSpeak server": a country from the list, "No flag" (neither a flag nor
+a placeholder), or "Automatic" (default: the GeoIP country the collector
+found for a game server on the same IP, else a neutral flag). Discord:
 invite and server ID. A box at the top of the public pages then shows the TeamSpeak address with a connect
 link, the type (e.g. `TeamSpeak 3`, from the server version), the password,
 the channel count and the players online, or the Discord

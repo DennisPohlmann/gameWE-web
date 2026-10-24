@@ -14,9 +14,10 @@ export type VoiceBox = {
     name: string;
     // "TeamSpeak 3" etc., from the server version; "TeamSpeak" when unknown.
     type: string;
-    // Country code for the flag ("" = unknown): the admin setting, else
-    // the GeoIP country of a game server with the same IP.
-    country: string;
+    // Country code for the flag ("" = unknown, placeholder flag; null = no
+    // flag): the admin setting, else the GeoIP country of a game server with
+    // the same IP.
+    country: string | null;
     // What the box shows as address, and where it links to. Both may be
     // set by the admin (gamewe_ts_display, gamewe_ts_link) for a DNS/SRV
     // name; the query always uses the real host and ports.
@@ -84,7 +85,8 @@ export function tsCountry(v: string): string {
 
 // The admin's country, else the one the collector found for a game server
 // on the same IP (hlstats_Servers.country_code, shown on public pages too).
-async function serverCountry(o: Record<string, string>, host: string): Promise<string> {
+async function serverCountry(o: Record<string, string>, host: string): Promise<string | null> {
+  if ((o.gamewe_ts_country ?? "").trim() === "none") return null;
   const set = tsCountry(o.gamewe_ts_country ?? "");
   if (set || !/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return set;
   try {

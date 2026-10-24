@@ -1,4 +1,5 @@
 import type { L } from "./admin-entities";
+import { FLAG_CODES } from "./flag-codes";
 
 // Typed form for the hlstats_Options keys the website and the collector read.
 // The collector's keys and defaults are documented in collector/docs/CONFIG.md.
@@ -27,6 +28,23 @@ export type Setting = {
 export type SettingGroup = { title: L; help?: L; items: Setting[] };
 
 const TS = { key: "gamewe_voice_type", value: "teamspeak" };
+
+// Every country with a flag, by its German name, as "Name (DE)".
+function countryChoices(): [string, L][] {
+  const name = (lang: string, c: string) => {
+    try {
+      return new Intl.DisplayNames([lang], { type: "region" }).of(c) ?? c;
+    } catch {
+      return c;
+    }
+  };
+  return [...FLAG_CODES]
+    .filter((c) => /^[a-z]{2}$/.test(c))
+    .map((c) => c.toUpperCase())
+    .map((c): [string, L] => [c, { de: `${name("de", c)} (${c})`, en: `${name("en", c)} (${c})` }])
+    .filter(([c, l]) => l.en !== `${c} (${c})`)
+    .sort((a, b) => a[1].de.localeCompare(b[1].de, "de"));
+}
 const DISCORD = { key: "gamewe_voice_type", value: "discord" };
 
 export const settingGroups: SettingGroup[] = [
@@ -248,12 +266,17 @@ export const settingGroups: SettingGroup[] = [
       },
       {
         key: "gamewe_ts_country",
-        label: { de: "Land des TeamSpeak-Servers", en: "Country of the TeamSpeak server" },
-        type: "text",
+        label: { de: "Flagge des TeamSpeak-Servers", en: "Flag of the TeamSpeak server" },
+        type: "choice",
         def: "",
+        choices: [
+          ["", { de: "Automatisch", en: "Automatic" }],
+          ["none", { de: "Keine Flagge", en: "No flag" }],
+          ...countryChoices(),
+        ],
         help: {
-          de: "Zweistelliger Ländercode für die Flagge vor dem Namen, z. B. DE. Leer: das Land eines Spielservers mit derselben IP, sonst eine neutrale Flagge.",
-          en: "Two-letter country code for the flag before the name, e.g. DE. Empty: the country of a game server on the same IP, else a neutral flag.",
+          de: "Vor dem Namen im Kasten und auf der Detailseite. Automatisch: das Land eines Spielservers mit derselben IP, sonst eine neutrale Flagge. Keine Flagge: weder Flagge noch Platzhalter.",
+          en: "Before the name in the box and on the detail page. Automatic: the country of a game server on the same IP, else a neutral flag. No flag: neither a flag nor a placeholder.",
         },
         show: TS,
       },

@@ -29,7 +29,7 @@ export function VoiceBox({ box, t, lang }: { box: Box; t: Dict; lang: Lang }) {
               {box.ts ? (
                 <tr>
                   <td>
-                    <ServerFlag code={box.ts.country} lang={lang} />
+                    {box.ts.country !== null ? <ServerFlag code={box.ts.country} lang={lang} /> : null}
                     <Link href="/voice" className="voice-name">
                       {box.ts.name}
                     </Link>

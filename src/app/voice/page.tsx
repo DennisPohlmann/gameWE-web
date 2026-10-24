@@ -24,7 +24,7 @@ export default async function VoicePage() {
       <Section
         title={
           <>
-            <ServerFlag code={box.country} lang={lang} />
+            {box.country !== null ? <ServerFlag code={box.country} lang={lang} /> : null}
             {box.name}
           </>
         }
