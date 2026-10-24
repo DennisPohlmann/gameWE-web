@@ -48,6 +48,12 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
   const hourDates = hourly.kills.map((_, i) =>
     dateFmt.format((hourly.start + i * hourly.step) * 1000),
   );
+  // The four 15-minute charts start where players, kills or headshots were
+  // first recorded and share one left edge, so they stay aligned.
+  const killsTotal = running(hourly.kills, Number(totals.kills));
+  const headshotsTotal = running(hourly.headshots, Number(totals.headshots));
+  const trendTrim = [hourly.players, hourly.kills, hourly.headshots];
+  const trendMax = Math.max(0, ...killsTotal, ...headshotsTotal, ...hourly.kills, ...hourly.players.map((v) => v ?? 0));
   const since = nowUnix() - 86400;
   const loads = await Promise.all(servers.map((s) => getServerLoad(s.serverId, since)));
   // With several servers, the list of all of them and one graph of all of
@@ -124,6 +130,8 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
               dates={hourDates}
               tips={hourTips}
               hourly
+              trimBy={trendTrim}
+              alignTo={trendMax}
               series={[{ label: t.playersOnline, values: hourly.players, className: "s1" }]}
             />
             <p className="legend">
@@ -138,6 +146,8 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
               dates={hourDates}
               tips={hourTips}
               hourly
+              trimBy={trendTrim}
+              alignTo={trendMax}
               series={[
                 { label: t.kills, values: hourly.kills, className: "s2" },
                 { label: t.headshotsLabel, values: hourly.headshots, className: "s3" },
@@ -152,7 +162,9 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
               tips={hourTips}
               hourly
               fromZero={false}
-              series={[{ label: t.kills, values: running(hourly.kills, Number(totals.kills)), className: "s2" }]}
+              trimBy={trendTrim}
+              alignTo={trendMax}
+              series={[{ label: t.kills, values: killsTotal, className: "s2" }]}
             />
             <LineChart
               locale={lang}
@@ -162,7 +174,9 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
               tips={hourTips}
               hourly
               fromZero={false}
-              series={[{ label: t.headshotsLabel, values: running(hourly.headshots, Number(totals.headshots)), className: "s3" }]}
+              trimBy={trendTrim}
+              alignTo={trendMax}
+              series={[{ label: t.headshotsLabel, values: headshotsTotal, className: "s3" }]}
             />
             <p className="legend">
               <span>{t.trendTotal}:</span>

@@ -22,6 +22,8 @@ export function LineChart({
   dates: allDates,
   hourly = false,
   trimStart = true,
+  trimBy,
+  alignTo,
 }: {
   labels: string[];
   // Time of each point for the hover box (e.g. "Mo 20.10. 14:00");
@@ -47,6 +49,13 @@ export function LineChart({
   // false: always show the whole range, even when it begins with zeros
   // (e.g. connects per day, where a quiet day is a real 0).
   trimStart?: boolean;
+  // Values that decide where the graph starts and ends instead of its own
+  // lines, so charts stacked together (e.g. running totals below the
+  // values per hour) cover the same time.
+  trimBy?: (number | null)[][];
+  // Largest value of the charts stacked together: the left margin fits its
+  // label too, so they all keep the same left edge.
+  alignTo?: number;
 }) {
   const [hover, setHover] = useState<{ i: number; left: number; top: number; flip: boolean } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -64,18 +73,18 @@ export function LineChart({
   }, [hover]);
   // While a graph is still filling up (e.g. load recorded since two days),
   // it starts at the first point with data instead of an empty left part.
+  const trim = trimBy ?? allSeries.map((s) => s.values);
   const first = !trimStart ? 0 : Math.min(
     Math.max(0, allLabels.length - 2),
-    Math.max(0, allLabels.findIndex((_, i) => allSeries.some((s) => (s.values[i] ?? 0) !== 0))),
+    Math.max(0, allLabels.findIndex((_, i) => trim.some((v) => (v[i] ?? 0) !== 0))),
   );
   // Hours not recorded yet at the end are left out too.
   let end = allLabels.length;
-  while (end - first > 2 && allSeries.every((s) => s.values[end - 1] === null || s.values[end - 1] === undefined)) end--;
+  while (end - first > 2 && trim.every((v) => v[end - 1] === null || v[end - 1] === undefined)) end--;
   const labels = allLabels.slice(first, end);
   const tips = allTips?.slice(first, end);
   const series = allSeries.map((s) => ({ ...s, values: s.values.slice(first, end) }));
   const dates = allDates?.slice(first, end);
-  const pad = { top: 12, right: 24, bottom: dates ? 36 : 22, left: 40 };
   const n = labels.length;
   if (n < 2) return null;
   const all = series.flatMap((s) => s.values).filter((v): v is number => v !== null);
@@ -83,17 +92,22 @@ export function LineChart({
   const lo = fromZero ? Math.min(0, ...all) : lowest - (Math.max(lowest + 2, ...all) - lowest) * 0.05;
   const hi = Math.max(fromZero ? 2 : lowest + 2, ...all);
   // Ticks at round whole numbers (1, 2, 2.5 or 5 times a power of ten),
-  // about four steps from bottom to top.
+  // about four steps from bottom to top; counts never go below 0.
   const step = niceStep((hi - lo) / 4);
-  const min = Math.floor(lo / step) * step;
+  const min = lowest >= 0 ? Math.max(0, Math.floor(lo / step) * step) : Math.floor(lo / step) * step;
   const max = Math.ceil(hi / step) * step;
+  const ticks = Array.from({ length: Math.round((max - min) / step) + 1 }, (_, i) => min + i * step);
+  // Left margin as wide as the longest tick label (about 6.5 units per
+  // character at the axis font size), at least the old 40.
+  const tickText = (t: number) => t.toLocaleString(locale);
+  const longest = Math.max(...ticks.map((t) => tickText(t).length), alignTo === undefined ? 0 : tickText(Math.ceil(alignTo)).length);
+  const pad = { top: 12, right: 24, bottom: dates ? 36 : 22, left: Math.max(40, Math.ceil(12 + longest * 6.5)) };
   const plotW = width - pad.left - pad.right;
   const x = (i: number) => pad.left + (i * plotW) / (n - 1);
   const gap = plotW / (n - 1);
   const dotR = Math.max(1, Math.min(2.5, gap / 3));
   const dense = gap < 6;
   const y = (v: number) => pad.top + (1 - (v - min) / (max - min || 1)) * (height - pad.top - pad.bottom);
-  const ticks = Array.from({ length: Math.round((max - min) / step) + 1 }, (_, i) => min + i * step);
   const every = Math.max(1, Math.ceil(n / 6));
   // First point of each day; a date needs about 70 units of room.
   const dayStarts = dates ? dates.flatMap((d, i) => (i === 0 || d !== dates[i - 1] ? [i] : [])) : [];
@@ -128,7 +142,7 @@ export function LineChart({
           <g key={i}>
             <line className="grid" x1={pad.left} x2={width - pad.right} y1={y(t)} y2={y(t)} />
             <text className="axis" x={pad.left - 6} y={y(t) + 4} textAnchor="end">
-              {t.toLocaleString(locale)}
+              {tickText(t)}
             </text>
           </g>
         ))}
