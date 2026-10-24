@@ -67,13 +67,11 @@ export function ServerTable({ game, servers, head, t, lang }: { game: string; se
 }
 
 // Flag of a server's country (hlstats_Servers.country_code) with the country
-// name as title; nothing for an empty or unknown code.
+// name as title; the neutral placeholder for an empty or unknown code.
 export function ServerFlag({ code, lang }: { code: string | null | undefined; lang: Lang }) {
-  const name = countryName(code, lang);
-  if (!name) return null;
   return (
     <>
-      <Flag code={code} title={name} />{" "}
+      <Flag code={code} title={countryName(code, lang) || undefined} />{" "}
     </>
   );
 }
@@ -124,7 +122,7 @@ export async function LiveTable({ game, players, t, lang }: { game: string; play
                   <td className="rank num">{++n}</td>
                   <td className="wrap-cell">
                     {/* Bots get their tag where players have the flag, so the names line up. */}
-                    {p.is_bot ? <span className="bot-tag">BOT</span> : p.flag ? <Flag code={p.flag} title={p.country} /> : <span className="flag-gap" />}{" "}
+                    {p.is_bot ? <Flag code="bot" /> : <Flag code={p.flag} title={p.country} />}{" "}
                     {p.is_bot && !botLinks ? (
                       <span className={p.is_dead ? "dead" : undefined}>{p.name || `#${p.player_id}`}</span>
                     ) : (

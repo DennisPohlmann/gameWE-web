@@ -131,7 +131,7 @@ the links above.
 
 | Path | Component | License |
 |------|-----------|---------|
-| `public/flags/*.svg` | flag-icons 7.2.3 by Panayiotis Lipiridis, https://github.com/lipis/flag-icons | MIT, text in `public/flags/LICENSE.txt` |
+| `public/flags/*.svg` (except `unknown.svg`, gameWE's own placeholder) | flag-icons 7.2.3 by Panayiotis Lipiridis, https://github.com/lipis/flag-icons | MIT, text in `public/flags/LICENSE.txt` |
 | `public/icon*.png`, `public/icon.svg`, `public/apple-touch-icon.png`, `public/avatar-unknown.svg` | gameWE's own graphics | GPL-3.0-or-later |
 | `templates/` | gameWE's own design templates | GPL-3.0-or-later |
 | Database schema and table names (`hlstats_*`) | HLstatsX: Community Edition, https://github.com/NomisCZ/hlstatsx-community-edition | GPL-2.0-or-later (the schema is created by the collector; gameWE web reads it) |

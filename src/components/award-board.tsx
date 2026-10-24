@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Empty, Flag, PlayerLink, Section, TableWrap } from "@/components/ui";
+import { Empty, PlayerLink, Section, TableWrap } from "@/components/ui";
 import { awardValue, getAwardBoard, getAwardDay } from "@/lib/awards";
 import { fmtDuration, fmtNum, localeOf } from "@/lib/format";
 import { fill, type Dict, type Lang } from "@/lib/i18n";
@@ -7,10 +7,6 @@ import { fill, type Dict, type Lang } from "@/lib/i18n";
 // All awards of a ranking with yesterday's winner and today's leader.
 export async function AwardBoard({ game, t, lang }: { game: string; t: Dict; lang: Lang }) {
   const { day, rows, flags } = await getAwardBoard(game);
-  const flag = (id: number) => {
-    const f = flags.get(id);
-    return f ? <Flag code={f.flag} title={f.country} /> : null;
-  };
   const val = (a: (typeof rows)[number], v: number) => awardValue(a, v, (n) => fmtNum(n, lang), fmtDuration);
   return (
     <Section title={t.dailyAwards}>
@@ -33,7 +29,7 @@ export async function AwardBoard({ game, t, lang }: { game: string; t: Dict; lan
                   <td>
                     {a.winner ? (
                       <>
-                        {flag(a.winner.playerId)} <PlayerLink game={game} id={a.winner.playerId} name={a.winner.name} plain={flags.get(a.winner.playerId)?.nolink} />{" "}
+                        <PlayerLink game={game} id={a.winner.playerId} name={a.winner.name} flag={flags.get(a.winner.playerId)} />{" "}
                         <span className="muted">({val(a, a.winner.value)})</span>
                       </>
                     ) : (
@@ -43,7 +39,7 @@ export async function AwardBoard({ game, t, lang }: { game: string; t: Dict; lan
                   <td>
                     {a.leader ? (
                       <>
-                        {flag(a.leader.playerId)} <PlayerLink game={game} id={a.leader.playerId} name={a.leader.name} plain={flags.get(a.leader.playerId)?.nolink} />{" "}
+                        <PlayerLink game={game} id={a.leader.playerId} name={a.leader.name} flag={flags.get(a.leader.playerId)} />{" "}
                         <span className="muted">({val(a, a.leader.value)})</span>
                       </>
                     ) : (
@@ -90,7 +86,7 @@ export async function AwardDayTable({ game, day, t, lang }: { game: string; day:
                     <td>
                       {a.winner ? (
                         <>
-                          {f ? <Flag code={f.flag} title={f.country} /> : null} <PlayerLink game={game} id={a.winner.playerId} name={a.winner.name} plain={f?.nolink} />{" "}
+                          <PlayerLink game={game} id={a.winner.playerId} name={a.winner.name} flag={f} />{" "}
                           <span className="muted">({val(a, a.winner.value)})</span>
                         </>
                       ) : (

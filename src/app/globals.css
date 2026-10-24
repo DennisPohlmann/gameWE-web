@@ -604,8 +604,7 @@ table.spaced { margin-top: 10px; }
 .swatch.up { background: #6fbf73; }
 .load-head { font-size: 11px; margin: 4px 0; text-align: right; }
 .load-chart svg { height: auto; max-width: 1100px; }
-.bot-tag { display: inline-block; width: 16px; height: 12px; margin-right: 5px; vertical-align: -1px; overflow: hidden; font: bold 7px/13px Verdana, sans-serif; letter-spacing: -0.4px; text-align: center; color: #fff; background: linear-gradient(#8a8f98, #5c616b); border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18), 0 1px 1px rgba(0, 0, 0, 0.25); }
-.flag-gap { display: inline-block; width: 16px; margin-right: 2px; }
+.bot-tag { display: inline-block; width: 16px; height: 12px; margin-right: 2px; vertical-align: -1px; overflow: hidden; font: bold 7px/13px Verdana, sans-serif; letter-spacing: -0.4px; text-align: center; color: #fff; background: linear-gradient(#8a8f98, #5c616b); border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18), 0 1px 1px rgba(0, 0, 0, 0.25); }
 
 .inline-form { display: inline-flex; gap: 4px; align-items: center; margin: 0; }
 .chart .dot { stroke: none; }

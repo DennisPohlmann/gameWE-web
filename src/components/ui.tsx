@@ -3,10 +3,10 @@ import type { ReactNode } from "react";
 import { AutoForm } from "@/components/auto-form";
 import { basePath } from "@/lib/base-path";
 import { FLAG_CODES } from "@/lib/flag-codes";
-import { flagEmoji } from "@/lib/format";
 import { gameKind } from "@/lib/games";
 
-// flag: the player's country (getPlayerFlags), shown before the name.
+// flag: the player's country (getPlayerFlags), shown before the name; without
+// one the neutral placeholder keeps the names in line.
 // plain (or flag.nolink): a bot without a profile, the name without a link.
 export function PlayerLink({
   game,
@@ -18,16 +18,12 @@ export function PlayerLink({
   game: string;
   id: number;
   name: string | null;
-  flag?: { flag: string; country: string; nolink?: boolean } | null;
+  flag?: { flag: string | null; country: string | null; nolink?: boolean } | null;
   plain?: boolean;
 }) {
   return (
     <>
-      {flag ? (
-        <>
-          <Flag code={flag.flag} title={flag.country} />{" "}
-        </>
-      ) : null}
+      <Flag code={flag?.flag} title={flag?.country} />{" "}
       {plain || flag?.nolink ? (
         <span className="player">{name || `#${id}`}</span>
       ) : (
@@ -40,20 +36,23 @@ export function PlayerLink({
 }
 
 // Flat country flag (SVG from public/flags) with a light gloss, the same look
-// as the language flags; codes without an SVG fall back to the emoji.
+// as the language flags. An empty or unknown code (no GeoIP data yet) gets the
+// neutral placeholder flags/unknown.svg of the same size, so names stay in line.
 export function Flag({ code, title }: { code: string | null | undefined; title?: string | null }) {
   const c = (code ?? "").trim().toLowerCase();
   if (c === "bot") return <span className="bot-tag" title="Bot">BOT</span>;
-  if (FLAG_CODES.has(c)) {
-    const label = title ?? c.toUpperCase();
-    return <span className="flag flag-svg" role="img" title={label} aria-label={label} style={{ backgroundImage: `url(${basePath}/flags/${c}.svg)` }} />;
-  }
-  const f = flagEmoji(c);
-  return f ? (
-    <span className="flag" title={title ?? undefined} aria-label={title ?? undefined}>
-      {f}
-    </span>
-  ) : null;
+  const known = FLAG_CODES.has(c);
+  const label = title || (known ? c.toUpperCase() : undefined);
+  return (
+    <span
+      className={known ? "flag flag-svg" : "flag flag-svg flag-unknown"}
+      role={label ? "img" : undefined}
+      title={label}
+      aria-label={label}
+      aria-hidden={label ? undefined : true}
+      style={{ backgroundImage: `url(${basePath}/flags/${known ? c : "unknown"}.svg)` }}
+    />
+  );
 }
 
 // Small tag with the ranking's base game, e.g. "CS:GO"; long shows the full name.

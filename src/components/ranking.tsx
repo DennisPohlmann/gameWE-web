@@ -65,8 +65,7 @@ export async function RankingTable({
               <tr key={r.playerId}>
                 {showRank ? <td className="rank">{fmtNum(firstRank + i, lang)}</td> : null}
                 <td>
-                  <Flag code={r.flag} title={r.country} />
-                  <PlayerLink game={game} id={r.playerId} name={r.name} plain={bots.has(r.playerId)} />
+                  <PlayerLink game={game} id={r.playerId} name={r.name} flag={{ flag: r.flag, country: r.country }} plain={bots.has(r.playerId)} />
                 </td>
                 {showGlobalRank ? <td className="num hide-sm">{fmtNum(Number(r.globalRank ?? 0), lang)}</td> : null}
                 <td className="num">{fmtNum(r.skill, lang)}</td>
