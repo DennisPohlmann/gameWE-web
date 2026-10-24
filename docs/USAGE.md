@@ -168,7 +168,15 @@ The admin area edits:
 - **Servers:** the collector only accepts logs from servers registered here
   (IP address, port, game, RCON password). The RCON password is write-only in
   the form and never shown again; public pages never read it, and the
-  read-only web user has no right to that column.
+  read-only web user has no right to that column. The optional **log
+  secret** (`sv_logsecret`, a number from 1 to 2147483647, empty by default)
+  is handled the same way: write-only, `-` clears it, and saving it also
+  sets `log_secret_changed` to the current time. The collector then accepts
+  only log packets with this secret; with the collector's default
+  `features.log_secret: auto` it sets and renews the secret itself over RCON,
+  so leave the field empty there (see the collector's CONFIG.md, "Log
+  secret"). The field appears once the collector's database has schema
+  version 4 (`gamewe db migrate`).
 - Games, players (points, hide from ranking, clan), clans, weapons (name,
   points modifier), actions (rewards), teams, roles, award definitions, ranks
   and users. The lists keep their filters (ranking, search, page, rows) in

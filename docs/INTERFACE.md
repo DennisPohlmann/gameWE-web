@@ -23,8 +23,8 @@ IP address may make 120 requests a minute (then `429` with `Retry-After`);
 answers may be cached for 30 seconds. It shows only what the website shows
 to everyone: players hidden from the ranking or banned, bots without a
 profile and hidden rankings (with their servers) are left out or answer
-`404`. The API never returns chat, IP addresses, Steam IDs, RCON passwords
-or other admin data.
+`404`. The API never returns chat, IP addresses, Steam IDs, RCON passwords, log
+secrets or other admin data.
 
 **Lists** are paged the same way everywhere: `limit` (1-100, default 25) and
 `page` (from 1) or `offset` (not both). The answer is

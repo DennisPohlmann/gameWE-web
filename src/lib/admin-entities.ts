@@ -1,4 +1,5 @@
 import { GAME_KINDS } from "./games";
+import { isLogSecret } from "./log-secret";
 
 // What the admin area can edit. Each entity is one table; the generic list,
 // edit and save code in app/admin works from these definitions only, so
@@ -26,6 +27,11 @@ export type Field = {
   min?: number;
   maxValue?: number;
   pattern?: RegExp;
+  // secret only: the value must pass this check (besides max).
+  valid?: (s: string) => boolean;
+  // A column set to the current Unix time whenever this field is written
+  // (a constant of the entity definition).
+  changedAt?: string;
 };
 
 export type Entity = {
@@ -107,6 +113,19 @@ export const entities: Entity[] = [
       { name: "port", label: { de: "Port", en: "Port" }, type: "number", inList: true, required: true, min: 1, maxValue: 65535, help: { de: "Spiel- und RCON-Port des Servers.", en: "Game and RCON port of the server." } },
       { ...gameField, help: { de: "Die Rangliste bestimmt das Spiel: erst unter Ranglisten das Spiel der Rangliste wählen, dann den Server ihr zuordnen. Nur Ranglisten desselben Spiels sind erlaubt.", en: "The ranking decides the game: first choose the ranking's game under Rankings, then assign the server to it. Only rankings of the same game are allowed." } },
       { name: "rcon_password", label: { de: "RCON-Passwort", en: "RCON password" }, type: "secret", max: 128, help: { de: "Für die Antworten auf !rank, !top10 usw. Leer lassen, um es nicht zu ändern. Ein einzelnes Minus (-) löscht es.", en: "For replies to !rank, !top10 etc. Leave empty to keep it. A single minus (-) clears it." } },
+      {
+        name: "log_secret",
+        label: { de: "Log-Secret", en: "Log secret" },
+        type: "secret",
+        optional: true,
+        max: 10,
+        valid: isLogSecret,
+        changedAt: "log_secret_changed",
+        help: {
+          de: "Optional: sv_logsecret des Gameservers, eine Zahl von 1 bis 2147483647. Der Collector nimmt dann nur Logpakete mit diesem Secret an. Mit features.log_secret: auto (Standard) setzt und erneuert der Collector es selbst per RCON, das Feld bleibt dann leer. Leer lassen, um es nicht zu ändern. Ein einzelnes Minus (-) löscht es.",
+          en: "Optional: the game server's sv_logsecret, a number from 1 to 2147483647. The collector then accepts only log packets with this secret. With features.log_secret: auto (the default) the collector sets and renews it itself over RCON; leave the field empty then. Leave empty to keep it. A single minus (-) clears it.",
+        },
+      },
       { name: "publicaddress", label: { de: "Öffentliche Adresse", en: "Public address" }, type: "text", max: 255, help: { de: "Wird statt IP:Port angezeigt, z. B. ein Hostname.", en: "Shown instead of IP:port, e.g. a host name." } },
       { name: "max_players", label: { de: "Max. Spieler", en: "Max players" }, type: "number" },
       { name: "display_id", label: { de: "Reihenfolge", en: "Order" }, type: "number", inList: true },

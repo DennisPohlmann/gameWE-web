@@ -129,6 +129,7 @@ async function parseValue(f: Field, raw: FormDataEntryValue | null): Promise<Par
       if (!s) return undefined;
       if (s === "-") return "";
       if (f.max && s.length > f.max) throw new InputError(f.name);
+      if (f.valid && !f.valid(s)) throw new InputError(f.name);
       return s;
     case "number": {
       if (!s) {
@@ -170,7 +171,10 @@ export async function saveRow(e: Entity, id: string | null, form: FormData): Pro
     if (f.readonly || f.virtual || (f.createOnly && id !== null)) continue;
     if (f.type === "password" && id === null && !String(form.get(f.name) ?? "").trim()) throw new InputError(f.name);
     const v = await parseValue(f, form.get(f.name));
-    if (v !== undefined) values[f.name] = v;
+    if (v !== undefined) {
+      values[f.name] = v;
+      if (f.changedAt) values[f.changedAt] = Math.floor(Date.now() / 1000);
+    }
   }
   if (id === null) {
     const key = String(values[e.pk] ?? "").toLowerCase();
