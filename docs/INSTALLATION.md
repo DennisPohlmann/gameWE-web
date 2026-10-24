@@ -83,7 +83,10 @@ COLLECTOR_PASSWORD='...' WEB_PASSWORD='...' WEB_ADMIN_PASSWORD='...' ./init-db.s
 The script stops if the database already has tables, so it never overwrites
 data. There are no migration scripts: the init script is the only way to
 create the database, and an older database (also an old HLstatsX one) is
-not upgraded. Create a new database with the current init script instead.
+not upgraded. Create a new database with the current init script instead,
+and copy old statistics into it with the migration guides of the collector:
+[from HLstatsX:CE](https://github.com/DennisPohlmann/gameWE-collector/blob/main/docs/MIGRATION-HLSTATSX.md),
+[from gameME](https://github.com/DennisPohlmann/gameWE-collector/blob/main/docs/MIGRATION-GAMEME.md).
 Afterwards `gamewe check` shows `schema: ok` or lists what is missing.
 
 ### 1.3 Database users
