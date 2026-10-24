@@ -51,7 +51,9 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
   // With several servers, the list of all of them and one graph of all of
   // them come first; a single server is shown only once.
   const multi = servers.length > 1;
-  const combined = multi ? combinedLoad(servers, loads, since, lang, t.total) : null;
+  // The graph of all servers is shown also with a single server, above its
+  // own load graph.
+  const combined = combinedLoad(servers, loads, since, lang, multi ? t.total : t.players);
   // Who is online right now, between the server list and the graphs.
   // Shown also when nobody is online (empty map), so the layout stays the same.
   const liveMap = mapLive ? (
@@ -95,6 +97,11 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
             <div key={s.serverId} className="server-margin">
               <ServerTable game={game} servers={[s]} t={t} head={multi ? undefined : head} />
               {multi ? null : liveMap}
+              {!multi && combined ? (
+                <div className="box">
+                  <LineChart locale={lang} ariaLabel={t.players} height={220} labels={combined.labels} dates={combined.dates} series={combined.series} />
+                </div>
+              ) : null}
               {loads[i].length > 1 ? (
                 <div className="box">
                   <ServerLoadChart points={loads[i]} slots={s.max_players} locale={lang} labels={{ players: t.players, uptime: t.uptime }} />
@@ -198,7 +205,8 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
 }
 
 // Players per server and in total over the last 24 hours, averaged per quarter
-// hour; quarters without samples stay empty.
+// hour; quarters without samples stay empty. A single server gets only the
+// total, which is its own line.
 function combinedLoad(servers: { name: string }[], loads: { timestamp: number; act_players: number }[][], since: number, lang: string, total: string) {
   const start = Math.floor(since / BUCKET) * BUCKET;
   const n = Math.ceil((nowUnix() - start) / BUCKET);
@@ -226,7 +234,7 @@ function combinedLoad(servers: { name: string }[], loads: { timestamp: number; a
     dates,
     series: [
       { label: total, values: sums, className: "s1" },
-      ...servers.map((s, i) => ({ label: s.name, values: perServer[i], className: `srv srv${i % 8}` })),
+      ...(servers.length > 1 ? servers.map((s, i) => ({ label: s.name, values: perServer[i], className: `srv srv${i % 8}` })) : []),
     ],
   };
 }
