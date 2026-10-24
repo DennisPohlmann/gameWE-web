@@ -877,3 +877,29 @@ td.ribbon-wall a { display: inline-flex; flex-direction: column; align-items: ce
 .admin-nav .admin-group { display: block; margin: 10px 0 2px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.6; }
 .admin-nav .admin-group:first-child { margin-top: 0; }
 .admin .opt-help { font-size: 11px; white-space: normal; min-width: 280px; overflow-wrap: anywhere; }
+
+/* Windows and macOS (data-os set by the layout from the user agent): Verdana
+   at 9-11px renders poorly there, so use the system UI font (Segoe UI hints
+   well with ClearType) and lift the smallest sizes. Linux has no data-os and
+   keeps the rules above unchanged. */
+html[data-os] body,
+html[data-os] input, html[data-os] select, html[data-os] textarea, html[data-os] button,
+html[data-os] .leaflet-tooltip,
+html[data-os] .hs, html[data-os] .pbar-text, html[data-os] .map-avatar span, html[data-os] .ban-type {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Verdana, Arial, sans-serif;
+}
+html[data-os] body,
+html[data-os] input, html[data-os] select, html[data-os] textarea, html[data-os] button,
+html[data-os] .leaflet-tooltip { font-size: 12px; }
+html[data-os] h2,
+html[data-os] .block > h3, html[data-os] .section-head h2 { font-size: 12px; }
+html[data-os] .small,
+html[data-os] .tabs-top a,
+html[data-os] table.player-livestats th,
+html[data-os] .game-tag, html[data-os] h3 .game-tag,
+html[data-os] .hl-badge, html[data-os] .help-type, html[data-os] .help-tile span,
+html[data-os] .admin-version, html[data-os] .admin-nav .admin-group,
+html[data-os] .decorated-rank, html[data-os] .ribbon-level,
+html[data-os] .spark b { font-size: 11px; }
+html[data-os] .hs { font-size: 10px; }
+html[data-os] .sig-code { font: 11px ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }

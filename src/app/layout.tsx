@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { getSettings, titleTemplate } from "@/lib/settings";
@@ -51,12 +52,23 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 
+// Windows and macOS get their own font stack and sizes (globals.css,
+// html[data-os]); Linux keeps the default rendering.
+async function clientOs(): Promise<"win" | "mac" | undefined> {
+  const h = await headers();
+  const platform = (h.get("sec-ch-ua-platform") ?? "").replace(/"/g, "");
+  const ua = h.get("user-agent") ?? "";
+  if (platform === "Windows" || /Windows NT/.test(ua)) return "win";
+  if (platform === "macOS" || /Macintosh|Mac OS X/.test(ua)) return /iPhone|iPad/.test(ua) ? undefined : "mac";
+  return undefined;
+}
+
 // Page frame in the style of gameME: header with tabs, breadcrumb bar with
 // the languages, optional logo, content, footer.
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const { lang, t } = await getDict();
   const { siteName, siteUrl, logoUrl, headerLogo, links, headerHome, headerOrder, geoipCredit, skin, sourcebansUrl } = await getSettings();
-  const [games, template] = await Promise.all([getGames().catch(() => []), resolveTemplate(skin)]);
+  const [games, template, os] = await Promise.all([getGames().catch(() => []), resolveTemplate(skin), clientOs()]);
   const sections = {
     "": t.servers,
     servers: t.servers,
@@ -70,7 +82,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     chat: t.chat,
   };
   return (
-    <html lang={lang} data-skin={template?.id ?? "default"}>
+    <html lang={lang} data-skin={template?.id ?? "default"} data-os={os}>
       <head>
         {template ? <link rel="stylesheet" href={`${basePath}/theme/${template.id}.css?v=${template.mtime}`} /> : null}
       </head>
