@@ -632,7 +632,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                   const mine = f.killerId === id;
                   return (
                     <tr key={i}>
-                      <td className="muted">{fmtDateTime(f.timestamp_id, lang)}</td>
+                      <td className="muted nowrap">{fmtDateTime(f.timestamp_id, lang)}</td>
                       <td>
                         {mine ? (
                           <>
@@ -715,7 +715,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                 <tbody>
                   {chat.map((c, i) => (
                     <tr key={i}>
-                      <td className="muted">{fmtDateTime(c.timestamp_id, lang)}</td>
+                      <td className="muted nowrap">{fmtDateTime(c.timestamp_id, lang)}</td>
                       <td className="wrap-cell">
                         {c.message_mode === 2 ? <span className="muted">({t.sayTeam}) </span> : null}
                         {c.message}

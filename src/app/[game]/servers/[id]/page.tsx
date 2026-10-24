@@ -100,7 +100,7 @@ export default async function ServerPage({ params }: Props) {
               <tbody>
                 {chat.map((c, i) => (
                   <tr key={i}>
-                    <td className="muted">{fmtDateTime(c.timestamp_id, lang)}</td>
+                    <td className="muted nowrap">{fmtDateTime(c.timestamp_id, lang)}</td>
                     <td>
                       <PlayerLink game={game} id={c.playerId} name={c.name} flag={flags.get(c.playerId)} />
                     </td>

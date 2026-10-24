@@ -103,14 +103,8 @@ export function GameEventsLive({
   if (!rows.length) return <p className="lead">{labels.noData}</p>;
   return (
     <TableWrap>
-      {/* Fixed column widths, so new rows do not make the columns jump. */}
+      {/* Time as wide as its text, event takes the rest, server and map clipped. */}
       <table className={`game-events${live ? " live" : ""}`}>
-        <colgroup>
-          <col className="ev-c-time" />
-          <col />
-          {withServer ? <col className="ev-c-server hide-sm" /> : null}
-          <col className="ev-c-map hide-sm" />
-        </colgroup>
         <thead>
           <tr>
             <th>{labels.time}</th>
@@ -122,14 +116,14 @@ export function GameEventsLive({
         <tbody>
           {rows.map((e) => (
             <tr key={e.id} className={`ev-${e.kind}${e.id === fresh ? " ev-new" : ""}`}>
-              <td className="muted nowrap">{fmtDateTime(e.ts, lang)}</td>
+              <td className="muted nowrap ev-time">{fmtDateTime(e.ts, lang)}</td>
               <td className="wrap-cell">{text(e)}</td>
               {withServer ? (
-                <td className="hide-sm muted ev-clip" title={e.server || undefined}>
-                  {e.server || "-"}
+                <td className="hide-sm muted" title={e.server || undefined}>
+                  <span className="ev-clip ev-clip-server">{e.server || "-"}</span>
                 </td>
               ) : null}
-              <td className="hide-sm muted ev-clip" title={e.map ?? undefined}>{e.map ?? "-"}</td>
+              <td className="hide-sm muted" title={e.map ?? undefined}><span className="ev-clip">{e.map ?? "-"}</span></td>
             </tr>
           ))}
         </tbody>

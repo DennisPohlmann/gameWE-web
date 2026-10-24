@@ -69,7 +69,7 @@ export default async function AdminChat({ searchParams }: { searchParams: Promis
                 <tbody>
                   {rows.slice(0, limit).map((c, i) => (
                     <tr key={i}>
-                      <td className="muted">{fmtDateTime(c.timestamp_id, lang)}</td>
+                      <td className="muted nowrap">{fmtDateTime(c.timestamp_id, lang)}</td>
                       <td>
                         <Link href={`${base}?player=${c.playerId}`}>{c.name ?? `#${c.playerId}`}</Link>
                       </td>

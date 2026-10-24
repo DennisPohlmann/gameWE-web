@@ -520,12 +520,12 @@ a.button { display: inline-block; text-decoration: none; }
 .admin-version { margin-top: 12px; font-size: 10px; line-height: 1.4; }
 .game-events .ev-kill .ev-verb, .game-events .ev-playeraction .ev-verb { color: var(--good); }
 .game-events .ev-teamkill .ev-verb, .game-events .ev-suicide .ev-verb { color: var(--bad); }
-/* Fixed layout: time narrow, event takes the rest, server and map clipped. */
-.game-events { table-layout: fixed; width: 100%; }
-.game-events col.ev-c-time { width: 9.5em; }
-.game-events col.ev-c-server { width: 22%; }
-.game-events col.ev-c-map { width: 16%; }
-.game-events td.ev-clip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The time is always as wide as its text (any language, any screen);
+   the event takes the rest and wraps, server and map are clipped. */
+.game-events { width: 100%; }
+.game-events td.ev-time { width: 1%; }
+.game-events .ev-clip { display: block; max-width: 10em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.game-events .ev-clip-server { max-width: 16em; }
 .game-events td.wrap-cell { min-width: 0; overflow-wrap: anywhere; }
 /* A new row starts grey and fades to the row's own background (no "to"
    frame, so every skin keeps its colour); the text stays fully opaque. */
