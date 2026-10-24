@@ -11,13 +11,13 @@ import { CLASSIC_STYLE, imageTheme, parseImageFile } from "@/lib/image-theme";
 const W = 560;
 const H = 95;
 // Side panel with the graph; the info area right of it (frame and padding
-// off) holds the name next to the logo and the columns address and players,
-// port, status and map (the rest of the width).
+// off) holds the name over its whole width and below it the columns address
+// and players, port, map (the rest of the width) and status, with the logo
+// in the bottom right corner next to the status.
 const SIDE = 128;
 const INFO = W - 2 - SIDE - 16;
-const NAME = INFO - 100;
-const COL1 = 120;
-const COL2 = 54;
+const COL1 = 112;
+const COL2 = 46;
 const COL3 = INFO - COL1 - COL2;
 
 // Server banner, 560x95: file "<serverId>.png" in the classic grey look,
@@ -99,35 +99,33 @@ export async function serverBanner(file: string, code: string | null) {
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1, padding: "5px 8px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <div style={label}>SERVER NAME:</div>
-              <div style={{ display: "flex", alignItems: "center", width: NAME }}>
-                {flag ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={flag} width={16} height={12} style={{ marginRight: 5 }} alt="" />
-                ) : null}
-                <span style={{ ...value, width: flag ? NAME - 21 : NAME }}>{s.name || addr}</span>
-              </div>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", width: 96 }}>
-              <div style={{ display: "flex", fontSize: 13, fontWeight: 800, color: th.text }}>
-                game<span style={{ color: th.accent }}>WE</span>
-              </div>
-              <div style={{ display: "flex", fontSize: 8, color: th.muted, maxWidth: 96, overflow: "hidden", whiteSpace: "nowrap" }}>{host}</div>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={label}>SERVER NAME:</div>
+            <div style={{ display: "flex", alignItems: "center", width: INFO }}>
+              {flag ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={flag} width={16} height={12} style={{ marginRight: 5 }} alt="" />
+              ) : null}
+              <span style={{ ...value, width: flag ? INFO - 21 : INFO }}>{s.name || addr}</span>
             </div>
           </div>
           <div style={{ display: "flex" }}>
             {cell(COL1, "IP ADDRESS:", ip)}
             {cell(COL2, "PORT:", port)}
-            {cell(COL3, "STATUS:", online ? "Online" : "Offline", online ? th.good : th.bad)}
+            {cell(COL3, "CURRENT MAP:", s.act_map || "-")}
           </div>
           <div style={{ display: "flex", alignItems: "flex-end" }}>
             <div style={{ display: "flex", alignItems: "center", width: COL1 + COL2 }}>
               {pie}
               <div style={{ display: "flex", marginLeft: 5 }}>{cell(COL1 - 29, "PLAYERS:", `${act}/${max}`)}</div>
             </div>
-            {cell(COL3, "CURRENT MAP:", s.act_map || "-")}
+            {cell(64, "STATUS:", online ? "Online" : "Offline", online ? th.good : th.bad)}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", width: COL3 - 64 }}>
+              <div style={{ display: "flex", fontSize: 13, fontWeight: 800, color: th.text }}>
+                game<span style={{ color: th.accent }}>WE</span>
+              </div>
+              <div style={{ display: "flex", fontSize: 8, color: th.muted, maxWidth: COL3 - 64, overflow: "hidden", whiteSpace: "nowrap" }}>{host}</div>
+            </div>
           </div>
         </div>
       </div>
