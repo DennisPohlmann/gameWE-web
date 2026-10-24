@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { PlayerLink, TableWrap } from "@/components/ui";
+import { Weapon, type WeaponSet } from "@/components/weapon";
 import { basePath } from "@/lib/base-path";
 import { fmtDateTime } from "@/lib/format";
 import type { GameEvent } from "@/lib/history";
@@ -30,6 +31,7 @@ export function GameEventsLive({
   initial,
   initialFlags,
   labels,
+  weapons,
 }: {
   game: string;
   lang: Lang;
@@ -38,6 +40,7 @@ export function GameEventsLive({
   initial: GameEvent[];
   initialFlags: Flags;
   labels: Labels;
+  weapons: WeaponSet | null;
 }) {
   const [data, setData] = useState<{ rows: Row[]; flags: Flags; fresh: number }>(() => ({ rows: initial.slice(0, SHOWN).map(withId), flags: initialFlags, fresh: 0 }));
   const queue = useRef<GameEvent[]>([]);
@@ -85,12 +88,21 @@ export function GameEventsLive({
   const { rows, flags, fresh } = data;
   const fill = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k: string) => String(v[k] ?? ""));
   const text = (e: GameEvent): ReactNode => {
-    const [before, after] = fill(labels.evText[e.kind] ?? "", { x: e.text || e.code || "?", n: e.num, old: e.text, new: e.code, p: "\u0000" }).split("\u0000");
+    // The weapon of a kill is shown as its image ({x} -> \u0001).
+    const armed = e.kind === "kill" && !!(e.text || e.code);
+    const [before, ...rest] = fill(labels.evText[e.kind] ?? "", { x: armed ? "\u0001" : e.text || e.code || "?", n: e.num, old: e.text, new: e.code, p: "\u0000" }).split(/(\u0000|\u0001)/);
+    const part = (s: string, i: number) =>
+      s === "\u0000" ? (
+        e.other ? <PlayerLink key={i} game={game} id={e.other} name={e.otherName} flag={flags[e.other]} /> : "?"
+      ) : s === "\u0001" ? (
+        <Weapon key={i} set={weapons} code={e.code} name={e.text} height={20} />
+      ) : (
+        s
+      );
     return (
       <>
-        <PlayerLink game={game} id={e.actor} name={e.actorName} flag={flags[e.actor]} /> <span className="ev-verb">{before}</span>
-        {after !== undefined ? e.other ? <PlayerLink game={game} id={e.other} name={e.otherName} flag={flags[e.other]} /> : "?" : null}
-        {after}
+        <PlayerLink game={game} id={e.actor} name={e.actorName} flag={flags[e.actor]} /> <span className="ev-verb">{part(before, -1)}</span>
+        {rest.map(part)}
         {e.kind === "kill" && e.num ? (
           <>
             {" "}

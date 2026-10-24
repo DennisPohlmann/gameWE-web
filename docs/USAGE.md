@@ -45,6 +45,13 @@ settings: [CONFIG.md](CONFIG.md).
 | `/robots.txt`, `/sitemap.xml` | for search engines, see [CONFIG.md](CONFIG.md#search-engines-and-sharing) |
 | `/admin` | admin area |
 
+Weapons are shown as images wherever they appear (weapon list and page, player
+profile and recent kills, event history, live events, weapon awards, help), with
+the name as tooltip and alt text. The images come from HLstatsX: Community
+Edition for CS:S, CS:GO, CS 1.6, TF2, TFC, HL2DM, HLDM, DoD:S, DoD, NS, L4D,
+L4D2 and Insurgency; a weapon without an image (or of another game) is shown
+by its name.
+
 A ranking is a row of `hlstats_Games` that you create in the admin area
 (Rankings, e.g. "Assault"), optionally copying weapons, actions, teams, roles,
 awards and ranks from an existing ranking. Servers are assigned on the
@@ -146,7 +153,10 @@ The admin area edits:
 - **Settings:** the website settings and the collector's `gamewe_*` options
   (points per kill, headshot bonus, penalties, win triggers, rank bots, chat and IP
   storage, in-game commands, RCON timeout). The collector picks them up within
-  a minute. All other `hlstats_Options` rows are under "All options".
+  a minute. All other `hlstats_Options` rows (own, old HLstatsX and obsolete
+  keys) are at the end of the same page under "Other keys (raw values)", where
+  they can be changed, deleted or added; TOTP secrets are never listed. The old
+  address `/admin/options` redirects to the settings page.
 - **Servers:** the collector only accepts logs from servers registered here
   (IP address, port, game, RCON password). The RCON password is write-only in
   the form and never shown again; public pages never read it, and the

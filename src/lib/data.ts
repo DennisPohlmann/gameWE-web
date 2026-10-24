@@ -742,6 +742,7 @@ export type Frag = {
   killerName: string | null;
   victimName: string | null;
   weapon: string | null;
+  weaponCode: string | null;
   headshot: number;
   map: string | null;
 };
@@ -749,7 +750,7 @@ export type Frag = {
 export function getPlayerFrags(id: number, limit: number) {
   return query<Frag>(
     `SELECT f.timestamp_id, f.killerId, f.victimId, kd.lastName AS killerName, vd.lastName AS victimName,
-            w.name AS weapon, f.headshot, m.map
+            w.name AS weapon, w.code AS weaponCode, f.headshot, m.map
      FROM ((SELECT * FROM hlstats_Events_Frags WHERE killerId = ? ORDER BY timestamp_id DESC LIMIT ?)
            UNION ALL
            (SELECT * FROM hlstats_Events_Frags WHERE victimId = ? ORDER BY timestamp_id DESC LIMIT ?)) f

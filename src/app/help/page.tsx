@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import Form from "next/form";
 import { AutoForm } from "@/components/auto-form";
 import { Bar, Section, TableWrap, strParam } from "@/components/ui";
+import { Weapon } from "@/components/weapon";
 import { getGames, getHelpActions, getHelpWeapons, getPointSettings } from "@/lib/data";
 import { fmtNum } from "@/lib/format";
 import { fill, getDict } from "@/lib/i18n";
+import { weaponImages } from "@/lib/weapons";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getDict()).t.help };
@@ -23,6 +25,7 @@ export default async function HelpPage({ searchParams }: { searchParams: SP }) {
   // Actions and weapons per ranking: the first ranking unless one is chosen.
   const game = games.some((g) => g.code === rawGame) ? rawGame : (games[0]?.code ?? "");
   const [actions, weapons, pts] = await Promise.all([getHelpActions(game), getHelpWeapons(game), getPointSettings()]);
+  const imagesOf = (code: string) => weaponImages(games.find((g) => g.code === code)?.realgame);
   const yn = (v: string) => (v === "1" ? t.yes : t.no);
   const signed = (n: number) => (n > 0 ? `+${fmtNum(n, lang)}` : fmtNum(n, lang));
   const questions = [
@@ -195,7 +198,9 @@ export default async function HelpPage({ searchParams }: { searchParams: SP }) {
                 <tbody>
                   {weapons.map((w) => (
                     <tr key={`${w.game}-${w.code}`}>
-                      <td>{w.name}</td>
+                      <td>
+                        <Weapon set={imagesOf(w.game)} code={w.code} name={w.name} />
+                      </td>
                       <td className="hide-sm">
                         <code>{w.code}</code>
                       </td>

@@ -38,6 +38,7 @@ const SOFTWARE: Row[] = [
 
 const ASSETS: Row[] = [
   ["flag-icons (Panayiotis Lipiridis)", "https://github.com/lipis/flag-icons", "MIT", "Länderflaggen", "Country flags"],
+  ["HLstatsX: Community Edition", "https://github.com/NomisCZ/hlstatsx-community-edition", "GPL-2.0-or-later", "Waffenbilder (Credits in THIRD-PARTY-LICENSES.md)", "Weapon images (credits in THIRD-PARTY-LICENSES.md)"],
   ["Geist (Vercel)", "https://github.com/vercel/geist-font", "SIL OFL 1.1", "Schrift in Signatur und Banner", "Font in signature and banner"],
 ];
 

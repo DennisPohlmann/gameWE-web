@@ -128,5 +128,6 @@ or (at your option) any later version, like the rest of gameWE. The full text
 is in [LICENSE](LICENSE). The licenses of the libraries and data the website
 uses (Next.js, React, Leaflet, DB-IP/GeoLite2 and others) are listed on the
 site under `/licenses`; the full list of third-party npm packages, fonts,
-flags and other bundled files with their licenses is in
+flags, weapon images (HLstatsX: Community Edition, GPL-2.0-or-later) and other
+bundled files with their licenses is in
 [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md).
