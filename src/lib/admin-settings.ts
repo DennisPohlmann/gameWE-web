@@ -243,6 +243,17 @@ export const settingGroups: SettingGroup[] = [
         },
         show: TS,
       },
+      {
+        key: "gamewe_ts_show_clients",
+        label: { de: "Namen der Personen online zeigen", en: "Show the names of the people online" },
+        type: "bool",
+        def: "1",
+        help: {
+          de: "Auf der Detailseite des TeamSpeak-Servers (Klick auf den Namen im Kasten). Nein: nur die Zahl je Channel. Die Namen sind personenbezogene Daten, gehört in die Datenschutzerklärung.",
+          en: "On the TeamSpeak server's detail page (click its name in the box). No: just the number per channel. The names are personal data; mention them in your privacy policy.",
+        },
+        show: TS,
+      },
       { key: "gamewe_discord_invite", label: { de: "Discord-Einladung", en: "Discord invite" }, type: "text", def: "", help: { de: "z. B. https://discord.gg/abc123", en: "e.g. https://discord.gg/abc123" }, show: DISCORD },
       { key: "gamewe_discord_guild", label: { de: "Discord-Server-ID (für die Online-Zahl)", en: "Discord server ID (for the online count)" }, type: "text", def: "", help: { de: "Rechtsklick auf den Server → Server-ID kopieren (Entwicklermodus). Leer: nur der Link.", en: "Right-click the server → Copy Server ID (developer mode). Empty: link only." }, show: DISCORD },
     ],

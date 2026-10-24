@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { NotOnAdmin } from "./not-on-admin";
 import { fmtNum } from "@/lib/format";
 import type { Dict, Lang } from "@/lib/i18n";
@@ -27,7 +28,10 @@ export function VoiceBox({ box, t, lang }: { box: Box; t: Dict; lang: Lang }) {
               {box.ts ? (
                 <tr>
                   <td>
-                    <span className="voice-icon ts" aria-hidden="true" /> {box.ts.name}
+                    <span className="voice-icon ts" aria-hidden="true" />{" "}
+                    <Link href="/voice" className="voice-name">
+                      {box.ts.name}
+                    </Link>
                   </td>
                   <td className="hide-sm">{box.ts.type}</td>
                   <td>

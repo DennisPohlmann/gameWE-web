@@ -83,6 +83,14 @@ group needs the permission to see server info. The Discord count comes from
 the server widget, which must be enabled in the Discord server settings
 (every 5 minutes). The ServerQuery password is never shown.
 
+Clicking the TeamSpeak name in the box opens `/voice` with the channel
+tree, the people online, server data, traffic and the welcome message. It
+runs `serverinfo`, `channellist -topic -flags` and
+`clientlist -away -voice -country` in one query connection, at most once a
+minute, so a query login (or a guest group) needs these permissions too.
+"Show the names of the people online" (default yes) can hide the nicknames;
+they are personal data, so mention them in your privacy policy.
+
 ## Access log
 
 The server writes one line per request to stdout in the combined log format

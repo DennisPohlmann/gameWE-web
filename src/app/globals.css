@@ -686,6 +686,22 @@ td.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9e
 .voice-icon { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 3px; }
 .voice-icon.ts { background: #2580c3; }
 .voice-icon.discord { background: #5865f2; border-radius: 50%; }
+.voice-box a.voice-name { color: var(--text); }
+
+/* voice server detail page (/voice): channel tree */
+.voice-tree ul { list-style: none; margin: 0; padding: 0 0 0 16px; }
+.voice-tree > ul { padding-left: 0; }
+.voice-tree li { margin: 0; }
+.voice-channel, .voice-spacer, .voice-clients li { padding: 1px 0; line-height: 1.5; }
+.voice-spacer { overflow: hidden; white-space: nowrap; text-overflow: clip; color: var(--muted); }
+.voice-spacer.center { text-align: center; }
+.voice-spacer.right { text-align: right; }
+.voice-ch-icon { display: inline-block; width: 10px; height: 10px; border: 2px solid var(--muted); border-radius: 50%; vertical-align: -1px; }
+.voice-user { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #3c3; vertical-align: 0; }
+.voice-user.muted { background: #d93; }
+.voice-user.deaf { background: #d33; }
+.voice-clients li.away { opacity: 0.6; }
+.voice-welcome { white-space: pre-line; overflow-wrap: anywhere; }
 
 /* ---------------------------------------------------------------- awards */
 
