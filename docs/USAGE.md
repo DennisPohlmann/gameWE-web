@@ -160,7 +160,9 @@ The admin area edits:
   read-only web user has no right to that column.
 - Games, players (points, hide from ranking, clan), clans, weapons (name,
   points modifier), actions (rewards), teams, roles, award definitions, ranks
-  and users.
+  and users. The lists keep their filters (ranking, search, page, rows) in
+  the address; "Back", saving and deleting on an edit page return to the
+  list with the same filters.
 - **Reset ranking** (level 100, needs collector 0.1.0 or newer): sets one ranking
   back, in one of three kinds (collector 0.2.0 or newer; an older collector
   refuses the job and changes nothing):

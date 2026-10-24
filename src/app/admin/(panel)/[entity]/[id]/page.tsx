@@ -11,6 +11,7 @@ import { getEntity } from "@/lib/admin-entities";
 import { adminDict } from "@/lib/admin-i18n";
 import { requireAdmin } from "@/lib/auth";
 import { fill, getAdminLang } from "@/lib/i18n";
+import { safeReturnTo } from "@/lib/return-to";
 
 type SP = Promise<Record<string, string | undefined>>;
 
@@ -28,6 +29,8 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
   const lang = await getAdminLang();
   const a = adminDict(lang);
   const sp = await searchParams;
+  // The list (ranking, search, page) this page was opened from.
+  const returnTo = safeReturnTo(sp.returnTo, e.key);
   const optionSets = Object.fromEntries(
     await Promise.all(
       [...new Set(e.fields.map((f) => f.options).filter((o): o is "games" | "clans" => typeof o === "string"))].map(
@@ -50,7 +53,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
   return (
     <>
       <p>
-        <Link href={`/admin/${e.key}`}>← {a.back}</Link>
+        <Link href={returnTo}>← {a.back}</Link>
       </p>
       <h1>
         {e.label[lang]}: {isNew ? a.new : id}
@@ -68,6 +71,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
         <form action={saveAction} className="form">
           <input type="hidden" name="__entity" value={e.key} />
           <input type="hidden" name="__id" value={id} />
+          <input type="hidden" name="__returnTo" value={returnTo} />
           {e.fields.filter((f) => isNew || !f.virtual).map((f) => {
             const value = (row as Record<string, string | number | null>)[f.name];
             const locked = f.readonly || (f.createOnly && !isNew);
@@ -119,12 +123,13 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
           </button>
         </form>
       </Section>
-      {!isNew && e.key === "games" ? <RankingServers gameId={id} code={String((row as Record<string, unknown>).code ?? "").trim()} lang={lang} /> : null}
+      {!isNew && e.key === "games" ? <RankingServers gameId={id} code={String((row as Record<string, unknown>).code ?? "").trim()} lang={lang} returnTo={returnTo} /> : null}
       {!isNew && e.canDelete ? (
         <Section title={a.delete}>
           <form action={deleteAction} className="form">
             <input type="hidden" name="__entity" value={e.key} />
             <input type="hidden" name="__id" value={id} />
+            <input type="hidden" name="__returnTo" value={returnTo} />
             <label className="check">
               <input type="checkbox" name="confirm" value="1" required /> {a.deleteConfirm}
             </label>
@@ -139,7 +144,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
 }
 
 // Servers of a ranking, and a form to move other servers into it.
-async function RankingServers({ gameId, code, lang }: { gameId: string; code: string; lang: "de" | "en" }) {
+async function RankingServers({ gameId, code, lang, returnTo }: { gameId: string; code: string; lang: "de" | "en"; returnTo: string }) {
   const a = adminDict(lang);
   const [servers, games, bases] = await Promise.all([allServers(), optionList("games"), rankingBaseGames()]);
   // Servers only move between rankings of the same base game.
@@ -166,6 +171,7 @@ async function RankingServers({ gameId, code, lang }: { gameId: string; code: st
                   {targets.length ? (
                     <form action={moveServerAction} className="inline-form">
                       <input type="hidden" name="__id" value={gameId} />
+                      <input type="hidden" name="__returnTo" value={returnTo} />
                       <input type="hidden" name="server" value={s.serverId} />
                       <select {...noAutofill} name="target" aria-label={a.rankingRemoveTo} defaultValue="">
                         <option value="" disabled>
@@ -198,6 +204,7 @@ async function RankingServers({ gameId, code, lang }: { gameId: string; code: st
       {others.length ? (
         <form action={assignServersAction} className="form box">
           <input type="hidden" name="__id" value={gameId} />
+          <input type="hidden" name="__returnTo" value={returnTo} />
           <b>{a.rankingAddServers}</b>
           {others.map((s) => (
             <label key={s.serverId} className="check">

@@ -11,6 +11,7 @@ import { getEntity, type Field } from "@/lib/admin-entities";
 import { adminDict } from "@/lib/admin-i18n";
 import { requireAdmin } from "@/lib/auth";
 import { getAdminLang } from "@/lib/i18n";
+import { listHref, withReturnTo } from "@/lib/return-to";
 
 type SP = Promise<Record<string, string | string[] | undefined>>;
 
@@ -40,6 +41,9 @@ export default async function EntityList({ params, searchParams }: { params: Pro
   const cols = e.fields.filter((f) => f.inList && f.name !== "realgame");
   const gameCol = e.key === "games" || e.key === "servers";
   const base = `/admin/${e.key}`;
+  // The edit page and its redirects come back to this list with its filters.
+  const listParams = { game: game || undefined, q: q || undefined, page: page > 1 ? page : undefined, rows: size !== 50 ? size : undefined };
+  const editHref = (id: string) => withReturnTo(`${base}/${encodeURIComponent(id)}`, listHref(e.key, listParams), e.key);
 
   return (
     <>
@@ -49,7 +53,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
       <Section
         title={
           e.canCreate ? (
-            <Link className="button" href={`${base}/new`}>
+            <Link className="button" href={editHref("new")}>
               + {a.new}
             </Link>
           ) : (
@@ -102,7 +106,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
                           {baseOf(e.key === "games" ? r.code : r.game) ? (
                             <GameTag realgame={baseOf(e.key === "games" ? r.code : r.game)} long />
                           ) : (
-                            <Link className="muted" href={e.key === "games" ? `${base}/${encodeURIComponent(String(r.__pk))}` : `/admin/games`}>
+                            <Link className="muted" href={e.key === "games" ? editHref(String(r.__pk)) : `/admin/games`}>
                               {a.gameUnset}
                             </Link>
                           )}
@@ -120,7 +124,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
                         </td>
                       ) : null}
                       <td className="num">
-                        <Link href={`${base}/${encodeURIComponent(String(r.__pk))}`}>{a.edit}</Link>
+                        <Link href={editHref(String(r.__pk))}>{a.edit}</Link>
                       </td>
                     </tr>
                   ))}

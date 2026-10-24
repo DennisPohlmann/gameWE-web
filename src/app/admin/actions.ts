@@ -13,6 +13,7 @@ import { adminExec, adminQuery, upsert } from "@/lib/db";
 import { imageUrl, invalidateSettings } from "@/lib/settings";
 import { listTemplates } from "@/lib/templates";
 import { jobsAvailable, queueReset, resetMode } from "@/lib/reset";
+import { addParams, safeReturnTo, withReturnTo } from "@/lib/return-to";
 import { discordGuild, discordInvite, tsDisplay, tsHost, tsLink } from "@/lib/voice";
 import { checkCode, consumeStep, newSecret, readSecret, removeSecret, storeSecret } from "@/lib/totp";
 
@@ -40,6 +41,11 @@ export async function logoutAction() {
   redirect("/admin/login");
 }
 
+// Edit page of a row; keeps the list it was opened from (returnTo).
+function editHref(entity: string, id: string, form: FormData, params: Record<string, string | undefined> = {}) {
+  return addParams(withReturnTo(`/admin/${entity}/${encodeURIComponent(id)}`, safeReturnTo(form.get("__returnTo"), entity), entity), params);
+}
+
 async function entityFrom(form: FormData) {
   const e = getEntity(String(form.get("__entity") ?? ""));
   if (!e) redirect("/admin");
@@ -51,10 +57,11 @@ export async function saveAction(form: FormData) {
   const user = await requireAdmin(e.minLevel);
   const rawId = String(form.get("__id") ?? "");
   const id = rawId === "new" ? null : rawId;
-  if (id === null && !e.canCreate) redirect(`/admin/${e.key}`);
-  if (id !== null && !(await getRow(e, id))) redirect(`/admin/${e.key}`);
+  const list = safeReturnTo(form.get("__returnTo"), e.key);
+  if (id === null && !e.canCreate) redirect(list);
+  if (id !== null && !(await getRow(e, id))) redirect(list);
   if (e.key === "users" && id === user.username && Number(form.get("acclevel")) < LEVEL_ADMIN && user.acclevel >= LEVEL_ADMIN) {
-    redirect(`/admin/${e.key}/${encodeURIComponent(id)}?error=self`);
+    redirect(editHref(e.key, id, form, { error: "self" }));
   }
   // A server only moves into a ranking of the same base game.
   if (e.key === "servers" && id !== null) {
@@ -63,18 +70,17 @@ export async function saveAction(form: FormData) {
     const to = String(form.get("game") ?? "").trim();
     const bases = await rankingBaseGames();
     if (from !== to && !sameBaseGame(bases.get(from) ?? null, bases.get(to) ?? null)) {
-      redirect(`/admin/${e.key}/${encodeURIComponent(id)}?error=mismatch`);
+      redirect(editHref(e.key, id, form, { error: "mismatch" }));
     }
   }
   let saved: string;
   try {
     saved = await saveRow(e, id, form);
   } catch (err) {
-    const back = `/admin/${e.key}/${encodeURIComponent(rawId)}`;
-    if (err instanceof InputError) redirect(`${back}?error=field&field=${encodeURIComponent(err.message)}`);
+    if (err instanceof InputError) redirect(editHref(e.key, rawId, form, { error: "field", field: err.message }));
     const msg = err instanceof Error ? err.message.slice(0, 200) : "?";
     console.error("admin save:", err);
-    redirect(`${back}?error=db&msg=${encodeURIComponent(msg)}`);
+    redirect(editHref(e.key, rawId, form, { error: "db", msg }));
   }
   // A new ranking takes the definitions of its template.
   if (e.key === "games" && id === null) {
@@ -89,11 +95,11 @@ export async function saveAction(form: FormData) {
       } catch (err) {
         const msg = err instanceof Error ? err.message.slice(0, 200) : "?";
         console.error("admin copy definitions:", err);
-        redirect(`/admin/${e.key}/${encodeURIComponent(saved)}?error=db&msg=${encodeURIComponent(msg)}`);
+        redirect(editHref(e.key, saved, form, { error: "db", msg }));
       }
     }
   }
-  redirect(`/admin/${e.key}/${encodeURIComponent(saved)}?saved=1`);
+  redirect(editHref(e.key, saved, form, { saved: "1" }));
 }
 
 // Moves servers into a ranking (edit page of the ranking).
@@ -102,7 +108,7 @@ export async function assignServersAction(form: FormData) {
   const gameId = String(form.get("__id") ?? "");
   const e = await withColumns(getEntity("games")!);
   const row = await getRow(e, gameId);
-  if (!row) redirect("/admin/games");
+  if (!row) redirect(safeReturnTo(form.get("__returnTo"), "games"));
   const [servers, bases] = await Promise.all([allServers(), rankingBaseGames()]);
   const code = String(row.code).trim();
   const base = bases.get(code) ?? null;
@@ -110,51 +116,50 @@ export async function assignServersAction(form: FormData) {
   const ids = form.getAll("server").map((v) => Number(v)).filter((n) => known.has(n));
   // A server only moves into a ranking of the same base game.
   if (ids.some((n) => !sameBaseGame(bases.get(known.get(n)!.game) ?? null, base))) {
-    redirect(`/admin/games/${encodeURIComponent(gameId)}?error=mismatch`);
+    redirect(editHref("games", gameId, form, { error: "mismatch" }));
   }
   try {
     await assignServers(code, ids);
   } catch (err) {
     const msg = err instanceof Error ? err.message.slice(0, 200) : "?";
-    redirect(`/admin/games/${encodeURIComponent(gameId)}?error=db&msg=${encodeURIComponent(msg)}`);
+    redirect(editHref("games", gameId, form, { error: "db", msg }));
   }
-  redirect(`/admin/games/${encodeURIComponent(gameId)}?saved=1`);
+  redirect(editHref("games", gameId, form, { saved: "1" }));
 }
 
 // Takes one server out of a ranking by moving it into another one.
 export async function moveServerAction(form: FormData) {
   await requireAdmin(100);
   const gameId = String(form.get("__id") ?? "");
-  const back = `/admin/games/${encodeURIComponent(gameId)}`;
   const serverId = Number(form.get("server"));
   const target = String(form.get("target") ?? "").trim();
   const [servers, games, bases] = await Promise.all([allServers(), optionList("games"), rankingBaseGames()]);
   const server = servers.find((s) => s.serverId === serverId);
-  if (!server || !games.some(([code]) => code === target)) redirect(back);
-  if (!sameBaseGame(bases.get(server.game) ?? null, bases.get(target) ?? null)) redirect(`${back}?error=mismatch`);
+  if (!server || !games.some(([code]) => code === target)) redirect(editHref("games", gameId, form));
+  if (!sameBaseGame(bases.get(server.game) ?? null, bases.get(target) ?? null)) redirect(editHref("games", gameId, form, { error: "mismatch" }));
   try {
     await assignServers(target, [serverId]);
   } catch (err) {
     const msg = err instanceof Error ? err.message.slice(0, 200) : "?";
-    redirect(`${back}?error=db&msg=${encodeURIComponent(msg)}`);
+    redirect(editHref("games", gameId, form, { error: "db", msg }));
   }
-  redirect(`${back}?saved=1`);
+  redirect(editHref("games", gameId, form, { saved: "1" }));
 }
 
 export async function deleteAction(form: FormData) {
   const e = await entityFrom(form);
   const user = await requireAdmin(e.minLevel);
   const id = String(form.get("__id") ?? "");
-  if (!e.canDelete || form.get("confirm") !== "1" || !(await getRow(e, id))) redirect(`/admin/${e.key}/${encodeURIComponent(id)}`);
-  if (e.key === "users" && id === user.username) redirect(`/admin/${e.key}/${encodeURIComponent(id)}?error=self`);
+  if (!e.canDelete || form.get("confirm") !== "1" || !(await getRow(e, id))) redirect(editHref(e.key, id, form));
+  if (e.key === "users" && id === user.username) redirect(editHref(e.key, id, form, { error: "self" }));
   try {
     await deleteRow(e, id);
     if (e.key === "users") await Promise.all([removeSecret(id, false), removeSecret(id, true)]);
   } catch (err) {
     const msg = err instanceof Error ? err.message.slice(0, 200) : "?";
-    redirect(`/admin/${e.key}/${encodeURIComponent(id)}?error=db&msg=${encodeURIComponent(msg)}`);
+    redirect(editHref(e.key, id, form, { error: "db", msg }));
   }
-  redirect(`/admin/${e.key}?deleted=1`);
+  redirect(addParams(safeReturnTo(form.get("__returnTo"), e.key), { deleted: "1" }));
 }
 
 // Section of a settings field ("raw:<key>" and "raw_new": the raw values),
