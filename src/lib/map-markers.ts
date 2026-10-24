@@ -24,7 +24,7 @@ export function mapMarkers(players: (MapPlayer & { server?: string | null })[], 
       lines: [
         svg ? name : `${flagEmoji(p.flag)} ${name}`.trim(),
         [p.city, p.country].filter(Boolean).join(", "),
-        `${t.points}: ${fmtNum(p.skill, lang)} · ${t.kills}: ${fmtNum(p.kills, lang)} · ${t.kpd}: ${kpd(p.kills, p.deaths).toFixed(2)}`,
+        `${p.rank ? `${t.rank}: ${fmtNum(p.rank, lang)} · ` : ""}${t.points}: ${fmtNum(p.skill, lang)} · ${t.kills}: ${fmtNum(p.kills, lang)} · ${t.kpd}: ${kpd(p.kills, p.deaths).toFixed(2)}`,
         p.server ? `${t.server}: ${p.server}` : `${t.lastConnect}: ${fmtDate(p.last_event, lang)}`,
       ].filter(Boolean),
     };

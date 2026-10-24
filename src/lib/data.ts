@@ -1396,6 +1396,8 @@ export type MapPlayer = {
   city: string | null;
   lat: number;
   lng: number;
+  // Place in the ranking, as on the ranking and the player page.
+  rank?: number;
 };
 
 // Players of a ranking with a known location, most recently active first,
@@ -1427,7 +1429,7 @@ export async function getMapPlayers(
      ORDER BY ${order === "skill" ? "p.skill DESC" : "p.last_event DESC"}, p.playerId LIMIT ?`,
     [...params, limit],
   );
-  return rows.map(mapRow).filter(onMap);
+  return withRanks(game, rows.map(mapRow).filter(onMap));
 }
 
 // Players online right now on the servers of a ranking, at the GeoIP city of
@@ -1447,7 +1449,14 @@ export async function getLiveMapPlayers(game: string): Promise<(MapPlayer & { se
      ORDER BY p.skill DESC, p.playerId`,
     [game],
   );
-  return rows.map(mapRow).filter(onMap);
+  return withRanks(game, rows.map(mapRow).filter(onMap));
+}
+
+// Ranking position of each map player (rankPositions: 1 + ranked players
+// with more points, hidden players not counted).
+async function withRanks<R extends MapPlayer>(game: string, rows: R[]): Promise<R[]> {
+  const pos = await rankPositions(rows.map((r) => ({ game, skill: r.skill })));
+  return rows.map((r) => ({ ...r, rank: pos.get(`${game}|${r.skill}`) }));
 }
 
 function mapRow<R extends { playerId: number; skill: number; kills: number; deaths: number; last_event: number; lat: string; lng: string }>(r: R) {

@@ -105,7 +105,10 @@ website therefore computes some things itself:
   (CARTO only for non-commercial sites up to 75,000 map views a month). The
   visitor's browser loads the tiles directly from the provider; the credit
   is shown in the map. On a country or city ranking the map shows only the
-  players of that place.
+  players of that place. Hovering a player shows name, city and country,
+  rank (the same position as on the ranking and the player page: 1 + ranked
+  players with more points, hidden players not counted), points, kills, K/D
+  and the server or last connect.
 - **SourceBans** (bans page): the public ban list
   (`index.php?p=banlist&page=N`) of the address under Settings → Bans is
   read every 30 minutes, at most 100 pages, one after another. Both the
