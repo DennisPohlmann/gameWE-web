@@ -1,4 +1,4 @@
-# Installing gameWE web
+# Installing gameWE - web
 
 The website shows the statistics that the gameWE collector writes to the
 database, and has an admin area for settings, rankings, servers and users.
@@ -16,7 +16,7 @@ machine, and the tar.gz if you prefer a plain service next to the collector.
 
 | What | Notes |
 |------|-------|
-| The gameWE collector | Installed, with its database set up (section 1.2). Its full guide: [collector INSTALLATION.md](https://github.com/DennisPohlmann/gameWE-collector/blob/main/INSTALLATION.md). |
+| The gameWE collector | Installed, with its database set up (section 1.2). Its full guide: [collector INSTALLATION.md](https://github.com/DennisPohlmann/gameWE-collector/blob/main/docs/INSTALLATION.md). |
 | Database | **MariaDB 11.4 or 12.3**, or **PostgreSQL 17 or 18** (tested on every release). MySQL 8 is not supported by the collector's schema scripts. |
 | Node.js 22 or newer | Only for the tar.gz (Node.js 24 LTS recommended). The container brings its own Node.js 24. |
 | Reverse proxy with TLS | nginx, Caddy, Apache or similar in front of port 3000 (see [section 5](#5-reverse-proxy)). |
@@ -25,7 +25,7 @@ machine, and the tar.gz if you prefer a plain service next to the collector.
 ### 1.1 Linux user and folders
 
 The website uses the same system user as the collector. The collector's
-package creates it; on a machine without the collector, create it yourself:
+installation creates it; on a machine without the collector, create it yourself:
 
 ```bash
 useradd --system --no-create-home --shell /usr/sbin/nologin gamewe
@@ -56,7 +56,7 @@ The website keeps no data of its own; everything is in the database.
 
 The collector's repository has the scripts; the website only needs the
 database they create. Short version (details and the alternatives by hand in
-the [collector INSTALLATION.md](https://github.com/DennisPohlmann/gameWE-collector/blob/main/INSTALLATION.md)):
+the [collector INSTALLATION.md](https://github.com/DennisPohlmann/gameWE-collector/blob/main/docs/INSTALLATION.md)):
 
 **MariaDB** (`schema/init/`):
 
@@ -365,7 +365,7 @@ tar -xzf gamewe-web-<version>-linux-amd64.tar.gz -C / --exclude=./etc/gamewe/web
 systemctl daemon-reload && systemctl restart gamewe-web
 ```
 
-Read the [CHANGELOG](CHANGELOG.md) for new settings; new entries in
+Read the [CHANGELOG](../CHANGELOG.md) for new settings; new entries in
 `.env.example` are optional unless the changelog says otherwise.
 
 ### Logs
@@ -431,7 +431,7 @@ address and design. Under **Admin → Rankings** each ranking gets its game
 (e.g. Counter-Strike: Source) and its servers.
 
 For monitoring, `/-/metrics` gives Prometheus metrics once a token is set
-(see the README).
+(see [USAGE.md](USAGE.md#health-and-monitoring)).
 
 ## 7. Troubleshooting
 
