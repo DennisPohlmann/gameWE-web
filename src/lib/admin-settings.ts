@@ -221,6 +221,28 @@ export const settingGroups: SettingGroup[] = [
       { key: "gamewe_ts_query_password", label: { de: "ServerQuery-Passwort", en: "ServerQuery password" }, type: "secret", def: "", help: { de: "Wird nie angezeigt. Leer lassen, um es zu behalten.", en: "Never shown. Leave empty to keep it." }, show: TS },
       { key: "gamewe_ts_password", label: { de: "TeamSpeak-Serverpasswort (öffentlich)", en: "TeamSpeak server password (public)" }, type: "text", def: "", help: { de: "Wird im Kasten für Besucher angezeigt. Leer: „-“.", en: "Shown to visitors in the box. Empty: \"-\"." }, show: TS },
       { key: "gamewe_ts_name", label: { de: "TeamSpeak-Anzeigename", en: "TeamSpeak display name" }, type: "text", def: "", help: { de: "Leer: Name aus der ServerQuery.", en: "Empty: the name from the ServerQuery." }, show: TS },
+      {
+        key: "gamewe_ts_display",
+        label: { de: "Angezeigte Adresse", en: "Address shown" },
+        type: "text",
+        def: "",
+        help: {
+          de: "Statt Adresse:Port, z. B. ein DNS-Name mit SRV-Eintrag (ts.example.org). Höchstens 100 Zeichen. Abgefragt wird weiter die echte Adresse mit den Ports oben. Leer: Adresse:Port.",
+          en: "Instead of address:port, e.g. a DNS name with an SRV record (ts.example.org). At most 100 characters. The query still uses the real address and the ports above. Empty: address:port.",
+        },
+        show: TS,
+      },
+      {
+        key: "gamewe_ts_link",
+        label: { de: "Connect-Link", en: "Connect link" },
+        type: "text",
+        def: "",
+        help: {
+          de: "Ersetzt den erzeugten Link, z. B. ts3server://ts.example.org?port=9987. Erlaubt: ts3server://, teamspeak:// und https:// mit Hostname. Leer: ts3server:// mit Adresse und Port oben.",
+          en: "Replaces the generated link, e.g. ts3server://ts.example.org?port=9987. Allowed: ts3server://, teamspeak:// and https:// with a host name. Empty: ts3server:// with the address and port above.",
+        },
+        show: TS,
+      },
       { key: "gamewe_discord_invite", label: { de: "Discord-Einladung", en: "Discord invite" }, type: "text", def: "", help: { de: "z. B. https://discord.gg/abc123", en: "e.g. https://discord.gg/abc123" }, show: DISCORD },
       { key: "gamewe_discord_guild", label: { de: "Discord-Server-ID (für die Online-Zahl)", en: "Discord server ID (for the online count)" }, type: "text", def: "", help: { de: "Rechtsklick auf den Server → Server-ID kopieren (Entwicklermodus). Leer: nur der Link.", en: "Right-click the server → Copy Server ID (developer mode). Empty: link only." }, show: DISCORD },
     ],

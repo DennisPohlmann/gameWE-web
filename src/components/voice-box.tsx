@@ -31,7 +31,7 @@ export function VoiceBox({ box, t, lang }: { box: Box; t: Dict; lang: Lang }) {
                   </td>
                   <td className="hide-sm">{box.ts.type}</td>
                   <td>
-                    <a href={`ts3server://${box.ts.address.replace(/:(\d+)$/, "?port=$1")}`}>{box.ts.address}</a>
+                    <a href={box.ts.link}>{box.ts.address}</a>
                   </td>
                   <td className="hide-sm">{box.ts.password || "-"}</td>
                   <td className="num hide-sm">{n(box.ts.channels)}</td>

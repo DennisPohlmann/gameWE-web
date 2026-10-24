@@ -12,7 +12,7 @@ import { adminExec, upsert } from "@/lib/db";
 import { imageUrl, invalidateSettings } from "@/lib/settings";
 import { listTemplates } from "@/lib/templates";
 import { jobsAvailable, queueReset } from "@/lib/reset";
-import { discordGuild, discordInvite, tsHost } from "@/lib/voice";
+import { discordGuild, discordInvite, tsDisplay, tsHost, tsLink } from "@/lib/voice";
 import { checkCode, consumeStep, newSecret, readSecret, removeSecret, storeSecret } from "@/lib/totp";
 
 export async function loginAction(form: FormData) {
@@ -195,6 +195,8 @@ export async function saveSettingsAction(form: FormData) {
       if (!host) redirect(`/admin/settings?field=${s.key}`);
       values.push([s.key, host]);
       continue;
+    } else if ((s.key === "gamewe_ts_display" && v && !tsDisplay(v)) || (s.key === "gamewe_ts_link" && v && !tsLink(v))) {
+      redirect(`/admin/settings?field=${s.key}`);
     } else if (s.key === "gamewe_discord_invite" && v) {
       const invite = discordInvite(v);
       if (!invite) redirect(`/admin/settings?field=${s.key}`);

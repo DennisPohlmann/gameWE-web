@@ -13,7 +13,11 @@ export type VoiceBox = {
     name: string;
     // "TeamSpeak 3" etc., from the server version; "TeamSpeak" when unknown.
     type: string;
+    // What the box shows as address, and where it links to. Both may be
+    // set by the admin (gamewe_ts_display, gamewe_ts_link) for a DNS/SRV
+    // name; the query always uses the real host and ports.
     address: string;
+    link: string;
     password: string;
     // null when the query could not be read.
     clients: number | null;
@@ -32,6 +36,8 @@ const KEYS = [
   "gamewe_ts_query_password",
   "gamewe_ts_password",
   "gamewe_ts_name",
+  "gamewe_ts_display",
+  "gamewe_ts_link",
   "gamewe_discord_invite",
   "gamewe_discord_guild",
 ] as const;
@@ -42,6 +48,31 @@ const HOST = /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9]([a-z
 export function tsHost(v: string): string {
   const s = v.trim().toLowerCase();
   return HOST.test(s) ? s : "";
+}
+
+// Shown instead of host:port: printable text, at most 100 characters.
+export function tsDisplay(v: string): string {
+  const s = v.trim();
+  return s.length <= 100 && !/[\p{Cc}\p{Cf}]/u.test(s) ? s : "";
+}
+
+// Connect link that replaces the generated ts3server:// link. Only the
+// TeamSpeak schemes and https, with a host name and an optional query
+// (e.g. ts3server://ts.example.org?port=9987&nickname=Guest).
+export function tsLink(v: string): string {
+  const s = v.trim();
+  if (s.length > 255 || /[\s"'<>\\`]/.test(s)) return "";
+  const m = /^(ts3server|teamspeak|https):\/\/([^/?#]+)(\/[^?#]*)?(\?[^#]*)?$/i.exec(s);
+  if (!m) return "";
+  const hostPort = /^(.+?)(?::(\d{1,5}))?$/.exec(m[2]);
+  if (!hostPort || !tsHost(hostPort[1]) || (hostPort[2] && Number(hostPort[2]) > 65535)) return "";
+  if (m[1].toLowerCase() !== "https" && m[3] && m[3] !== "/") return "";
+  return s;
+}
+
+// The generated connect link for host[:port].
+export function tsDefaultLink(address: string): string {
+  return `ts3server://${address.replace(/:(\d+)$/, "?port=$1")}`;
 }
 
 export function discordInvite(v: string): string {
@@ -105,10 +136,12 @@ async function load(o: Record<string, string>): Promise<VoiceBox> {
 }
 
 async function loadTs(host: string, voicePort: number, queryPort: number, o: Record<string, string>): Promise<VoiceBox["ts"]> {
+  const real = voicePort === 9987 ? host : `${host}:${voicePort}`;
   const base = {
     name: (o.gamewe_ts_name ?? "").trim(),
     type: "TeamSpeak",
-    address: voicePort === 9987 ? host : `${host}:${voicePort}`,
+    address: tsDisplay(o.gamewe_ts_display ?? "") || real,
+    link: tsLink(o.gamewe_ts_link ?? "") || tsDefaultLink(real),
     password: (o.gamewe_ts_password ?? "").trim(),
     clients: null,
     max: null,

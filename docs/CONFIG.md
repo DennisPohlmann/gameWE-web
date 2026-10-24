@@ -68,8 +68,12 @@ page has a share button with plain share links (no third-party scripts).
 
 Under Admin → Settings → Voiceserver choose None, TeamSpeak or Discord;
 only the fields of that kind are shown. TeamSpeak 3: address, port, password
-to show, ServerQuery port and login. Discord: invite and server ID. A box at
-the top of the public pages then shows the TeamSpeak address with a connect
+to show, ServerQuery port and login, and optionally an address shown
+instead of address:port (e.g. a DNS name with an SRV record) and a connect
+link that replaces the generated `ts3server://host?port=...` link (only
+`ts3server://`, `teamspeak://` and `https://` with a host name are
+accepted). The query always uses the real address and ports. Discord:
+invite and server ID. A box at the top of the public pages then shows the TeamSpeak address with a connect
 link, the type (e.g. `TeamSpeak 3`, from the server version), the password,
 the channel count and the players online, or the Discord
 link with its online count. Without a choice, a configured TeamSpeak is
