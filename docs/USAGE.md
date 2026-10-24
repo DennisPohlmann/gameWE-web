@@ -39,7 +39,7 @@ settings: [CONFIG.md](CONFIG.md).
 | `/<game>/events-feed` | the latest 10 events of a ranking as JSON (live box on the start page; 404 unless the admin setting "Latest events" is live) |
 | `/api/v1/...` | public JSON API, see [INTERFACE.md](INTERFACE.md) |
 | `/sig/<playerId>.png` | forum signature image (400x100) with rank insignia, position and activity; classic grey by default, `/sig/<playerId>-<template>.png` in a design template's colours; the profile offers the code as BBCode, HTML, Markdown or image URL |
-| `/banner/<serverId>.png` | server banner (560x95) with address, status, players, rank, map and the last 24 hours; `-<template>` as above; code on the server page and the Misc page |
+| `/banner/<serverId>.png` | server banner (560x95) with address, status, players, map and the last 24 hours; `-<template>` as above; code on the server page and the Misc page |
 | `/robots.txt`, `/sitemap.xml` | for search engines, see [CONFIG.md](CONFIG.md#search-engines-and-sharing) |
 | `/admin` | admin area |
 

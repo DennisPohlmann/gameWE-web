@@ -98,16 +98,6 @@ export function getServer(id: number) {
   );
 }
 
-// Place of a server among the servers of all visible rankings, by kills
-// (server banner).
-export async function getServerRank(kills: number) {
-  const r = await queryOne<{ n: number }>(
-    `SELECT COUNT(*) + 1 AS n FROM hlstats_Servers s JOIN hlstats_Games g ON g.code = s.game AND g.hidden = '0' WHERE s.kills > ?`,
-    [kills],
-  );
-  return Number(r?.n ?? 1);
-}
-
 export type Totals = { players: number; newPlayers: number; kills: number; headshots: number; servers: number };
 
 export async function getTotals(game: string): Promise<Totals> {

@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { ImageResponse } from "next/og";
-import { getGame, getServer, getServerLoad, getServerRank } from "@/lib/data";
+import { getGame, getServer, getServerLoad } from "@/lib/data";
 import { statsOrigin } from "@/lib/site-url";
 import { FLAG_CODES } from "@/lib/flag-codes";
 import { nowUnix } from "@/lib/format";
@@ -9,16 +9,25 @@ import { CLASSIC_STYLE, imageTheme, parseImageFile } from "@/lib/image-theme";
 
 const W = 560;
 const H = 95;
+// Side panel with the graph; the info area right of it (frame and padding
+// off) holds the name next to the logo and the columns address and players,
+// port, status and map (the rest of the width).
+const SIDE = 128;
+const INFO = W - 2 - SIDE - 16;
+const NAME = INFO - 100;
+const COL1 = 120;
+const COL2 = 54;
+const COL3 = INFO - COL1 - COL2;
 
 // Server banner: /banner/<serverId>.png, 560x95, in the classic grey look;
 // /banner/<serverId>-<template>.png in a design template's colours. Name with flag, address, port, status, players with a pie,
-// rank, map and, on the left, the players of the last 24 hours.
+// map and, on the left, the players of the last 24 hours.
 export async function GET(_req: Request, { params }: { params: Promise<{ file: string }> }) {
   const f = parseImageFile((await params).file);
   const s = f ? await getServer(f.id) : undefined;
   if (!s) return new Response("not found", { status: 404 });
   const now = nowUnix();
-  const [game, load, rank, origin] = await Promise.all([getGame(s.game), getServerLoad(s.serverId, now - 86400), getServerRank(Number(s.kills)), statsOrigin()]);
+  const [game, load, origin] = await Promise.all([getGame(s.game), getServerLoad(s.serverId, now - 86400), statsOrigin()]);
   if (!game) return new Response("not found", { status: 404 });
   const th = await imageTheme(f?.style ?? CLASSIC_STYLE);
   const cc = (s.country_code ?? "").trim().toLowerCase();
@@ -56,8 +65,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ file: s
   // Players of the last 24 hours.
   // The graph with a small scale on its left: at most four steps of 1, 2,
   // 5, 10, 20, 25, 50 or 100 players.
-  const cw = 78;
-  const ch = 58;
+  const cw = SIDE - 12 - 18;
+  const ch = 68;
   const peak = Math.max(1, max, ...load.map((l) => l.act_players));
   const step = [1, 2, 5, 10, 20, 25, 50, 100].find((n) => peak / n <= 4) ?? Math.ceil(peak / 400) * 100;
   const top = Math.ceil(peak / step) * step;
@@ -67,9 +76,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ file: s
   return new ImageResponse(
     (
       <div style={{ width: "100%", height: "100%", display: "flex", background: th.bg, border: `1px solid ${th.frame}`, borderTop: th.stripe ? `3px solid ${th.stripe}` : `1px solid ${th.frame}`, fontFamily: "sans-serif" }}>
-        <div style={{ display: "flex", flexDirection: "column", width: 112, padding: "5px 8px", background: th.side }}>
+        <div style={{ display: "flex", flexDirection: "column", width: SIDE, padding: "4px 6px", background: th.side }}>
           <div style={{ display: "flex", fontSize: 8, fontWeight: 700, color: th.sideText, letterSpacing: 0.3 }}># OF PLAYERS (24 H)</div>
-          <div style={{ display: "flex", marginTop: 4 }}>
+          <div style={{ display: "flex", marginTop: 3 }}>
             <div style={{ display: "flex", position: "relative", width: 18, height: ch }}>
               {ticks.map((v) => (
                 <div key={v} style={{ display: "flex", position: "absolute", right: 3, top: Math.min(ch - 9, Math.max(0, ch - (v / top) * ch - 5)), fontSize: 8, lineHeight: 1, color: th.sideText }}>
@@ -90,12 +99,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ file: s
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <div style={{ display: "flex", flexDirection: "column" }}>
               <div style={label}>SERVER NAME:</div>
-              <div style={{ display: "flex", alignItems: "center", width: 330 }}>
+              <div style={{ display: "flex", alignItems: "center", width: NAME }}>
                 {flag ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={flag} width={16} height={12} style={{ marginRight: 5 }} alt="" />
                 ) : null}
-                <span style={{ ...value, width: flag ? 309 : 330 }}>{s.name || addr}</span>
+                <span style={{ ...value, width: flag ? NAME - 21 : NAME }}>{s.name || addr}</span>
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", width: 96 }}>
@@ -106,28 +115,22 @@ export async function GET(_req: Request, { params }: { params: Promise<{ file: s
             </div>
           </div>
           <div style={{ display: "flex" }}>
-            {cell(196, "IP ADDRESS:", ip)}
-            {cell(54, "PORT:", port)}
-            {cell(180, "STATUS:", online ? "Online" : "Offline", online ? th.good : th.bad)}
+            {cell(COL1, "IP ADDRESS:", ip)}
+            {cell(COL2, "PORT:", port)}
+            {cell(COL3, "STATUS:", online ? "Online" : "Offline", online ? th.good : th.bad)}
           </div>
           <div style={{ display: "flex", alignItems: "flex-end" }}>
-            <div style={{ display: "flex", alignItems: "center", width: 196 }}>
+            <div style={{ display: "flex", alignItems: "center", width: COL1 + COL2 }}>
               {pie}
-              <div style={{ display: "flex", marginLeft: 5 }}>{cell(120, "PLAYERS:", `${act}/${max}`)}</div>
+              <div style={{ display: "flex", marginLeft: 5 }}>{cell(COL1 - 29, "PLAYERS:", `${act}/${max}`)}</div>
             </div>
-            {cell(54, "RANK:", ordinal(rank))}
-            {cell(180, "CURRENT MAP:", s.act_map || "-")}
+            {cell(COL3, "CURRENT MAP:", s.act_map || "-")}
           </div>
         </div>
       </div>
     ),
     { width: W, height: H, headers: { "cache-control": "public, max-age=300" } },
   );
-}
-
-function ordinal(n: number) {
-  const s = n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th";
-  return `${n}${s}`;
 }
 
 // Flag from public/flags as a data URL (cc is checked against FLAG_CODES).
