@@ -1,15 +1,16 @@
-import { api } from "@/lib/api";
-import { getPlayer, getPlayerPosition, noProfile } from "@/lib/data";
+import { api, publicPlayer } from "@/lib/api";
+import { pathId } from "@/lib/api-params";
+import { getPlayerPosition } from "@/lib/data";
 import { activity } from "@/lib/format";
 import { getSettings } from "@/lib/settings";
 
-// Public summary of one player; hidden players and bots without a profile answer 404.
+// Public summary of one player; hidden players, bots without a profile and
+// players of hidden rankings answer 404.
 export function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   return api(async () => {
     const { id } = await params;
-    if (!/^\d{1,10}$/.test(id)) return null;
-    const p = await getPlayer(Number(id));
-    if (!p || p.hideranking || (await noProfile(p))) return null;
+    const p = await publicPlayer(pathId(id));
+    if (!p) return null;
     const [rank, { activityDays }] = await Promise.all([getPlayerPosition(p.game, p.skill), getSettings()]);
     return {
       id: p.playerId,

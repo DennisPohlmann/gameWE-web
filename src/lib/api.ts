@@ -1,7 +1,9 @@
 import "server-only";
+import { ApiError, kpd, share } from "./api-params";
+import { basePath } from "./base-path";
 import { clientIp } from "./client-ip";
 import { activity } from "./format";
-import type { LivePlayer, RankingRow, Server } from "./data";
+import { getGame, getPlayer, getPlayerFlags, noProfile, type ClanRow, type LivePlayer, type MapRow, type RankingRow, type Server } from "./data";
 
 // Public read-only JSON API (/api/v1/...). Only data the website shows to
 // everyone: no IPs, no chat, no hidden players, no RCON or admin data.
@@ -24,6 +26,7 @@ export async function api(handler: () => Promise<unknown | null>): Promise<Respo
     const data = await handler();
     return data === null ? json({ error: "not found" }, 404) : json(data, 200);
   } catch (err) {
+    if (err instanceof ApiError) return json({ error: err.message }, err.status);
     console.error("api:", err instanceof Error ? err.message : err);
     return json({ error: "internal error" }, 500);
   }
@@ -48,6 +51,30 @@ export function intParam(v: string | null, def: number, min: number, max: number
 }
 
 export const codeOk = (s: string) => /^[A-Za-z0-9_-]{1,32}$/.test(s);
+
+// Weapon codes of hlstats_Weapons (weapon_awp, tec9, ...).
+export const weaponCodeOk = (s: string) => /^[A-Za-z0-9_.-]{1,64}$/.test(s);
+
+// Path of an endpoint as clients call it (for the links of a list).
+export const apiPath = (path: string) => `${basePath}/api/v1${path}`;
+
+// A visible ranking (hidden ones are for admins only), or undefined.
+export async function visibleGame(code: string) {
+  return codeOk(code) ? getGame(code) : undefined;
+}
+
+// A player the API may show: not hidden from the ranking (hideranking, which
+// also covers banned players), not a bot without a profile, in a visible
+// ranking. Anything else is answered like an unknown player (404).
+export async function publicPlayer(id: number | null) {
+  if (!id) return undefined;
+  const p = await getPlayer(id);
+  if (!p || p.hideranking || (await noProfile(p)) || !(await getGame(p.game))) return undefined;
+  return p;
+}
+
+export const apiCountry = (flag: string | null | undefined, name: string | null | undefined) =>
+  flag && flag.trim() ? { code: flag.trim().toUpperCase(), name: name ?? "" } : null;
 
 export function apiServer(s: Server) {
   return {
@@ -94,8 +121,58 @@ export function apiRankingRow(r: RankingRow, rank: number, activityDays: number)
     deaths: r.deaths,
     headshots: r.headshots,
     kpd: Math.round((r.kills / Math.max(1, r.deaths)) * 100) / 100,
+    hpk: share(r.headshots, r.kills),
+    accuracy: share(r.hits, r.shots),
     connectionTime: r.connection_time,
+    firstConnect: r.first_connect ?? null,
     lastEvent: r.last_event,
     activity: activity(r.last_event, activityDays),
+  };
+}
+
+// Country (null for bots and unknown places) and bot flag of players in a
+// top list, from their latest connect.
+export async function playerTags(ids: number[]) {
+  const flags = await getPlayerFlags(ids);
+  return (id: number) => {
+    const f = flags.get(Number(id));
+    return { country: f && f.flag !== "bot" ? apiCountry(f.flag, f.country) : null, bot: f?.flag === "bot" };
+  };
+}
+
+// A clan row of the clan ranking or a clan page. flag: the most common
+// country of its members (getClanFlags).
+export function apiClan(c: ClanRow, flag: { flag: string; country: string } | undefined) {
+  return {
+    id: Number(c.clanId),
+    tag: c.tag,
+    name: c.name,
+    homepage: /^https?:\/\//i.test(c.homepage ?? "") ? c.homepage : null,
+    country: flag ? apiCountry(flag.flag, flag.country) : null,
+    members: Number(c.members),
+    avgSkill: Number(c.skill ?? 0),
+    kills: Number(c.kills ?? 0),
+    deaths: Number(c.deaths ?? 0),
+    headshots: Number(c.headshots ?? 0),
+    kpd: kpd(c.kills ?? 0, c.deaths ?? 0),
+    hpk: share(c.headshots ?? 0, c.kills ?? 0),
+    connectionTime: Number(c.connection_time ?? 0),
+    lastEvent: c.last_event === null ? null : Number(c.last_event),
+  };
+}
+
+export function apiMap(m: MapRow) {
+  return {
+    id: Number(m.id),
+    name: m.map,
+    kills: Number(m.kills),
+    headshots: Number(m.headshots),
+    hpk: share(m.headshots, m.kills),
+    teamKills: Number(m.teamkills),
+    teamAWins: Number(m.teama_wins),
+    teamBWins: Number(m.teamb_wins),
+    played: Number(m.played),
+    playTime: Number(m.play_time),
+    rounds: Number(m.rounds),
   };
 }

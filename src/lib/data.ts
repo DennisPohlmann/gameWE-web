@@ -433,9 +433,17 @@ export async function getRanking(opts: {
   // Only players from this country (two-letter code) and/or city.
   country?: string;
   city?: string;
+  // Only members of this clan.
+  clan?: number;
+  // Fill globalRank also without a country or city (API lists).
+  withRank?: boolean;
 }) {
   const where = [`p.game = ?`, `p.hideranking = 0`];
   const params: Param[] = [opts.game];
+  if (opts.clan) {
+    where.push(`p.clan = ?`);
+    params.push(opts.clan);
+  }
   if (opts.search) {
     where.push(`d.lastName ${likeOp()} ?`);
     params.push(like(opts.search));
@@ -466,7 +474,7 @@ export async function getRanking(opts: {
     ),
     queryOne<{ n: number }>(`SELECT COUNT(*) AS n ${countFrom}`, params),
   ]);
-  if (local) {
+  if (local || opts.withRank) {
     const pos = await rankPositions(rows.map((r) => ({ game: opts.game, skill: r.skill })));
     for (const r of rows) r.globalRank = pos.get(`${opts.game}|${Number(r.skill)}`);
   }
@@ -740,15 +748,15 @@ export type PlayerMap = { id: number; map: string; kills: number; deaths: number
 
 // Per-map kills and deaths from hlstats_Events_Frags (hlstats_Players_Maps is
 // not filled by the collector).
-export function getPlayerMaps(id: number) {
+export function getPlayerMaps(id: number, limit = 25) {
   return query<PlayerMap>(
     `SELECT m.id, m.map, SUM(x.k) AS kills, SUM(x.d) AS deaths, SUM(x.hs) AS headshots
      FROM (SELECT map, 1 AS k, 0 AS d, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS hs FROM hlstats_Events_Frags WHERE killerId = ?
            UNION ALL
            SELECT map, 0, 1, 0 FROM hlstats_Events_Frags WHERE victimId = ?) x
      JOIN hlstats_Maps m ON m.id = x.map
-     GROUP BY m.id, m.map ORDER BY kills DESC, deaths DESC, m.id LIMIT 25`,
-    [id, id],
+     GROUP BY m.id, m.map ORDER BY kills DESC, deaths DESC, m.id LIMIT ?`,
+    [id, id, limit],
   );
 }
 
@@ -957,12 +965,27 @@ const clanAgg = `COUNT(p.playerId) AS members, ROUND(AVG(p.skill)) AS skill, SUM
   SUM(p.deaths) AS deaths, SUM(p.headshots) AS headshots, SUM(p.connection_time) AS connection_time,
   MAX(p.last_event) AS last_event`;
 
-export function getClans(game: string, limit: number, offset: number) {
+export const clanSorts = {
+  skill: "skill",
+  members: "members",
+  kills: "kills",
+  deaths: "deaths",
+  headshots: "headshots",
+  kpd: "kills * 1.0 / GREATEST(deaths, 1)",
+  hpk: "headshots * 1.0 / GREATEST(kills, 1)",
+  time: "connection_time",
+  activity: "last_event",
+  tag: "tag",
+} as const;
+export type ClanSort = keyof typeof clanSorts;
+
+export function getClans(game: string, limit: number, offset: number, sort: ClanSort = "skill", asc = false) {
   return query<ClanRow>(
-    `SELECT c.clanId, c.tag, c.name, c.homepage, c.flag, ${clanAgg}
-     FROM hlstats_Clans c JOIN hlstats_Players p ON p.clan = c.clanId AND p.hideranking = 0
-     WHERE c.game = ? GROUP BY c.clanId, c.tag, c.name, c.homepage, c.flag
-     HAVING COUNT(p.playerId) >= 2 ORDER BY skill DESC, c.clanId LIMIT ? OFFSET ?`,
+    `SELECT * FROM (SELECT c.clanId, c.tag, c.name, c.homepage, c.flag, ${clanAgg}
+       FROM hlstats_Clans c JOIN hlstats_Players p ON p.clan = c.clanId AND p.hideranking = 0
+       WHERE c.game = ? GROUP BY c.clanId, c.tag, c.name, c.homepage, c.flag
+       HAVING COUNT(p.playerId) >= 2) x
+     ORDER BY ${clanSorts[sort]} ${asc ? "ASC" : "DESC"}, clanId LIMIT ? OFFSET ?`,
     [game, limit, offset],
   );
 }
@@ -1019,7 +1042,7 @@ export function getWeapon(game: string, code: string) {
 export type TopRow = { playerId: number; name: string | null; a: number; b: number; c: number; d: number };
 
 // Best players for one weapon: a = kills, b = headshots, c = shots, d = hits.
-export function getWeaponTop(weaponId: number) {
+export function getWeaponTop(weaponId: number, limit = 50, offset = 0) {
   const src = weeksAndMonths("Players_Weapons", "player_id, kills, headshots, shots, hits", "weapon_id = ?", [weaponId]);
   return query<TopRow>(
     `SELECT x.player_id AS playerId, d.lastName AS name, SUM(x.kills) AS a, SUM(x.headshots) AS b,
@@ -1027,9 +1050,21 @@ export function getWeaponTop(weaponId: number) {
      FROM ${src.sql} x
      JOIN hlstats_Players p ON p.playerId = x.player_id AND p.hideranking = 0
      LEFT JOIN hlstats_Players_Data d ON d.playerId = x.player_id
-     GROUP BY x.player_id, d.lastName HAVING SUM(x.kills) > 0 ORDER BY a DESC, x.player_id LIMIT 50`,
+     GROUP BY x.player_id, d.lastName HAVING SUM(x.kills) > 0 ORDER BY a DESC, x.player_id LIMIT ? OFFSET ?`,
+    [...src.params, limit, offset],
+  );
+}
+
+// Number of players getWeaponTop can list (for paging).
+export async function countWeaponTop(weaponId: number) {
+  const src = weeksAndMonths("Players_Weapons", "player_id, kills", "weapon_id = ?", [weaponId]);
+  const r = await queryOne<{ n: number }>(
+    `SELECT COUNT(*) AS n FROM (SELECT x.player_id FROM ${src.sql} x
+       JOIN hlstats_Players p ON p.playerId = x.player_id AND p.hideranking = 0
+       GROUP BY x.player_id HAVING SUM(x.kills) > 0) y`,
     src.params,
   );
+  return Number(r?.n ?? 0);
 }
 
 export type ActionRow = {
@@ -1099,7 +1134,7 @@ export function getMap(id: number) {
 
 // Best players on one map over the last `days` days, from hlstats_Events_Frags:
 // a = kills, b = deaths, c = headshots.
-export function getMapTop(mapId: number, days: number) {
+export function getMapTop(mapId: number, days: number, limit = 50, offset = 0) {
   const since = nowUnix() - days * 86400;
   return query<TopRow>(
     `SELECT x.playerId, d.lastName AS name, SUM(x.k) AS a, SUM(x.dd) AS b, SUM(x.hs) AS c, 0 AS d
@@ -1109,9 +1144,21 @@ export function getMapTop(mapId: number, days: number) {
            SELECT victimId, 0, 1, 0 FROM hlstats_Events_Frags WHERE timestamp_id >= ? AND map = ?) x
      JOIN hlstats_Players p ON p.playerId = x.playerId AND p.hideranking = 0
      LEFT JOIN hlstats_Players_Data d ON d.playerId = x.playerId
-     GROUP BY x.playerId, d.lastName HAVING SUM(x.k) > 0 ORDER BY a DESC, x.playerId LIMIT 50`,
-    [since, mapId, since, mapId],
+     GROUP BY x.playerId, d.lastName HAVING SUM(x.k) > 0 ORDER BY a DESC, x.playerId LIMIT ? OFFSET ?`,
+    [since, mapId, since, mapId, limit, offset],
   );
+}
+
+// Number of players getMapTop can list (for paging).
+export async function countMapTop(mapId: number, days: number) {
+  const since = nowUnix() - days * 86400;
+  const r = await queryOne<{ n: number }>(
+    `SELECT COUNT(DISTINCT f.killerId) AS n FROM hlstats_Events_Frags f
+     JOIN hlstats_Players p ON p.playerId = f.killerId AND p.hideranking = 0
+     WHERE f.timestamp_id >= ? AND f.map = ?`,
+    [since, mapId],
+  );
+  return Number(r?.n ?? 0);
 }
 
 export type TeamRow = {
@@ -1309,6 +1356,14 @@ export async function getMiscStats(game: string, days: number): Promise<MiscStat
     weekdays,
     connectTypes: types.map((t) => ({ type: Number(t.type), n: Number(t.n) })),
   };
+}
+
+// The ids among `ids` of players shown in the ranking (not hidden or banned).
+export async function visiblePlayerIds(ids: number[]) {
+  const uniq = [...new Set(ids.filter((x) => x > 0))];
+  if (!uniq.length) return new Set<number>();
+  const rows = await query<{ playerId: number }>(`SELECT playerId FROM hlstats_Players WHERE playerId IN (?) AND hideranking = 0`, [uniq]);
+  return new Set(rows.map((r) => Number(r.playerId)));
 }
 
 // Country flag of each player (from the latest connect's GeoIP location).
