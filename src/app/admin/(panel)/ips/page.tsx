@@ -28,7 +28,7 @@ export default async function AdminIps({ searchParams }: { searchParams: Promise
   const [rows, total, games] = await Promise.all([
     searchIps({ ...filter, limit, offset: (page - 1) * limit }),
     countIps(filter),
-    optionList("games"),
+    optionList("games", true),
   ]);
   const base = "/admin/ips";
   const gameName = new Map(games);

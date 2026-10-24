@@ -26,7 +26,7 @@ export default async function AdminChat({ searchParams }: { searchParams: Promis
   const [rows, total, games] = await Promise.all([
     getChat({ ...filter, limit, offset: (page - 1) * limit }),
     countChat(filter),
-    optionList("games"),
+    optionList("games", true),
   ]);
   const base = "/admin/chat";
   return (

@@ -19,7 +19,7 @@ type SP = Promise<Record<string, string | string[] | undefined>>;
 export default async function HelpPage({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams;
   const { lang, t } = await getDict();
-  const games = await getGames();
+  const games = await getGames(true);
   const rawGame = strParam(sp.game);
   // Actions and weapons per ranking: the first ranking unless one is chosen.
   const game = games.some((g) => g.code === rawGame) ? rawGame : (games[0]?.code ?? "");

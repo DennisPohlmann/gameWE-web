@@ -3,7 +3,7 @@ import { cache } from "react";
 import { adminQuery, likeOp, query, queryOne, sinceDays, type Param } from "./db";
 import { addDays, dayOf, siteDay } from "./day";
 import { nowUnix, steamIds } from "./format";
-import { baseGameOf } from "./games";
+import { baseGameOf, GAME_HAS_DATA } from "./games";
 
 // All reads of the HLstatsX/gameME tables the collector fills.
 // Times are Unix seconds unless a field says otherwise.
@@ -73,8 +73,13 @@ async function gameCols() {
 
 const withBase = (g: Game): Game => ({ ...g, realgame: baseGameOf(g.code, g.realgame) });
 
-export async function getGames() {
-  return (await query<Game>(`SELECT ${await gameCols()} FROM hlstats_Games WHERE hidden = '0' ORDER BY display_id, name`)).map(withBase);
+// withData: only rankings with a server or a player (for ranking choices).
+export async function getGames(withData = false) {
+  return (
+    await query<Game>(
+      `SELECT ${await gameCols()} FROM hlstats_Games WHERE hidden = '0'${withData ? ` AND ${GAME_HAS_DATA}` : ""} ORDER BY display_id, name`,
+    )
+  ).map(withBase);
 }
 
 // Hidden rankings are left out unless withHidden is set (admins only).

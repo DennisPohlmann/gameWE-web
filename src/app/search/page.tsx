@@ -20,7 +20,7 @@ const LIMIT = 100;
 export default async function SearchPage({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams;
   const { lang, t } = await getDict();
-  const games = await getGames();
+  const games = await getGames(true);
   const q = strParam(sp.q).trim().slice(0, 64);
   const rawIn = strParam(sp.st);
   const by: SearchIn = SEARCH_IN.find((s) => s === rawIn) ?? "names";

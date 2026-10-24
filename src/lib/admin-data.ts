@@ -2,6 +2,7 @@ import "server-only";
 import type { Entity, Field } from "./admin-entities";
 import { HIDDEN_OPTION_PREFIXES, allSettings } from "./admin-settings";
 import { hashPassword } from "./auth";
+import { GAME_HAS_DATA } from "./games";
 import { adminExec, adminInsert, adminQuery, likeOp, type Param } from "./db";
 
 export type Row = Record<string, string | number | null>;
@@ -107,9 +108,13 @@ export async function getRow(e: Entity, id: string): Promise<Row | undefined> {
   return rows[0];
 }
 
-export async function optionList(kind: "games" | "clans"): Promise<[string, string][]> {
+// withData: only rankings with a server or a player (filters); forms that
+// assign a ranking keep all of them.
+export async function optionList(kind: "games" | "clans", withData = false): Promise<[string, string][]> {
   if (kind === "games") {
-    const g = await adminQuery<{ code: string; name: string }>(`SELECT TRIM(code) AS code, name FROM hlstats_Games ORDER BY display_id, name`);
+    const g = await adminQuery<{ code: string; name: string }>(
+      `SELECT TRIM(code) AS code, name FROM hlstats_Games${withData ? ` WHERE ${GAME_HAS_DATA}` : ""} ORDER BY display_id, name`,
+    );
     return g.map((x) => [x.code, `${x.name} (${x.code})`]);
   }
   const c = await adminQuery<{ clanId: number; tag: string; game: string }>(`SELECT clanId, tag, game FROM hlstats_Clans ORDER BY tag LIMIT 2000`);

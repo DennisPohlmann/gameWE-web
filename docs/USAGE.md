@@ -52,7 +52,9 @@ awards and ranks from an existing ranking. Servers are assigned on the
 ranking's page (this sets `hlstats_Servers.game`); the collector picks the
 change up within a minute. The start page lists every ranking that has servers;
 the servers are listed on the ranking's page. Rankings without servers serve
-as templates.
+as templates. The ranking choices on the search and help pages and the
+ranking filters of the admin chat and IP pages list only rankings with at
+least one server or player; the admin forms that assign a ranking list all.
 
 `<game>` is `hlstats_Games.code`, for example `css`.
 

@@ -35,6 +35,12 @@ export function baseGameOf(code: string | null | undefined, realgame: string | n
   return GAME_KINDS[c] ? c : null;
 }
 
+// SQL condition on hlstats_Games: the ranking has a server or a player. The
+// seeded rankings (cstrike, csgo, dod …) without either are left out of the
+// ranking choices.
+export const GAME_HAS_DATA = `(EXISTS (SELECT 1 FROM hlstats_Servers s WHERE s.game = hlstats_Games.code)
+  OR EXISTS (SELECT 1 FROM hlstats_Players p WHERE p.game = hlstats_Games.code))`;
+
 // Servers of different base games must not share a ranking (different log
 // formats, weapons and actions). Unknown games are not blocked.
 export function sameBaseGame(a: string | null, b: string | null): boolean {
