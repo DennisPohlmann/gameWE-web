@@ -9,19 +9,27 @@ import { getGame, getPlayer, getPlayerFlags, noProfile, type ClanRow, type LiveP
 // everyone: no IPs, no chat, no hidden players, no RCON or admin data.
 
 const LIMIT = 120; // requests per IP and minute
-const hits = new Map<string, { n: number; until: number }>();
+const buckets = new Map<string, Map<string, { n: number; until: number }>>();
 
-export async function api(handler: () => Promise<unknown | null>): Promise<Response> {
+// Counts a request of the client in `bucket` (one per kind of endpoint);
+// over `limit` a minute: the seconds to wait, otherwise 0.
+export async function overLimit(bucket: string, limit: number): Promise<number> {
   const ip = await clientIp();
   const now = Date.now();
+  let hits = buckets.get(bucket);
+  if (!hits) buckets.set(bucket, (hits = new Map()));
   const h = hits.get(ip);
-  if (h && h.until > now && h.n >= LIMIT) {
-    return json({ error: "rate limit" }, 429, { "retry-after": String(Math.ceil((h.until - now) / 1000)) });
-  }
+  if (h && h.until > now && h.n >= limit) return Math.ceil((h.until - now) / 1000);
   if (!h || h.until <= now) {
     if (hits.size > 10000) hits.clear();
     hits.set(ip, { n: 1, until: now + 60_000 });
   } else h.n++;
+  return 0;
+}
+
+export async function api(handler: () => Promise<unknown | null>): Promise<Response> {
+  const wait = await overLimit("api", LIMIT);
+  if (wait) return json({ error: "rate limit" }, 429, { "retry-after": String(wait) });
   try {
     const data = await handler();
     return data === null ? json({ error: "not found" }, 404) : json(data, 200);

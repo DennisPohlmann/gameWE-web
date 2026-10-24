@@ -19,7 +19,7 @@ settings: [CONFIG.md](CONFIG.md).
 | `/<game>` | a ranking: servers (flag of the server's country), live players per server by team, daily awards, activity |
 | `/<game>/servers/<id>` | one server: live view with the server's country flag, bots and flags, load graph of the last 24 hours (players, maps, uptime), counters, chat |
 | `/<game>/players` | ranking (sortable, search), `?view=new` for new players; country and city rankings with gameME's links: `?type=countryinfo` (all countries), `?type=countryinfo&valuecountry=de` (players of a country), `?type=cityinfo[&valuecountry=de]` (cities), `?type=cityinfo&valuecountry=de&valuecity=berlin` (players of a city; `valuecity` alone also works but joins cities of the same name) |
-| `/<game>/players/<id>` | player profile: Steam avatar and data, summary with radar and trend pills, player trend, rank and career, ribbons, forum signature, hitbox, weapons, maps, opponents |
+| `/<game>/players/<id>` | player profile: Steam avatar and data, summary with radar and trend pills, player trend, rank and career, ribbons, forum signature, hitbox, weapons, maps, opponents, recent kills and deaths (live, see the admin setting) |
 | `/<game>/clans`, `/<game>/clans/<id>` | clans and members |
 | `/<game>/awards` | daily awards with a calendar (`?date=YYYY-MM-DD`, `?month=YYYY-MM`); `?view=history`, `?view=ranks`, `?view=ribbons` (with most decorated players, `&class=N` filters a ribbon class) |
 | `/<game>/weapons`, `/<game>/weapons/<code>` | weapons like gameME's (kills %, headshots %, HS/kill as bars, sortable: `?sort=name\|modifier\|kills\|headshots\|hpk&dir=asc`), best players per weapon |
@@ -37,7 +37,8 @@ settings: [CONFIG.md](CONFIG.md).
 | `/help` | help: how points are calculated (with the current settings), actions, weapon modifiers, chat commands |
 | `/voice` | detail page of the TeamSpeak server from the voice server box (click its name): channel tree with the people online (names can be hidden in the admin settings), server info (operating system with a small symbol, uptime, users, connections, security level, ping, version, host banner URL), traffic and the welcome message; live from the ServerQuery, kept for a minute; 404 unless TeamSpeak is the voice server |
 | `/licenses` | licenses of the software, data, map tiles, flags and fonts gameWE uses |
-| `/<game>/events-feed` | the latest 10 events of a ranking as JSON (live box on the start page; 404 unless the admin setting "Latest events" is live) |
+| `/<game>/events-feed` | the latest 10 events of a ranking as JSON (live box on the start page; 404 unless the admin setting "Latest events" is "Sync") |
+| `/<game>/players/<id>/kills-feed` | the latest 25 kills and deaths of one player as JSON, the same rows the profile shows (live table on the player page; 404 unless the admin setting "Recent kills and deaths" is "Sync", for unknown players and players of another ranking; 60 requests per IP and minute, then `429`) |
 | `/api` | documentation of the public JSON API: every endpoint with parameters, example answers and code for curl, PHP, Python and JavaScript (Scalar, self-hosted); the OpenAPI description is `/api/openapi.json` |
 | `/api/v1/...` | public JSON API, see [INTERFACE.md](INTERFACE.md) |
 | `/banner/<game>/player/<playerId>.png` | player banner (forum signature, 400x100) with rank insignia, position and activity; classic grey by default, `/banner/<game>/player/<playerId>-<template>.png` in a design template's colours; the profile offers the code as BBCode, HTML, Markdown or image URL; 404 if the player is not in that ranking, for hidden rankings and for bots while "Rank bots" is off; hidden players get it without their position |

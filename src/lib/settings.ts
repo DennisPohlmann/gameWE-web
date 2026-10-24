@@ -1,5 +1,6 @@
 import "server-only";
 import { config } from "./config";
+import { eventsMode, type EventsMode } from "./events-mode";
 import { query } from "./db";
 import { mapStyleId } from "./map-styles";
 import { sourcebansBase } from "./sourcebans";
@@ -55,9 +56,11 @@ export type Settings = {
   sigBrand: string;
   // Chat on the public pages; otherwise only in the admin area.
   chatPublic: boolean;
-  // Latest events on a ranking's start page: live (new ones flow in),
-  // static (as of loading the page) or off.
-  gameEvents: "live" | "static" | "off";
+  // Latest events on a ranking's start page and the recent kills and deaths
+  // on a player's page: live (sync, new ones flow in), static (async, as
+  // of loading the page) or off (not shown).
+  gameEvents: EventsMode;
+  playerEvents: EventsMode;
   // Game designs (templates/game-*) on the pages of a game; off unless set to "1".
   gameSkins: boolean;
   // Look of the site: dark (default), light, orange and others.
@@ -125,7 +128,7 @@ export async function getSettings(): Promise<Settings> {
   try {
     const rows = await query<{ keyname: string; value: string }>(
       `SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`,
-      [["sitename", "MinActivity", "gamewe_page_size", "gamewe_site_url", "gamewe_logo_url", "gamewe_header_logo", "gamewe_favicon", "gamewe_apple_icon", "gamewe_title_format", "gamewe_title_ranking", "gamewe_geoip_credit", "gamewe_sig_brand", "gamewe_chat_public", "gamewe_game_events", "gamewe_skin", "gamewe_game_skins", "gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_sourcebans_url", "gamewe_seo_description", "gamewe_seo_keywords", "gamewe_seo_image", "gamewe_seo_index", "gamewe_seo_twitter", "gamewe_header_home", "gamewe_header_order", ...linkKeys]],
+      [["sitename", "MinActivity", "gamewe_page_size", "gamewe_site_url", "gamewe_logo_url", "gamewe_header_logo", "gamewe_favicon", "gamewe_apple_icon", "gamewe_title_format", "gamewe_title_ranking", "gamewe_geoip_credit", "gamewe_sig_brand", "gamewe_chat_public", "gamewe_game_events", "gamewe_player_events", "gamewe_skin", "gamewe_game_skins", "gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_sourcebans_url", "gamewe_seo_description", "gamewe_seo_keywords", "gamewe_seo_image", "gamewe_seo_index", "gamewe_seo_twitter", "gamewe_header_home", "gamewe_header_order", ...linkKeys]],
     );
     o = Object.fromEntries(rows.map((r) => [r.keyname, r.value]));
   } catch {
@@ -153,7 +156,8 @@ export async function getSettings(): Promise<Settings> {
     geoipCredit: geoip(o.gamewe_geoip_credit),
     sigBrand: o.gamewe_sig_brand?.trim() || o.sitename?.trim() || config.siteName,
     chatPublic: o.gamewe_chat_public?.trim() === "1",
-    gameEvents: o.gamewe_game_events?.trim() === "static" ? "static" : o.gamewe_game_events?.trim() === "off" ? "off" : "live",
+    gameEvents: eventsMode(o.gamewe_game_events),
+    playerEvents: eventsMode(o.gamewe_player_events),
     gameSkins: o.gamewe_game_skins?.trim() === "1",
     mapLive: o.gamewe_map_live?.trim() !== "0",
     mapPlayers: o.gamewe_map_players?.trim() !== "0",

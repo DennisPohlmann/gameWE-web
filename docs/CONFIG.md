@@ -93,6 +93,19 @@ the host, so with a base path either point the root's `robots.txt` at the
 sitemap (`Sitemap: https://example.org/new/sitemap.xml`) or proxy it. Every
 page has a share button with plain share links (no third-party scripts).
 
+## Latest events and recent kills
+
+Two choices under Admin → Settings decide how the event boxes behave:
+"Latest events (ranking start page)" (`gamewe_game_events`) and "Recent
+kills and deaths (player page)" (`gamewe_player_events`, only the kills and
+deaths of that player). Each is "Sync" (`live`, default: new events flow in
+while the page is open), "Async" (`static`: only the latest ones as of
+loading the page) or "Off" (`off`: the section is not shown). The live
+tables ask `/<game>/events-feed` and `/<game>/players/<id>/kills-feed`
+every 4 seconds while the tab is visible; both answer 404 unless their
+setting is "Sync". The player feed is kept for 3 seconds per player and
+allows 60 requests per client IP and minute.
+
 ## Voice server
 
 Under Admin → Settings → Voiceserver choose None, TeamSpeak or Discord;

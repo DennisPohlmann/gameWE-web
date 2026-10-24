@@ -38,6 +38,13 @@ export type SettingGroup = { id: string; title: L; help?: L; items: Setting[] };
 
 const TS = { key: "gamewe_voice_type", value: "teamspeak" };
 
+// Event boxes on the public pages (lib/events-mode.ts).
+const EVENT_MODES: [string, L][] = [
+  ["live", { de: "Sync: neue Ereignisse laufen live ein", en: "Sync: new events flow in live" }],
+  ["static", { de: "Async: nur die letzten beim Laden der Seite", en: "Async: only the latest ones when the page loads" }],
+  ["off", { de: "Aus: Bereich nicht zeigen", en: "Off: section not shown" }],
+];
+
 // Every country with a flag, by its German name, as "Name (DE)".
 function countryChoices(): [string, L][] {
   const name = (lang: string, c: string) => {
@@ -143,11 +150,18 @@ export const settingGroups: SettingGroup[] = [
         label: { de: "Letzte Ereignisse (Startseite einer Rangliste)", en: "Latest events (ranking start page)" },
         type: "choice",
         def: "live",
-        choices: [
-          ["live", { de: "Live: neue Ereignisse laufen laufend ein", en: "Live: new events keep flowing in" }],
-          ["static", { de: "Nur beim Laden der Seite", en: "Only when the page loads" }],
-          ["off", { de: "Aus", en: "Off" }],
-        ],
+        choices: EVENT_MODES,
+      },
+      {
+        key: "gamewe_player_events",
+        label: { de: "Letzte Kills und Tode (Spielerseite)", en: "Recent kills and deaths (player page)" },
+        type: "choice",
+        def: "live",
+        choices: EVENT_MODES,
+        help: {
+          de: "Nur Kills und Tode dieses Spielers.",
+          en: "Only the kills and deaths of that player.",
+        },
       },
       {
         key: "gamewe_metrics_token",

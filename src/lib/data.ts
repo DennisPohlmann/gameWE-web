@@ -816,6 +816,21 @@ export function getPlayerFrags(id: number, limit: number) {
   );
 }
 
+const fragCache = new Map<string, { at: number; value: Promise<Frag[]> }>();
+
+// getPlayerFrags kept for 3 seconds per player, for the live table on the
+// player page (every open page asks every few seconds).
+export function getPlayerFragsCached(id: number, limit: number): Promise<Frag[]> {
+  const key = `${id}|${limit}`;
+  const hit = fragCache.get(key);
+  if (hit && Date.now() - hit.at < 3_000) return hit.value;
+  if (fragCache.size > 500) fragCache.clear();
+  const value = getPlayerFrags(id, limit);
+  fragCache.set(key, { at: Date.now(), value });
+  value.catch(() => fragCache.delete(key));
+  return value;
+}
+
 export type Opponent = { playerId: number; name: string | null; kills: number; headshots: number };
 
 export function getOpponents(id: number, as: "victims" | "killers") {

@@ -8,6 +8,7 @@ import { RankBadge, Ribbon, RibbonLevel, rankName, ribbonClassName } from "@/com
 import { Radar, Spark, TrendChart } from "@/components/graphics";
 import { Hitbox } from "@/components/hitbox";
 import { SigCode } from "@/components/sig-code";
+import { PlayerFragsLive } from "@/components/player-frags-live";
 import { ZONES } from "@/lib/zones";
 import { awardValue, getAwards, getPlayerRibbons, getRanks, getRibbonClasses, rankFor, ribbonFor, ribbonProgress } from "@/lib/awards";
 import { siteDay } from "@/lib/day";
@@ -617,48 +618,17 @@ export default async function PlayerPage({ params, searchParams }: Props) {
         {killers.length ? <OpponentTable title={t.killers} rows={killers} game={game} t={t} lang={lang} flags={flags} /> : null}
       </div>
 
-      {frags.length ? (
+      {frags.length && settings.playerEvents !== "off" ? (
         <Section title={t.recentKills}>
-          <TableWrap>
-            <table>
-              <thead>
-                <tr>
-                  <th>{t.date}</th>
-                  <th>{t.kills}</th>
-                  <th>{t.weapons}</th>
-                  <th className="hide-sm">{t.map}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {frags.map((f, i) => {
-                  const mine = f.killerId === id;
-                  return (
-                    <tr key={i}>
-                      <td className="muted nowrap">{fmtDateTime(f.timestamp_id, lang)}</td>
-                      <td>
-                        {mine ? (
-                          <>
-                            <span className="good">{t.killed}</span>{" "}
-                            <PlayerLink game={game} id={f.victimId} name={f.victimName} flag={flags.get(f.victimId)} />
-                          </>
-                        ) : (
-                          <>
-                            <span className="bad">{t.killedBy}</span>{" "}
-                            <PlayerLink game={game} id={f.killerId} name={f.killerName} flag={flags.get(f.killerId)} />
-                          </>
-                        )}
-                      </td>
-                      <td>
-                        {f.weapon ?? "-"}
-                        {f.headshot ? <span className="hs" title="Headshot">HS</span> : null}
-                      </td>
-                      <td className="hide-sm">{f.map ?? "-"}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </TableWrap>
+          <PlayerFragsLive
+            game={game}
+            playerId={id}
+            lang={lang}
+            live={settings.playerEvents === "live"}
+            initial={frags}
+            initialFlags={Object.fromEntries(frags.flatMap((f) => [f.victimId, f.killerId]).flatMap((x) => (flags.has(x) ? [[x, flags.get(x)!]] : [])))}
+            labels={{ date: t.date, kills: t.kills, weapons: t.weapons, map: t.map, killed: t.killed, killedBy: t.killedBy }}
+          />
         </Section>
       ) : null}
 
