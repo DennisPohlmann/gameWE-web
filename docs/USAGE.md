@@ -64,7 +64,9 @@ website therefore computes some things itself:
 - **Daily awards** are the awards in `hlstats_Awards`. The collector stores each day's winners in `hlstats_Awards_History`; the
   website computes today's leaders, and yesterday's winners while nothing is
   stored, from the same sources (`hlstats_Events_Frags`,
-  `hlstats_Events_PlayerActions`, `hlstats_Players_History`).
+  `hlstats_Events_PlayerActions`, `hlstats_Players_History`; the latency
+  award from `hlstats_Events_Latency`: lowest average ping of players with
+  at least 30 ping samples that day, as in the collector).
   The calendar under `?view=history` links the days up to the last day with
   stored winners (yesterday while none are stored); today and later days are
   greyed out, and a `?date=` after that day shows the last day instead.

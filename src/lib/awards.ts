@@ -12,6 +12,8 @@ import { query } from "./db";
 // computes the running day itself (and the previous day while nothing is
 // stored yet). Winning an award again and again earns a ribbon of that award,
 // whose class (bronze, silver, gold) comes from hlstats_Definition_Ribbons_Classes.
+// "latency" (type W, but not a weapon) goes to the lowest average ping of the
+// day in hlstats_Events_Latency, by the collector's rule (LATENCY_MIN_SAMPLES).
 // Ranks are kill thresholds in hlstats_Definition_Ranks_Ribbons.
 
 // The award queries scan the day's events, which is slow on big tables, so
@@ -43,6 +45,10 @@ export const PLAYER_AWARDS: Record<string, string> = {
   longest_killstreak: "kill_streak",
 };
 
+// Ping samples (one per minute online, 0 left out) a player needs on a day
+// for the latency award, as LatencyMinSamples in the collector.
+export const LATENCY_MIN_SAMPLES = 30;
+
 export type Award = { awardId: number; awardType: string; code: string; name: string; verb: string };
 export type AwardWin = { awardId: number; playerId: number; name: string | null; value: number };
 
@@ -73,11 +79,13 @@ export function computeDay(game: string, day: string, awards: Award[]): Promise<
 async function computeDayNow(game: string, day: string, awards: Award[]): Promise<Map<number, AwardWin>> {
   const [start, end] = dayRange(day);
   const isPlayer = (a: Award) => a.code in PLAYER_AWARDS;
-  const weapons = awards.filter((a) => a.awardType === "W" && !isPlayer(a)).map((a) => a.code);
+  const isLatency = (a: Award) => a.awardType === "W" && a.code === "latency";
+  const isWeapon = (a: Award) => a.awardType === "W" && !isPlayer(a) && !isLatency(a);
+  const weapons = awards.filter(isWeapon).map((a) => a.code);
   const actions = awards.filter((a) => a.awardType !== "W" && !isPlayer(a)).map((a) => a.code);
   const players = awards.filter(isPlayer);
 
-  const [w, o, p] = await Promise.all([
+  const [w, o, p, l] = await Promise.all([
     weapons.length
       ? query<Row>(
           `SELECT wp.code, f.killerId AS playerId, d.lastName AS name, COUNT(*) AS value
@@ -117,12 +125,27 @@ async function computeDayNow(game: string, day: string, awards: Award[]): Promis
         ),
       ),
     ).then((r) => r.flat()),
+    // Lowest average ping wins; the value is the rounded average in ms.
+    awards.some(isLatency)
+      ? query<Row>(
+          `SELECT 'latency' AS code, e.playerId, d.lastName AS name, ROUND(AVG(e.ping)) AS value
+           FROM hlstats_Events_Latency e
+           JOIN hlstats_Players p ON p.playerId = e.playerId AND p.hideranking = 0
+           LEFT JOIN hlstats_Players_Data d ON d.playerId = e.playerId
+           WHERE e.timestamp_id >= ? AND e.timestamp_id < ? AND p.game = ? AND e.ping > 0
+           GROUP BY e.playerId, d.lastName
+           HAVING COUNT(*) >= ?
+           ORDER BY AVG(e.ping), e.playerId LIMIT 1`,
+          [start, end, game, LATENCY_MIN_SAMPLES],
+        ).then((r) => r.map((x) => ({ ...x, value: Math.max(1, Number(x.value)) })))
+      : [],
   ]);
 
   const wins = [
-    ...best(w, awards, (a) => a.awardType === "W" && !isPlayer(a)),
+    ...best(w, awards, isWeapon),
     ...best(o, awards, (a) => a.awardType !== "W" && !isPlayer(a)),
     ...best(p, awards, isPlayer),
+    ...best(l, awards, isLatency),
   ];
   return new Map(wins.map((x) => [x.awardId, x]));
 }
