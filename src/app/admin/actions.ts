@@ -12,7 +12,7 @@ import { LEVEL_ADMIN, adminSecret, cancelPendingLogin, changePassword, login, lo
 import { adminExec, adminQuery, upsert } from "@/lib/db";
 import { imageUrl, invalidateSettings } from "@/lib/settings";
 import { listTemplates } from "@/lib/templates";
-import { jobsAvailable, queueReset } from "@/lib/reset";
+import { jobsAvailable, queueReset, resetMode } from "@/lib/reset";
 import { discordGuild, discordInvite, tsDisplay, tsHost, tsLink } from "@/lib/voice";
 import { checkCode, consumeStep, newSecret, readSecret, removeSecret, storeSecret } from "@/lib/totp";
 
@@ -337,15 +337,15 @@ export async function changePasswordAction(form: FormData) {
   redirect(`/admin/account?pw=${r === "ok" ? "saved" : r}`);
 }
 
-// Ranking reset (lib/reset.ts): admins only, the ranking's code typed again
-// and the collector confirmed as stopped.
+// Ranking reset (lib/reset.ts): admins only, confirmed in the dialog of the
+// reset page (the checkbox "deleted for good" and its confirm button).
 export async function resetRankingAction(form: FormData) {
   const user = await requireAdmin(LEVEL_ADMIN);
   const game = String(form.get("game") ?? "");
-  const mode = form.get("mode") === "all" ? "all" : form.get("mode") === "stats" ? "stats" : null;
+  const mode = resetMode(form.get("mode"));
   const games = await optionList("games");
   if (!games.some(([code]) => code === game) || !mode) redirect("/admin/reset?error=input");
-  if (String(form.get("confirm") ?? "").trim() !== game) {
+  if (form.get("confirmed") !== "yes" || form.get("understood") !== "yes") {
     redirect(`/admin/reset?error=confirm&game=${encodeURIComponent(game)}`);
   }
   if (!(await jobsAvailable())) redirect("/admin/reset");

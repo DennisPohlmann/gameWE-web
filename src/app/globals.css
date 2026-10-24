@@ -668,6 +668,16 @@ td.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9e
 .admin-rank code { font-size: 0.85em; }
 .reset-mode { border: 1px solid var(--input-border, #888); padding: 6px 10px; }
 .reset-mode label { display: flex; gap: 6px; align-items: flex-start; font-weight: normal; margin: 4px 0; }
+.reset-mode label span { flex: 1; }
+.reset-dialog { max-width: min(560px, calc(100vw - 32px)); background: var(--panel); color: var(--text); border: 1px solid var(--border); padding: 16px 20px; }
+.reset-dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
+.reset-dialog h2 { margin: 0 0 10px; font-size: 1.2em; }
+.reset-dialog dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 12px; margin: 0 0 12px; }
+.reset-dialog dt { font-weight: bold; color: var(--muted); }
+.reset-dialog dd { margin: 0; }
+.form .reset-dialog label.reset-understood { display: flex; gap: 6px; align-items: flex-start; font-weight: bold; }
+.reset-dialog-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 14px; }
+.reset-dialog .button:disabled { opacity: 0.5; cursor: not-allowed; }
 .reset-result { white-space: pre-wrap; font-size: 0.9em; margin: 6px 0 0; max-height: 240px; overflow: auto; }
 .reset-result-cell { white-space: pre-wrap; min-width: 240px; font-size: 0.9em; }
 

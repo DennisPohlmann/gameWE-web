@@ -162,18 +162,33 @@ The admin area edits:
   points modifier), actions (rewards), teams, roles, award definitions, ranks
   and users.
 - **Reset ranking** (level 100, needs collector 0.1.0 or newer): sets one ranking
-  back. "Statistics only" keeps the players and gives them the start points
-  (Settings → Points) with empty statistics; "Everything" also deletes the
-  players, their names, Steam IDs and the clans of that ranking. Games,
+  back, in one of three kinds (collector 0.2.0 or newer; an older collector
+  refuses the job and changes nothing):
+  - "Player statistics only" deletes the events, player histories, the
+    players' weapon, action, map, role and team statistics, the award winners
+    and the ranking totals made from them (weapons, actions, maps, teams,
+    roles); the players stay and start again with the start points
+    (Settings → Points). The server statistics stay.
+  - "All statistics" also resets the server statistics: the counters of the
+    servers (kills, players, rounds, headshots, bombs, wins, map values), the
+    load history (`hlstats_server_load`) and the trend (`hlstats_Trend`). The
+    players stay.
+  - "Everything" also deletes the players, their names, Steam IDs and the
+    clans of that ranking.
+
+  The collector's `docs/USAGE.md` lists the tables of each kind. Games,
   servers, definitions, options and users stay. The website only places a
   job in `hlstats_gamewe_jobs` (created by the collector's init script); the running
   collector pauses that ranking's servers, does the reset and writes the
   result back, which the page shows. It need not be stopped; if it is not
   running (no `gamewe_heartbeat` in the last two minutes) the job waits for
-  its next start. One open job per ranking. The ranking's code must be typed
-  again to confirm. It cannot be undone, so back up the database first. The
-  admin database user needs `SELECT` and `INSERT` on `hlstats_gamewe_jobs`
-  (the init script grants it). From the console: `gamewe reset CODE -mode stats|all`.
+  its next start. One open job per ranking. The reset button opens a dialog
+  that shows the ranking and what is deleted and what stays; the job is only
+  placed after ticking "I understand that this data will be deleted
+  irreversibly" and confirming there. It cannot be undone, so back up the
+  database first. The admin database user needs `SELECT` and `INSERT` on
+  `hlstats_gamewe_jobs` (the init script grants it). From the console:
+  `gamewe reset CODE -mode player-stats|all-stats|all`.
 - **Chat** and **IP addresses:** all stored chat messages and connect
   addresses, searchable (IP or its start, Steam ID, name, host name), for
   admins only.

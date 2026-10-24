@@ -1,13 +1,14 @@
 import "server-only";
 import { adminInsert, adminQuery } from "./db";
+import type { ResetMode } from "./reset-modes";
 
-// Reset of one ranking through the running collector (collector 1.8.0,
+// Reset of one ranking through the running collector (collector 0.1.0,
 // table from its init script). The web only queues a job in hlstats_gamewe_jobs and shows
 // its state; the collector pauses the servers of that game, drops its
 // in-memory players and runs the reset itself. The web user may only SELECT
 // and INSERT on the job table.
 
-export type ResetMode = "stats" | "all";
+export { RESET_MODES, jobModeName, resetMode, type ResetMode } from "./reset-modes";
 
 export type ResetJob = {
   id: number;
