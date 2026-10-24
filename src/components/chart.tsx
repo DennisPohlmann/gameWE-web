@@ -26,7 +26,6 @@ export function LineChart({
   dates: allDates,
   hourly = false,
   trimStart = true,
-  dots = false,
 }: {
   labels: string[];
   // Time of each point for the hover box (e.g. "Mo 20.10. 14:00");
@@ -52,8 +51,6 @@ export function LineChart({
   // false: always show the whole range, even when it begins with zeros
   // (e.g. connects per day, where a quiet day is a real 0).
   trimStart?: boolean;
-  // Always a small dot at every point, also on dense (quarter-hourly) charts.
-  dots?: boolean;
 }) {
   const [hover, setHover] = useState<{ i: number; left: number; top: number; flip: boolean } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -161,7 +158,7 @@ export function LineChart({
             ),
           ),
         )}
-        {dots || n <= DOTS_UP_TO
+        {n <= DOTS_UP_TO
           ? series.map((s) =>
               s.values.map((v, i) =>
                 v === null ? null : <circle key={`${s.label}-d${i}`} className={`dot small ${s.className}`} cx={x(i)} cy={y(v)} r={2.5} />,

@@ -596,6 +596,8 @@ table.spaced { margin-top: 10px; }
 .load-chart .axis.up { fill: #6fbf73; }
 .load-chart .load-dot { fill: var(--series-2); stroke: #fff; stroke-width: 1.5; opacity: 0; }
 .load-chart .load-dot.up { fill: #6fbf73; }
+.load-chart .load-mark circle { fill: var(--series-2); stroke: #fff; stroke-width: 1; pointer-events: none; }
+.load-chart .load-mark circle.up { fill: #6fbf73; }
 .load-chart .hover { fill: transparent; }
 .load-chart .guide { opacity: 0; }
 .load-pt:hover .load-dot, .load-pt:hover .guide { opacity: 1; }

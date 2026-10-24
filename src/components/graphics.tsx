@@ -369,6 +369,13 @@ export function ServerLoadChart({
           ) : null}
           <polyline className="line-up" points={points.map((p) => `${x(p.timestamp).toFixed(1)},${yU(p.uptime / 60).toFixed(1)}`).join(" ")} />
           <polyline className="line-players" points={points.map((p) => `${x(p.timestamp).toFixed(1)},${yP(p.act_players).toFixed(1)}`).join(" ")} />
+          {/* A small dot at every sample, like on the graph of all servers. */}
+          {points.map((p, i) => (
+            <g key={`s${i}`} className="load-mark">
+              <circle className="up" cx={x(p.timestamp)} cy={yU(p.uptime / 60)} r="2" />
+              <circle cx={x(p.timestamp)} cy={yP(p.act_players)} r="2.5" />
+            </g>
+          ))}
           {points.map((p, i) => {
             // Each point owns the strip up to half way to its neighbours.
             const cx = x(p.timestamp);
