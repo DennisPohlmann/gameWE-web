@@ -24,6 +24,7 @@ export function LineChart({
   trimStart = true,
   trimBy,
   alignTo,
+  title,
 }: {
   labels: string[];
   // Time of each point for the hover box (e.g. "Mo 20.10. 14:00");
@@ -56,6 +57,9 @@ export function LineChart({
   // Largest value of the charts stacked together: the left margin fits its
   // label too, so they all keep the same left edge.
   alignTo?: number;
+  // A heading above the chart with the legend of its lines beside it,
+  // instead of the legend below (only with more than one line).
+  title?: string;
 }) {
   const [hover, setHover] = useState<{ i: number; left: number; top: number; flip: boolean } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -137,6 +141,18 @@ export function LineChart({
   const shown = hover ? series.filter((s) => s.values[hover.i] !== null && s.values[hover.i] !== undefined) : [];
   return (
     <figure className="chart" ref={figRef}>
+      {title ? (
+        <figcaption className="chart-head">
+          <span className="chart-title">{title}</span>
+          <span className="legend">
+            {series.map((s) => (
+              <span key={s.label}>
+                <i className={`swatch line ${s.className}`} /> {s.label}
+              </span>
+            ))}
+          </span>
+        </figcaption>
+      ) : null}
       <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={ariaLabel}>
         {ticks.map((t, i) => (
           <g key={i}>
@@ -217,7 +233,7 @@ export function LineChart({
           ))}
         </div>
       ) : null}
-      {series.length > 1 ? (
+      {!title && series.length > 1 ? (
         <figcaption className="legend">
           {series.map((s) => (
             <span key={s.label}>

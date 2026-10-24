@@ -122,10 +122,12 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
       <Section title={t.trend14d}>
         {hourly.players.some((v) => v !== null) || hourly.kills.some((v) => v > 0) ? (
           <>
-            {/* Per hour; the labels mark midnight of each day. */}
+            {/* Per 15 minutes, each with a title and its legend; the labels
+                mark midnight of each day. */}
             <LineChart
               locale={lang}
-              ariaLabel={t.playersOnline}
+              ariaLabel={t.trendPlayersTitle}
+              title={t.trendPlayersTitle}
               labels={hourLabels}
               dates={hourDates}
               tips={hourTips}
@@ -134,14 +136,10 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
               alignTo={trendMax}
               series={[{ label: t.playersOnline, values: hourly.players, className: "s1" }]}
             />
-            <p className="legend">
-              <span>
-                <i className="swatch s1" /> {t.playersOnline}
-              </span>
-            </p>
             <LineChart
               locale={lang}
-              ariaLabel={t.kills}
+              ariaLabel={t.trendKillsTitle}
+              title={t.trendKillsTitle}
               labels={hourLabels}
               dates={hourDates}
               tips={hourTips}
@@ -156,7 +154,8 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
             {/* Running totals: today's totals minus what came after each point. */}
             <LineChart
               locale={lang}
-              ariaLabel={t.trendTotal}
+              ariaLabel={t.trendKillsTotal}
+              title={t.trendKillsTotal}
               labels={hourLabels}
               dates={hourDates}
               tips={hourTips}
@@ -168,7 +167,8 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
             />
             <LineChart
               locale={lang}
-              ariaLabel={t.trendTotal}
+              ariaLabel={t.trendHeadshotsTotal}
+              title={t.trendHeadshotsTotal}
               labels={hourLabels}
               dates={hourDates}
               tips={hourTips}
@@ -178,15 +178,6 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
               alignTo={trendMax}
               series={[{ label: t.headshotsLabel, values: headshotsTotal, className: "s3" }]}
             />
-            <p className="legend">
-              <span>{t.trendTotal}:</span>
-              <span>
-                <i className="swatch s2" /> {t.kills}
-              </span>
-              <span>
-                <i className="swatch s3" /> {t.headshotsLabel}
-              </span>
-            </p>
             <p className="muted">{t.trendHourly}</p>
           </>
         ) : (

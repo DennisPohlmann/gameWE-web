@@ -494,6 +494,14 @@ a.button { display: inline-block; text-decoration: none; }
 .swatch.s1 { background: var(--accent); }
 .swatch.s2 { background: var(--series-2); }
 .swatch.s3 { background: var(--series-3, #d64541); }
+/* Title row above a chart with its legend on the right; the swatch is a
+   short line with a dot, like the lines in the chart. */
+.chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 16px; max-width: 1200px; margin: 0 auto 6px; }
+.chart-title { font-weight: 700; color: var(--text); }
+.chart-head .legend { flex-wrap: wrap; gap: 4px 14px; }
+.chart-head .legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.swatch.line { position: relative; width: 18px; height: 2px; }
+.swatch.line::after { content: ""; position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: inherit; }
 
 @media (max-width: 600px) {
   body { margin: 8px 4px; }
@@ -525,11 +533,11 @@ a.button { display: inline-block; text-decoration: none; }
 .game-events .ev-kill .ev-verb, .game-events .ev-playeraction .ev-verb { color: var(--good); }
 .game-events .ev-teamkill .ev-verb, .game-events .ev-suicide .ev-verb { color: var(--bad); }
 /* The time is always as wide as its text (any language, any screen);
-   the event takes the rest and wraps, server and map are clipped. */
+   the event takes the rest and wraps. Server and map are shown in full
+   and only wrap when the table runs out of room. */
 .game-events { width: 100%; }
 .game-events td.ev-time { width: 1%; }
-.game-events .ev-clip { display: block; max-width: 10em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.game-events .ev-clip-server { max-width: 16em; }
+.game-events td.ev-name { white-space: normal; min-width: 6em; overflow-wrap: anywhere; }
 .game-events td.wrap-cell { min-width: 0; overflow-wrap: anywhere; }
 /* A new row starts grey and fades to the row's own background (no "to"
    frame, so every skin keeps its colour); the text stays fully opaque. */
