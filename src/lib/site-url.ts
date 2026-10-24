@@ -13,6 +13,8 @@ export async function statsOrigin(): Promise<string> {
   return (await getSettings()).siteUrl.replace(/\/$/, "");
 }
 
-export async function signatureUrl(playerId: number): Promise<string> {
-  return `${await statsOrigin()}/sig/${playerId}.png`;
+// Banner pictures: /banner/<game>/player/<id>.png (forum signature) and
+// /banner/<game>/server/<id>.png. The game code comes from the database.
+export async function bannerUrl(game: string, kind: "player" | "server", id: number): Promise<string> {
+  return `${await statsOrigin()}/banner/${encodeURIComponent(game)}/${kind}/${id}.png`;
 }

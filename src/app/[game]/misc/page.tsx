@@ -112,7 +112,7 @@ export default async function MiscPage({ params }: { params: Promise<{ game: str
               <Link href={`/${game}/servers/${s.serverId}`}>{s.name || `${s.address}:${s.port}`}</Link>
             </h3>
             <SigCode
-              base={`${origin}/banner/${s.serverId}`}
+              base={`${origin}/banner/${game}/server/${s.serverId}`}
               styles={imgStyles}
               link={`${origin}/${game}/servers/${s.serverId}`}
               alt={`${t.serverBanner}: ${s.name}`}

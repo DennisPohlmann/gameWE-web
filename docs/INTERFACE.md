@@ -34,3 +34,20 @@ IP addresses, RCON passwords or other admin data.
 | `/api/v1/players/<id>` | a player's profile values and rank (404 for hidden players, and for bots while "Rank bots" is off) |
 
 Unknown rankings, servers and players give `404` with `{"error":"not found"}`.
+
+## Banner pictures
+
+PNG pictures for forums and other sites, under the base path like every
+page (with `BASE_PATH=/stats`: `/stats/banner/...`). `<game>` is the ranking
+code (e.g. `css1`); `-<template>` before `.png` picks a design template's
+colours. The codes on the profile, server and Misc pages use these URLs.
+
+| URL | Content |
+|-----|---------|
+| `/banner/<game>/player/<playerId>.png` | player banner (forum signature), 400x100, cached 15 minutes |
+| `/banner/<game>/server/<serverId>.png` | server banner, 560x95, cached 5 minutes |
+| `/sig/<playerId>.png`, `/banner/<serverId>.png` | old URLs, aliases of the two above (same picture, no redirect) |
+
+A player or server that does not belong to `<game>`, a hidden ranking and a
+bot while "Rank bots" is off give `404`. Players hidden from the ranking keep
+their banner (as their profile), without their position.

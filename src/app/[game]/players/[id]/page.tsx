@@ -13,7 +13,7 @@ import { awardValue, getAwards, getPlayerRibbons, getRanks, getRibbonClasses, ra
 import { siteDay } from "@/lib/day";
 import { getSteamProfile } from "@/lib/steam";
 import { PlayerLinks, historyAccess } from "@/components/player-history";
-import { signatureUrl } from "@/lib/site-url";
+import { bannerUrl, statsOrigin } from "@/lib/site-url";
 import { shareMetadata } from "@/lib/share-meta";
 import { imageStyles } from "@/lib/image-theme";
 import { getSettings } from "@/lib/settings";
@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     getDict(),
     getSettings(),
     p.hideranking ? Promise.resolve(null) : getPlayerPosition(p.game, p.skill),
-    signatureUrl(p.playerId),
+    bannerUrl(p.game, "player", p.playerId),
   ]);
   const name = p.name ?? `#${id}`;
   const text = position
@@ -74,7 +74,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const { lang, t } = await getDict();
   const [settings, access] = await Promise.all([getSettings(), historyAccess()]);
   const ids = steamIds(p.uniqueId);
-  const [position, history, names, weapons, maps, teams, actions, frags, victims, killers, killStats, awards, ranks, chat, steam, ribbons, allAwards, classes, sigUrl] =
+  const [position, history, names, weapons, maps, teams, actions, frags, victims, killers, killStats, awards, ranks, chat, steam, ribbons, allAwards, classes, sigUrl, origin] =
     await Promise.all([
       p.hideranking ? Promise.resolve(null) : getPlayerPosition(game, p.skill),
       getPlayerHistory(id, 30),
@@ -94,7 +94,8 @@ export default async function PlayerPage({ params, searchParams }: Props) {
       getPlayerRibbons(id),
       getAwards(game),
       getRibbonClasses(game),
-      signatureUrl(id),
+      bannerUrl(game, "player", id),
+      statsOrigin(),
     ]);
   const imgStyles = await imageStyles(lang === "de" ? "de" : "en");
   const flags = await getPlayerFlags([
@@ -395,7 +396,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                     <SigCode
                       base={sigUrl.replace(/\.png$/, "")}
                       styles={imgStyles}
-                      link={sigUrl.replace(/\/sig\/.*$/, `/${game}/players/${id}`)}
+                      link={`${origin}/${game}/players/${id}`}
                       alt={`${t.forumSignature}: ${p.name ?? id}`}
                       width={400}
                       height={100}

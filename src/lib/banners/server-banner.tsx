@@ -1,3 +1,4 @@
+import "server-only";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { ImageResponse } from "next/og";
@@ -19,13 +20,15 @@ const COL1 = 120;
 const COL2 = 54;
 const COL3 = INFO - COL1 - COL2;
 
-// Server banner: /banner/<serverId>.png, 560x95, in the classic grey look;
-// /banner/<serverId>-<template>.png in a design template's colours. Name with flag, address, port, status, players with a pie,
-// map and, on the left, the players of the last 24 hours.
-export async function GET(_req: Request, { params }: { params: Promise<{ file: string }> }) {
-  const f = parseImageFile((await params).file);
+// Server banner, 560x95: file "<serverId>.png" in the classic grey look,
+// "<serverId>-<template>.png" in a design template's colours. Name with flag,
+// address, port, status, players with a pie, map and, on the left, the
+// players of the last 24 hours. With code set (banner/<code>/server/...) the
+// server must belong to that ranking; null only for the old /banner/<file>.
+export async function serverBanner(file: string, code: string | null) {
+  const f = parseImageFile(file);
   const s = f ? await getServer(f.id) : undefined;
-  if (!s) return new Response("not found", { status: 404 });
+  if (!s || (code !== null && s.game !== code)) return new Response("not found", { status: 404 });
   const now = nowUnix();
   const [game, load, origin] = await Promise.all([getGame(s.game), getServerLoad(s.serverId, now - 86400), statsOrigin()]);
   if (!game) return new Response("not found", { status: 404 });

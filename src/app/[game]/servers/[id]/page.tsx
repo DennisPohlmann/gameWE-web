@@ -82,7 +82,7 @@ export default async function ServerPage({ params }: Props) {
         <Section title={t.serverBanner}>
           <div className="box">
             <SigCode
-              base={`${origin}/banner/${s.serverId}`}
+              base={`${origin}/banner/${game}/server/${s.serverId}`}
               styles={imgStyles}
               link={`${origin}/${game}/servers/${s.serverId}`}
               alt={`${t.serverBanner}: ${s.name}`}

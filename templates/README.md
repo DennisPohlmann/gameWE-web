@@ -48,7 +48,8 @@ template.
 
 ## Signature and server banner
 
-The forum signature (`/sig/…`) and the server banner (`/banner/…`) come in
+The player banner or forum signature (`/banner/<game>/player/…`) and the
+server banner (`/banner/<game>/server/…`) come in
 the colours of every template, yours included, without extra work. They use
 `--surface`, `--surface-2`, `--panel`, `--text`, `--muted`, `--accent`,
 `--good`, `--bad`, `--border`, `--bar-bg` and `--bar-border`. Only plain
