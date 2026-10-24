@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { GameNav } from "@/components/nav";
 import { GameTag } from "@/components/ui";
+import { VoiceBox } from "@/components/voice-box";
 import { currentAdmin } from "@/lib/auth";
 import { getGame } from "@/lib/data";
 import { getDict } from "@/lib/i18n";
@@ -49,6 +50,7 @@ export default async function GameLayout({ children, params }: { children: React
           <i className={`skin-${skin.id}`} hidden />
         </>
       ) : null}
+      <VoiceBox />
       <div className="block">
         <h3>
           {t.sections} <GameTag realgame={game.realgame} long />

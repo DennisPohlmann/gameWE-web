@@ -13,8 +13,6 @@ import { basePath } from "@/lib/base-path";
 import { Crumbs } from "@/components/crumbs";
 import { getGames } from "@/lib/data";
 import { resolveTemplate } from "@/lib/templates";
-import { getVoiceBox } from "@/lib/voice";
-import { VoiceBox } from "@/components/voice-box";
 import "./globals.css";
 
 // Every page reads live data from the collector's database.
@@ -58,7 +56,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const { lang, t } = await getDict();
   const { siteName, siteUrl, logoUrl, headerLogo, links, headerHome, headerOrder, geoipCredit, skin, sourcebansUrl } = await getSettings();
-  const [games, template, voice] = await Promise.all([getGames().catch(() => []), resolveTemplate(skin), getVoiceBox()]);
+  const [games, template] = await Promise.all([getGames().catch(() => []), resolveTemplate(skin)]);
   const sections = {
     "": t.servers,
     servers: t.servers,
@@ -136,7 +134,6 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           </div>
         ) : null}
         <main className="page">
-          <VoiceBox box={voice} t={t} lang={lang} />
           {children}
         </main>
         <footer className="footer">

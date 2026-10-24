@@ -4,6 +4,7 @@ import { Flag, GameTag } from "@/components/ui";
 import { basePath } from "@/lib/base-path";
 import { LineChart } from "@/components/chart";
 import { Rich } from "@/components/rich";
+import { VoiceBox } from "@/components/voice-box";
 import { everyDay, getClanFlags, getDailyActivityAll, getHourlyActivity, getPlayer, getRankingOverview, getSiteTotals, unlinkedBots } from "@/lib/data";
 import { dateFormat, fmtNum, localeOf, steamIds } from "@/lib/format";
 import { getSteamProfile } from "@/lib/steam";
@@ -17,7 +18,12 @@ export default async function Home() {
     data = await Promise.all([getRankingOverview(), getSiteTotals(), getDailyActivityAll(30), getHourlyActivity(null, 30)]);
   } catch (err) {
     console.error("database:", err);
-    return <p className="notice error">{t.dbError}</p>;
+    return (
+      <>
+        <VoiceBox />
+        <p className="notice error">{t.dbError}</p>
+      </>
+    );
   }
   const [rankings, totals, rows, hourly] = data;
   // Steam picture of each ranking's top player and the country of its top clan.
@@ -48,6 +54,7 @@ export default async function Home() {
   const dayLabel = (d: string) => `${d.slice(8, 10)}.${d.slice(5, 7)}.`;
   return (
     <>
+      <VoiceBox />
       <section className="block">
         <h3>{fill(t.rankingsCount, { n: fmtNum(online, lang) })}</h3>
         <div className="container">

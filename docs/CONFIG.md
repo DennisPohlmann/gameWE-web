@@ -106,8 +106,9 @@ before the name shows the server's country, chosen in "Flag of the
 TeamSpeak server": "No flag" (default: neither a flag nor a placeholder),
 "Automatic" (the GeoIP country the collector found for a game server on
 the same IP, else a neutral flag), or a country from the list. Discord:
-invite and server ID. A box at the top of the public pages then shows the TeamSpeak address with a connect
-link, the type (e.g. `TeamSpeak 3`, from the server version), the password,
+invite and server ID. A box at the top of the start page and of every
+ranking page (`/<game>` and its subpages) then shows the TeamSpeak address
+with a connect link, the type (e.g. `TeamSpeak 3`, from the server version), the password,
 the channel count and the players online, or the Discord
 link with its online count. Without a choice, a configured TeamSpeak is
 used, else Discord. The players are read via
