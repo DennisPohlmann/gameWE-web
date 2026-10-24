@@ -11,7 +11,8 @@ on MariaDB/MySQL or PostgreSQL. It
   weapons, actions, maps with kill heatmaps, chat and bans,
 - has an admin area for settings, rankings, servers, players, definitions,
   users (with optional TOTP) and ranking resets,
-- offers a read-only public JSON API, forum signatures and server banners,
+- offers a read-only public JSON API (documented on `/api` with Scalar),
+  forum signatures and server banners,
 - comes in 13 languages and with design templates, including your own.
 
 Built with Next.js 16 (App Router, server-rendered, almost no client
@@ -126,7 +127,7 @@ Local development, checks and the release process:
 gameWE web is free software under the GNU General Public License, version 3
 or (at your option) any later version, like the rest of gameWE. The full text
 is in [LICENSE](LICENSE). The licenses of the libraries and data the website
-uses (Next.js, React, Leaflet, DB-IP/GeoLite2 and others) are listed on the
+uses (Next.js, React, Leaflet, Scalar, DB-IP/GeoLite2 and others) are listed on the
 site under `/licenses`; the full list of third-party npm packages, fonts,
 flags and other bundled files with their licenses is in
 [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md).

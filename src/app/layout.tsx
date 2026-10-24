@@ -118,7 +118,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             statistics={t.statistics}
             games={Object.fromEntries(games.map((g) => [g.code, g.name]))}
             sections={sections}
-            pages={{ search: t.searchTitle, help: t.help, licenses: t.licenses }}
+            pages={{ search: t.searchTitle, help: t.help, licenses: t.licenses, api: t.api }}
           />
           <ShareMenu labels={{ share: t.share, copy: t.shareCopy, copied: t.copied, email: t.shareEmail }} />
           <span className="langs" aria-label={t.language}>
@@ -143,7 +143,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           {/* The full credits are on /licenses; the GeoIP licenses ask for a
               link on every page that shows their data, so it stays here, short. */}
           <p className="small">
-            {t.poweredBy} · <Link href="/licenses">{t.licenses}</Link>
+            {t.poweredBy} · <Link href="/licenses">{t.licenses}</Link> · <Link href="/api">{t.api}</Link>
             {geoipCredit === "dbip" ? (
               <>
                 {" · "}

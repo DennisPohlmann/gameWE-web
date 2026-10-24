@@ -127,6 +127,19 @@ linux-x64 counterparts.
 The MPL-2.0 components are used unmodified; their source is available at
 the links above.
 
+## Browser bundle of the API documentation
+
+The page `/api` renders the OpenAPI description of the public API with the
+self-hosted browser bundle of **Scalar API Reference**
+(`@scalar/api-reference` 1.73.1, devDependency, https://github.com/scalar/scalar,
+MIT). `npm run build` copies `dist/browser/standalone.js` to
+`public/vendor/scalar/standalone.js` together with Scalar's MIT license text
+(`public/vendor/scalar/LICENSE.txt`); nothing is loaded from Scalar's
+servers. The bundle includes code from Scalar's dependencies (`npm query
+'#@scalar/api-reference *'`): mostly MIT (Vue, Tailwind CSS and others),
+some Apache-2.0, ISC, BSD-2-Clause, BSD-3-Clause (highlight.js) and 0BSD;
+all compatible with GPL-3.0-or-later.
+
 ## Files in this repository
 
 | Path | Component | License |

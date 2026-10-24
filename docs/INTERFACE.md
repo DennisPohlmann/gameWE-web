@@ -25,7 +25,9 @@ IP addresses, RCON passwords or other admin data.
 
 | URL | Content |
 |-----|---------|
-| `/api/v1` | list of the endpoints |
+| `/api` | documentation page (Scalar) with code examples in curl, PHP, Python and JavaScript |
+| `/api/openapi.json` | OpenAPI 3.1 description of `/api/v1` |
+| `/api/v1` | list of the endpoints and the link to the documentation |
 | `/api/v1/rankings` | all rankings with servers, players online, best player and clan |
 | `/api/v1/rankings/<game>?limit=10&offset=0` | one ranking: totals and the players by points (limit 1-100) |
 | `/api/v1/rankings/<game>/servers` | servers of a ranking with the players online (name, team, points, kills; bots without an id) |
@@ -34,6 +36,11 @@ IP addresses, RCON passwords or other admin data.
 | `/api/v1/players/<id>` | a player's profile values and rank (404 for hidden players, and for bots while "Rank bots" is off) |
 
 Unknown rankings, servers and players give `404` with `{"error":"not found"}`.
+
+The OpenAPI description is written in `src/lib/openapi.ts` (one entry per
+route, with schema and a made-up example answer); `/api/v1` lists the same
+entries. `npm run build` fails when a route under `src/app/api/v1` has no
+entry there, so new endpoints have to be documented.
 
 ## Banner pictures
 

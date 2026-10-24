@@ -31,6 +31,7 @@ const SOFTWARE: Row[] = [
   ["Leaflet", "https://leafletjs.com", "BSD-2-Clause", "Weltkarte der Spieler", "World map of the players"],
   ["mysql2", "https://github.com/sidorares/node-mysql2", "MIT", "MySQL/MariaDB-Zugriff", "MySQL/MariaDB access"],
   ["node-postgres (pg)", "https://github.com/brianc/node-postgres", "MIT", "PostgreSQL-Zugriff", "PostgreSQL access"],
+  ["Scalar API Reference", "https://github.com/scalar/scalar", "MIT", "API-Dokumentation unter /api", "API documentation on /api"],
   ["uqr", "https://github.com/unjs/uqr", "MIT", "QR-Code für TOTP", "QR code for TOTP"],
   ["server-only", "https://www.npmjs.com/package/server-only", "MIT", "Schutz serverseitiger Module", "Guard for server-side modules"],
   ["HLstatsX: Community Edition", "https://github.com/NomisCZ/hlstatsx-community-edition", "GPL-2.0-or-later", "Grundlage des Datenbankschemas", "Basis of the database schema"],

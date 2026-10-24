@@ -22,6 +22,11 @@ npm run lint    # type check (tsc)
 npm run build
 ```
 
+`npm run dev` and `npm run build` first run `scripts/vendor.mjs`: it copies
+the Scalar browser bundle (devDependency `@scalar/api-reference`) to
+`public/vendor/scalar/` (git-ignored) for the `/api` page and stops when a
+route under `src/app/api/v1` is missing in `src/lib/openapi.ts`.
+
 ```bash
 make package    # dist/gamewe-web-<version>-linux-amd64.tar.gz + .sha256
 make image      # local Docker image gamewe-web:<version>
