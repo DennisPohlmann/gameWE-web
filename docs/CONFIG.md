@@ -70,7 +70,8 @@ Under Admin → Settings → Voiceserver choose None, TeamSpeak or Discord;
 only the fields of that kind are shown. TeamSpeak 3: address, port, password
 to show, ServerQuery port and login. Discord: invite and server ID. A box at
 the top of the public pages then shows the TeamSpeak address with a connect
-link, the password, the channel count and the players online, or the Discord
+link, the type (e.g. `TeamSpeak 3`, from the server version), the password,
+the channel count and the players online, or the Discord
 link with its online count. Without a choice, a configured TeamSpeak is
 used, else Discord. The players are read via
 ServerQuery (`serverinfo`, every 60 seconds); without a query login the guest

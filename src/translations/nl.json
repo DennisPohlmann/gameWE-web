@@ -385,6 +385,7 @@
   "helpCmdHelp": "Lijst met commando's",
   "helpHideText": "Typ !hideranking in de chat of kies het in het menu !settings. Je statistieken worden nog steeds geteld, maar je verschijnt niet meer in ranglijsten, zoeken en awards. Typ het opnieuw om weer te verschijnen. Je profiel blijft bereikbaar via de link.",
   "voiceServer": "Voiceserver",
+  "voiceType": "Type",
   "password": "Wachtwoord",
   "channels": "Kanalen",
   "awardsOfDay": "Prijzen van {day}",

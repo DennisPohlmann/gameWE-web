@@ -385,6 +385,7 @@
   "helpCmdHelp": "Lista komend",
   "helpHideText": "Wpisz !hideranking na czacie lub wybierz to w menu !settings. Twoje statystyki są nadal liczone, ale nie pojawiasz się już w rankingach, wyszukiwarce i nagrodach. Wpisz ponownie, aby znów się pojawić. Twój profil pozostaje dostępny pod swoim linkiem.",
   "voiceServer": "Serwer głosowy",
+  "voiceType": "Typ",
   "password": "Hasło",
   "channels": "Kanały",
   "awardsOfDay": "Nagrody z dnia {day}",

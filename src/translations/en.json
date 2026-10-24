@@ -387,6 +387,7 @@
   "helpCmdHelp": "List of commands",
   "helpHideText": "Type !hideranking in the chat, or choose it in the !settings menu. Your stats are still counted, but you no longer appear in rankings, search and awards. Type it again to show up again. Your profile stays reachable by its link.",
   "voiceServer": "Voice server",
+  "voiceType": "Type",
   "password": "Password",
   "channels": "Channels",
   "awardsOfDay": "Awards of {day}",

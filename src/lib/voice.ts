@@ -11,6 +11,8 @@ import { query } from "./db";
 export type VoiceBox = {
   ts: {
     name: string;
+    // "TeamSpeak 3" etc., from the server version; "TeamSpeak" when unknown.
+    type: string;
     address: string;
     password: string;
     // null when the query could not be read.
@@ -18,7 +20,7 @@ export type VoiceBox = {
     max: number | null;
     channels: number | null;
   } | null;
-  discord: { name: string; invite: string; online: number | null } | null;
+  discord: { name: string; type: string; invite: string; online: number | null } | null;
 };
 
 const KEYS = [
@@ -97,7 +99,7 @@ async function load(o: Record<string, string>): Promise<VoiceBox> {
   const guild = type === "discord" ? discordGuild(o.gamewe_discord_guild ?? "") : "";
   const [ts, discord] = await Promise.all([
     host ? loadTs(host, port(o.gamewe_ts_port, 9987), port(o.gamewe_ts_query_port, 10011), o) : null,
-    invite || guild ? loadDiscord(guild).then((d) => ({ name: d?.name ?? "Discord", invite, online: d?.online ?? null })) : null,
+    invite || guild ? loadDiscord(guild).then((d) => ({ name: d?.name ?? "Discord", type: "Discord", invite, online: d?.online ?? null })) : null,
   ]);
   return { ts, discord };
 }
@@ -105,6 +107,7 @@ async function load(o: Record<string, string>): Promise<VoiceBox> {
 async function loadTs(host: string, voicePort: number, queryPort: number, o: Record<string, string>): Promise<VoiceBox["ts"]> {
   const base = {
     name: (o.gamewe_ts_name ?? "").trim(),
+    type: "TeamSpeak",
     address: voicePort === 9987 ? host : `${host}:${voicePort}`,
     password: (o.gamewe_ts_password ?? "").trim(),
     clients: null,
@@ -119,6 +122,7 @@ async function loadTs(host: string, voicePort: number, queryPort: number, o: Rec
     return {
       ...base,
       name: base.name || (info.virtualserver_name ?? "").slice(0, 80) || host,
+      type: tsType(info.virtualserver_version),
       clients: online === null ? null : Math.max(0, online - queries),
       max: num("virtualserver_maxclients"),
       channels: num("virtualserver_channelsonline"),
@@ -127,6 +131,12 @@ async function loadTs(host: string, voicePort: number, queryPort: number, o: Rec
     console.warn(`TeamSpeak query: ${e instanceof Error ? e.message : e}`);
     return { ...base, name: base.name || host };
   }
+}
+
+// "3.13.7 [Build: 1655727713]" -> "TeamSpeak 3".
+export function tsType(version: string | undefined): string {
+  const major = /^(\d{1,2})\./.exec(version ?? "")?.[1];
+  return major ? `TeamSpeak ${major}` : "TeamSpeak";
 }
 
 // ServerQuery escaping (TeamSpeak 3 server query manual).

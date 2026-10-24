@@ -385,6 +385,7 @@
   "helpCmdHelp": "Liste over kommandoer",
   "helpHideText": "Skriv !hideranking i chatten, eller vælg det i menuen !settings. Dine statistikker tælles stadig, men du vises ikke længere i ranglister, søgning og awards. Skriv det igen for at blive vist igen. Din profil kan stadig nås via sit link.",
   "voiceServer": "Voiceserver",
+  "voiceType": "Type",
   "password": "Adgangskode",
   "channels": "Kanaler",
   "awardsOfDay": "Priser den {day}",

@@ -16,6 +16,7 @@ export function VoiceBox({ box, t, lang }: { box: Box; t: Dict; lang: Lang }) {
             <thead>
               <tr>
                 <th>{t.server}</th>
+                <th className="hide-sm">{t.voiceType}</th>
                 <th>{t.address}</th>
                 <th className="hide-sm">{t.password}</th>
                 <th className="num hide-sm">{t.channels}</th>
@@ -28,6 +29,7 @@ export function VoiceBox({ box, t, lang }: { box: Box; t: Dict; lang: Lang }) {
                   <td>
                     <span className="voice-icon ts" aria-hidden="true" /> {box.ts.name}
                   </td>
+                  <td className="hide-sm">{box.ts.type}</td>
                   <td>
                     <a href={`ts3server://${box.ts.address.replace(/:(\d+)$/, "?port=$1")}`}>{box.ts.address}</a>
                   </td>
@@ -44,6 +46,7 @@ export function VoiceBox({ box, t, lang }: { box: Box; t: Dict; lang: Lang }) {
                   <td>
                     <span className="voice-icon discord" aria-hidden="true" /> {box.discord.name}
                   </td>
+                  <td className="hide-sm">{box.discord.type}</td>
                   <td>
                     {box.discord.invite ? (
                       <a href={box.discord.invite} target="_blank" rel="noopener noreferrer">

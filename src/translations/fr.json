@@ -385,6 +385,7 @@
   "helpCmdHelp": "Liste des commandes",
   "helpHideText": "Tape !hideranking dans le chat, ou choisis-le dans le menu !settings. Tes statistiques continuent d'être comptées, mais tu n'apparais plus dans les classements, la recherche et les awards. Tape-le à nouveau pour réapparaître. Ton profil reste accessible par son lien.",
   "voiceServer": "Serveur vocal",
+  "voiceType": "Type",
   "password": "Mot de passe",
   "channels": "Canaux",
   "awardsOfDay": "Récompenses du {day}",

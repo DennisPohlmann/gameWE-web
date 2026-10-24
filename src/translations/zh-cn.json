@@ -385,6 +385,7 @@
   "helpCmdHelp": "命令列表",
   "helpHideText": "在聊天中输入 !hideranking，或在 !settings 菜单中选择。你的数据仍会统计，但你不再出现在排行榜、搜索和奖项中。再次输入即可重新显示。你的资料页仍可通过链接访问。",
   "voiceServer": "语音服务器",
+  "voiceType": "类型",
   "password": "密码",
   "channels": "频道",
   "awardsOfDay": "{day} 的奖项",

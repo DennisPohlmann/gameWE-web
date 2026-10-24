@@ -385,6 +385,7 @@
   "helpCmdHelp": "Lista de comandos",
   "helpHideText": "Escribe !hideranking en el chat o elígelo en el menú !settings. Tus estadísticas se siguen contando, pero ya no apareces en rankings, búsqueda ni premios. Escríbelo otra vez para volver a aparecer. Tu perfil sigue accesible por su enlace.",
   "voiceServer": "Servidor de voz",
+  "voiceType": "Tipo",
   "password": "Contraseña",
   "channels": "Canales",
   "awardsOfDay": "Premios del {day}",
