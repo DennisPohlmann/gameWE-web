@@ -2,8 +2,12 @@
 
 import { useRef, useState, type PointerEvent, type ReactNode } from "react";
 
+// Only plain colours as inline style, nothing that could load a URL.
+const isColor = (s: string) => /^(#[0-9a-f]{3,8}|rgb\(\d{1,3},\d{1,3},\d{1,3}\))$/i.test(s);
+
 // Hover box for server-rendered graphics: an element inside with a data-tip
-// attribute shows that text next to the pointer (lines split at "\n").
+// attribute shows that text next to the pointer (lines split at "\n"; see
+// tipText for rows with a swatch).
 export function HoverTip({ children, className }: { children: ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [tip, setTip] = useState<{ text: string; left: number; top: number; flip: boolean } | null>(null);
@@ -21,10 +25,21 @@ export function HoverTip({ children, className }: { children: ReactNode; classNa
       {children}
       {tip?.text ? (
         <div className={`chart-tip${tip.flip ? " flip" : ""}`} style={{ left: tip.left, top: tip.top }} role="status">
-          <b>{head}</b>
-          {rest.map((l, i) => (
-            <span key={i}>{l}</span>
-          ))}
+          {head ? <b>{head}</b> : null}
+          {rest.map((l, i) => {
+            const [swatch, label, value] = l.split("\t");
+            return value === undefined ? (
+              <span key={i} className="tip-line">
+                {l}
+              </span>
+            ) : (
+              <span key={i} className="tip-row">
+                <i className={isColor(swatch) ? "swatch" : `swatch ${swatch}`} style={isColor(swatch) ? { background: swatch } : undefined} />
+                <span className="tip-name">{label}</span>
+                <b>{value}</b>
+              </span>
+            );
+          })}
         </div>
       ) : null}
     </div>

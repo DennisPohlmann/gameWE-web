@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { HoverTip } from "./hover-tip";
+import { tipText } from "./tip-text";
 
 // Server-rendered SVG graphics of the player profile: radar, spark pills and
 // the player trend. Hovering shows the values (HoverTip box, data-tip).
@@ -147,7 +148,10 @@ export function TrendChart({
             <g
               key={d.day}
               className="trend-day"
-              data-tip={`${d.day.slice(8, 10)}.${d.day.slice(5, 7)}.${d.day.slice(0, 4)}\n${labels.points}: ${fmt(d.skill)}\n${d.change >= 0 ? labels.gained : labels.lost}: ${fmt(Math.abs(d.change))}`}
+              data-tip={tipText(`${d.day.slice(8, 10)}.${d.day.slice(5, 7)}.${d.day.slice(0, 4)}`, [
+                { swatch: "s1", label: labels.points, value: fmt(d.skill) },
+                d.change >= 0 ? { swatch: "gain", label: labels.gained, value: fmt(d.change) } : { swatch: "loss", label: labels.lost, value: fmt(-d.change) },
+              ])}
             >
               <rect className="hover" x={x(i) - bw / 2 - 1} y={pad.t} width={bw + 2} height={barTop + barH - pad.t} />
               <circle className="trend-dot" cx={x(i)} cy={y(d.skill)} r="2.5" />
@@ -175,6 +179,7 @@ export function Pie({ slices, locale }: { slices: { label: string; value: number
   const r = 80;
   let a0 = -Math.PI / 2;
   const pct = (v: number) => `${((v / total) * 100).toLocaleString(locale, { maximumFractionDigits: 1 })} %`;
+  const tip = (s: { label: string; value: number }, color: string) => tipText("", [{ swatch: color, label: s.label, value: `${pct(s.value)} · ${s.value.toLocaleString(locale)}` }]);
   return (
     <HoverTip className="pie">
       <svg viewBox="0 0 180 180" width="180" height="180" role="img" aria-label={slices.map((s) => `${s.label} ${pct(s.value)}`).join(", ")}>
@@ -187,9 +192,9 @@ export function Pie({ slices, locale }: { slices: { label: string; value: number
               : `M${c},${c} L${(c + r * Math.cos(a0)).toFixed(2)},${(c + r * Math.sin(a0)).toFixed(2)} A${r},${r} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${(c + r * Math.cos(a1)).toFixed(2)},${(c + r * Math.sin(a1)).toFixed(2)} Z`;
           a0 = a1;
           return path ? (
-            <path key={i} d={path} fill={color} className="slice" data-tip={`${s.label}\n${pct(s.value)} · ${s.value.toLocaleString(locale)}`} />
+            <path key={i} d={path} fill={color} className="slice" data-tip={tip(s, color)} />
           ) : (
-            <circle key={i} cx={c} cy={c} r={r} fill={color} className="slice" data-tip={`${s.label}\n${pct(s.value)} · ${s.value.toLocaleString(locale)}`} />
+            <circle key={i} cx={c} cy={c} r={r} fill={color} className="slice" data-tip={tip(s, color)} />
           );
         })}
       </svg>
@@ -237,7 +242,10 @@ export function WeekdayBars({
               <g
                 key={i}
                 className="bar-day"
-                data-tip={`${labels.days[i]}\n${labels.connects}: ${d.connects.toLocaleString(locale)}\n${labels.time}: ${fmtH(d.seconds)}`}
+                data-tip={tipText(labels.days[i], [
+                  { swatch: "s1", label: labels.connects, value: d.connects.toLocaleString(locale) },
+                  { swatch: "s2", label: labels.time, value: fmtH(d.seconds) },
+                ])}
               >
                 <rect className="hover" x={10 + i * slot} y={10} width={slot} height={base - 10} />
                 <rect className="bar-s1" x={x} y={base - hc} width={bw} height={hc} />
@@ -273,7 +281,7 @@ export function ServerLoadChart({
   points: { timestamp: number; act_players: number; min_players: number; max_players: number; uptime: number; map: string | null }[];
   slots: number;
   locale: string;
-  labels: { players: string; uptime: string; min: string; max: string };
+  labels: { players: string; uptime: string };
 }) {
   const W = 960;
   const H = 280;
@@ -290,10 +298,6 @@ export function ServerLoadChart({
   const yU = (h: number) => pad.t + (1 - h / maxU) * (H - pad.t - pad.b);
   const hhmm = (ts: number) => new Date(ts * 1000).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
   const upText = (m: number) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}h`;
-  // Players at the sample time; the lowest and highest count within its
-  // 10-minute interval only when they differ.
-  const playersText = (p: { act_players: number; min_players: number; max_players: number }) =>
-    p.min_players === p.max_players ? `${p.act_players}` : `${p.act_players} (${labels.min} ${p.min_players} / ${labels.max} ${p.max_players})`;
 
   // Consecutive points with the same map form one band.
   const bands: { from: number; to: number; map: string }[] = [];
@@ -389,7 +393,10 @@ export function ServerLoadChart({
               <g
                 key={i}
                 className="load-pt"
-                data-tip={`${hhmm(p.timestamp)} · ${p.map ?? "?"}\n${labels.players}: ${playersText(p)}\n${labels.uptime}: ${upText(p.uptime)}`}
+                data-tip={tipText(`${hhmm(p.timestamp)} · ${p.map ?? "?"}`, [
+                  { swatch: "s2", label: labels.players, value: String(p.act_players) },
+                  { swatch: "up", label: labels.uptime, value: upText(p.uptime) },
+                ])}
               >
                 <rect className="hover" x={from} y={pad.t} width={Math.max(1, to - from)} height={H - pad.t - pad.b} />
                 <line className="guide" x1={cx} x2={cx} y1={pad.t} y2={H - pad.b} />

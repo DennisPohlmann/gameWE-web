@@ -56,7 +56,7 @@ export default async function ServerPage({ params }: Props) {
               {t.avgPlayers24h}: <b>{fmtNum(avg(load24), lang, 1)}</b> · {t.lastHour}: <b>{fmtNum(avg(load24.filter((l) => l.timestamp >= now - 3600)), lang, 1)}</b> · {t.uptime}:{" "}
               <b>{fmtDuration(load24[load24.length - 1].uptime * 60)}</b>
             </p>
-            <ServerLoadChart points={load24} slots={s.max_players} locale={lang} labels={{ players: t.players, uptime: t.uptime, min: t.min, max: t.max }} />
+            <ServerLoadChart points={load24} slots={s.max_players} locale={lang} labels={{ players: t.players, uptime: t.uptime }} />
           </div>
         ) : (
           <Empty>{t.noLoadYet}</Empty>

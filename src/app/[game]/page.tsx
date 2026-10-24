@@ -110,7 +110,7 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
               {multi ? null : liveMap}
               {loads[i].length > 1 ? (
                 <div className="box">
-                  <ServerLoadChart points={loads[i]} slots={s.max_players} locale={lang} labels={{ players: t.players, uptime: t.uptime, min: t.min, max: t.max }} />
+                  <ServerLoadChart points={loads[i]} slots={s.max_players} locale={lang} labels={{ players: t.players, uptime: t.uptime }} />
                 </div>
               ) : null}
               {players.length ? <LiveTable game={game} players={players} t={t} lang={lang} /> : <p>{t.nobodyOnline}</p>}

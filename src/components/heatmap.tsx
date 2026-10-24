@@ -1,5 +1,6 @@
 import type { Heatmap } from "@/lib/heatmap";
 import { HoverTip } from "./hover-tip";
+import { tipText } from "./tip-text";
 
 // Kill heatmap as SVG: one sharp square per grid cell, coloured from blue
 // (few kills) over green and yellow to red (most). The scale is logarithmic
@@ -35,7 +36,7 @@ export function HeatmapView({ heat, label, tip }: { heat: Heatmap; label: string
         <g className="heat-cells" shapeRendering="crispEdges">
           {heat.cells.map(([c, r, n]) => {
             const v = Math.log1p(n) / log;
-            return <rect key={`${c}-${r}`} x={c} y={rows - 1 - r} width={1} height={1} fill={color(v)} opacity={0.45 + 0.55 * v} data-tip={tip(n)} />;
+            return <rect key={`${c}-${r}`} x={c} y={rows - 1 - r} width={1} height={1} fill={color(v)} opacity={0.45 + 0.55 * v} data-tip={tipText("", [{ swatch: color(v), label: tip(n), value: "" }])} />;
           })}
         </g>
       </svg>

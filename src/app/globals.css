@@ -635,6 +635,8 @@ table.spaced { margin-top: 10px; }
 .load-chart .guide { opacity: 0; }
 .load-pt:hover .load-dot, .load-pt:hover .guide { opacity: 1; }
 .swatch.up { background: #6fbf73; }
+.swatch.gain { background: #2e9e2e; }
+.swatch.loss { background: #c03030; }
 .load-head { font-size: 11px; margin: 4px 0; text-align: right; }
 .load-chart svg { height: auto; max-width: 1100px; }
 .bot-tag { display: inline-block; width: 16px; height: 12px; margin-right: 2px; vertical-align: -1px; overflow: hidden; font: bold 7px/13px Verdana, sans-serif; letter-spacing: -0.4px; text-align: center; color: #fff; background: linear-gradient(#8a8f98, #5c616b); border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18), 0 1px 1px rgba(0, 0, 0, 0.25); }
@@ -725,6 +727,7 @@ td.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9e
 }
 .chart-tip > b:first-child { grid-column: 1 / -1; color: var(--accent-text, #ffb066); }
 .chart-tip .tip-row { display: contents; }
+.chart-tip .tip-line { grid-column: 1 / -1; }
 .chart-tip .swatch { align-self: center; }
 .chart-tip .tip-name { overflow: hidden; text-overflow: ellipsis; }
 .chart-tip .tip-row b { padding-left: 8px; text-align: right; font-variant-numeric: tabular-nums; }
