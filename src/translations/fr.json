@@ -320,6 +320,8 @@
   "killsNeeded": "encore {n} frags ({pct})",
   "topRank": "Grade le plus élevé atteint",
   "career": "Carrière",
+  "rankReached": "Atteint",
+  "rankLocked": "Pas encore atteint",
   "playerTrend": "Évolution du joueur",
   "skillGained": "Points gagnés",
   "skillLost": "Points perdus",

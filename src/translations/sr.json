@@ -320,6 +320,8 @@
   "killsNeeded": "још {n} убистава ({pct})",
   "topRank": "Највиши достигнути чин",
   "career": "Каријера",
+  "rankReached": "Достигнут",
+  "rankLocked": "Још није достигнут",
   "playerTrend": "Ток играча",
   "skillGained": "Освојени поени",
   "skillLost": "Изгубљени поени",

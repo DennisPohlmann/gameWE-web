@@ -320,6 +320,8 @@
   "killsNeeded": "还需 {n} 次击杀（{pct}）",
   "topRank": "达到的最高军衔",
   "career": "生涯",
+  "rankReached": "已达成",
+  "rankLocked": "尚未达成",
   "playerTrend": "玩家走势",
   "skillGained": "获得分数",
   "skillLost": "失去分数",

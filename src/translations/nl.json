@@ -320,6 +320,8 @@
   "killsNeeded": "nog {n} kills ({pct})",
   "topRank": "Hoogst behaalde rang",
   "career": "Carrière",
+  "rankReached": "Bereikt",
+  "rankLocked": "Nog niet bereikt",
   "playerTrend": "Spelersverloop",
   "skillGained": "Punten gewonnen",
   "skillLost": "Punten verloren",

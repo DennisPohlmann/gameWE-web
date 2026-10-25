@@ -320,6 +320,8 @@
   "killsNeeded": "ещё {n} убийств ({pct})",
   "topRank": "Достигнуто высшее звание",
   "career": "Карьера",
+  "rankReached": "Достигнут",
+  "rankLocked": "Ещё не достигнут",
   "playerTrend": "Динамика игрока",
   "skillGained": "Получено очков",
   "skillLost": "Потеряно очков",

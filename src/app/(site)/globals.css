@@ -581,6 +581,18 @@ td.radar-cell { width: 1%; text-align: center; vertical-align: middle; }
 .spark .sp-one { fill: var(--chart-spark-line); }
 .spark .sp-dot { stroke: var(--chart-spark-frame); stroke-width: 0.8; }
 td.career { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 10px; }
+/* Career row: each badge a button with a detail box (rank-tips.tsx). The box
+   takes the colours of the chart hover boxes, so it fits every template. */
+.rank-tips { display: contents; }
+.rank-tip-btn { display: inline-flex; padding: 0; margin: 0; border: 0; border-radius: 4px; background: none; color: inherit; font: inherit; line-height: 0; cursor: help; }
+.rank-tip-btn:focus-visible, .rank-tip-btn.open { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+.chart-tip.rank-tip { position: fixed; z-index: 50; transform: none; display: flex; flex-direction: column; gap: 1px; min-width: 150px; width: max-content; max-width: min(260px, calc(100vw - 16px)); white-space: normal; }
+.chart-tip.rank-tip > b:first-child { font-size: 12px; }
+.rank-tip .tip-line > b { font-variant-numeric: tabular-nums; }
+.rank-tip-state.reached { color: var(--good); }
+.rank-tip-state.current { color: var(--accent-text); font-weight: bold; }
+.rank-tip-state.locked { color: var(--muted); }
+.rank-tip .bar { margin: 3px 0 1px; }
 td.ribbon-wall { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 10px; }
 td.ribbon-wall a { text-decoration: none; }
 img.sig { max-width: 100%; height: auto; }

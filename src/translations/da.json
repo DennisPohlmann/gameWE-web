@@ -320,6 +320,8 @@
   "killsNeeded": "{n} drab mere ({pct})",
   "topRank": "Højeste opnåede rang",
   "career": "Karriere",
+  "rankReached": "Opnået",
+  "rankLocked": "Endnu ikke opnået",
   "playerTrend": "Spillerforløb",
   "skillGained": "Point vundet",
   "skillLost": "Point tabt",

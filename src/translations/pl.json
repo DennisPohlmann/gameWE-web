@@ -320,6 +320,8 @@
   "killsNeeded": "jeszcze {n} zabójstw ({pct})",
   "topRank": "Najwyższa zdobyta ranga",
   "career": "Kariera",
+  "rankReached": "Osiągnięty",
+  "rankLocked": "Jeszcze nieosiągnięty",
   "playerTrend": "Przebieg gracza",
   "skillGained": "Zdobyte punkty",
   "skillLost": "Stracone punkty",

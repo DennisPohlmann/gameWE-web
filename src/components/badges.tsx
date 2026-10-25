@@ -60,7 +60,21 @@ export function rankName(name: string): string {
 // Insignia for a rank: chevrons for enlisted, bars for warrant officers and
 // lieutenants, stars for generals, a lettered disc for anything else.
 // `plain` leaves out the <title> (the signature renderer would print it).
-export function RankBadge({ name, size = 48, dim = false, plain = false }: { name: string; size?: number; dim?: boolean; plain?: boolean }) {
+// untitled: no SVG <title> (no native hover text), for badges that show a
+// detail box of their own.
+export function RankBadge({
+  name,
+  size = 48,
+  dim = false,
+  plain = false,
+  untitled = false,
+}: {
+  name: string;
+  size?: number;
+  dim?: boolean;
+  plain?: boolean;
+  untitled?: boolean;
+}) {
   const k = key(name) ?? "";
   const title = rankName(name);
   const gold = "#f2c200";
@@ -125,7 +139,7 @@ export function RankBadge({ name, size = 48, dim = false, plain = false }: { nam
   })();
   const svg = (
     <svg className={dim ? "rank-badge dim" : "rank-badge"} width={size} height={size} viewBox="0 0 48 48" role="img" aria-label={title}>
-      {plain ? null : <title>{title}</title>}
+      {plain || untitled ? null : <title>{title}</title>}
       {shape}
     </svg>
   );

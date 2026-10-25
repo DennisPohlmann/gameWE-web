@@ -7,6 +7,7 @@ import { SortableTable } from "@/components/sortable-table";
 import { RankBadge, Ribbon, RibbonLevel, rankName, ribbonClassName } from "@/components/badges";
 import { Spark } from "@/components/graphics";
 import { PlayerTrend } from "@/components/player-trend";
+import { RankTips } from "@/components/rank-tips";
 import { Radar, type RadarAxis } from "@/components/radar";
 import { FIXED_MAX, radarPoints, type PlayerRatios, type RadarKey } from "@/lib/radar";
 import { Hitbox } from "@/components/hitbox";
@@ -426,9 +427,47 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                 <tbody>
                   <tr>
                     <td className="career">
-                      {ranks.map((r) => (
-                        <RankBadge key={r.index} name={r.name} size={40} dim={p.kills < r.minimum} />
-                      ))}
+                      <RankTips
+                        items={ranks.map((r) => {
+                          const range =
+                            r.next !== null
+                              ? fill(t.killsRange, { min: fmtNum(r.minimum, lang), max: fmtNum(r.next - 1, lang) })
+                              : fill(t.killsFrom, { min: fmtNum(r.minimum, lang) });
+                          const current = r.index === rank?.index;
+                          // Progress towards the next rank (current) or towards this one (locked).
+                          const goal = current ? r.next : p.kills < r.minimum ? r.minimum : null;
+                          const from = current ? r.minimum : 0;
+                          const share = goal !== null ? Math.max(0, Math.min(1, (p.kills - from) / Math.max(1, goal - from))) : null;
+                          return {
+                            key: r.index,
+                            badge: <RankBadge name={r.name} size={40} dim={p.kills < r.minimum} untitled />,
+                            tip: (
+                              <>
+                                <b>{rankName(r.name)}</b>
+                                <span className="tip-line">{range}</span>
+                                <span className={`tip-line rank-tip-state ${current ? "current" : p.kills < r.minimum ? "locked" : "reached"}`}>
+                                  {current ? t.currentRank : p.kills < r.minimum ? t.rankLocked : t.rankReached}
+                                </span>
+                                {current || goal !== null ? (
+                                  <span className="tip-line">
+                                    {t.kills}: <b>{fmtNum(p.kills, lang)}</b>
+                                  </span>
+                                ) : null}
+                                {goal !== null && share !== null ? (
+                                  <>
+                                    <span className="tip-line">{fill(t.killsNeeded, { n: fmtNum(goal - p.kills, lang), pct: pc(share) })}</span>
+                                    <span className="tip-line">
+                                      <Bar value={share} wide />
+                                    </span>
+                                  </>
+                                ) : current ? (
+                                  <span className="tip-line">{t.topRank}</span>
+                                ) : null}
+                              </>
+                            ),
+                          };
+                        })}
+                      />
                     </td>
                   </tr>
                 </tbody>

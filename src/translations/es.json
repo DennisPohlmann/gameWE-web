@@ -320,6 +320,8 @@
   "killsNeeded": "faltan {n} bajas ({pct})",
   "topRank": "Rango máximo alcanzado",
   "career": "Carrera",
+  "rankReached": "Alcanzado",
+  "rankLocked": "Aún no alcanzado",
   "playerTrend": "Evolución del jugador",
   "skillGained": "Puntos ganados",
   "skillLost": "Puntos perdidos",

@@ -320,6 +320,8 @@
   "killsNeeded": "faltam {n} abates ({pct})",
   "topRank": "Patente mais alta alcançada",
   "career": "Carreira",
+  "rankReached": "Alcançado",
+  "rankLocked": "Ainda não alcançado",
   "playerTrend": "Evolução do jogador",
   "skillGained": "Pontos ganhos",
   "skillLost": "Pontos perdidos",
