@@ -184,10 +184,11 @@ The admin area edits:
   read-only web user has no right to that column. The optional **log
   secret** (`sv_logsecret`, a number from 1 to 2147483647, empty by default)
   is handled the same way: write-only, `-` clears it, and saving it also
-  sets `log_secret_changed` to the current time. The collector then accepts
-  only log packets with this secret; with the collector's default
-  `features.log_secret: auto` it sets and renews the secret itself over RCON,
-  so leave the field empty there (see the collector's CONFIG.md, "Log
+  sets `log_secret_changed` to the current time. When a secret is set, the
+  collector accepts only log packets with exactly this secret, so put the
+  same value as `sv_logsecret` into the game server's `server.cfg`; without a
+  secret it accepts all log packets of the server. The collector never sets
+  or changes the secret itself (see the collector's CONFIG.md, "Log
   secret"). The field appears once the collector's database has schema
   version 4 (`gamewe db migrate`).
 - Games, players (points, hide from ranking, clan), clans, weapons (name,

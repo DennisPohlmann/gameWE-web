@@ -122,8 +122,8 @@ export const entities: Entity[] = [
         valid: isLogSecret,
         changedAt: "log_secret_changed",
         help: {
-          de: "Optional: sv_logsecret des Gameservers, eine Zahl von 1 bis 2147483647. Der Collector nimmt dann nur Logpakete mit diesem Secret an. Mit features.log_secret: auto (Standard) setzt und erneuert der Collector es selbst per RCON, das Feld bleibt dann leer. Leer lassen, um es nicht zu ändern. Ein einzelnes Minus (-) löscht es.",
-          en: "Optional: the game server's sv_logsecret, a number from 1 to 2147483647. The collector then accepts only log packets with this secret. With features.log_secret: auto (the default) the collector sets and renews it itself over RCON; leave the field empty then. Leave empty to keep it. A single minus (-) clears it.",
+          de: "Optional: sv_logsecret des Gameservers, eine Zahl von 1 bis 2147483647. Ist es gesetzt, nimmt der Collector nur Logpakete mit genau diesem Secret an; trage denselben Wert als sv_logsecret in die server.cfg des Gameservers ein. Ohne Secret werden alle Logpakete des Servers angenommen. Der Collector setzt oder ändert es nie selbst. Leer lassen, um es nicht zu ändern. Ein einzelnes Minus (-) löscht es.",
+          en: "Optional: the game server's sv_logsecret, a number from 1 to 2147483647. When it is set, the collector accepts only log packets with exactly this secret; put the same value as sv_logsecret into the game server's server.cfg. Without a secret all log packets of the server are accepted. The collector never sets or changes it itself. Leave empty to keep it. A single minus (-) clears it.",
         },
       },
       { name: "publicaddress", label: { de: "Öffentliche Adresse", en: "Public address" }, type: "text", max: 255, help: { de: "Wird statt IP:Port angezeigt, z. B. ein Hostname.", en: "Shown instead of IP:port, e.g. a host name." } },
