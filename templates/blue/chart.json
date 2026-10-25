@@ -22,6 +22,9 @@
     "border": "#444444",
     "title": "#8cc4ff"
   },
+  "radar": {
+    "total": "#ffb74d"
+  },
   "series": [
     "#3d9bff",
     "#ffb74d",

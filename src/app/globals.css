@@ -527,20 +527,22 @@ td.avatar-cell img { display: block; width: 184px; height: 184px; aspect-ratio: 
 td.radar-cell { width: 1%; text-align: center; vertical-align: middle; }
 .radar { width: 100%; max-width: 170px; height: auto; display: block; margin: 0 auto; }
 .radar-grid { fill: none; stroke: var(--chart-radar-grid); stroke-width: 1; }
-.radar-total { fill: color-mix(in srgb, var(--chart-radar-total) 28%, transparent); stroke: var(--chart-radar-total); stroke-width: 1.5; }
-/* The current shape's wide stroke frames the total's line drawn on top, so
-   both stay visible when they are equal. */
-.radar-current { fill: color-mix(in srgb, var(--chart-radar-current) 30%, transparent); stroke: var(--chart-radar-current); stroke-width: 3.5; stroke-linejoin: round; }
-.radar-total-line { fill: none; stroke: var(--chart-radar-total); stroke-width: 1.5; stroke-linejoin: round; pointer-events: none; }
+.radar-total { fill: color-mix(in srgb, var(--chart-radar-total) 7%, transparent); stroke: var(--chart-radar-total); stroke-width: 1.5; stroke-dasharray: 4 3; stroke-linejoin: round; }
+/* The two series differ in more than colour: the players' average is a
+   dashed reference outline with hollow points, the player a solid, filled
+   shape with filled points. The average's dashed line is drawn over the
+   player's shape, so both stay visible when they are equal. */
+.radar-current { fill: color-mix(in srgb, var(--chart-radar-current) 42%, transparent); stroke: var(--chart-radar-current); stroke-width: 2.5; stroke-linejoin: round; }
+.radar-total-line { fill: none; stroke: var(--chart-radar-total); stroke-width: 1.5; stroke-dasharray: 4 3; stroke-linejoin: round; pointer-events: none; }
 .radar-label { fill: var(--chart-radar-label); font-size: 10px; }
 .radar-wrap { position: relative; max-width: 170px; margin: 0 auto; white-space: normal; }
 .radar-wrap .radar { max-width: none; }
 .radar-grid.on { stroke: var(--chart-radar-label); stroke-dasharray: 2 2; }
 .radar-axis { cursor: pointer; outline: none; }
 .radar-hit { fill: transparent; stroke: none; pointer-events: all; }
-.radar-dot { stroke: var(--chart-dot-edge); stroke-width: 1; transition: r 0.1s; }
-.radar-dot.total { fill: var(--chart-radar-total); }
-.radar-dot.current { fill: var(--chart-radar-current); }
+.radar-dot { transition: r 0.1s; }
+.radar-dot.total { fill: none; stroke: var(--chart-radar-total); stroke-width: 1.5; }
+.radar-dot.current { fill: var(--chart-radar-current); stroke: var(--chart-dot-edge); stroke-width: 1; }
 .radar-axis.on .radar-label { fill: var(--chart-axis-strong); font-weight: bold; }
 .radar-axis.nodata .radar-label { fill: var(--muted); font-style: italic; }
 .radar-axis:focus-visible .radar-label { text-decoration: underline; }
@@ -549,8 +551,14 @@ td.radar-cell { width: 1%; text-align: center; vertical-align: middle; }
 .radar-tip.down { transform: translate(-50%, 0); }
 .radar-tip .tip-name { overflow: visible; text-align: left; }
 .radar-tip .tip-scale { padding-left: 15px; color: var(--chart-legend); font-size: 10px; margin-top: -2px; }
-.swatch.rt { background: var(--chart-radar-total); }
+/* Swatches in the style of their series: the average hollow (in the legend
+   a dashed line with a ring), the player filled (a solid line with a dot). */
+.swatch.rt { background: transparent; box-shadow: inset 0 0 0 2px var(--chart-radar-total); }
 .swatch.rc { background: var(--chart-radar-current); }
+.swatch.line.rt { box-shadow: none; background: linear-gradient(90deg, var(--chart-radar-total) 0 3px, transparent 3px 15px, var(--chart-radar-total) 15px); }
+.swatch.line.rt::after { background: transparent; border: 1.5px solid var(--chart-radar-total); box-sizing: border-box; }
+.swatch.line.rc { height: 3px; }
+.swatch.line.rc::after { width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; }
 .radar-wrap .radar-legend { justify-content: center; flex-wrap: wrap; gap: 2px 12px; font-size: 10px; line-height: 1.3; margin-top: 2px; }
 .radar-legend > span { display: inline-flex; align-items: center; gap: 6px; }
 .radar-wrap .radar-note { font-size: 10px; line-height: 1.3; margin-top: 2px; }

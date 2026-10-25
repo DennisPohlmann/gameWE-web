@@ -8,8 +8,10 @@ import { useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEven
 // shows its values and scale in a box. Colours come from the template's
 // chart.json (radar.total for the average, radar.current for the player),
 // see globals.css. An axis without data for the player sits greyed at the
-// centre. The average's outline and points are drawn over the player's
-// shape, so both stay visible when they are equal.
+// centre. The average is a dashed outline with hollow points, the player a
+// solid filled shape with filled points; the average's outline and points
+// are drawn over the player's shape, so both stay visible when they are
+// equal.
 
 export type RadarAxis = {
   label: string;
@@ -127,10 +129,10 @@ export function Radar({ axes, labels, notes = [] }: { axes: RadarAxis[]; labels:
               onKeyDown={(e) => onKey(e, i)}
             >
               <polygon className="radar-hit" points={wedge(i)} />
-              {/* The average's dot is the larger one: on an equal player dot
-                  it stays visible as a ring. */}
+              {/* The average's point is a hollow ring drawn over the player's
+                  filled dot: on an equal value it rings it. */}
+              {cur ? <circle className="radar-dot current" cx={cur[0]} cy={cur[1]} r={on ? 3.5 : 2.5} /> : null}
               {a.avg > 0 ? <circle className="radar-dot total" cx={px} cy={py} r={on ? 5.5 : cur ? 4 : 2.5} /> : null}
-              {cur ? <circle className="radar-dot current" cx={cur[0]} cy={cur[1]} r={on ? 3 : 2} /> : null}
               <text className="radar-label" x={x} y={y + 3} textAnchor={x < C - 5 ? "end" : x > C + 5 ? "start" : "middle"}>
                 {a.label}
               </text>
