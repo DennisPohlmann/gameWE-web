@@ -132,12 +132,28 @@ export type Server = {
 // (66/48), and hlstats_server_load still holds those spikes.
 const capped = (p: string) => `CASE WHEN ${p}max_players > 0 AND ${p}act_players > ${p}max_players THEN ${p}max_players ELSE ${p}act_players END`;
 
-// Bots online: the live rows of bots (uniqueId BOT:<name>); act_players
-// counts them too (player-count.ts caps them at act_players).
-const botsOnline = (p: string) => `(SELECT COUNT(*) FROM hlstats_Livestats lb WHERE lb.server_id = ${p}serverId AND lb.unique_id LIKE 'BOT%')`;
+// Bots online, counted in act_players too (player-count.ts caps them at
+// act_players): hlstats_Servers.act_bots of the collector (migration 6),
+// written with act_players. Older databases count the bots' live rows
+// (uniqueId BOT:<name>), which miss bots: the rows are cleared at a map
+// change while act_players holds the count from before, and servers of one
+// game with the same bot names share a bot's row (one per player). The
+// pages look again for the column every 5 minutes.
+let actBotsCol: { ok: Promise<boolean>; at: number } | undefined;
+async function actBotsOk() {
+  if (!actBotsCol || (Date.now() - actBotsCol.at > 300_000 && !(await actBotsCol.ok))) {
+    actBotsCol = { ok: query(`SELECT act_bots FROM hlstats_Servers WHERE 1 = 0`).then(() => true, () => false), at: Date.now() };
+  }
+  return actBotsCol.ok;
+}
+async function botsOnline(p: string) {
+  return (await actBotsOk())
+    ? `${p}act_bots`
+    : `(SELECT COUNT(*) FROM hlstats_Livestats lb WHERE lb.server_id = ${p}serverId AND lb.unique_id LIKE 'BOT%')`;
+}
 
 // With the ranking's name and base game (hlstats_Games) for the Game column.
-const serverCols = `s.serverId, s.address, s.port, s.publicaddress, s.name, ${capped("s.")} AS act_players, ${botsOnline("s.")} AS bots, s.max_players, s.act_map,
+const serverCols = `s.serverId, s.address, s.port, s.publicaddress, s.name, ${capped("s.")} AS act_players, s.max_players, s.act_map,
   s.map_started, s.kills, s.headshots, s.suicides, s.rounds, s.players, s.ct_wins, s.ts_wins, s.bombs_planted,
   s.bombs_defused, s.country_code, s.game, g.name AS game_name, g.realgame`;
 const serverFrom = "hlstats_Servers s LEFT JOIN hlstats_Games g ON g.code = s.game";
@@ -160,14 +176,14 @@ async function serverInfoCols() {
 
 export async function getServers(game: string) {
   return query<Server>(
-    `SELECT ${serverCols}, ${await serverInfoCols()} FROM ${serverFrom} WHERE s.game = ? ORDER BY s.display_id, s.serverId`,
+    `SELECT ${serverCols}, ${await botsOnline("s.")} AS bots, ${await serverInfoCols()} FROM ${serverFrom} WHERE s.game = ? ORDER BY s.display_id, s.serverId`,
     [game],
   );
 }
 
 export async function getServer(id: number) {
   return queryOne<Server>(
-    `SELECT ${serverCols}, ${await serverInfoCols()} FROM ${serverFrom} WHERE s.serverId = ?`,
+    `SELECT ${serverCols}, ${await botsOnline("s.")} AS bots, ${await serverInfoCols()} FROM ${serverFrom} WHERE s.serverId = ?`,
     [id],
   );
 }
@@ -1388,7 +1404,7 @@ export async function getRankingOverview(): Promise<RankingOverview[]> {
   const [games, servers, tops, clans] = await Promise.all([
     getGames(),
     query<{ game: string; act: number; bots: number; max: number }>(
-      `SELECT TRIM(s.game) AS game, ${capped("s.")} AS act, ${botsOnline("s.")} AS bots, s.max_players AS max FROM hlstats_Servers s`,
+      `SELECT TRIM(s.game) AS game, ${capped("s.")} AS act, ${await botsOnline("s.")} AS bots, s.max_players AS max FROM hlstats_Servers s`,
     ).then((rows) => {
       const games = new Map<string, { act: number; max: number; n: number; counts: PlayerCount[] }>();
       for (const r of rows) {

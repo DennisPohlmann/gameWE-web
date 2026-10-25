@@ -16,10 +16,14 @@ settings: [CONFIG.md](CONFIG.md).
 Players online are shown as real players, the bots with the BOT tag (only
 when there are any) and the slots, e.g. `1 (31 BOT) / 48` or `1 / 48`: in
 the rankings on `/` and their total, in the server lists of a ranking and
-on the server page. The collector counts bots in `act_players`; the web
-takes the bots from the live view (`hlstats_Livestats`, uniqueId `BOT:...`)
-and shows `act_players` minus bots as real players (never below 0). The
-heading on `/` counts the real players.
+on the server page. The collector counts bots in `act_players` and, with
+collector schema version 6 (`gamewe db migrate`), the bots among them per server in
+`hlstats_Servers.act_bots`; the web shows `act_players` minus `act_bots` as
+real players (never below 0). Older databases without the column take the
+bots from the live view (`hlstats_Livestats`, uniqueId `BOT:...`), which
+misses bots during a map change and when servers of one ranking use the same
+bot names (they share one live row per bot); the web looks for the column
+again every 5 minutes. The heading on `/` counts the real players.
 
 | URL | Content |
 |-----|---------|
