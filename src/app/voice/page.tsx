@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ServerFlag } from "@/components/live";
+import { SigCode } from "@/components/sig-code";
 import { Empty, Flag, Section, Stats } from "@/components/ui";
 import { fmtDateTime, fmtDuration, fmtNum } from "@/lib/format";
 import { getDict, type Dict, type Lang } from "@/lib/i18n";
+import { imageStyles } from "@/lib/image-theme";
+import { statsOrigin } from "@/lib/site-url";
 import { getVoiceDetail, type VoiceChannel, type VoiceOs } from "@/lib/voice";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -13,10 +16,12 @@ export async function generateMetadata(): Promise<Metadata> {
 
 // Detail page of the TeamSpeak server from the voice server box, like
 // TSViewer: channel tree with the people online, server data, traffic and
-// the welcome message. Live from the ServerQuery, kept for a minute.
+// the welcome message, and at the bottom the code of the TeamSpeak banner.
+// Live from the ServerQuery, kept for a minute.
 export default async function VoicePage() {
-  const [{ lang, t }, v] = await Promise.all([getDict(), getVoiceDetail()]);
+  const [{ lang, t }, v, origin] = await Promise.all([getDict(), getVoiceDetail(), statsOrigin()]);
   if (!v) notFound();
+  const imgStyles = await imageStyles(lang === "de" ? "de" : "en");
   const { box, info } = v;
   const n = (x: number | null) => (x === null ? "-" : fmtNum(x, lang));
   return (
@@ -121,6 +126,19 @@ export default async function VoicePage() {
           </div>
         </Section>
       )}
+      <Section title={t.voiceBanner}>
+        <div className="box">
+          <SigCode
+            base={`${origin}/banner/teamspeak`}
+            styles={imgStyles}
+            link={`${origin}/voice`}
+            alt={`${t.voiceBanner}: ${box.name}`}
+            width={560}
+            height={95}
+            labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgSkinDefault, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
+          />
+        </div>
+      </Section>
     </>
   );
 }

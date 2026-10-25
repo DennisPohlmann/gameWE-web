@@ -454,6 +454,7 @@
   "imgStyle": "Style",
   "imgSkinDefault": "Current design (default)",
   "serverBanner": "Server banner",
+  "voiceBanner": "TeamSpeak banner",
   "copy": "Copy",
   "copied": "Copied",
   "shareCopy": "Copy link",

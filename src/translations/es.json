@@ -450,6 +450,7 @@
   "imgStyle": "Estilo",
   "imgSkinDefault": "Diseño actual (predeterminado)",
   "serverBanner": "Banner del servidor",
+  "voiceBanner": "Banner de TeamSpeak",
   "copy": "Copiar",
   "copied": "Copiado",
   "shareCopy": "Copiar enlace",

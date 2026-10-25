@@ -28,6 +28,8 @@ export type VoiceBox = {
     clients: number | null;
     max: number | null;
     channels: number | null;
+    // Seconds since the server started (null: query failed).
+    uptime: number | null;
   } | null;
   discord: { name: string; type: string; invite: string; online: number | null } | null;
 };
@@ -184,6 +186,7 @@ async function loadTs(host: string, voicePort: number, queryPort: number, o: Rec
     clients: null,
     max: null,
     channels: null,
+    uptime: null,
   };
   try {
     const [[info = {}]] = await tsQuery(host, queryPort, voicePort, (o.gamewe_ts_query_user ?? "").trim(), o.gamewe_ts_query_password ?? "", ["serverinfo"]);
@@ -192,15 +195,16 @@ async function loadTs(host: string, voicePort: number, queryPort: number, o: Rec
     const queries = num("virtualserver_queryclientsonline") ?? 0;
     return {
       ...base,
-      name: base.name || (info.virtualserver_name ?? "").slice(0, 80) || host,
+      name: base.name || (info.virtualserver_name ?? "").slice(0, 80) || base.address,
       type: tsType(info.virtualserver_version),
       clients: online === null ? null : Math.max(0, online - queries),
       max: num("virtualserver_maxclients"),
       channels: num("virtualserver_channelsonline"),
+      uptime: num("virtualserver_uptime"),
     };
   } catch (e) {
     console.warn(`TeamSpeak query: ${e instanceof Error ? e.message : e}`);
-    return { ...base, name: base.name || host };
+    return { ...base, name: base.name || base.address };
   }
 }
 
@@ -279,16 +283,20 @@ async function loadDetail(o: Record<string, string>): Promise<VoiceDetail | null
   const voicePort = port(o.gamewe_ts_port, 9987);
   const real = voicePort === 9987 ? host : `${host}:${voicePort}`;
   const showClients = (o.gamewe_ts_show_clients ?? "1") !== "0";
+  // Without a name the shown address stands in (not the query host, which
+  // differs from it when a display name is set).
+  const address = tsDisplay(o.gamewe_ts_display ?? "") || real;
   const box: VoiceDetail["box"] = {
-    name: (o.gamewe_ts_name ?? "").trim() || host,
+    name: (o.gamewe_ts_name ?? "").trim() || address,
     type: "TeamSpeak",
     country: await serverCountry(o, host),
-    address: tsDisplay(o.gamewe_ts_display ?? "") || real,
+    address,
     link: tsLink(o.gamewe_ts_link ?? "") || tsDefaultLink(real),
     password: (o.gamewe_ts_password ?? "").trim(),
     clients: null,
     max: null,
     channels: null,
+    uptime: null,
   };
   let answers: Record<string, string>[][];
   try {
@@ -307,11 +315,12 @@ async function loadDetail(o: Record<string, string>): Promise<VoiceDetail | null
   const people = clientRows.filter((c) => c.client_type === "0");
   const online = num(si, "virtualserver_clientsonline");
   const queries = num(si, "virtualserver_queryclientsonline") ?? 0;
-  box.name = (o.gamewe_ts_name ?? "").trim() || text(si.virtualserver_name, 80) || host;
+  box.name = (o.gamewe_ts_name ?? "").trim() || text(si.virtualserver_name, 80) || address;
   box.type = tsType(si.virtualserver_version);
   box.clients = online === null ? people.length : Math.max(0, online - queries);
   box.max = num(si, "virtualserver_maxclients");
   box.channels = num(si, "virtualserver_channelsonline");
+  box.uptime = num(si, "virtualserver_uptime");
 
   const banner = si.virtualserver_hostbanner_url ?? "";
   const info: VoiceInfo = {

@@ -146,6 +146,11 @@ minute, so a query login (or a guest group) needs these permissions too.
 "Show the names of the people online" (default yes) can hide the nicknames;
 they are personal data, so mention them in your privacy policy.
 
+The TeamSpeak banner `/banner/teamspeak.png` (code at the bottom of `/voice`)
+uses the same `serverinfo` answer as the box: name, the shown address (the
+display address when set), users of the slots, channels, uptime and type.
+The server password, the query login and the query port are never in it.
+
 ## Access log
 
 The server writes one line per request to stdout in the combined log format

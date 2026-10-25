@@ -13,7 +13,7 @@ on MariaDB/MySQL or PostgreSQL. It
   users (with optional TOTP) and ranking resets,
 - offers a read-only public JSON API with paged lists of players, countries,
   cities, clans, weapons, maps, awards, ranks and servers (documented on
-  `/api` with Scalar), forum signatures and server banners,
+  `/api` with Scalar), forum signatures, server banners and a TeamSpeak banner,
 - comes in 13 languages and with design templates, including your own.
 
 Built with Next.js 16 (App Router, server-rendered, almost no client

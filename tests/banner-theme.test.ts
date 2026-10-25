@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
-import { bannerTheme, BANNER_VARS, chosenTemplate, cssVars, darkBanner, hasBannerDefinition, parseImageFile } from "../src/lib/banner-theme.ts";
+import { bannerTheme, BANNER_VARS, chosenTemplate, cssVars, darkBanner, hasBannerDefinition, parseImageFile, parseVoiceBannerFile } from "../src/lib/banner-theme.ts";
 
 // npm test runs in the repository root.
 const dir = path.join(process.cwd(), "templates");
@@ -57,4 +57,11 @@ test("no style, classic and unknown styles mean the active skin", () => {
   assert.deepEqual(parseImageFile("12-classic.png"), { id: 12, style: "classic" });
   assert.deepEqual(parseImageFile("12.png"), { id: 12, style: null });
   assert.equal(parseImageFile("12-../x.png"), null);
+});
+
+test("TeamSpeak banner file names: style like the other banners, nothing else", () => {
+  assert.deepEqual(parseVoiceBannerFile("teamspeak.png"), { style: null });
+  assert.deepEqual(parseVoiceBannerFile("teamspeak-dark.png"), { style: "dark" });
+  assert.deepEqual(parseVoiceBannerFile("teamspeak-classic.png"), { style: "classic" });
+  for (const f of ["teamspeak", "teamspeak-.png", "teamspeak-../x.png", "TeamSpeak.png", "12.png", "teamspeak-Dark.png", "teamspeak.png.png"]) assert.equal(parseVoiceBannerFile(f), null, f);
 });

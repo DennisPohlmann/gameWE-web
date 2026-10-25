@@ -142,7 +142,7 @@ export async function serverBanner(file: string, code: string | null) {
 }
 
 // Flag from public/flags as a data URL (cc is checked against FLAG_CODES).
-async function flagDataUrl(cc: string): Promise<string | null> {
+export async function flagDataUrl(cc: string): Promise<string | null> {
   try {
     const svg = await readFile(path.join(process.cwd(), "public", "flags", `${cc}.svg`));
     return `data:image/svg+xml;base64,${svg.toString("base64")}`;
