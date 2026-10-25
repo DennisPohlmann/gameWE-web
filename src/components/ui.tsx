@@ -236,9 +236,19 @@ export function SortTh({
   );
 }
 
+// |◀ and ▶| drawn as SVG: the text glyphs for them (⏮ ⏭) differ too much
+// between fonts and become emoji on phones.
+function PagerEdge({ last }: { last: boolean }) {
+  return (
+    <svg className="pager-edge" viewBox="0 0 12 12" aria-hidden="true">
+      <path fill="currentColor" d={last ? "M9 1.5h2v9H9zM1 1.5v9L8.5 6z" : "M1 1.5h2v9H1zM11 1.5v9L3.5 6z"} />
+    </svg>
+  );
+}
+
 // Paging below a table. With `total` it is the full bar: a page field, the
 // rows per page (when `rows` is given), the number of entries and pages,
-// and back/forward.
+// and first/back/forward/last.
 export function Pager({
   base,
   params,
@@ -258,7 +268,7 @@ export function Pager({
   total?: number;
   rows?: { value: number; options: number[] };
   locale?: string;
-  labels: { prev: string; next: string; page: string; goTo?: string; showRows?: string; entriesOnPages?: string };
+  labels: { prev: string; next: string; firstPage: string; lastPage: string; page: string; goTo?: string; showRows?: string; entriesOnPages?: string };
 }) {
   const next = pages !== undefined ? page < pages : !!hasNext;
   if (total !== undefined && pages !== undefined && labels.goTo && labels.entriesOnPages) {
@@ -291,18 +301,36 @@ export function Pager({
         <span className="pager-count">{labels.entriesOnPages.replace("{n}", total.toLocaleString(locale)).replace("{p}", pages.toLocaleString(locale))}</span>
         <span className="pager-arrows">
           {page > 1 ? (
-            <Link href={withParams(base, params, { page: page - 1 > 1 ? page - 1 : undefined })} aria-label={labels.prev}>
+            <Link href={withParams(base, params, { page: undefined })} aria-label={labels.firstPage} title={labels.firstPage}>
+              <PagerEdge last={false} />
+            </Link>
+          ) : (
+            <span className="disabled" aria-hidden="true">
+              <PagerEdge last={false} />
+            </span>
+          )}
+          {page > 1 ? (
+            <Link href={withParams(base, params, { page: page - 1 > 1 ? page - 1 : undefined })} aria-label={labels.prev} title={labels.prev}>
               ◀
             </Link>
           ) : (
-            <span className="disabled">◀</span>
+            <span className="disabled" aria-hidden="true">◀</span>
           )}
           {next ? (
-            <Link href={withParams(base, params, { page: page + 1 })} aria-label={labels.next}>
+            <Link href={withParams(base, params, { page: page + 1 })} aria-label={labels.next} title={labels.next}>
               ▶
             </Link>
           ) : (
-            <span className="disabled">▶</span>
+            <span className="disabled" aria-hidden="true">▶</span>
+          )}
+          {next ? (
+            <Link href={withParams(base, params, { page: pages })} aria-label={labels.lastPage} title={labels.lastPage}>
+              <PagerEdge last />
+            </Link>
+          ) : (
+            <span className="disabled" aria-hidden="true">
+              <PagerEdge last />
+            </span>
           )}
         </span>
       </nav>
@@ -311,6 +339,11 @@ export function Pager({
   if (page <= 1 && !next) return null;
   return (
     <nav className="pager" aria-label={labels.page}>
+      {page > 1 ? (
+        <Link href={withParams(base, params, { page: undefined })}>« {labels.firstPage}</Link>
+      ) : (
+        <span className="disabled">« {labels.firstPage}</span>
+      )}
       {page > 1 ? (
         <Link href={withParams(base, params, { page: page - 1 > 1 ? page - 1 : undefined })}>← {labels.prev}</Link>
       ) : (
@@ -325,6 +358,13 @@ export function Pager({
       ) : (
         <span className="disabled">{labels.next} →</span>
       )}
+      {pages !== undefined ? (
+        next ? (
+          <Link href={withParams(base, params, { page: pages })}>{labels.lastPage} »</Link>
+        ) : (
+          <span className="disabled">{labels.lastPage} »</span>
+        )
+      ) : null}
     </nav>
   );
 }

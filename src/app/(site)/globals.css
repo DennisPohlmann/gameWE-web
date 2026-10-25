@@ -648,6 +648,7 @@ a.button { display: inline-block; text-decoration: none; }
 .pager-count { font-weight: bold; }
 .pager-arrows { display: inline-flex; gap: 4px; }
 .pager-arrows a, .pager-arrows span { display: inline-block; min-width: 22px; padding: 1px 4px; text-align: center; text-decoration: none; border: 1px solid var(--border); border-radius: 3px; background: var(--surface-2); }
+.pager-edge { width: 0.9em; height: 0.9em; vertical-align: -0.08em; }
 
 .empty { color: var(--muted); }
 

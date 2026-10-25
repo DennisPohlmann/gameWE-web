@@ -255,6 +255,7 @@ td .name, .name { font-weight: 600; color: var(--text); }
 .pager-count { font-weight: 600; color: var(--soft); }
 .pager-arrows { display: inline-flex; gap: 6px; }
 .pager-arrows a, .pager-arrows span { display: inline-grid; place-items: center; min-width: 32px; height: 32px; border: 1px solid var(--line-2); border-radius: 8px; color: var(--text); background: var(--panel); }
+.pager-edge { width: 0.9em; height: 0.9em; vertical-align: -0.08em; }
 .pager-arrows a:hover { border-color: var(--accent); text-decoration: none; }
 .pager .disabled { color: var(--line-2); }
 

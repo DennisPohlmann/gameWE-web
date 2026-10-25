@@ -117,6 +117,8 @@
   "page": "Side",
   "prev": "Forrige",
   "next": "Næste",
+  "firstPage": "Første side",
+  "lastPage": "Sidste side",
   "address": "Adresse",
   "map": "Bane",
   "online": "Online",

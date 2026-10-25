@@ -241,7 +241,7 @@ const de = {
     version: "Version",
     noDocker: "ohne Docker (Node.js)",
   },
-  pager: { prev: "Zurück", next: "Weiter", page: "Seiten", goTo: "Gehe zu:", showRows: "Zeilen anzeigen:", entriesOnPages: "{n} Einträge auf {p} Seiten" },
+  pager: { firstPage: "Erste Seite", prev: "Zurück", next: "Weiter", lastPage: "Letzte Seite", page: "Seiten", goTo: "Gehe zu:", showRows: "Zeilen anzeigen:", entriesOnPages: "{n} Einträge auf {p} Seiten" },
 };
 
 export type AdminDict = typeof de;
@@ -486,7 +486,7 @@ const en: AdminDict = {
     version: "Version",
     noDocker: "no Docker (Node.js)",
   },
-  pager: { prev: "Previous", next: "Next", page: "Pages", goTo: "Go to:", showRows: "Show rows:", entriesOnPages: "{n} entries on {p} pages" },
+  pager: { firstPage: "First page", prev: "Previous", next: "Next", lastPage: "Last page", page: "Pages", goTo: "Go to:", showRows: "Show rows:", entriesOnPages: "{n} entries on {p} pages" },
 };
 
 export function adminDict(lang: Lang): AdminDict {

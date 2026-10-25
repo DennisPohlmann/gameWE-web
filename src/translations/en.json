@@ -117,6 +117,8 @@
   "page": "Page",
   "prev": "Previous",
   "next": "Next",
+  "firstPage": "First page",
+  "lastPage": "Last page",
   "address": "Address",
   "map": "Map",
   "online": "Online",

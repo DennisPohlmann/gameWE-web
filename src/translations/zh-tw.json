@@ -117,6 +117,8 @@
   "page": "頁",
   "prev": "上一頁",
   "next": "下一頁",
+  "firstPage": "首頁",
+  "lastPage": "末頁",
   "address": "地址",
   "map": "地圖",
   "online": "線上",
