@@ -53,7 +53,7 @@ test("only plain colours and colour gradients are taken", () => {
 
 test("no style, classic and unknown styles mean the active skin", () => {
   for (const s of [null, "classic", "nope", "../dark", "Dark"]) assert.equal(chosenTemplate(s, builtIn), null, String(s));
-  assert.equal(chosenTemplate("blue", builtIn), "blue");
+  assert.equal(chosenTemplate("modern-orange", builtIn), "modern-orange");
   assert.deepEqual(parseImageFile("12-classic.png"), { id: 12, style: "classic" });
   assert.deepEqual(parseImageFile("12.png"), { id: 12, style: null });
   assert.equal(parseImageFile("12-../x.png"), null);
@@ -64,4 +64,12 @@ test("TeamSpeak banner file names: style like the other banners, nothing else", 
   assert.deepEqual(parseVoiceBannerFile("teamspeak-dark.png"), { style: "dark" });
   assert.deepEqual(parseVoiceBannerFile("teamspeak-classic.png"), { style: "classic" });
   for (const f of ["teamspeak", "teamspeak-.png", "teamspeak-../x.png", "TeamSpeak.png", "12.png", "teamspeak-Dark.png", "teamspeak.png.png"]) assert.equal(parseVoiceBannerFile(f), null, f);
+});
+
+test("old banner URLs of removed templates use their replacement", () => {
+  assert.equal(chosenTemplate("blue", builtIn), "dark");
+  assert.equal(chosenTemplate("game-tf", builtIn), "light");
+  assert.equal(chosenTemplate("modern-gold", builtIn), "modern-dark");
+  // A folder of that name in TEMPLATES_DIR still wins.
+  assert.equal(chosenTemplate("blue", [...builtIn, "blue"]), "blue");
 });

@@ -12,6 +12,7 @@ import { requireAdmin } from "@/lib/auth";
 import { noAutofill } from "@/lib/autofill";
 import { adminQuery } from "@/lib/db";
 import { fill, getAdminLang } from "@/lib/i18n";
+import { replacedTemplate } from "@/lib/skin-fallback";
 import { listTemplates } from "@/lib/templates";
 import { voiceType } from "@/lib/voice";
 
@@ -168,9 +169,11 @@ function SettingField({
       </select>
     );
   } else if (s.type === "template") {
+    // A removed built-in template shows (and saves) its replacement.
+    const pick = replacedTemplate(v, templates.map((t) => t.id));
     control = (
-      <select {...noAutofill} id={id} name={s.key} defaultValue={v}>
-        {templates.some((t) => t.id === v) ? null : <option value={v}>{v} (?)</option>}
+      <select {...noAutofill} id={id} name={s.key} defaultValue={pick}>
+        {templates.some((t) => t.id === pick) ? null : <option value={pick}>{pick} (?)</option>}
         {templates.map((t) => (
           <option key={t.id} value={t.id}>
             {t.name[lang]}

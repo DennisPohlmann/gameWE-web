@@ -34,7 +34,10 @@ URL, banner, header links, activity days and page size through
 `hlstats_Options`. Logo and favicon are given as a path (`/images/logo.png`,
 relative to the domain) or an http(s) URL, there is no upload; the logo is
 scaled to the header's height, a PNG with a transparent background fits
-best. The default design is "dark".
+best. The default design is "dark"; the built-in designs are `dark`,
+`light`, `orange`, `modern-dark`, `modern-light` and `modern-orange` (a
+setting that names a removed one gets its replacement, see
+[templates/README.md](../templates/README.md)).
 
 The website uses two database users: `DB_USER` (read-only, for the public
 pages) and `DB_ADMIN_USER` (for the admin area). The collector creates both;

@@ -227,12 +227,7 @@ const LIGHT = {
 // light text; hover: button hover; on: text on the accent colour;
 // second: the second chart series (and radar total when it is blue).
 const VARIANTS = [
-  { id: "modern-gold", name: { de: "Modern Gold", en: "Modern gold" }, base: DARK, accent: "#f0b400", accentText: "#ffcf40", hover: "#ffc61a", on: "#111111", first: "#4a90e2", second: "#f0b400" },
   { id: "modern-orange", name: { de: "Modern Orange", en: "Modern orange" }, base: DARK, accent: "#ff8000", accentText: "#ffb066", hover: "#ff9433", on: "#111111" },
-  { id: "modern-blue", name: { de: "Modern Blau", en: "Modern blue" }, base: DARK, accent: "#3d9bff", accentText: "#8cc4ff", hover: "#5aabff", on: "#0b0b0c", second: "#f0b400" },
-  { id: "modern-red", name: { de: "Modern Rot", en: "Modern red" }, base: DARK, accent: "#ff4d4f", accentText: "#ff9a9c", hover: "#ff6b6d", on: "#111111" },
-  { id: "modern-green", name: { de: "Modern Grün", en: "Modern green" }, base: DARK, accent: "#3cc35f", accentText: "#94e0a8", hover: "#55d176", on: "#0b0b0c" },
-  { id: "modern-pink", name: { de: "Modern Pink", en: "Modern pink" }, base: DARK, accent: "#ff4fa3", accentText: "#ff9ccb", hover: "#ff6fb4", on: "#111111" },
   // Dark: neutral silver on a deeper black, charts in blue and gold.
   {
     id: "modern-dark", name: { de: "Modern Dunkel", en: "Modern dark" }, base: DARK, accent: "#d4d4d8", accentText: "#ffffff", hover: "#e8e8ec", on: "#111111", first: "#4a90e2", second: "#f0b400",

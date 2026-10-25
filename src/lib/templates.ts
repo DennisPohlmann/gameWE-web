@@ -4,6 +4,7 @@ import path from "node:path";
 import { basePath } from "./base-path";
 import { chartCss } from "./chart-config";
 import { env } from "./env";
+import { replacedTemplate } from "./skin-fallback";
 
 // Look templates: one folder each with a theme.css (CSS variables, see
 // templates/README.md), an optional template.json with the display name and an
@@ -74,11 +75,13 @@ export async function listTemplates(): Promise<Template[]> {
   return list;
 }
 
-// The chosen template, else "dark", else "light", else the first one, else none (then
-// the orange defaults of the stylesheet apply).
+// The chosen template (a removed built-in one: its replacement, see
+// skin-fallback.ts), else "dark", else "light", else the first one, else none
+// (then the orange defaults of the stylesheet apply).
 export async function resolveTemplate(id: string): Promise<Template | null> {
   const list = await listTemplates();
-  return list.find((t) => t.id === id) ?? list.find((t) => t.id === "dark") ?? list.find((t) => t.id === "light") ?? list[0] ?? null;
+  const want = replacedTemplate(id, list.map((t) => t.id));
+  return list.find((t) => t.id === want) ?? list.find((t) => t.id === "dark") ?? list.find((t) => t.id === "light") ?? list[0] ?? null;
 }
 
 // Game design: the template "game-<realgame>" (else "game-<code>"), shown on

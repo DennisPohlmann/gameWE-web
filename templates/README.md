@@ -4,6 +4,17 @@ Each folder here is one design. The site lists every folder it finds under
 Admin > Settings > Design & logo > "Design (template)". The admin area has
 its own design and is not part of a template.
 
+Six designs are built in: `dark` (the default), `light`, `orange`,
+`modern-dark`, `modern-light` and `modern-orange`. The others of earlier
+versions are gone; a setting, banner URL (`12-blue.png`) or picker that still
+names one gets its replacement: `blue`, `green`, `pink`, `red` and the game
+designs `game-csgo`, `game-css`, `game-cstrike`, `game-dods`, `game-hl2mp`
+become `dark`, `game-tf` becomes `light`, `modern-blue`, `modern-gold`,
+`modern-green`, `modern-pink` and `modern-red` become `modern-dark`
+(`src/lib/skin-fallback.ts`). An own template in `TEMPLATES_DIR` with one of
+these names is used as it is. Saving Admin > Settings > Design & logo writes
+the replacement to the database.
+
 ```
 templates/
   orange/
@@ -124,8 +135,7 @@ lists every key.
 
 ## Modern templates
 
-The `modern-*` templates (`modern-gold`, `modern-orange`, `modern-blue`,
-`modern-red`, `modern-green`, `modern-pink`, `modern-dark`, `modern-light`)
+The `modern-*` templates (`modern-orange`, `modern-dark`, `modern-light`)
 change the layout as well as the colours: header with big accent-coloured
 links, the ranking's sections as a full-width bar under the header, one
 narrow centred column, rounded cards with a title strip, flat tables and
@@ -166,8 +176,8 @@ html[data-skin] .load-chart .area-players { fill: color-mix(in srgb, var(--chart
 
 ## Game designs
 
-Folders named `game-<game>` (`game-css`, `game-cstrike`, `game-tf`,
-`game-hl2mp`, `game-dods`, `game-csgo`) are game designs. With the
+Folders named `game-<game>` (e.g. `game-css`, `game-cstrike`, `game-tf`) are
+game designs. None is built in; put your own in `TEMPLATES_DIR`. With the
 setting "Game designs" on (off by default), the pages of a ranking use the design of
 its game (`hlstats_Games.realgame`, else the ranking code), the rest of the
 site keeps the main template. A game design can also be chosen as the main

@@ -4,6 +4,8 @@
 // every value it leaves out, gets the Dark banner (darkBanner). Pure
 // functions without file access, so tests can run them directly.
 
+import { replacedTemplate } from "./skin-fallback.ts";
+
 export type ImageTheme = {
   bg: string;
   side: string;
@@ -140,9 +142,12 @@ export function bannerTheme(css: string | null): ImageTheme {
 
 // The template a picture style names, or null for the active skin: no style,
 // a name that is no template, and the old "classic" (gone, its URLs in
-// forum posts keep working in the skin's banner).
+// forum posts keep working in the skin's banner). A removed built-in template
+// ("12-blue.png" in old posts) gives its replacement (skin-fallback.ts).
 export function chosenTemplate(style: string | null, templates: string[]): string | null {
-  return style && STYLE_ID.test(style) && templates.includes(style) ? style : null;
+  if (!style || !STYLE_ID.test(style)) return null;
+  const id = replacedTemplate(style, templates);
+  return templates.includes(id) ? id : null;
 }
 
 // "12" or "12-dark" (with or without .png): the id and the style; no style

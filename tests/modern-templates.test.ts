@@ -13,7 +13,7 @@ test("the generated modern templates are up to date", () => {
 
 test("the modern templates load nothing from outside", () => {
   const ids = readdirSync("templates").filter((d) => d.startsWith("modern-"));
-  assert.ok(ids.length >= 8);
+  assert.deepEqual(ids.sort(), ["modern-dark", "modern-light", "modern-orange"]);
   for (const id of ids) {
     const css = readFileSync(`templates/${id}/theme.css`, "utf8");
     assert.doesNotMatch(css, /@import|url\(|expression\(|javascript:/i, id);

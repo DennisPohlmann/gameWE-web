@@ -111,8 +111,8 @@ const definitions: Omit<SettingGroup, "area">[] = [
         type: "bool",
         def: "0",
         help: {
-          de: "Ja: die Seiten eines Spiels nutzen das Template game-<Spiel>, wenn es eins gibt (z. B. game-tf).",
-          en: "Yes: a game's pages use the template game-<game> when there is one (e.g. game-tf).",
+          de: "Ja: die Seiten eines Spiels nutzen das Template game-<Spiel>, wenn es eins gibt (eigenes Design in TEMPLATES_DIR, z. B. game-tf; keins ist eingebaut).",
+          en: "Yes: a game's pages use the template game-<game> when there is one (your own design in TEMPLATES_DIR, e.g. game-tf; none is built in).",
         },
       },
       {
