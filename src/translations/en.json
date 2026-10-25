@@ -449,6 +449,7 @@
   "timePct": "Time %",
   "deathsPct": "Deaths %",
   "kpdShort": "Kpd",
+  "hpkShort": "Hpk",
   "heatmap": "Heatmap",
   "heatDeaths": "Deaths",
   "heatKills": "Kills",

@@ -445,6 +445,7 @@
   "timePct": "Время %",
   "deathsPct": "Смерти %",
   "kpdShort": "У/С",
+  "hpkShort": "Hpk",
   "heatmap": "Тепловая карта",
   "heatDeaths": "Смерти",
   "heatKills": "Убийства",

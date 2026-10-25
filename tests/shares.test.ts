@@ -1,7 +1,7 @@
-// Shares and sorting of the teams/roles tables. Run with `npm test`.
+// Shares and sorting of the teams/roles, weapons and actions tables. Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { rowShares, shareTotals, sortTeams, teamSort } from "../src/lib/shares.ts";
+import { rowShares, shareTotals, sortTeams, teamSort, weaponShares, weaponTotals } from "../src/lib/shares.ts";
 
 const teams = [
   { id: 1, name: "Terrorist", time_played: 6000, kills: 300, deaths: 200 },
@@ -57,4 +57,20 @@ test("sorting: time first by default, names A to Z, dir=asc flips", () => {
   assert.deepEqual(ids(sortTeams(teams, "kpd", false)), [1, 2, 3]);
   // Equal deaths keep the id order.
   assert.deepEqual(ids(sortTeams(teams, "deaths", false)), [1, 2, 3]);
+});
+
+test("weapons: kills %, headshots % of all and hpk of the weapon", () => {
+  const weapons = [
+    { kills: 600, headshots: 300 },
+    { kills: 400, headshots: 100 },
+    { kills: 0, headshots: 0 },
+  ];
+  const total = weaponTotals(weapons);
+  assert.deepEqual(total, { kills: 1000, headshots: 400 });
+  const a = weaponShares(weapons[0], total);
+  assert.deepEqual([a.killsPct, a.headshotsPct, a.hpk], [0.6, 0.75, 0.5]);
+  const b = weaponShares(weapons[1], total);
+  assert.equal(Math.round(b.hpk * 100), 25);
+  assert.deepEqual(weaponShares(weapons[2], total), { killsPct: 0, headshotsPct: 0, hpk: 0 });
+  assert.deepEqual(weaponShares(weapons[0], { kills: 0, headshots: 0 }), { killsPct: 0, headshotsPct: 0, hpk: 0.5 });
 });

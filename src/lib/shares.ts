@@ -72,3 +72,20 @@ export function sortTeams<T extends ShareInput & { id: number; name: string }>(r
     return (asc ? c : -c) || Number(a.id) - Number(b.id);
   });
 }
+
+// Weapons page: kills % = weapon kills / all kills, headshots % = weapon
+// headshots / all headshots, Hpk = weapon headshots / weapon kills; 0 when
+// there is nothing to divide by.
+export type WeaponInput = { kills: number; headshots: number };
+
+export function weaponTotals(rows: WeaponInput[]): { kills: number; headshots: number } {
+  return rows.reduce((s, w) => ({ kills: s.kills + Number(w.kills), headshots: s.headshots + Number(w.headshots) }), { kills: 0, headshots: 0 });
+}
+
+export function weaponShares(w: WeaponInput, total: { kills: number; headshots: number }) {
+  return {
+    killsPct: share(Number(w.kills), total.kills),
+    headshotsPct: share(Number(w.headshots), total.headshots),
+    hpk: share(Number(w.headshots), Number(w.kills)),
+  };
+}

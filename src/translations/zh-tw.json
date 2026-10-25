@@ -445,6 +445,7 @@
   "timePct": "時間 %",
   "deathsPct": "死亡 %",
   "kpdShort": "Kpd",
+  "hpkShort": "爆頭率",
   "heatmap": "熱度圖",
   "heatDeaths": "死亡",
   "heatKills": "擊殺",
