@@ -37,7 +37,7 @@ import {
   getPlayerNames,
   getPlayerPosition,
   getPlayerTeams,
-  getRadarRanks,
+  getRadarAverage,
   getPlayerWeapons,
 } from "@/lib/data";
 import { activity, fmtAge, fmtDateTime, fmtDuration, fmtNum, fmtPct, kpd, ratio, steamIds } from "@/lib/format";
@@ -154,35 +154,49 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const n2 = (v: number | null) => fmtNum(v, lang, 2);
   const pc = (v: number | null) => fmtPct(v, lang);
   const kpm = (kills: number, secs: number) => (secs > 0 ? kills / (secs / 60) : 0);
-  // Radar: each axis as a ratio, all time and the last two weeks; radar.ts
-  // turns them into percentiles among the game's players, drops axes the
-  // game does not record and marks those without data.
+  // Radar: the player's last two weeks against the average of all players
+  // active in them; radar.ts places the average on the middle ring, drops
+  // axes the game does not record and marks those without data.
+  const r14 = (num: number, den: number) => (last14.length ? { num, den } : null);
   const radarRatios: PlayerRatios = {
-    kpd: { total: { num: p.kills, den: p.deaths }, current: last14.length ? { num: kills14, den: sum14("deaths") } : null },
-    kpm: { total: { num: p.kills, den: p.connection_time }, current: { num: kills14, den: sum14("connection_time") } },
-    assists: { total: { num: p.kill_assists, den: p.kills }, current: { num: sum14("kill_assists"), den: kills14 } },
-    survived: { total: { num: p.survived_count, den: p.rounds }, current: { num: sum14("survived_count"), den: sum14("rounds") } },
-    wins: { total: { num: p.wins, den: p.rounds }, current: { num: sum14("wins"), den: sum14("rounds") } },
+    kpd: r14(kills14, sum14("deaths")),
+    kpm: r14(kills14, sum14("connection_time")),
+    assists: r14(sum14("kill_assists"), kills14),
+    survived: r14(sum14("survived_count"), sum14("rounds")),
+    wins: r14(sum14("wins"), sum14("rounds")),
   };
-  const radarRanks = await getRadarRanks(game, radarRatios);
-  const radarPts = radarPoints(radarRatios, radarRanks);
+  const radarAvg = await getRadarAverage(game);
+  const radarPts = radarPoints(radarRatios, radarAvg);
   const radarLabel: Record<RadarKey, string> = { kpd: t.kpd, kpm: t.kpm, assists: t.assists, survived: t.survived, wins: t.winRatioShort };
-  const radarValue = (key: RadarKey, v: number, count: number) =>
-    key === "survived" || key === "wins" ? pc(v) : key === "assists" ? `${n2(v)} ${t.perKill} (${fmtNum(count, lang)})` : n2(v);
-  const radarScale = (key: RadarKey, pct: number | null) =>
-    pct !== null ? fill(t.radarBetter, { pct: pc(pct) }) : fill(t.radarScale, { max: fmtNum(FIXED_MAX[key], lang, key === "assists" ? 1 : 0) });
+  const radarValue = (key: RadarKey, v: number | null, count?: number) =>
+    v === null
+      ? "—"
+      : key === "survived" || key === "wins"
+        ? pc(v)
+        : key === "assists"
+          ? `${n2(v)} ${t.perKill}${count === undefined ? "" : ` (${fmtNum(count, lang)})`}`
+          : n2(v);
+  // The player against the average: rounded to a whole per cent, as shown.
+  const radarRelation = (a: (typeof radarPts)[number]) => {
+    if (a.noData) return t.winNoData;
+    if (a.rel === null) return "";
+    const d = Math.round((a.rel - 1) * 100) / 100;
+    return d === 0 ? t.radarEqual : fill(d > 0 ? t.radarAbove : t.radarBelow, { pct: pc(Math.abs(d)) });
+  };
   const radar: RadarAxis[] = radarPts.map((a) => ({
     label: radarLabel[a.key],
     noData: a.noData,
-    total: a.rTotal,
-    current: a.rCurrent,
-    totalText: a.noData ? "—" : radarValue(a.key, a.total, p.kill_assists),
-    currentText: a.current === null ? "—" : radarValue(a.key, a.current, sum14("kill_assists")),
-    totalScale: a.noData ? t.winNoData : radarScale(a.key, a.pctTotal),
-    currentScale: a.current === null ? "" : radarScale(a.key, a.pctCurrent),
+    avg: a.rAvg,
+    player: a.r,
+    avgText: radarValue(a.key, a.avg),
+    playerText: radarValue(a.key, a.value, sum14("kill_assists")),
+    relation: radarRelation(a),
+    scale: a.rAvg > 0 ? t.radarRings : fill(t.radarScale, { max: fmtNum(FIXED_MAX[a.key], lang, a.key === "assists" ? 1 : 0) }),
   }));
-  const radarN = Math.max(0, ...radarPts.filter((a) => a.pctTotal !== null).map((a) => radarRanks[a.key]?.n ?? 0));
-  const radarNote = radarN ? fill(t.radarCompared, { n: fmtNum(radarN, lang) }) : undefined;
+  const radarNotes = [
+    last14.length ? "" : t.radarInactive,
+    radarAvg.players ? fill(t.radarCompared, { n: fmtNum(radarAvg.players, lang) }) : "",
+  ].filter(Boolean);
   const wonAwards = new Map(ribbons.map((r) => [r.awardId, r.wins]));
   const totalRibbonWins = ribbons.reduce((n, r) => n + r.wins, 0);
 
@@ -279,7 +293,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
               </tr>
               <tr>
                 <td colSpan={4} rowSpan={7} className="radar-cell">
-                  <Radar axes={radar} labels={{ total: t.total, current: `${t.current} (${days14})` }} note={radarNote} />
+                  <Radar axes={radar} labels={{ avg: t.radarAll, player: t.radarPlayer }} notes={radarNotes} />
                 </td>
                 <td className="stats-key">{t.kills}:</td>
                 <td>

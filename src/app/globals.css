@@ -523,7 +523,7 @@ td.radar-cell { width: 45%; text-align: center; vertical-align: middle; }
 .radar-current { fill: color-mix(in srgb, var(--chart-radar-current) 30%, transparent); stroke: var(--chart-radar-current); stroke-width: 3.5; stroke-linejoin: round; }
 .radar-total-line { fill: none; stroke: var(--chart-radar-total); stroke-width: 1.5; stroke-linejoin: round; pointer-events: none; }
 .radar-label { fill: var(--chart-radar-label); font-size: 10px; }
-.radar-wrap { position: relative; max-width: 170px; margin: 0 auto; }
+.radar-wrap { position: relative; max-width: 170px; margin: 0 auto; white-space: normal; }
 .radar-wrap .radar { max-width: none; }
 .radar-grid.on { stroke: var(--chart-radar-label); stroke-dasharray: 2 2; }
 .radar-axis { cursor: pointer; outline: none; }

@@ -7,7 +7,7 @@ import { baseGameOf, GAME_HAS_DATA } from "./games";
 import { hiddenSql, liveEntry } from "./hidden";
 import { LOAD_INTERVAL_MAX, type MapSort } from "./map-table";
 import { playerCount, sumCounts, type PlayerCount } from "./player-count";
-import { axisRatio, RADAR_KEYS, RADAR_MIN_KILLS, RADAR_SQL, type AxisRank, type PlayerRatios, type RadarKey, type Ratio } from "./radar";
+import { RADAR_KEYS, RADAR_SQL, type RadarAverage } from "./radar";
 import { winsByMap } from "./shares";
 import type { PlaceKind } from "./places";
 import { placeSorts, rankingSorts, type PlaceSort, type RankingSort } from "./sorts";
@@ -727,52 +727,36 @@ export async function getPlayerPosition(game: string, skill: number) {
   return r?.n ?? null;
 }
 
-// Percentiles of the profile radar (radar.ts): one pass over the game's
-// ranked players counts, per axis, the comparable players, those with a
-// non-zero value and those below the player's total and current value.
-// "a/b below x/y" is compared as a*y < x*b (denominators are positive), in
-// DECIMAL/NUMERIC so it is exact and cannot overflow. Cached for 5 minutes
-// per player and values, like the other per-page helpers.
-const radarCache = new Map<string, { at: number; value: Promise<Partial<Record<RadarKey, AxisRank>>> }>();
+// Average of the profile radar (radar.ts): the game's ranked players active
+// in the last 14 days (rows in the daily history), their numerators and
+// denominators summed per axis, so the page divides them into the pooled
+// ratio. One query per game, cached for 5 minutes like the other helpers.
+const radarCache = new Map<string, { at: number; value: Promise<RadarAverage> }>();
 
-export function getRadarRanks(game: string, ratios: PlayerRatios): Promise<Partial<Record<RadarKey, AxisRank>>> {
-  const key = `${game}|${JSON.stringify(ratios)}`;
-  const hit = radarCache.get(key);
+export function getRadarAverage(game: string): Promise<RadarAverage> {
+  const hit = radarCache.get(game);
   if (hit && Date.now() - hit.at < 300_000) return hit.value;
-  if (radarCache.size > 500) radarCache.clear();
-  const value = loadRadarRanks(game, ratios);
-  value.catch(() => radarCache.delete(key));
-  radarCache.set(key, { at: Date.now(), value });
+  if (radarCache.size > 100) radarCache.clear();
+  const value = loadRadarAverage(game);
+  value.catch(() => radarCache.delete(game));
+  radarCache.set(game, { at: Date.now(), value });
   return value;
 }
 
-async function loadRadarRanks(game: string, ratios: PlayerRatios): Promise<Partial<Record<RadarKey, AxisRank>>> {
-  const cols: string[] = [];
-  const params: Param[] = [];
-  const below = (key: RadarKey, r: Ratio | null, name: string) => {
-    const v = axisRatio(key, r);
-    const s = RADAR_SQL[key];
-    if (!v) return cols.push(`NULL AS ${name}`);
-    cols.push(`SUM(CASE WHEN ${s.valid} AND 1.0 * ${s.num} * ? < 1.0 * ? * ${s.den} THEN 1 ELSE 0 END) AS ${name}`);
-    params.push(v.den, v.num);
-  };
-  for (const key of RADAR_KEYS) {
-    const s = RADAR_SQL[key];
-    cols.push(`SUM(CASE WHEN ${s.valid} THEN 1 ELSE 0 END) AS ${key}_n`, `SUM(CASE WHEN ${s.valid} AND ${s.num} > 0 THEN 1 ELSE 0 END) AS ${key}_nz`);
-    below(key, ratios[key].total, `${key}_bt`);
-    below(key, ratios[key].current, `${key}_bc`);
-  }
+async function loadRadarAverage(game: string): Promise<RadarAverage> {
+  const cols = RADAR_KEYS.flatMap((k) => [`SUM(h.${RADAR_SQL[k].num}) AS ${k}_num`, `SUM(h.${RADAR_SQL[k].den}) AS ${k}_den`]);
   const r = await queryOne<Record<string, number | string | null>>(
-    `SELECT ${cols.join(", ")} FROM hlstats_Players WHERE game = ? AND hideranking = 0 AND kills >= ?`,
-    [...params, game, RADAR_MIN_KILLS],
+    `SELECT COUNT(DISTINCT h.playerId) AS players, ${cols.join(", ")}
+     FROM hlstats_Players_History h
+     JOIN hlstats_Players p ON p.playerId = h.playerId AND p.hideranking = 0
+     WHERE h.game = ? AND ${sinceDays("h.eventTime")}`,
+    [game, 13],
   );
-  const num = (v: number | string | null | undefined) => (v === null || v === undefined ? null : Number(v));
-  return Object.fromEntries(
-    RADAR_KEYS.map((k) => [
-      k,
-      { n: num(r?.[`${k}_n`]) ?? 0, nonZero: num(r?.[`${k}_nz`]) ?? 0, belowTotal: num(r?.[`${k}_bt`]) ?? 0, belowCurrent: num(r?.[`${k}_bc`]) },
-    ]),
-  );
+  const num = (v: number | string | null | undefined) => Number(v ?? 0);
+  return {
+    players: num(r?.players),
+    ratios: Object.fromEntries(RADAR_KEYS.map((k) => [k, { num: num(r?.[`${k}_num`]), den: num(r?.[`${k}_den`]) }])) as RadarAverage["ratios"],
+  };
 }
 
 export type HistoryDay = {
