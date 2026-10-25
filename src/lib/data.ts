@@ -8,6 +8,7 @@ import type { MapSort } from "./map-table";
 import { playerCount, sumCounts, type PlayerCount } from "./player-count";
 import { axisRatio, RADAR_KEYS, RADAR_MIN_KILLS, RADAR_SQL, type AxisRank, type PlayerRatios, type RadarKey, type Ratio } from "./radar";
 import { winsByMap } from "./shares";
+import type { PlaceKind } from "./places";
 import { placeSorts, rankingSorts, type PlaceSort, type RankingSort } from "./sorts";
 
 // All reads of the HLstatsX/gameME tables the collector fills.
@@ -462,7 +463,7 @@ export type RankingRow = {
   hits: number;
   flag: string | null;
   country: string | null;
-  // Place in the whole ranking; only filled in a country or city ranking.
+  // Place in the whole ranking; only filled in a country, state or city ranking.
   globalRank?: number;
 };
 
@@ -475,12 +476,13 @@ export async function getRanking(opts: {
   search: string;
   limit: number;
   offset: number;
-  // Only players from this country (two-letter code) and/or city.
+  // Only players from this country (two-letter code), state and/or city.
   country?: string;
+  state?: string;
   city?: string;
   // Only members of this clan.
   clan?: number;
-  // Fill globalRank also without a country or city (API lists).
+  // Fill globalRank also without a country, state or city (API lists).
   withRank?: boolean;
 }) {
   const where = [`p.game = ?`, `p.hideranking = 0`];
@@ -497,11 +499,15 @@ export async function getRanking(opts: {
     where.push(`LOWER(l.flag) = ?`);
     params.push(opts.country);
   }
+  if (opts.state) {
+    where.push(`LOWER(l.state) = ?`);
+    params.push(opts.state.toLowerCase());
+  }
   if (opts.city) {
     where.push(`LOWER(l.city) = ?`);
     params.push(opts.city.toLowerCase());
   }
-  const local = !!(opts.country || opts.city);
+  const local = !!(opts.country || opts.state || opts.city);
   const from = `FROM hlstats_Players p
     LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
     LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
@@ -526,11 +532,11 @@ export async function getRanking(opts: {
   return { rows, total: count?.n ?? 0 };
 }
 
-// ---------------------------------------------------------------- countries and cities
+// ---------------------------------------------------------------- countries, states and cities
 
-// Countries and cities with ranked players, most players first (for the
-// selects above the ranking).
-export type PlaceOption = { code: string; name: string; city: string; players: number };
+// Countries, states and cities with ranked players, most players first (for
+// the selects above the ranking).
+export type PlaceOption = { code: string; name: string; state: string; city: string; players: number };
 
 // Counted over all players of a ranking, so kept for five minutes.
 const countryCache = new Map<string, { at: number; value: Promise<PlaceOption[]> }>();
@@ -547,7 +553,7 @@ export function getCountryOptions(game: string): Promise<PlaceOption[]> {
 
 function loadCountryOptions(game: string): Promise<PlaceOption[]> {
   return placeOptions(
-    `SELECT LOWER(l.flag) AS code, MAX(l.country) AS name, '' AS city, COUNT(*) AS players
+    `SELECT LOWER(l.flag) AS code, MAX(l.country) AS name, '' AS state, '' AS city, COUNT(*) AS players
      FROM hlstats_Players p
      JOIN hlstats_Players_Data d ON d.playerId = p.playerId
      JOIN hlstats_Players_Locations l ON l.id = d.location_id
@@ -557,9 +563,26 @@ function loadCountryOptions(game: string): Promise<PlaceOption[]> {
   );
 }
 
+// States are names (GeoIP subdivision). HLstatsX stored legacy region codes
+// of at most 3 characters ("02" for Bavaria) instead; the collector replaces
+// them on the next lookup, until then such players are not counted.
+const STATE_NAME = `CHAR_LENGTH(l.state) > 3`;
+
+export async function getStateOptions(game: string, country: string): Promise<PlaceOption[]> {
+  return placeOptions(
+    `SELECT LOWER(l.flag) AS code, MAX(l.country) AS name, l.state, '' AS city, COUNT(*) AS players
+     FROM hlstats_Players p
+     JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+     JOIN hlstats_Players_Locations l ON l.id = d.location_id
+     WHERE p.game = ? AND p.hideranking = 0 AND ${STATE_NAME} AND l.flag <> ''${country ? " AND LOWER(l.flag) = ?" : ""}
+     GROUP BY LOWER(l.flag), l.state ORDER BY players DESC, l.state LIMIT 500`,
+    country ? [game, country] : [game],
+  );
+}
+
 export async function getCityOptions(game: string, country: string): Promise<PlaceOption[]> {
   return placeOptions(
-    `SELECT LOWER(l.flag) AS code, MAX(l.country) AS name, l.city, COUNT(*) AS players
+    `SELECT LOWER(l.flag) AS code, MAX(l.country) AS name, '' AS state, l.city, COUNT(*) AS players
      FROM hlstats_Players p
      JOIN hlstats_Players_Data d ON d.playerId = p.playerId
      JOIN hlstats_Players_Locations l ON l.id = d.location_id
@@ -574,7 +597,7 @@ async function placeOptions(sql: string, params: Param[]) {
   return rows.map((r) => ({ ...r, players: Number(r.players) }));
 }
 
-// Ranking of countries or cities: summed and averaged player values.
+// Ranking of countries, states or cities: summed and averaged player values.
 export type PlaceRow = PlaceOption & {
   skill: number;
   avgSkill: number;
@@ -589,7 +612,7 @@ export { placeSorts, type PlaceSort } from "./sorts";
 
 export async function getPlaceRanking(opts: {
   game: string;
-  cities: boolean;
+  kind: PlaceKind;
   country: string;
   sort: PlaceSort;
   asc: boolean;
@@ -598,13 +621,17 @@ export async function getPlaceRanking(opts: {
 }) {
   const where = [`p.game = ?`, `p.hideranking = 0`, `l.flag <> ''`];
   const params: Param[] = [opts.game];
-  if (opts.cities) where.push(`l.city <> ''`);
+  // States and cities are grouped within their country, so places with the
+  // same name in two countries stay apart.
+  const col = opts.kind === "state" ? "l.state" : opts.kind === "city" ? "l.city" : "";
+  if (col) where.push(col === "l.state" ? STATE_NAME : `${col} <> ''`);
   if (opts.country) {
     where.push(`LOWER(l.flag) = ?`);
     params.push(opts.country);
   }
-  const group = opts.cities ? `LOWER(l.flag), l.city` : `LOWER(l.flag)`;
-  const inner = `SELECT LOWER(l.flag) AS code, MAX(l.country) AS name, ${opts.cities ? "l.city" : "''"} AS city,
+  const group = col ? `LOWER(l.flag), ${col}` : `LOWER(l.flag)`;
+  const inner = `SELECT LOWER(l.flag) AS code, MAX(l.country) AS name,
+      ${opts.kind === "state" ? "l.state" : "''"} AS state, ${opts.kind === "city" ? "l.city" : "''"} AS city,
       COUNT(*) AS players, SUM(p.skill) AS skill, ROUND(AVG(p.skill)) AS avgSkill,
       SUM(p.kills) AS kills, SUM(p.deaths) AS deaths, SUM(p.headshots) AS headshots,
       SUM(p.connection_time) AS connection_time, MAX(p.last_event) AS last_event
@@ -612,7 +639,7 @@ export async function getPlaceRanking(opts: {
     JOIN hlstats_Players_Data d ON d.playerId = p.playerId
     JOIN hlstats_Players_Locations l ON l.id = d.location_id
     WHERE ${where.join(" AND ")} GROUP BY ${group}`;
-  const order = `${placeSorts[opts.sort]} ${opts.asc ? "ASC" : "DESC"}, code, city`;
+  const order = `${placeSorts[opts.sort]} ${opts.asc ? "ASC" : "DESC"}, code, state, city`;
   const [rows, count] = await Promise.all([
     query<PlaceRow>(`SELECT * FROM (${inner}) x ORDER BY ${order} LIMIT ? OFFSET ?`, [...params, opts.limit, opts.offset]),
     queryOne<{ n: number }>(`SELECT COUNT(*) AS n FROM (${inner}) x`, params),
@@ -1656,12 +1683,12 @@ export type MapPlayer = {
 
 // Players of a ranking with a known location, most recently active first,
 // for the player map. Only the GeoIP city point is used, never an address.
-// place: only players of that country and/or city (country or city ranking).
+// place: only players of that country, state and/or city (country, state or city ranking).
 // order "skill": the best players of the ranking; "recent": the most recently active.
 export async function getMapPlayers(
   game: string,
   limit: number,
-  place: { country?: string; city?: string } = {},
+  place: { country?: string; state?: string; city?: string } = {},
   order: "skill" | "recent" = "recent",
 ): Promise<MapPlayer[]> {
   const params: Param[] = [game];
@@ -1669,6 +1696,10 @@ export async function getMapPlayers(
   if (place.country) {
     where += " AND LOWER(l.flag) = ?";
     params.push(place.country);
+  }
+  if (place.state) {
+    where += " AND LOWER(l.state) = ?";
+    params.push(place.state.toLowerCase());
   }
   if (place.city) {
     where += " AND LOWER(l.city) = ?";

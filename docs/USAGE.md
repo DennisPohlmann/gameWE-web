@@ -30,7 +30,7 @@ again every 5 minutes. The heading on `/` counts the real players.
 | `/` | all rankings with players online (with a total row when there are several), best player (Steam picture, flag) and clan (flag of its members' most common country), load of the last 30 days |
 | `/<game>` | a ranking: servers (flag of the server's country; on wide screens also the server version with a Linux or Windows icon and a VAC shield for VAC-secured servers, from the collector's `features.server_info`; `-` while unknown), live players per server by team, daily awards, activity |
 | `/<game>/servers/<id>` | one server: live view with the server's country flag, bots and flags, load graph of the last 24 hours (players, maps, uptime), counters, chat |
-| `/<game>/players` | ranking (sortable, search), `?view=new` for new players; country and city rankings with gameME's links: `?type=countryinfo` (all countries), `?type=countryinfo&valuecountry=de` (players of a country), `?type=cityinfo[&valuecountry=de]` (cities), `?type=cityinfo&valuecountry=de&valuecity=berlin` (players of a city; `valuecity` alone also works but joins cities of the same name) |
+| `/<game>/players` | ranking (sortable, search), `?view=new` for new players; country, state and city rankings with gameME's links: `?type=countryinfo` (all countries), `?type=countryinfo&valuecountry=de` (players of a country), `?type=stateinfo[&valuecountry=de]` (states: the GeoIP subdivision, e.g. German Bundesland or US state, counted per country; players whose location has no state name, such as the legacy region codes HLstatsX wrote, are left out until the collector looks them up again), `?type=stateinfo&valuecountry=de&valuestate=bavaria` (players of a state), `?type=cityinfo[&valuecountry=de]` (cities), `?type=cityinfo&valuecountry=de&valuecity=berlin` (players of a city; `valuecity` alone also works but joins cities of the same name) |
 | `/<game>/players/<id>` | player profile: Steam avatar and data, summary with radar (K/D, kills per minute, assists per kill, survived and won rounds as the percentile among the ranking's players with at least 10 kills, all time and last 14 days; axes the game does not record are left out; hover, tap or focus an axis for its values in a box that never covers the axis label), assists (with the assisted kills only when the collector counted any) and trend pills, player trend (its "Overview" link opens the sessions page), rank and career, ribbons, forum signature, hitbox, weapons, maps, opponents, latest events of the player (live, see the admin setting) |
 | `/<game>/clans`, `/<game>/clans/<id>` | clans and members |
 | `/<game>/awards` | daily awards with a calendar (`?date=YYYY-MM-DD`, `?month=YYYY-MM`); `?view=history`, `?view=ranks`, `?view=ribbons` (with most decorated players, `&class=N` filters a ribbon class) |
@@ -109,7 +109,7 @@ default order. Tables with their own params, as a page shows more than one:
 | `/search` | `sort`, `dir` | players: `name`, `game`, `points`, `kills`, `kpd`; clans: `clan`, `game`, `members`, `points` |
 | `/admin/<entity>` | `sort`, `dir` | every list column that is a column of the table (also kept when an edit page returns to the list) |
 
-The player ranking and the country and city rankings on `/<game>/players`
+The player ranking and the country, state and city rankings on `/<game>/players`
 sorted by their heads already (`sort`/`dir`), as does the weapons list.
 Small tables that are shown whole sort in the browser without
 reloading the page: on the player profile weapons, teams, actions, maps,
@@ -202,7 +202,7 @@ website therefore computes some things itself:
   on dark designs), OpenStreetMap, OSM Humanitarian, OpenTopoMap or CARTO
   (CARTO only for non-commercial sites up to 75,000 map views a month). The
   visitor's browser loads the tiles directly from the provider; the credit
-  is shown in the map. On a country or city ranking the map shows only the
+  is shown in the map. On a country, state or city ranking the map shows only the
   players of that place. Hovering a player shows name, city and country,
   rank (the same position as on the ranking and the player page: 1 + ranked
   players with more points, hidden players not counted), points, kills, K/D

@@ -12,7 +12,7 @@ on MariaDB/MySQL or PostgreSQL. It
 - has an admin area for settings, rankings, servers, players, definitions,
   users (with optional TOTP) and ranking resets,
 - offers a read-only public JSON API with paged lists of players, countries,
-  cities, clans, weapons, maps, awards, ranks and servers (documented on
+  states, cities, clans, weapons, maps, awards, ranks and servers (documented on
   `/api` with Scalar), forum signatures, server banners and a TeamSpeak banner,
 - comes in 13 languages and with design templates, including your own.
 

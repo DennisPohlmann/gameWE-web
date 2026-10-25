@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { PLACE_SORT_DEFAULT, placeSorts, rankingSorts, sortParam } from "../src/lib/sorts.ts";
 
-test("country and city rankings sort by total points by default", () => {
+test("country, state and city rankings sort by total points by default", () => {
   assert.equal(PLACE_SORT_DEFAULT, "skill");
   assert.equal(placeSorts[PLACE_SORT_DEFAULT], "skill");
   assert.equal(sortParam(placeSorts, "", PLACE_SORT_DEFAULT), "skill");
@@ -33,9 +33,9 @@ test("known keys are kept, unknown and inherited keys fall back", () => {
   assert.equal(sortParam(rankingSorts, "", "new"), "new");
 });
 
-test("the API lists countries and cities by total points by default", async () => {
+test("the API lists countries, states and cities by total points by default", async () => {
   const { endpoints } = await import("../src/lib/openapi.ts");
-  for (const path of ["/rankings/{game}/countries", "/rankings/{game}/cities"]) {
+  for (const path of ["/rankings/{game}/countries", "/rankings/{game}/states", "/rankings/{game}/cities"]) {
     const e = endpoints.find((x) => x.path === path);
     assert.equal(e?.list?.sort, "skill", path);
     assert.deepEqual(e?.list?.sorts, Object.keys(placeSorts), path);

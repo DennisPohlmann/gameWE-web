@@ -14,9 +14,9 @@ export function GET(req: Request, { params }: { params: Promise<{ game: string }
     const p = pagingArg(q);
     const { sort, asc } = sortArg(q, PLACE_SORTS, PLACE_SORT_DEFAULT, ["name"]);
     const country = countryArg(q);
-    const r = await getPlaceRanking({ game: game.code, cities: true, country, sort, asc, limit: p.limit, offset: p.offset });
+    const r = await getPlaceRanking({ game: game.code, kind: "city", country, sort, asc, limit: p.limit, offset: p.offset });
     return paged(
-      r.rows.map((x, i) => apiPlace(game.code, x, p.offset + i + 1, true)),
+      r.rows.map((x, i) => apiPlace(game.code, x, p.offset + i + 1, "city")),
       r.total,
       p,
       apiPath(`/rankings/${game.code}/cities`),

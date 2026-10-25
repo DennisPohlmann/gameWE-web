@@ -16,12 +16,14 @@ import {
   getPlayerLiveServers,
   getPlaceRanking,
   getRanking,
+  getStateOptions,
   placeSorts,
   rankingSorts,
   type PlaceSort,
   type RankingSort,
 } from "@/lib/data";
 import { mapMarkers, serverMarkers } from "@/lib/map-markers";
+import { parsePlaceQuery, placeTypes } from "@/lib/places";
 import { PLACE_SORT_DEFAULT, sortParam } from "@/lib/sorts";
 import { fmtNum, localeOf } from "@/lib/format";
 import { fill, getDict } from "@/lib/i18n";
@@ -51,19 +53,16 @@ export default async function PlayersPage({
 
   const view = strParam(sp.view) === "new" ? "new" : "";
   const mapAll = strParam(sp.map) === "all";
-  // Country and city rankings, with gameME's parameters:
-  // ?type=countryinfo[&valuecountry=de], ?type=cityinfo[&valuecity=madrid].
-  const rawType = strParam(sp.type);
-  const placeType = rawType === "countryinfo" || rawType === "cityinfo" ? rawType : "";
-  // The city select sends "de:frankfurt" when no country is chosen, so
-  // cities with the same name in two countries stay apart.
-  const rawCity = strParam(sp.valuecity).trim().toLowerCase();
-  const cityCountry = /^([a-z]{2}):(.+)$/.exec(rawCity);
-  const rawCountry = (cityCountry?.[1] ?? strParam(sp.valuecountry)).trim().toLowerCase();
-  const country = /^[a-z]{2}$/.test(rawCountry) ? rawCountry : "";
-  const cityName0 = cityCountry?.[2] ?? rawCity;
-  const city = placeType === "cityinfo" && cityName0.length <= 80 ? cityName0 : "";
-  const placeList = (placeType === "countryinfo" && !country) || (placeType === "cityinfo" && !city);
+  // Country, state and city rankings, with gameME's parameters (see places.ts).
+  const { type: placeType, country, state, city } = parsePlaceQuery({
+    type: strParam(sp.type),
+    valuecountry: strParam(sp.valuecountry),
+    valuestate: strParam(sp.valuestate),
+    valuecity: strParam(sp.valuecity),
+  });
+  const placeKind = placeType ? placeTypes[placeType] : "";
+  const placeList =
+    (placeKind === "country" && !country) || (placeKind === "state" && !state) || (placeKind === "city" && !city);
   const rawSort = strParam(sp.sort);
   const sort: RankingSort = sortParam(rankingSorts, rawSort, view === "new" ? "new" : "skill");
   const placeSort: PlaceSort = sortParam(placeSorts, rawSort, PLACE_SORT_DEFAULT);
@@ -73,7 +72,7 @@ export default async function PlayersPage({
   const { pageSize, activityDays, mapPlayers: showMap, mapStyle } = await getSettings();
   const limit = rowsParam(sp.rows, pageSize);
 
-  const [{ rows, total }, places, mapPlayers, mapServers, countries, cities] = await Promise.all([
+  const [{ rows, total }, places, mapPlayers, mapServers, countries, states, cities] = await Promise.all([
     placeList
       ? { rows: [], total: 0 }
       : getRanking({
@@ -84,12 +83,13 @@ export default async function PlayersPage({
           limit,
           offset: (page - 1) * limit,
           country,
+          state,
           city,
         }),
-    placeList
+    placeList && placeKind
       ? getPlaceRanking({
           game,
-          cities: placeType === "cityinfo",
+          kind: placeKind,
           country,
           sort: placeSort,
           asc,
@@ -97,11 +97,12 @@ export default async function PlayersPage({
           offset: (page - 1) * limit,
         })
       : null,
-    // The map follows the filter: the players of one country or city.
-    showMap ? getMapPlayers(game, mapAll ? MAP_ALL_LIMIT : MAP_LIMIT, placeList && placeType === "countryinfo" ? {} : { country, city }, "skill") : [],
+    // The map follows the filter: the players of one country, state or city.
+    showMap ? getMapPlayers(game, mapAll ? MAP_ALL_LIMIT : MAP_LIMIT, placeList && placeKind === "country" ? {} : { country, state, city }, "skill") : [],
     showMap ? getMapServers(game) : [],
     getCountryOptions(game),
-    placeType === "cityinfo" ? getCityOptions(game, country) : [],
+    placeKind === "state" ? getStateOptions(game, country) : [],
+    placeKind === "city" ? getCityOptions(game, country) : [],
   ]);
   // The top 10 map joins each player who is online right now to their
   // server, as the live map does; with all players the lines would cover
@@ -123,15 +124,16 @@ export default async function PlayersPage({
     dir: asc ? "asc" : undefined,
     type: placeType || undefined,
     valuecountry: country || undefined,
+    valuestate: state || undefined,
     valuecity: city || undefined,
     map: mapAll ? "all" : undefined,
     rows: limit !== pageSize ? limit : undefined,
   };
   const rowOptions = { value: limit, options: [...new Set([pageSize, ...ROW_OPTIONS])].sort((a, b) => a - b) };
   // Rank numbers are positions only in the unfiltered points ranking (or
-  // the points ranking of one country or city).
+  // the points ranking of one country, state or city).
   const showRank = sort === "skill" && !asc && !q;
-  const local = !!(country || city);
+  const local = !!(country || state || city);
   const countryName = countries.find((c) => c.code === country)?.name || country.toUpperCase();
   const cityOptions = cities.map((c) => ({
     value: country ? c.city.toLowerCase() : `${c.code}:${c.city.toLowerCase()}`,
@@ -139,12 +141,19 @@ export default async function PlayersPage({
     players: c.players,
   }));
   const cityName = cities.find((c) => c.city.toLowerCase() === city && (!country || c.code === country))?.city || city;
+  const stateOptions = states.map((c) => ({
+    value: country ? c.state.toLowerCase() : `${c.code}:${c.state.toLowerCase()}`,
+    label: country ? c.state : `${c.state} (${c.code.toUpperCase()})`,
+    players: c.players,
+  }));
+  const stateName = states.find((c) => c.state.toLowerCase() === state && (!country || c.code === country))?.state || state;
   const placeForm = (
     // Keyed by the filter, so the selects show it again after a change.
-    <PlaceSelect key={`${placeType}|${country}|${city}`} action={base}>
+    <PlaceSelect key={`${placeType}|${country}|${state}|${city}`} action={base}>
       <select {...noAutofill} name="type" defaultValue={placeType} aria-label={t.rankingType}>
         <option value="">{t.playerRanking}</option>
         <option value="countryinfo">{t.countryRanking}</option>
+        <option value="stateinfo">{t.stateRanking}</option>
         <option value="cityinfo">{t.cityRanking}</option>
       </select>
       <select {...noAutofill} name="valuecountry" defaultValue={country} aria-label={t.placeCountry}>
@@ -155,7 +164,17 @@ export default async function PlayersPage({
           </option>
         ))}
       </select>
-      {placeType === "cityinfo" ? (
+      {placeKind === "state" ? (
+        <select {...noAutofill} name="valuestate" defaultValue={state && (country ? state : "")} aria-label={t.placeState}>
+          <option value="">{t.allStates}</option>
+          {stateOptions.map((c) => (
+            <option key={c.value} value={c.value}>
+              {c.label} [{fmtNum(c.players, lang)}]
+            </option>
+          ))}
+        </select>
+      ) : null}
+      {placeKind === "city" ? (
         <select {...noAutofill} name="valuecity" defaultValue={city && (country ? city : "")} aria-label={t.placeCity}>
           <option value="">{t.allCities}</option>
           {cityOptions.map((c) => (
@@ -231,19 +250,20 @@ export default async function PlayersPage({
             />
             {placeType ? <input type="hidden" name="type" value={placeType} /> : null}
             {country ? <input type="hidden" name="valuecountry" value={country} /> : null}
+            {state ? <input type="hidden" name="valuestate" value={state} /> : null}
             {city ? <input type="hidden" name="valuecity" value={city} /> : null}
             <button type="submit">{t.search}</button>
           </Form>
           </>
         }
       >
-        {places ? (
+        {places && placeKind ? (
           places.rows.length ? (
             <>
               <PlaceTable
                 game={game}
                 rows={places.rows}
-                cities={placeType === "cityinfo"}
+                kind={placeKind}
                 firstRank={(page - 1) * limit + 1}
                 sort={{ current: placeSort, asc, base, params: keep }}
                 t={t}
@@ -259,7 +279,7 @@ export default async function PlayersPage({
             {local ? (
               <p className="lead">
                 <Flag code={country} />
-                {fill(t.playersIn, { place: city ? cityName : countryName })}
+                {fill(t.playersIn, { place: city ? cityName : state ? stateName : countryName })}
               </p>
             ) : null}
             <RankingTable

@@ -9,7 +9,7 @@ import { PLACE_SORT_DEFAULT, placeSorts, type PlaceSort } from "./sorts";
 
 type Schema = Record<string, unknown>;
 type Param = { name: string; in: "path" | "query"; description: string; schema: Schema; required?: boolean; example?: unknown };
-type Tag = "Rankings" | "Players" | "Countries and cities" | "Clans" | "Weapons" | "Maps" | "Awards and ranks" | "Actions and teams" | "Servers" | "Statistics";
+type Tag = "Rankings" | "Players" | "Countries, states and cities" | "Clans" | "Weapons" | "Maps" | "Awards and ranks" | "Actions and teams" | "Servers" | "Statistics";
 type Endpoint = {
   path: string;
   operationId: string;
@@ -135,7 +135,7 @@ const schemas: Record<string, Schema> = {
     hpk: fraction("Headshots per kill"),
     connectionTime: int("Time on the servers in seconds"),
     lastEvent: unix("Last seen of its most recent player"),
-    playersUrl: link("its players (/rankings/{game}/players with country and city)"),
+    playersUrl: link("its players (/rankings/{game}/players with country, state or city)"),
   }),
   Clan: obj({
     id: int("Clan ID"),
@@ -333,10 +333,11 @@ export const endpoints: Endpoint[] = [
     tag: "Players",
     summary: "Players of a ranking",
     description:
-      "The ranking as a paged list, with the filters of the website: country, city, clan and a name search. `rank` is always the place in the whole ranking by points, also in a filtered or re-sorted list. Hidden and banned players are not listed. Sort fields: `skill` points, `name`, `activity` last seen, `time` time on the servers, `kills`, `deaths`, `kpd`, `hs` headshots, `hpk` headshots per kill, `acc` accuracy, `new` first seen.",
+      "The ranking as a paged list, with the filters of the website: country, state, city, clan and a name search. `rank` is always the place in the whole ranking by points, also in a filtered or re-sorted list. Hidden and banned players are not listed. Sort fields: `skill` points, `name`, `activity` last seen, `time` time on the servers, `kills`, `deaths`, `kpd`, `hs` headshots, `hpk` headshots per kill, `acc` accuracy, `new` first seen.",
     params: [
       gameParam,
       countryQuery,
+      { name: "state", in: "query", description: "Only this state or region (exact GeoIP name, any case; best together with country)", schema: str("", { maxLength: 80 }), example: "Bavaria" },
       { name: "city", in: "query", description: "Only this city (exact name, any case; best together with country)", schema: str("", { maxLength: 80 }), example: "Berlin" },
       { name: "clan", in: "query", description: "Only members of this clan (clan ID)", schema: int("", { minimum: 1 }) },
       { name: "q", in: "query", description: "Part of the current name", schema: str("", { maxLength: 64 }) },
@@ -362,11 +363,11 @@ export const endpoints: Endpoint[] = [
     example: { game: "css", name: "Counter-Strike: Source", baseGame: "css", totals: { players: 1234, rankedPlayers: 1180, newPlayers24h: 5, kills: 456789, headshots: 123456, servers: 2 }, days },
     notFound: "Unknown ranking",
   },
-  // ------------------------------------------------------------ countries and cities
+  // ------------------------------------------------------------ countries, states and cities
   {
     path: "/rankings/{game}/countries",
     operationId: "listCountries",
-    tag: "Countries and cities",
+    tag: "Countries, states and cities",
     summary: "Country ranking",
     description: "Countries of the ranked players (by GeoIP of their last connect) with summed and averaged values, by total points (`?sort=players` orders by number of players). `avg` sorts by average points.",
     params: [gameParam],
@@ -377,7 +378,7 @@ export const endpoints: Endpoint[] = [
   {
     path: "/rankings/{game}/countries/{country}",
     operationId: "getCountry",
-    tag: "Countries and cities",
+    tag: "Countries, states and cities",
     summary: "One country",
     description: "Totals of one country and its place in the country ranking by total points. Its players: `playersUrl`.",
     params: [gameParam, { name: "country", in: "path", required: true, description: "ISO 3166-1 alpha-2 code, any case", schema: str("", { pattern: "^[A-Za-z]{2}$" }), example: "de" }],
@@ -386,9 +387,20 @@ export const endpoints: Endpoint[] = [
     notFound: "Unknown ranking, or no ranked player from this country",
   },
   {
+    path: "/rankings/{game}/states",
+    operationId: "listStates",
+    tag: "Countries, states and cities",
+    summary: "State ranking",
+    description: "States and regions of the ranked players (GeoIP subdivision of their last connect), optionally of one country, by total points (`?sort=players` orders by number of players). States are counted per country, so the same name in two countries stays apart. Its players: `playersUrl` (country and state filter of `/players`).",
+    params: [gameParam, countryQuery],
+    list: { item: "PlaceState", sorts: PLACE_SORTS, sort: PLACE_SORT_DEFAULT },
+    example: page([{ ...place, state: "Bavaria", players: 88, playersUrl: `${v1("/rankings/css/players")}?country=de&state=Bavaria` }], 16, "/rankings/css/states", { country: "de" }),
+    notFound: "Unknown ranking",
+  },
+  {
     path: "/rankings/{game}/cities",
     operationId: "listCities",
-    tag: "Countries and cities",
+    tag: "Countries, states and cities",
     summary: "City ranking",
     description: "Cities of the ranked players, optionally of one country, by total points (`?sort=players` orders by number of players). Its players: `playersUrl` (country and city filter of `/players`).",
     params: [gameParam, countryQuery],
@@ -814,6 +826,7 @@ export const endpoints: Endpoint[] = [
   },
 ];
 
+schemas.PlaceState = { allOf: [ref("Place"), obj({ state: str("State or region (GeoIP subdivision)") })] };
 schemas.PlaceCity = { allOf: [ref("Place"), obj({ city: str("City") })] };
 schemas.MapRanked = { allOf: [obj({ rank: int("Position in this list") }), ref("Map")] };
 schemas.ClanRanked = { allOf: [obj({ rank: int("Position in this list") }), ref("Clan")] };
@@ -892,7 +905,7 @@ export function openApiDocument(version: string) {
     },
     // Relative, so the examples show the address of the site they are read on.
     servers: [{ url: `${basePath}/api/v1` }],
-    tags: [{ name: "Index" }, ...(["Rankings", "Players", "Countries and cities", "Clans", "Weapons", "Maps", "Awards and ranks", "Actions and teams", "Servers", "Statistics"] satisfies Tag[]).map((name) => ({ name }))],
+    tags: [{ name: "Index" }, ...(["Rankings", "Players", "Countries, states and cities", "Clans", "Weapons", "Maps", "Awards and ranks", "Actions and teams", "Servers", "Statistics"] satisfies Tag[]).map((name) => ({ name }))],
     paths,
     components: { schemas },
   };

@@ -3,6 +3,9 @@ import Link from "next/link";
 import { unlinkedBots, type PlaceRow, type RankingRow } from "@/lib/data";
 import { activity, fmtDate, fmtDuration, fmtNum, fmtPct, kpd, ratio } from "@/lib/format";
 import type { Dict, Lang } from "@/lib/i18n";
+import { placeHref, type PlaceKind } from "@/lib/places";
+
+export { placeHref };
 
 // The ranking's sort keys (rankingSorts in data.ts) as values of loaded
 // rows, for player lists that are shown whole (clan members).
@@ -112,11 +115,11 @@ export async function RankingTable({
   );
 }
 
-// Ranking of countries or cities; each row links to the players of that place.
+// Ranking of countries, states or cities; each row links to the players of that place.
 export function PlaceTable({
   game,
   rows,
-  cities,
+  kind,
   firstRank,
   sort,
   t,
@@ -124,7 +127,7 @@ export function PlaceTable({
 }: {
   game: string;
   rows: PlaceRow[];
-  cities: boolean;
+  kind: PlaceKind;
   firstRank: number;
   sort: SortProps;
   t: Dict;
@@ -137,7 +140,7 @@ export function PlaceTable({
         <thead>
           <tr>
             <th className="num">#</th>
-            {th(cities ? t.placeCity : t.placeCountry, "name", "")}
+            {th(kind === "city" ? t.placeCity : kind === "state" ? t.placeState : t.placeCountry, "name", "")}
             {th(t.players, "players")}
             {th(t.avgPoints, "avg")}
             {th(t.totalPoints, "skill", "num hide-sm")}
@@ -150,11 +153,11 @@ export function PlaceTable({
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={`${r.code}|${r.city}`}>
+            <tr key={`${r.code}|${r.state}|${r.city}`}>
               <td className="rank">{fmtNum(firstRank + i, lang)}</td>
               <td>
                 <Flag code={r.code} title={r.name} />
-                <Link href={placeHref(game, r.code, cities ? r.city : "")}>{cities ? r.city : r.name || r.code.toUpperCase()}</Link>
+                <Link href={placeHref(game, r.code, r.city, r.state)}>{r.city || r.state || r.name || r.code.toUpperCase()}</Link>
               </td>
               <td className="num">{fmtNum(r.players, lang)}</td>
               <td className="num">{fmtNum(r.avgSkill, lang)}</td>
@@ -172,13 +175,4 @@ export function PlaceTable({
       </table>
     </TableWrap>
   );
-}
-
-// Players of a country or city, in gameME's link form
-// (/<game>/players?type=countryinfo&valuecountry=de, ...?type=cityinfo&valuecity=madrid);
-// city links also name the country, as a city name can exist twice.
-export function placeHref(game: string, country: string, city = ""): string {
-  const c = country.toLowerCase();
-  const q = new URLSearchParams(city ? { type: "cityinfo", ...(c ? { valuecountry: c } : {}), valuecity: city.toLowerCase() } : { type: "countryinfo", valuecountry: c });
-  return `/${game}/players?${q}`;
 }

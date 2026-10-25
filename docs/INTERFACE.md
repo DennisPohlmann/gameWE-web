@@ -43,10 +43,11 @@ parameters are ignored.
 | `/api/v1` | list of the endpoints and the link to the documentation |
 | `/api/v1/rankings` | all rankings with servers, players online (`players`, bots included, and `bots`), best player and clan |
 | `/api/v1/rankings/<game>?limit=10&offset=0` | one ranking: totals and the best players by points (limit 1-100) |
-| `/api/v1/rankings/<game>/players` | the ranking as a paged list; filters `country`, `city`, `clan`, `q` (name); `sort` by points, name, activity, time, kills, deaths, K:D, headshots, HS/kill, accuracy or first seen |
+| `/api/v1/rankings/<game>/players` | the ranking as a paged list; filters `country`, `state`, `city`, `clan`, `q` (name); `sort` by points, name, activity, time, kills, deaths, K:D, headshots, HS/kill, accuracy or first seen |
 | `/api/v1/rankings/<game>/stats?days=30` | totals and activity per day (players, kills, headshots) |
 | `/api/v1/rankings/<game>/countries` | country ranking (players, points, kills summed per country), by total points by default (`?sort=players` for the number of players) |
 | `/api/v1/rankings/<game>/countries/<code>` | one country with its place in the country ranking by total points |
+| `/api/v1/rankings/<game>/states?country=de` | state ranking (GeoIP subdivision: German Bundesland, US state, ...), optionally of one country, by total points by default; states are counted per country |
 | `/api/v1/rankings/<game>/cities?country=de` | city ranking, optionally of one country, by total points by default |
 | `/api/v1/rankings/<game>/clans` | clan ranking (clans with at least two ranked members) |
 | `/api/v1/rankings/<game>/clans/<id>` | one clan |

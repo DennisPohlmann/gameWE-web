@@ -2,19 +2,21 @@ import "server-only";
 import { apiPath } from "./api";
 import { kpd, share } from "./api-params";
 import { placeSorts, type PlaceRow, type PlaceSort } from "./data";
+import type { PlaceKind } from "./places";
 
-// Countries and cities in the public API (/api/v1/rankings/{game}/countries, /cities).
+// Countries, states and cities in the public API (/api/v1/rankings/{game}/countries, /states, /cities).
 
 export const PLACE_SORTS = Object.keys(placeSorts) as PlaceSort[];
 
 // rank: place in this list (null when unknown).
-export function apiPlace(game: string, r: PlaceRow, rank: number | null, city: boolean) {
+export function apiPlace(game: string, r: PlaceRow, rank: number | null, kind: PlaceKind) {
   const code = r.code.trim().toUpperCase();
-  const filter = new URLSearchParams({ country: code.toLowerCase(), ...(city ? { city: r.city } : {}) });
+  const place: Record<string, string> = kind === "state" ? { state: r.state } : kind === "city" ? { city: r.city } : {};
+  const filter = new URLSearchParams({ country: code.toLowerCase(), ...place });
   return {
     rank,
     country: { code, name: r.name ?? "" },
-    ...(city ? { city: r.city } : {}),
+    ...place,
     players: r.players,
     skill: r.skill,
     avgSkill: r.avgSkill,

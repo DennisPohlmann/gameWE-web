@@ -119,11 +119,12 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const fav = weapons[0];
   const rank = rankFor(p.kills, ranks);
   const rankProgress = rank && rank.next !== null ? (p.kills - rank.minimum) / (rank.next - rank.minimum) : 1;
-  // City and country link to the ranking of that place.
+  // City, state and country link to the ranking of that place.
   const code = /^[a-z]{2}$/i.test(p.flag ?? "") ? (p.flag as string) : "";
   const location = [
     p.city ? (code ? <Link key="c" href={placeHref(game, code, p.city)}>{p.city}</Link> : p.city) : null,
-    p.state,
+    // A legacy HLstatsX region code ("02") has no state ranking.
+    p.state ? (code && p.state.length > 3 ? <Link key="s" href={placeHref(game, code, "", p.state)}>{p.state}</Link> : p.state) : null,
     p.country ? (code ? <Link key="l" href={placeHref(game, code)}>{p.country}</Link> : p.country) : null,
   ]
     .filter(Boolean)

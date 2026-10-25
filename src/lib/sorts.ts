@@ -31,7 +31,7 @@ export const placeSorts = {
 } as const;
 export type PlaceSort = keyof typeof placeSorts;
 
-// The country and city rankings are ordered by total points by default.
+// The country, state and city rankings are ordered by total points by default.
 export const PLACE_SORT_DEFAULT: PlaceSort = "skill";
 
 // Own keys only, so "constructor" or "toString" never reach the SQL.
