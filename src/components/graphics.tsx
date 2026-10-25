@@ -3,51 +3,10 @@ import { ChartHead } from "./chart-head";
 import { HoverTip } from "./hover-tip";
 import { tipText } from "./tip-text";
 
-// Server-rendered SVG graphics: radar and spark pills of the player profile,
-// pies, weekday bars and the server load. Hovering shows the values
-// (HoverTip box, data-tip); the player trend is ComboChart in chart.tsx.
-
-export type RadarAxis = { label: string; total: number; current: number; text: string };
-
-// Pentagon (or n-gon) chart: grey = all time, orange = last two weeks.
-// Values are 0..1.
-export function Radar({ axes, labels }: { axes: RadarAxis[]; labels: { total: string; current: string } }) {
-  const n = axes.length;
-  const c = 110;
-  const r = 70;
-  const pt = (i: number, v: number) => {
-    const a = (Math.PI * 2 * i) / n - Math.PI / 2;
-    const k = Math.max(0.03, Math.min(1, v)) * r;
-    return [c + k * Math.cos(a), c + k * Math.sin(a)];
-  };
-  const poly = (vals: number[]) => vals.map((v, i) => pt(i, v).map((x) => x.toFixed(1)).join(",")).join(" ");
-  return (
-    <svg className="radar" viewBox="0 0 220 220" role="img" aria-label={axes.map((a) => `${a.label} ${a.text}`).join(", ")}>
-      {[0.25, 0.5, 0.75, 1].map((g) => (
-        <polygon key={g} className="radar-grid" points={poly(axes.map(() => g))} />
-      ))}
-      {axes.map((_, i) => {
-        const [x, y] = pt(i, 1);
-        return <line key={i} className="radar-grid" x1={c} y1={c} x2={x} y2={y} />;
-      })}
-      <polygon className="radar-total" points={poly(axes.map((a) => a.total))}>
-        <title>{labels.total}</title>
-      </polygon>
-      <polygon className="radar-current" points={poly(axes.map((a) => a.current))}>
-        <title>{labels.current}</title>
-      </polygon>
-      {axes.map((a, i) => {
-        const [x, y] = pt(i, 1.28);
-        return (
-          <text key={a.label} className="radar-label" x={x} y={y + 3} textAnchor={x < c - 5 ? "end" : x > c + 5 ? "start" : "middle"}>
-            <title>{a.text}</title>
-            {a.label}
-          </text>
-        );
-      })}
-    </svg>
-  );
-}
+// Server-rendered SVG graphics: spark pills of the player profile, pies,
+// weekday bars and the server load. Hovering shows the values (HoverTip box,
+// data-tip); the player trend is ComboChart in chart.tsx and the radar a
+// client component (radar.tsx).
 
 // gameME's value strip as one fixed-size graphic, the same width in every row:
 // total | current | daily values | min | max. The graph scales the days, the
