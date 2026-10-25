@@ -8,7 +8,7 @@ import { RankBadge, Ribbon, RibbonLevel, rankName, ribbonClassName } from "@/com
 import { Radar, Spark, TrendChart } from "@/components/graphics";
 import { Hitbox } from "@/components/hitbox";
 import { SigCode } from "@/components/sig-code";
-import { PlayerFragsLive } from "@/components/player-frags-live";
+import { PlayerEvents } from "@/components/game-events";
 import { ZONES } from "@/lib/zones";
 import { awardValue, getAwards, getPlayerRibbons, getRanks, getRibbonClasses, rankFor, ribbonFor, ribbonProgress } from "@/lib/awards";
 import { siteDay } from "@/lib/day";
@@ -28,7 +28,6 @@ import {
   getPlayerAwards,
   getPlayerFlags,
   noProfile,
-  getPlayerFrags,
   getPlayerHistory,
   getPlayerMaps,
   getPlayerNames,
@@ -75,7 +74,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const { lang, t } = await getDict();
   const [settings, access] = await Promise.all([getSettings(), historyAccess()]);
   const ids = steamIds(p.uniqueId);
-  const [position, history, names, weapons, maps, teams, actions, frags, victims, killers, killStats, awards, ranks, chat, steam, ribbons, allAwards, classes, sigUrl, origin] =
+  const [position, history, names, weapons, maps, teams, actions, victims, killers, killStats, awards, ranks, chat, steam, ribbons, allAwards, classes, sigUrl, origin] =
     await Promise.all([
       p.hideranking ? Promise.resolve(null) : getPlayerPosition(game, p.skill),
       getPlayerHistory(id, 30),
@@ -84,7 +83,6 @@ export default async function PlayerPage({ params, searchParams }: Props) {
       getPlayerMaps(id),
       getPlayerTeams(id),
       getPlayerActions(id),
-      getPlayerFrags(id, 25),
       getOpponents(id, "victims"),
       getOpponents(id, "killers"),
       getPlayerKillStats(id),
@@ -100,7 +98,6 @@ export default async function PlayerPage({ params, searchParams }: Props) {
     ]);
   const imgStyles = await imageStyles(lang === "de" ? "de" : "en");
   const flags = await getPlayerFlags([
-    ...frags.flatMap((f) => [f.victimId, f.killerId]),
     ...victims.map((o) => o.playerId),
     ...killers.map((o) => o.playerId),
     ...killStats.map((o) => o.playerId),
@@ -618,18 +615,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
         {killers.length ? <OpponentTable title={t.killers} rows={killers} game={game} t={t} lang={lang} flags={flags} /> : null}
       </div>
 
-      {frags.length && settings.playerEvents !== "off" ? (
-        <PlayerFragsLive
-          title={t.recentKills}
-          game={game}
-          playerId={id}
-          lang={lang}
-          live={settings.playerEvents === "live"}
-          initial={frags}
-          initialFlags={Object.fromEntries(frags.flatMap((f) => [f.victimId, f.killerId]).flatMap((x) => (flags.has(x) ? [[x, flags.get(x)!]] : [])))}
-          labels={{ date: t.date, kills: t.kills, weapons: t.weapons, map: t.map, killed: t.killed, killedBy: t.killedBy, liveData: t.liveData, liveUpdates: t.liveUpdates }}
-        />
-      ) : null}
+      <PlayerEvents game={game} playerId={id} t={t} lang={lang} />
 
       <div className="grid-2">
         {names.length ? (
@@ -700,7 +686,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
         ) : null}
       </div>
 
-      {!weapons.length && !frags.length && !history.length ? <Empty>{t.noData}</Empty> : null}
+      {!weapons.length && !history.length ? <Empty>{t.noData}</Empty> : null}
       {killList.length ? (
         <Section title={t.killStats}>
           <p className="muted small">{t.killStatsHint}</p>

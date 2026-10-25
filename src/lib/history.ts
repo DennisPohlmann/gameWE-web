@@ -204,57 +204,64 @@ export async function hasEventServer() {
   return serverCol.ok;
 }
 
-function gameSources(withServer: boolean): string[] {
+// One SELECT per event table, all with the same columns; `by` is the column
+// the source is filtered on (a constant from GAME_BY / PLAYER_BY, never input).
+function gameSource(kind: GameEventKind, by: string, withServer: boolean): string {
   // Only the name of the server, never other columns of hlstats_Servers.
   const m = withServer
     ? `LEFT JOIN hlstats_Maps m ON m.id = e.map LEFT JOIN (SELECT serverId, name FROM hlstats_Servers) s ON s.serverId = e.server_id`
     : `LEFT JOIN hlstats_Maps m ON m.id = e.map`;
   const srv = withServer ? `COALESCE(s.name, '') AS server` : `'' AS server`;
+  const w = `WHERE ${by} = ?`;
   const all: Record<GameEventKind, string> = {
-    entry: `SELECT e.timestamp_id AS ts, 'entry' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map, ${srv} FROM hlstats_Events_Entries e ${m} WHERE e.game_id = ?`,
-    disconnect: `SELECT e.timestamp_id AS ts, 'disconnect' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map, ${srv} FROM hlstats_Events_Disconnects e ${m} WHERE e.game_id = ?`,
+    entry: `SELECT e.timestamp_id AS ts, 'entry' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map, ${srv} FROM hlstats_Events_Entries e ${m} ${w}`,
+    disconnect: `SELECT e.timestamp_id AS ts, 'disconnect' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map, ${srv} FROM hlstats_Events_Disconnects e ${m} ${w}`,
     team: `SELECT e.timestamp_id AS ts, 'team' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, COALESCE(t.name, '') AS text, COALESCE(t.code, '') AS code, m.map AS map, ${srv}
-           FROM hlstats_Events_ChangeTeam e LEFT JOIN hlstats_Teams t ON t.teamId = e.team ${m} WHERE e.game_id = ?`,
+           FROM hlstats_Events_ChangeTeam e LEFT JOIN hlstats_Teams t ON t.teamId = e.team ${m} ${w}`,
     action: `SELECT e.timestamp_id AS ts, 'action' AS kind, e.playerId AS actor, e.bonus AS num, 0 AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map, ${srv}
-             FROM hlstats_Events_PlayerActions e LEFT JOIN hlstats_Actions a ON a.id = e.actionId ${m} WHERE e.game_id = ?`,
+             FROM hlstats_Events_PlayerActions e LEFT JOIN hlstats_Actions a ON a.id = e.actionId ${m} ${w}`,
     playeraction: `SELECT e.timestamp_id AS ts, 'playeraction' AS kind, e.playerId AS actor, e.bonus AS num, e.victimId AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map, ${srv}
-                   FROM hlstats_Events_PlayerPlayerActions e LEFT JOIN hlstats_Actions a ON a.id = e.actionId ${m} WHERE e.game_id = ?`,
+                   FROM hlstats_Events_PlayerPlayerActions e LEFT JOIN hlstats_Actions a ON a.id = e.actionId ${m} ${w}`,
     teambonus: `SELECT e.timestamp_id AS ts, 'teambonus' AS kind, e.playerId AS actor, e.bonus AS num, 0 AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map, ${srv}
-                FROM hlstats_Events_TeamBonuses e LEFT JOIN hlstats_Actions a ON a.id = e.actionId ${m} WHERE e.game_id = ?`,
+                FROM hlstats_Events_TeamBonuses e LEFT JOIN hlstats_Actions a ON a.id = e.actionId ${m} ${w}`,
     kill: `SELECT e.timestamp_id AS ts, 'kill' AS kind, e.killerId AS actor, e.headshot AS num, e.victimId AS other, COALESCE(w.name, '') AS text, COALESCE(w.code, '') AS code, m.map AS map, ${srv}
-           FROM hlstats_Events_Frags e LEFT JOIN hlstats_Weapons w ON w.weaponId = e.weapon ${m} WHERE e.game_id = ?`,
+           FROM hlstats_Events_Frags e LEFT JOIN hlstats_Weapons w ON w.weaponId = e.weapon ${m} ${w}`,
     suicide: `SELECT e.timestamp_id AS ts, 'suicide' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, COALESCE(w.name, '') AS text, COALESCE(w.code, '') AS code, m.map AS map, ${srv}
-              FROM hlstats_Events_Suicides e LEFT JOIN hlstats_Weapons w ON w.weaponId = e.weapon ${m} WHERE e.game_id = ?`,
+              FROM hlstats_Events_Suicides e LEFT JOIN hlstats_Weapons w ON w.weaponId = e.weapon ${m} ${w}`,
     teamkill: `SELECT e.timestamp_id AS ts, 'teamkill' AS kind, e.killerId AS actor, 0 AS num, e.victimId AS other, COALESCE(w.name, '') AS text, COALESCE(w.code, '') AS code, m.map AS map, ${srv}
-               FROM hlstats_Events_Teamkills e LEFT JOIN hlstats_Weapons w ON w.weaponId = e.weapon ${m} WHERE e.game_id = ?`,
+               FROM hlstats_Events_Teamkills e LEFT JOIN hlstats_Weapons w ON w.weaponId = e.weapon ${m} ${w}`,
   };
-  return LIVE_KINDS.map((k) => all[k]);
+  return all[kind];
 }
 
-const gameCache = new Map<string, { at: number; value: Promise<GameEvent[]> }>();
+// The live box of a ranking: every live kind of the ranking's servers.
+const GAME_BY: [GameEventKind, string][] = LIVE_KINDS.map((k) => [k, "e.game_id"]);
+// The live box of a player: the same kinds with the player on either side
+// (kills and deaths, actions on and by the player). Each column has an
+// index (killer_time, victim_time, playerId, victimId).
+const PLAYER_BY: [GameEventKind, string][] = [
+  ["kill", "e.killerId"],
+  ["kill", "e.victimId"],
+  ["action", "e.playerId"],
+  ["playeraction", "e.playerId"],
+  ["playeraction", "e.victimId"],
+  ["teambonus", "e.playerId"],
+];
 
-// Kept for 30 seconds per ranking.
-export function getGameEvents(game: string, limit: number): Promise<GameEvent[]> {
-  const key = `${game}|${limit}`;
-  const hit = gameCache.get(key);
-  if (hit && Date.now() - hit.at < 3_000) return hit.value;
-  if (gameCache.size > 100) gameCache.clear();
-  const value = loadGameEvents(game, limit);
-  gameCache.set(key, { at: Date.now(), value });
-  value.catch(() => gameCache.delete(key));
-  return value;
+type RawEvent = Omit<GameEvent, "actorName" | "otherName">;
+
+// Newest `n` rows over the sources, each source limited to `n` itself, so a
+// long history is not read in full.
+async function loadEvents(by: [GameEventKind, string][], id: number, n: number): Promise<RawEvent[]> {
+  const withServer = await hasEventServer();
+  const parts = by.map(([k, col]) => `(${gameSource(k, col, withServer)} ORDER BY 1 DESC LIMIT ${Number(n)})`);
+  return query<RawEvent>(`SELECT * FROM (${parts.join(" UNION ALL ")}) x ORDER BY ts DESC, kind LIMIT ?`, [...by.map(() => id), n]);
 }
 
-async function loadGameEvents(game: string, limit: number): Promise<GameEvent[]> {
-  const g = await queryOne<{ id: number }>(`SELECT id FROM hlstats_Games WHERE code = ?`, [game]);
-  if (!g) return [];
-  // More rows than shown, as hidden players are dropped afterwards.
-  const n = limit * 3;
-  const parts = gameSources(await hasEventServer()).map((s) => `(${s} ORDER BY 1 DESC LIMIT ${Number(n)})`);
-  const rows = await query<Omit<GameEvent, "actorName" | "otherName">>(
-    `SELECT * FROM (${parts.join(" UNION ALL ")}) x ORDER BY ts DESC, kind LIMIT ?`,
-    [...LIVE_KINDS.map(() => Number(g.id)), n],
-  );
+// Names and visibility: rows of hidden actors are left out (bots stay; `self`,
+// the player whose page it is, stays too: the page shows them anyway); a
+// hidden opponent is shown without id and name.
+async function named(rows: RawEvent[], limit: number, self = 0): Promise<GameEvent[]> {
   const ids = [...new Set(rows.flatMap((r) => [Number(r.actor), Number(r.other)]).filter((x) => x > 0))];
   const people = ids.length
     ? await query<{ playerId: number; name: string | null; hideranking: number; bot: number }>(
@@ -264,26 +271,62 @@ async function loadGameEvents(game: string, limit: number): Promise<GameEvent[]>
         [ids],
       )
     : [];
-  const visible = new Map(people.filter((x) => Number(x.hideranking) === 0 || Number(x.bot)).map((x) => [Number(x.playerId), x.name]));
+  const visible = new Map(people.filter((x) => Number(x.hideranking) === 0 || Number(x.bot) || Number(x.playerId) === self).map((x) => [Number(x.playerId), x.name]));
+  if (self > 0 && !visible.has(self)) {
+    // The page's player may have moved to hlstats_PlayersInactive.
+    const me = await queryOne<{ name: string | null }>(`SELECT lastName AS name FROM hlstats_Players_Data WHERE playerId = ?`, [self]);
+    visible.set(self, me?.name ?? null);
+  }
   return rows
-    .filter((r) => visible.has(Number(r.actor)))
+    .filter((r) => visible.has(Number(r.actor)) || (self > 0 && Number(r.other) === self))
     .slice(0, limit)
     .map((r) => {
+      const actor = Number(r.actor);
       const other = Number(r.other);
       return {
         ...r,
         ts: Number(r.ts),
         num: Number(r.num),
-        actor: Number(r.actor),
+        // A hidden player on the other side of the page's player: no id, no name.
+        actor: visible.has(actor) ? actor : 0,
         server: r.server ?? "",
-        actorName: visible.get(Number(r.actor)) ?? null,
-        // A hidden opponent: no id, no name.
+        actorName: visible.get(actor) ?? null,
         other: visible.has(other) ? other : 0,
         otherName: visible.get(other) ?? null,
       };
     });
 }
 
+const gameCache = new Map<string, { at: number; value: Promise<GameEvent[]> }>();
+
+// Kept for 3 seconds per ranking (or player).
+function cached(key: string, load: () => Promise<GameEvent[]>): Promise<GameEvent[]> {
+  const hit = gameCache.get(key);
+  if (hit && Date.now() - hit.at < 3_000) return hit.value;
+  if (gameCache.size > 500) gameCache.clear();
+  const value = load();
+  gameCache.set(key, { at: Date.now(), value });
+  value.catch(() => gameCache.delete(key));
+  return value;
+}
+
+export function getGameEvents(game: string, limit: number): Promise<GameEvent[]> {
+  return cached(`g|${game}|${limit}`, async () => {
+    const g = await queryOne<{ id: number }>(`SELECT id FROM hlstats_Games WHERE code = ?`, [game]);
+    if (!g) return [];
+    // More rows than shown, as hidden players are dropped afterwards.
+    return named(await loadEvents(GAME_BY, Number(g.id), limit * 3), limit);
+  });
+}
+
+// Rows of the live box on the player page.
+export const PLAYER_EVENTS = 25;
+
+// The latest events with the player on either side, for the live box on the
+// player page. The caller checks that the page may be shown.
+export function getPlayerGameEvents(playerId: number, limit: number): Promise<GameEvent[]> {
+  return cached(`p|${playerId}|${limit}`, async () => named(await loadEvents(PLAYER_BY, playerId, limit), limit, playerId));
+}
 
 // ---------------------------------------------------------------- admin: IP search
 

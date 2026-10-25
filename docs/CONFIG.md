@@ -93,20 +93,24 @@ the host, so with a base path either point the root's `robots.txt` at the
 sitemap (`Sitemap: https://example.org/new/sitemap.xml`) or proxy it. Every
 page has a share button with plain share links (no third-party scripts).
 
-## Latest events and recent kills
+## Latest events
 
-Two choices under Admin → Settings decide how the event boxes behave:
-"Latest events (ranking start page)" (`gamewe_game_events`) and "Recent
-kills and deaths (player page)" (`gamewe_player_events`, only the kills and
-deaths of that player). Each is "Sync" (`live`, default: new events flow in
+Two choices under Admin → Settings decide how the "Latest events" boxes
+behave: "Latest events (ranking start page)" (`gamewe_game_events`: kills,
+actions and team bonuses on all servers of the ranking) and "Latest events
+(player page)" (`gamewe_player_events`: the same kinds, but only with that
+player on either side: their kills and deaths, actions by and against them,
+their team bonuses). Each is "Sync" (`live`, default: new events flow in
 while the page is open), "Async" (`static`: only the latest ones as of
-loading the page) or "Off" (`off`: the section is not shown). The live
-tables ask `/<game>/events-feed` and `/<game>/players/<id>/kills-feed`
-every 4 seconds while the tab is visible; both answer 404 unless their
-setting is "Sync". On the player page the heading then says "(Live data)"
-and a switch top right pauses the updates (no requests while paused; the
-choice is kept in the browser). The player feed is kept for 3 seconds per player and
-allows 60 requests per client IP and minute.
+loading the page) or "Off" (`off`: the section is not shown). Both boxes
+show time, event, server and map the same way; a hidden player in another
+row is shown as "?". In "Sync" the heading says "(Live data)" and a switch
+top right pauses the updates (no requests while paused; the choice is kept
+per browser and box). The live boxes ask `/<game>/events-feed` and
+`/<game>/players/<id>/events-feed` every 4 seconds while the tab is
+visible; both answer 404 unless their setting is "Sync". Both are kept for
+3 seconds per ranking or player; the player feed allows 60 requests per
+client IP and minute.
 
 ## Voice server
 

@@ -789,48 +789,6 @@ export function getPlayerActions(id: number) {
   );
 }
 
-export type Frag = {
-  timestamp_id: number;
-  killerId: number;
-  victimId: number;
-  killerName: string | null;
-  victimName: string | null;
-  weapon: string | null;
-  headshot: number;
-  map: string | null;
-};
-
-export function getPlayerFrags(id: number, limit: number) {
-  return query<Frag>(
-    `SELECT f.timestamp_id, f.killerId, f.victimId, kd.lastName AS killerName, vd.lastName AS victimName,
-            w.name AS weapon, f.headshot, m.map
-     FROM ((SELECT * FROM hlstats_Events_Frags WHERE killerId = ? ORDER BY timestamp_id DESC LIMIT ?)
-           UNION ALL
-           (SELECT * FROM hlstats_Events_Frags WHERE victimId = ? ORDER BY timestamp_id DESC LIMIT ?)) f
-     LEFT JOIN hlstats_Players_Data kd ON kd.playerId = f.killerId
-     LEFT JOIN hlstats_Players_Data vd ON vd.playerId = f.victimId
-     LEFT JOIN hlstats_Weapons w ON w.weaponId = f.weapon
-     LEFT JOIN hlstats_Maps m ON m.id = f.map
-     ORDER BY f.timestamp_id DESC LIMIT ?`,
-    [id, limit, id, limit, limit],
-  );
-}
-
-const fragCache = new Map<string, { at: number; value: Promise<Frag[]> }>();
-
-// getPlayerFrags kept for 3 seconds per player, for the live table on the
-// player page (every open page asks every few seconds).
-export function getPlayerFragsCached(id: number, limit: number): Promise<Frag[]> {
-  const key = `${id}|${limit}`;
-  const hit = fragCache.get(key);
-  if (hit && Date.now() - hit.at < 3_000) return hit.value;
-  if (fragCache.size > 500) fragCache.clear();
-  const value = getPlayerFrags(id, limit);
-  fragCache.set(key, { at: Date.now(), value });
-  value.catch(() => fragCache.delete(key));
-  return value;
-}
-
 export type Opponent = { playerId: number; name: string | null; kills: number; headshots: number };
 
 export function getOpponents(id: number, as: "victims" | "killers") {

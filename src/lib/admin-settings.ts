@@ -154,13 +154,13 @@ export const settingGroups: SettingGroup[] = [
       },
       {
         key: "gamewe_player_events",
-        label: { de: "Letzte Kills und Tode (Spielerseite)", en: "Recent kills and deaths (player page)" },
+        label: { de: "Letzte Ereignisse (Spielerseite)", en: "Latest events (player page)" },
         type: "choice",
         def: "live",
         choices: EVENT_MODES,
         help: {
-          de: "Nur Kills und Tode dieses Spielers.",
-          en: "Only the kills and deaths of that player.",
+          de: "Wie auf der Startseite einer Rangliste, aber nur Ereignisse dieses Spielers: seine Kills und Tode, Aktionen von ihm und gegen ihn, Teamboni.",
+          en: "As on a ranking's start page, but only the events of that player: their kills and deaths, actions by and against them, team bonuses.",
         },
       },
       {
