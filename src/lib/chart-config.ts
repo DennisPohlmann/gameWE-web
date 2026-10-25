@@ -56,22 +56,38 @@ export const CHART_KEYS: [key: string, cssVar: string, fallback: string][] = [
   ...PIE_DEFAULTS.map((d, i): [string, string, string] => [`pie.${i}`, `--chart-pie-${i + 1}`, d]),
 ];
 
-const NAMES = new Set(
+// CSS colour names with their hex value (for comparing colours).
+const NAMES = new Map(
   (
-    "aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown burlywood cadetblue " +
-    "chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgreen darkgrey " +
-    "darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray " +
-    "darkslategrey darkturquoise darkviolet deeppink deepskyblue dimgray dimgrey dodgerblue firebrick floralwhite forestgreen " +
-    "fuchsia gainsboro ghostwhite gold goldenrod gray green greenyellow grey honeydew hotpink indianred indigo ivory khaki " +
-    "lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan lightgoldenrodyellow lightgray lightgreen " +
-    "lightgrey lightpink lightsalmon lightseagreen lightskyblue lightslategray lightslategrey lightsteelblue lightyellow lime " +
-    "limegreen linen magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue " +
-    "mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive " +
-    "olivedrab orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum " +
-    "powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver " +
-    "skyblue slateblue slategray slategrey snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white " +
-    "whitesmoke yellow yellowgreen transparent"
-  ).split(" "),
+    "aliceblue:f0f8ff antiquewhite:faebd7 aqua:00ffff aquamarine:7fffd4 azure:f0ffff beige:f5f5dc bisque:ffe4c4 " +
+    "black:000000 blanchedalmond:ffebcd blue:0000ff blueviolet:8a2be2 brown:a52a2a burlywood:deb887 " +
+    "cadetblue:5f9ea0 chartreuse:7fff00 chocolate:d2691e coral:ff7f50 cornflowerblue:6495ed cornsilk:fff8dc " +
+    "crimson:dc143c cyan:00ffff darkblue:00008b darkcyan:008b8b darkgoldenrod:b8860b darkgray:a9a9a9 " +
+    "darkgreen:006400 darkgrey:a9a9a9 darkkhaki:bdb76b darkmagenta:8b008b darkolivegreen:556b2f darkorange:ff8c00 " +
+    "darkorchid:9932cc darkred:8b0000 darksalmon:e9967a darkseagreen:8fbc8f darkslateblue:483d8b " +
+    "darkslategray:2f4f4f darkslategrey:2f4f4f darkturquoise:00ced1 darkviolet:9400d3 deeppink:ff1493 " +
+    "deepskyblue:00bfff dimgray:696969 dimgrey:696969 dodgerblue:1e90ff firebrick:b22222 floralwhite:fffaf0 " +
+    "forestgreen:228b22 fuchsia:ff00ff gainsboro:dcdcdc ghostwhite:f8f8ff gold:ffd700 goldenrod:daa520 gray:808080 " +
+    "green:008000 greenyellow:adff2f grey:808080 honeydew:f0fff0 hotpink:ff69b4 indianred:cd5c5c indigo:4b0082 " +
+    "ivory:fffff0 khaki:f0e68c lavender:e6e6fa lavenderblush:fff0f5 lawngreen:7cfc00 lemonchiffon:fffacd " +
+    "lightblue:add8e6 lightcoral:f08080 lightcyan:e0ffff lightgoldenrodyellow:fafad2 lightgray:d3d3d3 " +
+    "lightgreen:90ee90 lightgrey:d3d3d3 lightpink:ffb6c1 lightsalmon:ffa07a lightseagreen:20b2aa " +
+    "lightskyblue:87cefa lightslategray:778899 lightslategrey:778899 lightsteelblue:b0c4de lightyellow:ffffe0 " +
+    "lime:00ff00 limegreen:32cd32 linen:faf0e6 magenta:ff00ff maroon:800000 mediumaquamarine:66cdaa " +
+    "mediumblue:0000cd mediumorchid:ba55d3 mediumpurple:9370db mediumseagreen:3cb371 mediumslateblue:7b68ee " +
+    "mediumspringgreen:00fa9a mediumturquoise:48d1cc mediumvioletred:c71585 midnightblue:191970 mintcream:f5fffa " +
+    "mistyrose:ffe4e1 moccasin:ffe4b5 navajowhite:ffdead navy:000080 oldlace:fdf5e6 olive:808000 olivedrab:6b8e23 " +
+    "orange:ffa500 orangered:ff4500 orchid:da70d6 palegoldenrod:eee8aa palegreen:98fb98 paleturquoise:afeeee " +
+    "palevioletred:db7093 papayawhip:ffefd5 peachpuff:ffdab9 peru:cd853f pink:ffc0cb plum:dda0dd powderblue:b0e0e6 " +
+    "purple:800080 rebeccapurple:663399 red:ff0000 rosybrown:bc8f8f royalblue:4169e1 saddlebrown:8b4513 " +
+    "salmon:fa8072 sandybrown:f4a460 seagreen:2e8b57 seashell:fff5ee sienna:a0522d silver:c0c0c0 skyblue:87ceeb " +
+    "slateblue:6a5acd slategray:708090 slategrey:708090 snow:fffafa springgreen:00ff7f steelblue:4682b4 tan:d2b48c " +
+    "teal:008080 thistle:d8bfd8 tomato:ff6347 turquoise:40e0d0 violet:ee82ee wheat:f5deb3 white:ffffff " +
+    "whitesmoke:f5f5f5 yellow:ffff00 yellowgreen:9acd32 "
+  )
+    .trim()
+    .split(" ")
+    .map((p) => p.split(":") as [string, string]),
 );
 
 const HEX = /^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
@@ -82,7 +98,7 @@ const NUM = /^(?:\d{1,3}(?:\.\d{1,4})?|\.\d{1,4})(?:%|deg)?$/;
 export function chartColor(v: unknown): string | null {
   if (typeof v !== "string" || v.length > 64) return null;
   const s = v.trim().toLowerCase();
-  if (HEX.test(s) || NAMES.has(s)) return s;
+  if (HEX.test(s) || NAMES.has(s) || s === "transparent") return s;
   const m = FUNC.exec(s);
   if (!m) return null;
   // rgb(1, 2, 3) / rgba(1, 2, 3, 0.5) / rgb(1 2 3 / 50%): three or four numbers.
@@ -120,12 +136,113 @@ export function chartVars(json: unknown): { vars: [string, string][]; dropped: s
   return { vars, dropped };
 }
 
+// Colours that are shown together in one chart must differ: the total and
+// the server lines, the series, players and uptime, points, gains and
+// losses, the trend pills, the radar areas, the pie slices. Earlier groups
+// win; a later colour that repeats one of its group is replaced.
+const range = (k: string, n: number) => Array.from({ length: n }, (_, i) => `${k}.${i}`);
+export const CHART_GROUPS: string[][] = [
+  range("series", SERIES),
+  ["series.0", ...range("servers", SERVERS)],
+  ["series.1", "uptime"],
+  ["series.0", "gain", "loss"],
+  ["spark.total", "spark.current", "gain", "loss"],
+  ["spark.totalLine", "spark.currentLine"],
+  ["radar.total", "radar.current"],
+  range("pie", PIES),
+];
+
+// Replacements for a repeated colour, the first one not used in the group.
+const SPARE = ["#5aa9ff", "#4cc38a", "#ffd54f", "#b388ff", "#ff8a5c", "#4dd0e1", "#f48fb1", "#d64541", "#8bc34a", "#2f7dc0", "#c9a200", "#1aa0a0", "#d0609a", "#9e9e9e", "#ff8000", "#6b6b6b", "#ffffff", "#000000"];
+
+// The theme variables the chart defaults use, as in the :root block of
+// globals.css (used when theme.css does not set them).
+export const BASE_THEME: Record<string, string> = { accent: "#ff8000", "series-2": "#5aa9ff", good: "#4cc38a", bad: "#ff4d4d" };
+
+// The variables of a theme.css (the last one wins, as in CSS).
+export function themeVars(css: string): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const m of css.matchAll(/--([a-z0-9-]{1,40})\s*:\s*([^;{}]{1,200});/g)) out.set(m[1], m[2].trim());
+  return out;
+}
+
+// A plain colour as "r,g,b,a" (0-255, alpha 0-1), so #f00, #ff0000, red and
+// rgb(255, 0, 0) compare equal; null if it is not a plain colour.
+export function colorKey(v: string): string | null {
+  const c = chartColor(v);
+  if (!c) return null;
+  if (c === "transparent") return "0,0,0,0";
+  let hex = c.startsWith("#") ? c.slice(1) : NAMES.get(c);
+  if (hex) {
+    if (hex.length <= 4) hex = [...hex].map((x) => x + x).join("");
+    const n = (i: number) => parseInt(hex!.slice(i, i + 2), 16);
+    return [n(0), n(2), n(4), hex.length === 8 ? +(n(6) / 255).toFixed(3) : 1].join(",");
+  }
+  const m = /^(rgba?|hsla?)\((.*)\)$/.exec(c)!;
+  const p = m[2].split(", ");
+  const num = (x: string, scale: number) => (x.endsWith("%") ? (parseFloat(x) / 100) * scale : parseFloat(x));
+  const a = p[3] === undefined ? 1 : Math.min(1, num(p[3], 1));
+  let rgb: number[];
+  if (m[1].startsWith("rgb")) rgb = p.slice(0, 3).map((x) => num(x, 255));
+  else {
+    const h = (((parseFloat(p[0]) % 360) + 360) % 360) / 360;
+    const sat = Math.min(1, num(p[1], 1));
+    const l = Math.min(1, num(p[2], 1));
+    const q = l < 0.5 ? l * (1 + sat) : l + sat - l * sat;
+    const t = 2 * l - q;
+    const f = (x: number) => {
+      const k = x < 0 ? x + 1 : x > 1 ? x - 1 : x;
+      return k < 1 / 6 ? t + (q - t) * 6 * k : k < 1 / 2 ? q : k < 2 / 3 ? t + (q - t) * (2 / 3 - k) * 6 : t;
+    };
+    rgb = [f(h + 1 / 3), f(h), f(h - 1 / 3)].map((x) => x * 255);
+  }
+  return [...rgb.map((x) => Math.round(Math.min(255, x))), +a.toFixed(3)].join(",");
+}
+
+// A default such as var(--accent) or var(--series-3, #d64541) as the colour
+// it stands for in this theme.
+function resolve(fallback: string, theme: Map<string, string>): string {
+  const m = /^var\(--([a-z0-9-]+)(?:,\s*(.+))?\)$/.exec(fallback);
+  if (!m) return fallback;
+  return chartColor(theme.get(m[1])) ?? BASE_THEME[m[1]] ?? chartColor(m[2]) ?? fallback;
+}
+
+// The colours of every key in CHART_GROUPS, from chart.json, else from the
+// defaults resolved against theme.css, with repeats in a group replaced.
+// replaced: the keys that got another colour.
+export function uniqueColours(set: Map<string, string>, themeCss: string): { colours: Map<string, string>; replaced: string[] } {
+  const theme = themeVars(themeCss);
+  const byKey = new Map(CHART_KEYS.map(([key, cssVar, fallback]) => [key, set.get(cssVar) ?? resolve(fallback, theme)]));
+  const done = new Set<string>();
+  const replaced: string[] = [];
+  const id = (key: string) => colorKey(byKey.get(key)!) ?? byKey.get(key)!;
+  for (const group of CHART_GROUPS) {
+    const used = new Set<string>();
+    for (const key of group) if (done.has(key)) used.add(id(key));
+    for (const [i, key] of group.entries()) {
+      if (done.has(key)) continue;
+      if (used.has(id(key))) {
+        // Not a colour that a later key of the group still brings along.
+        const later = new Set(group.slice(i + 1).map(id));
+        const spare = SPARE.find((c) => !used.has(colorKey(c)!) && !later.has(colorKey(c)!))!;
+        byKey.set(key, spare);
+        used.add(colorKey(spare)!);
+        replaced.push(key);
+      } else used.add(id(key));
+      done.add(key);
+    }
+  }
+  return { colours: new Map([...done].map((k) => [k, byKey.get(k)!])), replaced };
+}
+
 // The CSS block for a template: every chart variable, from chart.json where
 // it sets a valid colour, else the default. Written out in full so a game
-// design always replaces the main template's chart colours.
-export function chartCss(json: unknown): { css: string; dropped: string[] } {
+// design always replaces the main template's chart colours. The colours of
+// CHART_GROUPS are written as plain colours, kept unique per group.
+export function chartCss(json: unknown, themeCss = ""): { css: string; dropped: string[]; replaced: string[] } {
   const { vars, dropped } = chartVars(json);
   const set = new Map(vars);
-  const lines = CHART_KEYS.map(([, cssVar, fallback]) => `  ${cssVar}: ${set.get(cssVar) ?? fallback};`);
-  return { css: `\n/* chart colours (chart.json) */\nhtml[data-skin] {\n${lines.join("\n")}\n}\n`, dropped };
+  const { colours, replaced } = uniqueColours(set, themeCss);
+  const lines = CHART_KEYS.map(([key, cssVar, fallback]) => `  ${cssVar}: ${colours.get(key) ?? set.get(cssVar) ?? fallback};`);
+  return { css: `\n/* chart colours (chart.json) */\nhtml[data-skin] {\n${lines.join("\n")}\n}\n`, dropped, replaced };
 }

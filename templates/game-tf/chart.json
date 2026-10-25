@@ -15,7 +15,7 @@
   "bandOdd": "#ebdfc2",
   "uptime": "#2e8b57",
   "gain": "#3f7a2a",
-  "loss": "#b8383b",
+  "loss": "#7a1a1c",
   "tooltip": {
     "background": "#fffaf0",
     "text": "#2b2118",
@@ -42,14 +42,14 @@
     "#8a6a4c"
   ],
   "servers": [
-    "#b8383b",
     "#4a7a9a",
     "#cf6a32",
     "#3f7a2a",
     "#7a5a8a",
     "#a68400",
     "#2f7f7a",
-    "#6b5a48"
+    "#6b5a48",
+    "#c0508a"
   ],
   "pie": [
     "#b8383b",

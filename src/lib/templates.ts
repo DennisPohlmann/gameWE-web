@@ -92,16 +92,18 @@ export async function templateCss(id: string, scoped = false): Promise<string | 
   if (!t) return null;
   const st = await lstat(t.file).catch(() => null);
   if (!st?.isFile() || st.size > MAX_CSS) return null;
-  const css = (await readFile(t.file, "utf8")) + (await readChart(t));
+  const theme = await readFile(t.file, "utf8");
+  const css = theme + (await readChart(t, theme));
   return scoped ? css.replaceAll("html[data-skin]", `html[data-skin]:has(.skin-${id})`) : css;
 }
 
-// chart.json as a CSS block (always all chart variables, see chartCss). A
-// missing, oversized, linked or broken file gives the defaults; dropped
-// values are noted once per template version, by key only.
+// chart.json as a CSS block (always all chart variables, see chartCss; the
+// theme.css resolves the defaults so repeated colours can be found). A
+// missing, oversized, linked or broken file gives the defaults; dropped and
+// replaced values are noted once per template version, by key only.
 const noted = new Set<string>();
 
-async function readChart(t: Template): Promise<string> {
+async function readChart(t: Template, theme: string): Promise<string> {
   let json: unknown = null;
   try {
     const st = await lstat(t.chart);
@@ -109,11 +111,12 @@ async function readChart(t: Template): Promise<string> {
   } catch {
     json = null;
   }
-  const { css, dropped } = chartCss(json);
+  const { css, dropped, replaced } = chartCss(json, theme);
   const key = `${t.id}:${t.mtime}`;
-  if (dropped.length && !noted.has(key)) {
+  if ((dropped.length || replaced.length) && !noted.has(key)) {
     noted.add(key);
-    console.warn(`template ${t.id}: chart.json values ignored: ${dropped.join(", ")}`);
+    if (dropped.length) console.warn(`template ${t.id}: chart.json values ignored: ${dropped.join(", ")}`);
+    if (replaced.length) console.warn(`template ${t.id}: repeated chart colours replaced: ${replaced.join(", ")}`);
   }
   return css;
 }

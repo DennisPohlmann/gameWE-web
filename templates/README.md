@@ -84,6 +84,18 @@ the limit are ignored. The file must be a plain file (no symbolic link) of
 at most 16 KB with valid JSON, else all defaults apply. A changed
 `chart.json` shows up like a changed `theme.css` (within a minute).
 
+Colours shown together in one chart never repeat: the total line and the
+server lines (`series[0]` and `servers`), the series among themselves,
+players and uptime (`series[1]`, `uptime`), points, gains and losses
+(`series[0]`, `gain`, `loss`), the trend pills (`spark.total`,
+`spark.current`, `gain`, `loss`), their reference lines, the two radar
+areas and the pie slices. The site compares the resolved colours (from
+`chart.json`, else from `theme.css`; `#f00`, `#ff0000`, `red` and
+`rgb(255, 0, 0)` count as the same) and replaces a colour that repeats an
+earlier one of the same chart with an unused one from a built-in palette;
+the server log names the replaced keys. These chart colours are written
+into the stylesheet as plain colours.
+
 Example (light charts on a dark template):
 
 ```json
