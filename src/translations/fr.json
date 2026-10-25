@@ -295,6 +295,8 @@
   "load": "Charge",
   "loadCaption": "Joueurs actifs par jour, 30 derniers jours",
   "loadCaptionHourly": "Joueurs en ligne par heure (tous les serveurs), 30 derniers jours",
+  "loadCaptionHourlySince": "Joueurs en ligne par heure (tous les serveurs), depuis {d}",
+  "loadCaptionSince": "Joueurs actifs par jour, depuis {d}",
   "noRankings": "Aucun classement n'a encore été créé.",
   "sections": "Sections",
   "allWeapons": "Toutes les armes",

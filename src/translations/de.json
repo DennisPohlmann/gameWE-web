@@ -297,6 +297,8 @@
   "load": "Auslastung",
   "loadCaption": "Aktive Spieler pro Tag, letzte 30 Tage",
   "loadCaptionHourly": "Spieler online pro Stunde (alle Server), letzte 30 Tage",
+  "loadCaptionHourlySince": "Spieler online pro Stunde (alle Server), seit {d}",
+  "loadCaptionSince": "Aktive Spieler pro Tag, seit {d}",
   "noRankings": "Es ist noch keine Rangliste angelegt.",
   "sections": "Bereiche",
   "allWeapons": "Alle Waffen",

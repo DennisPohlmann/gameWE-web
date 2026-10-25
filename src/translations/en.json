@@ -297,6 +297,8 @@
   "load": "Load",
   "loadCaption": "Active players per day, last 30 days",
   "loadCaptionHourly": "Players online per hour (all servers), last 30 days",
+  "loadCaptionHourlySince": "Players online per hour (all servers), since {d}",
+  "loadCaptionSince": "Active players per day, since {d}",
   "noRankings": "No ranking has been set up yet.",
   "sections": "Sections",
   "allWeapons": "All weapons",

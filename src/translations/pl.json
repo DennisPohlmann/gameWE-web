@@ -295,6 +295,8 @@
   "load": "Obciążenie",
   "loadCaption": "Aktywni gracze dziennie, ostatnie 30 dni",
   "loadCaptionHourly": "Gracze online na godzinę (wszystkie serwery), ostatnie 30 dni",
+  "loadCaptionHourlySince": "Gracze online na godzinę (wszystkie serwery), od {d}",
+  "loadCaptionSince": "Aktywni gracze dziennie, od {d}",
   "noRankings": "Nie utworzono jeszcze rankingów.",
   "sections": "Działy",
   "allWeapons": "Wszystkie bronie",

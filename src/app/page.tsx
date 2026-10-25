@@ -71,6 +71,18 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
   const activity = everyDay(rows, 30);
   const online = sumCounts(rankings.map((r) => r.online));
   const dayLabel = (d: string) => `${d.slice(8, 10)}.${d.slice(5, 7)}.`;
+  // The chart starts at the first point with data, so while the load has been
+  // recorded for less than the 30 days the caption names that first day.
+  const firstData = (values: (number | null)[]) => values.findIndex((v) => (v ?? 0) !== 0);
+  const hourFirst = firstData(hourly.players);
+  const dayFirst = firstData(activity.map((a) => (a.point ? Number(a.point.players) : null)));
+  const loadCaption = perHour
+    ? hourFirst * hourly.step >= 86400
+      ? fill(t.loadCaptionHourlySince, { d: dateFmt.format((hourly.start + hourFirst * hourly.step) * 1000) })
+      : t.loadCaptionHourly
+    : dayFirst > 0
+      ? fill(t.loadCaptionSince, { d: dayLabel(activity[dayFirst].day) })
+      : t.loadCaption;
   return (
     <>
       <VoiceBox />
@@ -171,17 +183,17 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
         <div className="container">
           <div className="box">
             {perHour ? (
-              <LineChart locale={lang} ariaLabel={t.loadCaptionHourly} labels={hourLabels} dates={hourDates} tips={hourTips} hourly legend series={[{ label: t.playersOnline, values: hourly.players, className: "s1" }]} />
+              <LineChart locale={lang} ariaLabel={loadCaption} labels={hourLabels} dates={hourDates} tips={hourTips} hourly legend series={[{ label: t.playersOnline, values: hourly.players, className: "s1" }]} />
             ) : (
               <LineChart
                 locale={lang}
-                ariaLabel={t.loadCaption}
+                ariaLabel={loadCaption}
                 legend
                 labels={activity.map((a) => dayLabel(a.day))}
                 series={[{ label: t.players, values: activity.map((a) => (a.point ? Number(a.point.players) : null)), className: "s1" }]}
               />
             )}
-            <p className="small center">{perHour ? t.loadCaptionHourly : t.loadCaption}</p>
+            <p className="small center">{loadCaption}</p>
           </div>
         </div>
       </section>

@@ -295,6 +295,8 @@
   "load": "负载",
   "loadCaption": "每日活跃玩家，最近 30 天",
   "loadCaptionHourly": "每小时在线玩家（所有服务器），最近 30 天",
+  "loadCaptionHourlySince": "每小时在线玩家（所有服务器），自 {d} 起",
+  "loadCaptionSince": "每日活跃玩家，自 {d} 起",
   "noRankings": "尚未创建排行榜。",
   "sections": "栏目",
   "allWeapons": "所有武器",

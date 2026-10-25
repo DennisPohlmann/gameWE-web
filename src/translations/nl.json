@@ -295,6 +295,8 @@
   "load": "Belasting",
   "loadCaption": "Actieve spelers per dag, laatste 30 dagen",
   "loadCaptionHourly": "Spelers online per uur (alle servers), laatste 30 dagen",
+  "loadCaptionHourlySince": "Spelers online per uur (alle servers), sinds {d}",
+  "loadCaptionSince": "Actieve spelers per dag, sinds {d}",
   "noRankings": "Er zijn nog geen ranglijsten aangemaakt.",
   "sections": "Onderdelen",
   "allWeapons": "Alle wapens",

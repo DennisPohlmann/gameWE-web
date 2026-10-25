@@ -295,6 +295,8 @@
   "load": "Belastning",
   "loadCaption": "Aktive spillere pr. dag, sidste 30 dage",
   "loadCaptionHourly": "Spillere online pr. time (alle servere), sidste 30 dage",
+  "loadCaptionHourlySince": "Spillere online pr. time (alle servere), siden {d}",
+  "loadCaptionSince": "Aktive spillere pr. dag, siden {d}",
   "noRankings": "Der er endnu ikke oprettet ranglister.",
   "sections": "Afsnit",
   "allWeapons": "Alle våben",
