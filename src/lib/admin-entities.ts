@@ -55,6 +55,11 @@ export type Entity = {
   // read, created, changed or deleted here, e.g. the TOTP secrets and the
   // TeamSpeak query password in Options.
   hiddenPrefix?: string[];
+  // One row of buttons above the list (?status=<value>); `where` is a
+  // constant SQL condition on the table alias t, never input.
+  statusFilter?: { value: string; label: L; where: string; tone?: "ok" | "warn" | "bad" }[];
+  // The list column shown as a coloured state (value -> filter value).
+  statusColumn?: string;
 };
 
 const yesNo: [string, L][] = [
@@ -167,6 +172,14 @@ export const entities: Entity[] = [
     ],
     order: "t.skill DESC",
     search: ["d.lastName"],
+    // Hidden and banned players stay out of every public page (lib/hidden.ts);
+    // the admin list shows them, marked, to let them back in.
+    statusFilter: [
+      { value: "visible", label: { de: "Sichtbar", en: "Visible" }, where: "t.hideranking = 0", tone: "ok" },
+      { value: "hidden", label: { de: "Versteckt", en: "Hidden" }, where: "t.hideranking IN (1, 3)", tone: "warn" },
+      { value: "banned", label: { de: "Gebannt", en: "Banned" }, where: "t.hideranking = 2", tone: "bad" },
+    ],
+    statusColumn: "hideranking",
     gameColumn: "game",
     canCreate: false,
     canDelete: false,

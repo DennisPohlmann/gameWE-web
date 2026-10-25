@@ -4,6 +4,7 @@ import { assignServersAction, deleteAction, moveServerAction, saveAction } from 
 import { allServers, rankingBaseGames } from "@/lib/admin-rankings";
 import { noAutofill } from "@/lib/autofill";
 import { gameKind, sameBaseGame } from "@/lib/games";
+import { PageHead } from "@/components/admin/page-head";
 import { Section } from "@/components/ui";
 import { getRow, optionList, withColumns } from "@/lib/admin-data";
 import { RankBadge, rankName } from "@/components/badges";
@@ -31,6 +32,10 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
   const sp = await searchParams;
   // The list (ranking, search, page) this page was opened from.
   const returnTo = safeReturnTo(sp.returnTo, e.key);
+  // Rankings are managed on /admin/rankings; their plain list is only the editor's.
+  const back = e.key === "games" && returnTo === "/admin/games" ? "/admin/rankings" : returnTo;
+  const r0 = row as Record<string, unknown>;
+  const title = String(r0.lastName ?? r0.name ?? r0.tag ?? r0.username ?? r0.code ?? id);
   const optionSets = Object.fromEntries(
     await Promise.all(
       [...new Set(e.fields.map((f) => f.options).filter((o): o is "games" | "clans" => typeof o === "string"))].map(
@@ -52,12 +57,19 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
 
   return (
     <>
-      <p>
-        <Link href={returnTo}>← {a.back}</Link>
-      </p>
-      <h1>
-        {e.label[lang]}: {isNew ? a.new : id}
-      </h1>
+      <PageHead
+        crumbs={[
+          [e.key === "users" ? a.ui.areaSettings : a.ui.areaRankings, e.key === "users" ? "/admin/settings" : "/admin/rankings"],
+          [e.label[lang], back],
+          [isNew ? a.new : title],
+        ]}
+        title={isNew ? `${e.label[lang]}: ${a.new}` : title}
+        actions={
+          <Link className="button" href={back}>
+            ← {a.back}
+          </Link>
+        }
+      />
       {e.key === "games" && !e.fields.some((f) => f.name === "realgame") ? <p className="notice error">{a.realgameMissing}</p> : null}
       {e.key === "ranks" && !isNew && typeof (row as Record<string, unknown>).name === "string" ? (
         <p className="lead admin-rank">
@@ -155,7 +167,7 @@ async function RankingServers({ gameId, code, lang, returnTo }: { gameId: string
   const mine = servers.filter((s) => s.game === code);
   const others = servers.filter((s) => s.game !== code);
   return (
-    <Section title={a.rankingServers}>
+    <Section id="servers" title={a.rankingServers}>
       {mine.length ? (
         <table>
           <tbody>

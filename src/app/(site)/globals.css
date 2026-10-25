@@ -753,15 +753,6 @@ a.button { display: inline-block; text-decoration: none; }
   table.stats.summary td.stats-key.pair { font-size: 10px; }
 }
 
-/* ---------------------------------------------------------------- admin */
-
-.admin { display: grid; grid-template-columns: 200px 1fr; gap: 15px; align-items: start; width: 95%; margin: 15px auto; }
-.admin-nav { background: var(--surface); border: 1px solid var(--border); padding: 10px; position: sticky; top: 10px; }
-.admin-title { display: block; font-weight: bold; font-size: 13px; margin-bottom: 8px; text-decoration: none; }
-.admin-nav nav { display: flex; flex-direction: column; gap: 2px; }
-.admin-nav nav a { color: var(--th-text); padding: 2px 4px; text-decoration: none; }
-.admin-nav nav a:hover { background: var(--surface-2); text-decoration: underline; }
-.admin-version { margin-top: 12px; font-size: 10px; line-height: 1.4; }
 .game-events .ev-kill .ev-verb, .game-events .ev-playeraction .ev-verb { color: var(--good); }
 .game-events .ev-teamkill .ev-verb, .game-events .ev-suicide .ev-verb { color: var(--bad); }
 /* The time is always as wide as its text (any language, any screen);
@@ -789,79 +780,9 @@ a.button { display: inline-block; text-decoration: none; }
 .live-switch[aria-checked="true"] .live-switch-track::after { transform: translateX(14px); background: #fff; }
 .live-switch:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .live-switch-track, .live-switch-track::after { transition: none; } }
-.admin-user { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--border); }
-.admin-main { min-width: 0; }
-.admin-main td { max-width: 28em; overflow-wrap: anywhere; }
-.admin-main h1 { margin-bottom: 8px; text-shadow: var(--title-shadow); }
-.admin-main > p { margin: 0 0 10px; }
-.admin-main .section, .admin-main .block { width: 100%; }
-.admin .servers { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-bottom: 15px; }
-.admin .server-card { background: var(--line-bg); color: var(--line-text); border: 1px solid var(--border); padding: 8px 10px; }
-.admin .server-card a { color: var(--line-text); }
-.admin .server-card h3 { font-size: 11px; margin-bottom: 4px; }
-/* Admin pages in every template: each section is a header strip with a card
-   below, intro texts and the save bar are cards of their own, all in the
-   template's own colours. Public pages keep their look. */
-.admin { gap: 18px; }
-.admin-nav nav a { padding: 3px 6px; }
-.admin-main > p:not(.notice), .admin-main > .lead { padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text); }
-.admin-main .section { margin: 0 0 18px; }
-.admin-main .section-head { align-items: center; margin: 0 0 4px; padding: 7px 10px; background: var(--th-bg); border: 1px solid var(--border); color: var(--th-text); }
-.admin-main .section-head h2 { margin: 0; padding: 0; font-size: 12px; color: inherit; }
-.admin-main .section-head h2::before, .admin-main .section-head h2::after { content: none; }
-.admin-main .section-aside { padding: 0; }
-.admin-main .section > .form { padding: 12px 14px; }
-.admin-main .section > :not(.section-head) + :not(.pager):not(.footnote) { margin-top: 6px; }
-.linkish { background: none; border: 0; padding: 0; color: var(--text); text-decoration: underline; cursor: pointer; text-align: left; }
 
-.form { display: grid; gap: 10px; max-width: 560px; }
-.form label { display: grid; gap: 3px; }
-.form label.check { display: flex; gap: 6px; align-items: center; }
-.form input:not([type="checkbox"]), .form select, .form textarea { background: var(--input-bg); color: var(--input-text); border: 1px solid var(--input-border); padding: 3px 5px; min-width: 0; }
-.form input[readonly] { background: #ddd; }
-.form input.mono { font-family: ui-monospace, monospace; }
-.form .button { justify-self: start; }
-.form small { color: var(--muted); }
-.qr { display: block; width: 220px; max-width: 100%; height: auto; border: 1px solid var(--border); }
-/* Admin settings: full width, two fields per row (one on phones). */
-.form.settings-grid { max-width: none; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 24px; align-items: start; }
-.settings-grid .settings-help { grid-column: 1 / -1; margin: 0; color: var(--muted); }
-.link-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 6px; }
-.settings-save { margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
-.settings-save .notice { margin: 0; }
-.section:target, .section:has(.settings-save .notice) { scroll-margin-top: 8px; }
-/* Admin settings: the header tabs as one ordered list. */
-.hl-editor { grid-column: 1 / -1; }
-.hl-list { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 6px; max-width: 760px; }
-.hl-row { border: 1px solid var(--border); background: var(--surface-2); color: var(--text); padding: 6px 8px; display: grid; gap: 6px; }
-.hl-row.dragging { opacity: 0.5; }
-.hl-row.invalid { border-color: var(--bad); }
-.hl-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.hl-grip { cursor: grab; color: var(--muted); font-size: 14px; user-select: none; padding: 0 2px; }
-.hl-pos { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border-radius: 11px; background: var(--tab-bg); color: var(--tab-text); border: 1px solid var(--tab-border); font-weight: bold; }
-.hl-name { color: var(--text); }
-.hl-badge { font-size: 10px; padding: 1px 6px; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); }
-.hl-badge-edit { border-style: dashed; }
-.hl-actions { margin-left: auto; display: flex; gap: 4px; }
-.hl-actions .button { padding: 1px 7px; }
-.hl-actions .button:disabled { opacity: 0.4; cursor: default; }
-.hl-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 6px; }
-.hl-fields label { display: grid; gap: 3px; }
-.hl-hint, .hl-error { grid-column: 1 / -1; }
-.hl-error { color: var(--error-text); }
 
-.login { max-width: 380px; margin: 30px auto; }
-.login h1 { margin-bottom: 10px; text-shadow: var(--title-shadow); }
-.login .notice { margin-bottom: 10px; }
-@media (max-width: 640px) {
-  .form.settings-grid { grid-template-columns: minmax(0, 1fr); }
-}
 
-@media (max-width: 900px) {
-  .admin { grid-template-columns: 1fr; }
-  .admin-nav { position: static; }
-  .admin-nav nav { flex-direction: row; flex-wrap: wrap; gap: 2px 10px; }
-}
 
 /* Misc statistics */
 .chart .bar-s1 { fill: var(--chart-series-1); }
@@ -1012,23 +933,6 @@ table.spaced { margin-top: 10px; }
 .ban-type.ban-lifted { background: #6b6b6b; color: #ddd; }
 tr.ban-old td { opacity: 0.7; }
 td.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9em; }
-.template-tag { background: #777; color: #fff; }
-.admin-rank { display: inline-flex; align-items: center; gap: 6px; }
-.admin-rank code { font-size: 0.85em; }
-.reset-mode { border: 1px solid var(--input-border, #888); padding: 6px 10px; }
-.reset-mode label { display: flex; gap: 6px; align-items: flex-start; font-weight: normal; margin: 4px 0; }
-.reset-mode label span { flex: 1; }
-.reset-dialog { max-width: min(560px, calc(100vw - 32px)); background: var(--panel); color: var(--text); border: 1px solid var(--border); padding: 16px 20px; }
-.reset-dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
-.reset-dialog h2 { margin: 0 0 10px; font-size: 1.2em; }
-.reset-dialog dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 12px; margin: 0 0 12px; }
-.reset-dialog dt { font-weight: bold; color: var(--muted); }
-.reset-dialog dd { margin: 0; }
-.form .reset-dialog label.reset-understood { display: flex; gap: 6px; align-items: flex-start; font-weight: bold; }
-.reset-dialog-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 14px; }
-.reset-dialog .button:disabled { opacity: 0.5; cursor: not-allowed; }
-.reset-result { white-space: pre-wrap; font-size: 0.9em; margin: 6px 0 0; max-height: 240px; overflow: auto; }
-.reset-result-cell { white-space: pre-wrap; min-width: 240px; font-size: 0.9em; }
 
 /* ---------------------------------------------------------------- hover values */
 
@@ -1217,10 +1121,6 @@ td.ribbon-wall a { display: inline-flex; flex-direction: column; align-items: ce
 .lic-table th:nth-child(2) { width: 14%; }
 .lic-table th:nth-child(4) { width: 26%; }
 
-/* Admin menu: group headings. */
-.admin-nav .admin-group { display: block; margin: 10px 0 2px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.6; }
-.admin-nav .admin-group:first-child { margin-top: 0; }
-.admin .opt-help { font-size: 11px; white-space: normal; min-width: 280px; overflow-wrap: anywhere; }
 
 /* Windows and macOS (data-os set by the layout from the user agent): Verdana
    at 9-11px renders poorly there, so use the system UI font (Segoe UI hints
@@ -1241,8 +1141,7 @@ html[data-os] .small,
 html[data-os] .tabs-top a,
 html[data-os] table.player-livestats th,
 html[data-os] .game-tag,
-html[data-os] .hl-badge, html[data-os] .help-type, html[data-os] .help-tile span,
-html[data-os] .admin-version, html[data-os] .admin-nav .admin-group,
+html[data-os] .help-type, html[data-os] .help-tile span,
 html[data-os] .decorated-rank, html[data-os] .ribbon-level,
 html[data-os] .spark .sp-pill text { font-size: 11px; }
 html[data-os] .hs { font-size: 10px; }

@@ -1,7 +1,8 @@
 # Design templates
 
 Each folder here is one design. The site lists every folder it finds under
-Admin > Settings > "Design (template)".
+Admin > Settings > Design & logo > "Design (template)". The admin area has
+its own design and is not part of a template.
 
 ```
 templates/

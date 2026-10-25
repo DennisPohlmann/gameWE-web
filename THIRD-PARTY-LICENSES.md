@@ -147,6 +147,7 @@ all compatible with GPL-3.0-or-later.
 | `public/flags/*.svg` (except `unknown.svg`, gameWE's own placeholder) | flag-icons 7.2.3 by Panayiotis Lipiridis, https://github.com/lipis/flag-icons | MIT, text in `public/flags/LICENSE.txt` |
 | `public/icon*.png`, `public/icon.svg`, `public/apple-touch-icon.png`, `public/avatar-unknown.svg` | gameWE's own graphics | GPL-3.0-or-later |
 | `templates/` | gameWE's own design templates | GPL-3.0-or-later |
+| `src/components/admin/icons.tsx` | admin menu icons, several paths after Feather Icons 4.29 by Cole Bemis, https://github.com/feathericons/feather | MIT, text in `src/components/admin/FEATHER-LICENSE.txt` |
 | Database schema and table names (`hlstats_*`) | HLstatsX: Community Edition, https://github.com/NomisCZ/hlstatsx-community-edition | GPL-2.0-or-later (the schema is created by the collector; gameWE web reads it) |
 
 Rank insignia and award ribbons are drawn with SVG and CSS in

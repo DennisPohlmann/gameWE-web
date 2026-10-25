@@ -51,7 +51,7 @@ plaintext; `skip-verify` encrypts without checking the certificate.
 
 ## Header links
 
-Admin → Settings → Header links shows all tabs at the top of the site as one
+Admin → Settings → Header & links shows all tabs at the top of the site as one
 numbered list in the order the header uses. Move an entry with its arrows or
 drag it by its handle; the order is saved with the settings.
 
@@ -97,7 +97,7 @@ page has a share button with plain share links (no third-party scripts).
 
 ## Latest events
 
-Two choices under Admin → Settings decide how the "Latest events" boxes
+Two choices under Admin → Settings → Maps & events decide how the "Latest events" boxes
 behave: "Latest events (ranking start page)" (`gamewe_game_events`: kills,
 actions and team bonuses on all servers of the ranking) and "Latest events
 (player page)" (`gamewe_player_events`: the same kinds, but only with that
@@ -125,7 +125,7 @@ the top, from `/<game>/players/<id>/events-feed?list=<type>`. "Async" and
 
 ## Voice server
 
-Under Admin → Settings → Voiceserver choose None, TeamSpeak or Discord;
+Under Admin → Settings → Voice server choose None, TeamSpeak or Discord;
 only the fields of that kind are shown. TeamSpeak 3: address, port, password
 to show, ServerQuery port and login, and optionally an address shown
 instead of address:port (e.g. a DNS name with an SRV record) and a connect

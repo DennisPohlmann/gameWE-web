@@ -88,7 +88,7 @@ test("the CSS block has every variable, set or default, and nothing else", () =>
 });
 
 test("globals.css has the same defaults", () => {
-  const src = readFileSync("src/app/globals.css", "utf8");
+  const src = readFileSync("src/app/(site)/globals.css", "utf8");
   const block = /:root \{\n(  --chart-[\s\S]*?)\n\}/.exec(src)?.[1];
   assert.ok(block);
   assert.deepEqual(
@@ -174,7 +174,7 @@ test("other duplicates: pie, players and uptime, trend pills, radar", () => {
 });
 
 test("the defaults without template and the base theme match globals.css", () => {
-  const src = readFileSync("src/app/globals.css", "utf8");
+  const src = readFileSync("src/app/(site)/globals.css", "utf8");
   for (const [k, v] of Object.entries(BASE_THEME)) assert.ok(src.includes(`  --${k}: ${v};`), k);
   const { css, replaced } = chartCss(null, "");
   assert.deepEqual(replaced, []);

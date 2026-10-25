@@ -65,3 +65,35 @@ export async function assignServers(code: string, ids: number[]): Promise<number
   const res = await adminExec(`UPDATE hlstats_Servers SET game = ? WHERE serverId IN (?)`, [code, ids]);
   return res.affectedRows;
 }
+
+export type RankingSummary = { id: number; code: string; name: string; hidden: boolean; base: string | null; servers: number };
+
+// Every ranking with its base game and number of servers, in display order
+// (admin menu, overview and the list of rankings).
+export async function rankingSummaries(): Promise<RankingSummary[]> {
+  const [rows, servers, bases] = await Promise.all([
+    adminQuery<{ id: number; code: string; name: string; hidden: string | number }>(
+      `SELECT id, TRIM(code) AS code, name, hidden FROM hlstats_Games ORDER BY display_id, name`,
+    ),
+    adminQuery<{ game: string; n: number | string }>(`SELECT TRIM(game) AS game, COUNT(*) AS n FROM hlstats_Servers GROUP BY TRIM(game)`),
+    rankingBaseGames(),
+  ]);
+  const count = new Map(servers.map((s) => [s.game, Number(s.n)]));
+  return rows.map((r) => ({
+    id: Number(r.id),
+    code: r.code,
+    name: r.name,
+    hidden: String(r.hidden) === "1",
+    base: bases.get(r.code) ?? null,
+    servers: count.get(r.code) ?? 0,
+  }));
+}
+
+// Number of rows per ranking in one of the per-ranking tables. Table and
+// column are constants of the callers, never input.
+export async function countByRanking(table: string, column: string, where = ""): Promise<Map<string, number>> {
+  const rows = await adminQuery<{ game: string; n: number | string }>(
+    `SELECT TRIM(${column}) AS game, COUNT(*) AS n FROM ${table}${where ? ` WHERE ${where}` : ""} GROUP BY TRIM(${column})`,
+  );
+  return new Map(rows.map((r) => [r.game, Number(r.n)]));
+}

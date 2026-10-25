@@ -7,7 +7,7 @@ import { test } from "node:test";
 // them: the base rule must outrank the series colour rules (.chart .sN,
 // .chart .srvN set stroke and fill), and no base rule may paint an area.
 test("chart areas are hidden in the base stylesheet", () => {
-  const css = readFileSync("src/app/globals.css", "utf8");
+  const css = readFileSync("src/app/(site)/globals.css", "utf8");
   assert.match(css, /\.chart polygon\.area, \.load-chart polygon\.area-players \{ fill: none; stroke: none;/);
   for (const m of css.matchAll(/([^{}]*)\{([^}]*)\}/g)) {
     const [sel, body] = [m[1].trim(), m[2]];

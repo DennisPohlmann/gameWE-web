@@ -32,9 +32,9 @@ export type Setting = {
   optional?: boolean;
 };
 
-// `id` is the anchor of the group's section (the save buttons under each
-// section come back to it).
-export type SettingGroup = { id: string; title: L; help?: L; items: Setting[] };
+// One page of the settings (/admin/settings/<id>) in one area of the menu.
+export type SettingArea = "website" | "services" | "collector" | "advanced";
+export type SettingGroup = { id: string; area: SettingArea; title: L; help?: L; items: Setting[] };
 
 const TS = { key: "gamewe_voice_type", value: "teamspeak" };
 
@@ -63,7 +63,8 @@ function countryChoices(): [string, L][] {
 }
 const DISCORD = { key: "gamewe_voice_type", value: "discord" };
 
-export const settingGroups: SettingGroup[] = [
+// Every setting, by its old section; settingGroups below puts them on pages.
+const definitions: Omit<SettingGroup, "area">[] = [
   {
     id: "website",
     title: { de: "Webseite", en: "Website" },
@@ -431,7 +432,91 @@ export const settingGroups: SettingGroup[] = [
   },
 ];
 
+const byKey = new Map(definitions.flatMap((g) => g.items).map((s) => [s.key, s]));
+const helpOf = (id: string) => definitions.find((g) => g.id === id)?.help;
+const pick = (...keys: string[]) =>
+  keys.map((k) => {
+    const s = byKey.get(k);
+    if (!s) throw new Error(`setting ${k} is not defined`);
+    return s;
+  });
+
+// The settings pages of the admin menu, in menu order. Every setting is on
+// exactly one page (tests/admin-settings.test.ts).
+export const settingGroups: SettingGroup[] = [
+  {
+    id: "general",
+    area: "website",
+    title: { de: "Allgemein", en: "General" },
+    help: { de: "Name, Titel und Grundwerte der Webseite.", en: "Name, titles and basic values of the website." },
+    items: pick("sitename", "gamewe_title_format", "gamewe_title_ranking", "gamewe_site_url", "gamewe_page_size", "MinActivity", "gamewe_chat_public", "gamewe_geoip_credit"),
+  },
+  {
+    id: "design",
+    area: "website",
+    title: { de: "Design & Logo", en: "Design & logo" },
+    help: {
+      de: "Aussehen der öffentlichen Seiten. Der Admin-Bereich hat sein eigenes Design und ändert sich hier nicht mit.",
+      en: "Look of the public pages. The admin area has its own design and does not change with it.",
+    },
+    items: pick("gamewe_skin", "gamewe_game_skins", "gamewe_header_logo", "gamewe_favicon", "gamewe_apple_icon", "gamewe_logo_url", "gamewe_sig_brand"),
+  },
+  {
+    id: "header",
+    area: "website",
+    title: { de: "Kopfzeile & Links", en: "Header & links" },
+    items: definitions.find((g) => g.id === "header")!.items,
+  },
+  {
+    id: "maps",
+    area: "website",
+    title: { de: "Karten & Ereignisse", en: "Maps & events" },
+    help: helpOf("maps"),
+    items: pick("gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_game_events", "gamewe_player_events"),
+  },
+  { id: "seo", area: "website", title: { de: "Suchmaschinen", en: "Search engines" }, help: helpOf("seo"), items: definitions.find((g) => g.id === "seo")!.items },
+  { id: "voice", area: "services", title: { de: "Voiceserver", en: "Voice server" }, help: helpOf("voice"), items: definitions.find((g) => g.id === "voice")!.items },
+  { id: "bans", area: "services", title: { de: "SourceBans", en: "SourceBans" }, help: helpOf("bans"), items: pick("gamewe_sourcebans_url") },
+  {
+    id: "monitoring",
+    area: "services",
+    title: { de: "Monitoring", en: "Monitoring" },
+    help: {
+      de: "Kennzahlen der Webseite für Prometheus unter /-/metrics.",
+      en: "Metrics of the website for Prometheus under /-/metrics.",
+    },
+    items: pick("gamewe_metrics_token"),
+  },
+  { id: "points", area: "collector", title: { de: "Punkte", en: "Points" }, help: helpOf("points"), items: definitions.find((g) => g.id === "points")!.items },
+  {
+    id: "capture",
+    area: "collector",
+    title: { de: "Erfassung & Datenschutz", en: "Recording & privacy" },
+    help: {
+      de: "Was der Collector speichert. Der Collector übernimmt Änderungen innerhalb einer Minute.",
+      en: "What the collector stores. The collector picks up changes within a minute.",
+    },
+    items: pick("gamewe_rank_bots", "gamewe_server_load", "gamewe_store_chat", "gamewe_store_player_ip", "gamewe_store_locations", "gamewe_idle_timeout", "gamewe_log_lines"),
+  },
+  {
+    id: "commands",
+    area: "collector",
+    title: { de: "Befehle im Spiel", en: "In-game commands" },
+    help: {
+      de: "Antworten des Collectors auf !rank, !top10 und Co. über RCON.",
+      en: "The collector's replies to !rank, !top10 etc. over RCON.",
+    },
+    items: pick("gamewe_commands", "gamewe_menu_time", "gamewe_rcon_timeout", "gamewe_command_display", "gamewe_command_prefix", "gamewe_raw_messages"),
+  },
+  { id: "older", area: "advanced", title: { de: "Ältere Optionen", en: "Older options" }, help: helpOf("older"), items: definitions.find((g) => g.id === "older")!.items },
+];
+
+// The page with the raw hlstats_Options rows (no group of its own).
+export const RAW_GROUP = "raw";
+
 export const allSettings = settingGroups.flatMap((g) => g.items);
+// Every defined setting, for the tests.
+export const definedSettings = definitions.flatMap((g) => g.items);
 
 // hlstats_Options rows that are never listed or written as raw values:
 // TOTP secrets of the admin users and the secrets of the form above.

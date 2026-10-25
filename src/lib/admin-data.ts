@@ -80,9 +80,12 @@ export function listSortColumn(e: Entity, key: string): string | null {
   return e.joinCols && f.readonly && f.name === "lastName" ? "d.lastName" : `t.${f.name}`;
 }
 
-export async function listRows(e: Entity, opts: { game?: string; q?: string; page: number; pageSize?: number; sort?: string; asc?: boolean }) {
+export async function listRows(e: Entity, opts: { game?: string; q?: string; status?: string; page: number; pageSize?: number; sort?: string; asc?: boolean }) {
   const size = opts.pageSize ?? PAGE;
   const { parts, params } = fixedWhere(e, "t");
+  // Only a condition of the entity's own list, chosen by its value.
+  const status = e.statusFilter?.find((f) => f.value === opts.status);
+  if (status) parts.push(status.where);
   if (opts.game && e.gameColumn) {
     parts.push(`t.${e.gameColumn} = ?`);
     params.push(opts.game);

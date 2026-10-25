@@ -273,7 +273,7 @@ website therefore computes some things itself:
 3. Sign in at `/admin/login`.
 
 Two-factor sign-in with TOTP is optional. Each user can set it up under
-Administration → My account (next to "Signed in as"), where the password
+Settings → My account & 2FA (also in the user menu top right), where the password
 can be changed too, or `create-admin <name> --totp` prints a key
 as text for the authenticator app (in the container:
 `docker exec gamewe-web node scripts/create-admin.mjs admin --totp`). After
@@ -289,15 +289,39 @@ After 10 failed sign-ins an IP address is blocked for 15 minutes. The session
 cookie is `HttpOnly`, `SameSite=Strict` and `Secure` behind HTTPS (set
 `ADMIN_COOKIE_SECURE=true` if the proxy does not send `X-Forwarded-Proto`).
 
-The admin area edits:
+The admin area has its own design, independent of the templates of the
+public pages: light or dark (it follows the device; the user menu top right
+switches it and the language). The top bar has three areas, on phones a bar
+at the bottom; each area has its own side menu (on phones a drawer behind the
+menu button), and lists turn into cards on narrow screens:
+
+- **Overview** (`/admin`): active rankings, servers (and how many have
+  players right now), players (and how many are hidden or banned), players
+  active today, whether the collector reports in (`gamewe_heartbeat`), the
+  rankings with their state, what needs attention (own TOTP off, collector
+  silent, active ranking without a game, no server yet) and quick links.
+- **Rankings** (`/admin/rankings`): all rankings, the ones with servers
+  first. The ranking chosen at the top of the side menu applies to everything
+  below it: its overview (`/admin/rankings/<code>`: servers with address, map
+  and players now, number of players, clans and definitions), servers,
+  players, clans, weapons, actions, teams, roles, awards, ranks and the reset.
+  "All rankings" in the same menu shows the lists without a filter.
+- **Settings** (`/admin/settings/<page>`): one page per topic, each with its
+  own save bar: Website (general, design & logo, header & links, maps &
+  events, search engines), Services (voice server, SourceBans, monitoring),
+  Collector (points, recording & privacy, in-game commands), Moderation (chat,
+  IP addresses), Access (users, my account & 2FA) and Advanced (all options
+  (raw), older options).
+
+What the admin area edits:
 
 - **Settings:** the website settings and the collector's `gamewe_*` options
   (points per kill, headshot bonus, penalties, win triggers, rank bots, chat and IP
   storage, in-game commands, RCON timeout). The collector picks them up within
-  a minute. All other `hlstats_Options` rows (own, old HLstatsX and obsolete
-  keys) are at the end of the same page under "Other keys (raw values)", where
-  they can be changed, deleted or added; TOTP secrets are never listed. The old
-  address `/admin/options` redirects to the settings page.
+  a minute. A page saves only its own settings. All other `hlstats_Options`
+  rows (own, old HLstatsX and obsolete keys) are on Advanced → All options
+  (raw), where they can be changed, deleted or added; TOTP secrets are never
+  listed. The old address `/admin/options` redirects there.
 - **Servers:** the collector only accepts logs from servers registered here
   (IP address, port, game, RCON password). The RCON password is write-only in
   the form and never shown again; public pages never read it, and the
@@ -313,9 +337,11 @@ The admin area edits:
   version 4 (`gamewe db migrate`).
 - Games, players (points, hide from ranking, clan), clans, weapons (name,
   points modifier), actions (rewards), teams, roles, award definitions, ranks
-  and users. The lists keep their filters (ranking, search, page, rows) in
-  the address; "Back", saving and deleting on an edit page return to the
-  list with the same filters.
+  and users. The lists keep their filters (ranking, search, state, page,
+  rows) in the address; "Back", saving and deleting on an edit page return
+  to the list with the same filters. The player list shows hidden and banned
+  players marked and filters them (All, Visible, Hidden, Banned), so they can
+  be let back in; the public pages keep leaving them out.
 - **Reset ranking** (level 100, needs collector 0.1.0 or newer): sets one ranking
   back, in one of three kinds (collector 0.2.0 or newer; an older collector
   refuses the job and changes nothing):

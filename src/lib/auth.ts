@@ -74,7 +74,7 @@ function fail(ip: string) {
   failures.set(ip, { n: (f && f.until > Date.now() ? f.n : 0) + 1, until: Date.now() + 15 * 60_000 });
 }
 
-async function cookieSecure() {
+export async function cookieSecure() {
   return (await headers()).get("x-forwarded-proto") === "https" || env("ADMIN_COOKIE_SECURE") === "true";
 }
 

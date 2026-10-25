@@ -9,8 +9,10 @@ on MariaDB/MySQL or PostgreSQL. It
 - shows rankings, servers with live view and load graphs, player profiles
   (hitbox, weapons, maps, history), clans, daily awards, ribbons and ranks,
   weapons, actions, maps with kill heatmaps, chat and bans,
-- has an admin area for settings, rankings, servers, players, definitions,
-  users (with optional TOTP) and ranking resets,
+- has an admin area with its own light and dark design for desktop and
+  phone: an overview of what needs attention, ranking management (rankings,
+  servers, players, definitions, ranking resets) and settings (website,
+  services, collector, users with optional TOTP),
 - offers a read-only public JSON API with paged lists of players, countries,
   states, cities, clans, weapons, maps, awards, ranks and servers (documented on
   `/api` with Scalar), forum signatures, server banners and a TeamSpeak banner,

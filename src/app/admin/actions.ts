@@ -1,14 +1,17 @@
 "use server";
 
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { sourcebansBase } from "@/lib/sourcebans";
 import { getEntity } from "@/lib/admin-entities";
 import { deleteRow, getRow, InputError, optionList, rawOptions, saveRow, withColumns } from "@/lib/admin-data";
 import { allServers, assignServers, copyDefinitions, rankingBaseGames } from "@/lib/admin-rankings";
 import { baseGameOf, sameBaseGame } from "@/lib/games";
-import { READONLY_OPTIONS, allSettings, homeValue, linkValue, rawKeyAllowed, settingGroups } from "@/lib/admin-settings";
+import { RAW_GROUP, READONLY_OPTIONS, homeValue, linkValue, rawKeyAllowed, settingGroups } from "@/lib/admin-settings";
 import { headerOrder } from "@/lib/header-links";
-import { LEVEL_ADMIN, adminSecret, cancelPendingLogin, changePassword, login, loginCode, logout, requireAdmin } from "@/lib/auth";
+import { ADMIN_THEME_COOKIE, isAdminTheme } from "@/lib/admin-theme";
+import { basePath } from "@/lib/base-path";
+import { LEVEL_ADMIN, adminSecret, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, requireAdmin } from "@/lib/auth";
 import { adminExec, adminQuery, upsert } from "@/lib/db";
 import { imageUrl, invalidateSettings } from "@/lib/settings";
 import { listTemplates } from "@/lib/templates";
@@ -34,6 +37,33 @@ export async function loginCodeAction(form: FormData) {
 export async function loginCancelAction() {
   await cancelPendingLogin();
   redirect("/admin/login");
+}
+
+// Light, dark or automatic look of the admin area (user menu); back to the
+// page the button was on.
+export async function adminThemeAction(form: FormData) {
+  await requireAdmin();
+  const theme = form.get("theme");
+  if (!isAdminTheme(theme)) redirect("/admin");
+  (await cookies()).set(ADMIN_THEME_COOKIE, theme, {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: await cookieSecure(),
+    path: `${basePath}/admin`,
+    maxAge: 60 * 60 * 24 * 365,
+  });
+  redirect(adminReferer(await headers()));
+}
+
+// The admin page a form was sent from (same host, below /admin), else /admin.
+function adminReferer(h: Headers): string {
+  try {
+    const u = new URL(h.get("referer") ?? "");
+    if (u.host === h.get("host") && (u.pathname === `${basePath}/admin` || u.pathname.startsWith(`${basePath}/admin/`))) {
+      return u.pathname.slice(basePath.length) + u.search;
+    }
+  } catch {}
+  return "/admin";
 }
 
 export async function logoutAction() {
@@ -162,35 +192,29 @@ export async function deleteAction(form: FormData) {
   redirect(addParams(safeReturnTo(form.get("__returnTo"), e.key), { deleted: "1" }));
 }
 
-// Section of a settings field ("raw:<key>" and "raw_new": the raw values),
-// the anchor the page comes back to.
-function settingSection(field: string): string {
-  if (field.startsWith("raw:") || field === "raw_new") return "raw";
-  return settingGroups.find((g) => g.items.some((s) => s.key === field))?.id ?? "";
+function badField(group: string, field: string): never {
+  redirect(`/admin/settings/${group}?field=${encodeURIComponent(field)}`);
 }
 
-function badField(field: string): never {
-  redirect(`/admin/settings?field=${encodeURIComponent(field)}#sec-${settingSection(field)}`);
-}
-
-// The whole page is one form: every save button (one under each section)
-// sends and saves all sections, so nothing typed elsewhere is lost. The
-// button's `section` only decides where the page comes back to.
+// One settings page (/admin/settings/<group>) is one form: only the settings
+// of that group, or on the raw page the raw rows, are read and written.
 export async function saveSettingsAction(form: FormData) {
   await requireAdmin();
-  const sectionSent = String(form.get("section") ?? "");
-  const section = sectionSent === "raw" || settingGroups.some((g) => g.id === sectionSent) ? sectionSent : "";
+  const groupSent = String(form.get("group") ?? "");
+  const group = settingGroups.find((g) => g.id === groupSent);
+  const isRaw = groupSent === RAW_GROUP;
+  if (!group && !isRaw) redirect("/admin/settings");
+  const page = group?.id ?? RAW_GROUP;
+  const bad: (field: string) => never = (field) => badField(page, field);
+  const items = group?.items ?? [];
   const values: [string, string][] = [];
   // Rows that exist now: optional settings are only written when filled in
-  // or already stored; raw values only for rows without a field.
+  // or already stored.
+  const optional = items.filter((s) => s.optional).map((s) => s.key);
   const stored = new Set(
-    (await adminQuery<{ keyname: string }>(`SELECT keyname FROM hlstats_Options WHERE keyname IN (?)`, [allSettings.filter((s) => s.optional).map((s) => s.key)])).map(
-      (r) => r.keyname,
-    ),
+    optional.length ? (await adminQuery<{ keyname: string }>(`SELECT keyname FROM hlstats_Options WHERE keyname IN (?)`, [optional])).map((r) => r.keyname) : [],
   );
-  const raw = await rawOptions();
-  const rawKeys = new Set(raw.map((r) => r.keyname));
-  for (const s of allSettings) {
+  for (const s of items) {
     if (s.type === "order") {
       // Sent by the header links list; without it the stored order stays.
       const v = form.get(s.key);
@@ -199,13 +223,13 @@ export async function saveSettingsAction(form: FormData) {
     }
     if (s.type === "home") {
       const v = homeValue(String(form.get(`${s.key}__label`) ?? ""), String(form.get(`${s.key}__url`) ?? ""));
-      if (v === null) badField(s.key);
+      if (v === null) bad(s.key);
       values.push([s.key, v]);
       continue;
     }
     if (s.type === "link") {
       const v = linkValue(String(form.get(`${s.key}__label`) ?? ""), String(form.get(`${s.key}__url`) ?? ""));
-      if (v === null) badField(s.key);
+      if (v === null) bad(s.key);
       values.push([s.key, v]);
       continue;
     }
@@ -214,46 +238,52 @@ export async function saveSettingsAction(form: FormData) {
       const v = String(form.get(s.key) ?? "");
       if (form.get(`${s.key}__clear`) === "1") values.push([s.key, ""]);
       else if (v) {
-        if (v.length > 255 || /[\r\n]/.test(v)) badField(s.key);
+        if (v.length > 255 || /[\r\n]/.test(v)) bad(s.key);
         values.push([s.key, v]);
       }
+      continue;
+    }
+    if (s.type === "bool") {
+      // A switch: the hidden "0" always, "1" as well when it is on.
+      const sent = form.getAll(s.key).map(String);
+      if (!sent.length || sent.some((x) => x !== "0" && x !== "1")) bad(s.key);
+      values.push([s.key, sent.includes("1") ? "1" : "0"]);
       continue;
     }
     const v = String(form.get(s.key) ?? "").trim();
     if (s.type === "number") {
       const n = Number(v);
       if (!v || !Number.isInteger(n) || (s.min !== undefined && n < s.min) || (s.max !== undefined && n > s.max)) {
-        badField(s.key);
+        bad(s.key);
       }
     } else if (
-      (s.type === "bool" && v !== "0" && v !== "1") ||
       (s.type === "choice" && !s.choices?.some(([c]) => c === v)) ||
       (s.type === "template" && !(await listTemplates()).some((t) => t.id === v))
     ) {
-      badField(s.key);
+      bad(s.key);
     } else if (v.length > 255) {
-      badField(s.key);
+      bad(s.key);
     } else if (s.key === "gamewe_ts_host" && v) {
       const host = tsHost(v);
-      if (!host) badField(s.key);
+      if (!host) bad(s.key);
       values.push([s.key, host]);
       continue;
     } else if ((s.key === "gamewe_ts_display" && v && !tsDisplay(v)) || (s.key === "gamewe_ts_link" && v && !tsLink(v))) {
-      badField(s.key);
+      bad(s.key);
     } else if (s.key === "gamewe_discord_invite" && v) {
       const invite = discordInvite(v);
-      if (!invite) badField(s.key);
+      if (!invite) bad(s.key);
       values.push([s.key, invite]);
       continue;
     } else if (s.key === "gamewe_discord_guild" && v && !discordGuild(v)) {
-      badField(s.key);
+      bad(s.key);
     } else if ((s.key === "gamewe_header_logo" || s.key === "gamewe_favicon" || s.key === "gamewe_apple_icon") && v && !imageUrl(v)) {
-      badField(s.key);
+      bad(s.key);
     } else if ((s.key === "gamewe_title_format" || s.key === "gamewe_title_ranking") && !v.includes("{page}")) {
-      badField(s.key);
+      bad(s.key);
     } else if (s.key === "gamewe_sourcebans_url" && v) {
       const base = sourcebansBase(v);
-      if (!base) badField(s.key);
+      if (!base) bad(s.key);
       values.push([s.key, base]);
       continue;
     } else if (s.optional && !v && !stored.has(s.key)) {
@@ -261,36 +291,39 @@ export async function saveSettingsAction(form: FormData) {
     }
     values.push([s.key, v]);
   }
-  // Other keys (raw values): the form sends each key with its index; only
-  // keys that exist as raw rows are written or deleted.
   const removed: string[] = [];
-  for (const [name, entry] of form.entries()) {
-    const m = /^raw_key_(\d{1,4})$/.exec(name);
-    if (!m) continue;
-    const key = String(entry);
-    if (!rawKeys.has(key) || READONLY_OPTIONS.includes(key)) continue;
-    if (form.get(`raw_del_${m[1]}`) === "1") {
-      removed.push(key);
-      continue;
+  if (isRaw) {
+    // Other keys (raw values): the form sends each key with its index; only
+    // keys that exist as raw rows are written or deleted.
+    const rawKeys = new Set((await rawOptions()).map((r) => r.keyname));
+    for (const [name, entry] of form.entries()) {
+      const m = /^raw_key_(\d{1,4})$/.exec(name);
+      if (!m) continue;
+      const key = String(entry);
+      if (!rawKeys.has(key) || READONLY_OPTIONS.includes(key)) continue;
+      if (form.get(`raw_del_${m[1]}`) === "1") {
+        removed.push(key);
+        continue;
+      }
+      const v = String(form.get(`raw_val_${m[1]}`) ?? "");
+      if (v.length > 255 || /[\r\n]/.test(v)) bad(`raw:${key}`);
+      values.push([key, v]);
     }
-    const v = String(form.get(`raw_val_${m[1]}`) ?? "");
-    if (v.length > 255 || /[\r\n]/.test(v)) badField(`raw:${key}`);
-    values.push([key, v]);
-  }
-  const newKey = String(form.get("raw_new_key") ?? "").trim();
-  if (newKey) {
-    const v = String(form.get("raw_new_val") ?? "");
-    if (!rawKeyAllowed(newKey) || rawKeys.has(newKey) || v.length > 255 || /[\r\n]/.test(v)) badField("raw_new");
-    const exists = await adminQuery(`SELECT keyname FROM hlstats_Options WHERE keyname = ?`, [newKey]);
-    if (exists.length) badField("raw_new");
-    values.push([newKey, v]);
+    const newKey = String(form.get("raw_new_key") ?? "").trim();
+    if (newKey) {
+      const v = String(form.get("raw_new_val") ?? "");
+      if (!rawKeyAllowed(newKey) || rawKeys.has(newKey) || v.length > 255 || /[\r\n]/.test(v)) bad("raw_new");
+      const exists = await adminQuery(`SELECT keyname FROM hlstats_Options WHERE keyname = ?`, [newKey]);
+      if (exists.length) bad("raw_new");
+      values.push([newKey, v]);
+    }
   }
   for (const [k, v] of values) {
     await adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [k, v]);
   }
   for (const k of removed) await adminExec(`DELETE FROM hlstats_Options WHERE keyname = ?`, [k]);
   invalidateSettings();
-  redirect(section ? `/admin/settings?saved=1&section=${section}#sec-${section}` : "/admin/settings?saved=1");
+  redirect(`/admin/settings/${page}?saved=1`);
 }
 
 // TOTP for the signed-in user's own account: a new secret waits as "pending"

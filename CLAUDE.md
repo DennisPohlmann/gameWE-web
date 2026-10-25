@@ -2,8 +2,10 @@
 
 Next.js (App Router, standalone output) stats website for the gameWE
 collector's HLstatsX/gameME database (MariaDB/MySQL or PostgreSQL). Public
-pages under `src/app/[game]`, forum signatures under `src/app/sig`, admin
-area under `src/app/admin` (session cookie signed with `ADMIN_SECRET`,
+pages under `src/app/(site)` (root layout, `globals.css`, `[game]`), forum
+signatures under `src/app/sig`, admin area under `src/app/admin` with its own
+root layout and stylesheet (`admin.css`, menu in `src/components/admin`;
+templates never style it; session cookie signed with `ADMIN_SECRET`,
 optional TOTP, `src/lib/auth.ts`, `src/lib/totp.ts`). Runs behind nginx
 under a base path (`BASE_PATH`, e.g. `/new`), access log via
 `scripts/access-log.cjs`. Config: `.env.example` → `/etc/gamewe/web/web.env`.

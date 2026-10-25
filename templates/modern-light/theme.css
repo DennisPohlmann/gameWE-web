@@ -75,7 +75,6 @@ html[data-skin] {
   --m-foot-link: #3b424c;
   --m-icon: #eceef1;
   --m-error-border: #e3a0a0;
-  --m-readonly: #f2f3f5;
   --m-team-a: #1f5fae;
   --m-team-b: #b02a2a;
   --m-srv-full: #c62828;
@@ -162,7 +161,6 @@ html[data-skin] .page {
 }
 html[data-skin] .page > p, html[data-skin] .page > .notice, html[data-skin] .page > .lead,
 html[data-skin] .page-share { width: auto; margin: 0 0 14px; }
-html[data-skin] .page:has(> .admin) { max-width: 1280px; }
 
 /* Footer: dark bar, muted links, the credit line on the right. */
 html[data-skin] .footer {
@@ -251,7 +249,7 @@ html[data-skin] .container { padding: 0; }
 html[data-skin] .section > :not(.section-head) + :not(.pager):not(.footnote) { margin-top: 6px; }
 html[data-skin] .box,
 html[data-skin] .section > p, html[data-skin] .section > .chart, html[data-skin] .section > .lead,
-html[data-skin] .section > .legend, html[data-skin] .section > .form, html[data-skin] .notice {
+html[data-skin] .section > .legend, html[data-skin] .notice {
   padding: 12px 14px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -381,7 +379,6 @@ html[data-skin] .pager-arrows a:hover { border-color: var(--accent); color: var(
 /* ------------------------------------------------------------ forms */
 
 html[data-skin] .search input, html[data-skin] .search select,
-html[data-skin] .form input:not([type="checkbox"]), html[data-skin] .form select, html[data-skin] .form textarea,
 html[data-skin] .hb-picker select, html[data-skin] .sig-codes-bar select, html[data-skin] .pager-page {
   padding: 5px 8px;
   background: var(--input-bg);
@@ -389,7 +386,7 @@ html[data-skin] .hb-picker select, html[data-skin] .sig-codes-bar select, html[d
   border: 1px solid var(--input-border);
   border-radius: 3px;
 }
-html[data-skin] .search input:focus, html[data-skin] .form input:focus, html[data-skin] .form select:focus {
+html[data-skin] .search input:focus {
   outline: none;
   border-color: var(--accent);
 }
@@ -407,7 +404,6 @@ html[data-skin] .search button, html[data-skin] .button, html[data-skin] .sig-co
 html[data-skin] .button, html[data-skin] .sig-codes-bar button { border-radius: 3px; }
 html[data-skin] .search button:hover, html[data-skin] .button:hover { background: var(--tab-hover); }
 html[data-skin] .button.danger { background: var(--m-danger); border-color: var(--m-danger); color: #ffffff; }
-html[data-skin] .form input[readonly] { background: var(--m-readonly); color: var(--muted); }
 
 /* ------------------------------------------------------------ charts */
 
@@ -443,19 +439,6 @@ html[data-skin] .help-num { color: var(--m-on-accent); }
 html[data-skin] .award-cal td.sel a { color: var(--m-on-accent); }
 html[data-skin] .player-map { border-color: var(--border); border-radius: var(--m-radius); }
 html[data-skin] .heatmap svg { border-radius: 4px; }
-
-/* Admin area */
-html[data-skin] .admin { width: 100%; margin: 0; gap: 18px; }
-html[data-skin] .admin-nav { border-radius: var(--m-radius); padding: 12px; }
-html[data-skin] .admin-nav nav a { border-radius: 3px; padding: 3px 6px; color: var(--soft); }
-html[data-skin] .admin-nav nav a:hover { background: var(--m-hover); color: var(--accent); text-decoration: none; }
-html[data-skin] .admin-title { color: var(--accent); }
-html[data-skin] .admin .server-card { border-radius: var(--m-radius); }
-/* Intro texts stay plain text on the page (the base layout puts them in a card). */
-html[data-skin] .admin-main > p:not(.notice), html[data-skin] .admin-main > .lead { padding: 0; background: none; border: 0; color: inherit; }
-html[data-skin] .admin-main > .lead:not(.notice) { color: var(--muted); }
-html[data-skin] .hl-row { border-radius: 4px; }
-html[data-skin] .login { padding: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--m-radius); }
 
 /* ------------------------------------------------------------ phones */
 

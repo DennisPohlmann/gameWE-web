@@ -47,3 +47,9 @@ test("anything else falls back to the plain list", () => {
 test("unknown parameters are dropped", () => {
   assert.equal(safeReturnTo("/admin/awards?game=css&next=//evil.example&deleted=1#x", "awards"), "/admin/awards?game=css");
 });
+
+test("the list keeps the state filter", () => {
+  const list = listHref("players", { game: "css", status: "banned" });
+  assert.equal(list, "/admin/players?game=css&status=banned");
+  assert.equal(safeReturnTo(list, "players"), list);
+});

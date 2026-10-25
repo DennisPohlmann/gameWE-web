@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { loginAction, loginCancelAction, loginCodeAction } from "../../actions";
+import { Logo } from "@/components/admin/nav";
+import { basePath } from "@/lib/base-path";
 import { adminSecret, currentAdmin, pendingLogin } from "@/lib/auth";
 import { adminDict } from "@/lib/admin-i18n";
 import { adminQuery } from "@/lib/db";
@@ -38,8 +40,16 @@ export default async function LoginPage({
             ? a.totpExpired
             : null;
   return (
+    <div className="adm-login">
     <div className="login">
-      <h1>{a.admin}</h1>
+      <span className="adm-brand">
+        <Logo />
+        <span>
+          game<b>WE</b>
+        </span>
+        <small>Admin</small>
+      </span>
+      <h1>{a.login}</h1>
       {noSecret ? <p className="notice error">{a.nosecret}</p> : null}
       {n === 0 ? <p className="notice">{a.noUsers}</p> : null}
       {n < 0 ? <p className="notice error">{a.dbAdminError}</p> : null}
@@ -96,6 +106,10 @@ export default async function LoginPage({
           </button>
         </form>
       )}
+      <p className="login-foot">
+        <a href={`${basePath}/`}>← {a.toSite}</a>
+      </p>
+    </div>
     </div>
   );
 }
