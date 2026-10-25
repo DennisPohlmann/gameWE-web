@@ -399,7 +399,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                       alt={`${t.forumSignature}: ${p.name ?? id}`}
                       width={400}
                       height={100}
-                      labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgStandard, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
+                      labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgSkinDefault, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
                     />
                   </td>
                 </tr>

@@ -448,7 +448,7 @@
   "sigFormat": "格式",
   "sigImageUrl": "圖片網址",
   "imgStyle": "樣式",
-  "imgStandard": "經典（標準）",
+  "imgSkinDefault": "目前設計（預設）",
   "serverBanner": "伺服器橫幅",
   "copy": "複製",
   "copied": "已複製",

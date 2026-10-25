@@ -6,7 +6,7 @@ import { getGame, getServer, getServerLoad } from "@/lib/data";
 import { statsOrigin } from "@/lib/site-url";
 import { FLAG_CODES } from "@/lib/flag-codes";
 import { nowUnix } from "@/lib/format";
-import { CLASSIC_STYLE, imageTheme, parseImageFile } from "@/lib/image-theme";
+import { imageTheme, parseImageFile } from "@/lib/image-theme";
 
 const W = 560;
 const H = 95;
@@ -22,8 +22,8 @@ const INFO = W - 2 - SIDE - 16;
 const GAP = 12;
 const ADDR = 140;
 
-// Server banner, 560x95: file "<serverId>.png" in the classic grey look,
-// "<serverId>-<template>.png" in a design template's colours. Name with flag,
+// Server banner, 560x95: file "<serverId>.png" in the banner of the active
+// skin, "<serverId>-<template>.png" in that of a design template. Name with flag,
 // address, port, status, players with a pie, map and, on the left, the
 // players of the last 24 hours. With code set (banner/<code>/server/...) the
 // server must belong to that ranking; null only for the old /banner/<file>.
@@ -34,7 +34,7 @@ export async function serverBanner(file: string, code: string | null) {
   const now = nowUnix();
   const [game, load, origin] = await Promise.all([getGame(s.game), getServerLoad(s.serverId, now - 86400), statsOrigin()]);
   if (!game) return new Response("not found", { status: 404 });
-  const th = await imageTheme(f?.style ?? CLASSIC_STYLE);
+  const th = await imageTheme(f?.style ?? null, game);
   const cc = (s.country_code ?? "").trim().toLowerCase();
   const flag = FLAG_CODES.has(cc) ? await flagDataUrl(cc) : null;
   const addr = s.publicaddress || `${s.address}:${s.port}`;

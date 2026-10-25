@@ -448,7 +448,7 @@
   "sigFormat": "Format",
   "sigImageUrl": "Billed-URL",
   "imgStyle": "Stil",
-  "imgStandard": "Klassisk (standard)",
+  "imgSkinDefault": "Aktuelt design (standard)",
   "serverBanner": "Serverbanner",
   "copy": "Kopiér",
   "copied": "Kopieret",

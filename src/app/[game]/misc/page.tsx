@@ -121,7 +121,7 @@ export default async function MiscPage({ params }: { params: Promise<{ game: str
               alt={`${t.serverBanner}: ${s.name}`}
               width={560}
               height={95}
-              labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgStandard, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
+              labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgSkinDefault, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
             />
           </div>
         ))}

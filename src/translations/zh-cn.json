@@ -448,7 +448,7 @@
   "sigFormat": "格式",
   "sigImageUrl": "图片网址",
   "imgStyle": "样式",
-  "imgStandard": "经典（标准）",
+  "imgSkinDefault": "当前设计（默认）",
   "serverBanner": "服务器横幅",
   "copy": "复制",
   "copied": "已复制",

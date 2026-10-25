@@ -49,9 +49,30 @@ template.
 ## Signature and server banner
 
 The player banner or forum signature (`/banner/<game>/player/…`) and the
-server banner (`/banner/<game>/server/…`) come in
-the colours of every template, yours included, without extra work. They use
-`--surface`, `--surface-2`, `--panel`, `--text`, `--muted`, `--accent`,
-`--good`, `--bad`, `--border`, `--bar-bg` and `--bar-border`. Only plain
-colours count (`#rgb`, `#rrggbb`, `rgb()`/`rgba()`, colour names); anything
-else falls back to the classic colours.
+server banner (`/banner/<game>/server/…`) show the banner of the active
+skin by default (the ranking's game design while "Game designs" is on, else
+the main template); `…/<id>-<template>.png` picks another template.
+
+A template defines its banner with `--banner-*` variables in its
+`theme.css`, in an extra `html[data-skin] { … }` block at the end (see any
+built-in template):
+
+| Variable | Used for |
+| --- | --- |
+| `--banner-bg` | background of the picture |
+| `--banner-side` | left side panel (rank insignia, player graph) |
+| `--banner-side-text` | text on the side panel |
+| `--banner-frame` | frame around the picture |
+| `--banner-stripe` | stripe on top (`none`: no stripe) |
+| `--banner-text` | values, names |
+| `--banner-muted` | small text (site address) |
+| `--banner-accent` | labels, graph line, the "WE" of the logo |
+| `--banner-good`, `--banner-bad` | online / offline, gains / losses |
+| `--banner-border` | lines |
+| `--banner-bar-bg`, `--banner-bar-border` | progress bars, graph and pie background |
+
+Only plain colours count (`#rgb`, `#rrggbb`, `rgb()`/`rgba()`, colour
+names); `--banner-bg` and `--banner-side` may also be up to three
+`linear-gradient(…)` of such colours (optional angle in `deg`, positions in
+`%`). A template without banner definition gets the banner of `dark`, and
+every variable it leaves out or sets to something else comes from there.

@@ -448,7 +448,7 @@
   "sigFormat": "Формат",
   "sigImageUrl": "URL изображения",
   "imgStyle": "Стиль",
-  "imgStandard": "Классический (стандарт)",
+  "imgSkinDefault": "Текущее оформление (по умолчанию)",
   "serverBanner": "Баннер сервера",
   "copy": "Копировать",
   "copied": "Скопировано",

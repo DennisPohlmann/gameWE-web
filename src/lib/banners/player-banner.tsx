@@ -10,11 +10,11 @@ import { statsOrigin } from "@/lib/site-url";
 import { getSteamProfile } from "@/lib/steam";
 import { FLAG_CODES } from "@/lib/flag-codes";
 import { activity, kpd, ratio, steamIds } from "@/lib/format";
-import { CLASSIC_STYLE, imageTheme, parseImageFile } from "@/lib/image-theme";
+import { imageTheme, parseImageFile } from "@/lib/image-theme";
 
 // Player banner (forum signature), 400x100: file "<playerId>.png" in the
-// classic grey look, "<playerId>-<template>.png" in a design template's
-// colours. Left the rank insignia and the progress to the next rank, right
+// banner of the active skin, "<playerId>-<template>.png" in that of a design
+// template. Left the rank insignia and the progress to the next rank, right
 // avatar, position and key numbers. Same rules as the profile: 404 for a
 // hidden ranking and for bots while they have no profile; hidden players
 // keep it, without their position. With game set (banner/<game>/player/...)
@@ -22,7 +22,8 @@ import { CLASSIC_STYLE, imageTheme, parseImageFile } from "@/lib/image-theme";
 export async function playerBanner(file: string, game: string | null) {
   const f = parseImageFile(file);
   const p = f ? await getPlayer(f.id) : undefined;
-  if (!p || (game !== null && p.game !== game) || (await noProfile(p)) || !(await getGame(p.game))) return new Response("not found", { status: 404 });
+  const g = p && (game === null || p.game === game) && !(await noProfile(p)) ? await getGame(p.game) : undefined;
+  if (!p || !g) return new Response("not found", { status: 404 });
   const ids = steamIds(p.uniqueId);
   const [position, total, ranks, settings, origin, steam] = await Promise.all([
     p.hideranking ? Promise.resolve(null) : getPlayerPosition(p.game, p.skill),
@@ -32,7 +33,7 @@ export async function playerBanner(file: string, game: string | null) {
     statsOrigin(),
     ids ? getSteamProfile(ids.steam64) : Promise.resolve(null),
   ]);
-  const th = await imageTheme(f?.style ?? CLASSIC_STYLE);
+  const th = await imageTheme(f?.style ?? null, g);
   const rank = rankFor(p.kills, ranks);
   const progress = rank ? (rank.next !== null ? (p.kills - rank.minimum) / (rank.next - rank.minimum) : 1) : 0;
   const act = activity(p.last_event, settings.activityDays);

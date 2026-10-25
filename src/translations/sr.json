@@ -448,7 +448,7 @@
   "sigFormat": "Формат",
   "sigImageUrl": "URL слике",
   "imgStyle": "Стил",
-  "imgStandard": "Класични (стандардно)",
+  "imgSkinDefault": "Тренутни дизајн (подразумевано)",
   "serverBanner": "Банер сервера",
   "copy": "Копирај",
   "copied": "Копирано",

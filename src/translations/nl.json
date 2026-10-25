@@ -448,7 +448,7 @@
   "sigFormat": "Formaat",
   "sigImageUrl": "Afbeeldings-URL",
   "imgStyle": "Stijl",
-  "imgStandard": "Klassiek (standaard)",
+  "imgSkinDefault": "Huidig ontwerp (standaard)",
   "serverBanner": "Serverbanner",
   "copy": "Kopiëren",
   "copied": "Gekopieerd",

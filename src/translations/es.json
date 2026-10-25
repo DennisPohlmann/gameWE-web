@@ -448,7 +448,7 @@
   "sigFormat": "Formato",
   "sigImageUrl": "URL de la imagen",
   "imgStyle": "Estilo",
-  "imgStandard": "Clásico (estándar)",
+  "imgSkinDefault": "Diseño actual (predeterminado)",
   "serverBanner": "Banner del servidor",
   "copy": "Copiar",
   "copied": "Copiado",

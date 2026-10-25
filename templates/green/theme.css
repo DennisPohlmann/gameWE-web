@@ -43,3 +43,20 @@ html[data-skin] {
   --error-text: #ffffff;
   color-scheme: dark;
 }
+
+/* Player banner (forum signature) and server banner, see README.md */
+html[data-skin] {
+  --banner-bg: linear-gradient(135deg, rgba(60,195,95,0.16) 0%, rgba(0,0,0,0) 40%), linear-gradient(180deg, #1e1e1e 0%, #121212 100%);
+  --banner-side: linear-gradient(180deg, #23893f 0%, rgb(19,75,35) 100%);
+  --banner-side-text: #ffffff;
+  --banner-frame: rgb(25,96,44);
+  --banner-stripe: #3cc35f;
+  --banner-text: #ffffff;
+  --banner-muted: #b5b5b5;
+  --banner-accent: #3cc35f;
+  --banner-good: #4cc38a;
+  --banner-bad: #ff4d4d;
+  --banner-border: #333333;
+  --banner-bar-bg: #333333;
+  --banner-bar-border: #555555;
+}
