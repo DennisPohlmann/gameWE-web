@@ -207,8 +207,10 @@ website therefore computes some things itself:
   (`hlstats_Servers` `lat`/`lng` from GeoIP: a city, or only the country's
   centre when GeoIP knows no city). The map always opens with all players and
   all servers in view; on the "who is playing now" map a thin line joins each
-  player to the server they are playing on (the players map shows no lines:
-  its players are not on a server right now). Servers at the same place (coordinates
+  player to the server they are playing on, and on the players map's top 10
+  to the ranking's server they joined last (`server_id` of their
+  `hlstats_Events_Entries`; no line for events without it, and none on the
+  map of all players). Lines are green while the server is online. Servers at the same place (coordinates
   equal after rounding to 0.01°, about 1 km) share one square that shows
   their number; hovering lists them all, each with a green or red status
   dot, and a click opens a box with a link to each server page. Hovering a

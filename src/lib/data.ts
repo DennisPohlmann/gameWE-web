@@ -5,6 +5,7 @@ import { addDays, dayOf, siteDay } from "./day";
 import { nowUnix, steamIds } from "./format";
 import { baseGameOf, GAME_HAS_DATA } from "./games";
 import type { MapSort } from "./map-table";
+import { hasEventServer } from "./history";
 import { playerCount, sumCounts, type PlayerCount } from "./player-count";
 import { axisRatio, RADAR_KEYS, RADAR_MIN_KILLS, RADAR_SQL, type AxisRank, type PlayerRatios, type RadarKey, type Ratio } from "./radar";
 import { winsByMap } from "./shares";
@@ -1734,6 +1735,27 @@ export async function getMapServers(game: string): Promise<MapServer[]> {
   return rows
     .map((r) => ({ ...r, serverId: Number(r.serverId), port: Number(r.port), lat: Number(r.lat), lng: Number(r.lng), online: r.uptime !== null, uptime: r.uptime === null ? null : Number(r.uptime) }))
     .filter(onMap);
+}
+
+// The ranking's game server each player joined last (hlstats_Events_Entries,
+// server_id of the collector's events), for the lines on the top 10 map.
+// Empty on a database without that column; events of gameME/HLstatsX (0) are
+// left out.
+export async function getPlayerServerIds(game: string, ids: number[]): Promise<Map<number, number>> {
+  const out = new Map<number, number>();
+  if (!ids.length || !(await hasEventServer())) return out;
+  const rows = await query<{ playerId: number; serverId: number; ts: number }>(
+    `SELECT e.playerId, s.serverId, MAX(e.timestamp_id) AS ts
+     FROM hlstats_Events_Entries e
+     JOIN hlstats_Servers s ON s.serverId = e.server_id
+     WHERE e.playerId IN (?) AND s.game = ?
+     GROUP BY e.playerId, s.serverId
+     ORDER BY ts, s.serverId`,
+    [ids, game],
+  );
+  // Ordered by time: the last row of a player is the server they joined last.
+  for (const r of rows) out.set(Number(r.playerId), Number(r.serverId));
+  return out;
 }
 
 function mapRow<R extends { playerId: number; skill: number; kills: number; deaths: number; last_event: number; lat: string; lng: string }>(r: R) {
