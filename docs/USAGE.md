@@ -122,10 +122,11 @@ website therefore computes some things itself:
   if set, as in the server list), the current map and, while the server is
   online, its uptime (from the latest load sample, as on the server page);
   a click opens the server page. The status lights in the
-  square beat like a heart (double beat, then a pause): green while the
-  server is online (load samples of the last 30 minutes, as on the server
-  banner), red and slower when not; with reduced motion set in the system
-  they stay lit without beating. Servers without a location
+  square glow slowly like a lighthouse (fade on, stay lit a moment, fade
+  off, stay dark; once every 4 s): green while a server there is online
+  (load samples of the last 30 minutes, as on the server banner), red and
+  every 5 s when not; with reduced motion set in the system they stay lit
+  without glowing on and off. Servers without a location
   (LAN address, no GeoIP database, rows imported without one) are left out.
 - **SourceBans** (bans page): the public ban list
   (`index.php?p=banlist&page=N`) of the address under Settings → Bans is

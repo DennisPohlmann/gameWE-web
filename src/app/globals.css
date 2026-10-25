@@ -687,24 +687,20 @@ table.spaced { margin-top: 10px; }
 .map-server a { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: 2px solid #fff; border-radius: 7px; color: #fff; background: linear-gradient(#4b5666, #232a33); box-shadow: 0 0 0 1px #555, 0 1px 3px rgba(0, 0, 0, 0.5); }
 .map-server svg { display: block; }
 /* Status lights: green while the server is online (load samples of the last
-   30 minutes), red when not. Both beat like a calm heart (two soft beats
-   that swell and fade, then a pause) with a glow in time, offline more
-   slowly. Only opacity and scale are animated, so it stays cheap. */
-.map-server a { position: relative; --led: #ff5a4f; --glow: rgba(255, 70, 60, 0.6); --beat: 3.6s; }
-.map-server.on a { --led: #6dff8a; --glow: rgba(80, 230, 110, 0.65); --beat: 2.4s; }
-.map-server .led { fill: var(--led); stroke: none; transform-box: fill-box; transform-origin: center; animation: led-beat var(--beat) ease-in-out infinite; }
-.map-server a::after { content: ""; position: absolute; inset: -4px; border-radius: 10px; box-shadow: 0 0 8px 2px var(--glow); pointer-events: none; animation: glow-beat var(--beat) ease-in-out infinite; }
-@keyframes led-beat {
-  0%, 55%, 100% { opacity: 0.55; transform: scale(1); }
-  12% { opacity: 1; transform: scale(1.15); }
-  22% { opacity: 0.7; transform: scale(1.02); }
-  32% { opacity: 0.9; transform: scale(1.08); }
+   30 minutes), red when not. They glow like a lighthouse: fade on with the
+   glow, stay lit a moment, fade off, stay dark, once per cycle; offline more
+   slowly. Only opacity is animated, so it stays cheap. */
+.map-server a { position: relative; --led: #ff5a4f; --glow: rgba(255, 70, 60, 0.6); --cycle: 5s; }
+.map-server.on a { --led: #6dff8a; --glow: rgba(80, 230, 110, 0.65); --cycle: 4s; }
+.map-server .led { fill: var(--led); stroke: none; animation: led-flash var(--cycle) ease-in-out infinite; }
+.map-server a::after { content: ""; position: absolute; inset: -4px; border-radius: 10px; box-shadow: 0 0 10px 3px var(--glow); pointer-events: none; animation: glow-flash var(--cycle) ease-in-out infinite; }
+@keyframes led-flash {
+  0%, 65%, 100% { opacity: 0.2; }
+  25%, 40% { opacity: 1; }
 }
-@keyframes glow-beat {
-  0%, 55%, 100% { opacity: 0.2; }
-  12% { opacity: 0.8; }
-  22% { opacity: 0.4; }
-  32% { opacity: 0.6; }
+@keyframes glow-flash {
+  0%, 65%, 100% { opacity: 0; }
+  25%, 40% { opacity: 0.9; }
 }
 @media (prefers-reduced-motion: reduce) {
   .map-server .led, .map-server a::after { animation: none; }
