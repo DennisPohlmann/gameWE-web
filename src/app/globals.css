@@ -142,6 +142,13 @@ img { border: 0; vertical-align: middle; }
 .good { color: var(--good); }
 .bad { color: var(--bad); }
 
+/* Server version OS icon and VAC shield (server-icons.ts): 1em, in the text
+   colour of the row or hover box (currentColor), so they fit every skin. */
+.os-mark, .vac-mark { display: inline-block; line-height: 0; vertical-align: -0.15em; }
+.os-mark.muted { color: var(--muted); line-height: inherit; vertical-align: baseline; font-size: 0.9em; }
+.vac-mark { vertical-align: -0.25em; }
+.os-mark svg, .vac-mark svg { display: block; }
+
 /* ---------------------------------------------------------------- frame */
 
 .header {

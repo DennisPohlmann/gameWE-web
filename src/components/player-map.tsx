@@ -3,6 +3,7 @@
 import "leaflet/dist/leaflet.css";
 import { useEffect, useRef } from "react";
 import { mapStyles } from "@/lib/map-styles";
+import { VAC_SVG } from "@/lib/server-icons";
 
 export type MapMarker = {
   id: number;
@@ -20,8 +21,9 @@ export type MapMarker = {
   serverId?: number;
 };
 
-// One game server: name (with the flag), page and hover details.
-export type ServerEntry = { id: number; name: string; href: string; online: boolean; flag?: string; lines: string[] };
+// One game server: name (with the flag), page and hover details. vac: the
+// title of the VAC shield after the name, only when it is VAC-secured.
+export type ServerEntry = { id: number; name: string; href: string; online: boolean; flag?: string; vac?: string; lines: string[] };
 
 // The game servers at one GeoIP location: one square, not an avatar, with
 // the number of servers when there are several. online: any of them is.
@@ -167,11 +169,17 @@ function greatCircle(a: [number, number], b: [number, number]): [number, number]
   return out;
 }
 
-// Hover box: first line bold with the flag, then the details.
-function tip(m: { lines: string[]; flag?: string }) {
+// Hover box: first line bold with the flag (and a server's VAC shield),
+// then the details.
+function tip(m: { lines: string[]; flag?: string; vac?: string }) {
   return m.lines
-    .map((l, i) => (i ? esc(l) : `<b>${m.flag ? `<span class="flag flag-svg" style="background-image:url('${esc(m.flag)}')"></span>` : ""}${esc(l)}</b>`))
+    .map((l, i) => (i ? esc(l) : `<b>${m.flag ? `<span class="flag flag-svg" style="background-image:url('${esc(m.flag)}')"></span>` : ""}${esc(l)}</b>${vacMark(m.vac)}`))
     .join("<br>");
+}
+
+// The VAC shield of the server lists, with its title.
+function vacMark(title?: string) {
+  return title ? ` <span class="vac-mark" title="${esc(title)}" role="img" aria-label="${esc(title)}">${VAC_SVG}</span>` : "";
 }
 
 // Hover box of a server marker: one server as a player's (name, place,
@@ -179,14 +187,14 @@ function tip(m: { lines: string[]; flag?: string }) {
 function serverTip(m: ServerMarker) {
   if (m.servers.length === 1) {
     const s = m.servers[0];
-    return tip({ flag: s.flag, lines: [s.name, m.place, ...s.lines].filter(Boolean) });
+    return tip({ flag: s.flag, vac: s.vac, lines: [s.name, m.place, ...s.lines].filter(Boolean) });
   }
   return (
     `<b>${esc(m.title ?? m.place)}</b>` +
     m.servers
       .map(
         (s) =>
-          `<div class="srv-row"><i class="srv-dot${s.online ? " on" : ""}"></i><b>${s.flag ? `<span class="flag flag-svg" style="background-image:url('${esc(s.flag)}')"></span>` : ""}${esc(s.name)}</b><br>${s.lines.map(esc).join(" · ")}</div>`,
+          `<div class="srv-row"><i class="srv-dot${s.online ? " on" : ""}"></i><b>${s.flag ? `<span class="flag flag-svg" style="background-image:url('${esc(s.flag)}')"></span>` : ""}${esc(s.name)}</b>${vacMark(s.vac)}<br>${s.lines.map(esc).join(" · ")}</div>`,
       )
       .join("")
   );

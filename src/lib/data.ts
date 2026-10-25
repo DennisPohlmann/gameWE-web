@@ -117,6 +117,12 @@ export type Server = {
   game: string;
   game_name: string | null;
   realgame: string | null;
+  // What the game server says about itself (collector features.server_info):
+  // version string, "linux" / "windows" / "mac", "secure" / "insecure"; "" is
+  // unknown.
+  server_version: string;
+  server_os: string;
+  server_vac: string;
 };
 
 // Players online, at most the slots: older collectors kept kicked bots counted
@@ -133,16 +139,32 @@ const serverCols = `s.serverId, s.address, s.port, s.publicaddress, s.name, ${ca
   s.bombs_defused, s.country_code, s.game, g.name AS game_name, g.realgame`;
 const serverFrom = "hlstats_Servers s LEFT JOIN hlstats_Games g ON g.code = s.game";
 
-export function getServers(game: string) {
+// hlstats_Servers.server_version, server_os and server_vac come with collector
+// migration 5 (features.server_info); in older databases they are empty, and
+// the pages look again every 5 minutes.
+let serverInfoCol: { ok: Promise<boolean>; at: number } | undefined;
+async function serverInfoOk() {
+  if (!serverInfoCol || (Date.now() - serverInfoCol.at > 300_000 && !(await serverInfoCol.ok))) {
+    serverInfoCol = { ok: query(`SELECT server_version, server_os, server_vac FROM hlstats_Servers WHERE 1 = 0`).then(() => true, () => false), at: Date.now() };
+  }
+  return serverInfoCol.ok;
+}
+async function serverInfoCols() {
+  return (await serverInfoOk())
+    ? "s.server_version, s.server_os, s.server_vac"
+    : "'' AS server_version, '' AS server_os, '' AS server_vac";
+}
+
+export async function getServers(game: string) {
   return query<Server>(
-    `SELECT ${serverCols} FROM ${serverFrom} WHERE s.game = ? ORDER BY s.display_id, s.serverId`,
+    `SELECT ${serverCols}, ${await serverInfoCols()} FROM ${serverFrom} WHERE s.game = ? ORDER BY s.display_id, s.serverId`,
     [game],
   );
 }
 
-export function getServer(id: number) {
+export async function getServer(id: number) {
   return queryOne<Server>(
-    `SELECT ${serverCols} FROM ${serverFrom} WHERE s.serverId = ?`,
+    `SELECT ${serverCols}, ${await serverInfoCols()} FROM ${serverFrom} WHERE s.serverId = ?`,
     [id],
   );
 }
@@ -1570,6 +1592,8 @@ export type MapServer = {
   // Game server uptime in minutes from the latest of those samples, as on
   // the server page; null when offline.
   uptime: number | null;
+  // "secure" when the server is VAC-secured (Server.server_vac).
+  server_vac: string;
 };
 
 // Game servers of a ranking at the GeoIP location the collector stores for
@@ -1578,6 +1602,7 @@ export type MapServer = {
 export async function getMapServers(game: string): Promise<MapServer[]> {
   const rows = await query<Omit<MapServer, "lat" | "lng" | "online" | "uptime"> & { lat: string; lng: string; uptime: number | null }>(
     `SELECT s.serverId, s.name, s.address, s.port, s.publicaddress, s.act_map, s.city, s.country_name, s.country_code, s.lat, s.lng,
+            ${(await serverInfoOk()) ? "s.server_vac" : "'' AS server_vac"},
             (SELECT l.uptime FROM hlstats_server_load l WHERE l.server_id = s.serverId AND l.timestamp >= ?
              ORDER BY l.timestamp DESC LIMIT 1) AS uptime
      FROM hlstats_Servers s WHERE s.game = ? AND s.lat <> '' AND s.lng <> '' ORDER BY s.display_id, s.serverId`,

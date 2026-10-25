@@ -48,6 +48,7 @@ export function serverMarkers(servers: MapServer[], game: string, t: Dict): Serv
       href: `${basePath}/${game}/servers/${s.serverId}`,
       online: s.online,
       flag: svg ? `${basePath}/flags/${code}.svg` : undefined,
+      vac: s.server_vac === "secure" ? t.vacSecure : undefined,
       lines: [
         `${t.address}: ${s.publicaddress || `${s.address}:${s.port}`}`,
         s.act_map ? `${t.map}: ${s.act_map}` : "",

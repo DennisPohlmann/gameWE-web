@@ -5,41 +5,55 @@ import { countryName, fmtDuration, fmtNum, fmtPct, nowUnix, ratio } from "@/lib/
 import { baseGameOf, gameKind } from "@/lib/games";
 import type { Dict, Lang } from "@/lib/i18n";
 import { playerCount } from "@/lib/player-count";
+import { LINUX_SVG, VAC_SVG, WINDOWS_SVG } from "@/lib/server-icons";
 import { PlayerCount } from "./player-count";
 import { Flag } from "./ui";
 
 // Server rows as on gameME: name, game, address (steam://connect), map, map
 // time, players. The game is the ranking's base game ("Counter-Strike:
 // Source"), else the ranking's name. `head` is an optional first header row spanning the table. The
-// flag of the server's country stands before its name.
-export function ServerTable({ game, servers, head, t, lang }: { game: string; servers: Server[]; head?: ReactNode; t: Dict; lang: Lang }) {
+// flag of the server's country stands before its name. `details` adds the
+// server version with an OS icon and the VAC state as the last columns (the
+// ranking's start page only).
+export function ServerTable({ game, servers, head, details, t, lang }: { game: string; servers: Server[]; head?: ReactNode; details?: boolean; t: Dict; lang: Lang }) {
   const now = nowUnix();
+  const w = details ? { server: "36%", game: "12%", address: "15%", map: "8%", time: "7%", players: "8%" } : { server: "46%", game: "14%", address: "16%", map: "8%", time: "8%", players: "8%" };
   return (
     <div className="table-wrap">
       <table>
         <thead>
           {head ? (
             <tr>
-              <th colSpan={6} className="wrap-cell">{head}</th>
+              <th colSpan={details ? 8 : 6} className="wrap-cell">{head}</th>
             </tr>
           ) : null}
           <tr>
-            <th style={{ width: "46%" }}>{t.server}</th>
-            <th className="hide-sm" style={{ width: "14%" }}>
+            <th style={{ width: w.server }}>{t.server}</th>
+            <th className="hide-sm" style={{ width: w.game }}>
               {t.baseGame}
             </th>
-            <th className="hide-sm" style={{ width: "16%" }}>
+            <th className="hide-sm" style={{ width: w.address }}>
               {t.address}
             </th>
-            <th style={{ width: "8%" }}>
+            <th style={{ width: w.map }}>
               {t.map}
             </th>
-            <th className="num hide-sm" style={{ width: "8%" }}>
+            <th className="num hide-sm" style={{ width: w.time }}>
               {t.time}
             </th>
-            <th className="num" style={{ width: "8%" }}>
+            <th className="num" style={{ width: w.players }}>
               {t.players}
             </th>
+            {details ? (
+              <>
+                <th className="hide-sm" style={{ width: "9%" }}>
+                  {t.serverVersion}
+                </th>
+                <th className="center hide-sm" style={{ width: "5%" }}>
+                  {t.vac}
+                </th>
+              </>
+            ) : null}
           </tr>
         </thead>
         <tbody>
@@ -65,6 +79,16 @@ export function ServerTable({ game, servers, head, t, lang }: { game: string; se
                     <PlayerCount count={playerCount(s.act_players, s.bots, s.max_players)} lang={lang} botsLabel={t.bots} />
                   </span>
                 </td>
+                {details ? (
+                  <>
+                    <td className="hide-sm nowrap">
+                      <ServerVersion version={s.server_version} os={s.server_os} />
+                    </td>
+                    <td className="center hide-sm">
+                      <VacState vac={s.server_vac} t={t} />
+                    </td>
+                  </>
+                ) : null}
               </tr>
             );
           })}
@@ -72,6 +96,39 @@ export function ServerTable({ game, servers, head, t, lang }: { game: string; se
       </table>
     </div>
   );
+}
+
+// Version number, a space, the OS icon ("Linux" / "Windows" as title).
+// The icons are constant markup of server-icons.ts.
+function ServerVersion({ version, os }: { version: string; os: string }) {
+  const icon = os === "linux" ? { svg: LINUX_SVG, name: "Linux" } : os === "windows" ? { svg: WINDOWS_SVG, name: "Windows" } : null;
+  if (!version && !icon && os !== "mac") return <>-</>;
+  return (
+    <>
+      {version || "-"}{" "}
+      {icon ? (
+        <span className="os-mark" title={icon.name} role="img" aria-label={icon.name} dangerouslySetInnerHTML={{ __html: icon.svg }} />
+      ) : os === "mac" ? (
+        <span className="os-mark muted" title="macOS">
+          macOS
+        </span>
+      ) : null}
+    </>
+  );
+}
+
+// The VAC shield when the server is VAC-secured; a muted "-" when it is not,
+// "-" when unknown.
+export function VacState({ vac, t }: { vac: string; t: Dict }) {
+  if (vac === "secure")
+    return <span className="vac-mark" title={t.vacSecure} role="img" aria-label={t.vacSecure} dangerouslySetInnerHTML={{ __html: VAC_SVG }} />;
+  if (vac === "insecure")
+    return (
+      <span className="muted" title={t.vacInsecure}>
+        -
+      </span>
+    );
+  return <>-</>;
 }
 
 // Flag of a server's country (hlstats_Servers.country_code) with the country

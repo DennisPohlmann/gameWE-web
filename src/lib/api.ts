@@ -99,6 +99,9 @@ export function apiServer(s: Server) {
     headshots: s.headshots,
     rounds: s.rounds,
     country: s.country_code || null,
+    version: s.server_version || null,
+    os: s.server_os || null,
+    vac: s.server_vac === "secure" ? true : s.server_vac === "insecure" ? false : null,
   };
 }
 

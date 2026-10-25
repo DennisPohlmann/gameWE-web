@@ -24,7 +24,7 @@ heading on `/` counts the real players.
 | URL | Content |
 |-----|---------|
 | `/` | all rankings with players online (with a total row when there are several), best player (Steam picture, flag) and clan (flag of its members' most common country), load of the last 30 days |
-| `/<game>` | a ranking: servers (flag of the server's country), live players per server by team, daily awards, activity |
+| `/<game>` | a ranking: servers (flag of the server's country; on wide screens also the server version with a Linux or Windows icon and a VAC shield for VAC-secured servers, from the collector's `features.server_info`; `-` while unknown), live players per server by team, daily awards, activity |
 | `/<game>/servers/<id>` | one server: live view with the server's country flag, bots and flags, load graph of the last 24 hours (players, maps, uptime), counters, chat |
 | `/<game>/players` | ranking (sortable, search), `?view=new` for new players; country and city rankings with gameME's links: `?type=countryinfo` (all countries), `?type=countryinfo&valuecountry=de` (players of a country), `?type=cityinfo[&valuecountry=de]` (cities), `?type=cityinfo&valuecountry=de&valuecity=berlin` (players of a city; `valuecity` alone also works but joins cities of the same name) |
 | `/<game>/players/<id>` | player profile: Steam avatar and data, summary with radar (K/D, kills per minute, assists per kill, survived and won rounds as the percentile among the ranking's players with at least 10 kills, all time and last 14 days; axes the game does not record are left out; hover, tap or focus an axis for its values) and trend pills, player trend, rank and career, ribbons, forum signature, hitbox, weapons, maps, opponents, latest events of the player (live, see the admin setting) |
@@ -136,7 +136,8 @@ website therefore computes some things itself:
   equal after rounding to 0.01°, about 1 km) share one square that shows
   their number; hovering lists them all, each with a green or red status
   dot, and a click opens a box with a link to each server page. Hovering a
-  single server shows name, city and country, address (the public address
+  single server shows name (with the VAC shield of the server list when the
+  server is VAC-secured, also in the list of several), city and country, address (the public address
   if set, as in the server list), the current map and, while the server is
   online, its uptime (from the latest load sample, as on the server page);
   a click opens the server page. The status lights in the

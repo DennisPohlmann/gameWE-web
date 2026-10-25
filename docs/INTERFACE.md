@@ -63,7 +63,7 @@ parameters are ignored.
 | `/api/v1/rankings/<game>/ranks/<index>/players` | the players of one rank |
 | `/api/v1/rankings/<game>/actions` | actions (bomb planted, ...) by count |
 | `/api/v1/rankings/<game>/teams` | teams and roles |
-| `/api/v1/rankings/<game>/servers` | servers of a ranking (`players` online with bots, `bots` among them) with the players online (name, team, points, kills; bots without an id) |
+| `/api/v1/rankings/<game>/servers` | servers of a ranking (`players` online with bots, `bots` among them; `version`, `os` (`linux`, `windows`, `mac`) and `vac` (true / false), each null while unknown) with the players online (name, team, points, kills; bots without an id) |
 | `/api/v1/rankings/<game>/servers/<id>` | one server of that ranking |
 | `/api/v1/rankings/<game>/servers/<id>/load?hours=24` | players on that server per 10 minutes (1-168 hours) |
 | `/api/v1/servers` | all servers |
