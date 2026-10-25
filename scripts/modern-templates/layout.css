@@ -204,6 +204,9 @@ html[data-skin] .back-to, html[data-skin] .history-back { color: var(--muted); }
 /* ------------------------------------------------------------ tables */
 
 html[data-skin] th, html[data-skin] td { border: 0; padding: 6px 8px; }
+/* The player profile stays as compact as in the classic skins. */
+html[data-skin] table.stats.profile th, html[data-skin] table.stats.profile td { padding: 2px 4px; }
+html[data-skin] table.stats.profile td.avatar-cell { padding: 6px; }
 html[data-skin] th {
   background: var(--th-bg);
   color: var(--th-text);

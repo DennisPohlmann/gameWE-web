@@ -407,9 +407,12 @@ table.stats td.stats-key { width: 35%; color: var(--th-text); font-weight: bold;
 /* Position and points share the left half of the player summary's first row. */
 table.stats td.stats-key.pair { width: auto; }
 table.stats td.pair-value { text-align: center; }
-/* In the player profile the labels are only as wide as their text; the
-   values get the rest, the avatar keeps its column. */
-table.stats.profile td.stats-key { width: 1%; }
+/* The player profile is as compact as HLstatsX's: rows of about 21px (2px
+   4px padding at the 11px font), the labels in a column of 30 %, the values
+   next to them and the avatar on the right over all rows. */
+table.stats.profile th, table.stats.profile td { padding: 2px 4px; }
+table.stats.profile td.stats-key { width: 30%; }
+table.stats.profile td.avatar-cell { width: 1%; padding: 6px; vertical-align: top; }
 /* In the summary the labels are only as wide as their text and wide screens
    give the room to the right-hand values, not to the radar and the labels.
    In a narrow box (two columns on a small laptop, up to 600px) labels wrap
