@@ -420,18 +420,19 @@ table.stats td.stats-key.pair { width: auto; }
 table.stats td.pair-value { text-align: center; }
 /* The player profile is laid out like gameME's and as compact as HLstatsX's:
    rows of about 21px (2px 4px padding at the 11px font), the labels in a
-   column of 30 %, the name across the full width. The avatar sits in its
-   own framed box, centred in a column of 20 % beside the seven rows from
-   Clan to Steam name, small enough not to stretch them; the rows below
-   use the full width. */
+   column of 30 %, the name across the full width. The avatar has no frame
+   of its own: the cell beside the seven rows from Clan to Steam name is
+   its frame, with the same gap on all four sides. The picture is just
+   taller than those seven rows (--avatar-size + 2 x --avatar-gap, a little
+   more than 7 x 20.4px in the classic skins; the modern ones set their own
+   size), so it sets the cell's height and the column is only as wide as the
+   picture and its gaps; the rows below use the full width. */
+table.stats.profile { --avatar-size: 128px; --avatar-gap: 8px; }
 table.stats.profile th, table.stats.profile td { padding: 2px 4px; }
 table.stats.profile td.stats-key { width: 30%; }
-table.stats.profile td.avatar-cell { width: 20%; padding: 6px; text-align: center; vertical-align: middle; }
-@media (min-width: 601px) {
-  table.stats.profile td.avatar-cell img, table.stats.profile .avatar-none { width: 140px; height: 140px; }
-  table.stats.profile td.avatar-cell img { padding: 6px; }
-  table.stats.profile .avatar-none { font-size: 52px; }
-}
+table.stats.profile td.avatar-cell { width: 1%; padding: var(--avatar-gap); text-align: center; vertical-align: middle; }
+table.stats.profile td.avatar-cell img, table.stats.profile .avatar-none { width: var(--avatar-size); height: var(--avatar-size); margin: 0 auto; padding: 0; border: 0; box-sizing: border-box; }
+table.stats.profile .avatar-none { font-size: calc(var(--avatar-size) * 0.4); }
 /* The player summary is split like gameME's: the left half is four equal
    cells (position and points) and below them the radar, centred; the right
    half is the labels (24 %) and the values beside them. The rows below put
@@ -557,9 +558,8 @@ a.dead { opacity: 0.6; }
 table.stats.spaced { margin-top: 10px; }
 /* The picture is taller than the rows beside it, so the padding is the same on all four sides. */
 /* The picture sits in a square frame of its own, whatever height the cell gets. */
-td.avatar-cell { width: 1%; padding: 12px; text-align: center; vertical-align: middle; }
-td.avatar-cell img { display: block; width: 184px; height: 184px; aspect-ratio: 1; object-fit: cover; margin: 0 auto; padding: 8px; background: var(--panel); border: 1px solid #555; box-sizing: content-box; }
-.avatar-none { display: flex; margin: 0 auto; align-items: center; justify-content: center; width: 184px; height: 184px; background: radial-gradient(circle at 35% 30%, #444, #161616); color: #777; font-size: 64px; font-weight: bold; border: 1px solid #333; }
+td.avatar-cell img { display: block; aspect-ratio: 1; object-fit: cover; }
+.avatar-none { display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 35% 30%, #444, #161616); color: #777; font-weight: bold; }
 td.radar-cell { width: 1%; text-align: center; vertical-align: middle; }
 .radar { width: 100%; max-width: 170px; height: auto; display: block; margin: 0 auto; }
 .radar-grid { fill: none; stroke: var(--chart-radar-grid); stroke-width: 1; }
@@ -786,10 +786,7 @@ a.button { display: inline-block; text-decoration: none; }
      avatar column stays on screen; the labels only wrap between words. */
   table.stats.profile td { white-space: normal; }
   table.stats.profile td.stats-key { width: 35%; overflow-wrap: normal; }
-  td.avatar-cell { padding: 6px; }
-  td.avatar-cell img, .avatar-none { width: 88px; height: 88px; }
-  td.avatar-cell img { padding: 4px; }
-  .avatar-none { font-size: 36px; }
+  table.stats.profile { --avatar-size: 88px; }
   td.radar-cell { width: auto; }
   .radar { width: 100%; max-width: 220px; height: auto; }
   .radar-wrap { max-width: 220px; }

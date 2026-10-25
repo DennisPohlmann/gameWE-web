@@ -205,7 +205,9 @@ html[data-skin] .back-to, html[data-skin] .history-back { color: var(--muted); }
 html[data-skin] th, html[data-skin] td { border: 0; padding: 6px 8px; }
 /* The player profile stays as compact as in the classic skins. */
 html[data-skin] table.stats.profile th, html[data-skin] table.stats.profile td { padding: 2px 4px; }
-html[data-skin] table.stats.profile td.avatar-cell { padding: 6px; }
+/* Rows of about 22.1px here: the avatar is just taller than seven of them. */
+html[data-skin] table.stats.profile { --avatar-size: 140px; }
+html[data-skin] table.stats.profile td.avatar-cell { padding: var(--avatar-gap); }
 html[data-skin] th {
   background: var(--th-bg);
   color: var(--th-text);
@@ -341,8 +343,8 @@ html[data-skin] .swatch { border-radius: 2px; }
 
 html[data-skin] .rank-cell, html[data-skin] .ribbon-cell { border-radius: 4px; }
 html[data-skin] .rank-cell:hover, html[data-skin] .ribbon-cell:hover { background: var(--m-hover); }
-html[data-skin] td.avatar-cell img { border: 1px solid var(--border); border-radius: 4px; background: var(--panel); }
-html[data-skin] .avatar-none { border-radius: 4px; border-color: var(--border); background: var(--m-avatar); }
+html[data-skin] td.avatar-cell img { border-radius: 4px; }
+html[data-skin] .avatar-none { border-radius: 4px; background: var(--m-avatar); }
 html[data-skin] .map-image { border-radius: 4px; }
 html[data-skin] .share-bar { border-left-width: 1px; border-radius: var(--m-radius); box-shadow: none; }
 html[data-skin] .share-bar-head svg { fill: var(--accent); stroke: var(--accent); }
@@ -367,6 +369,7 @@ html[data-skin] .heatmap svg { border-radius: 4px; }
   html[data-skin] .footer { flex-direction: column; text-align: center; }
   /* Values wrap; the labels stay on one line, as wide as their text. */
   html[data-skin] table.stats.profile td:not(.stats-key) { white-space: normal; overflow-wrap: anywhere; }
+  @media (max-width: 600px) { html[data-skin] table.stats.profile { --avatar-size: 88px; } }
   html[data-skin] .section > .cont-2 { overflow-x: auto; }
   html[data-skin] .sig-codes-bar { flex-wrap: wrap; }
   html[data-skin] .sig-codes-bar select { min-width: 0; max-width: 100%; }
