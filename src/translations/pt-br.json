@@ -330,6 +330,7 @@
   "max": "Máx",
   "kpm": "Abates/min",
   "assists": "Assistências",
+  "assistedKills": "abates com assistência",
   "survived": "Sobreviveu",
   "winRatioShort": "Vitórias",
   "radarBetter": "melhor que {pct} dos jogadores",

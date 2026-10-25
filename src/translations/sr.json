@@ -330,6 +330,7 @@
   "max": "Макс",
   "kpm": "Уб./мин",
   "assists": "Асистенције",
+  "assistedKills": "убиства уз асистенцију",
   "survived": "Преживео",
   "winRatioShort": "Победе",
   "radarBetter": "боље од {pct} играча",

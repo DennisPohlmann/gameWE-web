@@ -333,6 +333,7 @@
   "max": "Max",
   "kpm": "Kills/min",
   "assists": "Assists",
+  "assistedKills": "assisted kills",
   "survived": "Survived",
   "winRatioShort": "Wins",
   "radarBetter": "better than {pct} of players",

@@ -330,6 +330,7 @@
   "max": "Max",
   "kpm": "Kills/min",
   "assists": "Assists",
+  "assistedKills": "kills met assist",
   "survived": "Overleefd",
   "winRatioShort": "Winst",
   "radarBetter": "beter dan {pct} van de spelers",

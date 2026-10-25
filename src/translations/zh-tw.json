@@ -330,6 +330,7 @@
   "max": "最大",
   "kpm": "擊殺/分",
   "assists": "助攻",
+  "assistedKills": "被助攻的擊殺",
   "survived": "存活",
   "winRatioShort": "勝率",
   "radarBetter": "優於 {pct} 的玩家",

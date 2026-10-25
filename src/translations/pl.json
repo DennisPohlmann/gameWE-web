@@ -330,6 +330,7 @@
   "max": "Maks",
   "kpm": "Zab./min",
   "assists": "Asysty",
+  "assistedKills": "zabójstwa z asystą",
   "survived": "Przeżyto",
   "winRatioShort": "Wygrane",
   "radarBetter": "lepszy niż {pct} graczy",

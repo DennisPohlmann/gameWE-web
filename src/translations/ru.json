@@ -330,6 +330,7 @@
   "max": "Макс",
   "kpm": "Убийств/мин",
   "assists": "Помощь",
+  "assistedKills": "убийства с помощью",
   "survived": "Выжил",
   "winRatioShort": "Победы",
   "radarBetter": "лучше, чем {pct} игроков",

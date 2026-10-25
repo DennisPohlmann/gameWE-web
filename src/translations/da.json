@@ -330,6 +330,7 @@
   "max": "Maks",
   "kpm": "Drab/min",
   "assists": "Assists",
+  "assistedKills": "kills med assist",
   "survived": "Overlevet",
   "winRatioShort": "Sejre",
   "radarBetter": "bedre end {pct} af spillerne",

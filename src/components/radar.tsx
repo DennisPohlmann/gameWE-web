@@ -77,11 +77,14 @@ export function Radar({ axes, labels, note }: { axes: RadarAxis[]; labels: { tot
     el?.focus();
   };
   const tip = active === null ? null : axes[active];
-  // Beside the vertex for side axes; above or below the label for the axis
-  // at the top or bottom.
-  const side = active === null ? "" : (([x]) => (x < C - 5 ? "left" : x > C + 5 ? "right" : ""))(pt(active, 1));
-  const [tx, ty] = active === null ? [0, 0] : pt(active, side ? 1.05 : 1.42);
-  const place = side || (ty < C ? "up" : "down");
+  // The box never covers the label of the axis it describes: for an axis at
+  // the side it sits above the label when the label is in the lower half and
+  // below it in the upper half; for the axis at the top or bottom it sits
+  // beyond the label.
+  const [lx, ly] = active === null ? [C, C] : pt(active, 1.28);
+  const side = Math.abs(lx - C) > 5;
+  const [tx, ty] = active === null ? [0, 0] : side ? [lx, ly > C ? ly - 9 : ly + 7] : pt(active, 1.42);
+  const place = side ? (ly > C ? "up" : "down") : ty < C ? "up" : "down";
 
   return (
     <div

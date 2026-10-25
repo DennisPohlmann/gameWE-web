@@ -319,7 +319,8 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                 <td className="stats-key">{t.killsPerMin}:</td>
                 <td>{n2(kpm(p.kills, p.connection_time))}</td>
               </tr>
-              <Row4 k={t.assists} v={`${fmtNum(p.kill_assists, lang)} (${t.kills}: ${fmtNum(p.kills_assisted, lang)})`} />
+              {/* Assisted kills (kills of this player others helped with) only when the collector counted any. */}
+              <Row4 k={t.assists} v={`${fmtNum(p.kill_assists, lang)}${p.kills_assisted > 0 ? ` · ${t.assistedKills}: ${fmtNum(p.kills_assisted, lang)}` : ""}`} />
               {/* Rounds count only with a winner: servers without win triggers (GunGame, DM) have none. */}
               <Row4 k={t.rounds} v={p.rounds ? `${fmtNum(p.rounds, lang)} (${t.wins}: ${fmtNum(p.wins, lang)}, ${t.losses}: ${fmtNum(p.losses, lang)})` : "—"} />
               <Row4 k={t.winRatio} v={p.rounds ? <Bar value={ratio(p.wins, p.rounds)} green label={pc(ratio(p.wins, p.rounds))} /> : "—"} />

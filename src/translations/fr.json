@@ -330,6 +330,7 @@
   "max": "Max",
   "kpm": "Frags/min",
   "assists": "Assistances",
+  "assistedKills": "kills assistés",
   "survived": "Survécu",
   "winRatioShort": "Victoires",
   "radarBetter": "meilleur que {pct} des joueurs",
