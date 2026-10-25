@@ -24,7 +24,9 @@ export type ServerSort = keyof typeof serverValues;
 // flag of the server's country stands before its name. `details` adds the
 // server version with an OS icon and the VAC state as the last columns (the
 // ranking's start page only). With `sort` the heads of name, map, time and
-// players sort the list (servers come sorted).
+// players sort the list (servers come sorted). All columns are left-aligned,
+// heads and cells alike; only the VAC column is centred and as narrow as its
+// icon.
 export function ServerTable({
   game,
   servers,
@@ -61,12 +63,12 @@ export function ServerTable({
             <th className={`hide-sm ${w.game}`}>{t.baseGame}</th>
             <th className={`hide-sm ${w.address}`}>{t.address}</th>
             {th(t.map, "map", w.map)}
-            {th(t.time, "time", `num hide-sm ${w.time}`)}
-            {th(t.players, "players", `num ${w.players}`)}
+            {th(t.time, "time", `hide-sm ${w.time}`)}
+            {th(t.players, "players", w.players)}
             {details ? (
               <>
                 <th className="hide-sm w-9">{t.serverVersion}</th>
-                <th className="center hide-sm w-5">{t.vac}</th>
+                <th className="center fit hide-sm">{t.vac}</th>
               </>
             ) : null}
           </tr>
@@ -88,8 +90,8 @@ export function ServerTable({
                   <a href={`steam://connect/${addr}/`}>{addr}</a>
                 </td>
                 <td>{s.act_map || "-"}</td>
-                <td className="num hide-sm">{s.map_started ? fmtDuration(now - s.map_started) : "-"}</td>
-                <td className="num">
+                <td className="hide-sm">{s.map_started ? fmtDuration(now - s.map_started) : "-"}</td>
+                <td>
                   <span className={cls}>
                     <PlayerCount count={playerCount(s.act_players, s.bots, s.max_players)} lang={lang} botsLabel={t.bots} />
                   </span>
@@ -99,7 +101,7 @@ export function ServerTable({
                     <td className="hide-sm nowrap">
                       <ServerVersion version={s.server_version} os={s.server_os} />
                     </td>
-                    <td className="center hide-sm">
+                    <td className="center fit hide-sm">
                       <VacState vac={s.server_vac} t={t} />
                     </td>
                   </>

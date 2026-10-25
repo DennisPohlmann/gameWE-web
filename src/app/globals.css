@@ -309,7 +309,6 @@ th.w-12 { width: 12%; }
 th.w-9 { width: 9%; }
 th.w-8 { width: 8%; }
 th.w-7 { width: 7%; }
-th.w-5 { width: 5%; }
 th a.sort { text-decoration: none; }
 th a.sort:hover { text-decoration: underline; }
 th button.sort { padding: 0; font: inherit; color: var(--th-text); background: none; border: 0; cursor: pointer; text-decoration: none; }
