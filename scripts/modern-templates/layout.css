@@ -356,7 +356,8 @@ html[data-skin] .login { padding: 18px; background: var(--surface); border: 1px 
   html[data-skin] ul.sections a { padding: 9px 7px 8px; }
   html[data-skin] .block, html[data-skin] .section { margin-bottom: 16px; }
   html[data-skin] .footer { flex-direction: column; text-align: center; }
-  html[data-skin] table.stats.profile td { white-space: normal; }
+  /* Values wrap; the labels stay on one line, as wide as their text. */
+  html[data-skin] table.stats.profile td:not(.stats-key) { white-space: normal; overflow-wrap: anywhere; }
   html[data-skin] .section > .cont-2 { overflow-x: auto; }
   html[data-skin] .sig-codes-bar { flex-wrap: wrap; }
   html[data-skin] .sig-codes-bar select { min-width: 0; max-width: 100%; }

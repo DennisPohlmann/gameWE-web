@@ -407,6 +407,9 @@ table.stats td.stats-key { width: 35%; color: var(--th-text); font-weight: bold;
 /* Position and points share the left half of the player summary's first row. */
 table.stats td.stats-key.pair { width: auto; }
 table.stats td.pair-value { text-align: center; }
+/* In the player profile the labels are only as wide as their text; the
+   values get the rest, the avatar keeps its column. */
+table.stats.profile td.stats-key { width: 1%; }
 /* In the summary the labels are only as wide as their text and wide screens
    give the room to the right-hand values, not to the radar and the labels.
    In a narrow box (two columns on a small laptop) labels wrap and the trend
@@ -713,7 +716,7 @@ a.button { display: inline-block; text-decoration: none; }
   /* Long profile values (location, clan, Steam name and IDs) wrap so the
      avatar column stays on screen; the labels only wrap between words. */
   table.stats.profile td { white-space: normal; }
-  table.stats.profile td.stats-key { overflow-wrap: normal; }
+  table.stats.profile td.stats-key { width: 35%; overflow-wrap: normal; }
   td.avatar-cell { padding: 6px; }
   td.avatar-cell img, .avatar-none { width: 88px; height: 88px; }
   td.avatar-cell img { padding: 4px; }
