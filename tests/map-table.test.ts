@@ -2,7 +2,7 @@
 // `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { kpm, mapSort } from "../src/lib/map-table.ts";
+import { kpm, LOAD_INTERVAL_MAX, mapPlayTime, mapSort } from "../src/lib/map-table.ts";
 
 test("default is most kills first", () => {
   assert.deepEqual(mapSort("", ""), { sort: "kills", flipped: false, desc: true });
@@ -36,4 +36,18 @@ test("kills per minute of play time", () => {
   assert.equal(kpm(0, 600), 0);
   assert.equal(kpm(10, 0), null);
   assert.equal(kpm(10, -5), null);
+});
+
+test("map play time: the larger of the stored time and the load rows", () => {
+  assert.equal(mapPlayTime(0, 44173), 44173);
+  assert.equal(mapPlayTime(18821, 0), 18821);
+  assert.equal(mapPlayTime(90000, 44173), 90000);
+  assert.equal(mapPlayTime(0, 0), 0);
+  assert.equal(mapPlayTime(Number.NaN, -5), 0);
+  // 6,309 kills in 10 hours of load rows: 10.5 per minute instead of "-".
+  assert.equal(kpm(6309, mapPlayTime(0, 36000))?.toFixed(2), "10.52");
+});
+
+test("one load row stands for at most the collector's 10 minutes", () => {
+  assert.equal(LOAD_INTERVAL_MAX, 600);
 });

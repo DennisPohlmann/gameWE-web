@@ -153,6 +153,13 @@ export function winSplit(ct: number, t: number): { ct: number; t: number } | nul
   return { ct: pct, t: 100 - pct };
 }
 
+// The split the win bar draws: without any win both sides get half
+// (data false, the tooltip says so) instead of an empty bar.
+export function winBarSplit(ct: number, t: number): { ct: number; t: number; data: boolean } {
+  const s = winSplit(ct, t);
+  return s ? { ...s, data: true } : { ct: 50, t: 50, data: false };
+}
+
 // Round wins per map and side from rows (map id, team code of the winning
 // action, wins). Team codes as in hlstats_Actions.team: "CT" and
 // "TERRORIST"; anything else (games without sides) is left out.

@@ -169,7 +169,11 @@ website therefore computes some things itself:
   kills are counted in the line above it. GG wins count the `gg_win` actions
   of the listed players on that map (column only when the ranking logged a
   `gg_win`). Accuracy comes from `hlstats_Players_Maps` (shots and hits),
-  which the collector does not fill: "–" without data. The API
+  which the collector does not fill: "–" without data. The map's time is
+  the larger of `hlstats_Maps.play_time` (only filled by imported gameME
+  data) and the time `hlstats_server_load` saw the map running with
+  players (each row counts the time since the server's previous row, at
+  most 10 minutes); kills per minute divide the kills by that time. The API
   `/maps/<id>/players` still returns the best players of the last days.
 - **Map shares** (time %, kills %, headshots %) are the map's part of the
   sum over all maps of the ranking, with one decimal (`<0.1%` for a tiny
@@ -179,7 +183,8 @@ website therefore computes some things itself:
   (`hlstats_Actions.team` `CT` / `TERRORIST`): one round per map and time,
   only rounds whose trigger has a team reward, as long as the events are
   kept. Maps without such rounds, and games whose round actions have no
-  side (TF2, DoD:S), show "no data" instead of a ratio; the column appears
+  side (TF2, DoD:S), show an even 50 % / 50 % bar whose tooltip says
+  "no data"; the column appears
   for Counter-Strike rankings and wherever wins exist. The collector does
   not write `hlstats_Maps.teama_wins` / `teamb_wins`.
 - **Countries** come from the collector's GeoIP lookup:

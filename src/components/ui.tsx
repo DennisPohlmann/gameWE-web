@@ -5,7 +5,7 @@ import { noAutofill } from "@/lib/autofill";
 import { basePath } from "@/lib/base-path";
 import { FLAG_CODES } from "@/lib/flag-codes";
 import { gameKind } from "@/lib/games";
-import { shareText, winSplit } from "@/lib/shares";
+import { shareText, winBarSplit } from "@/lib/shares";
 
 // flag: the player's country (getPlayerFlags), shown before the name; without
 // one the neutral placeholder keeps the names in line.
@@ -128,19 +128,20 @@ export function PctBar({ value, lang, tone, fill }: { value: number | null; lang
 }
 
 // Round wins of the two sides as one bar, CT (blue) left, T (red) right,
-// with both percentages (winSplit: whole numbers, together 100). Without
-// any win a neutral "no data" instead of a made-up 50/50.
+// with both percentages (winBarSplit: whole numbers, together 100). Without
+// any win both sides get half, the tooltip says there is no data.
 export function WinRatioBar({ ct, t, labels }: { ct: number; t: number; labels: { ct: string; t: string; noData: string } }) {
-  const s = winSplit(ct, t);
-  if (!s) return <span className="winbar winbar-none">{labels.noData}</span>;
-  const title = `${labels.ct} ${s.ct}% (${ct}) | ${labels.t} ${s.t}% (${t})`;
+  const split = winBarSplit(ct, t);
+  const title = split.data
+    ? `${labels.ct} ${split.ct}% (${ct}) | ${labels.t} ${split.t}% (${t})`
+    : `${labels.ct} ${split.ct}% | ${labels.t} ${split.t}% (${labels.noData})`;
   return (
     <span className="winbar" title={title} role="img" aria-label={title}>
-      <span className="winbar-ct" style={{ width: `${s.ct}%` }}>
-        {s.ct >= 20 ? `${s.ct}%` : ""}
+      <span className="winbar-ct" style={{ width: `${split.ct}%` }}>
+        {split.ct >= 20 ? `${split.ct}%` : ""}
       </span>
-      <span className="winbar-t" style={{ width: `${s.t}%` }}>
-        {s.t >= 20 ? `${s.t}%` : ""}
+      <span className="winbar-t" style={{ width: `${split.t}%` }}>
+        {split.t >= 20 ? `${split.t}%` : ""}
       </span>
     </span>
   );

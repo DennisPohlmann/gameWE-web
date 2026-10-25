@@ -376,7 +376,6 @@ a.player { color: var(--text); }
 .winbar > span { display: block; text-align: center; white-space: nowrap; overflow: hidden; }
 .winbar-ct { background: linear-gradient(#7fb6ff, #2f6fc0); }
 .winbar-t { background: linear-gradient(#ff8a80, #c62828); }
-.winbar.winbar-none { justify-content: center; color: var(--muted); text-shadow: none; font-weight: normal; }
 .meter { display: inline-flex; align-items: center; white-space: nowrap; }
 .meter .bar { flex: none; }
 .meter-val { min-width: 5.5ch; text-align: right; font-variant-numeric: tabular-nums; }

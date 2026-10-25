@@ -4,7 +4,7 @@ import { adminQuery, likeOp, query, queryOne, sinceDays, type Param } from "./db
 import { addDays, dayOf, siteDay } from "./day";
 import { nowUnix, steamIds } from "./format";
 import { baseGameOf, GAME_HAS_DATA } from "./games";
-import type { MapSort } from "./map-table";
+import { LOAD_INTERVAL_MAX, type MapSort } from "./map-table";
 import { playerCount, sumCounts, type PlayerCount } from "./player-count";
 import { axisRatio, RADAR_KEYS, RADAR_MIN_KILLS, RADAR_SQL, type AxisRank, type PlayerRatios, type RadarKey, type Ratio } from "./radar";
 import { winsByMap } from "./shares";
@@ -1337,6 +1337,22 @@ export async function countMapKillers(mapId: number) {
     [mapId],
   );
   return { players: Number(r?.shown ?? 0), hiddenKills: Number(r?.hidden ?? 0) };
+}
+
+// Seconds one map ran with players, from hlstats_server_load (one row per
+// server and interval with the map of that moment): each row with a player
+// counts the time since the server's previous row, at most
+// LOAD_INTERVAL_MAX; a server's first row counts nothing.
+export async function getMapLoadTime(mapId: number): Promise<number> {
+  const r = await queryOne<{ t: number | null }>(
+    `SELECT SUM(LEAST(x.gap, ${LOAD_INTERVAL_MAX})) AS t
+     FROM (SELECT l.map, l.max_players, l.timestamp - LAG(l.timestamp) OVER (PARTITION BY l.server_id ORDER BY l.timestamp) AS gap
+           FROM hlstats_server_load l
+           WHERE l.server_id IN (SELECT DISTINCT server_id FROM hlstats_server_load WHERE map = ?)) x
+     WHERE x.map = ? AND x.max_players > 0 AND x.gap > 0`,
+    [mapId, mapId],
+  );
+  return Number(r?.t ?? 0);
 }
 
 // Hit share of all shots on one map from the per-map player stats

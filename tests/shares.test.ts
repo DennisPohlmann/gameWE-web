@@ -16,6 +16,7 @@ import {
   teamSort,
   weaponShares,
   weaponTotals,
+  winBarSplit,
   winSplit,
   winsByMap,
 } from "../src/lib/shares.ts";
@@ -163,6 +164,13 @@ test("a side with wins never shows 0 %", () => {
 test("no wins is no data, not 50/50", () => {
   assert.equal(winSplit(0, 0), null);
   assert.equal(winSplit(-1, 0), null);
+});
+
+test("the win bar splits evenly without any win", () => {
+  assert.deepEqual(winBarSplit(0, 0), { ct: 50, t: 50, data: false });
+  assert.deepEqual(winBarSplit(-1, 0), { ct: 50, t: 50, data: false });
+  assert.deepEqual(winBarSplit(3, 1), { ct: 75, t: 25, data: true });
+  assert.deepEqual(winBarSplit(0, 2), { ct: 0, t: 100, data: true });
 });
 
 test("wins are summed per map and side", () => {

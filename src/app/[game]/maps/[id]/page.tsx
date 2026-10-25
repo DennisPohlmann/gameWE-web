@@ -9,11 +9,11 @@ import { SortInputs } from "@/components/sort-head";
 import { Empty, Pager, PctBar, PlayerLink, ROW_OPTIONS, Section, SortTh, Stats, TableWrap, WinRatioBar, pageParam, rowsParam, strParam } from "@/components/ui";
 import { noAutofill } from "@/lib/autofill";
 import { basePath } from "@/lib/base-path";
-import { countMapKillers, getMap, getMapAccuracy, getMapGgWins, getMapPlayerTable, getMapWins, getPlayerFlags } from "@/lib/data";
+import { countMapKillers, getMap, getMapAccuracy, getMapGgWins, getMapLoadTime, getMapPlayerTable, getMapWins, getPlayerFlags } from "@/lib/data";
 import { fmtDuration, fmtNum, fmtPct, kpd, localeOf, ratio } from "@/lib/format";
 import { getHeatmap, type HeatWho } from "@/lib/heatmap";
 import { fill, getDict } from "@/lib/i18n";
-import { kpm, mapSort } from "@/lib/map-table";
+import { kpm, mapPlayTime, mapSort } from "@/lib/map-table";
 import { getSettings } from "@/lib/settings";
 
 type Props = {
@@ -33,7 +33,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 // gameME's map page: the map's details (time, CT/T win ratio, kills, kills
-// per minute, headshots, accuracy), the heatmap, then every player with a
+// per minute, headshots, accuracy; time also from the server load rows,
+// accuracy only from per-map player stats, which the collector does not
+// write), the heatmap, then every player with a
 // kill on the map (all time, hidden players only counted), sortable and
 // paged.
 export default async function MapPage({ params, searchParams }: Props) {
@@ -49,17 +51,19 @@ export default async function MapPage({ params, searchParams }: Props) {
   const page = pageParam(sp.page);
   const { pageSize } = await getSettings();
   const limit = rowsParam(sp.rows, pageSize);
-  const [players, counts, heat, wins, accuracy] = await Promise.all([
+  const [players, counts, heat, wins, accuracy, loadTime] = await Promise.all([
     getMapPlayerTable(game, m.id, sort, desc, limit, (page - 1) * limit),
     countMapKillers(m.id),
     getHeatmap(m.id, who),
     getMapWins(game).catch(() => new Map<number, { ct: number; t: number }>()),
     getMapAccuracy(m.id).catch(() => null),
+    getMapLoadTime(m.id).catch(() => 0),
   ]);
   const ids = players.map((r) => r.playerId);
   const [flags, gg] = await Promise.all([getPlayerFlags(ids), getMapGgWins(game, m.id, ids)]);
   const w = wins.get(m.id);
-  const perMin = kpm(m.kills, m.play_time);
+  const time = mapPlayTime(m.play_time, loadTime);
+  const perMin = kpm(m.kills, time);
   const base = `/${game}/maps/${m.id}`;
   const maps = `/${game}/maps`;
   const back = (
@@ -83,7 +87,7 @@ export default async function MapPage({ params, searchParams }: Props) {
             <h3>{m.map}</h3>
             <Stats
               items={[
-                [t.time, m.play_time ? fmtDuration(m.play_time) : "–"],
+                [t.time, time ? fmtDuration(time) : "–"],
                 [t.winRatio, <WinRatioBar key="w" ct={w?.ct ?? 0} t={w?.t ?? 0} labels={{ ct: t.sideCt, t: t.sideT, noData: t.winNoData }} />],
                 [t.kills, fmtNum(m.kills, lang)],
                 [t.kpm, perMin === null ? "–" : fmtNum(perMin, lang, 2)],

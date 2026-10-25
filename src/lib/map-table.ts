@@ -19,6 +19,21 @@ export function mapSort(rawSort: string, rawDir: string): { sort: MapSort; flipp
   return { sort, flipped, desc };
 }
 
+// Longest stretch one hlstats_server_load row stands for: the collector
+// writes a row every 10 minutes (gameME every 5); a longer gap to the
+// server's previous row means the server was down or not logging, so it
+// counts as one interval only.
+export const LOAD_INTERVAL_MAX = 600;
+
+// Play time of a map: hlstats_Maps.play_time is only filled by imported
+// gameME data (the collector never writes it), the load rows give the time
+// the collector saw the map running with players; the larger one counts.
+export function mapPlayTime(stored: number, fromLoad: number): number {
+  const a = Number(stored);
+  const b = Number(fromLoad);
+  return Math.max(Number.isFinite(a) ? a : 0, Number.isFinite(b) ? b : 0, 0);
+}
+
 // Kills per minute of play time; null without play time.
 export function kpm(kills: number, seconds: number): number | null {
   return seconds > 0 ? kills / (seconds / 60) : null;
