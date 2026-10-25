@@ -1,14 +1,17 @@
-// Country codes with a flag in public/flags (flag-icons 7.2.3, MIT, 4:3 SVG).
-export const FLAG_CODES: ReadonlySet<string> = new Set(
-  `ad ae af ag ai al am ao aq ar as at au aw ax az ba bb bd be bf bg bh bi bj
-bl bm bn bo bq br bs bt bv bw by bz ca cc cd cf cg ch ci ck cl cm cn co cp
-cr cu cv cw cx cy cz de dg dj dk dm do dz ec ee eg eh er es et eu fi fj fk
-fm fo fr ga gb gd ge gf gg gh gi gl gm gn gp gq gr gs gt gu gw gy hk hm hn
-hr ht hu ic id ie il im in io iq ir is it je jm jo jp ke kg kh ki km kn kp
-kr kw ky kz la lb lc li lk lr ls lt lu lv ly ma mc md me mf mg mh mk ml mm
-mn mo mp mq mr ms mt mu mv mw mx my mz na nc ne nf ng ni nl no np nr nu nz
-om pa pc pe pf pg ph pk pl pm pn pr ps pt pw py qa re ro rs ru rw sa sb sc
-sd se sg sh si sj sk sl sm sn so sr ss st sv sx sy sz tc td tf tg th tj tk
-tl tm tn to tr tt tv tw tz ua ug um un us uy uz va vc ve vg vi vn vu wf ws
-xk xx ye yt za zm zw`.split(/\s+/),
-);
+import { FLAG_SPRITE } from "./flag-sprite";
+
+// Country codes with a flag in public/flags (flag-icons 7.2.3, MIT, 4:3 SVG),
+// all drawn into public/flags/sprite.png (scripts/flags-sprite.mjs).
+export const FLAG_CODES: ReadonlySet<string> = new Set(FLAG_SPRITE.codes);
+
+// The sprite with its version, for the cache (a year).
+export const FLAG_SPRITE_URL = `/flags/sprite.png?v=${FLAG_SPRITE.v}`;
+
+// Where a flag sits in the sprite, as CSS background-position in percent
+// (so it fits any size of the box); the placeholder for unknown codes.
+export function flagPos(code: string): string {
+  let i = FLAG_SPRITE.codes.indexOf(code);
+  if (i < 0) i = FLAG_SPRITE.codes.indexOf("unknown");
+  const pct = (n: number, of: number) => (of > 1 ? `${((n / (of - 1)) * 100).toFixed(4).replace(/\.?0+$/, "")}%` : "0%");
+  return `${pct(i % FLAG_SPRITE.cols, FLAG_SPRITE.cols)} ${pct(Math.floor(i / FLAG_SPRITE.cols), FLAG_SPRITE.rows)}`;
+}

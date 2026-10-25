@@ -2,8 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { AutoForm } from "@/components/auto-form";
 import { noAutofill } from "@/lib/autofill";
-import { basePath } from "@/lib/base-path";
-import { FLAG_CODES } from "@/lib/flag-codes";
+import { FLAG_CODES, flagPos } from "@/lib/flag-codes";
 import { gameKind } from "@/lib/games";
 import { shareText, winBarSplit } from "@/lib/shares";
 
@@ -37,9 +36,10 @@ export function PlayerLink({
   );
 }
 
-// Flat country flag (SVG from public/flags) with a light gloss, the same look
-// as the language flags. An empty or unknown code (no GeoIP data yet) gets the
-// neutral placeholder flags/unknown.svg of the same size, so names stay in line.
+// Flat country flag (out of the sprite of public/flags) with a light gloss,
+// the same look as the language flags. An empty or unknown code (no GeoIP
+// data yet) gets the neutral placeholder of the same size, so names stay in
+// line.
 export function Flag({ code, title }: { code: string | null | undefined; title?: string | null }) {
   const c = (code ?? "").trim().toLowerCase();
   if (c === "bot") return <span className="bot-tag" title="Bot">BOT</span>;
@@ -52,7 +52,7 @@ export function Flag({ code, title }: { code: string | null | undefined; title?:
       title={label}
       aria-label={label}
       aria-hidden={label ? undefined : true}
-      style={{ backgroundImage: `url(${basePath}/flags/${known ? c : "unknown"}.svg)` }}
+      style={{ backgroundPosition: flagPos(known ? c : "unknown") }}
     />
   );
 }

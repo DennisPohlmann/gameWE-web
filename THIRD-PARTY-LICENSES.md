@@ -63,7 +63,7 @@ linux-x64 counterparts.
 
 | Package | Version | Project |
 |---------|---------|---------|
-| sharp | 0.35.5 | https://github.com/lovell/sharp (optional, image optimisation of Next.js) |
+| sharp | 0.35.5 | https://github.com/lovell/sharp (optional, image optimisation of Next.js; also draws `public/flags/sprite.png` at development time) |
 | @img/sharp-linux-x64 | 0.35.5 | https://github.com/lovell/sharp |
 | @img/sharp-linuxmusl-x64 | 0.35.5 | https://github.com/lovell/sharp |
 | @swc/helpers | 0.5.23 | https://github.com/swc-project/swc |
@@ -144,7 +144,7 @@ all compatible with GPL-3.0-or-later.
 
 | Path | Component | License |
 |------|-----------|---------|
-| `public/flags/*.svg` (except `unknown.svg`, gameWE's own placeholder) | flag-icons 7.2.3 by Panayiotis Lipiridis, https://github.com/lipis/flag-icons | MIT, text in `public/flags/LICENSE.txt` |
+| `public/flags/*.svg` (except `unknown.svg`, gameWE's own placeholder) and `public/flags/sprite.png` (all of them in one picture, made by `scripts/flags-sprite.mjs`) | flag-icons 7.2.3 by Panayiotis Lipiridis, https://github.com/lipis/flag-icons | MIT, text in `public/flags/LICENSE.txt` |
 | `public/icon*.png`, `public/icon.svg`, `public/apple-touch-icon.png`, `public/avatar-unknown.svg` | gameWE's own graphics | GPL-3.0-or-later |
 | `templates/` | gameWE's own design templates | GPL-3.0-or-later |
 | `src/components/admin/icons.tsx` | admin menu icons, several paths after Feather Icons 4.29 by Cole Bemis, https://github.com/feathericons/feather | MIT, text in `src/components/admin/FEATHER-LICENSE.txt` |

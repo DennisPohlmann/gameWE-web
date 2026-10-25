@@ -2,7 +2,7 @@ import "server-only";
 import type { MapMarker, ServerEntry, ServerMarker } from "@/components/player-map";
 import { basePath } from "./base-path";
 import type { MapPlayer, MapServer } from "./data";
-import { FLAG_CODES } from "./flag-codes";
+import { FLAG_CODES, flagPos } from "./flag-codes";
 import { flagEmoji, fmtDate, fmtDuration, fmtNum, kpd } from "./format";
 import type { Dict, Lang } from "./i18n";
 
@@ -21,7 +21,7 @@ export function mapMarkers(players: (MapPlayer & { server?: string | null; serve
       lat: p.lat,
       lng: p.lng,
       serverId: p.serverId,
-      flag: svg ? `${basePath}/flags/${code}.svg` : undefined,
+      flag: svg ? flagPos(code) : undefined,
       lines: [
         svg ? name : `${flagEmoji(p.flag)} ${name}`.trim(),
         [p.city, p.country].filter(Boolean).join(", "),
@@ -47,7 +47,7 @@ export function serverMarkers(servers: MapServer[], game: string, t: Dict): Serv
       id: s.serverId,
       href: `${basePath}/${game}/servers/${s.serverId}`,
       online: s.online,
-      flag: svg ? `${basePath}/flags/${code}.svg` : undefined,
+      flag: svg ? flagPos(code) : undefined,
       vac: s.server_vac === "secure" ? t.vacSecure : undefined,
       lines: [
         `${t.address}: ${s.publicaddress || `${s.address}:${s.port}`}`,

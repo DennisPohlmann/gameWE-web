@@ -11,6 +11,7 @@ import { LANGUAGES } from "@/translations/languages";
 import { LangFlag } from "@/components/lang-flag";
 import { ShareMenu } from "@/components/share-menu";
 import { basePath } from "@/lib/base-path";
+import { FLAG_SPRITE_URL } from "@/lib/flag-codes";
 import { Crumbs } from "@/components/crumbs";
 import { getGames } from "@/lib/data";
 import { resolveTemplate, themeStyle } from "@/lib/templates";
@@ -87,6 +88,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <head>
         {/* The template's variables: in the page when small, else linked. */}
         {theme && "css" in theme ? <style>{theme.css}</style> : theme ? <link rel="stylesheet" href={theme.href} /> : null}
+        {/* All flags come out of one picture (public/flags/sprite.png). */}
+        <style>{`.flag-svg{background-image:url(${basePath}${FLAG_SPRITE_URL})}`}</style>
       </head>
       <body>
         <header className="header">

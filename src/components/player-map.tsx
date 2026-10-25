@@ -13,7 +13,8 @@ export type MapMarker = {
   initial: string;
   lat: number;
   lng: number;
-  // SVG flag shown before the name on hover (same flags as everywhere).
+  // Flag shown before the name on hover: its position in the sprite (same
+  // flags as everywhere).
   flag?: string;
   // Lines shown on hover: name first, then details.
   lines: string[];
@@ -207,7 +208,7 @@ function greatCircle(a: [number, number], b: [number, number]): [number, number]
 // then the details.
 function tip(m: { lines: string[]; flag?: string; vac?: string }) {
   return m.lines
-    .map((l, i) => (i ? esc(l) : `<b>${m.flag ? `<span class="flag flag-svg" style="background-image:url('${esc(m.flag)}')"></span>` : ""}${esc(l)}</b>${vacMark(m.vac)}`))
+    .map((l, i) => (i ? esc(l) : `<b>${m.flag ? `<span class="flag flag-svg" style="background-position:${esc(m.flag)}"></span>` : ""}${esc(l)}</b>${vacMark(m.vac)}`))
     .join("<br>");
 }
 
@@ -228,7 +229,7 @@ function serverTip(m: ServerMarker) {
     m.servers
       .map(
         (s) =>
-          `<div class="srv-row"><i class="srv-dot${s.online ? " on" : ""}"></i><b>${s.flag ? `<span class="flag flag-svg" style="background-image:url('${esc(s.flag)}')"></span>` : ""}${esc(s.name)}</b>${vacMark(s.vac)}<br>${s.lines.map(esc).join(" · ")}</div>`,
+          `<div class="srv-row"><i class="srv-dot${s.online ? " on" : ""}"></i><b>${s.flag ? `<span class="flag flag-svg" style="background-position:${esc(s.flag)}"></span>` : ""}${esc(s.name)}</b>${vacMark(s.vac)}<br>${s.lines.map(esc).join(" · ")}</div>`,
       )
       .join("")
   );

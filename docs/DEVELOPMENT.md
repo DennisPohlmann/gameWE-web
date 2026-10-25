@@ -16,6 +16,9 @@ design templates: [templates/README.md](../templates/README.md).
 The `modern-*` templates are generated: change
 `scripts/modern-templates/layout.css` or `scripts/modern-templates.mjs`,
 then run `npm run templates` (see "Modern templates" there).
+The flags are shown out of one picture, `public/flags/sprite.png`, with
+their order in `src/lib/flag-sprite.ts`: after a change in `public/flags/`
+run `npm run flags` (devDependency `sharp`) and commit both.
 
 ## Build and check
 

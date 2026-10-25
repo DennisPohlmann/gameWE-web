@@ -21,13 +21,16 @@ const nextConfig: NextConfig = {
   // scripts/create-admin.mjs can use it on the server too.
   serverExternalPackages: ["mysql2", "pg"],
   // Files in public/ are served with "max-age=0" by default, so the browser
-  // asks for every flag again on every page. The flags, icons and the
+  // asks for every icon again on every page. The flags, icons and the
   // vendored Scalar bundle change only with a release, so the browser may
-  // keep them for a day.
+  // keep them for a day; the flags sprite, whose URL carries its version,
+  // for a year.
   async headers() {
     const day = "public, max-age=86400";
     return [
       { source: "/flags/:path*", headers: [{ key: "cache-control", value: day }] },
+      // After the rule above: the later rule wins for the same header.
+      { source: "/flags/sprite.png", headers: [{ key: "cache-control", value: "public, max-age=31536000, immutable" }] },
       { source: "/:file(icon\\.svg|icon-32\\.png|icon-192\\.png|icon-512\\.png|apple-touch-icon\\.png|avatar-unknown\\.svg)", headers: [{ key: "cache-control", value: day }] },
       { source: "/vendor/:path*", headers: [{ key: "cache-control", value: day }] },
     ];
