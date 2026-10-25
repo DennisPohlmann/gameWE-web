@@ -150,19 +150,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                   </tr>
                 ))}
               </tbody>
-              {rankings.length > 1 ? (
-                <tfoot>
-                  <tr className="ranking-total">
-                    <td colSpan={2}>{t.total}</td>
-                    <td className="hide-sm fit" />
-                    <td className="num">
-                      <PlayerCount count={online} lang={lang} botsLabel={t.bots} />
-                    </td>
-                    <td />
-                    <td className="hide-sm" />
-                  </tr>
-                </tfoot>
-              ) : null}
             </table>
           )}
           <p className="summary">

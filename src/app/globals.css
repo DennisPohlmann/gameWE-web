@@ -836,7 +836,6 @@ table.spaced { margin-top: 10px; }
 /* Players online "1 (31 BOT) / 48" (components/player-count.tsx): on one line, the tag right before ")". */
 .player-count { white-space: nowrap; }
 .player-count .bot-tag { margin-right: 0; }
-.ranking-total td { font-weight: bold; }
 
 .inline-form { display: inline-flex; gap: 4px; align-items: center; margin: 0; }
 .chart .dot { stroke: none; }
