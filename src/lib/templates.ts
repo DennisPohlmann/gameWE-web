@@ -1,19 +1,23 @@
 import "server-only";
 import { lstat, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
+import { chartCss } from "./chart-config";
 import { env } from "./env";
 
 // Look templates: one folder each with a theme.css (CSS variables, see
-// templates/README.md) and an optional template.json with the display name.
+// templates/README.md), an optional template.json with the display name and an
+// optional chart.json with the chart colours (src/lib/chart-config.ts).
 // The built-in ones sit in templates/ next to the server; TEMPLATES_DIR adds a
 // folder of your own (same name: yours wins). Only plain folders and files
 // whose name is a short [a-z0-9_-] id count, no symlinks, so a name can never
 // point outside these folders.
 
-export type Template = { id: string; name: { de: string; en: string }; file: string; mtime: number };
+// mtime: the newest of theme.css and chart.json, for the stylesheet URL.
+export type Template = { id: string; name: { de: string; en: string }; file: string; chart: string; mtime: number };
 
 const ID = /^[a-z0-9][a-z0-9_-]{0,31}$/;
 const MAX_CSS = 256 * 1024;
+const MAX_CHART = 16 * 1024;
 
 let cache: { at: number; list: Template[] } | undefined;
 
@@ -34,7 +38,10 @@ async function scan(root: string): Promise<Template[]> {
     const file = path.join(root, id, "theme.css");
     const st = await lstat(file).catch(() => null);
     if (!st?.isFile() || st.size > MAX_CSS) continue;
-    out.push({ id, name: await readName(path.join(root, id, "template.json"), id), file, mtime: Math.floor(st.mtimeMs) });
+    const chart = path.join(root, id, "chart.json");
+    const cst = await lstat(chart).catch(() => null);
+    const mtime = Math.max(st.mtimeMs, cst?.isFile() ? cst.mtimeMs : 0);
+    out.push({ id, name: await readName(path.join(root, id, "template.json"), id), file, chart, mtime: Math.floor(mtime) });
   }
   return out;
 }
@@ -85,6 +92,28 @@ export async function templateCss(id: string, scoped = false): Promise<string | 
   if (!t) return null;
   const st = await lstat(t.file).catch(() => null);
   if (!st?.isFile() || st.size > MAX_CSS) return null;
-  const css = await readFile(t.file, "utf8");
+  const css = (await readFile(t.file, "utf8")) + (await readChart(t));
   return scoped ? css.replaceAll("html[data-skin]", `html[data-skin]:has(.skin-${id})`) : css;
+}
+
+// chart.json as a CSS block (always all chart variables, see chartCss). A
+// missing, oversized, linked or broken file gives the defaults; dropped
+// values are noted once per template version, by key only.
+const noted = new Set<string>();
+
+async function readChart(t: Template): Promise<string> {
+  let json: unknown = null;
+  try {
+    const st = await lstat(t.chart);
+    if (st.isFile() && st.size <= MAX_CHART) json = JSON.parse(await readFile(t.chart, "utf8"));
+  } catch {
+    json = null;
+  }
+  const { css, dropped } = chartCss(json);
+  const key = `${t.id}:${t.mtime}`;
+  if (dropped.length && !noted.has(key)) {
+    noted.add(key);
+    console.warn(`template ${t.id}: chart.json values ignored: ${dropped.join(", ")}`);
+  }
+  return css;
 }

@@ -48,6 +48,72 @@
   color-scheme: dark;
 }
 
+/* Chart colours: every graph uses only these. They follow the template's
+   colours; a template's chart.json can set them (templates/README.md). Same
+   list and defaults as src/lib/chart-config.ts. */
+:root {
+  --chart-bg: var(--surface);
+  --chart-border: var(--border);
+  --chart-grid: var(--grid);
+  --chart-axis: var(--muted);
+  --chart-axis-strong: var(--text);
+  --chart-day-line: var(--grid-2);
+  --chart-guide: var(--muted);
+  --chart-title: var(--text);
+  --chart-legend: var(--muted);
+  --chart-dot-edge: var(--surface);
+  --chart-pie-edge: var(--surface);
+  --chart-bar-hover: color-mix(in srgb, var(--text) 8%, transparent);
+  --chart-band: var(--band);
+  --chart-band-odd: var(--band-odd);
+  --chart-uptime: #6fbf73;
+  --chart-gain: var(--good);
+  --chart-loss: var(--bad);
+  --chart-tip-bg: color-mix(in srgb, var(--surface) 94%, transparent);
+  --chart-tip-text: var(--text);
+  --chart-tip-border: var(--border);
+  --chart-tip-title: var(--accent-text);
+  --chart-spark-total: #555555;
+  --chart-spark-current: #2f7dc0;
+  --chart-spark-total-line: #8a8a8a;
+  --chart-spark-current-line: #5aa9ff;
+  --chart-spark-text: #ffffff;
+  --chart-spark-frame: var(--band);
+  --chart-spark-edge: var(--grid-2);
+  --chart-spark-line: var(--soft);
+  --chart-radar-total: #8ca0ff;
+  --chart-radar-current: var(--accent);
+  --chart-radar-grid: var(--grid-2);
+  --chart-radar-label: var(--soft);
+  --chart-heat-bg: #0d1117;
+  --chart-heat-edge: #ffffff;
+  --chart-series-1: var(--accent);
+  --chart-series-2: var(--series-2);
+  --chart-series-3: var(--series-3, #d64541);
+  --chart-series-4: #4caf50;
+  --chart-series-5: #a35ad8;
+  --chart-series-6: #e6c229;
+  --chart-series-7: #2fb5a8;
+  --chart-series-8: #d87aa0;
+  --chart-server-1: #2f7dc0;
+  --chart-server-2: #2e9e2e;
+  --chart-server-3: #c03030;
+  --chart-server-4: #8a4fbf;
+  --chart-server-5: #c9a200;
+  --chart-server-6: #1aa0a0;
+  --chart-server-7: #d0609a;
+  --chart-server-8: #6b6b6b;
+  --chart-pie-1: var(--accent);
+  --chart-pie-2: #3b8fd9;
+  --chart-pie-3: #4caf50;
+  --chart-pie-4: #d64545;
+  --chart-pie-5: #a35ad8;
+  --chart-pie-6: #e6c229;
+  --chart-pie-7: #2fb5a8;
+  --chart-pie-8: #d87aa0;
+  --chart-pie-9: #8a8a8a;
+}
+
 * { box-sizing: border-box; }
 
 html { -webkit-text-size-adjust: 100%; }
@@ -381,33 +447,33 @@ td.avatar-cell img { display: block; width: 184px; height: 184px; aspect-ratio: 
 .avatar-none { display: flex; margin: 0 auto; align-items: center; justify-content: center; width: 184px; height: 184px; background: radial-gradient(circle at 35% 30%, #444, #161616); color: #777; font-size: 64px; font-weight: bold; border: 1px solid #333; }
 td.radar-cell { width: 45%; text-align: center; vertical-align: middle; }
 .radar { width: 100%; max-width: 170px; height: auto; display: block; margin: 0 auto; }
-.radar-grid { fill: none; stroke: var(--grid-2); stroke-width: 1; }
-.radar-total { fill: rgba(140, 170, 255, 0.28); stroke: #8ca0ff; stroke-width: 1.5; }
-.radar-current { fill: rgba(255, 128, 0, 0.35); stroke: var(--accent); stroke-width: 1.5; }
-.radar-label { fill: var(--soft); font-size: 10px; }
+.radar-grid { fill: none; stroke: var(--chart-radar-grid); stroke-width: 1; }
+.radar-total { fill: color-mix(in srgb, var(--chart-radar-total) 28%, transparent); stroke: var(--chart-radar-total); stroke-width: 1.5; }
+.radar-current { fill: color-mix(in srgb, var(--chart-radar-current) 35%, transparent); stroke: var(--chart-radar-current); stroke-width: 1.5; }
+.radar-label { fill: var(--chart-radar-label); font-size: 10px; }
 /* Natural size everywhere: a percentage max-width lets an auto-layout table
    cell squeeze it to its min-content width. Phones scale it down below. */
 .spark { display: block; width: 240px; min-width: 240px; height: 18px; flex-shrink: 0; overflow: visible; }
-.spark .sp-pill text { fill: #fff; font-size: 10px; font-weight: bold; font-variant-numeric: tabular-nums; }
-.spark .sp-total rect { fill: #555; }
-.spark .sp-current rect { fill: #2f7dc0; }
-.spark .sp-bad rect, .spark .sp-dot.sp-bad { fill: #c03030; }
-.spark .sp-good rect, .spark .sp-dot.sp-good { fill: #2e9e2e; }
-.spark .sp-frame { fill: var(--band); stroke: var(--grid-2); stroke-width: 1; }
-.spark .sp-ref-total { stroke: #8a8a8a; stroke-width: 1; stroke-dasharray: 2 2; }
-.spark .sp-ref-current { stroke: #5aa9ff; stroke-width: 1; }
-.spark .sp-line { fill: none; stroke: var(--soft); stroke-width: 1.2; stroke-linejoin: round; }
-.spark .sp-one { fill: var(--soft); }
-.spark .sp-dot { stroke: var(--band); stroke-width: 0.8; }
+.spark .sp-pill text { fill: var(--chart-spark-text); font-size: 10px; font-weight: bold; font-variant-numeric: tabular-nums; }
+.spark .sp-total rect { fill: var(--chart-spark-total); }
+.spark .sp-current rect { fill: var(--chart-spark-current); }
+.spark .sp-bad rect, .spark .sp-dot.sp-bad { fill: var(--chart-loss); }
+.spark .sp-good rect, .spark .sp-dot.sp-good { fill: var(--chart-gain); }
+.spark .sp-frame { fill: var(--chart-spark-frame); stroke: var(--chart-spark-edge); stroke-width: 1; }
+.spark .sp-ref-total { stroke: var(--chart-spark-total-line); stroke-width: 1; stroke-dasharray: 2 2; }
+.spark .sp-ref-current { stroke: var(--chart-spark-current-line); stroke-width: 1; }
+.spark .sp-line { fill: none; stroke: var(--chart-spark-line); stroke-width: 1.2; stroke-linejoin: round; }
+.spark .sp-one { fill: var(--chart-spark-line); }
+.spark .sp-dot { stroke: var(--chart-spark-frame); stroke-width: 0.8; }
 .trend { width: 100%; max-width: 640px; height: auto; display: block; margin: 0 auto; }
-.trend .grid { stroke: var(--grid); }
-.trend .axis { fill: var(--muted); font-size: 10px; }
-.trend-line { fill: none; stroke: var(--accent); stroke-width: 2; }
-.trend-dot { fill: var(--accent); }
-.trend .bar-up { fill: #2e9e2e; }
-.trend .bar-down { fill: #c03030; }
+.trend .grid { stroke: var(--chart-grid); }
+.trend .axis { fill: var(--chart-axis); font-size: 10px; }
+.trend-line { fill: none; stroke: var(--chart-series-1); stroke-width: 2; }
+.trend-dot { fill: var(--chart-series-1); }
+.trend .bar-up { fill: var(--chart-gain); }
+.trend .bar-down { fill: var(--chart-loss); }
 .trend .hover { fill: transparent; }
-.trend-day:hover .hover { fill: rgba(0, 0, 0, 0.05); }
+.trend-day:hover .hover { fill: var(--chart-bar-hover); }
 .trend-day:hover .trend-dot { r: 4; }
 td.career { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 10px; }
 td.ribbon-wall { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 10px; }
@@ -473,51 +539,76 @@ a.button { display: inline-block; text-decoration: none; }
 .chart { margin: 0; }
 .chart svg { width: 100%; max-width: 1200px; height: auto; display: block; margin: 0 auto; }
 .chart svg.weekday { max-width: 460px; }
-/* Graphs are white in every skin, with their own light grid colours. */
+/* Graphs in the chart colours of the template (--chart-*, chart.json). */
 .chart svg,
-.trend { background: #fff; border: 1px solid #aaa; box-sizing: border-box; --grid: #e2e2e2; --muted: #555; --band: #f7f7f7; --band-odd: #ececec; }
-.chart .grid { stroke: var(--grid); stroke-width: 1; }
-.chart .axis { fill: var(--muted); font-size: 10px; }
+.trend { background: var(--chart-bg); border: 1px solid var(--chart-border); box-sizing: border-box; }
+.chart .grid { stroke: var(--chart-grid); stroke-width: 1; }
+.chart .axis { fill: var(--chart-axis); font-size: 10px; }
 /* Day boundaries on hourly charts, with the date below. */
-.chart .day-line { stroke: #9a9a9a; stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
-.chart .axis.day { font-weight: 700; fill: #333; }
+.chart .day-line { stroke: var(--chart-day-line); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
+.chart .axis.day { font-weight: 700; fill: var(--chart-axis-strong); }
 .chart .line { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; }
-.chart .s1 { stroke: var(--accent); background: var(--accent); }
-.chart .s2 { stroke: var(--series-2); background: var(--series-2); }
-.chart .s3 { stroke: var(--series-3, #d64541); background: var(--series-3, #d64541); }
+.chart .s1 { stroke: var(--chart-series-1); background: var(--chart-series-1); }
+.chart .s2 { stroke: var(--chart-series-2); background: var(--chart-series-2); }
+.chart .s3 { stroke: var(--chart-series-3); background: var(--chart-series-3); }
+.chart .s4 { stroke: var(--chart-series-4); background: var(--chart-series-4); }
+.chart .s5 { stroke: var(--chart-series-5); background: var(--chart-series-5); }
+.chart .s6 { stroke: var(--chart-series-6); background: var(--chart-series-6); }
+.chart .s7 { stroke: var(--chart-series-7); background: var(--chart-series-7); }
+.chart .s8 { stroke: var(--chart-series-8); background: var(--chart-series-8); }
 /* One colour per server in the graph of all servers. */
 .chart .srv { stroke-width: 1.5; }
 .chart .line.srv { fill: none; }
-.chart .srv0 { stroke: #2f7dc0; background: #2f7dc0; fill: #2f7dc0; }
-.chart .srv1 { stroke: #2e9e2e; background: #2e9e2e; fill: #2e9e2e; }
-.chart .srv2 { stroke: #c03030; background: #c03030; fill: #c03030; }
-.chart .srv3 { stroke: #8a4fbf; background: #8a4fbf; fill: #8a4fbf; }
-.chart .srv4 { stroke: #c9a200; background: #c9a200; fill: #c9a200; }
-.chart .srv5 { stroke: #1aa0a0; background: #1aa0a0; fill: #1aa0a0; }
-.chart .srv6 { stroke: #d0609a; background: #d0609a; fill: #d0609a; }
-.chart .srv7 { stroke: #6b6b6b; background: #6b6b6b; fill: #6b6b6b; }
-.legend { display: flex; gap: 16px; color: var(--muted); }
+.chart .srv0 { stroke: var(--chart-server-1); background: var(--chart-server-1); fill: var(--chart-server-1); }
+.chart .srv1 { stroke: var(--chart-server-2); background: var(--chart-server-2); fill: var(--chart-server-2); }
+.chart .srv2 { stroke: var(--chart-server-3); background: var(--chart-server-3); fill: var(--chart-server-3); }
+.chart .srv3 { stroke: var(--chart-server-4); background: var(--chart-server-4); fill: var(--chart-server-4); }
+.chart .srv4 { stroke: var(--chart-server-5); background: var(--chart-server-5); fill: var(--chart-server-5); }
+.chart .srv5 { stroke: var(--chart-server-6); background: var(--chart-server-6); fill: var(--chart-server-6); }
+.chart .srv6 { stroke: var(--chart-server-7); background: var(--chart-server-7); fill: var(--chart-server-7); }
+.chart .srv7 { stroke: var(--chart-server-8); background: var(--chart-server-8); fill: var(--chart-server-8); }
+.legend { display: flex; gap: 16px; color: var(--chart-legend); }
 .swatch { display: inline-block; width: 9px; height: 9px; }
-.swatch.s1 { background: var(--accent); }
-.swatch.s2 { background: var(--series-2); }
-.swatch.s3 { background: var(--series-3, #d64541); }
+.swatch.s1 { background: var(--chart-series-1); }
+.swatch.s2 { background: var(--chart-series-2); }
+.swatch.s3 { background: var(--chart-series-3); }
+.swatch.s4 { background: var(--chart-series-4); }
+.swatch.s5 { background: var(--chart-series-5); }
+.swatch.s6 { background: var(--chart-series-6); }
+.swatch.s7 { background: var(--chart-series-7); }
+.swatch.s8 { background: var(--chart-series-8); }
+.swatch.pie0 { background: var(--chart-pie-1); }
+.swatch.pie1 { background: var(--chart-pie-2); }
+.swatch.pie2 { background: var(--chart-pie-3); }
+.swatch.pie3 { background: var(--chart-pie-4); }
+.swatch.pie4 { background: var(--chart-pie-5); }
+.swatch.pie5 { background: var(--chart-pie-6); }
+.swatch.pie6 { background: var(--chart-pie-7); }
+.swatch.pie7 { background: var(--chart-pie-8); }
+.swatch.pie8 { background: var(--chart-pie-9); }
 /* Row above every chart: title or summary on the left, legend on the right
    (also without a title); the swatch is a short line with a dot, like the
    lines in the chart. As wide as the chart below it. */
 .chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 16px; max-width: 1200px; margin: 0 auto 6px; }
 .chart-head.weekday { max-width: 460px; }
 .load-chart .chart-head { max-width: 1100px; }
-.chart-title { font-weight: 700; color: var(--text); }
-.chart-note { font-size: 11px; color: var(--text); }
+.chart-title { font-weight: 700; color: var(--chart-title); }
+.chart-note { font-size: 11px; color: var(--chart-title); }
 .chart-head .legend { flex-wrap: wrap; gap: 4px 14px; margin-left: auto; }
 .chart-head .legend > span { display: inline-flex; align-items: center; gap: 6px; }
 .swatch.line { position: relative; width: 18px; height: 2px; }
 .swatch.line::after { content: ""; position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: inherit; }
 /* Bars per day; the day under the pointer gets a light band. */
 .chart .col { stroke: none; }
-.chart .col.s2 { fill: var(--series-2); }
-.chart .col.s3 { fill: var(--series-3, #d64541); }
-.chart .bar-hover { fill: rgba(0, 0, 0, 0.06); }
+.chart .col.s1 { fill: var(--chart-series-1); }
+.chart .col.s2 { fill: var(--chart-series-2); }
+.chart .col.s3 { fill: var(--chart-series-3); }
+.chart .col.s4 { fill: var(--chart-series-4); }
+.chart .col.s5 { fill: var(--chart-series-5); }
+.chart .col.s6 { fill: var(--chart-series-6); }
+.chart .col.s7 { fill: var(--chart-series-7); }
+.chart .col.s8 { fill: var(--chart-series-8); }
+.chart .bar-hover { fill: var(--chart-bar-hover); }
 
 @media (max-width: 600px) {
   body { margin: 8px 4px; }
@@ -632,11 +723,20 @@ a.button { display: inline-block; text-decoration: none; }
 }
 
 /* Misc statistics */
-.chart .bar-s1 { fill: var(--accent); }
-.chart .bar-s2 { fill: var(--series-2); }
+.chart .bar-s1 { fill: var(--chart-series-1); }
+.chart .bar-s2 { fill: var(--chart-series-2); }
 .chart rect:hover, .pie .slice:hover { opacity: 0.8; }
 .pie { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: center; padding: 8px; }
-.pie .slice { stroke: var(--surface); stroke-width: 1; }
+.pie .slice { stroke: var(--chart-pie-edge); stroke-width: 1; }
+.pie .slice.pie0 { fill: var(--chart-pie-1); }
+.pie .slice.pie1 { fill: var(--chart-pie-2); }
+.pie .slice.pie2 { fill: var(--chart-pie-3); }
+.pie .slice.pie3 { fill: var(--chart-pie-4); }
+.pie .slice.pie4 { fill: var(--chart-pie-5); }
+.pie .slice.pie5 { fill: var(--chart-pie-6); }
+.pie .slice.pie6 { fill: var(--chart-pie-7); }
+.pie .slice.pie7 { fill: var(--chart-pie-8); }
+.pie .slice.pie8 { fill: var(--chart-pie-9); }
 .pie-legend { list-style: none; margin: 0; padding: 0; font-size: 11px; line-height: 1.8; }
 .pie-legend .swatch { margin-right: 4px; }
 
@@ -650,30 +750,35 @@ a.button { display: inline-block; text-decoration: none; }
 .award-sum-cell b { min-width: 34px; text-align: right; }
 .nowrap { white-space: nowrap; }
 table.spaced { margin-top: 10px; }
-.load-chart .band { fill: var(--band); }
-.load-chart .band.odd { fill: var(--band-odd); }
-.load-chart .band-label { fill: var(--muted); font-size: 9px; }
-.load-chart .line-players { fill: none; stroke: var(--series-2); stroke-width: 2; }
-.load-chart .line-up { fill: none; stroke: #6fbf73; stroke-width: 1.5; }
-.load-chart .axis.up { fill: #6fbf73; }
-.load-chart .load-dot { fill: var(--series-2); stroke: #fff; stroke-width: 1.5; opacity: 0; }
-.load-chart .load-dot.up { fill: #6fbf73; }
-.load-chart .load-mark circle { fill: var(--series-2); stroke: #fff; stroke-width: 1; pointer-events: none; }
-.load-chart .load-mark circle.up { fill: #6fbf73; }
+.load-chart .band { fill: var(--chart-band); }
+.load-chart .band.odd { fill: var(--chart-band-odd); }
+.load-chart .band-label { fill: var(--chart-axis); font-size: 9px; }
+.load-chart .line-players { fill: none; stroke: var(--chart-series-2); stroke-width: 2; }
+.load-chart .line-up { fill: none; stroke: var(--chart-uptime); stroke-width: 1.5; }
+.load-chart .axis.up { fill: var(--chart-uptime); }
+.load-chart .load-dot { fill: var(--chart-series-2); stroke: var(--chart-dot-edge); stroke-width: 1.5; opacity: 0; }
+.load-chart .load-dot.up { fill: var(--chart-uptime); }
+.load-chart .load-mark circle { fill: var(--chart-series-2); stroke: var(--chart-dot-edge); stroke-width: 1; pointer-events: none; }
+.load-chart .load-mark circle.up { fill: var(--chart-uptime); }
 .load-chart .hover { fill: transparent; }
 .load-chart .guide { opacity: 0; }
 .load-pt:hover .load-dot, .load-pt:hover .guide { opacity: 1; }
-.swatch.up { background: #6fbf73; }
-.swatch.gain { background: #2e9e2e; }
-.swatch.loss { background: #c03030; }
+.swatch.up { background: var(--chart-uptime); }
+.swatch.gain { background: var(--chart-gain); }
+.swatch.loss { background: var(--chart-loss); }
 .load-chart svg { height: auto; max-width: 1100px; }
 .bot-tag { display: inline-block; width: 16px; height: 12px; margin-right: 2px; vertical-align: -1px; overflow: hidden; font: bold 7px/13px Verdana, sans-serif; letter-spacing: -0.4px; text-align: center; color: #fff; background: linear-gradient(#8a8f98, #5c616b); border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18), 0 1px 1px rgba(0, 0, 0, 0.25); }
 
 .inline-form { display: inline-flex; gap: 4px; align-items: center; margin: 0; }
 .chart .dot { stroke: none; }
-.chart .dot.s1 { fill: var(--accent); }
-.chart .dot.s2 { fill: var(--series-2); }
-.chart .dot.s3 { fill: var(--series-3, #d64541); }
+.chart .dot.s1 { fill: var(--chart-series-1); }
+.chart .dot.s2 { fill: var(--chart-series-2); }
+.chart .dot.s3 { fill: var(--chart-series-3); }
+.chart .dot.s4 { fill: var(--chart-series-4); }
+.chart .dot.s5 { fill: var(--chart-series-5); }
+.chart .dot.s6 { fill: var(--chart-series-6); }
+.chart .dot.s7 { fill: var(--chart-series-7); }
+.chart .dot.s8 { fill: var(--chart-series-8); }
 
 /* Player map (OpenStreetMap): Steam avatars as markers. */
 .player-map { height: 420px; width: 100%; border: 1px solid #aaa; background: #fff; }
@@ -758,12 +863,12 @@ td.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9e
 /* Line charts and graphics show the values under the pointer in a box. */
 .chart, .hover-tip { position: relative; }
 .chart .hover-area { fill: transparent; cursor: crosshair; touch-action: pan-y; }
-.chart .guide, .load-chart .guide { stroke: #888; stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; pointer-events: none; }
-.chart .dot.small { stroke: #fff; stroke-width: 1; pointer-events: none; }
+.chart .guide, .load-chart .guide { stroke: var(--chart-guide); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; pointer-events: none; }
+.chart .dot.small { stroke: var(--chart-dot-edge); stroke-width: 1; pointer-events: none; }
 .chart .dot.small.dense { stroke: none; }
-.chart .dot.hot { stroke: #fff; stroke-width: 2; pointer-events: none; filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5)); }
+.chart .dot.hot { stroke: var(--chart-dot-edge); stroke-width: 2; pointer-events: none; filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5)); }
 .chart .bar-day .hover { fill: transparent; }
-.chart .bar-day:hover .hover { fill: rgba(0, 0, 0, 0.05); }
+.chart .bar-day:hover .hover { fill: var(--chart-bar-hover); }
 .chart-tip {
   position: absolute;
   z-index: 5;
@@ -774,9 +879,9 @@ td.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9e
   min-width: 140px;
   max-width: min(420px, 90vw);
   padding: 6px 10px;
-  background: rgba(20, 20, 20, 0.92);
-  color: #fff;
-  border: 1px solid #555;
+  background: var(--chart-tip-bg);
+  color: var(--chart-tip-text);
+  border: 1px solid var(--chart-tip-border);
   border-radius: 4px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   font-size: 11px;
@@ -784,7 +889,7 @@ td.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9e
   white-space: nowrap;
   pointer-events: none;
 }
-.chart-tip > b:first-child { grid-column: 1 / -1; color: var(--accent-text, #ffb066); }
+.chart-tip > b:first-child { grid-column: 1 / -1; color: var(--chart-tip-title); }
 .chart-tip .tip-row { display: contents; }
 .chart-tip .tip-line { grid-column: 1 / -1; }
 .chart-tip .swatch { align-self: center; }
@@ -845,10 +950,10 @@ td.ribbon-wall a { display: inline-flex; flex-direction: column; align-items: ce
 .heat-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 12px; }
 .heat-head .lead { margin: 0; }
 .heatmap { max-width: 640px; margin: 0 auto; }
-.heatmap svg { display: block; width: 100%; height: auto; max-height: 640px; background: #0d1117; border: 1px solid var(--border); }
-.heatmap .heat-bg { fill: #0d1117; }
-.heatmap .heat-cells rect:hover { stroke: #fff; stroke-width: 0.1; }
-.heat-legend { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 11px; color: var(--muted, #999); }
+.heatmap svg { display: block; width: 100%; height: auto; max-height: 640px; background: var(--chart-heat-bg); border: 1px solid var(--border); }
+.heatmap .heat-bg { fill: var(--chart-heat-bg); }
+.heatmap .heat-cells rect:hover { stroke: var(--chart-heat-edge); stroke-width: 0.1; }
+.heat-legend { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 11px; color: var(--chart-legend); }
 .heat-legend i { flex: 1; height: 8px; border: 1px solid var(--border); }
 .decorated td.decorated-cell { white-space: normal; overflow-wrap: anywhere; }
 .decorated-rank { display: flex; align-items: center; gap: 4px; margin-top: 2px; font-size: 10px; color: var(--muted); }

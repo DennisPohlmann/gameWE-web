@@ -8,6 +8,7 @@ templates/
   orange/
     theme.css      # required: the CSS variables
     template.json  # optional: display name
+    chart.json     # optional: chart colours, see "Charts" below
 ```
 
 ## Your own template
@@ -36,6 +37,71 @@ templates/
 
 Only plain folders and a plain `theme.css` (no symbolic links, at most 256 KB)
 are used.
+
+## Charts (`chart.json`)
+
+All graphs (line and bar charts, server load, pies, the summary's trend
+graphics, the kill heatmap and the hover boxes) take their colours from
+`--chart-*` variables. Without a `chart.json`, or for a key it leaves out,
+they follow the template's `theme.css` (background `--surface`, grid
+`--grid`, labels `--muted` and `--text`, first series `--accent`, second
+`--series-2`, gains `--good`, losses `--bad`, ...), so every template gets
+matching charts without extra work. A `chart.json` next to `theme.css` sets
+them yourself; every key is optional:
+
+| Key | Colours | Default |
+| --- | --- | --- |
+| `background` | chart area | `--surface` |
+| `border` | frame around the chart | `--border` |
+| `grid` | grid lines | `--grid` |
+| `axis` | axis labels, band labels | `--muted` |
+| `axisStrong` | dates under the day boundaries | `--text` |
+| `dayLine` | dashed day boundaries of hourly charts | `--grid-2` |
+| `guide` | dashed line under the pointer | `--muted` |
+| `title` | chart title above the chart | `--text` |
+| `legend` | legend text | `--muted` |
+| `dotEdge` | edge of the points on lines | `--surface` |
+| `pieEdge` | edge between pie slices | `--surface` |
+| `barHover` | band behind the day under the pointer | `--text` at 8 % |
+| `band`, `bandOdd` | day bands of the server load chart | `--band`, `--band-odd` |
+| `uptime` | uptime line of the server load chart | `#6fbf73` |
+| `gain`, `loss` | rising and falling bars (points, trends) | `--good`, `--bad` |
+| `tooltip.background`, `.text`, `.border`, `.title` | hover box | `--surface` at 94 %, `--text`, `--border`, `--accent-text` |
+| `spark.total`, `.current`, `.totalLine`, `.currentLine`, `.text`, `.frame`, `.edge`, `.line` | trend graphics of the profile summary | grey/blue pills, `--band`, `--grid-2`, `--soft` |
+| `radar.total`, `.current`, `.grid`, `.label` | radar of the profile summary | `#8ca0ff`, `--accent`, `--grid-2`, `--soft` |
+| `heatmapBackground`, `heatmapEdge` | kill heatmap background, cell under the pointer | `#0d1117`, `#ffffff` |
+| `series` | up to 8 colours of the data lines and bars | `--accent`, `--series-2`, `--series-3`, then a fixed palette |
+| `servers` | up to 8 colours, one per server in the graph of all servers | fixed palette |
+| `pie` | up to 9 colours of the pie slices | `--accent`, then a fixed palette |
+
+Allowed values: `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`, `rgb()`/`rgba()` and
+`hsl()`/`hsla()` with plain numbers (`%` and `deg` allowed), CSS colour names
+and `transparent`. Anything else (`var()`, `url()`, gradients, several
+values, `;` or braces) is ignored and the default applies; the server log
+names the ignored keys (not the values). An entry of `series`, `servers` or
+`pie` that is not valid keeps the default of that position; entries beyond
+the limit are ignored. The file must be a plain file (no symbolic link) of
+at most 16 KB with valid JSON, else all defaults apply. A changed
+`chart.json` shows up like a changed `theme.css` (within a minute).
+
+Example (light charts on a dark template):
+
+```json
+{
+  "background": "#ffffff",
+  "grid": "#e2e2e2",
+  "axis": "#555555",
+  "axisStrong": "#333333",
+  "dayLine": "#9a9a9a",
+  "dotEdge": "#ffffff",
+  "tooltip": { "background": "rgba(20, 20, 20, 0.92)", "text": "#ffffff" },
+  "series": ["#ff8000", "#5aa9ff", "#d64541"],
+  "servers": ["#2f7dc0", "#2e9e2e", "#c03030"]
+}
+```
+
+The built-in templates each come with a `chart.json`; `orange/chart.json`
+lists every key.
 
 ## Game designs
 

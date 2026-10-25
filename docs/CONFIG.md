@@ -22,7 +22,9 @@ All settings are environment variables, see `.env.example`. `TZ` (e.g.
 `Europe/Berlin`) sets the time zone of all times on the site and when a day
 starts (awards, daily charts); without it the Docker image uses UTC. Set the
 collector to the same zone. `TEMPLATES_DIR` adds a folder of your own design
-templates (see [templates/README.md](../templates/README.md)). `DB_TYPE` selects the database: `mariadb` (default,
+templates (see [templates/README.md](../templates/README.md)); a template's
+optional `chart.json` sets the colours of its charts (section "Charts"
+there). `DB_TYPE` selects the database: `mariadb` (default,
 also for MySQL) or `postgres`. `DB_PORT`
 defaults to 3306 or 5432 accordingly. Both use the same table and column
 names; on PostgreSQL they are unquoted, so they are stored in lower case. The

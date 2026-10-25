@@ -202,7 +202,8 @@ export function TrendChart({
   );
 }
 
-const PIE_COLORS = ["#ff8000", "#3b8fd9", "#4caf50", "#d64545", "#a35ad8", "#e6c229", "#2fb5a8", "#d87aa0", "#8a8a8a"];
+// Slice colours: the classes pie0..pie8 (--chart-pie-1..9 of the template).
+const PIES = 9;
 
 // Pie with a legend; hovering a slice shows its label and share.
 export function Pie({ slices, locale }: { slices: { label: string; value: number; icon?: ReactNode }[]; locale: string }) {
@@ -212,29 +213,29 @@ export function Pie({ slices, locale }: { slices: { label: string; value: number
   const r = 80;
   let a0 = -Math.PI / 2;
   const pct = (v: number) => `${((v / total) * 100).toLocaleString(locale, { maximumFractionDigits: 1 })} %`;
-  const tip = (s: { label: string; value: number }, color: string) => tipText("", [{ swatch: color, label: s.label, value: `${pct(s.value)} · ${s.value.toLocaleString(locale)}` }]);
+  const tip = (s: { label: string; value: number }, pie: string) => tipText("", [{ swatch: pie, label: s.label, value: `${pct(s.value)} · ${s.value.toLocaleString(locale)}` }]);
   return (
     <HoverTip className="pie">
       <svg viewBox="0 0 180 180" width="180" height="180" role="img" aria-label={slices.map((s) => `${s.label} ${pct(s.value)}`).join(", ")}>
         {slices.map((s, i) => {
           const a1 = a0 + (s.value / total) * Math.PI * 2;
-          const color = PIE_COLORS[i % PIE_COLORS.length];
+          const pie = `pie${i % PIES}`;
           const path =
             s.value === total
               ? null
               : `M${c},${c} L${(c + r * Math.cos(a0)).toFixed(2)},${(c + r * Math.sin(a0)).toFixed(2)} A${r},${r} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${(c + r * Math.cos(a1)).toFixed(2)},${(c + r * Math.sin(a1)).toFixed(2)} Z`;
           a0 = a1;
           return path ? (
-            <path key={i} d={path} fill={color} className="slice" data-tip={tip(s, color)} />
+            <path key={i} d={path} className={`slice ${pie}`} data-tip={tip(s, pie)} />
           ) : (
-            <circle key={i} cx={c} cy={c} r={r} fill={color} className="slice" data-tip={tip(s, color)} />
+            <circle key={i} cx={c} cy={c} r={r} className={`slice ${pie}`} data-tip={tip(s, pie)} />
           );
         })}
       </svg>
       <ul className="pie-legend">
         {slices.map((s, i) => (
           <li key={i}>
-            <i className="swatch" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
+            <i className={`swatch pie${i % PIES}`} />
             {s.icon} {s.label} <span className="muted">{pct(s.value)}</span>
           </li>
         ))}
