@@ -6,6 +6,7 @@ import { nowUnix, steamIds } from "./format";
 import { baseGameOf, GAME_HAS_DATA } from "./games";
 import { playerCount, sumCounts, type PlayerCount } from "./player-count";
 import { axisRatio, RADAR_KEYS, RADAR_MIN_KILLS, RADAR_SQL, type AxisRank, type PlayerRatios, type RadarKey, type Ratio } from "./radar";
+import { winsByMap } from "./shares";
 import { placeSorts, rankingSorts, type PlaceSort, type RankingSort } from "./sorts";
 
 // All reads of the HLstatsX/gameME tables the collector fills.
@@ -1173,6 +1174,36 @@ export function getMaps(game: string) {
     `SELECT ${mapCols} FROM hlstats_Maps WHERE game = ? AND (kills > 0 OR played > 0) ORDER BY kills DESC, id`,
     [game],
   );
+}
+
+// Round wins per map of a ranking and side (CT, T), from the round-won
+// events: hlstats_Events_TeamBonuses has one row per winning player, the
+// side is the team of the trigger's action (CTs_Win, Target_Bombed …), so
+// rows with the same map and time are one round. hlstats_Maps.teama_wins /
+// teamb_wins are not written by the collector. Games whose round actions
+// have no side (TF2, DoD:S) and rounds without a team reward give no wins.
+// One pass over the events of the ranking's maps, kept for 10 minutes.
+const mapWinsCache = new Map<string, { at: number; value: Promise<Map<number, { ct: number; t: number }>> }>();
+
+export function getMapWins(game: string): Promise<Map<number, { ct: number; t: number }>> {
+  const hit = mapWinsCache.get(game);
+  if (hit && Date.now() - hit.at < 600_000) return hit.value;
+  if (mapWinsCache.size > 100) mapWinsCache.clear();
+  const value = query<{ map: number; team: string; wins: number }>(
+    `SELECT r.map, r.team, COUNT(*) AS wins
+     FROM (SELECT e.map, UPPER(a.team) AS team, e.timestamp_id
+           FROM hlstats_Events_TeamBonuses e
+           JOIN hlstats_Maps m ON m.id = e.map AND m.game = ?
+           JOIN hlstats_Actions a ON a.id = e.actionId
+           WHERE UPPER(a.team) IN ('CT', 'TERRORIST')
+           GROUP BY e.map, UPPER(a.team), e.timestamp_id) r
+     GROUP BY r.map, r.team`,
+    [game],
+  ).then(winsByMap);
+  mapWinsCache.set(game, { at: Date.now(), value });
+  // An error is asked again on the next request.
+  value.catch(() => mapWinsCache.delete(game));
+  return value;
 }
 
 export function getMap(id: number) {

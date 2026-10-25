@@ -5,6 +5,7 @@ import { noAutofill } from "@/lib/autofill";
 import { basePath } from "@/lib/base-path";
 import { FLAG_CODES } from "@/lib/flag-codes";
 import { gameKind } from "@/lib/games";
+import { shareText, winSplit } from "@/lib/shares";
 
 // flag: the player's country (getPlayerFlags), shown before the name; without
 // one the neutral placeholder keeps the names in line.
@@ -101,23 +102,46 @@ export function Bar({
 
 // Percentage as gameME shows it in tables: a bar with the rounded value in
 // it, the exact value (one decimal) on hover. Green from 30 %, yellow below.
-// tone "share": a blue bar for a share of a total (kills %, headshots %).
+// tone "share": a blue bar for a share of a total (kills %, headshots %),
+// with one decimal ("0.5%", "<0.1%"), since a share of many entries is
+// mostly below 1 %. fill: the bar width 0..1 when it should differ from the
+// value, e.g. relative to the largest share of the table (relativeFill).
 // Activity colour: red at 0 %, through yellow, to green at 100 %.
 export function activityColor(v: number): string {
   const h = Math.round(120 * Math.max(0, Math.min(1, v)));
   return `linear-gradient(rgba(255, 255, 255, 0.35), rgba(0, 0, 0, 0.15)), hsl(${h} 80% 45%)`;
 }
 
-export function PctBar({ value, lang, tone }: { value: number | null; lang: string; tone?: "share" | "activity" }) {
+export function PctBar({ value, lang, tone, fill }: { value: number | null; lang: string; tone?: "share" | "activity"; fill?: number }) {
   // No basis (e.g. no kills, no shots): an empty bar at 0 %, not a blank cell.
   const n = value !== null && Number.isFinite(value) ? value : 0;
   const v = Math.max(0, Math.min(1, n));
+  const w = fill !== undefined && Number.isFinite(fill) ? Math.max(0, Math.min(1, fill)) : v;
   const pct = n * 100;
-  const exact = `${pct.toLocaleString(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
+  const exact = tone === "share" ? shareText(n, lang) : `${pct.toLocaleString(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
   return (
     <span className={`pbar${tone ? ` ${tone}` : v >= 0.3 ? " good" : v > 0 ? " low" : ""}`} title={exact}>
-      <span className="pbar-fill" style={{ width: `${(v * 100).toFixed(1)}%`, background: tone === "activity" ? activityColor(v) : undefined }} />
-      <span className="pbar-text">{Math.round(pct)}%</span>
+      <span className="pbar-fill" style={{ width: `${(w * 100).toFixed(1)}%`, background: tone === "activity" ? activityColor(v) : undefined }} />
+      <span className="pbar-text">{tone === "share" ? exact : `${Math.round(pct)}%`}</span>
+    </span>
+  );
+}
+
+// Round wins of the two sides as one bar, CT (blue) left, T (red) right,
+// with both percentages (winSplit: whole numbers, together 100). Without
+// any win a neutral "no data" instead of a made-up 50/50.
+export function WinRatioBar({ ct, t, labels }: { ct: number; t: number; labels: { ct: string; t: string; noData: string } }) {
+  const s = winSplit(ct, t);
+  if (!s) return <span className="winbar winbar-none">{labels.noData}</span>;
+  const title = `${labels.ct} ${s.ct}% (${ct}) | ${labels.t} ${s.t}% (${t})`;
+  return (
+    <span className="winbar" title={title} role="img" aria-label={title}>
+      <span className="winbar-ct" style={{ width: `${s.ct}%` }}>
+        {s.ct >= 20 ? `${s.ct}%` : ""}
+      </span>
+      <span className="winbar-t" style={{ width: `${s.t}%` }}>
+        {s.t >= 20 ? `${s.t}%` : ""}
+      </span>
     </span>
   );
 }

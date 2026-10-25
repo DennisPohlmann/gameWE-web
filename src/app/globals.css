@@ -351,6 +351,12 @@ a.player { color: var(--text); }
 .pbar.low .pbar-fill { background: linear-gradient(#ffe680, #d9b300); }
 .pbar.share .pbar-fill { background: linear-gradient(#7fb6ff, #2f6fc0); }
 .pbar-text { position: relative; display: block; font: bold 10px/14px Verdana, sans-serif; text-align: center; color: #fff; text-shadow: 0 0 2px #000, 0 0 1px #000; font-variant-numeric: tabular-nums; }
+/* CT/T round wins: blue left, red right, the percentages inside. */
+.winbar { display: inline-flex; vertical-align: middle; width: 100px; height: 14px; border: 1px solid var(--bar-border); border-radius: 2px; overflow: hidden; background: var(--bar-bg); font: bold 10px/14px Verdana, sans-serif; color: #fff; text-shadow: 0 0 2px #000, 0 0 1px #000; font-variant-numeric: tabular-nums; }
+.winbar > span { display: block; text-align: center; white-space: nowrap; overflow: hidden; }
+.winbar-ct { background: linear-gradient(#7fb6ff, #2f6fc0); }
+.winbar-t { background: linear-gradient(#ff8a80, #c62828); }
+.winbar.winbar-none { justify-content: center; color: var(--muted); text-shadow: none; font-weight: normal; }
 .meter { display: inline-flex; align-items: center; white-space: nowrap; }
 .meter .bar { flex: none; }
 .meter-val { min-width: 5.5ch; text-align: right; font-variant-numeric: tabular-nums; }
@@ -1090,7 +1096,7 @@ td.ribbon-wall a { display: inline-flex; flex-direction: column; align-items: ce
 html[data-os] body,
 html[data-os] input, html[data-os] select, html[data-os] textarea, html[data-os] button,
 html[data-os] .leaflet-tooltip,
-html[data-os] .hs, html[data-os] .pbar-text, html[data-os] .map-avatar span, html[data-os] .ban-type {
+html[data-os] .hs, html[data-os] .pbar-text, html[data-os] .winbar, html[data-os] .map-avatar span, html[data-os] .ban-type {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Verdana, Arial, sans-serif;
 }
 html[data-os] body,

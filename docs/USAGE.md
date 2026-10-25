@@ -32,7 +32,7 @@ heading on `/` counts the real players.
 | `/<game>/awards` | daily awards with a calendar (`?date=YYYY-MM-DD`, `?month=YYYY-MM`); `?view=history`, `?view=ranks`, `?view=ribbons` (with most decorated players, `&class=N` filters a ribbon class) |
 | `/<game>/weapons`, `/<game>/weapons/<code>` | weapons like gameME's ("From a total of X kills with Y headshots"; weapon code, name, modifier, kills, kills %, headshots, headshots % and Hpk as bars; kills % and headshots % are shares of all kills and headshots, Hpk is headshots per kill of the weapon; sortable: `?sort=code\|name\|modifier\|kills\|headshots\|hpk&dir=asc`), best players per weapon |
 | `/<game>/actions`, `/<game>/actions/<id>` | actions like gameME's ("From a total of X actions"; action, skill bonus (the player reward, or the team reward of a team action), achieved and achieved % of all actions as a bar; sortable: `?sort=name\|bonus\|count&dir=asc`, paged with `?page=` and `?rows=`), best players per action |
-| `/<game>/maps`, `/<game>/maps/<id>` | maps; per map a kill heatmap (where players died, `?pos=killer` where the killers stood; Source games only, GoldSrc logs carry no positions) and the best players (last 30 days) |
+| `/<game>/maps`, `/<game>/maps/<id>` | maps (sortable) with time, kills and headshots and their share of all maps of the ranking, the CT/T win ratio and headshots per kill; per map a kill heatmap (where players died, `?pos=killer` where the killers stood; Source games only, GoldSrc logs carry no positions) and the best players (last 30 days) |
 | `/<game>/teams` | teams and roles like gameME's: time, kills, deaths and K/D per team and role, each with its share of the table's total as a bar (teamkills not counted; teams without kills or deaths such as spectators show `-`); each table sorts on its own: `?tsort=name\|time\|kills\|deaths\|kpd&tdir=asc` for teams, `rsort`/`rdir` for roles |
 | `/<game>/players/<id>/events` | player history: connects, team and name changes, actions, kills and deaths (filter by type) |
 | `/<game>/players/<id>/sessions` | player history per day: points, time, kills, K/D, HS, accuracy |
@@ -107,6 +107,17 @@ website therefore computes some things itself:
   and `hlstats_Roles` (`time_played`, `kills`, `deaths` per game); they
   cover all players of the game, like the weapon, action and map totals.
 - **Best players per map** come from `hlstats_Events_Frags` of the last 30 days.
+- **Map shares** (time %, kills %, headshots %) are the map's part of the
+  sum over all maps of the ranking, with one decimal (`<0.1%` for a tiny
+  share); the bars are filled relative to the largest share in the list.
+- **Win ratio per map** (CT blue / T red) counts the won rounds in
+  `hlstats_Events_TeamBonuses` by the side of the trigger's action
+  (`hlstats_Actions.team` `CT` / `TERRORIST`): one round per map and time,
+  only rounds whose trigger has a team reward, as long as the events are
+  kept. Maps without such rounds, and games whose round actions have no
+  side (TF2, DoD:S), show "no data" instead of a ratio; the column appears
+  for Counter-Strike rankings and wherever wins exist. The collector does
+  not write `hlstats_Maps.teama_wins` / `teamb_wins`.
 - **Countries** come from the collector's GeoIP lookup:
   `hlstats_Players_Data.location_id` and `hlstats_Livestats.cli_location_id`
   point to `hlstats_Players_Locations`. The footer shows the credit the

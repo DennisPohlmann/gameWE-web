@@ -1,4 +1,5 @@
-// Shares and sorting of the teams/roles, weapons and actions tables. Run with `npm test`.
+// Shares and sorting of the teams/roles, weapons and actions tables, map
+// shares, bar fill and the CT/T win split. Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
@@ -6,13 +7,17 @@ import {
   actionName,
   actionShares,
   actionSort,
+  relativeFill,
   rowShares,
+  shareText,
   shareTotals,
   sortActions,
   sortTeams,
   teamSort,
   weaponShares,
   weaponTotals,
+  winSplit,
+  winsByMap,
 } from "../src/lib/shares.ts";
 
 const teams = [
@@ -106,4 +111,71 @@ test("actions: achieved share, signed skill bonus and sorting", () => {
   assert.deepEqual(ids(sortActions(actions, "bonus", false)), [1, 3, 2]);
   assert.deepEqual(ids(sortActions(actions, "bonus", true)), [2, 3, 1]);
   assert.deepEqual(ids(sortActions(actions, "name", false)), [3, 2, 1]);
+});
+
+test("shares keep one decimal", () => {
+  assert.equal(shareText(0.0053, "en"), "0.5%");
+  assert.equal(shareText(0.0092, "en"), "0.9%");
+  assert.equal(shareText(0.0109, "en"), "1.1%");
+  assert.equal(shareText(0.25, "en"), "25.0%");
+  assert.equal(shareText(1, "en"), "100.0%");
+  assert.equal(shareText(0.0053, "de"), "0,5%");
+});
+
+test("tiny shares are not shown as zero, none is zero", () => {
+  assert.equal(shareText(0.0004, "en"), "<0.1%");
+  assert.equal(shareText(0.0000001, "en"), "<0.1%");
+  assert.equal(shareText(0.0005, "en"), "0.1%");
+  assert.equal(shareText(0, "en"), "0%");
+  assert.equal(shareText(null, "en"), "0%");
+  assert.equal(shareText(Number.NaN, "en"), "0%");
+});
+
+test("bars fill relative to the largest share", () => {
+  assert.equal(relativeFill(0.02, 0.02), 1);
+  assert.equal(relativeFill(0.01, 0.02), 0.5);
+  assert.equal(relativeFill(0, 0.02), 0);
+  assert.equal(relativeFill(0.01, 0), 0);
+  assert.equal(relativeFill(null, 0.5), 0);
+  assert.equal(relativeFill(0.9, 0.5), 1);
+});
+
+test("win split adds up to 100", () => {
+  assert.deepEqual(winSplit(1, 1), { ct: 50, t: 50 });
+  assert.deepEqual(winSplit(2, 1), { ct: 67, t: 33 });
+  assert.deepEqual(winSplit(1, 2), { ct: 33, t: 67 });
+  assert.deepEqual(winSplit(5, 0), { ct: 100, t: 0 });
+  assert.deepEqual(winSplit(0, 3), { ct: 0, t: 100 });
+  for (let a = 0; a < 40; a++) {
+    for (let b = 0; b < 40; b++) {
+      const s = winSplit(a, b);
+      if (a + b === 0) assert.equal(s, null);
+      else assert.equal(s!.ct + s!.t, 100);
+    }
+  }
+});
+
+test("a side with wins never shows 0 %", () => {
+  assert.deepEqual(winSplit(1, 999), { ct: 1, t: 99 });
+  assert.deepEqual(winSplit(999, 1), { ct: 99, t: 1 });
+});
+
+test("no wins is no data, not 50/50", () => {
+  assert.equal(winSplit(0, 0), null);
+  assert.equal(winSplit(-1, 0), null);
+});
+
+test("wins are summed per map and side", () => {
+  const m = winsByMap([
+    { map: 7, team: "CT", wins: 3 },
+    { map: "7", team: "TERRORIST", wins: "2" },
+    { map: 8, team: "terrorist", wins: 4 },
+    { map: 9, team: "", wins: 10 },
+    { map: 9, team: null, wins: 10 },
+    { map: 10, team: "Red", wins: 1 },
+  ]);
+  assert.deepEqual(m.get(7), { ct: 3, t: 2 });
+  assert.deepEqual(m.get(8), { ct: 0, t: 4 });
+  assert.equal(m.has(9), false);
+  assert.equal(m.has(10), false);
 });
