@@ -17,7 +17,7 @@ export type MapMarker = {
   flag?: string;
   // Lines shown on hover: name first, then details.
   lines: string[];
-  // The server the player is on right now (live map): a line joins them.
+  // The server the player is on right now: a line joins them.
   serverId?: number;
 };
 
@@ -70,7 +70,7 @@ export function PlayerMap({ markers, servers = NO_SERVERS, style }: { markers: M
       const serverAt = new Map<number, { pos: [number, number]; online: boolean }>();
       for (const m of servers) {
         const [dx, dy] = spread(m, 4);
-        for (const s of m.servers) serverAt.set(s.id, { pos: [m.lat, m.lng], online: m.online });
+        for (const s of m.servers) serverAt.set(s.id, { pos: [m.lat, m.lng], online: s.online });
         const one = m.servers.length === 1 ? m.servers[0] : null;
         const icon = L.divIcon({
           className: `map-server${m.online ? " on" : ""}${one ? "" : " group"}`,
@@ -119,20 +119,43 @@ export function PlayerMap({ markers, servers = NO_SERVERS, style }: { markers: M
       // A thin line from each player to their server, along the great circle,
       // under the markers and not clickable. It starts at the player's picture
       // (which may sit beside its city, see spread), so it is drawn again
-      // after each zoom.
+      // after each zoom. On a line to an online server a dot (a "packet")
+      // runs to and fro along the line's own SVG path (CSS offset-path,
+      // see .map-packet), so it needs no script loop; noClip keeps that path
+      // in one piece.
       if (links.length) {
         const lines = links.map((k) =>
-          L.polyline([], { className: `map-link${k.online ? " on" : ""}`, interactive: false, weight: 1.5 }).addTo(map!),
+          L.polyline([], { className: `map-link${k.online ? " on" : ""}`, interactive: false, weight: 1.5, noClip: true }).addTo(map!),
         );
+        const packets = links.map((k, i) => {
+          const path = lines[i].getElement();
+          if (!k.online || !path?.parentNode) return null;
+          const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          dot.setAttribute("class", "map-packet");
+          dot.setAttribute("r", "2.5");
+          // Each dot starts at another point of its run.
+          dot.style.animationDelay = `-${(i * 1.7) % 6}s`;
+          path.parentNode.appendChild(dot);
+          return dot;
+        });
+        // The dots follow the path as Leaflet draws it (after zooms and moves).
+        const follow = () => {
+          packets.forEach((dot, i) => {
+            const d = lines[i].getElement()?.getAttribute("d");
+            if (dot && d) dot.style.offsetPath = `path("${d}")`;
+          });
+        };
         const draw = () => {
           links.forEach((k, i) => {
             const path: import("leaflet").LatLngExpression[] = greatCircle(k.from, k.to);
             path[0] = map!.layerPointToLatLng(map!.latLngToLayerPoint(k.from).add([k.dx, k.dy]));
             lines[i].setLatLngs(path);
           });
+          follow();
         };
         draw();
         map.on("zoomend", draw);
+        map.getRenderer(lines[0]).on("update", follow);
       }
     });
     return () => {

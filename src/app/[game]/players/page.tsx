@@ -13,7 +13,7 @@ import {
   getCountryOptions,
   getMapPlayers,
   getMapServers,
-  getPlayerServerIds,
+  getPlayerLiveServers,
   getPlaceRanking,
   getRanking,
   placeSorts,
@@ -103,12 +103,12 @@ export default async function PlayersPage({
     getCountryOptions(game),
     placeType === "cityinfo" ? getCityOptions(game, country) : [],
   ]);
-  // The top 10 map joins each player to the ranking's server they joined
-  // last, with the lines of the live map; with all players they would cover
+  // The top 10 map joins each player who is online right now to their
+  // server, as the live map does; with all players the lines would cover
   // the map.
-  const playerServers = mapAll ? new Map<number, number>() : await getPlayerServerIds(game, mapPlayers.map((p) => p.playerId));
+  const online = mapAll ? new Map<number, { serverId: number; server: string }>() : await getPlayerLiveServers(game, mapPlayers.map((p) => p.playerId));
   const markers = mapMarkers(
-    mapPlayers.map((p) => ({ ...p, serverId: playerServers.get(p.playerId) })),
+    mapPlayers.map((p) => ({ ...p, ...online.get(p.playerId) })),
     game,
     t,
     lang,
