@@ -641,8 +641,10 @@ a.button { display: inline-block; text-decoration: none; }
 .chart .day-line { stroke: var(--chart-day-line); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
 .chart .axis.day { font-weight: 700; fill: var(--chart-axis-strong); }
 .chart .line { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; }
-/* Area under a line (chart.tsx, server load): off by default, a template may fill it. */
-.chart .area, .load-chart .area-players { fill: none; stroke: none; pointer-events: none; }
+/* Area under a line (chart.tsx, server load): off by default, a template may
+   fill it with its own, more specific rule. The selector names the polygon so
+   the series and server colour rules below (stroke, fill) never reach it. */
+.chart polygon.area, .load-chart polygon.area-players { fill: none; stroke: none; pointer-events: none; }
 .chart .s1 { stroke: var(--chart-series-1); background: var(--chart-series-1); }
 .chart .s2 { stroke: var(--chart-series-2); background: var(--chart-series-2); }
 .chart .s3 { stroke: var(--chart-series-3); background: var(--chart-series-3); }
