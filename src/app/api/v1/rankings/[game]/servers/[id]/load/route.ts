@@ -6,15 +6,16 @@ import { nowUnix } from "@/lib/format";
 // Players on one server over the last `hours` hours, one point per 10 minutes.
 export function GET(req: Request, { params }: { params: Promise<{ game: string; id: string }> }) {
   return api(async () => {
-    const { game, id } = await params;
+    const { game: code, id } = await params;
     const serverId = pathId(id);
-    if (!serverId || !(await visibleGame(game))) return null;
+    const game = await visibleGame(code);
+    if (!serverId || !game) return null;
     const s = await getServer(serverId);
-    if (!s || s.game.trim() !== game) return null;
+    if (!s || s.game.trim() !== game.code) return null;
     const hours = intArg(new URL(req.url).searchParams, "hours", 24, 1, 168);
     const load = await getServerLoad(s.serverId, nowUnix() - hours * 3600);
     return {
-      game,
+      game: game.code,
       id: s.serverId,
       hours,
       maxPlayers: s.max_players,

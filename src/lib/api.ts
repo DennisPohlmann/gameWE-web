@@ -3,8 +3,11 @@ import { ApiError, kpd, share } from "./api-params";
 import { basePath } from "./base-path";
 import { clientIp } from "./client-ip";
 import { activity } from "./format";
-import { getGame, getPlayer, getPlayerFlags, noProfile, type ClanRow, type LivePlayer, type MapRow, type RankingRow, type Server } from "./data";
+import { getGame, getGames, getPlayer, getPlayerFlags, noProfile, type ClanRow, type LivePlayer, type MapRow, type RankingRow, type Server } from "./data";
 import { playerCount } from "./player-count";
+import { winSplit } from "./shares";
+
+export { RANKING_SORT_ALIASES } from "./sorts";
 
 // Public read-only JSON API (/api/v1/...). Only data the website shows to
 // everyone: no IPs, no chat, no hidden players, no RCON or admin data.
@@ -26,6 +29,24 @@ export async function overLimit(bucket: string, limit: number): Promise<number> 
     hits.set(ip, { n: 1, until: now + 60_000 });
   } else h.n++;
   return 0;
+}
+
+// Fallback of the documentation's examples when no ranking can be read.
+export const EXAMPLE_GAME_FALLBACK = "css";
+
+// Ranking used in the examples and "try it" requests of /api: the first
+// public ranking in the site's order (display_id, name) that has servers
+// or players, else the first public one, else EXAMPLE_GAME_FALLBACK.
+export async function defaultGame(): Promise<string> {
+  try {
+    const withData = await getGames(true);
+    if (withData[0]) return withData[0].code;
+    const all = await getGames();
+    if (all[0]) return all[0].code;
+  } catch (err) {
+    console.error("api: default ranking:", err instanceof Error ? err.message : err);
+  }
+  return EXAMPLE_GAME_FALLBACK;
 }
 
 export async function api(handler: () => Promise<unknown | null>): Promise<Response> {
@@ -72,13 +93,14 @@ export async function visibleGame(code: string) {
   return codeOk(code) ? getGame(code) : undefined;
 }
 
-// A player the API may show: not hidden from the ranking (hideranking, which
-// also covers banned players), not a bot without a profile, in a visible
-// ranking. Anything else is answered like an unknown player (404).
+// A player the API may show, exactly when the website shows the profile:
+// not hidden (hideranking, which also covers banned players), not a bot
+// while bots have no profile (noProfile), in a visible ranking. Anything
+// else is answered like an unknown player (404).
 export async function publicPlayer(id: number | null) {
   if (!id) return undefined;
   const p = await getPlayer(id);
-  if (!p || p.hideranking || (await noProfile(p)) || !(await getGame(p.game))) return undefined;
+  if (!p || (await noProfile(p)) || !(await getGame(p.game))) return undefined;
   return p;
 }
 
@@ -95,9 +117,15 @@ export function apiServer(s: Server) {
     bots: playerCount(s.act_players, s.bots, s.max_players).bots,
     maxPlayers: s.max_players,
     mapStarted: s.map_started || null,
-    kills: s.kills,
-    headshots: s.headshots,
-    rounds: s.rounds,
+    kills: Number(s.kills),
+    headshots: Number(s.headshots),
+    hpk: share(s.headshots, s.kills),
+    suicides: Number(s.suicides),
+    rounds: Number(s.rounds),
+    ctWins: Number(s.ct_wins),
+    tWins: Number(s.ts_wins),
+    bombsPlanted: Number(s.bombs_planted),
+    bombsDefused: Number(s.bombs_defused),
     country: s.country_code || null,
     version: s.server_version || null,
     os: s.server_os || null,
@@ -115,26 +143,42 @@ export function apiLivePlayer(p: LivePlayer) {
     kills: p.kills,
     deaths: p.deaths,
     headshots: p.headshots,
+    hpk: share(p.headshots, p.kills),
+    rounds: Number(p.rounds),
+    shots: Number(p.shots),
+    hits: Number(p.hits),
+    accuracy: share(p.hits, p.shots),
+    // Latency in ms; null while unknown.
+    ping: Number(p.ping) || null,
+    points: p.skill,
+    pointsChange: p.skill_change,
+    rank: p.position,
+    // Deprecated names of points and pointsChange.
     skill: p.skill,
     skillChange: p.skill_change,
-    rank: p.position,
     connectedSince: p.connected || null,
     dead: !!p.is_dead,
     country: p.flag ? { code: p.flag.trim().toUpperCase(), name: p.country } : null,
   };
 }
 
-export function apiRankingRow(r: RankingRow, rank: number, activityDays: number) {
+// A row of the website's player ranking (RankingTable). position: the row's
+// number in this list (the # column); rank: the place in the whole ranking
+// by points (1 + players with more points, as on the profile).
+export function apiRankingRow(r: RankingRow, position: number, activityDays: number) {
   return {
-    rank,
+    position,
+    rank: r.globalRank ?? position,
     id: r.playerId,
     name: r.name,
     country: r.flag ? { code: r.flag.trim().toUpperCase(), name: r.country } : null,
-    skill: r.skill,
+    points: Number(r.skill),
+    // Deprecated name of points.
+    skill: Number(r.skill),
     kills: r.kills,
     deaths: r.deaths,
     headshots: r.headshots,
-    kpd: Math.round((r.kills / Math.max(1, r.deaths)) * 100) / 100,
+    kpd: kpd(r.kills, r.deaths),
     hpk: share(r.headshots, r.kills),
     accuracy: share(r.hits, r.shots),
     connectionTime: r.connection_time,
@@ -164,6 +208,8 @@ export function apiClan(c: ClanRow, flag: { flag: string; country: string } | un
     homepage: /^https?:\/\//i.test(c.homepage ?? "") ? c.homepage : null,
     country: flag ? apiCountry(flag.flag, flag.country) : null,
     members: Number(c.members),
+    avgPoints: Number(c.skill ?? 0),
+    // Deprecated name of avgPoints.
     avgSkill: Number(c.skill ?? 0),
     kills: Number(c.kills ?? 0),
     deaths: Number(c.deaths ?? 0),
@@ -175,7 +221,10 @@ export function apiClan(c: ClanRow, flag: { flag: string; country: string } | un
   };
 }
 
-export function apiMap(m: MapRow) {
+// wins: CT and T round wins of the map (getMapWins), as the win ratio
+// column of the maps page; undefined when the ranking has no sides.
+export function apiMap(m: MapRow, wins?: { ct: number; t: number }) {
+  const split = wins ? winSplit(wins.ct, wins.t) : null;
   return {
     id: Number(m.id),
     name: m.map,
@@ -188,5 +237,9 @@ export function apiMap(m: MapRow) {
     played: Number(m.played),
     playTime: Number(m.play_time),
     rounds: Number(m.rounds),
+    ctWins: wins ? wins.ct : null,
+    tWins: wins ? wins.t : null,
+    // Whole percentages as the win bar shows them; null without a win.
+    winRatio: split ? { ct: split.ct, t: split.t } : null,
   };
 }

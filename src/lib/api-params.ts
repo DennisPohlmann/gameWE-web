@@ -78,9 +78,13 @@ export function pathId(raw: string): number | null {
 export type Sort<K extends string> = { sort: K; asc: boolean };
 
 // sort (one of the keys) and order (asc/desc); without order each key has
-// its natural direction (names ascending, numbers descending).
-export function sortArg<K extends string>(q: Query, keys: readonly K[], def: K, ascByDefault: readonly K[] = []): Sort<K> {
-  const sort = enumArg(q, "sort", keys, def);
+// its natural direction (names ascending, numbers descending). aliases are
+// other names for a key (points for skill, as the website calls it).
+export function sortArg<K extends string>(q: Query, keys: readonly K[], def: K, ascByDefault: readonly K[] = [], aliases: Readonly<Record<string, K>> = {}): Sort<K> {
+  const raw = q.get("sort");
+  const alias = raw !== null && Object.hasOwn(aliases, raw) ? aliases[raw] : undefined;
+  if (raw !== null && !alias && !(keys as readonly string[]).includes(raw)) throw bad(`invalid sort: one of ${[...keys, ...Object.keys(aliases)].join(", ")}`);
+  const sort = alias ?? (raw === null ? def : (raw as K));
   const order = q.get("order") === null ? null : enumArg(q, "order", ["asc", "desc"] as const, "desc");
   return { sort, asc: order ? order === "asc" : ascByDefault.includes(sort) };
 }

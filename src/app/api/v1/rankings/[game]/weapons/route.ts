@@ -8,11 +8,15 @@ const key: Record<(typeof SORTS)[number], (w: WeaponRow) => number | string> = {
   headshots: (w) => Number(w.headshots),
   hpk: (w) => Number(w.headshots) / Math.max(1, Number(w.kills)),
   modifier: (w) => Number(w.modifier),
-  name: (w) => w.name,
+  name: (w) => weaponName(w),
   code: (w) => w.code,
 };
 
-// The weapons of a ranking with kills, by kills.
+// Full name; the code when the weapon has no name yet (as the website).
+const weaponName = (w: WeaponRow) => w.name?.trim() || w.code;
+
+// The weapons of a ranking with kills, by kills: the columns of the
+// website's weapons table (kills and headshots with their share of all).
 export function GET(req: Request, { params }: { params: Promise<{ game: string }> }) {
   return api(async () => {
     const { game: code } = await params;
@@ -23,16 +27,18 @@ export function GET(req: Request, { params }: { params: Promise<{ game: string }
     const { sort, asc } = sortArg(q, SORTS, "kills", ["name", "code"]);
     const all = sortRows(await getWeapons(game.code), key[sort], asc, (w) => Number(w.weaponId));
     const total = all.reduce((n, w) => n + Number(w.kills), 0);
+    const totalHs = all.reduce((n, w) => n + Number(w.headshots), 0);
     return paged(
       pageOf(all, p).map((w, i) => ({
         rank: p.offset + i + 1,
         code: w.code,
-        name: w.name,
+        name: weaponName(w),
         modifier: Number(w.modifier),
         kills: Number(w.kills),
-        headshots: Number(w.headshots),
-        hpk: share(w.headshots, w.kills),
         killShare: share(w.kills, total),
+        headshots: Number(w.headshots),
+        headshotShare: share(w.headshots, totalHs),
+        hpk: share(w.headshots, w.kills),
       })),
       all.length,
       p,

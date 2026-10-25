@@ -5,17 +5,13 @@ import { Empty, PctBar, Section, SortTh, TableWrap, WinRatioBar, strParam } from
 import { getGame, getMapWins, getMaps, type MapRow } from "@/lib/data";
 import { fmtDuration, fmtNum, ratio } from "@/lib/format";
 import { fill, getDict } from "@/lib/i18n";
-import { relativeFill } from "@/lib/shares";
+import { SIDE_GAMES, relativeFill } from "@/lib/shares";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getDict()).t.maps };
 }
 
 type SP = Promise<Record<string, string | string[] | undefined>>;
-
-// Games whose rounds are won by a side (CT or T): the win ratio column is
-// shown there even before the first recorded round win.
-const SIDE_GAMES = new Set(["css", "csgo", "cstrike"]);
 
 // Sort keys of the column heads; default most kills first.
 const SORTS: Record<string, (m: MapRow) => number | string> = {

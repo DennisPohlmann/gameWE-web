@@ -29,8 +29,9 @@ const routes = [];
 })(v1);
 const documented = new Set([...readFileSync(join(root, "src/lib/openapi.ts"), "utf8").matchAll(/^\s+path: "([^"]+)",$/gm)].map((m) => m[1]));
 // [id] -> {id}; the index (/api/v1 itself) is documented separately.
+// The catch-all [...path] (JSON 404 for unknown paths) is no endpoint.
 const missing = routes
-  .filter((parts) => parts.length > 0)
+  .filter((parts) => parts.length > 0 && !parts.some((s) => s.startsWith("[...")))
   .map((parts) => "/" + parts.map((s) => s.replace(/^\[(\w+)\]$/, "{$1}")).join("/"))
   .filter((p) => !documented.has(p));
 if (missing.length) {

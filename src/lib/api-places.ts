@@ -7,6 +7,7 @@ import type { PlaceKind } from "./places";
 // Countries, states and cities in the public API (/api/v1/rankings/{game}/countries, /states, /cities).
 
 export const PLACE_SORTS = Object.keys(placeSorts) as PlaceSort[];
+export { PLACE_SORT_ALIASES } from "./sorts";
 
 // rank: place in this list (null when unknown).
 export function apiPlace(game: string, r: PlaceRow, rank: number | null, kind: PlaceKind) {
@@ -18,6 +19,10 @@ export function apiPlace(game: string, r: PlaceRow, rank: number | null, kind: P
     country: { code, name: r.name ?? "" },
     ...place,
     players: r.players,
+    // As the website's columns: average and total points of the place.
+    avgPoints: r.avgSkill,
+    totalPoints: r.skill,
+    // Deprecated names of totalPoints and avgPoints.
     skill: r.skill,
     avgSkill: r.avgSkill,
     kills: r.kills,

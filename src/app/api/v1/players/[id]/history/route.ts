@@ -1,8 +1,9 @@
 import { api, apiPath, publicPlayer } from "@/lib/api";
-import { kpd, pagingArg, paged, pathId } from "@/lib/api-params";
+import { kpd, pagingArg, paged, pathId, share } from "@/lib/api-params";
 import { getPlayerSessions } from "@/lib/history";
 
-// A player's days on the servers, newest first: points, kills and time per day.
+// A player's days on the servers, newest first: the columns of the
+// website's sessions table (points and their change, time, kills, ...).
 export function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   return api(async () => {
     const p = await publicPlayer(pathId((await params).id));
@@ -12,8 +13,11 @@ export function GET(req: Request, { params }: { params: Promise<{ id: string }> 
     return paged(
       rows.map((d) => ({
         day: String(d.eventTime).slice(0, 10),
+        points: Number(d.skill),
+        pointsChange: Number(d.points_change),
+        // Deprecated names of points and pointsChange.
         skill: Number(d.skill),
-        skillChange: d.points_change,
+        skillChange: Number(d.points_change),
         connectionTime: Number(d.connection_time),
         rounds: Number(d.rounds),
         wins: Number(d.wins),
@@ -21,9 +25,11 @@ export function GET(req: Request, { params }: { params: Promise<{ id: string }> 
         deaths: Number(d.deaths),
         kpd: kpd(d.kills, d.deaths),
         headshots: Number(d.headshots),
+        hpk: share(d.headshots, d.kills),
         killStreak: Number(d.kill_streak),
         shots: Number(d.shots),
         hits: Number(d.hits),
+        accuracy: share(d.hits, d.shots),
       })),
       total,
       pg,

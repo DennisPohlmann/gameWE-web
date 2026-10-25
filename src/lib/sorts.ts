@@ -34,6 +34,11 @@ export type PlaceSort = keyof typeof placeSorts;
 // The country, state and city rankings are ordered by total points by default.
 export const PLACE_SORT_DEFAULT: PlaceSort = "skill";
 
+// Other names of sort keys in the public API, as the website names the
+// columns: points (skill), total and average points of a place.
+export const RANKING_SORT_ALIASES: Readonly<Record<string, RankingSort>> = { points: "skill" };
+export const PLACE_SORT_ALIASES: Readonly<Record<string, PlaceSort>> = { points: "skill", totalPoints: "skill", avgPoints: "avg" };
+
 // Own keys only, so "constructor" or "toString" never reach the SQL.
 export function sortParam<K extends string>(sorts: Record<K, string>, raw: string, def: K): K {
   return Object.hasOwn(sorts, raw) ? (raw as K) : def;

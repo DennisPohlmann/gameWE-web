@@ -70,7 +70,8 @@ as templates. The ranking choices on the search and help pages and the
 ranking filters of the admin chat and IP pages list only rankings with at
 least one server or player; the admin forms that assign a ranking list all.
 
-`<game>` is `hlstats_Games.code`, for example `css`.
+`<game>` is `hlstats_Games.code`, for example `css1`; the API documentation on
+`/api` fills its examples with the first ranking of the site.
 
 ### Sorting tables
 
@@ -151,8 +152,9 @@ website therefore computes some things itself:
   axis). The bars are the difference to the day before (the last history day
   before the range for the first one), so they always match the line; the
   stored `skill_change` can differ from it. The "Change" column of the
-  sessions table and `skillChange` of `/api/v1/players/{id}/history` use the
-  same difference (the oldest day of all: its recorded `skill_change`).
+  sessions table and `pointsChange` (formerly `skillChange`) of
+  `/api/v1/players/{id}/history` use the same difference (the oldest day of
+  all: its recorded `skill_change`).
 - **Sessions table**: "Wins" are the rounds won that day (`wins`; gameWE
   records no GunGame wins), "-" when there are none; "Accuracy" is "-" on days
   without weapon statistics (`shots` = 0, e.g. games or servers that do not

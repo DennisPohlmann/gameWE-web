@@ -38,6 +38,7 @@ test("the API lists countries, states and cities by total points by default", as
   for (const path of ["/rankings/{game}/countries", "/rankings/{game}/states", "/rankings/{game}/cities"]) {
     const e = endpoints.find((x) => x.path === path);
     assert.equal(e?.list?.sort, "skill", path);
-    assert.deepEqual(e?.list?.sorts, Object.keys(placeSorts), path);
+    // The keys of placeSorts, then the website names of the points columns.
+    assert.deepEqual(e?.list?.sorts, [...Object.keys(placeSorts), "points", "totalPoints", "avgPoints"], path);
   }
 });

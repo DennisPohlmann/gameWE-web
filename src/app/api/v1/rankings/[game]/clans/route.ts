@@ -12,7 +12,7 @@ export function GET(req: Request, { params }: { params: Promise<{ game: string }
     if (!game) return null;
     const q = new URL(req.url).searchParams;
     const p = pagingArg(q);
-    const { sort, asc } = sortArg(q, SORTS, "skill", ["tag"]);
+    const { sort, asc } = sortArg(q, SORTS, "skill", ["tag"], { points: "skill", avgPoints: "skill" });
     const [rows, total] = await Promise.all([getClans(game.code, p.limit, p.offset, sort, asc), countClans(game.code)]);
     const flags = await getClanFlags(rows.map((c) => c.clanId));
     return paged(

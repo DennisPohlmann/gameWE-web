@@ -1,4 +1,4 @@
-import { api, apiPath, apiRankingRow, visibleGame } from "@/lib/api";
+import { api, apiPath, apiRankingRow, RANKING_SORT_ALIASES, visibleGame } from "@/lib/api";
 import { countryArg, pagingArg, paged, pathId, sortArg, textArg, bad } from "@/lib/api-params";
 import { getRanking, rankingSorts, type RankingSort } from "@/lib/data";
 import { getSettings } from "@/lib/settings";
@@ -14,7 +14,7 @@ export function GET(req: Request, { params }: { params: Promise<{ game: string }
     if (!game) return null;
     const q = new URL(req.url).searchParams;
     const p = pagingArg(q);
-    const { sort, asc } = sortArg(q, SORTS, "skill", ["name"]);
+    const { sort, asc } = sortArg(q, SORTS, "skill", ["name"], RANKING_SORT_ALIASES);
     const country = countryArg(q);
     const state = textArg(q, "state", 80);
     const city = textArg(q, "city", 80);
@@ -22,13 +22,12 @@ export function GET(req: Request, { params }: { params: Promise<{ game: string }
     const rawClan = q.get("clan");
     const clan = rawClan === null ? null : pathId(rawClan);
     if (rawClan !== null && !clan) throw bad("invalid clan: clan ID");
-    // The plain ranking numbers its rows; any other list gives each player's place in the whole ranking.
-    const plain = sort === "skill" && !asc && !country && !state && !city && !search && !clan;
+    // position numbers the rows of this list, rank is the place in the whole ranking.
     const [{ activityDays }, ranking] = await Promise.all([
       getSettings(),
-      getRanking({ game: game.code, sort, asc, search, limit: p.limit, offset: p.offset, country, state, city, clan: clan ?? undefined, withRank: !plain }),
+      getRanking({ game: game.code, sort, asc, search, limit: p.limit, offset: p.offset, country, state, city, clan: clan ?? undefined, withRank: true }),
     ]);
-    const rows = ranking.rows.map((r, i) => apiRankingRow(r, plain ? p.offset + i + 1 : (r.globalRank ?? 0), activityDays));
+    const rows = ranking.rows.map((r, i) => apiRankingRow(r, p.offset + i + 1, activityDays));
     return paged(rows, Number(ranking.total), p, apiPath(`/rankings/${game.code}/players`), {
       sort: sort === "skill" ? undefined : sort,
       order: q.get("order") ?? undefined,

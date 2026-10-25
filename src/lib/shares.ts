@@ -140,6 +140,10 @@ export function relativeFill(share: number | null | undefined, max: number): num
   return Math.max(0, Math.min(1, share / max));
 }
 
+// Games whose rounds are won by a side (CT or T): the maps page shows the
+// win ratio column there even before the first recorded round win.
+export const SIDE_GAMES: ReadonlySet<string> = new Set(["css", "csgo", "cstrike"]);
+
 // CT and T round wins as whole percentages that add up to 100. A side with
 // at least one win never shows 0 % (nor the other 100 %). null without any
 // win: there is no ratio to show, not 50/50.

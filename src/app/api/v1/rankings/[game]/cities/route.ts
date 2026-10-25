@@ -1,6 +1,6 @@
 import { api, apiPath, visibleGame } from "@/lib/api";
 import { countryArg, pagingArg, paged, sortArg } from "@/lib/api-params";
-import { apiPlace, PLACE_SORTS } from "@/lib/api-places";
+import { apiPlace, PLACE_SORT_ALIASES, PLACE_SORTS } from "@/lib/api-places";
 import { getPlaceRanking } from "@/lib/data";
 import { PLACE_SORT_DEFAULT } from "@/lib/sorts";
 
@@ -12,7 +12,7 @@ export function GET(req: Request, { params }: { params: Promise<{ game: string }
     if (!game) return null;
     const q = new URL(req.url).searchParams;
     const p = pagingArg(q);
-    const { sort, asc } = sortArg(q, PLACE_SORTS, PLACE_SORT_DEFAULT, ["name"]);
+    const { sort, asc } = sortArg(q, PLACE_SORTS, PLACE_SORT_DEFAULT, ["name"], PLACE_SORT_ALIASES);
     const country = countryArg(q);
     const r = await getPlaceRanking({ game: game.code, kind: "city", country, sort, asc, limit: p.limit, offset: p.offset });
     return paged(

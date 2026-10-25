@@ -69,3 +69,16 @@ test("in-memory lists sort with a stable tie-break", () => {
   assert.deepEqual(sortRows(rows, (r) => r.n, false, (r) => r.id).map((r) => r.id), [3, 1, 2]);
   assert.deepEqual(sortRows(rows, (r) => r.n, true, (r) => r.id).map((r) => r.id), [1, 2, 3]);
 });
+
+test("sort aliases map to their key; unknown sorts list the aliases too", () => {
+  const keys = ["skill", "name", "kills"] as const;
+  assert.deepEqual(sortArg(q("sort=points"), keys, "skill", ["name"], { points: "skill" }), { sort: "skill", asc: false });
+  assert.deepEqual(sortArg(q("sort=points&order=asc"), keys, "skill", ["name"], { points: "skill" }), { sort: "skill", asc: true });
+  assert.deepEqual(sortArg(q("sort=name"), keys, "skill", ["name"], { points: "skill" }), { sort: "name", asc: true });
+  assert.throws(
+    () => sortArg(q("sort=pts"), keys, "skill", [], { points: "skill" }),
+    (e: unknown) => e instanceof ApiError && e.status === 400 && e.message === "invalid sort: one of skill, name, kills, points",
+  );
+  // Inherited names are no alias.
+  for (const s of ["constructor", "__proto__", "toString"]) refused(() => sortArg(q(`sort=${s}`), keys, "skill", [], { points: "skill" }));
+});

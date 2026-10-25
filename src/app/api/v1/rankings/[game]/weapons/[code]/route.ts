@@ -13,7 +13,7 @@ export function GET(_req: Request, { params }: { params: Promise<{ game: string;
     return {
       game: game.code,
       code: w.code,
-      name: w.name,
+      name: w.name?.trim() || w.code,
       modifier: Number(w.modifier),
       kills: Number(w.kills),
       headshots: Number(w.headshots),

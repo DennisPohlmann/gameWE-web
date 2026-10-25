@@ -1,4 +1,4 @@
-import { api, apiPath, apiRankingRow, visibleGame } from "@/lib/api";
+import { api, apiPath, apiRankingRow, RANKING_SORT_ALIASES, visibleGame } from "@/lib/api";
 import { pagingArg, paged, pathId, sortArg } from "@/lib/api-params";
 import { getClan, getRanking, rankingSorts, type RankingSort } from "@/lib/data";
 import { getSettings } from "@/lib/settings";
@@ -16,13 +16,13 @@ export function GET(req: Request, { params }: { params: Promise<{ game: string; 
     if (!c || c.game !== game.code) return null;
     const q = new URL(req.url).searchParams;
     const p = pagingArg(q);
-    const { sort, asc } = sortArg(q, SORTS, "skill", ["name"]);
+    const { sort, asc } = sortArg(q, SORTS, "skill", ["name"], RANKING_SORT_ALIASES);
     const [{ activityDays }, r] = await Promise.all([
       getSettings(),
       getRanking({ game: game.code, sort, asc, search: "", limit: p.limit, offset: p.offset, clan: clanId, withRank: true }),
     ]);
     return paged(
-      r.rows.map((x) => apiRankingRow(x, x.globalRank ?? 0, activityDays)),
+      r.rows.map((x, i) => apiRankingRow(x, p.offset + i + 1, activityDays)),
       Number(r.total),
       p,
       apiPath(`/rankings/${game.code}/clans/${clanId}/members`),
