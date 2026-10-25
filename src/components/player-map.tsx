@@ -32,6 +32,11 @@ export type ServerMarker = { id: number; lat: number; lng: number; online: boole
 
 const NO_SERVERS: ServerMarker[] = [];
 
+// Speed of the packet dots on the lines in pixels per second, and the
+// shortest run in seconds (very short lines).
+const PACKET_SPEED = 40;
+const PACKET_MIN_RUN = 1.5;
+
 // Two rack units with a status light (.led, coloured in CSS) and a slot each.
 const SERVER_ICON =
   '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
@@ -133,16 +138,22 @@ export function PlayerMap({ markers, servers = NO_SERVERS, style }: { markers: M
           const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
           dot.setAttribute("class", "map-packet");
           dot.setAttribute("r", "2.5");
-          // Each dot starts at another point of its run.
-          dot.style.animationDelay = `-${(i * 1.7) % 6}s`;
           path.parentNode.appendChild(dot);
           return dot;
         });
-        // The dots follow the path as Leaflet draws it (after zooms and moves).
+        // The dots follow the path as Leaflet draws it (after zooms and moves)
+        // at the same slow speed on every line: one run takes the line's
+        // length on screen divided by PACKET_SPEED. Each dot starts at another
+        // point of its run.
         const follow = () => {
           packets.forEach((dot, i) => {
-            const d = lines[i].getElement()?.getAttribute("d");
-            if (dot && d) dot.style.offsetPath = `path("${d}")`;
+            const path = lines[i].getElement() as SVGPathElement | undefined;
+            const d = path?.getAttribute("d");
+            if (!dot || !path || !d) return;
+            const run = Math.max(path.getTotalLength() / PACKET_SPEED, PACKET_MIN_RUN);
+            dot.style.offsetPath = `path("${d}")`;
+            dot.style.animationDuration = `${run.toFixed(2)}s`;
+            dot.style.animationDelay = `-${(((i * 0.37) % 1) * run).toFixed(2)}s`;
           });
         };
         const draw = () => {

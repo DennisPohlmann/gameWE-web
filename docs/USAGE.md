@@ -230,8 +230,9 @@ website therefore computes some things itself:
   player to the server they are playing on, and so does the players map's
   top 10 for those of them who are online right now (`hlstats_Livestats`;
   the map of all players shows no lines). Lines are green while the server
-  is online, with a dot running to and fro along them like packets between
-  player and server (still, in the middle of the line, when the system asks
+  is online, with a dot running slowly to and fro along them like packets
+  between player and server, at the same speed on every line (about 40
+  pixels per second, so a longer line takes longer; still, in the middle of the line, when the system asks
   for reduced motion). Servers at the same place (coordinates
   equal after rounding to 0.01°, about 1 km) share one square that shows
   their number; hovering lists them all, each with a green or red status

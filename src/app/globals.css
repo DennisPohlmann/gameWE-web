@@ -981,9 +981,10 @@ table.spaced { margin-top: 10px; }
 .map-link.on { stroke: #34c759; stroke-opacity: 0.55; }
 /* A packet on a line to an online server: a dot in the line's colour that
    runs from the player to the server and back (offset-path is set to the
-   line's path by the map). Only the offset is animated, without a script;
+   line's path by the map). Only the offset is animated, without a script,
+   at a steady speed: the map sets the duration from the line's length;
    with reduced motion it stays still in the middle of the line. */
-.map-packet { fill: #34c759; pointer-events: none; offset-rotate: 0deg; animation: map-packet 3s ease-in-out infinite alternate; }
+.map-packet { fill: #34c759; pointer-events: none; offset-rotate: 0deg; animation: map-packet 3s linear infinite alternate; }
 @keyframes map-packet {
   from { offset-distance: 0%; }
   to { offset-distance: 100%; }
