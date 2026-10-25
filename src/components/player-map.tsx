@@ -16,10 +16,12 @@ export type MapMarker = {
   flag?: string;
   // Lines shown on hover: name first, then details.
   lines: string[];
+  // The server the player is on right now (live map): a line joins them.
+  serverId?: number;
 };
 
 // One game server: name (with the flag), page and hover details.
-export type ServerEntry = { name: string; href: string; online: boolean; flag?: string; lines: string[] };
+export type ServerEntry = { id: number; name: string; href: string; online: boolean; flag?: string; lines: string[] };
 
 // The game servers at one GeoIP location: one square, not an avatar, with
 // the number of servers when there are several. online: any of them is.
@@ -62,8 +64,11 @@ export function PlayerMap({ markers, servers = NO_SERVERS, style }: { markers: M
         const a = n * 2.4;
         return [Math.round(r * Math.cos(a)), Math.round(r * Math.sin(a))];
       };
+      // Where each server's square is drawn, for the lines to its players.
+      const serverAt = new Map<number, { pos: [number, number]; online: boolean }>();
       for (const m of servers) {
         const [dx, dy] = spread(m, 4);
+        for (const s of m.servers) serverAt.set(s.id, { pos: [m.lat, m.lng], online: m.online });
         const one = m.servers.length === 1 ? m.servers[0] : null;
         const icon = L.divIcon({
           className: `map-server${m.online ? " on" : ""}${one ? "" : " group"}`,
@@ -85,11 +90,15 @@ export function PlayerMap({ markers, servers = NO_SERVERS, style }: { markers: M
           marker.getElement()?.querySelector("a")?.addEventListener("click", (e) => e.preventDefault());
         }
       }
-      const points: [number, number][] = [];
+      // The view always holds all players and all servers.
+      const points: [number, number][] = servers.map((m) => [m.lat, m.lng]);
+      const links: { from: [number, number]; dx: number; dy: number; to: [number, number]; online: boolean }[] = [];
       for (const m of markers) {
         const [dx, dy] = spread(m);
         const pos: [number, number] = [m.lat, m.lng];
         points.push(pos);
+        const srv = m.serverId === undefined ? undefined : serverAt.get(m.serverId);
+        if (srv) links.push({ from: pos, dx, dy, to: srv.pos, online: srv.online });
         const icon = L.divIcon({
           className: "map-avatar",
           // The initial shows until the avatar has loaded, then the avatar fades
@@ -103,10 +112,26 @@ export function PlayerMap({ markers, servers = NO_SERVERS, style }: { markers: M
           .bindTooltip(tip(m), { direction: "top", offset: [dx, dy - 14] })
           .addTo(map);
       }
-      // Without players, the map shows where the servers are.
-      if (!points.length) for (const m of servers) points.push([m.lat, m.lng]);
       if (points.length > 1) map.fitBounds(L.latLngBounds(points), { padding: [60, 60], maxZoom: 6 });
       else map.setView(points[0] ?? [51, 10], points.length ? 6 : 4);
+      // A thin line from each player to their server, along the great circle,
+      // under the markers and not clickable. It starts at the player's picture
+      // (which may sit beside its city, see spread), so it is drawn again
+      // after each zoom.
+      if (links.length) {
+        const lines = links.map((k) =>
+          L.polyline([], { className: `map-link${k.online ? " on" : ""}`, interactive: false, weight: 1.5 }).addTo(map!),
+        );
+        const draw = () => {
+          links.forEach((k, i) => {
+            const path: import("leaflet").LatLngExpression[] = greatCircle(k.from, k.to);
+            path[0] = map!.layerPointToLatLng(map!.latLngToLayerPoint(k.from).add([k.dx, k.dy]));
+            lines[i].setLatLngs(path);
+          });
+        };
+        draw();
+        map.on("zoomend", draw);
+      }
     });
     return () => {
       gone = true;
@@ -114,6 +139,32 @@ export function PlayerMap({ markers, servers = NO_SERVERS, style }: { markers: M
     };
   }, [markers, servers, style]);
   return <div ref={el} className="player-map" />;
+}
+
+// Points along the great circle from a to b (as a straight line when they
+// are close), with longitudes kept continuous so the line does not jump
+// across the date line.
+function greatCircle(a: [number, number], b: [number, number]): [number, number][] {
+  const rad = Math.PI / 180;
+  const [p1, l1, p2, l2] = [a[0] * rad, a[1] * rad, b[0] * rad, b[1] * rad];
+  const d = 2 * Math.asin(Math.sqrt(Math.sin((p2 - p1) / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin((l2 - l1) / 2) ** 2));
+  if (d < 0.02) return [a, b];
+  const out: [number, number][] = [];
+  const n = 32;
+  for (let i = 0; i <= n; i++) {
+    const f = i / n;
+    const A = Math.sin((1 - f) * d) / Math.sin(d);
+    const B = Math.sin(f * d) / Math.sin(d);
+    const x = A * Math.cos(p1) * Math.cos(l1) + B * Math.cos(p2) * Math.cos(l2);
+    const y = A * Math.cos(p1) * Math.sin(l1) + B * Math.cos(p2) * Math.sin(l2);
+    const z = A * Math.sin(p1) + B * Math.sin(p2);
+    let lng = Math.atan2(y, x) / rad;
+    const prev = out[i - 1];
+    if (prev) while (lng - prev[1] > 180) lng -= 360;
+    if (prev) while (lng - prev[1] < -180) lng += 360;
+    out.push([Math.atan2(z, Math.sqrt(x * x + y * y)) / rad, lng]);
+  }
+  return out;
 }
 
 // Hover box: first line bold with the flag, then the details.

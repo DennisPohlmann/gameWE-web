@@ -115,7 +115,10 @@ website therefore computes some things itself:
   and the server or last connect. Both maps also show the ranking's game
   servers as squares at the location the collector stores for their address
   (`hlstats_Servers` `lat`/`lng` from GeoIP: a city, or only the country's
-  centre when GeoIP knows no city). Servers at the same place (coordinates
+  centre when GeoIP knows no city). The map always opens with all players and
+  all servers in view; on the "who is playing now" map a thin line joins each
+  player to the server they are playing on (the players map shows no lines:
+  its players are not on a server right now). Servers at the same place (coordinates
   equal after rounding to 0.01°, about 1 km) share one square that shows
   their number; hovering lists them all, each with a green or red status
   dot, and a click opens a box with a link to each server page. Hovering a

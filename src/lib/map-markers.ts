@@ -7,7 +7,7 @@ import { flagEmoji, fmtDate, fmtDuration, fmtNum, kpd } from "./format";
 import type { Dict, Lang } from "./i18n";
 
 // Markers for the player map: avatar, link and the hover lines per player.
-export function mapMarkers(players: (MapPlayer & { server?: string | null })[], game: string, t: Dict, lang: Lang): MapMarker[] {
+export function mapMarkers(players: (MapPlayer & { server?: string | null; serverId?: number })[], game: string, t: Dict, lang: Lang): MapMarker[] {
   return players.map((p) => {
     const name = p.name ?? `#${p.playerId}`;
     const code = (p.flag ?? "").trim().toLowerCase();
@@ -20,6 +20,7 @@ export function mapMarkers(players: (MapPlayer & { server?: string | null })[], 
       initial: name.replace(/[^A-Za-z0-9]/g, "").slice(0, 1).toUpperCase() || "?",
       lat: p.lat,
       lng: p.lng,
+      serverId: p.serverId,
       flag: svg ? `${basePath}/flags/${code}.svg` : undefined,
       lines: [
         svg ? name : `${flagEmoji(p.flag)} ${name}`.trim(),
@@ -43,6 +44,7 @@ export function serverMarkers(servers: MapServer[], game: string, t: Dict): Serv
     const svg = FLAG_CODES.has(code);
     const entry: ServerEntry = {
       name: svg ? name : `${flagEmoji(code)} ${name}`.trim(),
+      id: s.serverId,
       href: `${basePath}/${game}/servers/${s.serverId}`,
       online: s.online,
       flag: svg ? `${basePath}/flags/${code}.svg` : undefined,

@@ -1473,10 +1473,10 @@ export async function getMapPlayers(
 // Players online right now on the servers of a ranking, at the GeoIP city of
 // their current connection (or their last known one), for the map on the
 // servers page.
-export async function getLiveMapPlayers(game: string): Promise<(MapPlayer & { server: string })[]> {
-  const rows = await query<Omit<MapPlayer, "lat" | "lng"> & { lat: string; lng: string; server: string }>(
+export async function getLiveMapPlayers(game: string): Promise<(MapPlayer & { server: string; serverId: number })[]> {
+  const rows = await query<Omit<MapPlayer, "lat" | "lng"> & { lat: string; lng: string; server: string; serverId: number }>(
     `SELECT p.playerId, COALESCE(d.lastName, lv.name) AS name, p.skill, p.kills, p.deaths, p.last_event,
-            l.flag, l.country, l.city, l.lat, l.lng, s.name AS server
+            l.flag, l.country, l.city, l.lat, l.lng, s.name AS server, s.serverId
      FROM hlstats_Livestats lv
      JOIN hlstats_Servers s ON s.serverId = lv.server_id
      JOIN hlstats_Players p ON p.playerId = lv.player_id
@@ -1487,7 +1487,7 @@ export async function getLiveMapPlayers(game: string): Promise<(MapPlayer & { se
      ORDER BY p.skill DESC, p.playerId`,
     [game],
   );
-  return withRanks(game, rows.map(mapRow).filter(onMap));
+  return withRanks(game, rows.map((r) => ({ ...mapRow(r), serverId: Number(r.serverId) })).filter(onMap));
 }
 
 // Ranking position of each map player (rankPositions: 1 + ranked players
