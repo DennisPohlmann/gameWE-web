@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState, type PointerEvent, type RefObject } from "react";
+import { ChartHead } from "./chart-head";
 
 // SVG line chart. Rendered on the server; in the browser, moving the mouse
 // (or a finger) over it marks the nearest point in time and shows the
@@ -57,8 +58,8 @@ export function LineChart({
   // Largest value of the charts stacked together: the left margin fits its
   // label too, so they all keep the same left edge.
   alignTo?: number;
-  // A heading above the chart with the legend of its lines beside it,
-  // instead of the legend below (only with more than one line).
+  // A heading above the chart, left of the legend (the legend alone, on
+  // the right, without a title; none with a single untitled line).
   title?: string;
 }) {
   const { hover, setHover, svgRef, figRef, tipRef } = useHoverBox();
@@ -112,7 +113,7 @@ export function LineChart({
   const shown = hover ? series.filter((s) => s.values[hover.i] !== null && s.values[hover.i] !== undefined) : [];
   return (
     <figure className="chart" ref={figRef}>
-      {title ? <ChartHead title={title} series={series} swatch="line" /> : null}
+      {title || series.length > 1 ? <ChartHead title={title} series={series} /> : null}
       <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={ariaLabel}>
         {ticks.map((t, i) => (
           <g key={i}>
@@ -182,7 +183,6 @@ export function LineChart({
       {hover && shown.length ? (
         <ChartTip tipRef={tipRef} top={hover.top} head={tips?.[hover.i] || labels[hover.i]} series={shown} i={hover.i} locale={locale} />
       ) : null}
-      {!title && series.length > 1 ? <figcaption className="legend">{legendItems(series, "")}</figcaption> : null}
     </figure>
   );
 }
@@ -238,7 +238,7 @@ export function BarChart({
 
   return (
     <figure className="chart" ref={figRef}>
-      {title ? <ChartHead title={title} series={series} swatch="bar" /> : null}
+      {title || series.length > 1 ? <ChartHead title={title} series={series} /> : null}
       <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={ariaLabel}>
         {ticks.map((t, i) => (
           <g key={i}>
@@ -280,7 +280,6 @@ export function BarChart({
         />
       </svg>
       {hover ? <ChartTip tipRef={tipRef} top={hover.top} head={labels[hover.i]} series={series} i={hover.i} locale={locale} /> : null}
-      {!title && series.length > 1 ? <figcaption className="legend">{legendItems(series, "")}</figcaption> : null}
     </figure>
   );
 }
@@ -323,25 +322,6 @@ function yScale(values: (number | null)[], fromZero: boolean, locale: string | u
 }
 
 type Named = { label: string; className: string };
-
-// Legend entries; "line" draws a short line with a dot, like a chart line.
-function legendItems(series: Named[], swatch: "line" | "bar" | "") {
-  return series.map((s) => (
-    <span key={s.label}>
-      <i className={`swatch ${swatch} ${s.className}`} /> {s.label}
-    </span>
-  ));
-}
-
-// Title row above a chart with the legend on the right.
-function ChartHead({ title, series, swatch }: { title: string; series: Named[]; swatch: "line" | "bar" }) {
-  return (
-    <figcaption className="chart-head">
-      <span className="chart-title">{title}</span>
-      <span className="legend">{legendItems(series, swatch)}</span>
-    </figcaption>
-  );
-}
 
 // Hover box: the time or day, then one row per series: colour, name
 // (shortened when too long), value right-aligned in its own column. All

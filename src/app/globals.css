@@ -501,11 +501,15 @@ a.button { display: inline-block; text-decoration: none; }
 .swatch.s1 { background: var(--accent); }
 .swatch.s2 { background: var(--series-2); }
 .swatch.s3 { background: var(--series-3, #d64541); }
-/* Title row above a chart with its legend on the right; the swatch is a
-   short line with a dot, like the lines in the chart. */
+/* Row above every chart: title or summary on the left, legend on the right
+   (also without a title); the swatch is a short line with a dot, like the
+   lines in the chart. As wide as the chart below it. */
 .chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 16px; max-width: 1200px; margin: 0 auto 6px; }
+.chart-head.weekday { max-width: 460px; }
+.load-chart .chart-head { max-width: 1100px; }
 .chart-title { font-weight: 700; color: var(--text); }
-.chart-head .legend { flex-wrap: wrap; gap: 4px 14px; }
+.chart-note { font-size: 11px; color: var(--text); }
+.chart-head .legend { flex-wrap: wrap; gap: 4px 14px; margin-left: auto; }
 .chart-head .legend > span { display: inline-flex; align-items: center; gap: 6px; }
 .swatch.line { position: relative; width: 18px; height: 2px; }
 .swatch.line::after { content: ""; position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: inherit; }
@@ -662,7 +666,6 @@ table.spaced { margin-top: 10px; }
 .swatch.up { background: #6fbf73; }
 .swatch.gain { background: #2e9e2e; }
 .swatch.loss { background: #c03030; }
-.load-head { font-size: 11px; margin: 4px 0; text-align: right; }
 .load-chart svg { height: auto; max-width: 1100px; }
 .bot-tag { display: inline-block; width: 16px; height: 12px; margin-right: 2px; vertical-align: -1px; overflow: hidden; font: bold 7px/13px Verdana, sans-serif; letter-spacing: -0.4px; text-align: center; color: #fff; background: linear-gradient(#8a8f98, #5c616b); border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18), 0 1px 1px rgba(0, 0, 0, 0.25); }
 

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { ChartHead } from "./chart-head";
 import { HoverTip } from "./hover-tip";
 import { tipText } from "./tip-text";
 
@@ -262,6 +263,7 @@ export function WeekdayBars({
     `${Math.floor(s / 86400)}d ${String(Math.floor((s % 86400) / 3600)).padStart(2, "0")}:${String(Math.floor((s % 3600) / 60)).padStart(2, "0")}h`;
   return (
     <figure className="chart">
+      <ChartHead className="weekday" series={[{ label: labels.connects, className: "s1" }, { label: labels.time, className: "s2" }]} />
       <HoverTip>
         <svg className="weekday" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${labels.connects}, ${labels.time}`}>
           <line className="grid" x1="10" x2={W - 10} y1={base} y2={base} />
@@ -290,30 +292,24 @@ export function WeekdayBars({
           })}
         </svg>
       </HoverTip>
-      <figcaption className="legend">
-        <span>
-          <i className="swatch s1" /> {labels.connects}
-        </span>
-        <span>
-          <i className="swatch s2" /> {labels.time}
-        </span>
-      </figcaption>
     </figure>
   );
 }
 
 // Server load of the last day: players (left axis) and uptime (right axis),
-// with one band per map that was played.
+// with one band per map that was played; summary: text left of the legend.
 export function ServerLoadChart({
   points,
   slots,
   locale,
   labels,
+  summary,
 }: {
   points: { timestamp: number; act_players: number; min_players: number; max_players: number; uptime: number; map: string | null }[];
   slots: number;
   locale: string;
   labels: { players: string; uptime: string };
+  summary?: ReactNode;
 }) {
   const W = 960;
   const H = 280;
@@ -359,6 +355,7 @@ export function ServerLoadChart({
 
   return (
     <figure className="chart load-chart">
+      <ChartHead note={summary} series={[{ label: labels.players, className: "s2" }, { label: labels.uptime, className: "up" }]} />
       <HoverTip>
         <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={labels.players}>
           {bands.map((b, i) => {
@@ -439,14 +436,6 @@ export function ServerLoadChart({
           })}
         </svg>
       </HoverTip>
-      <figcaption className="legend">
-        <span>
-          <i className="swatch s2" /> {labels.players}
-        </span>
-        <span>
-          <i className="swatch up" /> {labels.uptime}
-        </span>
-      </figcaption>
     </figure>
   );
 }
