@@ -1,5 +1,5 @@
 import "server-only";
-import { hiddenSql, isHidden } from "./hidden";
+import { hiddenSql, shownEvents, type EventPerson } from "./hidden";
 import { adminQuery, likeOp, query, queryOne, type Param } from "./db";
 import { steamIds } from "./format";
 import { dayChanges } from "./points-trend";
@@ -264,18 +264,18 @@ export async function getPlayerChatCount(playerId: number) {
 // ---------------------------------------------------------------- ranking
 
 // The latest events of a ranking (all its servers), for its start page:
-// kills, actions, joins and so on, never chat or addresses. Hidden players
-// are left out (bots stay); a hidden opponent is shown without a name.
-export const GAME_EVENT_KINDS = ["entry", "disconnect", "team", "action", "playeraction", "teambonus", "kill", "suicide", "teamkill"] as const;
+// every kind the player's events page knows (connects, entries, leaves,
+// team, role and name changes, actions, kills, suicides, teamkills; deaths
+// are the kills seen from the victim), never chat or addresses. Rows with a
+// hidden player on either side are left out (bots stay).
+export const GAME_EVENT_KINDS = ["connect", "entry", "disconnect", "team", "role", "name", "action", "playeraction", "teambonus", "kill", "suicide", "teamkill"] as const;
 export type GameEventKind = (typeof GAME_EVENT_KINDS)[number];
-// Shown in the live box: kills and the actions the daily awards count
-// (bomb planted, GunGame level, ...); no joins, leaves or team changes.
-const LIVE_KINDS: GameEventKind[] = ["kill", "action", "playeraction", "teambonus"];
 export type GameEvent = Omit<PlayerEvent, "kind"> & { kind: GameEventKind; actor: number; actorName: string | null; otherName: string | null; server: string };
 
 // The server of an event (server_id on the event tables) comes with newer
 // collector init scripts; without it the server column is left out. Looked up
-// again every 5 minutes while missing.
+// again every 5 minutes while missing. hlstats_Events_Connects, _ChangeRole
+// and _ChangeName have no server_id: their rows show "-" as server.
 let serverCol: { ok: Promise<boolean>; at: number } | undefined;
 export async function hasEventServer() {
   if (!serverCol || (Date.now() - serverCol.at > 300_000 && !(await serverCol.ok))) {
@@ -293,11 +293,19 @@ function gameSource(kind: GameEventKind, by: string, withServer: boolean): strin
     : `LEFT JOIN hlstats_Maps m ON m.id = e.map`;
   const srv = withServer ? `COALESCE(s.name, '') AS server` : `'' AS server`;
   const w = `WHERE ${by} = ?`;
+  const mapOnly = `LEFT JOIN hlstats_Maps m ON m.id = e.map`;
   const all: Record<GameEventKind, string> = {
+    // Only the columns the public DB user may read (never ipAddress).
+    connect: `SELECT e.timestamp_id AS ts, 'connect' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map, '' AS server
+              FROM hlstats_Events_Connects e ${mapOnly} ${w}`,
     entry: `SELECT e.timestamp_id AS ts, 'entry' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map, ${srv} FROM hlstats_Events_Entries e ${m} ${w}`,
     disconnect: `SELECT e.timestamp_id AS ts, 'disconnect' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map, ${srv} FROM hlstats_Events_Disconnects e ${m} ${w}`,
     team: `SELECT e.timestamp_id AS ts, 'team' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, COALESCE(t.name, '') AS text, COALESCE(t.code, '') AS code, m.map AS map, ${srv}
            FROM hlstats_Events_ChangeTeam e LEFT JOIN hlstats_Teams t ON t.teamId = e.team ${m} ${w}`,
+    role: `SELECT e.timestamp_id AS ts, 'role' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, COALESCE(r.name, '') AS text, COALESCE(r.code, '') AS code, m.map AS map, '' AS server
+           FROM hlstats_Events_ChangeRole e LEFT JOIN hlstats_Roles r ON r.roleId = e.role ${mapOnly} ${w}`,
+    name: `SELECT e.timestamp_id AS ts, 'name' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, e.oldName AS text, e.newName AS code, m.map AS map, '' AS server
+           FROM hlstats_Events_ChangeName e ${mapOnly} ${w}`,
     action: `SELECT e.timestamp_id AS ts, 'action' AS kind, e.playerId AS actor, e.bonus AS num, 0 AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map, ${srv}
              FROM hlstats_Events_PlayerActions e LEFT JOIN hlstats_Actions a ON a.id = e.actionId ${m} ${w}`,
     playeraction: `SELECT e.timestamp_id AS ts, 'playeraction' AS kind, e.playerId AS actor, e.bonus AS num, e.victimId AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map, ${srv}
@@ -314,8 +322,8 @@ function gameSource(kind: GameEventKind, by: string, withServer: boolean): strin
   return all[kind];
 }
 
-// The live box of a ranking: every live kind of the ranking's servers.
-const GAME_BY: [GameEventKind, string][] = LIVE_KINDS.map((k) => [k, "e.game_id"]);
+// The live box of a ranking: every kind of the ranking's servers.
+const GAME_BY: [GameEventKind, string][] = GAME_EVENT_KINDS.map((k) => [k, "e.game_id"]);
 // The live box of a player: the same kinds with the player on either side
 // (kills and deaths, actions on and by the player). Each column has an
 // index (killer_time, victim_time, playerId, victimId).
@@ -343,7 +351,7 @@ async function loadEvents(by: [GameEventKind, string][], id: number, n: number):
 // hidden player has no page).
 async function named(rows: RawEvent[], limit: number, self = 0): Promise<GameEvent[]> {
   const ids = [...new Set(rows.flatMap((r) => [Number(r.actor), Number(r.other)]).filter((x) => x > 0))];
-  const people = ids.length
+  const people: EventPerson[] = ids.length
     ? await query<{ playerId: number; name: string | null; hideranking: number; bot: number }>(
         `SELECT p.playerId, d.lastName AS name, p.hideranking,
                 CASE WHEN EXISTS (SELECT 1 FROM hlstats_PlayerUniqueIds u WHERE u.playerId = p.playerId AND u.uniqueId LIKE 'BOT%') THEN 1 ELSE 0 END AS bot
@@ -351,31 +359,12 @@ async function named(rows: RawEvent[], limit: number, self = 0): Promise<GameEve
         [ids],
       )
     : [];
-  const hidden = new Set(people.filter((x) => isHidden(x) && Number(x.playerId) !== self).map((x) => Number(x.playerId)));
-  const visible = new Map(people.filter((x) => !hidden.has(Number(x.playerId))).map((x) => [Number(x.playerId), x.name]));
-  if (self > 0 && !visible.has(self)) {
+  if (self > 0 && !people.some((x) => Number(x.playerId) === self)) {
     // The page's player may have moved to hlstats_PlayersInactive.
     const me = await queryOne<{ name: string | null }>(`SELECT lastName AS name FROM hlstats_Players_Data WHERE playerId = ?`, [self]);
-    visible.set(self, me?.name ?? null);
+    people.push({ playerId: self, name: me?.name ?? null, hideranking: 0 });
   }
-  return rows
-    .filter((r) => !hidden.has(Number(r.actor)) && !hidden.has(Number(r.other)) && (visible.has(Number(r.actor)) || (self > 0 && Number(r.other) === self)))
-    .slice(0, limit)
-    .map((r) => {
-      const actor = Number(r.actor);
-      const other = Number(r.other);
-      return {
-        ...r,
-        ts: Number(r.ts),
-        num: Number(r.num),
-        // A player no longer in hlstats_Players (moved away): no id, no name.
-        actor: visible.has(actor) ? actor : 0,
-        server: r.server ?? "",
-        actorName: visible.get(actor) ?? null,
-        other: visible.has(other) ? other : 0,
-        otherName: visible.get(other) ?? null,
-      };
-    });
+  return shownEvents(rows, people, limit, self).map((r) => ({ ...r, ts: Number(r.ts), num: Number(r.num), server: r.server ?? "" }));
 }
 
 const gameCache = new Map<string, { at: number; value: Promise<unknown> }>();

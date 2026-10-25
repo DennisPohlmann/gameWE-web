@@ -98,15 +98,20 @@ page has a share button with plain share links (no third-party scripts).
 ## Latest events
 
 Two choices under Admin → Settings → Maps & events decide how the "Latest events" boxes
-behave: "Latest events (ranking start page)" (`gamewe_game_events`: kills,
-actions and team bonuses on all servers of the ranking) and "Latest events
-(player page)" (`gamewe_player_events`: the same kinds, but only with that
-player on either side: their kills and deaths, actions by and against them,
-their team bonuses). Each is "Sync" (`live`, default: new events flow in
-while the page is open), "Async" (`static`: only the latest ones as of
-loading the page) or "Off" (`off`: the section is not shown). Both boxes
-show time, event, server and map the same way; a hidden player in another
-row is shown as "?". In "Sync" the heading says "(Live data)" and a switch
+behave: "Latest events (ranking start page)" (`gamewe_game_events`: every
+event on all servers of the ranking: connects, entries, leaves, team, role
+and name changes, actions, team bonuses, kills, suicides and teamkills;
+never chat or addresses) and "Latest events (player page)"
+(`gamewe_player_events`: only the events with that player on either side:
+their kills and deaths, actions by and against them, their team bonuses).
+There is no setting per event type. Rows with a hidden or banned player as
+actor, victim or target are left out in both boxes. Connects, role and name
+changes have no server in the database, so their server column shows "-".
+Each is "Sync" (`live`, default: new events flow in while the page is
+open), "Async" (`static`: only the latest ones as of loading the page) or
+"Off" (`off`: the section is not shown). Both boxes show time, event,
+server and map the same way; a victim or target no longer in the player
+table is shown as "?". In "Sync" the heading says "(Live data)" and a switch
 top right pauses the updates (no requests while paused; the choice is kept
 per browser and box). The live boxes ask `/<game>/events-feed` and
 `/<game>/players/<id>/events-feed` every 4 seconds while the tab is
