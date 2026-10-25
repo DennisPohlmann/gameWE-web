@@ -87,7 +87,7 @@ them yourself; every key is optional:
 | `tooltip.background`, `.text`, `.border`, `.title` | hover box | `--surface` at 94 %, `--text`, `--border`, `--accent-text` |
 | `spark.total`, `.current`, `.totalLine`, `.currentLine`, `.text`, `.frame`, `.edge`, `.line` | trend graphics of the profile summary | grey/blue pills, `--band`, `--grid-2`, `--soft` |
 | `radar.total`, `.current`, `.grid`, `.label` | radar of the profile summary (polygons, points, tooltip swatches; the average is drawn dashed with hollow points, the player solid and filled) | `#8ca0ff`, `--accent`, `--grid-2`, `--soft` |
-| `heatmapBackground`, `heatmapEdge` | kill heatmap background, cell under the pointer | `#0d1117`, `#ffffff` |
+| `heatmapBackground`, `heatmapKill`, `heatmapDeath`, `heatmapEdge` | map heatmap background, kill and death dots, centre of the headshot dots | `#0d1117`, `#33aaff`, `#e03030`, `#ffffff` |
 | `series` | up to 8 colours of the data lines and bars | `--accent`, `--series-2`, `--series-3`, then a fixed palette |
 | `servers` | up to 8 colours, one per server in the graph of all servers | fixed palette |
 | `pie` | up to 9 colours of the pie slices | `--accent`, then a fixed palette |

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AutoForm } from "@/components/auto-form";
-import { HeatmapView } from "@/components/heatmap";
+import { HeatmapView, type HeatShow } from "@/components/heatmap";
 import { MiniAvatar } from "@/components/mini-avatar";
 import { Rich } from "@/components/rich";
 import { SortInputs } from "@/components/sort-head";
@@ -11,7 +11,7 @@ import { noAutofill } from "@/lib/autofill";
 import { basePath } from "@/lib/base-path";
 import { countMapKillers, getMap, getMapAccuracy, getMapGgWins, getMapLoadTime, getMapPlayerTable, getMapWins, getPlayerFlags } from "@/lib/data";
 import { fmtDuration, fmtNum, fmtPct, kpd, localeOf, ratio } from "@/lib/format";
-import { getHeatmap, type HeatWho } from "@/lib/heatmap";
+import { DOTS, getHeatmap } from "@/lib/heatmap";
 import { fill, getDict } from "@/lib/i18n";
 import { kpm, mapPlayTime, mapSort } from "@/lib/map-table";
 import { getSettings } from "@/lib/settings";
@@ -45,8 +45,10 @@ export default async function MapPage({ params, searchParams }: Props) {
   if (m.game !== game) redirect(`/${m.game}/maps/${m.id}`);
   const sp = await searchParams;
   const { lang, t } = await getDict();
-  // Heatmap of where players die (default) or where the killers stood.
-  const who: HeatWho = strParam(sp.pos) === "killer" ? "killer" : "victim";
+  // Heatmap of kills and deaths (default), only where the killers stood or
+  // only where players died.
+  const pos = strParam(sp.pos);
+  const show: HeatShow = pos === "killer" || pos === "victim" ? pos : "all";
   const { sort, flipped, desc } = mapSort(strParam(sp.sort), strParam(sp.dir));
   const page = pageParam(sp.page);
   const { pageSize } = await getSettings();
@@ -54,7 +56,7 @@ export default async function MapPage({ params, searchParams }: Props) {
   const [players, counts, heat, wins, accuracy, loadTime] = await Promise.all([
     getMapPlayerTable(game, m.id, sort, desc, limit, (page - 1) * limit),
     countMapKillers(m.id),
-    getHeatmap(m.id, who),
+    getHeatmap(m.id),
     getMapWins(game).catch(() => new Map<number, { ct: number; t: number }>()),
     getMapAccuracy(m.id).catch(() => null),
     getMapLoadTime(m.id).catch(() => 0),
@@ -72,7 +74,7 @@ export default async function MapPage({ params, searchParams }: Props) {
     </Link>
   );
   // Sorting and paging keep the heatmap choice and the rows per page.
-  const keep = { pos: who === "killer" ? "killer" : undefined, rows: limit !== pageSize ? limit : undefined, sort: sort !== "kills" ? sort : undefined, dir: flipped ? "asc" : undefined };
+  const keep = { pos: show !== "all" ? show : undefined, rows: limit !== pageSize ? limit : undefined, sort: sort !== "kills" ? sort : undefined, dir: flipped ? "asc" : undefined };
   const sortProps = { current: sort, asc: flipped, base, params: { pos: keep.pos, rows: keep.rows } };
   const th = (label: string, k: string, cls = "num") => <SortTh label={label} sortKey={k} className={cls} {...sortProps} />;
   const pages = Math.max(1, Math.ceil(counts.players / limit));
@@ -103,12 +105,19 @@ export default async function MapPage({ params, searchParams }: Props) {
         <div className="box heat-box">
           <div className="heat-head">
             <p className="lead">
-              {heat ? fill(who === "victim" ? t.heatHintDeaths : t.heatHintKills, { n: fmtNum(heat.total, lang) }) : t.heatNone}
+              {heat
+                ? fill(show === "victim" ? t.heatHintDeaths : show === "killer" ? t.heatHintKills : t.heatHint, {
+                    kills: fmtNum(heat.kills, lang),
+                    deaths: fmtNum(heat.deaths, lang),
+                  })
+                : t.heatNone}
+              {heat && ((show !== "victim" && heat.kills > DOTS) || (show !== "killer" && heat.deaths > DOTS)) ? ` ${fill(t.heatLatest, { n: fmtNum(DOTS, lang) })}` : null}
             </p>
             <AutoForm action={base} className="search">
-              <select {...noAutofill} name="pos" defaultValue={who === "killer" ? "killer" : ""} aria-label={t.heatmap}>
-                <option value="">{t.heatDeaths}</option>
+              <select {...noAutofill} name="pos" defaultValue={show === "all" ? "" : show} aria-label={t.heatmap}>
+                <option value="">{t.heatAll}</option>
                 <option value="killer">{t.heatKills}</option>
+                <option value="victim">{t.heatDeaths}</option>
               </select>
               {/* Switching the heatmap keeps the table's order and rows. */}
               <SortInputs keep={{ sort: keep.sort, dir: keep.dir, rows: keep.rows ? String(keep.rows) : undefined }} />
@@ -118,7 +127,7 @@ export default async function MapPage({ params, searchParams }: Props) {
             </AutoForm>
           </div>
           {heat ? (
-            <HeatmapView heat={heat} label={`${t.heatmap} ${m.map}`} tip={(n) => fill(who === "victim" ? t.heatTipDeaths : t.heatTipKills, { n: fmtNum(n, lang) })} />
+            <HeatmapView heat={heat} show={show} label={`${t.heatmap} ${m.map}`} title={m.map} labels={{ kills: t.heatKills, headshots: t.headshotsLabel, deaths: t.heatDeaths }} />
           ) : null}
         </div>
       </Section>

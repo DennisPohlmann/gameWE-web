@@ -51,6 +51,8 @@ export const CHART_KEYS: [key: string, cssVar: string, fallback: string][] = [
   ["radar.label", "--chart-radar-label", "var(--soft)"],
   ["heatmapBackground", "--chart-heat-bg", "#0d1117"],
   ["heatmapEdge", "--chart-heat-edge", "#ffffff"],
+  ["heatmapKill", "--chart-heat-kill", "#33aaff"],
+  ["heatmapDeath", "--chart-heat-death", "#e03030"],
   ...SERIES_DEFAULTS.map((d, i): [string, string, string] => [`series.${i}`, `--chart-series-${i + 1}`, d]),
   ...SERVER_DEFAULTS.map((d, i): [string, string, string] => [`servers.${i}`, `--chart-server-${i + 1}`, d]),
   ...PIE_DEFAULTS.map((d, i): [string, string, string] => [`pie.${i}`, `--chart-pie-${i + 1}`, d]),

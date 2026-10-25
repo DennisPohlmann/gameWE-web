@@ -1,50 +1,81 @@
+import { useId } from "react";
 import type { Heatmap } from "@/lib/heatmap";
-import { HoverTip } from "./hover-tip";
-import { tipText } from "./tip-text";
 
-// Kill heatmap as SVG: one sharp square per grid cell, coloured from blue
-// (few kills) over green and yellow to red (most). The scale is logarithmic
-// so quiet corners stay visible next to the hot spots. North (higher y in
-// the game) is up.
+// Kill and death positions as dots, like gameME's map tracking: deaths red,
+// kills blue, headshots blue with a white centre, drawn in that order so
+// headshots stay on top. Every kind is one path of zero-length round-capped
+// segments, drawn twice (dark edge, then colour); the strokes do not scale,
+// so a dot stays about 6px on every screen. North (higher y in the game) is
+// up.
 
-const STOPS: [number, [number, number, number]][] = [
-  [0, [40, 70, 200]],
-  [0.35, [40, 190, 120]],
-  [0.65, [240, 220, 40]],
-  [1, [230, 40, 30]],
-];
+export type HeatShow = "all" | "killer" | "victim";
 
-function color(v: number) {
-  for (let i = 1; i < STOPS.length; i++) {
-    const [b, cb] = STOPS[i];
-    const [a, ca] = STOPS[i - 1];
-    if (v <= b) {
-      const f = (v - a) / (b - a || 1);
-      return `rgb(${ca.map((c, k) => Math.round(c + (cb[k] - c) * f)).join(",")})`;
-    }
-  }
-  return "rgb(230,40,30)";
+function path(dots: [number, number, ...number[]][]) {
+  return dots.map(([x, y]) => `M${x} ${-y}h0`).join("");
 }
 
-export function HeatmapView({ heat, label, tip }: { heat: Heatmap; label: string; tip: (n: number) => string }) {
-  const { cols, rows, max } = heat;
-  const log = Math.log1p(max) || 1;
+export function HeatmapView({
+  heat,
+  show,
+  label,
+  title,
+  labels,
+}: {
+  heat: Heatmap;
+  show: HeatShow;
+  label: string;
+  title: string;
+  labels: { kills: string; headshots: string; deaths: string };
+}) {
+  const id = useId().replace(/:/g, "");
+  const { minX, minY, width, height } = heat;
+  const pad = Math.max(width, height) * 0.03;
+  const kills = show !== "victim";
+  const deaths = show !== "killer";
+  const layers: [string, string, [number, number, ...number[]][]][] = [];
+  if (deaths) layers.push(["death", `${id}d`, heat.deathDots]);
+  if (kills) {
+    layers.push(["kill", `${id}k`, heat.killDots.filter((d) => !d[2])]);
+    layers.push(["hs", `${id}h`, heat.killDots.filter((d) => d[2])]);
+  }
   return (
-    <HoverTip className="heatmap">
-      <svg viewBox={`0 0 ${cols} ${rows}`} role="img" aria-label={label} preserveAspectRatio="xMidYMid meet">
-        <rect width={cols} height={rows} className="heat-bg" />
-        <g className="heat-cells" shapeRendering="crispEdges">
-          {heat.cells.map(([c, r, n]) => {
-            const v = Math.log1p(n) / log;
-            return <rect key={`${c}-${r}`} x={c} y={rows - 1 - r} width={1} height={1} fill={color(v)} opacity={0.45 + 0.55 * v} data-tip={tipText("", [{ swatch: color(v), label: tip(n), value: "" }])} />;
-          })}
+    <div className="heatmap">
+      <div className="heat-legend">
+        <span className="heat-keys">
+          {kills ? (
+            <span>
+              <i className="heat-key kill" aria-hidden="true" /> {labels.kills}
+            </span>
+          ) : null}
+          {kills ? (
+            <span>
+              <i className="heat-key hs" aria-hidden="true" /> {labels.headshots}
+            </span>
+          ) : null}
+          {deaths ? (
+            <span>
+              <i className="heat-key death" aria-hidden="true" /> {labels.deaths}
+            </span>
+          ) : null}
+        </span>
+        <span className="heat-title">{title}</span>
+      </div>
+      <svg viewBox={`${minX - pad} ${-(minY + height) - pad} ${width + 2 * pad} ${height + 2 * pad}`} role="img" aria-label={label} preserveAspectRatio="xMidYMid meet">
+        <defs>
+          {layers.map(([, key, dots]) => (
+            <path key={key} id={key} d={path(dots)} vectorEffect="non-scaling-stroke" />
+          ))}
+        </defs>
+        <g className="heat-dots" fill="none" strokeLinecap="round">
+          {layers.map(([kind, key]) => (
+            <g key={key} className={kind}>
+              <use href={`#${key}`} className="edge" />
+              <use href={`#${key}`} className="dot" />
+              {kind === "hs" ? <use href={`#${key}`} className="core" /> : null}
+            </g>
+          ))}
         </g>
       </svg>
-      <div className="heat-legend" aria-hidden="true">
-        <span>1</span>
-        <i style={{ background: `linear-gradient(90deg, ${STOPS.map(([s]) => `${color(s)} ${s * 100}%`).join(", ")})` }} />
-        <span>{max}</span>
-      </div>
-    </HoverTip>
+    </div>
   );
 }

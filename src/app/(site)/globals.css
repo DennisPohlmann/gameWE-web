@@ -91,6 +91,8 @@
   --chart-radar-label: var(--soft);
   --chart-heat-bg: #0d1117;
   --chart-heat-edge: #ffffff;
+  --chart-heat-kill: #33aaff;
+  --chart-heat-death: #e03030;
   --chart-series-1: var(--accent);
   --chart-series-2: var(--series-2);
   --chart-series-3: var(--series-3, #d64541);
@@ -1080,10 +1082,22 @@ td.ribbon-wall a { display: inline-flex; flex-direction: column; align-items: ce
 .heat-head .lead { margin: 0; }
 .heatmap { max-width: 640px; margin: 0 auto; }
 .heatmap svg { display: block; width: 100%; height: auto; max-height: 640px; background: var(--chart-heat-bg); border: 1px solid var(--border); }
-.heatmap .heat-bg { fill: var(--chart-heat-bg); }
-.heatmap .heat-cells rect:hover { stroke: var(--chart-heat-edge); stroke-width: 0.1; }
-.heat-legend { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 11px; color: var(--chart-legend); }
-.heat-legend i { flex: 1; height: 8px; border: 1px solid var(--border); }
+/* Dots (map tracking): a dark edge under each colour, so they stay readable
+   on bright map pictures; headshots get a white centre. */
+.heat-dots .edge { stroke: rgba(0, 0, 0, 0.75); stroke-width: 7.5px; }
+.heat-dots .dot { stroke-width: 5.5px; }
+.heat-dots .core { stroke: var(--chart-heat-edge); stroke-width: 2.2px; }
+.heat-dots .kill .dot, .heat-dots .hs .dot { stroke: var(--chart-heat-kill); }
+.heat-dots .death .dot { stroke: var(--chart-heat-death); }
+/* Legend above the map, as on gameME: keys left, map name right. */
+.heat-legend { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 16px; margin-bottom: 6px; font-size: 11px; color: var(--chart-legend); }
+.heat-keys { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.heat-keys > span { display: inline-flex; align-items: center; gap: 5px; }
+.heat-title { font-weight: bold; color: var(--text); overflow-wrap: anywhere; }
+.heat-key { display: inline-block; width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.75); }
+.heat-key.kill { background: var(--chart-heat-kill); }
+.heat-key.hs { background: radial-gradient(circle, var(--chart-heat-edge) 0 1.6px, var(--chart-heat-kill) 2px); }
+.heat-key.death { background: var(--chart-heat-death); }
 .decorated td.decorated-cell { white-space: normal; overflow-wrap: anywhere; }
 .decorated-rank { display: flex; align-items: center; gap: 4px; margin-top: 2px; font-size: 10px; color: var(--muted); }
 .decorated-rank svg { flex: none; }
