@@ -24,6 +24,11 @@ export const GAME_KINDS: Record<string, GameKind> = {
   l4d: { name: "Left 4 Dead", short: "L4D", engine: "source", limited: true },
   l4d2: { name: "Left 4 Dead 2", short: "L4D2", engine: "source", limited: true },
   insurgency: { name: "Insurgency", short: "INS", engine: "source", limited: true },
+  zps: { name: "Zombie Panic! Source", short: "ZPS", engine: "source" },
+  ff: { name: "Fortress Forever", short: "FF", engine: "source" },
+  csp: { name: "CSPromod", short: "CSP", engine: "source" },
+  fof: { name: "Fistful of Frags", short: "FoF", engine: "source" },
+  nmrih: { name: "No More Room in Hell", short: "NMRiH", engine: "source", limited: true },
 };
 
 export function gameKind(realgame: string | null | undefined): GameKind | null {
