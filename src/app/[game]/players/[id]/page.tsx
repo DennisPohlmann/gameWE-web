@@ -348,7 +348,13 @@ export default async function PlayerPage({ params, searchParams }: Props) {
             <table className="stats">
               <thead>
                 <tr>
-                  <th>{t.playerTrend}</th>
+                  <th>
+                    {t.playerTrend} (
+                    <Link className="th-link" href={`/${game}/players/${id}/sessions`}>
+                      {t.overview}
+                    </Link>
+                    )
+                  </th>
                 </tr>
               </thead>
               <tbody>

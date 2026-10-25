@@ -288,6 +288,7 @@ th, td { padding: 4px; vertical-align: middle; border: 1px solid var(--border); 
 th { color: var(--th-text); background: var(--th-bg); font-weight: bold; }
 td { color: var(--text); background: var(--surface); }
 th a { color: var(--th-text); }
+th a.th-link { text-decoration: underline; }
 th.num, td.num { text-align: right; }
 td.rank { color: var(--muted); width: 1%; text-align: right; }
 /* One rule for all tables: text left, numbers right, bars and percentage
