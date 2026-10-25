@@ -93,8 +93,10 @@ export function LineChart({
   const dayWidth = dayStarts.length > 2 ? (x(dayStarts[dayStarts.length - 1]) - x(dayStarts[1])) / (dayStarts.length - 2) : plotW;
   const dateEvery = Math.max(1, Math.ceil(70 / Math.max(1, dayWidth)));
   const hourStride = hourly ? [1, 2, 3, 6, 12].find((h) => (h * plotW) / (n - 1) >= 30) : undefined;
+  // One point per day (no hours, no date row): dated days with a day line.
+  const daily = !dates && !hourly && !sparseLabels ? new Set(dayMarks(n, gap)) : null;
   const showLabel = (l: string, i: number) =>
-    hourly ? hourStride !== undefined && l !== "" && Number.parseInt(l, 10) % hourStride === 0 : sparseLabels ? l !== "" : i % every === 0 || i === n - 1;
+    hourly ? hourStride !== undefined && l !== "" && Number.parseInt(l, 10) % hourStride === 0 : sparseLabels ? l !== "" : daily ? daily.has(i) : i % every === 0 || i === n - 1;
 
   const onMove = (e: PointerEvent<SVGRectElement>) => {
     const svg = svgRef.current;
@@ -138,9 +140,10 @@ export function LineChart({
         {sparseLabels
           ? labels.map((l, i) => (l !== "" && i > 0 ? <line key={`d${i}`} className="day-line" x1={x(i)} x2={x(i)} y1={pad.top} y2={height - pad.bottom} /> : null))
           : null}
+        {daily ? [...daily].map((i) => (i > 0 ? <line key={`dl${i}`} className="day-line" x1={x(i)} x2={x(i)} y1={pad.top} y2={height - pad.bottom} /> : null)) : null}
         {labels.map((l, i) =>
           showLabel(l, i) ? (
-            <text key={i} className="axis" x={x(i)} y={height - (dates ? 20 : 6)} textAnchor="middle">
+            <text key={i} className={daily ? "axis day" : "axis"} x={x(i)} y={height - (dates ? 20 : 6)} textAnchor={daily && i === 0 ? "start" : daily && i === n - 1 ? "end" : "middle"}>
               {l}
             </text>
           ) : null,
@@ -220,8 +223,8 @@ export function BarChart({
   const cx = (i: number) => pad.left + (i + 0.5) * slot;
   const y = (v: number) => pad.top + (1 - (v - min) / (max - min || 1)) * (height - pad.top - pad.bottom);
   const base = y(min);
-  // A label needs about 60 units of room.
-  const every = Math.max(1, Math.ceil(60 / slot));
+  // Dated days, each with a day line at its start.
+  const marks = new Set(dayMarks(n, slot));
 
   const onMove = (e: PointerEvent<SVGRectElement>) => {
     const svg = svgRef.current;
@@ -261,10 +264,13 @@ export function BarChart({
                 height={base - y(s.values[i])}
               />
             ))}
-            {i % every === 0 ? (
-              <text className="axis day" x={cx(i)} y={height - 6} textAnchor="middle">
-                {l}
-              </text>
+            {marks.has(i) ? (
+              <>
+                {i > 0 ? <line className="day-line" x1={pad.left + i * slot} x2={pad.left + i * slot} y1={pad.top} y2={base} /> : null}
+                <text className="axis day" x={cx(i)} y={height - 6} textAnchor="middle">
+                  {l}
+                </text>
+              </>
             ) : null}
           </g>
         ))}
@@ -327,9 +333,8 @@ export function ComboChart({
   const zero = yR(0);
   const barW = Math.max(1, slot * 0.6);
   const dotR = Math.max(1, Math.min(2.5, slot / 3));
-  // A label needs about 60 units of room; the last day always gets one.
-  const every = Math.max(1, Math.ceil(60 / slot));
-  const showLabel = (i: number) => (n - 1 - i) % every === 0;
+  // Dated days, each with a day line at its start.
+  const marks = dayMarks(n, slot);
 
   const onMove = (e: PointerEvent<SVGRectElement>) => {
     const svg = svgRef.current;
@@ -385,13 +390,14 @@ export function ComboChart({
           ),
         )}
         <line className="zero" x1={pad.left} x2={width - pad.right} y1={zero} y2={zero} />
-        {labels.map((l, i) =>
-          showLabel(i) ? (
-            <text key={`x${i}`} className="axis day" x={cx(i)} y={height - 6} textAnchor="middle">
-              {l}
+        {marks.map((i) => (
+          <g key={`x${i}`}>
+            {i > 0 ? <line className="day-line" x1={pad.left + i * slot} x2={pad.left + i * slot} y1={pad.top} y2={height - pad.bottom} /> : null}
+            <text className="axis day" x={cx(i)} y={height - 6} textAnchor="middle">
+              {labels[i]}
             </text>
-          ) : null,
-        )}
+          </g>
+        ))}
         {n > 1 ? <polyline className={`line ${line.className}`} points={line.values.map((v, i) => `${cx(i).toFixed(1)},${yL(v).toFixed(1)}`).join(" ")} /> : null}
         {line.values.map((v, i) => (
           <circle key={`d${i}`} className={`dot small ${line.className}`} cx={cx(i)} cy={yL(v)} r={n > 1 ? dotR : 4} />
@@ -483,6 +489,15 @@ function ChartTip({
       ))}
     </div>
   );
+}
+
+// Days of a daily chart that get their date and a dashed day line: every
+// 1, 2, 3, 7 or 14 days (whatever leaves a date about 56 units of room),
+// counted back from the last day, so today always has its date. unit: the
+// room per day.
+function dayMarks(n: number, unit: number): number[] {
+  const stride = [1, 2, 3, 7, 14].find((d) => d * unit >= 56) ?? Math.ceil(56 / Math.max(1, unit));
+  return Array.from({ length: n }, (_, i) => i).filter((i) => (n - 1 - i) % stride === 0);
 }
 
 // Smallest round whole number at least raw: 1, 2, 2.5 or 5 times a power of

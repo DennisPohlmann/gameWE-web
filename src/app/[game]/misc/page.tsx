@@ -9,6 +9,7 @@ import { getMiscStats, getServers } from "@/lib/data";
 import { imageStyles } from "@/lib/image-theme";
 import { statsOrigin } from "@/lib/site-url";
 import { fill, getDict } from "@/lib/i18n";
+import { dateFormat, localeOf } from "@/lib/format";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getDict()).t.miscStats };
@@ -33,6 +34,8 @@ export default async function MiscPage({ params }: { params: Promise<{ game: str
     ...(rest ? [{ label: t.otherCountries, value: rest, icon: <span className="flag flag-blank" aria-hidden /> }] : []),
   ];
   const empty = <p className="empty">{t.noData}</p>;
+  // Hover text of each day, e.g. "Sa., 25.10.2026".
+  const dayTip = dateFormat(localeOf(lang), { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" });
   return (
     <>
     <Section title={t.miscStats}>
@@ -96,14 +99,15 @@ export default async function MiscPage({ params }: { params: Promise<{ game: str
         <LineChart
           locale={lang}
           ariaLabel={t.connectsCaption}
+          title={t.connectsCaption}
           trimStart={false}
           labels={m.connectsPerDay.map((d) => `${d.day.slice(8, 10)}.${d.day.slice(5, 7)}.`)}
+          tips={m.connectsPerDay.map((d) => dayTip.format(Date.parse(`${d.day}T00:00:00Z`)))}
           series={[{ label: t.connects, values: m.connectsPerDay.map((d) => d.n), className: "s1" }]}
         />
       ) : (
         empty
       )}
-      <p className="legend">{t.connectsCaption}</p>
     </Section>
     {/* Banner of every server of this ranking, with its code (also on each server page). */}
     {servers.length ? (
