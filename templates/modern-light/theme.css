@@ -322,10 +322,9 @@ html[data-skin] tr.ranking-line a, html[data-skin] tr.server-line a { color: var
 html[data-skin] a.rnk, html[data-skin] a.srv { color: var(--accent) !important; }
 html[data-skin] a.rnk:hover, html[data-skin] a.srv:hover { color: var(--accent-text) !important; text-decoration: none; }
 html[data-skin] tr.ranking-line td:first-child, html[data-skin] tr.server-line td:first-child { padding-left: 12px; }
-/* Long ranking and server names stay on one line and end in "…" (the full
-   name is the link's title). max-width: 0 lets the name column take only the
-   room the other columns leave; the top player is cut the same way. */
-html[data-skin] table.rankings td.no-rb,
+/* Long server names stay on one line and end in "…" (the full name is the
+   link's title). max-width: 0 lets the name column take only the room the
+   other columns leave; the top player is cut the same way. */
 html[data-skin] tr.server-line > td:first-child,
 html[data-skin] .voice-box td:first-child {
   max-width: 0;
@@ -333,7 +332,19 @@ html[data-skin] .voice-box td:first-child {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-html[data-skin] table.rankings td.no-rb { width: 50%; }
+/* Long ranking names wrap onto up to two lines (anywhere, also inside long
+   words); only beyond that they are cut, the full name stays the link's
+   title. The Players/Clans links beside them keep one line. */
+html[data-skin] table.rankings td.no-rb { max-width: 0; width: 50%; white-space: normal; }
+html[data-skin] table.rankings a.rnk {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+html[data-skin] table.rankings td.no-lb { white-space: nowrap; }
 html[data-skin] .voice-box td:first-child { width: 40%; }
 html[data-skin] table.rankings td:nth-child(5) {
   max-width: 200px;
