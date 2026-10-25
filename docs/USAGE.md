@@ -98,7 +98,9 @@ website therefore computes some things itself:
   keep the last value) and the points gained or lost that day (bars, right
   axis). The bars are the difference to the day before (the last history day
   before the range for the first one), so they always match the line; the
-  stored `skill_change` can differ from it.
+  stored `skill_change` can differ from it. The "Change" column of the
+  sessions table and `skillChange` of `/api/v1/players/{id}/history` use the
+  same difference (the oldest day of all: its recorded `skill_change`).
 - **Maps and teams in the player profile** come from `hlstats_Events_Frags`
   and `hlstats_Events_ChangeTeam`.
 - **Best players per map** come from `hlstats_Events_Frags` of the last 30 days.

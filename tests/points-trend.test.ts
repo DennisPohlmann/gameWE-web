@@ -2,7 +2,7 @@
 // Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { pointsTrend } from "../src/lib/points-trend.ts";
+import { dayChanges, pointsTrend } from "../src/lib/points-trend.ts";
 
 test("the change is the step of the line, also when skill_change disagrees", () => {
   const days = pointsTrend(
@@ -56,4 +56,24 @@ test("days without play keep the points, with no change, up to today", () => {
 test("no history, no days; never more than a year", () => {
   assert.deepEqual(pointsTrend([], 1000, "2026-10-25"), []);
   assert.equal(pointsTrend([{ day: "2020-01-01", skill: 1, change: 0 }], null, "2026-10-25").length, 366);
+});
+
+test("sessions and API: the same change, newest first, across page edges", () => {
+  // Days of the trend test above, newest first; the page ends before the
+  // oldest day, so its row is the "older" one.
+  const page = [
+    { skill: 16295, change: 700 },
+    { skill: 15580, change: 9000 },
+  ];
+  assert.deepEqual(dayChanges(page, 4914), [715, 10666]);
+  // The oldest day of all: its own recorded change.
+  assert.deepEqual(dayChanges([{ skill: 1040, change: 40 }], null), [40]);
+  // Matches pointsTrend on the played days.
+  const rows = [
+    { day: "2026-10-28", skill: 1200, change: 150 },
+    { day: "2026-10-31", skill: 1100, change: -90 },
+  ];
+  const trend = pointsTrend(rows, 1000, "2026-10-31").filter((d) => d.played).map((d) => d.change);
+  assert.deepEqual(dayChanges([...rows].reverse(), 1000).reverse(), trend);
+  assert.deepEqual(dayChanges([], null), []);
 });

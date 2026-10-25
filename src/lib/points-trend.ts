@@ -31,3 +31,11 @@ export function pointsTrend(rows: TrendRow[], before: number | null, today: stri
   }
   return out;
 }
+
+// The same change for a list of history days, newest first (the sessions
+// table and the history API): each day against the next older one; the
+// oldest of the list against `older` (the history day before it, null if
+// there is none: then its own recorded change).
+export function dayChanges(newestFirst: { skill: number; change: number }[], older: number | null): number[] {
+  return newestFirst.map((r, i) => r.skill - (i + 1 < newestFirst.length ? newestFirst[i + 1].skill : (older ?? r.skill - r.change)));
+}

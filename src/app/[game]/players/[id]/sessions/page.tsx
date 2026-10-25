@@ -71,9 +71,9 @@ export default async function SessionsPage({ params, searchParams }: Props) {
                 {rows.map((h) => (
                   <tr key={h.eventTime}>
                     <td className="nowrap">{String(h.eventTime).slice(0, 10)}</td>
-                    <td className={`num ${h.skill_change >= 0 ? "good" : "bad"}`}>
-                      {h.skill_change > 0 ? "+" : ""}
-                      {n(h.skill_change)}
+                    <td className={`num ${h.points_change >= 0 ? "good" : "bad"}`}>
+                      {h.points_change > 0 ? "+" : ""}
+                      {n(h.points_change)}
                     </td>
                     <td className="num">{n(h.skill)}</td>
                     <td className="num">{fmtDuration(h.connection_time)}</td>

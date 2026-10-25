@@ -238,7 +238,7 @@ const schemas: Record<string, Schema> = {
   PlayerDay: obj({
     day: str("Day (YYYY-MM-DD)", { format: "date" }),
     skill: int("Points at the end of the day"),
-    skillChange: int("Points won or lost that day"),
+    skillChange: int("Points won or lost that day: the points against the player's previous day with history (for the oldest day, the change the collector recorded that day)"),
     connectionTime: int("Time on the servers in seconds"),
     rounds: int("Rounds"),
     wins: int("Rounds won"),

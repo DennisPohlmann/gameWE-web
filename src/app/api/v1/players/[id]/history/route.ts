@@ -13,7 +13,7 @@ export function GET(req: Request, { params }: { params: Promise<{ id: string }> 
       rows.map((d) => ({
         day: String(d.eventTime).slice(0, 10),
         skill: Number(d.skill),
-        skillChange: Number(d.skill_change),
+        skillChange: d.points_change,
         connectionTime: Number(d.connection_time),
         rounds: Number(d.rounds),
         wins: Number(d.wins),

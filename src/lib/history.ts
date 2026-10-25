@@ -1,6 +1,7 @@
 import "server-only";
 import { adminQuery, likeOp, query, queryOne, type Param } from "./db";
 import { steamIds } from "./format";
+import { dayChanges } from "./points-trend";
 
 // A player's history pages: events, daily sessions and won awards.
 
@@ -125,16 +126,21 @@ export type SessionDay = {
   hits: number;
 };
 
+// points_change: the points against the day before, as in the player trend
+// (dayChanges); one row more is read for the oldest day of the page.
 export async function getPlayerSessions(playerId: number, limit: number, offset: number) {
-  const [rows, count] = await Promise.all([
+  const [all, count] = await Promise.all([
     query<SessionDay>(
       `SELECT eventTime, skill, skill_change, connection_time, rounds, wins, kills, deaths, kill_streak, headshots, shots, hits
        FROM hlstats_Players_History WHERE playerId = ? ORDER BY eventTime DESC LIMIT ? OFFSET ?`,
-      [playerId, limit, offset],
+      [playerId, limit + 1, offset],
     ),
     queryOne<{ n: number }>(`SELECT COUNT(*) AS n FROM hlstats_Players_History WHERE playerId = ?`, [playerId]),
   ]);
-  return { rows, total: Number(count?.n ?? 0) };
+  const page = all.slice(0, limit);
+  const older = all.length > limit ? Number(all[limit].skill) : null;
+  const changes = dayChanges(page.map((r) => ({ skill: Number(r.skill), change: Number(r.skill_change) })), older);
+  return { rows: page.map((r, i) => ({ ...r, points_change: changes[i] })), total: Number(count?.n ?? 0) };
 }
 
 export type AwardWin = { date: string; awardId: number; code: string; name: string; verb: string; winner_count: number };
