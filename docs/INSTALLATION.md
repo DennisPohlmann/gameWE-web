@@ -400,21 +400,8 @@ server {
     gzip_types text/html text/css application/javascript application/json image/svg+xml;
     gzip_min_length 1024;
 
-    # Static files straight from disk, kept by the browser for a year: the
-    # build files carry a hash in their name, the flags change only with a
-    # release. Only with the tar.gz install (section 3); the container keeps
-    # the files inside, leave these two blocks out there.
-    location /_next/static/ {
-        alias /opt/gamewe/web/.next/static/;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-    location /flags/ {
-        alias /opt/gamewe/web/public/flags/;
-        expires 1y;
-        add_header Cache-Control "public";
-    }
-
+    # Everything, static files included, comes from the website; it sets
+    # the cache headers itself.
     location / {
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
@@ -439,16 +426,6 @@ without a trailing slash in the location (with `location /stats/` nginx and
 the website redirect each other in a loop):
 
 ```nginx
-location /stats/_next/static/ {
-    alias /opt/gamewe/web/.next/static/;
-    expires 1y;
-    add_header Cache-Control "public, immutable";
-}
-location /stats/flags/ {
-    alias /opt/gamewe/web/public/flags/;
-    expires 1y;
-    add_header Cache-Control "public";
-}
 location /stats {
     proxy_pass http://127.0.0.1:3000;
     proxy_http_version 1.1;
