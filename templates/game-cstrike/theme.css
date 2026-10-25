@@ -14,6 +14,9 @@ html[data-skin] {
   --muted: #b4baa6;
   --accent: #c4b550;
   --accent-text: #e6d878;
+  --ribbon-text-1: #d9baa0;
+  --ribbon-text-2: #bac0c6;
+  --ribbon-text-3: #e0bd47;
   --good: #8fd18a;
   --bad: #ff7a6a;
   --series-2: #8fb6e0;
@@ -31,8 +34,8 @@ html[data-skin] {
   --header-bg: linear-gradient(#5a6a50, #3e4637);
   --header-border: #8c9682;
   --logo-text: #f2e9a6;
-  --tab-bg: linear-gradient(#6e7a62, #4c5844);
-  --tab-hover: linear-gradient(#7e8a72, #56624e);
+  --tab-bg: linear-gradient(#5c6752, #424c3b);
+  --tab-hover: linear-gradient(#65705a, #4c5844);
   --tab-border: #8c9682;
   --tab-text: #f2f2e6;
   --tab-shadow: 0 1px 0 #2a2f25;

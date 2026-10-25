@@ -307,6 +307,7 @@ export function ComboChart({
   width = 640,
   ariaLabel,
   locale,
+  title,
 }: {
   labels: string[];
   // Day of each point for the hover box; defaults to the label.
@@ -318,6 +319,9 @@ export function ComboChart({
   width?: number;
   ariaLabel: string;
   locale?: string;
+  // Heading left of the legend, as on the other charts (none where the box
+  // around it already names the chart).
+  title?: string;
 }) {
   const { hover, setHover, svgRef, figRef, tipRef } = useHoverBox();
   const n = labels.length;
@@ -358,7 +362,7 @@ export function ComboChart({
     : [];
   return (
     <figure className="chart combo" ref={figRef}>
-      <ChartHead series={[line, ...(bars.values.some((v) => v > 0) ? [bars.up] : []), ...(bars.values.some((v) => v < 0) ? [bars.down] : [])]} />
+      <ChartHead title={title} series={[line, ...(bars.values.some((v) => v > 0) ? [bars.up] : []), ...(bars.values.some((v) => v < 0) ? [bars.down] : [])]} />
       <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={ariaLabel}>
         <text className="axis title" x={4} y={12} textAnchor="start">
           {axisTitles.left}

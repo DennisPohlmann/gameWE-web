@@ -31,8 +31,8 @@ html[data-skin] {
   --header-bg: linear-gradient(#6b6a45, #3a3b26);
   --header-border: #8a8760;
   --logo-text: #efe2b0;
-  --tab-bg: linear-gradient(#7a7650, #4a4a30);
-  --tab-hover: linear-gradient(#8a865e, #56563a);
+  --tab-bg: linear-gradient(#6b6846, #4a4a30);
+  --tab-hover: linear-gradient(#75714d, #56563a);
   --tab-border: #8a8760;
   --tab-text: #fff8e0;
   --tab-shadow: 0 1px 0 #23241a;

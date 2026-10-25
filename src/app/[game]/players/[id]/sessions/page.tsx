@@ -70,7 +70,7 @@ export default async function SessionsPage({ params, searchParams }: Props) {
               {trend.length ? (
                 <div className="cont-2 session-charts">
                   <div>
-                    <PlayerTrend history={trend} before={before} locale={lang} t={t} />
+                    <PlayerTrend history={trend} before={before} locale={lang} t={t} title />
                   </div>
                   <div>
                     <PlayerKillsTrend history={trend} before={before} locale={lang} t={t} />

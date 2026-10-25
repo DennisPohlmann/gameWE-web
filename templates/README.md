@@ -17,7 +17,13 @@ templates/
    and give it a new name: lower-case letters, digits, `-` and `_`, at most
    32 characters (`clan-blue`, `dark2`).
 2. Change the colours in `theme.css`. Keep the selector `html[data-skin]`;
-   only CSS variables belong in it.
+   only CSS variables belong in it. Keep text readable (contrast at least
+   4.5:1): `--accent-text` is the accent as text on `--surface`, `--th-bg`
+   and `--panel` (active tabs and menu entries); `--accent-on` is the text
+   on an `--accent` background (black by default, white for a dark accent);
+   `--tab-text` must stay readable on both colours of `--tab-bg` and
+   `--tab-hover`; `--ribbon-text-1` to `-3` are the bronze, silver and gold
+   ribbon class names on `--surface`.
 3. Optional `template.json`:
 
    ```json

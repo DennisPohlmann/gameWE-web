@@ -12,10 +12,14 @@ export function PlayerTrend({
   before,
   locale,
   t,
+  title = false,
 }: {
   history: Pick<HistoryDay, "eventTime" | "skill" | "skill_change">[];
   before: number | null;
   locale: Lang;
+  // true: the chart's own title row (the sessions page, next to the kills
+  // and deaths chart); the profile's box already says "Player trend".
+  title?: boolean;
   t: { points: string; pointsPerDay: string; skillGained: string; skillLost: string; playerTrend: string; noData: string };
 }) {
   const trend = pointsTrend(
@@ -35,6 +39,7 @@ export function PlayerTrend({
       axisTitles={{ left: t.points, right: t.pointsPerDay }}
       ariaLabel={t.playerTrend}
       locale={locale}
+      title={title ? t.playerTrend : undefined}
     />
   );
 }

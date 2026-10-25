@@ -222,11 +222,13 @@ export function RibbonLevel({
   texts: { toNext: string; maxed: string };
 }) {
   if (!p) return null;
-  const color = CLASS_COLORS[Math.min(p.index, CLASS_COLORS.length - 1)];
+  const cls = Math.min(p.index, CLASS_COLORS.length - 1);
+  const color = CLASS_COLORS[cls];
   const hint = p.nextName && p.toNext !== null ? texts.toNext.replace("{n}", String(p.toNext)).replace("{cls}", className(p.nextName)) : texts.maxed;
   return (
     <span className="ribbon-level" title={hint}>
-      <b style={{ color }}>
+      {/* Text in the template's readable shade of the class colour (--ribbon-text-1..3). */}
+      <b style={{ color: `var(--ribbon-text-${cls + 1}, ${color})` }}>
         {className(p.name)} {p.level}/{p.max}
       </b>
       <span className="ribbon-level-bar" aria-hidden="true">

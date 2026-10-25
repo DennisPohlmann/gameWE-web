@@ -14,6 +14,10 @@ html[data-skin] {
   --muted: #5e4f3e;
   --accent: #b8383b;
   --accent-text: #9a2b2e;
+  --accent-on: #ffffff;
+  --ribbon-text-1: #88562d;
+  --ribbon-text-2: #5f6367;
+  --ribbon-text-3: #755e10;
   --good: #3f7a2a;
   --bad: #b8383b;
   --series-2: #4a7a9a;
@@ -31,8 +35,8 @@ html[data-skin] {
   --header-bg: linear-gradient(#5b3e2b, #3b2a1d);
   --header-border: #8a6a4c;
   --logo-text: #f4ecd6;
-  --tab-bg: linear-gradient(#cf6a32, #9c4a1e);
-  --tab-hover: linear-gradient(#dc7a42, #ab5626);
+  --tab-bg: linear-gradient(#a3522a, #8a4019);
+  --tab-hover: linear-gradient(#ac5829, #9c4a1e);
   --tab-border: #7a3a16;
   --tab-text: #fff6e6;
   --tab-shadow: 0 1px 0 #4a2410;
