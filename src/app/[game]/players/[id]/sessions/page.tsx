@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { TrendChart } from "@/components/graphics";
+import { PlayerTrend } from "@/components/player-trend";
 import { HistoryFrame, loadHistoryPlayer } from "@/components/player-history";
 import { Empty, Pager, ROW_OPTIONS, TableWrap, pageParam, rowsParam } from "@/components/ui";
-import { getPlayerHistory } from "@/lib/data";
+import { getPlayerHistory, getPlayerSkillBefore } from "@/lib/data";
 import { fmtDuration, fmtNum, fmtPct, ratio, localeOf } from "@/lib/format";
 import { getPlayerSessions } from "@/lib/history";
 import { getDict } from "@/lib/i18n";
@@ -24,7 +24,11 @@ export default async function SessionsPage({ params, searchParams }: Props) {
   const { lang, t } = await getDict();
   const { pageSize } = await getSettings();
   const limit = rowsParam(sp.rows, pageSize);
-  const [{ rows, total }, trend] = await Promise.all([getPlayerSessions(p.playerId, limit, (page - 1) * limit), getPlayerHistory(p.playerId, 60)]);
+  const [{ rows, total }, trend, before] = await Promise.all([
+    getPlayerSessions(p.playerId, limit, (page - 1) * limit),
+    getPlayerHistory(p.playerId, 60),
+    getPlayerSkillBefore(p.playerId, 60),
+  ]);
   const n = (v: number) => fmtNum(v, lang);
   return (
     <HistoryFrame game={game} id={p.playerId} name={p.name} t={t} tab="sessions">
@@ -37,15 +41,7 @@ export default async function SessionsPage({ params, searchParams }: Props) {
         <tbody>
           <tr>
             <td className="center">
-              {trend.length > 1 ? (
-                <TrendChart
-                  days={trend.map((h) => ({ day: h.eventTime.slice(0, 10), skill: h.skill, change: h.skill_change }))}
-                  locale={lang}
-                  labels={{ points: t.points, gained: t.skillGained, lost: t.skillLost }}
-                />
-              ) : (
-                <span className="muted">{t.noData}</span>
-              )}
+              <PlayerTrend history={trend} before={before} locale={lang} t={t} />
             </td>
           </tr>
         </tbody>

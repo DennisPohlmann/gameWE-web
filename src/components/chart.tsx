@@ -284,6 +284,135 @@ export function BarChart({
   );
 }
 
+// One line on the left axis and bars of its change on the right axis, per
+// day (the player trend: points, and points gained or lost that day). Bars
+// above zero take the "up" colour, below zero the "down" colour; both axes
+// carry a title on top. Hover box and title row as in the other charts.
+export function ComboChart({
+  labels,
+  tips,
+  line,
+  bars,
+  axisTitles,
+  height = 220,
+  width = 640,
+  ariaLabel,
+  locale,
+}: {
+  labels: string[];
+  // Day of each point for the hover box; defaults to the label.
+  tips?: string[];
+  line: { label: string; values: number[]; className: string };
+  bars: { values: number[]; up: Named; down: Named };
+  axisTitles: { left: string; right: string };
+  height?: number;
+  width?: number;
+  ariaLabel: string;
+  locale?: string;
+}) {
+  const { hover, setHover, svgRef, figRef, tipRef } = useHoverBox();
+  const n = labels.length;
+  if (!n) return null;
+  const L = yScale(line.values, false, locale, undefined);
+  const R = yScale(bars.values, true, locale, undefined);
+  const signed = (t: number) => (t > 0 ? `+${R.tickText(t)}` : R.tickText(t));
+  const right = Math.max(40, Math.ceil(12 + Math.max(...R.ticks.map((t) => signed(t).length)) * 6.5));
+  const pad = { top: 24, right, bottom: 22, left: L.left };
+  const plotW = width - pad.left - pad.right;
+  const plotH = height - pad.top - pad.bottom;
+  const slot = plotW / n;
+  const cx = (i: number) => pad.left + (i + 0.5) * slot;
+  const yL = (v: number) => pad.top + (1 - (v - L.min) / (L.max - L.min || 1)) * plotH;
+  const yR = (v: number) => pad.top + (1 - (v - R.min) / (R.max - R.min || 1)) * plotH;
+  const zero = yR(0);
+  const barW = Math.max(1, slot * 0.6);
+  const dotR = Math.max(1, Math.min(2.5, slot / 3));
+  // A label needs about 60 units of room; the last day always gets one.
+  const every = Math.max(1, Math.ceil(60 / slot));
+  const showLabel = (i: number) => (n - 1 - i) % every === 0;
+
+  const onMove = (e: PointerEvent<SVGRectElement>) => {
+    const svg = svgRef.current;
+    const fig = figRef.current;
+    if (!svg || !fig) return;
+    const r = svg.getBoundingClientRect();
+    const f = fig.getBoundingClientRect();
+    const sx = ((e.clientX - r.left) / r.width) * width;
+    const i = Math.max(0, Math.min(n - 1, Math.floor((sx - pad.left) / slot)));
+    const left = r.left - f.left + (cx(i) / width) * r.width;
+    const top = r.top - f.top + (Math.min(yL(line.values[i]), yR(Math.max(0, bars.values[i]))) / height) * r.height;
+    setHover({ i, left, top, flip: left > f.width / 2 });
+  };
+
+  const change = hover ? bars.values[hover.i] : 0;
+  const tipSeries = hover
+    ? [line, { ...(change >= 0 ? bars.up : bars.down), values: bars.values.map((v) => Math.abs(v)) }]
+    : [];
+  return (
+    <figure className="chart combo" ref={figRef}>
+      <ChartHead series={[line, ...(bars.values.some((v) => v > 0) ? [bars.up] : []), ...(bars.values.some((v) => v < 0) ? [bars.down] : [])]} />
+      <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={ariaLabel}>
+        <text className="axis title" x={4} y={12} textAnchor="start">
+          {axisTitles.left}
+        </text>
+        <text className="axis title" x={width - 4} y={12} textAnchor="end">
+          {axisTitles.right}
+        </text>
+        {L.ticks.map((t, i) => (
+          <g key={`l${i}`}>
+            <line className="grid" x1={pad.left} x2={width - pad.right} y1={yL(t)} y2={yL(t)} />
+            <text className="axis" x={pad.left - 6} y={yL(t) + 4} textAnchor="end">
+              {L.tickText(t)}
+            </text>
+          </g>
+        ))}
+        {R.ticks.map((t, i) => (
+          <text key={`r${i}`} className="axis" x={width - pad.right + 6} y={yR(t) + 4} textAnchor="start">
+            {signed(t)}
+          </text>
+        ))}
+        {hover ? <rect className="bar-hover" x={pad.left + hover.i * slot} y={pad.top} width={slot} height={plotH} /> : null}
+        {bars.values.map((v, i) =>
+          v === 0 ? null : (
+            <rect
+              key={`b${i}`}
+              className={`col ${v > 0 ? bars.up.className : bars.down.className}`}
+              x={cx(i) - barW / 2}
+              y={Math.min(zero, yR(v))}
+              width={barW}
+              height={Math.max(1, Math.abs(yR(v) - zero))}
+            />
+          ),
+        )}
+        <line className="zero" x1={pad.left} x2={width - pad.right} y1={zero} y2={zero} />
+        {labels.map((l, i) =>
+          showLabel(i) ? (
+            <text key={`x${i}`} className="axis day" x={cx(i)} y={height - 6} textAnchor="middle">
+              {l}
+            </text>
+          ) : null,
+        )}
+        {n > 1 ? <polyline className={`line ${line.className}`} points={line.values.map((v, i) => `${cx(i).toFixed(1)},${yL(v).toFixed(1)}`).join(" ")} /> : null}
+        {line.values.map((v, i) => (
+          <circle key={`d${i}`} className={`dot small ${line.className}`} cx={cx(i)} cy={yL(v)} r={n > 1 ? dotR : 4} />
+        ))}
+        {hover ? <circle className={`dot hot ${line.className}`} cx={cx(hover.i)} cy={yL(line.values[hover.i])} r={5} /> : null}
+        <rect
+          className="hover-area"
+          x={pad.left}
+          y={0}
+          width={plotW}
+          height={height}
+          onPointerMove={onMove}
+          onPointerDown={onMove}
+          onPointerLeave={() => setHover(null)}
+        />
+      </svg>
+      {hover ? <ChartTip tipRef={tipRef} top={hover.top} head={tips?.[hover.i] || labels[hover.i]} series={tipSeries} i={hover.i} locale={locale} /> : null}
+    </figure>
+  );
+}
+
 // State of the hover box. It sits beside the guide line, flipped to its left
 // on the right half, and is pushed back inside the chart where it would
 // stick out.

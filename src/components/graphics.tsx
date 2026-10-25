@@ -3,8 +3,9 @@ import { ChartHead } from "./chart-head";
 import { HoverTip } from "./hover-tip";
 import { tipText } from "./tip-text";
 
-// Server-rendered SVG graphics of the player profile: radar, spark pills and
-// the player trend. Hovering shows the values (HoverTip box, data-tip).
+// Server-rendered SVG graphics: radar and spark pills of the player profile,
+// pies, weekday bars and the server load. Hovering shows the values
+// (HoverTip box, data-tip); the player trend is ComboChart in chart.tsx.
 
 export type RadarAxis = { label: string; total: number; current: number; text: string };
 
@@ -125,80 +126,6 @@ export function Spark({
         {iMin !== iMax ? dot(iMax, `sp-dot ${pills[3].cls}`, titles.max) : null}
       </g>
     </svg>
-  );
-}
-
-// Points per day as a line, the day's gain or loss as bars below.
-export function TrendChart({
-  days,
-  locale,
-  labels,
-}: {
-  days: { day: string; skill: number; change: number }[];
-  locale: string;
-  labels: { points: string; gained: string; lost: string };
-}) {
-  const W = 640;
-  const H = 260;
-  const pad = { l: 52, r: 10, t: 10 };
-  const lineH = 150;
-  const barTop = 175;
-  const barH = 60;
-  const n = days.length;
-  if (n < 1) return null;
-  const lo = Math.min(...days.map((d) => d.skill));
-  const hi = Math.max(...days.map((d) => d.skill));
-  const span = hi - lo || 1;
-  const x = (i: number) => pad.l + ((i + 0.5) * (W - pad.l - pad.r)) / n;
-  const y = (v: number) => pad.t + (1 - (v - lo) / span) * (lineH - pad.t);
-  const maxAbs = Math.max(1, ...days.map((d) => Math.abs(d.change)));
-  const mid = barTop + barH / 2;
-  const bw = Math.max(2, ((W - pad.l - pad.r) / n) * 0.6);
-  const fmt = (v: number) => Math.round(v).toLocaleString(locale);
-  const every = Math.max(1, Math.ceil(n / 8));
-  return (
-    <HoverTip>
-      <svg className="trend" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={labels.points}>
-        {[lo, (lo + hi) / 2, hi].map((v, i) => (
-          <g key={i}>
-            <line className="grid" x1={pad.l} x2={W - pad.r} y1={y(v)} y2={y(v)} />
-            <text className="axis" x={pad.l - 5} y={y(v) + 3} textAnchor="end">
-              {fmt(v)}
-            </text>
-          </g>
-        ))}
-        <line className="grid" x1={pad.l} x2={W - pad.r} y1={mid} y2={mid} />
-        <text className="axis" x={pad.l - 5} y={barTop + 6} textAnchor="end">
-          +{fmt(maxAbs)}
-        </text>
-        <text className="axis" x={pad.l - 5} y={barTop + barH} textAnchor="end">
-          -{fmt(maxAbs)}
-        </text>
-        <polyline className="trend-line" points={days.map((d, i) => `${x(i).toFixed(1)},${y(d.skill).toFixed(1)}`).join(" ")} />
-        {days.map((d, i) => {
-          const h = (Math.abs(d.change) / maxAbs) * (barH / 2);
-          return (
-            <g
-              key={d.day}
-              className="trend-day"
-              data-tip={tipText(`${d.day.slice(8, 10)}.${d.day.slice(5, 7)}.${d.day.slice(0, 4)}`, [
-                { swatch: "s1", label: labels.points, value: fmt(d.skill) },
-                d.change >= 0 ? { swatch: "gain", label: labels.gained, value: fmt(d.change) } : { swatch: "loss", label: labels.lost, value: fmt(-d.change) },
-              ])}
-            >
-              <rect className="hover" x={x(i) - bw / 2 - 1} y={pad.t} width={bw + 2} height={barTop + barH - pad.t} />
-              <circle className="trend-dot" cx={x(i)} cy={y(d.skill)} r="2.5" />
-              <rect className={d.change >= 0 ? "bar-up" : "bar-down"} x={x(i) - bw / 2} y={d.change >= 0 ? mid - h : mid} width={bw} height={Math.max(1, h)} />
-              {i % every === 0 || i === n - 1 ? (
-                <text className="axis" x={x(i)} y={H - 4} textAnchor="middle">
-                  {d.day.slice(8, 10)}.{d.day.slice(5, 7)}.
-                </text>
-              ) : null}
-            </g>
-          );
-        })}
-      </svg>
-    </HoverTip>
   );
 }
 

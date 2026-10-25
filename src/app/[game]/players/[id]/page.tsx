@@ -5,7 +5,8 @@ import { notFound, redirect } from "next/navigation";
 import { Bar, Empty, Flag, PctBar, PlayerLink, Section, TableWrap } from "@/components/ui";
 import { SortableTable } from "@/components/sortable-table";
 import { RankBadge, Ribbon, RibbonLevel, rankName, ribbonClassName } from "@/components/badges";
-import { Radar, Spark, TrendChart } from "@/components/graphics";
+import { Radar, Spark } from "@/components/graphics";
+import { PlayerTrend } from "@/components/player-trend";
 import { Hitbox } from "@/components/hitbox";
 import { SigCode } from "@/components/sig-code";
 import { PlayerEvents } from "@/components/game-events";
@@ -29,6 +30,7 @@ import {
   getPlayerFlags,
   noProfile,
   getPlayerHistory,
+  getPlayerSkillBefore,
   getPlayerMaps,
   getPlayerNames,
   getPlayerPosition,
@@ -74,7 +76,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const { lang, t } = await getDict();
   const [settings, access] = await Promise.all([getSettings(), historyAccess()]);
   const ids = steamIds(p.uniqueId);
-  const [position, history, names, weapons, maps, teams, actions, victims, killers, killStats, awards, ranks, chat, steam, ribbons, allAwards, classes, sigUrl, origin] =
+  const [position, history, names, weapons, maps, teams, actions, victims, killers, killStats, awards, ranks, chat, steam, ribbons, allAwards, classes, sigUrl, origin, skillBefore] =
     await Promise.all([
       p.hideranking ? Promise.resolve(null) : getPlayerPosition(game, p.skill),
       getPlayerHistory(id, 30),
@@ -95,6 +97,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
       getRibbonClasses(game),
       bannerUrl(game, "player", id),
       statsOrigin(),
+      getPlayerSkillBefore(id, 30),
     ]);
   const imgStyles = await imageStyles(lang === "de" ? "de" : "en");
   const flags = await getPlayerFlags([
@@ -106,6 +109,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const killList = killStats.filter((o) => o.hideranking === 0 || flags.get(o.playerId)?.flag === "bot");
 
   const last14 = history.filter((h) => h.eventTime >= siteDay(-13));
+
   const kills14 = last14.reduce((s, h) => s + h.kills, 0);
   const hs14 = last14.reduce((s, h) => s + h.headshots, 0);
   const isBot = (p.uniqueId ?? "").startsWith("BOT");
@@ -326,15 +330,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
               <tbody>
                 <tr>
                   <td className="center">
-                    {history.length ? (
-                      <TrendChart
-                        days={history.map((h) => ({ day: h.eventTime.slice(0, 10), skill: h.skill, change: h.skill_change }))}
-                        locale={lang}
-                        labels={{ points: t.points, gained: t.skillGained, lost: t.skillLost }}
-                      />
-                    ) : (
-                      <span className="muted">{t.noData}</span>
-                    )}
+                    <PlayerTrend history={history} before={skillBefore} locale={lang} t={t} />
                   </td>
                 </tr>
               </tbody>

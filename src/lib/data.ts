@@ -703,6 +703,16 @@ export function getPlayerHistory(id: number, days: number) {
   );
 }
 
+// Points at the end of the last history day before the last `days` days
+// (the start of the player trend), null if there is none.
+export async function getPlayerSkillBefore(id: number, days: number): Promise<number | null> {
+  const row = await queryOne<{ skill: number }>(
+    `SELECT skill FROM hlstats_Players_History WHERE playerId = ? AND NOT (${sinceDays("eventTime")}) ORDER BY eventTime DESC LIMIT 1`,
+    [id, days],
+  );
+  return row ? Number(row.skill) : null;
+}
+
 export type PlayerName = {
   name: string;
   connection_time: number;

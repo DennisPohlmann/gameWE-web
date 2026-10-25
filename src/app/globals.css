@@ -468,16 +468,6 @@ td.radar-cell { width: 45%; text-align: center; vertical-align: middle; }
 .spark .sp-line { fill: none; stroke: var(--chart-spark-line); stroke-width: 1.2; stroke-linejoin: round; }
 .spark .sp-one { fill: var(--chart-spark-line); }
 .spark .sp-dot { stroke: var(--chart-spark-frame); stroke-width: 0.8; }
-.trend { width: 100%; max-width: 640px; height: auto; display: block; margin: 0 auto; }
-.trend .grid { stroke: var(--chart-grid); }
-.trend .axis { fill: var(--chart-axis); font-size: 10px; }
-.trend-line { fill: none; stroke: var(--chart-series-1); stroke-width: 2; }
-.trend-dot { fill: var(--chart-series-1); }
-.trend .bar-up { fill: var(--chart-gain); }
-.trend .bar-down { fill: var(--chart-loss); }
-.trend .hover { fill: transparent; }
-.trend-day:hover .hover { fill: var(--chart-bar-hover); }
-.trend-day:hover .trend-dot { r: 4; }
 td.career { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 10px; }
 td.ribbon-wall { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 10px; }
 td.ribbon-wall a { text-decoration: none; }
@@ -543,8 +533,7 @@ a.button { display: inline-block; text-decoration: none; }
 .chart svg { width: 100%; max-width: 1200px; height: auto; display: block; margin: 0 auto; }
 .chart svg.weekday { max-width: 460px; }
 /* Graphs in the chart colours of the template (--chart-*, chart.json). */
-.chart svg,
-.trend { background: var(--chart-bg); border: 1px solid var(--chart-border); box-sizing: border-box; }
+.chart svg { background: var(--chart-bg); border: 1px solid var(--chart-border); box-sizing: border-box; }
 .chart .grid { stroke: var(--chart-grid); stroke-width: 1; }
 .chart .axis { fill: var(--chart-axis); font-size: 10px; }
 /* Day boundaries on hourly charts, with the date below. */
@@ -612,6 +601,13 @@ a.button { display: inline-block; text-decoration: none; }
 .chart .col.s7 { fill: var(--chart-series-7); }
 .chart .col.s8 { fill: var(--chart-series-8); }
 .chart .bar-hover { fill: var(--chart-bar-hover); }
+/* Player trend: gains and losses as bars around a zero line, axis titles on top. */
+.chart .col.gain { fill: var(--chart-gain); }
+.chart .col.loss { fill: var(--chart-loss); }
+.chart .zero { stroke: var(--chart-axis); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.chart .axis.title { font-weight: 700; }
+.combo svg, .combo .chart-head { max-width: 640px; }
+.combo .chart-head .legend { white-space: normal; }
 
 @media (max-width: 600px) {
   body { margin: 8px 4px; }
