@@ -4,6 +4,7 @@ import { adminQuery, likeOp, query, queryOne, sinceDays, type Param } from "./db
 import { addDays, dayOf, siteDay } from "./day";
 import { nowUnix, steamIds } from "./format";
 import { baseGameOf, GAME_HAS_DATA } from "./games";
+import type { MapSort } from "./map-table";
 import { playerCount, sumCounts, type PlayerCount } from "./player-count";
 import { axisRatio, RADAR_KEYS, RADAR_MIN_KILLS, RADAR_SQL, type AxisRank, type PlayerRatios, type RadarKey, type Ratio } from "./radar";
 import { winsByMap } from "./shares";
@@ -1237,6 +1238,89 @@ export async function countMapTop(mapId: number, days: number) {
     [since, mapId],
   );
   return Number(r?.n ?? 0);
+}
+
+// ---------------------------------------------------------------- map page
+
+// Players of one map over all time, from hlstats_Events_Frags (index on
+// map): kills and headshots as killer, deaths as victim. Only players with
+// a kill on the map, hidden players (hideranking <> 0) left out. Sort keys
+// (mapSort) map to fixed SQL expressions; desc: biggest first (for
+// "position": the best place first, i.e. the most points).
+export type MapPlayerRow = { playerId: number; name: string | null; skill: number; kills: number; deaths: number; headshots: number };
+
+const MAP_PLAYER_SORTS: Record<MapSort, string> = {
+  kills: "SUM(x.k)",
+  deaths: "SUM(x.dd)",
+  kpd: "CASE WHEN SUM(x.dd) > 0 THEN SUM(x.k) * 1.0 / SUM(x.dd) ELSE SUM(x.k) END",
+  hs: "SUM(x.hs)",
+  hpk: "SUM(x.hs) * 1.0 / SUM(x.k)",
+  name: "d.lastName",
+  position: "p.skill",
+};
+
+const mapPlayerFrom = `FROM (SELECT killerId AS playerId, 1 AS k, 0 AS dd, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS hs FROM hlstats_Events_Frags WHERE map = ?
+           UNION ALL
+           SELECT victimId, 0, 1, 0 FROM hlstats_Events_Frags WHERE map = ?) x
+     JOIN hlstats_Players p ON p.playerId = x.playerId AND p.hideranking = 0`;
+
+// rank: the player's place in the whole ranking (rankPositions).
+export async function getMapPlayerTable(game: string, mapId: number, sort: MapSort, desc: boolean, limit: number, offset: number) {
+  const expr = MAP_PLAYER_SORTS[Object.hasOwn(MAP_PLAYER_SORTS, sort) ? sort : "kills"];
+  const dir = desc ? "DESC" : "ASC";
+  const rows = (
+    await query<MapPlayerRow>(
+      `SELECT x.playerId, d.lastName AS name, p.skill, SUM(x.k) AS kills, SUM(x.dd) AS deaths, SUM(x.hs) AS headshots
+       ${mapPlayerFrom}
+       LEFT JOIN hlstats_Players_Data d ON d.playerId = x.playerId
+       GROUP BY x.playerId, d.lastName, p.skill HAVING SUM(x.k) > 0
+       ORDER BY ${expr} ${dir}, x.playerId LIMIT ? OFFSET ?`,
+      [mapId, mapId, limit, offset],
+    )
+  ).map((r) => ({ ...r, playerId: Number(r.playerId), skill: Number(r.skill), kills: Number(r.kills), deaths: Number(r.deaths), headshots: Number(r.headshots) }));
+  const pos = await rankPositions(rows.map((r) => ({ game, skill: r.skill })));
+  return rows.map((r) => ({ ...r, rank: pos.get(`${game}|${r.skill}`) }));
+}
+
+// Kills on one map by visible players (rows of getMapPlayerTable, for
+// paging) and by hidden ones (hideranking <> 0, counted, not listed).
+export async function countMapKillers(mapId: number) {
+  const r = await queryOne<{ shown: number; hidden: number }>(
+    `SELECT COUNT(DISTINCT CASE WHEN p.hideranking = 0 THEN f.killerId END) AS shown,
+            SUM(CASE WHEN p.hideranking <> 0 THEN 1 ELSE 0 END) AS hidden
+     FROM hlstats_Events_Frags f JOIN hlstats_Players p ON p.playerId = f.killerId
+     WHERE f.map = ?`,
+    [mapId],
+  );
+  return { players: Number(r?.shown ?? 0), hiddenKills: Number(r?.hidden ?? 0) };
+}
+
+// Hit share of all shots on one map from the per-map player stats
+// (hlstats_Players_Maps, weekly plus monthly archive); null when there are
+// none (the collector does not fill these tables, imported data may).
+export async function getMapAccuracy(mapId: number): Promise<number | null> {
+  const src = weeksAndMonths("Players_Maps", "shots, hits", "map_id = ?", [mapId]);
+  const r = await queryOne<{ shots: number | null; hits: number | null }>(`SELECT SUM(x.shots) AS shots, SUM(x.hits) AS hits FROM ${src.sql} x`, src.params);
+  const shots = Number(r?.shots ?? 0);
+  return shots > 0 ? Number(r?.hits ?? 0) / shots : null;
+}
+
+// GunGame wins (player action gg_win) of some players on one map, for the
+// players of one table page; null when no gg_win was ever logged in the
+// ranking (not a GunGame ranking: CS:S rankings all have the action), so
+// the column is left out.
+export async function getMapGgWins(game: string, mapId: number, playerIds: number[]): Promise<Map<number, number> | null> {
+  const a = await queryOne<{ id: number }>(`SELECT id FROM hlstats_Actions WHERE game = ? AND code = 'gg_win' AND count > 0`, [game]);
+  if (!a) return null;
+  const out = new Map<number, number>();
+  const ids = [...new Set(playerIds.filter((x) => x > 0))];
+  if (!ids.length) return out;
+  const rows = await query<{ playerId: number; n: number }>(
+    `SELECT playerId, COUNT(*) AS n FROM hlstats_Events_PlayerActions WHERE playerId IN (?) AND map = ? AND actionId = ? GROUP BY playerId`,
+    [ids, mapId, Number(a.id)],
+  );
+  for (const r of rows) out.set(Number(r.playerId), Number(r.n));
+  return out;
 }
 
 export type TeamRow = {
