@@ -89,3 +89,34 @@ export function weaponShares(w: WeaponInput, total: { kills: number; headshots: 
     hpk: share(Number(w.headshots), Number(w.kills)),
   };
 }
+
+// Actions page: skill bonus is the player reward, or the team reward for a
+// team action; achieved % = count / all counts.
+export type ActionInput = { id: number; code: string; description: string | null; reward_player: number; reward_team: number; count: number };
+
+export const actionName = (a: ActionInput) => a.description?.trim() || a.code;
+export const actionBonus = (a: ActionInput) => Number(a.reward_player) || Number(a.reward_team);
+
+export function actionShares<T extends ActionInput>(rows: T[]): { total: number; pct: (a: T) => number } {
+  const total = rows.reduce((s, a) => s + Number(a.count), 0);
+  return { total, pct: (a) => share(Number(a.count), total) };
+}
+
+// Sort keys of the actions table; default most achieved first.
+export const ACTION_SORTS = ["name", "bonus", "count"] as const;
+export type ActionSort = (typeof ACTION_SORTS)[number];
+
+export function actionSort(v: string): ActionSort {
+  return (ACTION_SORTS as readonly string[]).includes(v) ? (v as ActionSort) : "count";
+}
+
+export function sortActions<T extends ActionInput>(rows: T[], sort: ActionSort, flipped: boolean): T[] {
+  const asc = flipped !== (sort === "name");
+  const key = (a: T): number | string => (sort === "name" ? actionName(a).toLowerCase() : sort === "bonus" ? actionBonus(a) : Number(a.count));
+  return [...rows].sort((a, b) => {
+    const x = key(a);
+    const y = key(b);
+    const c = typeof x === "string" ? x.localeCompare(String(y)) : x - Number(y);
+    return (asc ? c : -c) || Number(a.id) - Number(b.id);
+  });
+}

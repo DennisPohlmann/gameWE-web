@@ -1,7 +1,19 @@
 // Shares and sorting of the teams/roles, weapons and actions tables. Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { rowShares, shareTotals, sortTeams, teamSort, weaponShares, weaponTotals } from "../src/lib/shares.ts";
+import {
+  actionBonus,
+  actionName,
+  actionShares,
+  actionSort,
+  rowShares,
+  shareTotals,
+  sortActions,
+  sortTeams,
+  teamSort,
+  weaponShares,
+  weaponTotals,
+} from "../src/lib/shares.ts";
 
 const teams = [
   { id: 1, name: "Terrorist", time_played: 6000, kills: 300, deaths: 200 },
@@ -73,4 +85,25 @@ test("weapons: kills %, headshots % of all and hpk of the weapon", () => {
   assert.equal(Math.round(b.hpk * 100), 25);
   assert.deepEqual(weaponShares(weapons[2], total), { killsPct: 0, headshotsPct: 0, hpk: 0 });
   assert.deepEqual(weaponShares(weapons[0], { kills: 0, headshots: 0 }), { killsPct: 0, headshotsPct: 0, hpk: 0.5 });
+});
+
+test("actions: achieved share, signed skill bonus and sorting", () => {
+  const actions = [
+    { id: 1, code: "Planted_The_Bomb", description: "Planted the bomb", reward_player: 50, reward_team: 0, count: 300 },
+    { id: 2, code: "Killed_A_Hostage", description: "", reward_player: -5, reward_team: 0, count: 100 },
+    { id: 3, code: "CTs_Win", description: "All Terrorists eliminated", reward_player: 0, reward_team: 1, count: 600 },
+  ];
+  const { total, pct } = actionShares(actions);
+  assert.equal(total, 1000);
+  assert.deepEqual(actions.map((a) => Math.round(pct(a) * 100)), [30, 10, 60]);
+  assert.deepEqual(actions.map(actionBonus), [50, -5, 1]);
+  assert.equal(actionName(actions[1]), "Killed_A_Hostage");
+  assert.equal(actionShares([]).total, 0);
+  assert.equal(actionShares([{ ...actions[0], count: 0 }]).pct(actions[0]), 0);
+  const ids = (rows: typeof actions) => rows.map((r) => r.id);
+  assert.equal(actionSort("bogus"), "count");
+  assert.deepEqual(ids(sortActions(actions, "count", false)), [3, 1, 2]);
+  assert.deepEqual(ids(sortActions(actions, "bonus", false)), [1, 3, 2]);
+  assert.deepEqual(ids(sortActions(actions, "bonus", true)), [2, 3, 1]);
+  assert.deepEqual(ids(sortActions(actions, "name", false)), [3, 2, 1]);
 });
