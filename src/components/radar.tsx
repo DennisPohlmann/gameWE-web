@@ -5,7 +5,9 @@ import { useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEven
 // Profile radar: one axis per stat, the all-time polygon and the last two
 // weeks on top. Hovering, tapping or focusing an axis (Tab, then the arrow
 // keys) highlights it and shows its values and scale in a box. Colours come
-// from the template's chart.json (radar.*), see globals.css.
+// from the template's chart.json (radar.*), see globals.css. An axis
+// without data sits greyed at the centre. The total's outline and points are
+// drawn over the current shape, so both stay visible when they are equal.
 
 export type RadarAxis = {
   label: string;
@@ -15,6 +17,7 @@ export type RadarAxis = {
   currentText: string;
   totalScale: string; // "better than 78 % of players" or "scale 0–3"
   currentScale: string;
+  noData?: boolean;
 };
 
 const C = 110;
@@ -102,6 +105,7 @@ export function Radar({ axes, labels, note }: { axes: RadarAxis[]; labels: { tot
         })}
         <polygon className="radar-total" points={poly(axes.map((a) => a.total))} />
         {hasCurrent ? <polygon className="radar-current" points={poly(axes.map((a) => a.current ?? 0))} /> : null}
+        {hasCurrent ? <polygon className="radar-total-line" points={poly(axes.map((a) => a.total))} /> : null}
         {axes.map((a, i) => {
           const [x, y] = pt(i, 1.28);
           const [px, py] = pt(i, a.total);
@@ -110,7 +114,7 @@ export function Radar({ axes, labels, note }: { axes: RadarAxis[]; labels: { tot
           return (
             <g
               key={a.label}
-              className={on ? "radar-axis on" : "radar-axis"}
+              className={`radar-axis${on ? " on" : ""}${a.noData ? " nodata" : ""}`}
               tabIndex={0}
               role="img"
               aria-label={describe(a)}
@@ -121,8 +125,10 @@ export function Radar({ axes, labels, note }: { axes: RadarAxis[]; labels: { tot
               onKeyDown={(e) => onKey(e, i)}
             >
               <polygon className="radar-hit" points={wedge(i)} />
-              <circle className="radar-dot total" cx={px} cy={py} r={on ? 4 : 2.5} />
-              {cur ? <circle className="radar-dot current" cx={cur[0]} cy={cur[1]} r={on ? 4 : 2.5} /> : null}
+              {/* The total's dot is the larger one: on an equal current dot
+                  it stays visible as a ring. */}
+              {a.noData ? null : <circle className="radar-dot total" cx={px} cy={py} r={on ? 5.5 : cur ? 4 : 2.5} />}
+              {cur ? <circle className="radar-dot current" cx={cur[0]} cy={cur[1]} r={on ? 3 : 2} /> : null}
               <text className="radar-label" x={x} y={y + 3} textAnchor={x < C - 5 ? "end" : x > C + 5 ? "start" : "middle"}>
                 {a.label}
               </text>

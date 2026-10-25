@@ -9,8 +9,10 @@
 // units fit one chart. With too few players to compare, a fixed scale
 // (FIXED_MAX) is used instead. An axis is left out when the game records no
 // data for it (no comparable player has a non-zero value: CS:S logs no
-// assists, servers without win triggers count no wins) or when the player
-// has nothing to divide by (no rounds, no play time).
+// assists, servers without win triggers count no wins), as long as three
+// axes remain. When the player has nothing to divide by (no rounds, no play
+// time) the axis stays, marked noData, at the centre: the chart keeps its
+// shape and never falls below three axes.
 
 export const RADAR_KEYS = ["kpd", "kpm", "assists", "survived", "wins"] as const;
 export type RadarKey = (typeof RADAR_KEYS)[number];
@@ -63,22 +65,31 @@ export type RadarPoint = {
   rCurrent: number | null;
   pctTotal: number | null; // share of compared players below, 0..1; null: fixed scale
   pctCurrent: number | null;
+  noData: boolean; // no value for this player (or the game): drawn greyed at the centre
 };
 
 const clamp = (v: number) => Math.max(0, Math.min(1, v));
 
-// The axes to draw, in RADAR_KEYS order. Fewer than three: no chart.
+// The axes to draw, in RADAR_KEYS order, at least three of them.
 export function radarPoints(ratios: PlayerRatios, ranks: Partial<Record<RadarKey, AxisRank>>): RadarPoint[] {
   const out: RadarPoint[] = [];
+  // Axes the game does not record: only used to fill up to three axes.
+  const unrecorded = new Set<RadarKey>();
   for (const key of RADAR_KEYS) {
     const total = axisValue(key, ratios[key].total);
-    if (total === null) continue;
     const rank = ranks[key];
+    if (total === null) {
+      out.push({ key, total: 0, current: null, rTotal: 0, rCurrent: null, pctTotal: null, pctCurrent: null, noData: true });
+      continue;
+    }
     // Compared players without a single non-zero value: the game does not
     // record this (unless the player has one: then it does). Without ranks
     // only K/D and kills per minute are shown at zero.
-    if (rank && rank.nonZero === 0 && total === 0) continue;
-    if (!rank && total === 0 && key !== "kpd" && key !== "kpm") continue;
+    if ((rank && rank.nonZero === 0 && total === 0) || (!rank && total === 0 && key !== "kpd" && key !== "kpm")) {
+      unrecorded.add(key);
+      out.push({ key, total, current: null, rTotal: 0, rCurrent: null, pctTotal: null, pctCurrent: null, noData: true });
+      continue;
+    }
     const current = axisValue(key, ratios[key].current);
     const usePct = !!rank && rank.n >= RADAR_MIN_PLAYERS;
     const pct = (below: number | null) => (usePct && below !== null ? clamp(below / rank.n) : null);
@@ -92,7 +103,10 @@ export function radarPoints(ratios: PlayerRatios, ranks: Partial<Record<RadarKey
       rCurrent: current === null ? null : usePct ? (pctCurrent ?? 0) : clamp(current / FIXED_MAX[key]),
       pctTotal,
       pctCurrent,
+      noData: false,
     });
   }
-  return out;
+  // Unrecorded axes are dropped while more than three axes remain.
+  let drop = Math.min(unrecorded.size, out.length - 3);
+  return out.filter((p) => !(unrecorded.has(p.key) && drop-- > 0));
 }

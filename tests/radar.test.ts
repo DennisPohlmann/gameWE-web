@@ -58,12 +58,36 @@ test("axes the game does not record are left out, not drawn at zero", () => {
   assert.deepEqual(pts.map((p) => p.key), ["kpd", "kpm", "survived", "wins"]);
 });
 
-test("a player without rounds gets no round axes", () => {
+test("a player without rounds keeps the round axes, without data", () => {
   const r = full();
   r.survived = { total: { num: 0, den: 0 }, current: null };
   r.wins = { total: { num: 0, den: 0 }, current: null };
   const pts = radarPoints(r, ranks());
-  assert.deepEqual(pts.map((p) => p.key), ["kpd", "kpm", "assists"]);
+  assert.deepEqual(pts.map((p) => p.key), [...RADAR_KEYS]);
+  assert.deepEqual(pts.map((p) => p.noData), [false, false, false, true, true]);
+  const wins = pts.find((p) => p.key === "wins");
+  assert.equal(wins?.rTotal, 0);
+  assert.equal(wins?.rCurrent, null);
+});
+
+test("never fewer than three axes: no rounds and no assists logged", () => {
+  // CS:S player with kills but no rounds: before, only K/D and kills per
+  // minute were left and the chart turned into a list.
+  const r: PlayerRatios = {
+    kpd: { total: { num: 22, den: 9 }, current: { num: 22, den: 9 } },
+    kpm: { total: { num: 22, den: 154 }, current: { num: 22, den: 154 } },
+    assists: { total: { num: 0, den: 22 }, current: { num: 0, den: 22 } },
+    survived: { total: { num: 0, den: 0 }, current: { num: 0, den: 0 } },
+    wins: { total: { num: 0, den: 0 }, current: { num: 0, den: 0 } },
+  };
+  const pts = radarPoints(r, ranks({ assists: { nonZero: 0 } }));
+  assert.deepEqual(pts.map((p) => p.key), ["kpd", "kpm", "survived", "wins"]);
+  assert.deepEqual(pts.map((p) => p.noData), [false, false, true, true]);
+  // Nothing at all for the player but K/D: the unrecorded axis fills up.
+  const r2 = { ...r, kpm: { total: { num: 22, den: 0 }, current: null } };
+  const p2 = radarPoints(r2, ranks({ assists: { nonZero: 0 }, survived: { nonZero: 0 }, wins: { nonZero: 0 } }));
+  assert.ok(p2.length >= 3);
+  assert.deepEqual(p2.filter((p) => !p.noData).map((p) => p.key), ["kpd"]);
 });
 
 test("a real zero stays when the game records the stat", () => {

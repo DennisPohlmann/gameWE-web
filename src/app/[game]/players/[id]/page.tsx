@@ -156,8 +156,8 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const pc = (v: number | null) => fmtPct(v, lang);
   const kpm = (kills: number, secs: number) => (secs > 0 ? kills / (secs / 60) : 0);
   // Radar: each axis as a ratio, all time and the last two weeks; radar.ts
-  // turns them into percentiles among the game's players and drops axes the
-  // game does not record.
+  // turns them into percentiles among the game's players, drops axes the
+  // game does not record and marks those without data.
   const radarRatios: PlayerRatios = {
     kpd: { total: { num: p.kills, den: p.deaths }, current: last14.length ? { num: kills14, den: sum14("deaths") } : null },
     kpm: { total: { num: p.kills, den: p.connection_time }, current: { num: kills14, den: sum14("connection_time") } },
@@ -174,11 +174,12 @@ export default async function PlayerPage({ params, searchParams }: Props) {
     pct !== null ? fill(t.radarBetter, { pct: pc(pct) }) : fill(t.radarScale, { max: fmtNum(FIXED_MAX[key], lang, key === "assists" ? 1 : 0) });
   const radar: RadarAxis[] = radarPts.map((a) => ({
     label: radarLabel[a.key],
+    noData: a.noData,
     total: a.rTotal,
     current: a.rCurrent,
-    totalText: radarValue(a.key, a.total, p.kill_assists),
+    totalText: a.noData ? "—" : radarValue(a.key, a.total, p.kill_assists),
     currentText: a.current === null ? "—" : radarValue(a.key, a.current, sum14("kill_assists")),
-    totalScale: radarScale(a.key, a.pctTotal),
+    totalScale: a.noData ? t.winNoData : radarScale(a.key, a.pctTotal),
     currentScale: a.current === null ? "" : radarScale(a.key, a.pctCurrent),
   }));
   const radarN = Math.max(0, ...radarPts.filter((a) => a.pctTotal !== null).map((a) => radarRanks[a.key]?.n ?? 0));

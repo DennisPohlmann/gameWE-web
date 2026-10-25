@@ -515,7 +515,10 @@ td.radar-cell { width: 45%; text-align: center; vertical-align: middle; }
 .radar { width: 100%; max-width: 170px; height: auto; display: block; margin: 0 auto; }
 .radar-grid { fill: none; stroke: var(--chart-radar-grid); stroke-width: 1; }
 .radar-total { fill: color-mix(in srgb, var(--chart-radar-total) 28%, transparent); stroke: var(--chart-radar-total); stroke-width: 1.5; }
-.radar-current { fill: color-mix(in srgb, var(--chart-radar-current) 35%, transparent); stroke: var(--chart-radar-current); stroke-width: 1.5; }
+/* The current shape's wide stroke frames the total's line drawn on top, so
+   both stay visible when they are equal. */
+.radar-current { fill: color-mix(in srgb, var(--chart-radar-current) 30%, transparent); stroke: var(--chart-radar-current); stroke-width: 3.5; stroke-linejoin: round; }
+.radar-total-line { fill: none; stroke: var(--chart-radar-total); stroke-width: 1.5; stroke-linejoin: round; pointer-events: none; }
 .radar-label { fill: var(--chart-radar-label); font-size: 10px; }
 .radar-wrap { position: relative; max-width: 170px; margin: 0 auto; }
 .radar-wrap .radar { max-width: none; }
@@ -526,6 +529,7 @@ td.radar-cell { width: 45%; text-align: center; vertical-align: middle; }
 .radar-dot.total { fill: var(--chart-radar-total); }
 .radar-dot.current { fill: var(--chart-radar-current); }
 .radar-axis.on .radar-label { fill: var(--chart-axis-strong); font-weight: bold; }
+.radar-axis.nodata .radar-label { fill: var(--muted); font-style: italic; }
 .radar-axis:focus-visible .radar-label { text-decoration: underline; }
 .radar-tip { grid-template-columns: auto max-content auto; min-width: 0; width: max-content; }
 .radar-tip.up { transform: translate(-50%, -100%); }
