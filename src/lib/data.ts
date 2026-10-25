@@ -1222,19 +1222,26 @@ export type TeamRow = {
   rounds: number;
 };
 
+// Time, kills and deaths are the collector's counters per team (kills and
+// deaths without teamkills). joined counts the team changes of the game's
+// players that are not hidden, grouped once instead of per team row.
 export function getTeams(game: string) {
   return query<TeamRow>(
     `SELECT t.teamId AS id, t.code, t.name, t.time_played, t.kills, t.deaths, t.headshots, t.wins, t.losses,
-            t.rounds, (SELECT COUNT(*) FROM hlstats_Events_ChangeTeam e WHERE e.team = t.teamId) AS joined
-     FROM hlstats_Teams t WHERE t.game = ? AND t.hidden = '0' ORDER BY joined DESC, t.time_played DESC, t.teamId`,
-    [game],
+            t.rounds, COALESCE(j.joined, 0) AS joined
+     FROM hlstats_Teams t
+     LEFT JOIN (SELECT e.team, COUNT(*) AS joined FROM hlstats_Events_ChangeTeam e
+                JOIN hlstats_Players p ON p.playerId = e.playerId AND p.game = ? AND p.hideranking = 0
+                GROUP BY e.team) j ON j.team = t.teamId
+     WHERE t.game = ? AND t.hidden = '0' ORDER BY t.time_played DESC, t.teamId`,
+    [game, game],
   );
 }
 
 export function getRoles(game: string) {
   return query<TeamRow>(
     `SELECT roleId AS id, code, name, time_played, kills, deaths, headshots, wins, losses, rounds, 0 AS joined
-     FROM hlstats_Roles WHERE game = ? AND hidden = '0' ORDER BY time_played DESC`,
+     FROM hlstats_Roles WHERE game = ? AND hidden = '0' ORDER BY time_played DESC, roleId`,
     [game],
   );
 }

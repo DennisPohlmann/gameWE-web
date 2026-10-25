@@ -624,7 +624,7 @@ export const endpoints: Endpoint[] = [
     operationId: "listTeams",
     tag: "Actions and teams",
     summary: "Teams and roles",
-    description: "The teams of a ranking with how often players joined them, and its roles (classes), not paged.",
+    description: "The teams of a ranking with how often players (not hidden ones) joined them, and its roles (classes), not paged.",
     params: [gameParam],
     schema: obj({ game: str("Code of the ranking"), teams: arr(ref("TeamWithJoins")), roles: arr(ref("Team")) }),
     example: {

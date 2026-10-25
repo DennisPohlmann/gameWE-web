@@ -33,7 +33,7 @@ heading on `/` counts the real players.
 | `/<game>/weapons`, `/<game>/weapons/<code>` | weapons like gameME's (kills %, headshots %, HS/kill as bars, sortable: `?sort=name\|modifier\|kills\|headshots\|hpk&dir=asc`), best players per weapon |
 | `/<game>/actions`, `/<game>/actions/<id>` | actions, best players per action |
 | `/<game>/maps`, `/<game>/maps/<id>` | maps; per map a kill heatmap (where players died, `?pos=killer` where the killers stood; Source games only, GoldSrc logs carry no positions) and the best players (last 30 days) |
-| `/<game>/teams` | team choice, roles |
+| `/<game>/teams` | teams and roles like gameME's: time, kills, deaths and K/D per team and role, each with its share of the table's total as a bar (teamkills not counted; teams without kills or deaths such as spectators show `-`); each table sorts on its own: `?tsort=name\|time\|kills\|deaths\|kpd&tdir=asc` for teams, `rsort`/`rdir` for roles |
 | `/<game>/players/<id>/events` | player history: connects, team and name changes, actions, kills and deaths (filter by type) |
 | `/<game>/players/<id>/sessions` | player history per day: points, time, kills, K/D, HS, accuracy |
 | `/<game>/players/<id>/awards` | awards the player won: summary and list by date |
@@ -103,6 +103,9 @@ website therefore computes some things itself:
   same difference (the oldest day of all: its recorded `skill_change`).
 - **Maps and teams in the player profile** come from `hlstats_Events_Frags`
   and `hlstats_Events_ChangeTeam`.
+- **Teams and roles** come from the collector's counters in `hlstats_Teams`
+  and `hlstats_Roles` (`time_played`, `kills`, `deaths` per game); they
+  cover all players of the game, like the weapon, action and map totals.
 - **Best players per map** come from `hlstats_Events_Frags` of the last 30 days.
 - **Countries** come from the collector's GeoIP lookup:
   `hlstats_Players_Data.location_id` and `hlstats_Livestats.cli_location_id`

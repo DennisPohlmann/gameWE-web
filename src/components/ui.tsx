@@ -184,6 +184,8 @@ export function SortTh({
   base,
   params,
   className,
+  sortParam = "sort",
+  dirParam = "dir",
 }: {
   label: ReactNode;
   sortKey: string;
@@ -192,9 +194,13 @@ export function SortTh({
   base: string;
   params: Record<string, string | number | undefined>;
   className?: string;
+  // Query param names; two sortable tables on one page use their own, so
+  // sorting one keeps the order of the other.
+  sortParam?: string;
+  dirParam?: string;
 }) {
   const active = current === sortKey;
-  const href = withParams(base, params, { sort: sortKey, dir: active && !asc ? "asc" : undefined, page: undefined });
+  const href = withParams(base, params, { [sortParam]: sortKey, [dirParam]: active && !asc ? "asc" : undefined, page: undefined });
   return (
     <th className={className} aria-sort={active ? (asc ? "ascending" : "descending") : undefined}>
       <Link href={href} className={active ? "sort active" : "sort"}>
