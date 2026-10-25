@@ -404,6 +404,20 @@ table.stats td.stats-key { width: 35%; color: var(--th-text); font-weight: bold;
 /* Position and points share the left half of the player summary's first row. */
 table.stats td.stats-key.pair { width: auto; }
 table.stats td.pair-value { text-align: center; }
+/* In the summary the labels are only as wide as their text and wide screens
+   give the room to the right-hand values, not to the radar and the labels.
+   In a narrow box (two columns on a small laptop) labels wrap and the trend
+   graphics shrink as on phones, so the table fits. */
+table.stats.summary td.stats-key { width: 1%; }
+table.stats.summary td:last-child { width: 40%; }
+.summary-box { container-type: inline-size; }
+@container (max-width: 520px) {
+  table.stats.summary td { white-space: normal; }
+  .summary-box .spark { width: 156px; min-width: 156px; height: auto; }
+}
+@container (max-width: 360px) {
+  .summary-box .spark { width: 146px; min-width: 146px; }
+}
 table.stats th { font-weight: bold; }
 .cont-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 12px 2%; align-items: start; }
 .cont-2 > * { min-width: 0; }
@@ -703,7 +717,7 @@ a.button { display: inline-block; text-decoration: none; }
   table.stats.summary td { white-space: normal; overflow-wrap: normal; }
   table.stats.summary td.stats-key { width: auto; }
   .spark { width: 156px; min-width: 156px; height: auto; }
-  table.stats.summary td.stats-key.pair, table.stats.summary td.pair-value { padding: 4px 2px; }
+  table.stats.summary td { padding: 4px 2px; }
   table.stats.summary td.stats-key.pair { font-size: 10px; }
 }
 

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Children } from "react";
 import { ShareBar } from "@/components/share-menu";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -253,7 +254,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
           </table>
 
           {/* Summary and the history links below it share the right column. */}
-          <div>
+          <div className="summary-box">
           <table className="stats summary">
             <thead>
               <tr>
@@ -320,22 +321,26 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                 <td className="stats-key">{t.killsPerMin}:</td>
                 <td>{n2(kpm(p.kills, p.connection_time))}</td>
               </tr>
+              {/* Two label/value pairs per row: the left one under position and
+                  points, the right one under the column beside the radar. */}
+              <Pairs>
               {/* Assisted kills (kills of this player others helped with) only when the collector counted any. */}
               <Row4 k={t.assists} v={`${fmtNum(p.kill_assists, lang)}${p.kills_assisted > 0 ? ` · ${t.assistedKills}: ${fmtNum(p.kills_assisted, lang)}` : ""}`} />
               {/* Rounds count only with a winner: servers without win triggers (GunGame, DM) have none. */}
               <Row4 k={t.rounds} v={p.rounds ? `${fmtNum(p.rounds, lang)} (${t.wins}: ${fmtNum(p.wins, lang)}, ${t.losses}: ${fmtNum(p.losses, lang)})` : "—"} />
-              <Row4 k={t.winRatio} v={p.rounds ? <Bar value={ratio(p.wins, p.rounds)} green label={pc(ratio(p.wins, p.rounds))} /> : "—"} />
               <Row4 k={t.survived} v={p.rounds ? `${fmtNum(p.survived_count, lang)} ${t.rounds} (${pc(ratio(p.survived_count, p.rounds))})` : "—"} />
+              <Row4 k={t.winRatio} v={p.rounds ? <Bar value={ratio(p.wins, p.rounds)} green label={pc(ratio(p.wins, p.rounds))} /> : "—"} />
               <Row4 k={t.teamkills} v={fmtNum(p.team_kills, lang)} />
               <Row4
                 k={t.acc}
                 v={<Spark values={accDays} total={ratio(p.hits, p.shots)} current={accNow} fmt={pc} titles={sparkTitles} />}
               />
+              <Row4 k={t.killStreak} v={fmtNum(p.kill_streak, lang)} />
               <Row4
                 k={t.shotsPerKill}
                 v={<Spark values={spkDays} total={p.kills && p.shots ? p.shots / p.kills : null} current={spkNow} fmt={n2} titles={sparkTitles} lowerIsBetter />}
               />
-              <Row4 k={t.killStreak} v={fmtNum(p.kill_streak, lang)} />
+              </Pairs>
             </tbody>
           </table>
           <PlayerLinks game={game} id={id} name={p.name} t={t} />
@@ -766,6 +771,32 @@ function Row({ k, v, span = false }: { k: string; v: React.ReactNode; span?: boo
       <td colSpan={span ? 2 : 1}>{v}</td>
     </tr>
   );
+}
+
+// Groups the Row4 children two by two into one row of four cells; the second
+// of each pair sits in the trend graphics' column, so wide values (bars,
+// trend graphics) go second.
+function Pairs({ children }: { children: React.ReactNode }) {
+  const items = Children.toArray(children) as React.ReactElement<{ k: string; v: React.ReactNode }>[];
+  const rows: React.ReactNode[] = [];
+  for (let i = 0; i < items.length; i += 2) {
+    const [a, b] = [items[i].props, items[i + 1]?.props];
+    rows.push(
+      b ? (
+        <tr key={a.k}>
+          <td colSpan={2} className="stats-key">
+            {a.k}:
+          </td>
+          <td colSpan={2}>{a.v}</td>
+          <td className="stats-key">{b.k}:</td>
+          <td>{b.v}</td>
+        </tr>
+      ) : (
+        <Row4 key={a.k} k={a.k} v={a.v} />
+      ),
+    );
+  }
+  return rows;
 }
 
 function Row4({ k, v }: { k: string; v: React.ReactNode }) {
