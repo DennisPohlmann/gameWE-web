@@ -8,6 +8,7 @@ export type HitboxWeapon = { name: string; hits: Record<Zone, number> };
 // Body shapes, facing the viewer: the player's left arm is on the right.
 const SHAPES: Record<Zone, { d: string; lx: number; ly: number }> = {
   head: { d: "M100 12 a22 25 0 1 0 0.1 0 Z", lx: 100, ly: 42 },
+  neck: { d: "M90 50 L110 50 L113 62 L87 62 Z", lx: 100, ly: 56 },
   chest: { d: "M66 64 Q100 56 134 64 L138 120 L62 120 Z", lx: 100, ly: 96 },
   stomach: { d: "M62 122 L138 122 L134 172 L66 172 Z", lx: 100, ly: 150 },
   rightarm: { d: "M62 66 L42 72 L28 150 L24 196 L40 198 L46 152 L60 112 Z", lx: 40, ly: 130 },
@@ -16,6 +17,10 @@ const SHAPES: Record<Zone, { d: string; lx: number; ly: number }> = {
   rightleg: { d: "M66 174 L98 174 L96 250 L92 330 L70 330 L70 250 Z", lx: 82, ly: 236 },
   leftleg: { d: "M102 174 L134 174 L130 250 L130 330 L108 330 L104 250 Z", lx: 118, ly: 276 },
 };
+
+// With a neck zone the head is drawn smaller, so the neck shows between head
+// and chest.
+const HEAD_WITH_NECK = "M100 10 a20 21 0 1 0 0.1 0 Z";
 
 function heat(t: number): string {
   // t: the zone's hits relative to the most hit zone (0 to 1). Near black
@@ -30,6 +35,7 @@ function heat(t: number): string {
 // Callouts: the zone label and its share beside the figure, joined by a line.
 const CALLOUTS: Record<Zone, { side: "l" | "r"; ax: number; ay: number; y: number }> = {
   head: { side: "l", ax: 88, ay: 30, y: 34 },
+  neck: { side: "l", ax: 92, ay: 54, y: 78 },
   rightarm: { side: "l", ax: 36, ay: 140, y: 120 },
   stomach: { side: "l", ax: 76, ay: 150, y: 196 },
   rightleg: { side: "l", ax: 80, ay: 290, y: 286 },
@@ -54,11 +60,15 @@ export function Hitbox({
   const [hover, setHover] = useState<Zone | null>(null);
   const w = weapons[sel] ?? weapons[0];
   if (!w) return null;
-  const total = ZONES.reduce((s, z) => s + w.hits[z], 0);
+  // neck only for games that log it (Counter-Strike 2): shown when any
+  // weapon has neck hits.
+  const neck = weapons.some((x) => (x.hits.neck ?? 0) > 0);
+  const zones = ZONES.filter((z) => z !== "neck" || neck);
+  const total = zones.reduce((s, z) => s + w.hits[z], 0);
   const pct = (z: Zone) => (total ? w.hits[z] / total : 0);
   const fmtPct = (v: number) => `${(v * 100).toLocaleString(locale, { maximumFractionDigits: 1 })} %`;
   // Colours relative to the most hit zone, so the spread stays visible.
-  const top = Math.max(0, ...ZONES.map(pct));
+  const top = Math.max(0, ...zones.map(pct));
   const hoverProps = (z: Zone) => ({ onMouseEnter: () => setHover(z), onMouseLeave: () => setHover(null) });
   const cls = (z: Zone, base: string) => (hover === z ? `${base} active` : base);
 
@@ -67,8 +77,8 @@ export function Hitbox({
     <>
       <g transform={`translate(${dx} 0)`}>
         <g>
-          {ZONES.map((z) => (
-            <path key={z} d={SHAPES[z].d} fill={heat(top ? pct(z) / top : 0)} className={cls(z, "zone")} {...hoverProps(z)}>
+          {zones.map((z) => (
+            <path key={z} d={z === "head" && neck ? HEAD_WITH_NECK : SHAPES[z].d} fill={heat(top ? pct(z) / top : 0)} className={cls(z, "zone")} {...hoverProps(z)}>
               <title>{`${labels[z]}: ${w.hits[z].toLocaleString(locale)} (${fmtPct(pct(z))})`}</title>
             </path>
           ))}
@@ -114,7 +124,7 @@ export function Hitbox({
       {picker}
       <svg viewBox={`0 0 ${W} 340`} role="img" aria-label={`${labels.hits}: ${w.name}`}>
         {figure(dx)}
-        {ZONES.map((z) => {
+        {zones.map((z) => {
           const c = CALLOUTS[z];
           const ax = c.ax + dx;
           const ex = c.side === "l" ? 74 : W - 74;

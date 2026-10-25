@@ -5,6 +5,7 @@ import { SortableTable } from "@/components/sortable-table";
 import { Bar, Section, TableWrap, strParam } from "@/components/ui";
 import { noAutofill } from "@/lib/autofill";
 import { getGames, getHelpActions, getHelpWeapons, getPointSettings } from "@/lib/data";
+import { gameKind } from "@/lib/games";
 import { fmtNum } from "@/lib/format";
 import { fill, getDict } from "@/lib/i18n";
 
@@ -213,6 +214,8 @@ export default async function HelpPage({ searchParams }: { searchParams: SP }) {
               </div>
             ))}
           </div>
+          {/* Source 2 has no plugin to show the replies. */}
+          {games.some((g) => gameKind(g.realgame)?.engine === "source2") ? <p className="help-note">{t.helpCs2Commands}</p> : null}
         </div>
       </Section>
 

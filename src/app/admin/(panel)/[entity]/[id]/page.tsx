@@ -35,6 +35,8 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
   // Rankings are managed on /admin/rankings; their plain list is only the editor's.
   const back = e.key === "games" && returnTo === "/admin/games" ? "/admin/rankings" : returnTo;
   const r0 = row as Record<string, unknown>;
+  // Counter-Strike 2 servers log over HTTP and have no log secret.
+  const cs2 = e.key === "servers" && !isNew && (await rankingBaseGames()).get(String(r0.game ?? "").trim()) === "cs2";
   const title = String(r0.lastName ?? r0.name ?? r0.tag ?? r0.username ?? r0.code ?? id);
   const optionSets = Object.fromEntries(
     await Promise.all(
@@ -84,6 +86,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
         </p>
       ) : null}
       {sp.saved ? <p className="notice">{a.saved}</p> : null}
+      {cs2 ? <p className="notice">{fill(a.cs2LogHint, { port: String(Number(r0.port) || "<port>") })}</p> : null}
       {error ? (
         <p className="notice error">
           {error}
@@ -142,7 +145,11 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
                     maxLength={f.max}
                   />
                 )}
-                {f.help ? <small className="muted">{f.help[lang]}</small> : null}
+                {cs2 && f.name === "log_secret" ? (
+                  <small className="muted">{a.cs2LogSecret}</small>
+                ) : f.help ? (
+                  <small className="muted">{f.help[lang]}</small>
+                ) : null}
               </label>
             );
           })}

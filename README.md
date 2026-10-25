@@ -1,8 +1,9 @@
 # gameWE - web
 
-gameWE is a statistics system for Source and GoldSrc game servers, in the
-style of gameME / HLstatsX. **gameWE web** is its website: statistics pages in
-the style of gameME plus an admin area. It reads the database that the
+gameWE is a statistics system for Source 2 (Counter-Strike 2), Source and
+GoldSrc game servers, in the style of gameME / HLstatsX. **gameWE web** is
+its website: statistics pages in the style of gameME plus an admin area. It
+reads the database that the
 [gameWE collector](https://github.com/DennisPohlmann/gameWE-collector) fills,
 on MariaDB/MySQL or PostgreSQL. It
 
@@ -124,6 +125,25 @@ make image      # local Docker image gamewe-web:<version>
 
 Local development, checks and the release process:
 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+
+## Counter-Strike 2
+
+Rankings of Counter-Strike 2 (Source 2) servers carry their own game tag
+(CS2, in the Source 2 colour). CS2 logs no shots, so its pages leave out
+shots, hits, accuracy, damage per hit and shots per kill; damage and the hit
+zones (with the neck, which only CS2 logs) come from its attacked lines. The
+heatmap of de_nuke and de_vertigo shows the upper or the lower level alone on
+request.
+CS2 has no plugin, so in-game commands get no answer. Setting up the server
+(HTTP log) is described in the collector's documentation.
+
+## Credits
+
+The Counter-Strike 2 support follows HLstatsX:CE by lovasatt
+(https://github.com/lovasatt/hlstatsx-community-edition, GPL-2.0-or-later),
+whose CS2 game definitions and HTTP log handling were the reference for the
+gameWE collector's Source 2 engine. The database schema comes from
+HLstatsX: Community Edition. Thanks to both projects.
 
 ## License
 

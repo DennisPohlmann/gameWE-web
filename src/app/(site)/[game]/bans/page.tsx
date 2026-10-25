@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { sortHeads } from "@/components/sort-head";
 import { Empty, PctBar, PlayerLink, Section, TableWrap } from "@/components/ui";
-import { getBanPlayers, getBanRecords, getPlayersBySteam, getRecentPlayers, type BanPlayer } from "@/lib/data";
+import { gameHasShots, getBanPlayers, getBanRecords, getPlayersBySteam, getRecentPlayers, type BanPlayer } from "@/lib/data";
 import { fmtNum, kpd, localeOf, nowUnix, ratio, steamIds } from "@/lib/format";
 import { getDict, type Dict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
@@ -54,7 +54,8 @@ export default async function BansPage({ params, searchParams }: { params: Promi
   // The type sorts by its shown name.
   const values = { ...banValues, type: (r: BanRow) => kindLabel(r.kind, t) };
   const order = sortState(sp, values, "order");
-  const { sourcebansUrl } = await getSettings();
+  // Counter-Strike 2 logs no shots: no accuracy column.
+  const [{ sourcebansUrl }, shots] = await Promise.all([getSettings(), gameHasShots(game)]);
 
   const [records, sb, vac] = await Promise.all([
     getBanRecords(game, MAX_ROWS),
@@ -104,7 +105,7 @@ export default async function BansPage({ params, searchParams }: { params: Promi
                 {th(t.points, "points")}
                 {th(t.kpd, "kpd", "num hide-sm")}
                 {th(t.hpk, "hpk", "barcell")}
-                {th(t.acc, "acc", "barcell hide-sm")}
+                {shots ? th(t.acc, "acc", "barcell hide-sm") : null}
               </tr>
             </thead>
             <tbody>
@@ -126,9 +127,11 @@ export default async function BansPage({ params, searchParams }: { params: Promi
                   <td className="barcell">
                     <PctBar value={ratio(Number(r.player.headshots), Number(r.player.kills))} lang={lang} />
                   </td>
-                  <td className="barcell hide-sm">
-                    <PctBar value={ratio(Number(r.player.hits), Number(r.player.shots))} lang={lang} />
-                  </td>
+                  {shots ? (
+                    <td className="barcell hide-sm">
+                      <PctBar value={ratio(Number(r.player.hits), Number(r.player.shots))} lang={lang} />
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>

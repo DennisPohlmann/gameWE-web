@@ -235,6 +235,7 @@ td .name, .name { font-weight: 600; color: var(--text); }
 .game-tag { display: inline-block; padding: 1px 7px; border-radius: 6px; font-size: 11px; font-weight: 700; line-height: 18px; color: #fff; background: #5a6578; white-space: nowrap; vertical-align: middle; }
 .game-tag.goldsrc { background: #8a6d3b; }
 .game-tag.source { background: #3d6f99; }
+.game-tag.source2 { background: #2e7d6b; }
 .template-tag { background: #6b7385; }
 .bot-tag { display: inline-block; padding: 0 4px; border-radius: 4px; font-size: 9px; font-weight: 700; background: #6b7385; color: #fff; }
 .admin-rank { display: inline-flex; align-items: center; gap: 8px; }

@@ -1,6 +1,6 @@
 import { Flag, PctBar, PlayerLink, SortTh, TableWrap } from "@/components/ui";
 import Link from "next/link";
-import { unlinkedBots, type PlaceRow, type RankingRow } from "@/lib/data";
+import { gameHasShots, unlinkedBots, type PlaceRow, type RankingRow } from "@/lib/data";
 import { activity, fmtDate, fmtDuration, fmtNum, fmtPct, kpd, ratio } from "@/lib/format";
 import type { Dict, Lang } from "@/lib/i18n";
 import { placeHref, type PlaceKind } from "@/lib/places";
@@ -57,7 +57,7 @@ export async function RankingTable({
     ) : (
       <th className={cls}>{label}</th>
     );
-  const bots = await unlinkedBots(rows.map((r) => r.playerId));
+  const [bots, shots] = await Promise.all([unlinkedBots(rows.map((r) => r.playerId)), gameHasShots(game)]);
   return (
     <TableWrap>
       <table>
@@ -74,7 +74,7 @@ export async function RankingTable({
             {th(t.kpd, "kpd")}
             {th(t.hs, "hs", "num hide-sm")}
             {th(t.hpk, "hpk", "barcell")}
-            {th(t.acc, "acc", "barcell hide-sm")}
+            {shots ? th(t.acc, "acc", "barcell hide-sm") : null}
           </tr>
         </thead>
         <tbody>
@@ -103,9 +103,11 @@ export async function RankingTable({
                 <td className="barcell">
                   <PctBar value={ratio(r.headshots, r.kills)} lang={lang} />
                 </td>
-                <td className="barcell hide-sm">
-                  <PctBar value={ratio(r.hits, r.shots)} lang={lang} />
-                </td>
+                {shots ? (
+                  <td className="barcell hide-sm">
+                    <PctBar value={ratio(r.hits, r.shots)} lang={lang} />
+                  </td>
+                ) : null}
               </tr>
             );
           })}

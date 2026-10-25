@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PlayerKillsTrend, PlayerTrend } from "@/components/player-trend";
 import { BackToPlayer, HistoryFrame, loadHistoryPlayer } from "@/components/player-history";
 import { Empty, Pager, PctBar, ROW_OPTIONS, SortTh, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
-import { getPlayerHistory, getPlayerSkillBefore } from "@/lib/data";
+import { gameHasShots, getPlayerHistory, getPlayerSkillBefore } from "@/lib/data";
 import { fmtNum, kpd, ratio, localeOf } from "@/lib/format";
 import { getPlayerSessionDays } from "@/lib/history";
 import { getDict } from "@/lib/i18n";
@@ -39,10 +39,12 @@ export default async function SessionsPage({ params, searchParams }: Props) {
   const limit = rowsParam(sp.rows, pageSize);
   const sort = sessionSortParam(strParam(sp.sort));
   const asc = strParam(sp.dir) === "asc";
-  const [days, trend, before] = await Promise.all([
+  const [days, trend, before, shots] = await Promise.all([
     getPlayerSessionDays(p.playerId),
     getPlayerHistory(p.playerId, 60),
     getPlayerSkillBefore(p.playerId, 60),
+    // Counter-Strike 2 logs no shots: no accuracy column.
+    gameHasShots(game),
   ]);
   const shown = sessionPage(sortSessions(days, sort, asc), pageParam(sp.page), limit);
   const n = (v: number) => fmtNum(Number(v), lang);
@@ -102,7 +104,7 @@ export default async function SessionsPage({ params, searchParams }: Props) {
                   {th(t.killStreak, "streak", "num hide-sm")}
                   {th(t.hs, "hs", "num hide-sm")}
                   {th(t.hpk, "hpk", "barcell hide-sm")}
-                  {th(t.acc, "acc", "barcell hide-sm")}
+                  {shots ? th(t.acc, "acc", "barcell hide-sm") : null}
                 </tr>
               </thead>
               <tbody>
@@ -125,7 +127,7 @@ export default async function SessionsPage({ params, searchParams }: Props) {
                     <td className="barcell hide-sm">
                       <PctBar value={ratio(Number(h.headshots), Number(h.kills))} lang={lang} />
                     </td>
-                    <td className="barcell hide-sm">{Number(h.shots) ? <PctBar value={ratio(Number(h.hits), Number(h.shots))} lang={lang} /> : "-"}</td>
+                    {shots ? <td className="barcell hide-sm">{Number(h.shots) ? <PctBar value={ratio(Number(h.hits), Number(h.shots))} lang={lang} /> : "-"}</td> : null}
                   </tr>
                 ))}
               </tbody>

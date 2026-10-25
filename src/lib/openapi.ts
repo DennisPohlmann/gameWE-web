@@ -3,6 +3,7 @@ import { basePath } from "./base-path.ts";
 import { MAP_SORTS } from "./map-table.ts";
 import { PLACE_SORT_ALIASES, PLACE_SORT_DEFAULT, RANKING_SORT_ALIASES, placeSorts, rankingSorts } from "./sorts.ts";
 import { rankPlayerSorts } from "./table-sort.ts";
+import { ZONES } from "./zones.ts";
 
 // OpenAPI 3.1 description of the public API (/api/v1/...), shown on /api by
 // Scalar and served as /api/openapi.json. One entry per route under
@@ -280,7 +281,7 @@ const schemas: Record<string, Schema> = {
     shotsPerKill: nullable(num("Shots per kill, two decimals; null without kills")),
     hitboxes: ref("Hitboxes"),
   }),
-  Hitboxes: obj(Object.fromEntries(["head", "chest", "stomach", "leftarm", "rightarm", "leftleg", "rightleg"].map((z) => [z, int(`Hits on ${z}`)]))),
+  Hitboxes: obj(Object.fromEntries(ZONES.map((z) => [z, int(z === "neck" ? "Hits on neck (Counter-Strike 2 only, else 0)" : `Hits on ${z}`)]))),
   PlayerMap: obj({ id: int("Map ID"), name: str("Map name"), kills: int("Kills"), deaths: int("Deaths"), headshots: int("Headshots"), kpd: kpdNum(), hpk: fraction("Headshots per kill") }),
   PlayerDay: obj({
     day: str("Day (YYYY-MM-DD)", { format: "date" }),
@@ -358,7 +359,7 @@ const clan = { id: 3, tag: "[EX]", name: "Example Clan", homepage: "https://clan
 const weapon = { rank: 1, code: "ak47", name: "AK-47", modifier: 1, kills: 123456, killShare: 0.2612, headshots: 45678, headshotShare: 0.3011, hpk: 0.37 };
 const map = { id: 7, name: "de_dust2", kills: 345678, headshots: 112233, hpk: 0.3247, teamKills: 321, teamAWins: 5012, teamBWins: 4876, played: 2345, playTime: 3456789, rounds: 9888, ctWins: 4876, tWins: 5012, winRatio: { ct: 49, t: 51 } };
 const tag = { country: de, bot: false };
-const zones = { head: 1904, chest: 5120, stomach: 2310, leftarm: 880, rightarm: 910, leftleg: 640, rightleg: 655 };
+const zones = { head: 1904, neck: 0, chest: 5120, stomach: 2310, leftarm: 880, rightarm: 910, leftleg: 640, rightleg: 655 };
 const days = [
   { day: "2026-01-01", players: 31, kills: 4210, headshots: 1388 },
   { day: "2026-01-02", players: 28, kills: 3987, headshots: 1290 },

@@ -3,7 +3,7 @@ import { cache } from "react";
 import { adminQuery, likeOp, query, queryOne, sinceDays, type Param } from "./db";
 import { addDays, dayOf, siteDay } from "./day";
 import { nowUnix, steamIds } from "./format";
-import { baseGameOf, GAME_HAS_DATA } from "./games";
+import { baseGameOf, GAME_HAS_DATA, gameKind } from "./games";
 import { hiddenSql, liveEntry } from "./hidden";
 import { LOAD_INTERVAL_MAX, type MapSort } from "./map-table";
 import { playerCount, sumCounts, type PlayerCount } from "./player-count";
@@ -96,6 +96,10 @@ export const getGame = cache(async (code: string, withHidden = false) => {
   const g = await queryOne<Game>(`SELECT ${await gameCols()} FROM hlstats_Games WHERE code = ?${withHidden ? "" : ` AND hidden = '0'`}`, [code]);
   return g ? withBase(g) : g;
 });
+
+// Whether the ranking's game logs shots: not Counter-Strike 2 (no weaponstats
+// plugin), whose pages leave out shots, accuracy and shots per kill.
+export const gameHasShots = cache(async (code: string) => !gameKind((await getGame(code, true))?.realgame)?.noShots);
 
 // ---------------------------------------------------------------- servers
 
@@ -848,6 +852,7 @@ export type PlayerWeapon = {
   hits: number;
   damage: number;
   head: number;
+  neck: number;
   chest: number;
   stomach: number;
   leftarm: number;
@@ -856,17 +861,32 @@ export type PlayerWeapon = {
   rightleg: number;
 };
 
-export function getPlayerWeapons(id: number) {
+// hlstats_Players_Weapons.neck and its monthly archive come with collector
+// migration 7 (Counter-Strike 2); older databases read 0. The pages look again
+// for the columns every 5 minutes.
+let neckCol: { ok: Promise<boolean>; at: number } | undefined;
+async function neckOk() {
+  if (!neckCol || (Date.now() - neckCol.at > 300_000 && !(await neckCol.ok))) {
+    neckCol = {
+      ok: query(`SELECT a.neck, b.neck FROM hlstats_Players_Weapons a, hlstats_Players_Weapons_History_Months b WHERE 1 = 0`).then(() => true, () => false),
+      at: Date.now(),
+    };
+  }
+  return neckCol.ok;
+}
+
+export async function getPlayerWeapons(id: number) {
+  const neck = (await neckOk()) ? "neck" : "0 AS neck";
   const src = weeksAndMonths(
     "Players_Weapons",
-    "weapon_id, kills, deaths, headshots, shots, hits, damage, head, chest, stomach, leftarm, rightarm, leftleg, rightleg",
+    `weapon_id, kills, deaths, headshots, shots, hits, damage, head, ${neck}, chest, stomach, leftarm, rightarm, leftleg, rightleg`,
     "player_id = ?",
     [id],
   );
   return query<PlayerWeapon>(
     `SELECT w.weaponId, w.code, w.name, SUM(x.kills) AS kills, SUM(x.deaths) AS deaths,
             SUM(x.headshots) AS headshots, SUM(x.shots) AS shots, SUM(x.hits) AS hits, SUM(x.damage) AS damage,
-            SUM(x.head) AS head, SUM(x.chest) AS chest, SUM(x.stomach) AS stomach, SUM(x.leftarm) AS leftarm,
+            SUM(x.head) AS head, SUM(x.neck) AS neck, SUM(x.chest) AS chest, SUM(x.stomach) AS stomach, SUM(x.leftarm) AS leftarm,
             SUM(x.rightarm) AS rightarm, SUM(x.leftleg) AS leftleg, SUM(x.rightleg) AS rightleg
      FROM ${src.sql} x JOIN hlstats_Weapons w ON w.weaponId = x.weapon_id
      GROUP BY w.weaponId, w.code, w.name ORDER BY kills DESC, shots DESC, w.weaponId`,

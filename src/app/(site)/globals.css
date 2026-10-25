@@ -976,6 +976,7 @@ table.spaced { margin-top: 10px; }
 .game-tag { display: inline-block; margin-left: 6px; padding: 0 4px; border-radius: 2px; font-size: 9px; font-weight: bold; line-height: 14px; vertical-align: middle; color: #fff; background: #5a6b7c; white-space: nowrap; }
 .game-tag.goldsrc { background: #8a6d3b; }
 .game-tag.source { background: #3d6f99; }
+.game-tag.source2 { background: #2e7d6b; }
 .map-title { margin: 0 0 6px; font-size: 12px; }
 .ban-type { display: inline-block; min-width: 4.5em; padding: 0 6px; border-radius: 3px; font: bold 10px/16px Verdana, sans-serif; text-align: center; white-space: nowrap; color: #fff; background: #6b6b6b; }
 .ban-vac { background: linear-gradient(#ffe680, #d9b300); color: #3a3000; }

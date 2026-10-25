@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { botProfiles, type LivePlayer, type Server } from "@/lib/data";
+import { botProfiles, gameHasShots, type LivePlayer, type Server } from "@/lib/data";
 import { countryName, fmtDuration, fmtNum, fmtPct, nowUnix, ratio } from "@/lib/format";
 import { baseGameOf, gameKind } from "@/lib/games";
 import type { Dict, Lang } from "@/lib/i18n";
@@ -164,7 +164,8 @@ export function ServerFlag({ code, lang }: { code: string | null | undefined; la
 // Players on one server, coloured by team like gameME's live stats: the first
 // team blue, the second red, everyone else (spectators, unassigned) grey.
 export async function LiveTable({ game, players, t, lang }: { game: string; players: LivePlayer[]; t: Dict; lang: Lang }) {
-  const botLinks = await botProfiles();
+  // Counter-Strike 2 logs no shots: no accuracy column.
+  const [botLinks, shots] = await Promise.all([botProfiles(), gameHasShots(game)]);
   const teams = new Map<string, LivePlayer[]>();
   for (const p of players) {
     const k = p.team || "";
@@ -188,7 +189,7 @@ export async function LiveTable({ game, players, t, lang }: { game: string; play
             <th className="num">{t.hs}</th>
             <th className="num">{t.hpk}</th>
             <th className="num hide-sm">{t.rounds}</th>
-            <th className="num hide-sm">{t.acc}</th>
+            {shots ? <th className="num hide-sm">{t.acc}</th> : null}
             <th className="num hide-sm">{t.latency}</th>
             <th className="num hide-sm">{t.time}</th>
             <th className="num">+/-</th>
@@ -223,7 +224,7 @@ export async function LiveTable({ game, players, t, lang }: { game: string; play
                   <td className="num">{p.headshots}</td>
                   <td className="num">{p.kills ? fmtPct(ratio(p.headshots, p.kills), lang) : "-"}</td>
                   <td className="num hide-sm">{p.rounds}</td>
-                  <td className="num hide-sm">{p.shots ? fmtPct(ratio(p.hits, p.shots), lang) : "-"}</td>
+                  {shots ? <td className="num hide-sm">{p.shots ? fmtPct(ratio(p.hits, p.shots), lang) : "-"}</td> : null}
                   <td className="num hide-sm">{p.ping || "-"}</td>
                   <td className="num hide-sm">{p.connected ? fmtDuration(now - p.connected) : "-"}</td>
                   <td className="num">
@@ -242,7 +243,7 @@ export async function LiveTable({ game, players, t, lang }: { game: string; play
                 <td className="right frag">{sum.kills}</td>
                 <td className="center frag">:</td>
                 <td className="frag">{sum.deaths}</td>
-                <td colSpan={9} />
+                <td colSpan={shots ? 9 : 8} />
               </tr>,
             ];
           })}

@@ -9,9 +9,10 @@ import { SortInputs } from "@/components/sort-head";
 import { Empty, Pager, PctBar, PlayerLink, ROW_OPTIONS, Section, SortTh, Stats, TableWrap, WinRatioBar, pageParam, rowsParam, strParam } from "@/components/ui";
 import { noAutofill } from "@/lib/autofill";
 import { basePath } from "@/lib/base-path";
-import { countMapKillers, getMap, getMapAccuracy, getMapGgWins, getMapLoadTime, getMapPlayerTable, getMapWins, getPlayerFlags } from "@/lib/data";
+import { countMapKillers, gameHasShots, getGame, getMap, getMapAccuracy, getMapGgWins, getMapLoadTime, getMapPlayerTable, getMapWins, getPlayerFlags } from "@/lib/data";
 import { fmtDuration, fmtNum, fmtPct, kpd, localeOf, ratio } from "@/lib/format";
-import { DOTS, getHeatmap } from "@/lib/heatmap";
+import { DOTS, getHeatmap, heatLevel } from "@/lib/heatmap";
+import { levelParam, levelSplit } from "@/lib/map-levels";
 import { fill, getDict } from "@/lib/i18n";
 import { kpm, mapPlayTime, mapSort } from "@/lib/map-table";
 import { getSettings } from "@/lib/settings";
@@ -53,14 +54,22 @@ export default async function MapPage({ params, searchParams }: Props) {
   const page = pageParam(sp.page);
   const { pageSize } = await getSettings();
   const limit = rowsParam(sp.rows, pageSize);
-  const [players, counts, heat, wins, accuracy, loadTime] = await Promise.all([
+  const [players, counts, fullHeat, wins, accuracy, loadTime, shots, g] = await Promise.all([
     getMapPlayerTable(game, m.id, sort, desc, limit, (page - 1) * limit),
     countMapKillers(m.id),
     getHeatmap(m.id),
     getMapWins(game).catch(() => new Map<number, { ct: number; t: number }>()),
     getMapAccuracy(m.id).catch(() => null),
     getMapLoadTime(m.id).catch(() => 0),
+    // Counter-Strike 2 logs no shots: no accuracy.
+    gameHasShots(game),
+    getGame(game, true),
   ]);
+  // Maps with two levels (Counter-Strike 2's de_nuke, de_vertigo): the
+  // heatmap shows the upper or the lower level alone on request.
+  const split = levelSplit(g?.realgame, m.map);
+  const level = split === null ? null : levelParam(strParam(sp.lv));
+  const heat = fullHeat && split !== null && level ? heatLevel(fullHeat, split, level) : fullHeat;
   const ids = players.map((r) => r.playerId);
   const [flags, gg] = await Promise.all([getPlayerFlags(ids), getMapGgWins(game, m.id, ids)]);
   const w = wins.get(m.id);
@@ -74,8 +83,8 @@ export default async function MapPage({ params, searchParams }: Props) {
     </Link>
   );
   // Sorting and paging keep the heatmap choice and the rows per page.
-  const keep = { pos: show !== "all" ? show : undefined, rows: limit !== pageSize ? limit : undefined, sort: sort !== "kills" ? sort : undefined, dir: flipped ? "asc" : undefined };
-  const sortProps = { current: sort, asc: flipped, base, params: { pos: keep.pos, rows: keep.rows } };
+  const keep = { pos: show !== "all" ? show : undefined, lv: level ?? undefined, rows: limit !== pageSize ? limit : undefined, sort: sort !== "kills" ? sort : undefined, dir: flipped ? "asc" : undefined };
+  const sortProps = { current: sort, asc: flipped, base, params: { pos: keep.pos, lv: keep.lv, rows: keep.rows } };
   const th = (label: string, k: string, cls = "num") => <SortTh label={label} sortKey={k} className={cls} {...sortProps} />;
   const pages = Math.max(1, Math.ceil(counts.players / limit));
   return (
@@ -94,7 +103,7 @@ export default async function MapPage({ params, searchParams }: Props) {
                 [t.kills, fmtNum(m.kills, lang)],
                 [t.kpm, perMin === null ? "–" : fmtNum(perMin, lang, 2)],
                 [t.headshotsLabel, `${fmtNum(m.headshots, lang)} (${t.hpk}: ${fmtPct(ratio(m.headshots, m.kills), lang)})`],
-                [t.acc, accuracy === null ? "–" : fmtPct(accuracy, lang)],
+                ...(shots ? [[t.acc, accuracy === null ? "–" : fmtPct(accuracy, lang)] as [string, string]] : []),
               ]}
             />
           </div>
@@ -119,6 +128,13 @@ export default async function MapPage({ params, searchParams }: Props) {
                 <option value="killer">{t.heatKills}</option>
                 <option value="victim">{t.heatDeaths}</option>
               </select>
+              {split !== null ? (
+                <select {...noAutofill} name="lv" defaultValue={level ?? ""} aria-label={t.heatLevel}>
+                  <option value="">{t.heatLevelAll}</option>
+                  <option value="upper">{t.heatLevelUpper}</option>
+                  <option value="lower">{t.heatLevelLower}</option>
+                </select>
+              ) : null}
               {/* Switching the heatmap keeps the table's order and rows. */}
               <SortInputs keep={{ sort: keep.sort, dir: keep.dir, rows: keep.rows ? String(keep.rows) : undefined }} />
               <noscript>

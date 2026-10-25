@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { sortHeads } from "@/components/sort-head";
 import { Empty, PlayerLink, Section, Stats, TableWrap } from "@/components/ui";
-import { getWeapon, getWeaponTop, getPlayerFlags, type TopRow } from "@/lib/data";
+import { gameHasShots, getWeapon, getWeaponTop, getPlayerFlags, type TopRow } from "@/lib/data";
 import { fmtNum, fmtPct, ratio } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
 import { sortRows, sortState } from "@/lib/table-sort";
@@ -32,7 +32,8 @@ export default async function WeaponPage({ params, searchParams }: Props) {
   const w = await getWeapon(game, decodeURIComponent(code));
   if (!w) notFound();
   const { lang, t } = await getDict();
-  const loaded = await getWeaponTop(w.weaponId);
+  // Counter-Strike 2 logs no shots: no shots and accuracy columns.
+  const [loaded, shots] = await Promise.all([getWeaponTop(w.weaponId), gameHasShots(game)]);
   const flags = await getPlayerFlags(loaded.map((r) => r.playerId));
   const order = sortState(await searchParams, topValues, "kills");
   const top = sortRows(loaded, topValues, order.sort, order.asc);
@@ -61,8 +62,8 @@ export default async function WeaponPage({ params, searchParams }: Props) {
                   {th(t.kills, "kills")}
                   {th(t.hs, "hs")}
                   {th(t.hpk, "hpk")}
-                  {th(t.shots, "shots", "num hide-sm")}
-                  {th(t.acc, "acc")}
+                  {shots ? th(t.shots, "shots", "num hide-sm") : null}
+                  {shots ? th(t.acc, "acc") : null}
                 </tr>
               </thead>
               <tbody>
@@ -75,8 +76,8 @@ export default async function WeaponPage({ params, searchParams }: Props) {
                     <td className="num">{fmtNum(r.a, lang)}</td>
                     <td className="num">{fmtNum(r.b, lang)}</td>
                     <td className="num">{fmtPct(ratio(r.b, r.a), lang)}</td>
-                    <td className="num hide-sm">{fmtNum(r.c, lang)}</td>
-                    <td className="num">{fmtPct(ratio(r.d, r.c), lang)}</td>
+                    {shots ? <td className="num hide-sm">{fmtNum(r.c, lang)}</td> : null}
+                    {shots ? <td className="num">{fmtPct(ratio(r.d, r.c), lang)}</td> : null}
                   </tr>
                 ))}
               </tbody>

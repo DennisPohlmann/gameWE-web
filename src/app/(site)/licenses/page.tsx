@@ -36,6 +36,7 @@ const SOFTWARE: Row[] = [
   ["uqr", "https://github.com/unjs/uqr", "MIT", "QR-Code für TOTP", "QR code for TOTP"],
   ["server-only", "https://www.npmjs.com/package/server-only", "MIT", "Schutz serverseitiger Module", "Guard for server-side modules"],
   ["HLstatsX: Community Edition", "https://github.com/NomisCZ/hlstatsx-community-edition", "GPL-2.0-or-later", "Grundlage des Datenbankschemas", "Basis of the database schema"],
+  ["HLstatsX:CE mit CS2-Unterstützung (lovasatt)", "https://github.com/lovasatt/hlstatsx-community-edition", "GPL-2.0-or-later", "Vorlage für die Counter-Strike-2-Unterstützung", "Reference for the Counter-Strike 2 support"],
 ];
 
 const ASSETS: Row[] = [

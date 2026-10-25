@@ -149,6 +149,7 @@ all compatible with GPL-3.0-or-later.
 | `templates/` | gameWE's own design templates | GPL-3.0-or-later |
 | `src/components/admin/icons.tsx` | admin menu icons, several paths after Feather Icons 4.29 by Cole Bemis, https://github.com/feathericons/feather | MIT, text in `src/components/admin/FEATHER-LICENSE.txt` |
 | Database schema and table names (`hlstats_*`) | HLstatsX: Community Edition, https://github.com/NomisCZ/hlstatsx-community-edition | GPL-2.0-or-later (the schema is created by the collector; gameWE web reads it) |
+| Counter-Strike 2 support (game `cs2`, hit zone neck) | reference: HLstatsX:CE with CS2 support by lovasatt, https://github.com/lovasatt/hlstatsx-community-edition (no code or files copied; its CS2 definitions are used by the collector) | GPL-2.0-or-later, usable under GPL-3.0-or-later ("or any later version") |
 
 Rank insignia and award ribbons are drawn with SVG and CSS in
 `src/components/badges.tsx` (no third-party images).

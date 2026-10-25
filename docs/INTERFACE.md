@@ -83,7 +83,7 @@ website's # column) and `rank` (the place in the whole ranking by points);
 | `/api/v1/stats?days=30` | totals over all rankings and activity per day |
 | `/api/v1/players/<id>` | the values of a player's profile: place, points and last change, kills, K:D, HS/kill, kills per minute, assists, accuracy, shots per kill, rounds, win ratio, survived, connections, ping, location, career rank, favourite weapon |
 | `/api/v1/players/<id>/weapons` | the player's weapons with K:D, accuracy, damage per hit, shots per kill and hits per body zone |
-| `/api/v1/players/<id>/hitboxes` | hits per body zone over all weapons |
+| `/api/v1/players/<id>/hitboxes` | hits per body zone over all weapons (`neck` only from Counter-Strike 2, else 0) |
 | `/api/v1/players/<id>/maps` | kills and deaths per map |
 | `/api/v1/players/<id>/teams` | how often the player joined each team |
 | `/api/v1/players/<id>/actions` | the player's actions with count and points |

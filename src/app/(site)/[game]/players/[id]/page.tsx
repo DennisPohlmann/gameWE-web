@@ -41,6 +41,7 @@ import {
   getPlayerTeams,
   getRadarAverage,
   getPlayerWeapons,
+  gameHasShots,
 } from "@/lib/data";
 import { activity, fmtAge, fmtDateTime, fmtDuration, fmtNum, fmtPct, kpd, ratio, steamIds } from "@/lib/format";
 import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
@@ -144,6 +145,12 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const kpdNow = sum14("kills") / Math.max(1, sum14("deaths"));
   const hpkNow = ratio(hs14, kills14);
   const accNow = ratio(sum14("hits"), sum14("shots"));
+  // Counter-Strike 2 logs no shots (and the collector counts no hits for
+  // it): no accuracy, no shots per kill.
+  const shots = await gameHasShots(game);
+  // Weapon table columns that need shots or hits (shots, hits, accuracy,
+  // damage per hit, shots per kill).
+  const keep = <T,>(xs: T[]) => (shots ? xs : xs.filter((_, i) => ![1, 2, 9, 10, 11].includes(i)));
   const daily = (f: (h: (typeof history)[number]) => number | null) => history.map(f).filter((v): v is number => v !== null && Number.isFinite(v));
   const kpdDays = daily((h) => (h.kills || h.deaths ? h.kills / Math.max(1, h.deaths) : null));
   const hpkDays = daily((h) => (h.kills ? h.headshots / h.kills : null));
@@ -298,14 +305,18 @@ export default async function PlayerPage({ params, searchParams }: Props) {
               <Row4 k={t.winRatio} v={p.rounds ? <Bar value={ratio(p.wins, p.rounds)} green label={pc(ratio(p.wins, p.rounds))} /> : "—"} />
               <Row4 k={t.survived} v={p.rounds ? `${fmtNum(p.survived_count, lang)} ${t.rounds} (${pc(ratio(p.survived_count, p.rounds))})` : "—"} />
               <Row4 k={t.teamkills} v={fmtNum(p.team_kills, lang)} />
-              <Row4
-                k={t.acc}
-                v={<Spark values={accDays} total={ratio(p.hits, p.shots)} current={accNow} fmt={pc} titles={sparkTitles} />}
-              />
-              <Row4
-                k={t.shotsPerKill}
-                v={<Spark values={spkDays} total={p.kills && p.shots ? p.shots / p.kills : null} current={spkNow} fmt={n2} titles={sparkTitles} lowerIsBetter />}
-              />
+              {shots ? (
+                <>
+                  <Row4
+                    k={t.acc}
+                    v={<Spark values={accDays} total={ratio(p.hits, p.shots)} current={accNow} fmt={pc} titles={sparkTitles} />}
+                  />
+                  <Row4
+                    k={t.shotsPerKill}
+                    v={<Spark values={spkDays} total={p.kills && p.shots ? p.shots / p.kills : null} current={spkNow} fmt={n2} titles={sparkTitles} lowerIsBetter />}
+                  />
+                </>
+              ) : null}
               {/* Assisted kills (kills of this player others helped with) only when the collector counted any. */}
               <Row4 k={t.assists} v={`${fmtNum(p.kill_assists, lang)}${p.kills_assisted > 0 ? ` · ${t.assistedKills}: ${fmtNum(p.kills_assisted, lang)}` : ""}`} />
               <Row4 k={t.killStreak} v={fmtNum(p.kill_streak, lang)} />
@@ -503,6 +514,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
               locale={lang}
               labels={{
                 head: t.head,
+                neck: t.neck,
                 chest: t.chest,
                 stomach: t.stomach,
                 leftarm: t.leftarm,
@@ -523,8 +535,8 @@ export default async function PlayerPage({ params, searchParams }: Props) {
         <Section title={t.weapons}>
           <TableWrap>
             <SortableTable
-              initial={4}
-              cols={[
+              initial={shots ? 4 : 2}
+              cols={keep([
                 { label: t.weapon },
                 { label: t.shots, className: "num hide-sm" },
                 { label: t.hits, className: "num hide-sm" },
@@ -537,7 +549,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                 { label: t.acc, className: "barcell" },
                 { label: <abbr title={t.dphTitle}>{t.dph}</abbr>, className: "num hide-sm" },
                 { label: <abbr title={t.spkTitle}>{t.spk}</abbr>, className: "num hide-sm" },
-              ]}
+              ])}
               rows={weapons.map((w) => {
                 const hpk = ratio(w.headshots, w.kills);
                 const acc = ratio(w.hits, w.shots);
@@ -545,8 +557,8 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                 const spk = w.kills ? w.shots / w.kills : null;
                 return {
                   key: w.weaponId,
-                  values: [w.name, w.shots, w.hits, w.damage, w.kills, w.deaths, kpd(w.kills, w.deaths), w.headshots, hpk, acc, dph, spk],
-                  cells: [
+                  values: keep([w.name, w.shots, w.hits, w.damage, w.kills, w.deaths, kpd(w.kills, w.deaths), w.headshots, hpk, acc, dph, spk]),
+                  cells: keep([
                     <Link key="n" href={`/${game}/weapons/${encodeURIComponent(w.code)}`}>
                       {w.name}
                     </Link>,
@@ -561,7 +573,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                     <PctBar key="a" value={acc} lang={lang} />,
                     dph === null ? "-" : fmtNum(dph, lang, 2),
                     spk === null ? "-" : fmtNum(spk, lang, 2),
-                  ],
+                  ]),
                 };
               })}
             />

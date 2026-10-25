@@ -4,11 +4,15 @@
 
 // limited: the collector records kills, connects and teams, but has no
 // template definitions (weapons, actions, awards) for it yet.
-export type GameKind = { name: string; short: string; engine: "goldsrc" | "source"; limited?: boolean };
+// noShots: the logs have no shots (Counter-Strike 2 has no weaponstats
+// plugin), so shots, hits and accuracy are left out; damage and the hit zones
+// come from the attacked lines.
+export type GameKind = { name: string; short: string; engine: "goldsrc" | "source" | "source2"; limited?: boolean; noShots?: boolean };
 
 export const GAME_KINDS: Record<string, GameKind> = {
   css: { name: "Counter-Strike: Source", short: "CS:S", engine: "source" },
   csgo: { name: "Counter-Strike: Global Offensive", short: "CS:GO", engine: "source" },
+  cs2: { name: "Counter-Strike 2", short: "CS2", engine: "source2", noShots: true },
   cstrike: { name: "Counter-Strike 1.6", short: "CS 1.6", engine: "goldsrc" },
   tf: { name: "Team Fortress 2", short: "TF2", engine: "source" },
   tfc: { name: "Team Fortress Classic", short: "TFC", engine: "goldsrc" },
