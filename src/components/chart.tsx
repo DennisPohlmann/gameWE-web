@@ -26,6 +26,7 @@ export function LineChart({
   trimBy,
   alignTo,
   title,
+  legend = false,
 }: {
   labels: string[];
   // Time of each point for the hover box (e.g. "Mo 20.10. 14:00");
@@ -61,6 +62,8 @@ export function LineChart({
   // A heading above the chart, left of the legend (the legend alone, on
   // the right, without a title; none with a single untitled line).
   title?: string;
+  // Show the legend even for a single untitled line (e.g. the site load).
+  legend?: boolean;
 }) {
   const { hover, setHover, svgRef, figRef, tipRef } = useHoverBox();
   // While a graph is still filling up (e.g. load recorded since two days),
@@ -115,7 +118,7 @@ export function LineChart({
   const shown = hover ? series.filter((s) => s.values[hover.i] !== null && s.values[hover.i] !== undefined) : [];
   return (
     <figure className="chart" ref={figRef}>
-      {title || series.length > 1 ? <ChartHead title={title} series={series} /> : null}
+      {title || legend || series.length > 1 ? <ChartHead title={title} series={series} /> : null}
       <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={ariaLabel}>
         {ticks.map((t, i) => (
           <g key={i}>

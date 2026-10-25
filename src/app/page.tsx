@@ -171,11 +171,12 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
         <div className="container">
           <div className="box">
             {perHour ? (
-              <LineChart locale={lang} ariaLabel={t.loadCaptionHourly} labels={hourLabels} dates={hourDates} tips={hourTips} hourly series={[{ label: t.playersOnline, values: hourly.players, className: "s1" }]} />
+              <LineChart locale={lang} ariaLabel={t.loadCaptionHourly} labels={hourLabels} dates={hourDates} tips={hourTips} hourly legend series={[{ label: t.playersOnline, values: hourly.players, className: "s1" }]} />
             ) : (
               <LineChart
                 locale={lang}
                 ariaLabel={t.loadCaption}
+                legend
                 labels={activity.map((a) => dayLabel(a.day))}
                 series={[{ label: t.players, values: activity.map((a) => (a.point ? Number(a.point.players) : null)), className: "s1" }]}
               />
