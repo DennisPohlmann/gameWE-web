@@ -391,11 +391,33 @@ At the root of a domain:
 ```nginx
 server {
     listen 443 ssl;
+    http2 on;
     server_name stats.example.org;
     # ssl_certificate / ssl_certificate_key ...
 
+    # Compress the pages and JSON feeds (the website only gzips itself).
+    gzip on;
+    gzip_types text/html text/css application/javascript application/json image/svg+xml;
+    gzip_min_length 1024;
+
+    # Static files straight from disk, kept by the browser for a year: the
+    # build files carry a hash in their name, the flags change only with a
+    # release. Only with the tar.gz install (section 3); the container keeps
+    # the files inside, leave these two blocks out there.
+    location /_next/static/ {
+        alias /opt/gamewe/web/.next/static/;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+    location /flags/ {
+        alias /opt/gamewe/web/public/flags/;
+        expires 1y;
+        add_header Cache-Control "public";
+    }
+
     location / {
         proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
@@ -403,14 +425,29 @@ server {
 }
 ```
 
+With the Brotli module (`ngx_brotli`, in many distributions a package of
+its own) add `brotli on; brotli_types text/html text/css application/javascript application/json image/svg+xml;`
+next to the gzip lines; the pages get 15 to 20 per cent smaller than with gzip.
+
 Under a sub path, e.g. `https://example.org/stats`: set `BASE_PATH=/stats` in
 `web.env`, restart, and proxy the path as it is, without rewriting it and
 without a trailing slash in the location (with `location /stats/` nginx and
 the website redirect each other in a loop):
 
 ```nginx
+location /stats/_next/static/ {
+    alias /opt/gamewe/web/.next/static/;
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+}
+location /stats/flags/ {
+    alias /opt/gamewe/web/public/flags/;
+    expires 1y;
+    add_header Cache-Control "public";
+}
 location /stats {
     proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;

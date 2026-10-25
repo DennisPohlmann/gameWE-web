@@ -3,6 +3,7 @@ import { env } from "./env";
 import { createHmac, randomBytes, scryptSync, timingSafeEqual, createHash } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import { basePath } from "./base-path";
 import { clientIp } from "./client-ip";
 import { adminExec, adminQuery } from "./db";
@@ -200,7 +201,8 @@ export async function logout() {
   jar.delete({ name: OLD_COOKIE, path: `${basePath}/admin` });
 }
 
-export async function currentAdmin(): Promise<AdminUser | null> {
+// Once per request (React cache): layouts, metadata and page all ask.
+export const currentAdmin = cache(async (): Promise<AdminUser | null> => {
   const secret = adminSecret();
   const raw = (await cookies()).get(COOKIE)?.value;
   if (!secret || !raw) return null;
@@ -219,7 +221,7 @@ export async function currentAdmin(): Promise<AdminUser | null> {
   // Re-read the account so a deleted or demoted user loses access at once.
   const [user] = await adminQuery<AdminUser>(`SELECT username, acclevel FROM hlstats_Users WHERE username = ?`, [data.u]);
   return user && user.acclevel >= LEVEL_MIN ? user : null;
-}
+});
 
 export async function requireAdmin(level = LEVEL_MIN): Promise<AdminUser> {
   const user = await currentAdmin();

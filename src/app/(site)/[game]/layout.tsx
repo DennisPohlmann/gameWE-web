@@ -6,10 +6,9 @@ import { VoiceBox } from "@/components/voice-box";
 import { currentAdmin } from "@/lib/auth";
 import { getGame } from "@/lib/data";
 import { getDict } from "@/lib/i18n";
-import { basePath } from "@/lib/base-path";
 import { getSettings } from "@/lib/settings";
 import { rankingTitle } from "@/lib/ranking-title";
-import { gameTemplate } from "@/lib/templates";
+import { gameTemplate, themeStyle } from "@/lib/templates";
 
 // Pages of a ranking carry its name in the browser title (Settings →
 // Browser title in rankings), e.g. "GunGame Players | Clan". Absolute, so the
@@ -27,6 +26,7 @@ export default async function GameLayout({ children, params }: { children: React
   const { t } = await getDict();
   const { chatPublic, gameSkins } = await getSettings();
   const skin = gameSkins ? await gameTemplate(game.realgame, game.code) : null;
+  const theme = skin ? await themeStyle(skin, true) : null;
   const items = [
     { href: "", label: t.servers, icon: "🖥" },
     { href: "/players", label: t.players, icon: "👤" },
@@ -44,7 +44,14 @@ export default async function GameLayout({ children, params }: { children: React
     <>
       {skin ? (
         <>
-          <link rel="stylesheet" href={`${basePath}/theme/${skin.id}.game.css?v=${skin.mtime}`} precedence="game" />
+          {/* React lifts both into the head (precedence); the style's href is only its key. */}
+          {theme && "css" in theme ? (
+            <style href={`theme-${skin.id}-${skin.mtime}`} precedence="game">
+              {theme.css}
+            </style>
+          ) : theme ? (
+            <link rel="stylesheet" href={theme.href} precedence="game" />
+          ) : null}
           <i className={`skin-${skin.id}`} hidden />
         </>
       ) : null}

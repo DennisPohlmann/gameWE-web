@@ -80,20 +80,22 @@ async function gameCols() {
 
 const withBase = (g: Game): Game => ({ ...g, realgame: baseGameOf(g.code, g.realgame) });
 
+// Both run once per request (React cache): the layouts, the metadata and
+// the page of a ranking all ask for the same game.
 // withData: only rankings with a server or a player (for ranking choices).
-export async function getGames(withData = false) {
+export const getGames = cache(async (withData = false) => {
   return (
     await query<Game>(
       `SELECT ${await gameCols()} FROM hlstats_Games WHERE hidden = '0'${withData ? ` AND ${GAME_HAS_DATA}` : ""} ORDER BY display_id, name`,
     )
   ).map(withBase);
-}
+});
 
 // Hidden rankings are left out unless withHidden is set (admins only).
-export async function getGame(code: string, withHidden = false) {
+export const getGame = cache(async (code: string, withHidden = false) => {
   const g = await queryOne<Game>(`SELECT ${await gameCols()} FROM hlstats_Games WHERE code = ?${withHidden ? "" : ` AND hidden = '0'`}`, [code]);
   return g ? withBase(g) : g;
-}
+});
 
 // ---------------------------------------------------------------- servers
 
@@ -267,6 +269,34 @@ export async function getLivePlayers(game: string, serverId?: number): Promise<L
 // uptime of the game server in minutes.
 export type LoadPoint = { timestamp: number; act_players: number; min_players: number; max_players: number; uptime: number; map: string | null };
 
+// The load of every server of a ranking since `since`, by server id, in one
+// query (the ranking's start page shows a graph per server).
+export async function getServerLoads(game: string, since: number): Promise<Map<number, LoadPoint[]>> {
+  const rows = await query<LoadPoint & { server_id: number }>(
+    `SELECT l.server_id, l.timestamp, ${capped("l.")} AS act_players, l.min_players, l.max_players, l.uptime, m.map
+     FROM hlstats_server_load l LEFT JOIN hlstats_Maps m ON m.id = l.map
+     WHERE l.server_id IN (SELECT serverId FROM hlstats_Servers WHERE game = ?) AND l.timestamp >= ?
+     ORDER BY l.server_id, l.timestamp`,
+    [game, since],
+  );
+  const out = new Map<number, LoadPoint[]>();
+  for (const { server_id, ...r } of rows) {
+    const id = Number(server_id);
+    if (!out.has(id)) out.set(id, []);
+    out.get(id)!.push(loadPoint(r));
+  }
+  return out;
+}
+
+const loadPoint = (r: LoadPoint): LoadPoint => ({
+  ...r,
+  timestamp: Number(r.timestamp),
+  act_players: Number(r.act_players),
+  min_players: Number(r.min_players),
+  max_players: Number(r.max_players),
+  uptime: Number(r.uptime),
+});
+
 export async function getServerLoad(serverId: number, since: number) {
   const rows = await query<LoadPoint>(
     `SELECT l.timestamp, ${capped("l.")} AS act_players, l.min_players, l.max_players, l.uptime, m.map
@@ -274,14 +304,7 @@ export async function getServerLoad(serverId: number, since: number) {
      WHERE l.server_id = ? AND l.timestamp >= ? ORDER BY l.timestamp`,
     [serverId, since],
   );
-  return rows.map((r) => ({
-    ...r,
-    timestamp: Number(r.timestamp),
-    act_players: Number(r.act_players),
-    min_players: Number(r.min_players),
-    max_players: Number(r.max_players),
-    uptime: Number(r.uptime),
-  }));
+  return rows.map(loadPoint);
 }
 
 export type DayPoint = { day: string; players: number; kills: number; headshots: number };

@@ -4,7 +4,7 @@ import { LiveTable, ServerTable, serverValues } from "@/components/live";
 import { Rich } from "@/components/rich";
 import { Section } from "@/components/ui";
 import { ServerLoadChart } from "@/components/graphics";
-import { everyDay, getDailyActivity, getHourlyActivity, getLivePlayers, getLiveMapPlayers, getMapServers, getServerLoad, getServers, getTotals } from "@/lib/data";
+import { everyDay, getDailyActivity, getHourlyActivity, getLivePlayers, getLiveMapPlayers, getMapServers, getServerLoads, getServers, getTotals } from "@/lib/data";
 import { dateFormat, fmtNum, fmtPct, localeOf, nowUnix, ratio } from "@/lib/format";
 import { fill, getDict } from "@/lib/i18n";
 import { AwardBoard, awardBoardKeep } from "@/components/award-board";
@@ -38,7 +38,8 @@ export default async function ServersPage({
   const sp = await searchParams;
   const { lang, t } = await getDict();
   const { mapLive, mapStyle } = await getSettings();
-  const [servers, totals, live, activityRows, hourly, mapPlayers, mapServers] = await Promise.all([
+  const since = nowUnix() - 86400;
+  const [servers, totals, live, activityRows, hourly, mapPlayers, mapServers, loadByServer] = await Promise.all([
     getServers(game),
     getTotals(game),
     getLivePlayers(game),
@@ -46,7 +47,9 @@ export default async function ServersPage({
     getHourlyActivity(game, 14),
     mapLive ? getLiveMapPlayers(game) : [],
     mapLive ? getMapServers(game) : [],
+    getServerLoads(game, since),
   ]);
+  const loads = servers.map((s) => loadByServer.get(s.serverId) ?? []);
   const markers = mapMarkers(mapPlayers, game, t, lang);
   const serverPins = serverMarkers(mapServers, game, t);
   const activity = everyDay(activityRows, 14);
@@ -83,8 +86,6 @@ export default async function ServersPage({
   const headshotsTotal = running(hourly.headshots, Number(totals.headshots));
   const trendTrim = [hourly.players, hourly.kills, hourly.headshots];
   const trendMax = Math.max(0, ...killsTotal, ...headshotsTotal, ...days.map((d) => d.kills));
-  const since = nowUnix() - 86400;
-  const loads = await Promise.all(servers.map((s) => getServerLoad(s.serverId, since)));
   // With several servers, the list of all of them and one graph of all of
   // them come first; a single server is shown only once.
   const multi = servers.length > 1;

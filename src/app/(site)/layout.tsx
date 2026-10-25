@@ -13,7 +13,7 @@ import { ShareMenu } from "@/components/share-menu";
 import { basePath } from "@/lib/base-path";
 import { Crumbs } from "@/components/crumbs";
 import { getGames } from "@/lib/data";
-import { resolveTemplate } from "@/lib/templates";
+import { resolveTemplate, themeStyle } from "@/lib/templates";
 import "./globals.css";
 
 // Every page reads live data from the collector's database.
@@ -69,6 +69,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const { lang, t } = await getDict();
   const { siteName, siteUrl, logoUrl, headerLogo, links, headerHome, headerOrder, geoipCredit, skin, sourcebansUrl } = await getSettings();
   const [games, template, os] = await Promise.all([getGames().catch(() => []), resolveTemplate(skin), clientOs()]);
+  const theme = template ? await themeStyle(template) : null;
   const sections = {
     "": t.servers,
     servers: t.servers,
@@ -84,7 +85,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang={lang} data-skin={template?.id ?? "default"} data-os={os}>
       <head>
-        {template ? <link rel="stylesheet" href={`${basePath}/theme/${template.id}.css?v=${template.mtime}`} /> : null}
+        {/* The template's variables: in the page when small, else linked. */}
+        {theme && "css" in theme ? <style>{theme.css}</style> : theme ? <link rel="stylesheet" href={theme.href} /> : null}
       </head>
       <body>
         <header className="header">

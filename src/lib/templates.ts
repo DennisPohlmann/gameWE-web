@@ -1,6 +1,7 @@
 import "server-only";
 import { lstat, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
+import { basePath } from "./base-path";
 import { chartCss } from "./chart-config";
 import { env } from "./env";
 
@@ -18,6 +19,10 @@ export type Template = { id: string; name: { de: string; en: string }; file: str
 const ID = /^[a-z0-9][a-z0-9_-]{0,31}$/;
 const MAX_CSS = 256 * 1024;
 const MAX_CHART = 16 * 1024;
+// Up to this size a template's CSS goes into the page itself (one request
+// less before the first paint); the larger generated "modern" templates stay
+// a cached stylesheet, see themeStyle.
+const INLINE_CSS = 4 * 1024;
 
 let cache: { at: number; list: Template[] } | undefined;
 
@@ -81,6 +86,17 @@ export async function resolveTemplate(id: string): Promise<Template | null> {
 export async function gameTemplate(realgame: string | null, code: string): Promise<Template | null> {
   const list = await listTemplates();
   return list.find((t) => t.id === `game-${realgame}`) ?? list.find((t) => t.id === `game-${code}`) ?? null;
+}
+
+// The <style> or <link> of a template for the page head: small templates
+// (the classic ones, a few variables) are written into the page, so the
+// browser needs no extra request before it can paint; large ones (the
+// generated "modern" templates, about 23 KB) are linked, with the file time
+// in the URL so the browser keeps them (see app/theme/[file]/route.ts).
+export async function themeStyle(t: Template, scoped = false): Promise<{ css: string } | { href: string }> {
+  const css = await templateCss(t.id, scoped);
+  if (css !== null && css.length <= INLINE_CSS) return { css };
+  return { href: `${basePath}/theme/${t.id}${scoped ? ".game" : ""}.css?v=${t.mtime}` };
 }
 
 // scoped: the selector becomes html[data-skin]:has(.skin-<id>), so the game

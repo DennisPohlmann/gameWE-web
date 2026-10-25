@@ -20,6 +20,18 @@ const nextConfig: NextConfig = {
   // Keep mysql2 as a real package in the standalone output, so
   // scripts/create-admin.mjs can use it on the server too.
   serverExternalPackages: ["mysql2", "pg"],
+  // Files in public/ are served with "max-age=0" by default, so the browser
+  // asks for every flag again on every page. The flags, icons and the
+  // vendored Scalar bundle change only with a release, so the browser may
+  // keep them for a day.
+  async headers() {
+    const day = "public, max-age=86400";
+    return [
+      { source: "/flags/:path*", headers: [{ key: "cache-control", value: day }] },
+      { source: "/:file(icon\\.svg|icon-32\\.png|icon-192\\.png|icon-512\\.png|apple-touch-icon\\.png|avatar-unknown\\.svg)", headers: [{ key: "cache-control", value: day }] },
+      { source: "/vendor/:path*", headers: [{ key: "cache-control", value: day }] },
+    ];
+  },
   // The old raw list "Advanced: all options" is a settings page now.
   async redirects() {
     return [
