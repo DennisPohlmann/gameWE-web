@@ -4,13 +4,14 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { sourcebansBase } from "@/lib/sourcebans";
 import { getEntity } from "@/lib/admin-entities";
-import { deleteRow, getRow, InputError, optionList, rawOptions, saveRow, withColumns } from "@/lib/admin-data";
+import { deleteRow, getRow, InputError, isDuplicateKey, keptValues, optionList, otherServerAt, rawOptions, saveRow, withColumns } from "@/lib/admin-data";
 import { allServers, assignServers, copyDefinitions, rankingBaseGames } from "@/lib/admin-rankings";
 import { baseGameOf, sameBaseGame } from "@/lib/games";
 import { RAW_GROUP, READONLY_OPTIONS, homeValue, linkValue, rawKeyAllowed, settingGroups } from "@/lib/admin-settings";
 import { headerOrder } from "@/lib/header-links";
 import { ADMIN_THEME_COOKIE, isAdminTheme } from "@/lib/admin-theme";
 import { basePath } from "@/lib/base-path";
+import { canonicalIp } from "@/lib/ip";
 import { LEVEL_ADMIN, adminSecret, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, requireAdmin } from "@/lib/auth";
 import { adminExec, adminQuery, upsert } from "@/lib/db";
 import { imageUrl, invalidateSettings } from "@/lib/settings";
@@ -103,11 +104,24 @@ export async function saveAction(form: FormData) {
       redirect(editHref(e.key, id, form, { error: "mismatch" }));
     }
   }
+  // One server per IP and port: point to the existing one instead of the
+  // database's duplicate key error, and keep the input of a new server.
+  const kept = e.key === "servers" && id === null ? keptValues(e, form) : {};
+  if (e.key === "servers") {
+    const address = canonicalIp(String(form.get("address") ?? "").trim());
+    const port = Number(String(form.get("port") ?? "").trim());
+    if (address && Number.isInteger(port)) {
+      const other = await otherServerAt(address, port, id);
+      if (other !== null) redirect(editHref(e.key, rawId, form, { error: "duplicate", dup: String(other), ...kept }));
+    }
+  }
   let saved: string;
   try {
     saved = await saveRow(e, id, form);
   } catch (err) {
-    if (err instanceof InputError) redirect(editHref(e.key, rawId, form, { error: "field", field: err.message }));
+    if (err instanceof InputError) redirect(editHref(e.key, rawId, form, { error: "field", field: err.message, ...kept }));
+    // Another admin saved the same IP and port in the meantime.
+    if (e.key === "servers" && isDuplicateKey(err)) redirect(editHref(e.key, rawId, form, { error: "duplicate", ...kept }));
     const msg = err instanceof Error ? err.message.slice(0, 200) : "?";
     console.error("admin save:", err);
     redirect(editHref(e.key, rawId, form, { error: "db", msg }));

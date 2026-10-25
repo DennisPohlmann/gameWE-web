@@ -180,6 +180,11 @@ async function parseValue(f: Field, raw: FormDataEntryValue | null): Promise<Par
       if (f.required && !s) throw new InputError(f.name);
       if (f.max && s.length > f.max) throw new InputError(f.name);
       if (f.pattern && s && !f.pattern.test(s)) throw new InputError(f.name);
+      if (f.normalize && s) {
+        const n = f.normalize(s);
+        if (n === null) throw new InputError(f.name);
+        return n;
+      }
       return s;
   }
 }
@@ -211,6 +216,34 @@ export async function saveRow(e: Entity, id: string | null, form: FormData): Pro
     ]);
   }
   return id;
+}
+
+// The id of a server other than exceptId with this address and port, if any
+// (hlstats_Servers has a unique key on both).
+export async function otherServerAt(address: string, port: number, exceptId: string | null): Promise<number | null> {
+  const rows = await adminQuery<{ serverId: number | string }>(
+    `SELECT serverId FROM hlstats_Servers WHERE address = ? AND port = ? AND serverId <> ?`,
+    [address, port, exceptId === null ? 0 : Number(exceptId)],
+  );
+  return rows.length ? Number(rows[0].serverId) : null;
+}
+
+// A write that broke a unique key (MySQL/MariaDB ER_DUP_ENTRY, PostgreSQL 23505).
+export function isDuplicateKey(err: unknown): boolean {
+  const code = (err as { code?: unknown } | null)?.code;
+  return code === "ER_DUP_ENTRY" || code === "23505";
+}
+
+// The form's plain fields of a new row, to fill the form again after an
+// error; passwords and secrets are never put into a URL.
+export function keptValues(e: Entity, form: FormData): Record<string, string> {
+  const kept: Record<string, string> = {};
+  for (const f of e.fields) {
+    if (f.readonly || f.virtual || f.type === "password" || f.type === "secret") continue;
+    const v = form.get(f.name);
+    if (typeof v === "string" && v.trim()) kept[`v_${f.name}`] = v.trim().slice(0, f.max ?? 255);
+  }
+  return kept;
 }
 
 export async function deleteRow(e: Entity, id: string) {

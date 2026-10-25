@@ -1,4 +1,5 @@
 import { GAME_KINDS } from "./games";
+import { canonicalIp } from "./ip";
 import { isLogSecret } from "./log-secret";
 
 // What the admin area can edit. Each entity is one table; the generic list,
@@ -29,6 +30,8 @@ export type Field = {
   pattern?: RegExp;
   // secret only: the value must pass this check (besides max).
   valid?: (s: string) => boolean;
+  // text only: the stored form of the value, or null if it is invalid.
+  normalize?: (s: string) => string | null;
   // A column set to the current Unix time whenever this field is written
   // (a constant of the entity definition).
   changedAt?: string;
@@ -114,7 +117,7 @@ export const entities: Entity[] = [
     },
     fields: [
       { name: "name", label: { de: "Name", en: "Name" }, type: "text", inList: true, required: true, max: 255 },
-      { name: "address", label: { de: "IP-Adresse", en: "IP address" }, type: "text", inList: true, required: true, max: 32, pattern: /^(\d{1,3}\.){3}\d{1,3}$|^[0-9a-fA-F:]+$/, help: { de: "Eine IP-Adresse, kein Hostname.", en: "An IP address, not a host name." } },
+      { name: "address", label: { de: "IP-Adresse", en: "IP address" }, type: "text", inList: true, required: true, max: 32, normalize: canonicalIp, help: { de: "Eine IP-Adresse, kein Hostname. Jede Kombination aus IP und Port gibt es nur einmal.", en: "An IP address, not a host name. Each IP and port combination exists only once." } },
       { name: "port", label: { de: "Port", en: "Port" }, type: "number", inList: true, required: true, min: 1, maxValue: 65535, help: { de: "Spiel- und RCON-Port des Servers.", en: "Game and RCON port of the server." } },
       { ...gameField, help: { de: "Die Rangliste bestimmt das Spiel: erst unter Ranglisten das Spiel der Rangliste wählen, dann den Server ihr zuordnen. Nur Ranglisten desselben Spiels sind erlaubt.", en: "The ranking decides the game: first choose the ranking's game under Rankings, then assign the server to it. Only rankings of the same game are allowed." } },
       { name: "rcon_password", label: { de: "RCON-Passwort", en: "RCON password" }, type: "secret", max: 128, help: { de: "Für die Antworten auf !rank, !top10 usw. Leer lassen, um es nicht zu ändern. Ein einzelnes Minus (-) löscht es.", en: "For replies to !rank, !top10 etc. Leave empty to keep it. A single minus (-) clears it." } },

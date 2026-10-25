@@ -330,7 +330,13 @@ What the admin area edits:
   (raw), where they can be changed, deleted or added; TOTP secrets are never
   listed. The old address `/admin/options` redirects there.
 - **Servers:** the collector only accepts logs from servers registered here
-  (IP address, port, game, RCON password). The RCON password is write-only in
+  (IP address, port, game, RCON password). Each IP address and port exists
+  only once: saving a server with the IP and port of another one is refused
+  with a link to the existing server, and the form keeps its input (never the
+  RCON password or log secret). The address is stored in the form the
+  collector matches log packets by (IPv4 without leading zeros, IPv6
+  compressed in lower case, IPv4-mapped IPv6 as IPv4), so `192.000.002.010` and
+  `192.0.2.10` are the same server. The RCON password is write-only in
   the form and never shown again; public pages never read it, and the
   read-only web user has no right to that column. The optional **log
   secret** (`sv_logsecret`, a number from 1 to 2147483647, empty by default)

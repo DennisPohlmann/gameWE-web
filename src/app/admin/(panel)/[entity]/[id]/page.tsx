@@ -53,7 +53,13 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
           ? a.notSelf
           : sp.error === "mismatch"
             ? a.gameMismatch
-            : null;
+            : sp.error === "duplicate"
+              ? a.serverExists
+              : null;
+  // The existing server a duplicate points to.
+  const dup = sp.error === "duplicate" && /^\d{1,5}$/.test(sp.dup ?? "") ? sp.dup : null;
+  // A new row's input after an error (plain fields only, see keptValues).
+  const kept = (name: string) => (isNew && sp.error ? sp[`v_${name}`] : undefined);
 
   return (
     <>
@@ -78,14 +84,24 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
         </p>
       ) : null}
       {sp.saved ? <p className="notice">{a.saved}</p> : null}
-      {error ? <p className="notice error">{error}</p> : null}
+      {error ? (
+        <p className="notice error">
+          {error}
+          {dup ? (
+            <>
+              {" "}
+              <Link href={`/admin/servers/${dup}`}>{a.serverExistsOpen} →</Link>
+            </>
+          ) : null}
+        </p>
+      ) : null}
       <Section title={isNew ? a.new : a.edit}>
         <form action={saveAction} className="form">
           <input type="hidden" name="__entity" value={e.key} />
           <input type="hidden" name="__id" value={id} />
           <input type="hidden" name="__returnTo" value={returnTo} />
           {e.fields.filter((f) => isNew || !f.virtual).map((f) => {
-            const value = (row as Record<string, string | number | null>)[f.name];
+            const value = kept(f.name) ?? (row as Record<string, string | number | null>)[f.name];
             const locked = f.readonly || (f.createOnly && !isNew);
             const opts = Array.isArray(f.options)
               ? f.options.map(([v, l]): [string, string] => [v, typeof l === "string" ? l : l[lang]])
