@@ -30,7 +30,7 @@ export async function VoiceBox() {
               <tr>
                 <td>
                   {box.ts.country !== null ? <ServerFlag code={box.ts.country} lang={lang} /> : null}
-                  <Link href="/voice" className="voice-name">
+                  <Link href="/voice" className="voice-name" title={box.ts.name}>
                     {box.ts.name}
                   </Link>
                 </td>
@@ -48,7 +48,7 @@ export async function VoiceBox() {
             ) : null}
             {box.discord ? (
               <tr>
-                <td>
+                <td title={box.discord.name}>
                   <span className="voice-icon discord" aria-hidden="true" /> {box.discord.name}
                 </td>
                 <td className="hide-sm">{box.discord.type}</td>

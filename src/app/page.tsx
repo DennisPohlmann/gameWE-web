@@ -96,7 +96,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                 {rankings.map((r, i) => (
                   <tr key={r.code} className="ranking-line">
                     <td className="no-rb">
-                      <Link className="rnk" href={`/${r.code}`}>
+                      <Link className="rnk" href={`/${r.code}`} title={r.name}>
                         {r.name}
                       </Link>
                     </td>

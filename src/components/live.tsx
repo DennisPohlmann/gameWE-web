@@ -81,7 +81,7 @@ export function ServerTable({
               <tr key={s.serverId} className="server-line">
                 <td className="wrap-cell">
                   <ServerFlag code={s.country_code} lang={lang} />
-                  <Link className="srv" href={`/${game}/servers/${s.serverId}`}>
+                  <Link className="srv" href={`/${game}/servers/${s.serverId}`} title={s.name || addr}>
                     {s.name || addr}
                   </Link>
                 </td>

@@ -319,6 +319,25 @@ html[data-skin] tr.ranking-line a, html[data-skin] tr.server-line a { color: var
 html[data-skin] a.rnk, html[data-skin] a.srv { color: var(--accent) !important; }
 html[data-skin] a.rnk:hover, html[data-skin] a.srv:hover { color: var(--accent-text) !important; text-decoration: none; }
 html[data-skin] tr.ranking-line td:first-child, html[data-skin] tr.server-line td:first-child { padding-left: 12px; }
+/* Long ranking and server names stay on one line and end in "…" (the full
+   name is the link's title). max-width: 0 lets the name column take only the
+   room the other columns leave; the top player is cut the same way. */
+html[data-skin] table.rankings td.no-rb,
+html[data-skin] tr.server-line > td:first-child,
+html[data-skin] .voice-box td:first-child {
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+html[data-skin] table.rankings td.no-rb { width: 50%; }
+html[data-skin] .voice-box td:first-child { width: 40%; }
+html[data-skin] table.rankings td:nth-child(5) {
+  max-width: 200px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 html[data-skin] .icon { width: 22px; height: 22px; line-height: 22px; background: var(--m-icon); box-shadow: inset 0 0 0 1px var(--m-outline); }
 html[data-skin] .srv-full { color: var(--m-srv-full); }
 html[data-skin] .srv-nempty { color: var(--m-srv-nempty); }
@@ -450,6 +469,24 @@ html[data-skin] .login { padding: 18px; background: var(--surface); border: 1px 
   html[data-skin] .section > .cont-2 { overflow-x: auto; }
   html[data-skin] .sig-codes-bar { flex-wrap: wrap; }
   html[data-skin] .sig-codes-bar select { min-width: 0; max-width: 100%; }
+}
+
+/* Narrow screens: the start page keeps name, Players/Clans links, the
+   player count and (from 641px) the top player; game and top clan go. */
+@media (max-width: 900px) {
+  html[data-skin] table.rankings tr > :nth-child(3), html[data-skin] table.rankings tr > :nth-child(6) { display: none; }
+  html[data-skin] table.rankings td.no-rb { width: 60%; }
+  html[data-skin] table.rankings td:nth-child(5) { max-width: 0; width: 40%; }
+}
+@media (max-width: 640px) {
+  html[data-skin] table.rankings tr > :nth-child(5) { display: none; }
+  html[data-skin] table.rankings td.no-rb { width: 100%; }
+}
+/* Server lists up to tablet width: game and version columns go, so the
+   name, address, map and players fit without scrolling. */
+@media (max-width: 900px) {
+  html[data-skin] table:has(> tbody > tr.server-line) tr > :nth-child(2),
+  html[data-skin] table:has(> tbody > tr.server-line) tr > :nth-child(7) { display: none; }
 }
 
 /* Server load: players in the first series colour like the other area charts,
