@@ -1,5 +1,6 @@
 // Rank insignia and award ribbons, drawn with SVG and CSS (no images).
 
+import type { CSSProperties } from "react";
 import type { Lang } from "@/translations/languages";
 
 const RANKS: Record<string, [string, string]> = {
@@ -181,8 +182,8 @@ export function Ribbon({
   const h = hue(code);
   const edge = ribbon ? CLASS_COLORS[Math.min(ribbon.index, CLASS_COLORS.length - 1)] : "#444";
   const style = {
-    background: `linear-gradient(90deg, ${edge} 0 12%, hsl(${h} 55% 38%) 12% 30%, #eee 30% 34%, hsl(${(h + 40) % 360} 60% 45%) 34% 66%, #eee 66% 70%, hsl(${h} 55% 38%) 70% 88%, ${edge} 88% 100%)`,
-  };
+    "--ribbon-bg": `linear-gradient(90deg, ${edge} 0 12%, hsl(${h} 55% 38%) 12% 30%, #eee 30% 34%, hsl(${(h + 40) % 360} 60% 45%) 34% 66%, #eee 66% 70%, hsl(${h} 55% 38%) 70% 88%, ${edge} 88% 100%)`,
+  } as CSSProperties;
   return (
     <span className={ribbon ? "ribbon" : "ribbon none"} style={style} title={title}>
       <span className="ribbon-label">{label ?? title}</span>
