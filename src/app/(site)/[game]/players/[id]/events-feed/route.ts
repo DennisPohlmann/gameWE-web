@@ -2,6 +2,7 @@ import { overLimit } from "@/lib/api";
 import { currentAdmin } from "@/lib/auth";
 import { getGame, getPlayer, getPlayerFlags, noProfile } from "@/lib/data";
 import { EVENT_KINDS, getPlayerEventsFeed, getPlayerGameEvents, PLAYER_EVENTS, type EventKind } from "@/lib/history";
+import { noContent, nothingNew, sinceParam } from "@/lib/live-feed";
 import { getSettings } from "@/lib/settings";
 
 // Requests a client may make a minute (the page asks every 4 seconds; a few
@@ -13,6 +14,8 @@ const LIMIT = 60;
 // same rows the page itself shows, and only where the page exists.
 // With `?list=` (empty or an event kind): the newest rows of the player's
 // events page with that type filter instead, for its live table.
+// With `?since=<unix seconds>&seen=<n>` (the newest second the page knows
+// and how many events of it): 204 and no body when there is nothing newer.
 export async function GET(req: Request, { params }: { params: Promise<{ game: string; id: string }> }) {
   const { game, id: raw } = await params;
   if (!/^[a-z0-9_-]{1,32}$/i.test(game) || !/^[1-9]\d{0,9}$/.test(raw)) return notFound();
@@ -25,15 +28,19 @@ export async function GET(req: Request, { params }: { params: Promise<{ game: st
   const id = Number(raw);
   const p = await getPlayer(id);
   if (!p || p.game !== game || (await noProfile(p))) return notFound();
-  const list = new URL(req.url).searchParams.get("list");
+  const url = new URL(req.url);
+  const list = url.searchParams.get("list");
+  const since = sinceParam(req.url);
   if (list !== null) {
     // Only known kinds; anything else is the page's "all types".
     const kinds = EVENT_KINDS.includes(list as EventKind) ? [list as EventKind] : [...EVENT_KINDS];
     const rows = await getPlayerEventsFeed(id, kinds);
+    if (nothingNew(rows, since)) return noContent();
     const flags = await getPlayerFlags(rows.map((r) => r.other));
     return Response.json({ rows, flags: Object.fromEntries(flags) }, { headers: { "cache-control": "no-store" } });
   }
   const rows = await getPlayerGameEvents(id, PLAYER_EVENTS);
+  if (nothingNew(rows, since)) return noContent();
   const flags = await getPlayerFlags(rows.flatMap((r) => [r.actor, r.other]));
   return Response.json({ rows, flags: Object.fromEntries(flags) }, { headers: { "cache-control": "no-store" } });
 }

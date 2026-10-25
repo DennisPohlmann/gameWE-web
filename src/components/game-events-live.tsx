@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { PlayerLink, Section, TableWrap } from "@/components/ui";
 import { basePath } from "@/lib/base-path";
 import { fmtDateTime } from "@/lib/format";
+import { newerWith, newestOf } from "@/lib/live-feed";
 import type { GameEvent } from "@/lib/history";
 import type { Lang } from "@/translations/languages";
 
@@ -79,14 +80,15 @@ export function useLiveRows<T extends { ts: number }>({
   const [data, setData] = useState<{ rows: Row<T>[]; flags: Flags; fresh: number }>(() => ({ rows: initial.slice(0, shown).map(withId), flags: initialFlags, fresh: 0 }));
   const queue = useRef<T[]>([]);
   const known = useRef(new Set(initial.map(key)));
-  const newest = useRef(initial.reduce((m, e) => Math.max(m, e.ts), 0));
+  // The second of the newest event known (shown or queued) and how many of
+  // that second are known: the feed is asked for anything newer than that.
+  const newest = useRef(newestOf(initial));
   useEffect(() => {
     if (!running) return;
     let drip: ReturnType<typeof setTimeout> | undefined;
     const next = () => {
       const e = queue.current.shift();
       if (!e) return;
-      newest.current = Math.max(newest.current, e.ts);
       const row = withId(e);
       setData((d) => ({ rows: [row, ...d.rows].slice(0, shown), flags: d.flags, fresh: row.id }));
       if (queue.current.length) drip = setTimeout(next, Math.max(250, Math.min(1500, POLL_MS / (queue.current.length + 1))));
@@ -94,17 +96,21 @@ export function useLiveRows<T extends { ts: number }>({
     const load = async () => {
       if (document.visibilityState !== "visible") return;
       try {
-        const r = await fetch(`${basePath}${feed}`, { cache: "no-store" });
-        if (!r.ok) return;
+        // The feed answers 204 without a body when it has nothing newer
+        // than the newest event known here (same second: nothing beyond
+        // the `seen` ones).
+        const { ts: top, n } = newest.current;
+        const r = await fetch(`${basePath}${feed}${feed.includes("?") ? "&" : "?"}since=${top}&seen=${n}`, { cache: "no-store" });
+        if (r.status === 204 || !r.ok) return;
         const j: { rows: T[]; flags: Flags } = await r.json();
         // Only events at least as new as the newest one shown (or queued)
         // run in, oldest first, so the newest ends up on top. Older ones
         // that only now enter the window (e.g. after hidden players were
         // filtered out) are not new and stay out.
-        const top = Math.max(newest.current, ...queue.current.map((e) => e.ts));
         const add = j.rows.filter((e) => e.ts >= top && !known.current.has(key(e))).sort((a, b) => a.ts - b.ts);
         if (!add.length) return;
         for (const e of add) known.current.add(key(e));
+        newest.current = newerWith(newest.current, add);
         if (known.current.size > 500) known.current = new Set(j.rows.map(key));
         // After a long pause (hidden tab) only the latest ones run in.
         queue.current = [...queue.current, ...add].slice(-shown);

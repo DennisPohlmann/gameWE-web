@@ -115,9 +115,12 @@ table is shown as "?". In "Sync" the heading says "(Live data)" and a switch
 top right pauses the updates (no requests while paused; the choice is kept
 per browser and box). The live boxes ask `/<game>/events-feed` and
 `/<game>/players/<id>/events-feed` every 4 seconds while the tab is
-visible; both answer 404 unless their setting is "Sync". Both are kept for
-3 seconds per ranking or player; the player feed allows 60 requests per
-client IP and minute. The heading of the player page's box links to the
+visible, with `?since=<unix seconds>` of the newest row they show and
+`&seen=<n>` rows of that second; the feeds answer `204` without a body
+when nothing newer has happened (the usual case), so the browser has nothing to download or draw. Both answer
+404 unless their setting is "Sync". Both are kept for 3 seconds per
+ranking or player; the player feed allows 60 requests per client IP and
+minute. The heading of the player page's box links to the
 player's events page ("(Overview)").
 
 With "Latest events (player page)" on "Sync" the player's events page
