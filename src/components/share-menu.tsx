@@ -43,7 +43,7 @@ function ShareIcon({ size }: { size: number }) {
   );
 }
 
-// The share bar at the top of the profile pages (player, clan, server): the
+// The share bar at the top of the clan and server pages: the
 // share text and every target as its own button, no menu to open first.
 export function ShareBar({ labels }: { labels: Labels }) {
   const [copied, setCopied] = useState(false);

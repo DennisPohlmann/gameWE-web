@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Children } from "react";
-import { ShareBar } from "@/components/share-menu";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Bar, Empty, Flag, PctBar, PlayerLink, Section, TableWrap } from "@/components/ui";
@@ -189,10 +188,6 @@ export default async function PlayerPage({ params, searchParams }: Props) {
 
   return (
     <>
-      <div className="page-share">
-        <ShareBar labels={{ share: t.shareThis, copy: t.shareCopy, copied: t.copied, email: t.shareEmail }} />
-      </div>
-
       <Section title={t.playerInfo}>
         <div className="cont-2">
           <table className="stats profile">
