@@ -210,7 +210,8 @@ website therefore computes some things itself:
   kept. Maps without such rounds, and games whose round actions have no
   side (TF2, DoD:S), show an even 50 % / 50 % bar whose tooltip says
   "no data"; the column appears
-  for Counter-Strike rankings and wherever wins exist. The collector does
+  for Counter-Strike rankings (CS:S, CS:GO, CS2, CS 1.6, Condition Zero) and
+  wherever wins exist. The collector does
   not write `hlstats_Maps.teama_wins` / `teamb_wins`.
 - **Countries** come from the collector's GeoIP lookup:
   `hlstats_Players_Data.location_id` and `hlstats_Livestats.cli_location_id`
@@ -393,8 +394,8 @@ What the admin area edits:
 - **Chat** and **IP addresses:** all stored chat messages and connect
   addresses, searchable (IP or its start, Steam ID, name, host name), for
   admins only.
-- **Rankings and servers** show their game (Counter-Strike: Source, Day of
-  Defeat: Source ...). A server can only be moved into a ranking of the same
+- **Rankings and servers** show their game (Counter-Strike: Source, Counter-
+  Strike: Condition Zero, Day of Defeat: Source ...). A server can only be moved into a ranking of the same
   game; rankings without a known game are not checked. The game tag has
   the colour of its engine (GoldSrc, Source, Source 2). The form of a
   Counter-Strike 2 server shows the `logaddress_add_http` line for its game

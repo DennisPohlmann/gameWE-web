@@ -14,6 +14,7 @@ export const GAME_KINDS: Record<string, GameKind> = {
   csgo: { name: "Counter-Strike: Global Offensive", short: "CS:GO", engine: "source" },
   cs2: { name: "Counter-Strike 2", short: "CS2", engine: "source2", noShots: true },
   cstrike: { name: "Counter-Strike 1.6", short: "CS 1.6", engine: "goldsrc" },
+  czero: { name: "Counter-Strike: Condition Zero", short: "CS:CZ", engine: "goldsrc" },
   tf: { name: "Team Fortress 2", short: "TF2", engine: "source" },
   tfc: { name: "Team Fortress Classic", short: "TFC", engine: "goldsrc" },
   hl2mp: { name: "Half-Life 2 Deathmatch", short: "HL2DM", engine: "source" },

@@ -137,6 +137,13 @@ request.
 CS2 has no plugin, so in-game commands get no answer. Setting up the server
 (HTTP log) is described in the collector's documentation.
 
+## Counter-Strike: Condition Zero
+
+Rankings of Condition Zero servers (realgame `czero`) carry their own game
+tag (CS:CZ, in the GoldSrc colour) and show the same pages as Counter-Strike
+1.6, including the CT/T win ratio. The collector gives czero a copy of the
+cstrike definitions; the AMX Mod X plugin `gamewe_cstrike` runs on both.
+
 ## Credits
 
 The Counter-Strike 2 support follows HLstatsX:CE by lovasatt
