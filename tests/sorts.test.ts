@@ -32,3 +32,12 @@ test("known keys are kept, unknown and inherited keys fall back", () => {
   assert.equal(sortParam(rankingSorts, "acc", "skill"), "acc");
   assert.equal(sortParam(rankingSorts, "", "new"), "new");
 });
+
+test("the API lists countries and cities by total points by default", async () => {
+  const { endpoints } = await import("../src/lib/openapi.ts");
+  for (const path of ["/rankings/{game}/countries", "/rankings/{game}/cities"]) {
+    const e = endpoints.find((x) => x.path === path);
+    assert.equal(e?.list?.sort, "skill", path);
+    assert.deepEqual(e?.list?.sorts, Object.keys(placeSorts), path);
+  }
+});

@@ -1,5 +1,6 @@
 import { DEFAULT_LIMIT, MAX_LIMIT, MAX_OFFSET, paged } from "./api-params";
 import { basePath } from "./base-path";
+import { PLACE_SORT_DEFAULT, placeSorts, type PlaceSort } from "./sorts";
 
 // OpenAPI 3.1 description of the public API (/api/v1/...), shown on /api by
 // Scalar and served as /api/openapi.json. One entry per route under
@@ -287,7 +288,7 @@ const days = [
 ];
 
 const PLAYER_SORTS = ["skill", "name", "activity", "time", "kills", "deaths", "kpd", "hs", "hpk", "acc", "new"] as const;
-const PLACE_SORTS = ["players", "skill", "avg", "kills", "deaths", "kpd", "hpk", "time", "name"] as const;
+const PLACE_SORTS = Object.keys(placeSorts) as PlaceSort[];
 const CLAN_SORTS = ["skill", "members", "kills", "deaths", "headshots", "kpd", "hpk", "time", "activity", "tag"] as const;
 
 export const endpoints: Endpoint[] = [
@@ -364,9 +365,9 @@ export const endpoints: Endpoint[] = [
     operationId: "listCountries",
     tag: "Countries and cities",
     summary: "Country ranking",
-    description: "Countries of the ranked players (by GeoIP of their last connect) with summed and averaged values, by number of players. `avg` sorts by average points.",
+    description: "Countries of the ranked players (by GeoIP of their last connect) with summed and averaged values, by total points (`?sort=players` orders by number of players). `avg` sorts by average points.",
     params: [gameParam],
-    list: { item: "Place", sorts: PLACE_SORTS, sort: "players" },
+    list: { item: "Place", sorts: PLACE_SORTS, sort: PLACE_SORT_DEFAULT },
     example: page([place], 34, "/rankings/css/countries"),
     notFound: "Unknown ranking",
   },
@@ -375,7 +376,7 @@ export const endpoints: Endpoint[] = [
     operationId: "getCountry",
     tag: "Countries and cities",
     summary: "One country",
-    description: "Totals of one country and its place in the country ranking. Its players: `playersUrl`.",
+    description: "Totals of one country and its place in the country ranking by total points. Its players: `playersUrl`.",
     params: [gameParam, { name: "country", in: "path", required: true, description: "ISO 3166-1 alpha-2 code, any case", schema: str("", { pattern: "^[A-Za-z]{2}$" }), example: "de" }],
     schema: withGame(ref("Place")),
     example: { game: "css", ...place },
@@ -386,9 +387,9 @@ export const endpoints: Endpoint[] = [
     operationId: "listCities",
     tag: "Countries and cities",
     summary: "City ranking",
-    description: "Cities of the ranked players, optionally of one country, by number of players. Its players: `playersUrl` (country and city filter of `/players`).",
+    description: "Cities of the ranked players, optionally of one country, by total points (`?sort=players` orders by number of players). Its players: `playersUrl` (country and city filter of `/players`).",
     params: [gameParam, countryQuery],
-    list: { item: "PlaceCity", sorts: PLACE_SORTS, sort: "players" },
+    list: { item: "PlaceCity", sorts: PLACE_SORTS, sort: PLACE_SORT_DEFAULT },
     example: page([{ ...place, city: "Berlin", players: 57, playersUrl: `${v1("/rankings/css/players")}?country=de&city=Berlin` }], 120, "/rankings/css/cities", { country: "de" }),
     notFound: "Unknown ranking",
   },

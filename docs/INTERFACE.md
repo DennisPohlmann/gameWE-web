@@ -45,9 +45,9 @@ parameters are ignored.
 | `/api/v1/rankings/<game>?limit=10&offset=0` | one ranking: totals and the best players by points (limit 1-100) |
 | `/api/v1/rankings/<game>/players` | the ranking as a paged list; filters `country`, `city`, `clan`, `q` (name); `sort` by points, name, activity, time, kills, deaths, K:D, headshots, HS/kill, accuracy or first seen |
 | `/api/v1/rankings/<game>/stats?days=30` | totals and activity per day (players, kills, headshots) |
-| `/api/v1/rankings/<game>/countries` | country ranking (players, points, kills summed per country) |
-| `/api/v1/rankings/<game>/countries/<code>` | one country with its place |
-| `/api/v1/rankings/<game>/cities?country=de` | city ranking, optionally of one country |
+| `/api/v1/rankings/<game>/countries` | country ranking (players, points, kills summed per country), by total points by default (`?sort=players` for the number of players) |
+| `/api/v1/rankings/<game>/countries/<code>` | one country with its place in the country ranking by total points |
+| `/api/v1/rankings/<game>/cities?country=de` | city ranking, optionally of one country, by total points by default |
 | `/api/v1/rankings/<game>/clans` | clan ranking (clans with at least two ranked members) |
 | `/api/v1/rankings/<game>/clans/<id>` | one clan |
 | `/api/v1/rankings/<game>/clans/<id>/members` | its ranked members |

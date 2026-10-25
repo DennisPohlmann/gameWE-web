@@ -1,6 +1,7 @@
 import { api, visibleGame } from "@/lib/api";
 import { apiPlace } from "@/lib/api-places";
 import { getPlaceRanking } from "@/lib/data";
+import { PLACE_SORT_DEFAULT } from "@/lib/sorts";
 
 // One country of a ranking: its totals and its place among the countries.
 export function GET(_req: Request, { params }: { params: Promise<{ game: string; country: string }> }) {
@@ -10,8 +11,8 @@ export function GET(_req: Request, { params }: { params: Promise<{ game: string;
     if (!game || !/^[A-Za-z]{2}$/.test(raw)) return null;
     const country = raw.toLowerCase();
     const [one, all] = await Promise.all([
-      getPlaceRanking({ game: game.code, cities: false, country, sort: "players", asc: false, limit: 1, offset: 0 }),
-      getPlaceRanking({ game: game.code, cities: false, country: "", sort: "players", asc: false, limit: 300, offset: 0 }),
+      getPlaceRanking({ game: game.code, cities: false, country, sort: PLACE_SORT_DEFAULT, asc: false, limit: 1, offset: 0 }),
+      getPlaceRanking({ game: game.code, cities: false, country: "", sort: PLACE_SORT_DEFAULT, asc: false, limit: 300, offset: 0 }),
     ]);
     const row = one.rows[0];
     if (!row) return null;
