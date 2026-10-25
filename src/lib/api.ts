@@ -107,7 +107,8 @@ export function apiServer(s: Server) {
 
 export function apiLivePlayer(p: LivePlayer) {
   return {
-    id: p.is_bot ? null : p.player_id,
+    // Bots and hidden players (id 0, see getLivePlayers) have no id.
+    id: p.is_bot || !p.player_id ? null : p.player_id,
     name: p.name,
     bot: !!p.is_bot,
     team: p.team || null,

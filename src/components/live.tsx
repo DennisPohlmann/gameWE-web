@@ -199,14 +199,15 @@ export async function LiveTable({ game, players, t, lang }: { game: string; play
             const sum = list.reduce((a, p) => ({ kills: a.kills + p.kills, deaths: a.deaths + p.deaths }), { kills: 0, deaths: 0 });
             const cls = rowClass(team);
             return [
-              ...list.map((p) => (
-                <tr key={p.player_id} className={cls}>
+              ...list.map((p, i) => (
+                <tr key={p.player_id || `h${i}`} className={cls}>
                   <td className="rank num">{++n}</td>
                   <td className="wrap-cell">
                     {/* Bots get their tag where players have the flag, so the names line up. */}
                     {p.is_bot ? <Flag code="bot" /> : <Flag code={p.flag} title={p.country} />}{" "}
-                    {p.is_bot && !botLinks ? (
-                      <span className={p.is_dead ? "dead" : undefined}>{p.name || `#${p.player_id}`}</span>
+                    {/* Bots without profiles and hidden players (id 0): the name only. */}
+                    {(p.is_bot && !botLinks) || !p.player_id ? (
+                      <span className={p.is_dead ? "dead" : undefined}>{p.name || (p.player_id ? `#${p.player_id}` : "?")}</span>
                     ) : (
                       <Link href={`/${game}/players/${p.player_id}`} className={p.is_dead ? "dead" : undefined}>
                         {p.name || `#${p.player_id}`}

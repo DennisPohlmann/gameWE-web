@@ -92,9 +92,11 @@ the audit summary of `security-privacy-audit`.
 - Admin writes use the admin DB user (`DB_ADMIN_USER`); public pages run
   with the SELECT-only `gamewe_web` user. Code for public pages must not
   call `adminQuery`/`adminExec`, except reading data the public may see.
-- Public pages never show: hidden players (`hideranking`/`player_hidden`),
-  IP addresses, RCON data, admin users, TOTP rows, chat unless the setting
-  allows it.
+- Public pages never show: hidden players (`hideranking` other than 0,
+  i.e. also banned ones, or `player_hidden`; `src/lib/hidden.ts`, their own
+  pages are 404, every list leaves them out; only a server's live list shows
+  their in-game name, without id or link), IP addresses, RCON data, admin
+  users, TOTP rows, chat unless the setting allows it.
 - Secrets (`ADMIN_SECRET`, DB passwords) only from the environment
   (`src/lib/env.ts`), never in `NEXT_PUBLIC_*`, client components, logs,
   error messages or redirects.

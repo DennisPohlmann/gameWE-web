@@ -1,4 +1,5 @@
 import "server-only";
+import { hiddenSql, isHidden } from "./hidden";
 import { adminQuery, likeOp, query, queryOne, type Param } from "./db";
 import { steamIds } from "./format";
 import { dayChanges } from "./points-trend";
@@ -38,6 +39,16 @@ export type PlayerEventRow = PlayerEvent & { otherName: string | null };
 
 // One SELECT per event table, all with the same columns. The IP address of
 // hlstats_Events_Connects is never read.
+// Events with another player (kills, deaths, teamkills, actions on a player)
+// leave out those with a hidden player on the other side: rows and counts
+// alike, so the pages and the pager agree.
+const SHOWN_OTHER: Partial<Record<EventKind, string>> = {
+  playeraction: `NOT ${hiddenSql("e.victimId")}`,
+  kill: `NOT ${hiddenSql("e.victimId")}`,
+  death: `NOT ${hiddenSql("e.killerId")}`,
+  teamkill: `NOT ${hiddenSql("e.victimId")}`,
+};
+
 function sources(kinds: EventKind[]): string[] {
   const m = `LEFT JOIN hlstats_Maps m ON m.id = e.map`;
   const all: Record<EventKind, string> = {
@@ -53,17 +64,17 @@ function sources(kinds: EventKind[]): string[] {
     action: `SELECT e.timestamp_id AS ts, 'action' AS kind, e.bonus AS num, 0 AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map
              FROM hlstats_Events_PlayerActions e LEFT JOIN hlstats_Actions a ON a.id = e.actionId ${m} WHERE e.playerId = ?`,
     playeraction: `SELECT e.timestamp_id AS ts, 'playeraction' AS kind, e.bonus AS num, e.victimId AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map
-                   FROM hlstats_Events_PlayerPlayerActions e LEFT JOIN hlstats_Actions a ON a.id = e.actionId ${m} WHERE e.playerId = ?`,
+                   FROM hlstats_Events_PlayerPlayerActions e LEFT JOIN hlstats_Actions a ON a.id = e.actionId ${m} WHERE e.playerId = ? AND ${SHOWN_OTHER.playeraction}`,
     teambonus: `SELECT e.timestamp_id AS ts, 'teambonus' AS kind, e.bonus AS num, 0 AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map
                 FROM hlstats_Events_TeamBonuses e LEFT JOIN hlstats_Actions a ON a.id = e.actionId ${m} WHERE e.playerId = ?`,
     kill: `SELECT e.timestamp_id AS ts, 'kill' AS kind, e.headshot AS num, e.victimId AS other, COALESCE(w.name, '') AS text, COALESCE(w.code, '') AS code, m.map AS map
-           FROM hlstats_Events_Frags e LEFT JOIN hlstats_Weapons w ON w.weaponId = e.weapon ${m} WHERE e.killerId = ?`,
+           FROM hlstats_Events_Frags e LEFT JOIN hlstats_Weapons w ON w.weaponId = e.weapon ${m} WHERE e.killerId = ? AND ${SHOWN_OTHER.kill}`,
     death: `SELECT e.timestamp_id AS ts, 'death' AS kind, e.headshot AS num, e.killerId AS other, COALESCE(w.name, '') AS text, COALESCE(w.code, '') AS code, m.map AS map
-            FROM hlstats_Events_Frags e LEFT JOIN hlstats_Weapons w ON w.weaponId = e.weapon ${m} WHERE e.victimId = ?`,
+            FROM hlstats_Events_Frags e LEFT JOIN hlstats_Weapons w ON w.weaponId = e.weapon ${m} WHERE e.victimId = ? AND ${SHOWN_OTHER.death}`,
     suicide: `SELECT e.timestamp_id AS ts, 'suicide' AS kind, 0 AS num, 0 AS other, COALESCE(w.name, '') AS text, COALESCE(w.code, '') AS code, m.map AS map
               FROM hlstats_Events_Suicides e LEFT JOIN hlstats_Weapons w ON w.weaponId = e.weapon ${m} WHERE e.playerId = ?`,
     teamkill: `SELECT e.timestamp_id AS ts, 'teamkill' AS kind, 0 AS num, e.victimId AS other, COALESCE(w.name, '') AS text, COALESCE(w.code, '') AS code, m.map AS map
-               FROM hlstats_Events_Teamkills e LEFT JOIN hlstats_Weapons w ON w.weaponId = e.weapon ${m} WHERE e.killerId = ?`,
+               FROM hlstats_Events_Teamkills e LEFT JOIN hlstats_Weapons w ON w.weaponId = e.weapon ${m} WHERE e.killerId = ? AND ${SHOWN_OTHER.teamkill}`,
   };
   return kinds.map((k) => all[k]);
 }
@@ -87,7 +98,12 @@ const COUNT_FROM: Record<EventKind, [string, string]> = {
 
 export async function countPlayerEvents(playerId: number, kinds: EventKind[]): Promise<number> {
   const counts = await Promise.all(
-    kinds.map((k) => queryOne<{ n: number | string }>(`SELECT COUNT(*) AS n FROM ${COUNT_FROM[k][0]} WHERE ${COUNT_FROM[k][1]} = ?`, [playerId])),
+    kinds.map((k) =>
+      queryOne<{ n: number | string }>(
+        `SELECT COUNT(*) AS n FROM ${COUNT_FROM[k][0]} e WHERE e.${COUNT_FROM[k][1]} = ?${SHOWN_OTHER[k] ? ` AND ${SHOWN_OTHER[k]}` : ""}`,
+        [playerId],
+      ),
+    ),
   );
   return counts.reduce((a, c) => a + Number(c?.n ?? 0), 0);
 }
@@ -103,28 +119,11 @@ export async function getPlayerEvents(playerId: number, kinds: EventKind[], limi
     [...kinds.map(() => playerId), limit, offset],
   );
   const ids = [...new Set(rows.map((r) => Number(r.other)).filter((x) => x > 0))];
-  // A hidden opponent (bots stay) is shown without id and name, like in the
-  // live box (named()).
   const names = ids.length
-    ? await query<{ playerId: number; lastName: string | null; hideranking: number | null; bot: number }>(
-        `SELECT d.playerId, d.lastName, p.hideranking,
-                CASE WHEN EXISTS (SELECT 1 FROM hlstats_PlayerUniqueIds u WHERE u.playerId = d.playerId AND u.uniqueId LIKE 'BOT%') THEN 1 ELSE 0 END AS bot
-         FROM hlstats_Players_Data d LEFT JOIN hlstats_Players p ON p.playerId = d.playerId WHERE d.playerId IN (?)`,
-        [ids],
-      )
+    ? await query<{ playerId: number; lastName: string | null }>(`SELECT d.playerId, d.lastName FROM hlstats_Players_Data d WHERE d.playerId IN (?)`, [ids])
     : [];
-  const hidden = new Set(names.filter((x) => Number(x.hideranking ?? 0) !== 0 && !Number(x.bot)).map((x) => Number(x.playerId)));
   const byId = new Map(names.map((x) => [Number(x.playerId), x.lastName]));
-  return rows.map((r) => {
-    const other = hidden.has(Number(r.other)) ? 0 : Number(r.other);
-    return {
-      ...r,
-      ts: Number(r.ts),
-      num: Number(r.num),
-      other,
-      otherName: other ? (byId.get(other) ?? null) : null,
-    };
-  });
+  return rows.map((r) => ({ ...r, ts: Number(r.ts), num: Number(r.num), other: Number(r.other), otherName: byId.get(Number(r.other)) ?? null }));
 }
 
 export type SessionDay = {
@@ -339,9 +338,9 @@ async function loadEvents(by: [GameEventKind, string][], id: number, n: number):
   return query<RawEvent>(`SELECT * FROM (${parts.join(" UNION ALL ")}) x ORDER BY ts DESC, kind LIMIT ?`, [...by.map(() => id), n]);
 }
 
-// Names and visibility: rows of hidden actors are left out (bots stay; `self`,
-// the player whose page it is, stays too: the page shows them anyway); a
-// hidden opponent is shown without id and name.
+// Names and visibility: rows with a hidden player on either side are left
+// out (bots stay; `self`, the player whose page it is, is never hidden: a
+// hidden player has no page).
 async function named(rows: RawEvent[], limit: number, self = 0): Promise<GameEvent[]> {
   const ids = [...new Set(rows.flatMap((r) => [Number(r.actor), Number(r.other)]).filter((x) => x > 0))];
   const people = ids.length
@@ -352,14 +351,15 @@ async function named(rows: RawEvent[], limit: number, self = 0): Promise<GameEve
         [ids],
       )
     : [];
-  const visible = new Map(people.filter((x) => Number(x.hideranking) === 0 || Number(x.bot) || Number(x.playerId) === self).map((x) => [Number(x.playerId), x.name]));
+  const hidden = new Set(people.filter((x) => isHidden(x) && Number(x.playerId) !== self).map((x) => Number(x.playerId)));
+  const visible = new Map(people.filter((x) => !hidden.has(Number(x.playerId))).map((x) => [Number(x.playerId), x.name]));
   if (self > 0 && !visible.has(self)) {
     // The page's player may have moved to hlstats_PlayersInactive.
     const me = await queryOne<{ name: string | null }>(`SELECT lastName AS name FROM hlstats_Players_Data WHERE playerId = ?`, [self]);
     visible.set(self, me?.name ?? null);
   }
   return rows
-    .filter((r) => visible.has(Number(r.actor)) || (self > 0 && Number(r.other) === self))
+    .filter((r) => !hidden.has(Number(r.actor)) && !hidden.has(Number(r.other)) && (visible.has(Number(r.actor)) || (self > 0 && Number(r.other) === self)))
     .slice(0, limit)
     .map((r) => {
       const actor = Number(r.actor);
@@ -368,7 +368,7 @@ async function named(rows: RawEvent[], limit: number, self = 0): Promise<GameEve
         ...r,
         ts: Number(r.ts),
         num: Number(r.num),
-        // A hidden player on the other side of the page's player: no id, no name.
+        // A player no longer in hlstats_Players (moved away): no id, no name.
         actor: visible.has(actor) ? actor : 0,
         server: r.server ?? "",
         actorName: visible.get(actor) ?? null,

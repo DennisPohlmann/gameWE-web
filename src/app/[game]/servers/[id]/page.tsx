@@ -40,7 +40,7 @@ export default async function ServerPage({ params }: Props) {
   const [live, load24, chat] = await Promise.all([
     getLivePlayers(game, s.serverId),
     getServerLoad(s.serverId, now - 86400),
-    chatPublic ? getChat({ serverId: s.serverId, limit: 20, offset: 0 }) : Promise.resolve([]),
+    chatPublic ? getChat({ serverId: s.serverId, shown: true, limit: 20, offset: 0 }) : Promise.resolve([]),
   ]);
   const flags = await getPlayerFlags(chat.map((c) => c.playerId));
   const avg = (rows: { act_players: number }[]) => (rows.length ? rows.reduce((n, r) => n + r.act_players, 0) / rows.length : null);

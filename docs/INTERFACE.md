@@ -65,7 +65,7 @@ parameters are ignored.
 | `/api/v1/rankings/<game>/actions` | actions (bomb planted, ...) by count |
 | `/api/v1/rankings/<game>/teams` | teams and roles |
 | `/api/v1/rankings/<game>/servers` | servers of a ranking (`players` online with bots, `bots` among them; `version`, `os` (`linux`, `windows`, `mac`) and `vac` (true / false), each null while unknown) with the players online (name, team, points, kills; bots without an id) |
-| `/api/v1/rankings/<game>/servers/<id>` | one server of that ranking |
+| `/api/v1/rankings/<game>/servers/<id>` | one server of that ranking, with the players online (a hidden player with `id: null`, like a bot) |
 | `/api/v1/rankings/<game>/servers/<id>/load?hours=24` | players on that server per 10 minutes (1-168 hours) |
 | `/api/v1/servers` | all servers |
 | `/api/v1/stats?days=30` | totals over all rankings and activity per day |
@@ -102,7 +102,7 @@ URLs.
 | `/sig/<playerId>.png`, `/banner/<serverId>.png` | old URLs, aliases of the two above (same picture, no redirect) |
 
 A player or server that does not belong to `<game>`, a hidden ranking and a
-bot while "Rank bots" is off give `404`. Players hidden from the ranking keep
-their banner (as their profile), without their position. The TeamSpeak
+bot while "Rank bots" is off give `404`, and so do players hidden from the
+ranking or banned (as their profile). The TeamSpeak
 banner gives `404` unless TeamSpeak is the voice server (Admin → Settings →
 Voice server).

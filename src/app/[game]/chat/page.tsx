@@ -30,7 +30,7 @@ export default async function ChatPage({
   const limit = rowsParam(sp.rows, pageSize);
   if (!chatPublic) notFound();
   const order = sortState(sp, timeSorts, "date");
-  const [rows, total] = await Promise.all([getChat({ game, search: q, limit, offset: (page - 1) * limit, asc: order.asc }), countChat({ game, search: q })]);
+  const [rows, total] = await Promise.all([getChat({ game, search: q, shown: true, limit, offset: (page - 1) * limit, asc: order.asc }), countChat({ game, search: q, shown: true })]);
   const flags = await getPlayerFlags(rows.map((r) => r.playerId));
   const base = `/${game}/chat`;
   const keep = { q: q || undefined, ...order.keep, rows: limit !== pageSize ? limit : undefined };

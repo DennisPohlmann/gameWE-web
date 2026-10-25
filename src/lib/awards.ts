@@ -1,4 +1,5 @@
 import "server-only";
+import { hiddenSql } from "./hidden";
 import { getPlayerFlags } from "./data";
 import { dayRange, siteDay } from "./day";
 import { query } from "./db";
@@ -168,7 +169,7 @@ async function storedDayNow(game: string, day: string): Promise<Map<number, Awar
      FROM hlstats_Awards_History h
      JOIN hlstats_Awards a ON a.awardId = h.award_id
      LEFT JOIN hlstats_Players_Data d ON d.playerId = h.winner_id
-     WHERE a.game = ? AND h.date = ?`,
+     WHERE a.game = ? AND h.date = ? AND NOT ${hiddenSql("h.winner_id")}`,
     [game, day],
   );
   return new Map(rows.map((r) => [r.awardId, r]));

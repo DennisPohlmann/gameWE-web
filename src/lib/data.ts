@@ -4,6 +4,7 @@ import { adminQuery, likeOp, query, queryOne, sinceDays, type Param } from "./db
 import { addDays, dayOf, siteDay } from "./day";
 import { nowUnix, steamIds } from "./format";
 import { baseGameOf, GAME_HAS_DATA } from "./games";
+import { hiddenSql, liveEntry } from "./hidden";
 import { LOAD_INTERVAL_MAX, type MapSort } from "./map-table";
 import { playerCount, sumCounts, type PlayerCount } from "./player-count";
 import { axisRatio, RADAR_KEYS, RADAR_MIN_KILLS, RADAR_SQL, type AxisRank, type PlayerRatios, type RadarKey, type Ratio } from "./radar";
@@ -249,17 +250,16 @@ export async function getLivePlayers(game: string, serverId?: number): Promise<L
      LEFT JOIN hlstats_Players p ON p.playerId = l.player_id
      LEFT JOIN hlstats_Players_Locations loc ON loc.id = l.cli_location_id
      WHERE ${where} AND l.player_hidden = 0
-       -- Players hidden from the ranking (e.g. by !hide) stay out; bots stay in.
-       AND (p.hideranking IS NULL OR p.hideranking = 0 OR l.unique_id LIKE 'BOT%')
      ORDER BY l.team, l.kills DESC, l.skill DESC, l.player_id`,
     [serverId ?? game],
   );
   const ranked = (r: Row) => r.rankGame !== null && r.rankSkill !== null && Number(r.rankHidden) === 0;
   const pos = await rankPositions(rows.filter(ranked).map((r) => ({ game: r.rankGame as string, skill: Number(r.rankSkill) })));
-  return rows.map(({ rankHidden, rankGame, rankSkill, ...r }) => ({
-    ...r,
-    position: ranked({ rankHidden, rankGame, rankSkill, ...r }) ? (pos.get(`${rankGame}|${Number(rankSkill)}`) ?? null) : null,
-  }));
+  // A player hidden from the ranking (e.g. by !hide) is still on the server:
+  // listed with in-game name and live values, but without id or link.
+  return rows.map(({ rankHidden, rankGame, rankSkill, ...r }) =>
+    liveEntry({ ...r, position: ranked({ rankHidden, rankGame, rankSkill, ...r }) ? (pos.get(`${rankGame}|${Number(rankSkill)}`) ?? null) : null }, rankHidden),
+  );
 }
 
 // One row per server and 10 minutes (collector 1.5.0): players at that
@@ -383,7 +383,11 @@ export type DailyAward = {
 
 export function getDailyAwards(game: string) {
   return query<DailyAward>(
-    `SELECT a.awardId, a.awardType, a.name, a.verb, a.d_winner_id, a.d_winner_count, d.lastName AS winnerName
+    // A winner hidden since the award was given counts as no winner.
+    `SELECT a.awardId, a.awardType, a.name, a.verb,
+            CASE WHEN ${hiddenSql("a.d_winner_id")} THEN 0 ELSE a.d_winner_id END AS d_winner_id,
+            CASE WHEN ${hiddenSql("a.d_winner_id")} THEN 0 ELSE a.d_winner_count END AS d_winner_count,
+            CASE WHEN ${hiddenSql("a.d_winner_id")} THEN NULL ELSE d.lastName END AS winnerName
      FROM hlstats_Awards a LEFT JOIN hlstats_Players_Data d ON d.playerId = a.d_winner_id
      WHERE a.game = ? ORDER BY a.awardType DESC, a.name, a.awardId`,
     [game],
@@ -413,7 +417,7 @@ export async function getAwardHistory(game: string, days: number) {
      FROM hlstats_Awards_History h
      JOIN hlstats_Awards a ON a.awardId = h.award_id
      LEFT JOIN hlstats_Players_Data d ON d.playerId = h.winner_id
-     WHERE a.game = ? AND h.date IN (?) ORDER BY h.date DESC, a.awardType DESC, a.name`,
+     WHERE a.game = ? AND h.date IN (?) AND NOT ${hiddenSql("h.winner_id")} ORDER BY h.date DESC, a.awardType DESC, a.name`,
     [game, dates.map((d) => d.date)],
   );
 }
@@ -908,11 +912,12 @@ export type Opponent = { playerId: number; name: string | null; kills: number; h
 export function getOpponents(id: number, as: "victims" | "killers") {
   const [me, other] = as === "victims" ? ["killerId", "victimId"] : ["victimId", "killerId"];
   // Counted first, then the names of the ten joined (not of every frag).
+  // Hidden opponents are left out before the ten are picked.
   return query<Opponent>(
     `SELECT x.playerId, d.lastName AS name, x.kills, x.headshots
      FROM (SELECT f.${other} AS playerId, COUNT(*) AS kills, SUM(CASE WHEN f.headshot > 0 THEN 1 ELSE 0 END) AS headshots
            FROM hlstats_Events_Frags f
-           WHERE f.${me} = ? AND f.${other} <> f.${me}
+           WHERE f.${me} = ? AND f.${other} <> f.${me} AND NOT ${hiddenSql(`f.${other}`)}
            GROUP BY f.${other} ORDER BY kills DESC, f.${other} LIMIT 10) x
      LEFT JOIN hlstats_Players_Data d ON d.playerId = x.playerId
      ORDER BY x.kills DESC, x.playerId`,
@@ -989,9 +994,12 @@ export type ChatRow = {
 
 // Chat is personal data: read with the admin database user (the public one
 // may have no access), and shown publicly only when gamewe_chat_public is on.
-function chatWhere(opts: { game?: string; playerId?: number; serverId?: number; search?: string }) {
+// shown: public pages, without the lines of hidden players (the admin chat
+// keeps them).
+function chatWhere(opts: { game?: string; playerId?: number; serverId?: number; search?: string; shown?: boolean }) {
   const where: string[] = [];
   const params: Param[] = [];
+  if (opts.shown) where.push(`NOT ${hiddenSql("c.playerId")}`);
   if (opts.game) {
     where.push(`c.game_id = (SELECT id FROM hlstats_Games WHERE code = ?)`);
     params.push(opts.game);
@@ -1012,7 +1020,7 @@ function chatWhere(opts: { game?: string; playerId?: number; serverId?: number; 
 }
 
 // Newest first; asc: oldest first (the only order: chat can be large).
-export async function getChat(opts: { game?: string; playerId?: number; serverId?: number; search?: string; limit: number; offset: number; asc?: boolean }) {
+export async function getChat(opts: { game?: string; playerId?: number; serverId?: number; search?: string; shown?: boolean; limit: number; offset: number; asc?: boolean }) {
   const { where, params } = chatWhere(opts);
   return adminQuery<ChatRow>(
     `SELECT c.timestamp_id, c.playerId, d.lastName AS name, c.message_mode, c.message, s.name AS server
@@ -1026,7 +1034,7 @@ export async function getChat(opts: { game?: string; playerId?: number; serverId
 }
 
 // Number of chat lines for the same filter (pager).
-export async function countChat(opts: { game?: string; playerId?: number; serverId?: number; search?: string }) {
+export async function countChat(opts: { game?: string; playerId?: number; serverId?: number; search?: string; shown?: boolean }) {
   const { where, params } = chatWhere(opts);
   const [r] = await adminQuery<{ n: number | string }>(
     `SELECT COUNT(*) AS n FROM hlstats_Events_Chat c
@@ -1639,9 +1647,13 @@ export const botProfiles = cache(async () => Boolean((await getPointSettings()).
 
 export const isBotId = (uniqueId: string | null | undefined) => (uniqueId ?? "").toUpperCase().startsWith("BOT");
 
-// A player (getPlayer) whose profile answers 404: a bot while bots have none.
-export async function noProfile(p: { uniqueId: string | null }) {
-  return isBotId(p.uniqueId) && !(await botProfiles());
+// A player (getPlayer) whose public pages answer 404: a bot while bots have
+// none, and a hidden player (hideranking <> 0; hidden.ts) always. Profile,
+// sessions, events, awards, chat, events feed, signature, banner and avatar
+// all ask this.
+export async function noProfile(p: { uniqueId: string | null; hideranking?: number | null }) {
+  if (isBotId(p.uniqueId)) return !(await botProfiles());
+  return Number(p.hideranking ?? 0) !== 0;
 }
 
 // The bots among the ids that get no link (empty while bots have profiles).
@@ -1827,9 +1839,8 @@ function onMap(r: { lat: number; lng: number }) {
 
 // ---------------------------------------------------------------- bans page
 
-// Players on the bans page: ranked ones (hideranking 0) and those the
-// collector marked as banned (hideranking 2). Players an admin hid
-// (hideranking 1) never appear.
+// Players on the bans page: only ranked ones (hideranking 0). Hidden and
+// banned players (hideranking 1, 2, 3) appear nowhere, here neither.
 export type BanPlayer = {
   playerId: number;
   name: string | null;
@@ -1849,15 +1860,9 @@ export type BanPlayer = {
 const banPlayerSql = `SELECT p.playerId, d.lastName AS name, l.flag, l.country, u.uniqueId,
     p.skill, p.kills, p.deaths, p.headshots, p.shots, p.hits, p.last_event, p.hideranking
   FROM hlstats_PlayerUniqueIds u
-  JOIN hlstats_Players p ON p.playerId = u.playerId AND p.hideranking IN (0, 2)
+  JOIN hlstats_Players p ON p.playerId = u.playerId AND p.hideranking = 0
   LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
   LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id`;
-
-// Players the collector marked as banned (permanent engine ban or VAC
-// disconnect, collector 1.6), newest activity first.
-export function getBannedPlayers(game: string, limit: number) {
-  return query<BanPlayer>(`${banPlayerSql} WHERE p.game = ? AND p.hideranking = 2 ORDER BY p.last_event DESC LIMIT ?`, [game, limit]);
-}
 
 // Ban records with type, date and reason (hlstats_Players_Bans, collector
 // 1.7). Empty when the table does not exist yet.

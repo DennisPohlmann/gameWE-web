@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { sortHeads } from "@/components/sort-head";
 import { Empty, PctBar, PlayerLink, Section, TableWrap } from "@/components/ui";
-import { getBanPlayers, getBanRecords, getBannedPlayers, getPlayersBySteam, getRecentPlayers, type BanPlayer } from "@/lib/data";
+import { getBanPlayers, getBanRecords, getPlayersBySteam, getRecentPlayers, type BanPlayer } from "@/lib/data";
 import { fmtNum, kpd, localeOf, nowUnix, ratio, steamIds } from "@/lib/format";
 import { getDict, type Dict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getDict()).t.bans };
 }
 
-type Kind = "vac" | "sourcebans" | "sourcemod" | "amx" | "engine" | "banned";
+type Kind = "vac" | "sourcebans" | "sourcemod" | "amx" | "engine";
 
 type BanRow = {
   player: BanPlayer;
@@ -56,8 +56,7 @@ export default async function BansPage({ params, searchParams }: { params: Promi
   const order = sortState(sp, values, "order");
   const { sourcebansUrl } = await getSettings();
 
-  const [logged, records, sb, vac] = await Promise.all([
-    getBannedPlayers(game, MAX_ROWS),
+  const [records, sb, vac] = await Promise.all([
     getBanRecords(game, MAX_ROWS),
     sourcebansUrl ? sbRows(game, sourcebansUrl) : null,
     steamBansAvailable() ? vacRows(game) : [],
@@ -75,11 +74,6 @@ export default async function BansPage({ params, searchParams }: { params: Promi
     ...(sb?.rows ?? []),
     ...vac,
   ];
-  // Players the collector only marked as banned (no record with a type yet).
-  const typed = new Set(rows.map((r) => Number(r.player.playerId)));
-  for (const p of logged) {
-    if (!typed.has(Number(p.playerId))) rows.push({ player: p, kind: "banned", at: null, dateText: "", reason: "", length: "", old: false });
-  }
   // Running bans first, newest first; without a date at the end.
   rows.sort((a, b) => Number(a.old) - Number(b.old) || (b.at ?? 0) - (a.at ?? 0));
   const sorted = sortRows(rows, values, order.sort, order.asc);
@@ -149,7 +143,7 @@ export default async function BansPage({ params, searchParams }: { params: Promi
 }
 
 function kindLabel(k: Kind, t: Dict): string {
-  return { vac: "VAC", sourcebans: "SourceBans", sourcemod: "SourceMod", amx: "AMX", engine: t.banTypeServer, banned: t.banTypeBanned }[k];
+  return { vac: "VAC", sourcebans: "SourceBans", sourcemod: "SourceMod", amx: "AMX", engine: t.banTypeServer }[k];
 }
 
 function fmtMinutes(m: number): string {

@@ -44,7 +44,7 @@ again every 5 minutes. The heading on `/` counts the real players.
 | `/<game>/players/<id>/chat` | the player's chat messages |
 | `/<game>/chat` | chat log with search |
 | `/<game>/misc` | player countries, weekdays, connects per day, connect methods, server banners |
-| `/<game>/bans` | ban list like gameME's: players the collector marked as banned from the server logs (VAC kick, permanent server ban; `hideranking = 2`), bans from SourceBans (reason, length, date) and, with `STEAM_API_KEY`, VAC/game bans from Steam; points, K/D, HS/kill and accuracy per player. `hlstats_Players_Bans` adds type, date and reason for log bans. |
+| `/<game>/bans` | ban list like gameME's: bans of ranked players from the collector's ban records (`hlstats_Players_Bans`: type, date, reason), from SourceBans (reason, length, date) and, with `STEAM_API_KEY`, VAC/game bans from Steam; points, K/D, HS/kill and accuracy per player. Players the collector marked as banned (`hideranking = 2`) are hidden players and not listed (see below), so the list can be empty. |
 | `/search` | search players by name or Steam ID and clans by tag or name (`?q=...&st=names\|steam\|clans&game=<code>`) |
 | `/help` | help: how points are calculated (with the current settings), actions, weapon modifiers, chat commands |
 | `/voice` | detail page of the TeamSpeak server from the voice server box (click its name): channel tree with the people online (names can be hidden in the admin settings), server info (operating system with a small symbol, uptime, users, connections, security level, ping, version, host banner URL), traffic and the welcome message, and at the bottom the code of the TeamSpeak banner; live from the ServerQuery, kept for a minute; 404 unless TeamSpeak is the voice server |
@@ -163,6 +163,17 @@ website therefore computes some things itself:
 - **Teams and roles** come from the collector's counters in `hlstats_Teams`
   and `hlstats_Roles` (`time_played`, `kills`, `deaths` per game); they
   cover all players of the game, like the weapon, action and map totals.
+- **Hidden players** (`hlstats_Players.hideranking` other than 0: hidden by
+  an admin, hidden by the player with `!hide`, or marked as banned by the
+  collector) appear nowhere on the public pages or in the public API: their
+  profile, sessions, events, awards and chat pages, events feed, banner,
+  forum signature and avatar answer 404, and every ranking, list and table
+  leaves them out (opponents, events with them on the other side, award
+  winners, clans, maps, weapons, actions, bans, search, chat, the player
+  maps and their lines). Only the live list of a server still shows them,
+  with their in-game name and live values but without a link or player id;
+  the server's player count is unchanged. Bots are not hidden players. The
+  admin area shows them as before.
 - **Players of a map** (map page) come from `hlstats_Events_Frags` over all
   time: kills and headshots as killer, deaths as victim, the position is the
   place in the whole ranking. Hidden players are left out of the list; their

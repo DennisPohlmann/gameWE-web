@@ -192,7 +192,6 @@ export default async function PlayerPage({ params, searchParams }: Props) {
       <div className="page-share">
         <ShareBar labels={{ share: t.shareThis, copy: t.shareCopy, copied: t.copied, email: t.shareEmail }} />
       </div>
-      {p.hideranking ? <p className="notice">{Number(p.hideranking) === 3 ? t.hiddenBySelf : t.hidden}</p> : null}
 
       <Section title={t.playerInfo}>
         <div className="cont-2">
