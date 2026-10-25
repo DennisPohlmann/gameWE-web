@@ -7,7 +7,7 @@ import type { Dict, Lang } from "@/lib/i18n";
 import { playerCount } from "@/lib/player-count";
 import { LINUX_SVG, VAC_SVG, WINDOWS_SVG } from "@/lib/server-icons";
 import { PlayerCount } from "./player-count";
-import { Flag, SortTh } from "./ui";
+import { Flag, GameTag, SortTh } from "./ui";
 
 // Sort keys of the server list: name, map, map time, players online.
 export const serverValues = {
@@ -19,8 +19,8 @@ export const serverValues = {
 export type ServerSort = keyof typeof serverValues;
 
 // Server rows as on gameME: name, game, address (steam://connect), map, map
-// time, players. The game is the ranking's base game ("Counter-Strike:
-// Source"), else the ranking's name. `head` is an optional first header row spanning the table. The
+// time, players. The game is the ranking's base game as the same badge as on
+// the start page ("Counter-Strike: Source"), else the ranking's name. `head` is an optional first header row spanning the table. The
 // flag of the server's country stands before its name. `details` adds the
 // server version with an OS icon and the VAC state as the last columns (the
 // ranking's start page only). With `sort` the heads of name, map, time and
@@ -76,6 +76,7 @@ export function ServerTable({
         <tbody>
           {servers.map((s) => {
             const addr = s.publicaddress || `${s.address}:${s.port}`;
+            const base = baseGameOf(s.game, s.realgame);
             const cls = !s.act_players ? "srv-empty" : s.max_players && s.act_players >= s.max_players ? "srv-full" : "srv-nempty";
             return (
               <tr key={s.serverId} className="server-line">
@@ -85,7 +86,9 @@ export function ServerTable({
                     {s.name || addr}
                   </Link>
                 </td>
-                <td className="hide-sm">{gameKind(baseGameOf(s.game, s.realgame))?.name || s.game_name || "-"}</td>
+                <td className="hide-sm game-cell">
+                  {gameKind(base) ? <GameTag realgame={base} long /> : s.game_name || "-"}
+                </td>
                 <td className="hide-sm">
                   <a href={`steam://connect/${addr}/`}>{addr}</a>
                 </td>

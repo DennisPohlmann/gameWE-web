@@ -301,7 +301,7 @@ th.barcell, td.barcell { text-align: center; width: 1%; }
 td.barcell .meter { justify-content: center; }
 /* Column only as wide as its content, same space left and right (game tag). */
 th.fit, td.fit { width: 1%; padding-left: 8px; padding-right: 8px; }
-td.fit .game-tag { margin-left: 0; }
+td.fit .game-tag, td.game-cell .game-tag { margin-left: 0; }
 td.wrap-cell, th.wrap-cell { white-space: normal; min-width: 120px; }
 /* Column widths of the server list. */
 th.w-46 { width: 46%; }
