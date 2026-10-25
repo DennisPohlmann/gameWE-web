@@ -371,6 +371,9 @@ ul.sections a.active .sec-icon { background: radial-gradient(circle at 35% 30%, 
 
 /* Label/value tables of the info pages. */
 table.stats td.stats-key { width: 35%; color: var(--th-text); }
+/* Position and points share the left half of the player summary's first row. */
+table.stats td.stats-key.pair { width: auto; }
+table.stats td.pair-value { text-align: center; }
 table.stats th { font-weight: bold; }
 .cont-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 12px 2%; align-items: start; }
 .cont-2 > * { min-width: 0; }
@@ -628,7 +631,9 @@ a.button { display: inline-block; text-decoration: none; }
      radar give way instead. */
   table.stats.summary td { white-space: normal; overflow-wrap: normal; }
   table.stats.summary td.stats-key { width: auto; }
-  .spark { width: 168px; min-width: 168px; height: auto; }
+  .spark { width: 156px; min-width: 156px; height: auto; }
+  table.stats.summary td.stats-key.pair, table.stats.summary td.pair-value { padding: 4px 2px; }
+  table.stats.summary td.stats-key.pair { font-size: 10px; }
 }
 
 /* ---------------------------------------------------------------- admin */

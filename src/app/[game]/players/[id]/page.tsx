@@ -228,14 +228,20 @@ export default async function PlayerPage({ params, searchParams }: Props) {
           <table className="stats summary">
             <thead>
               <tr>
-                <th colSpan={4}>{t.playerSummary}</th>
+                <th colSpan={6}>{t.playerSummary}</th>
               </tr>
             </thead>
             <tbody>
+              {/* Six columns: the left half holds position and points as two
+                  label/value pairs, the radar and the full-width rows span it. */}
               <tr>
-                <td className="stats-key">{t.position}:</td>
-                <td>
-                  <b>{position ? fmtNum(position, lang) : "-"}</b> · {t.points}: <b>{fmtNum(p.skill, lang)}</b>{" "}
+                <td className="stats-key pair">{t.position}:</td>
+                <td className="pair-value">
+                  <b>{position ? fmtNum(position, lang) : "-"}</b>
+                </td>
+                <td className="stats-key pair">{t.points}:</td>
+                <td className="pair-value">
+                  <b>{fmtNum(p.skill, lang)}</b>{" "}
                   <span className={p.last_skill_change >= 0 ? "good" : "bad"}>
                     ({p.last_skill_change > 0 ? "+" : ""}
                     {fmtNum(p.last_skill_change, lang)})
@@ -247,7 +253,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                 </td>
               </tr>
               <tr>
-                <td colSpan={2} rowSpan={7} className="radar-cell">
+                <td colSpan={4} rowSpan={7} className="radar-cell">
                   <Radar axes={radar} labels={{ total: t.total, current: `${t.current} ${t.last14}` }} />
                 </td>
                 <td className="stats-key">{t.kills}:</td>
@@ -778,7 +784,7 @@ function Row({ k, v, span = false }: { k: string; v: React.ReactNode; span?: boo
 function Row4({ k, v }: { k: string; v: React.ReactNode }) {
   return (
     <tr>
-      <td colSpan={2} className="stats-key">
+      <td colSpan={4} className="stats-key">
         {k}:
       </td>
       <td colSpan={2}>{v}</td>
