@@ -10,6 +10,7 @@ export function GET() {
       baseGame: r.realgame || null,
       servers: r.servers,
       players: r.actPlayers,
+      bots: r.online.bots,
       maxPlayers: r.maxPlayers,
       top: r.topPlayerId
         ? { id: r.topPlayerId, name: r.topPlayerName, country: r.topPlayerFlag ? { code: r.topPlayerFlag.trim().toUpperCase(), name: r.topPlayerCountry } : null }

@@ -77,7 +77,8 @@ const schemas: Record<string, Schema> = {
     name: str("Server name"),
     address: str("Public address with port"),
     map: nullable(str("Current map")),
-    players: int("Players online"),
+    players: int("Players online, bots included"),
+    bots: int("Bots among the players online"),
     maxPlayers: int("Slots"),
     mapStarted: nullable(unix("Start of the current map")),
     kills: int("Kills on this server"),
@@ -255,7 +256,8 @@ const RankingOverview = obj({
   name: str("Name of the ranking"),
   baseGame: nullable(str("Code of the base game (realgame)")),
   servers: int("Servers"),
-  players: int("Players online"),
+  players: int("Players online, bots included"),
+  bots: int("Bots among the players online"),
   maxPlayers: int("Slots of all servers"),
   top: nullable(obj({ id: int("Player ID"), name: str("Name"), country: nullable(ref("Country")) })),
   topClan: nullable(obj({ id: int("Clan ID"), tag: str("Clan tag") })),
@@ -269,7 +271,7 @@ const de = { code: "DE", name: "Germany" };
 const v1 = (path: string) => `${basePath}/api/v1${path}`;
 const page = <T>(items: T[], total: number, path: string, args: Record<string, string | number> = {}) =>
   paged(items, total, { page: 1, limit: DEFAULT_LIMIT, offset: 0 }, v1(path), args);
-const server = { id: 1, name: "Example Public #1", address: "cs.example.org:27015", map: "de_dust2", players: 2, maxPlayers: 24, mapStarted: 1767225600, kills: 182345, headshots: 61234, rounds: 9876, country: "DE" };
+const server = { id: 1, name: "Example Public #1", address: "cs.example.org:27015", map: "de_dust2", players: 2, bots: 0, maxPlayers: 24, mapStarted: 1767225600, kills: 182345, headshots: 61234, rounds: 9876, country: "DE" };
 const live = { id: 42, name: "ExamplePlayer", bot: false, team: "CT", kills: 12, deaths: 5, headshots: 4, skill: 1450, skillChange: 23, rank: 7, connectedSince: 1767225900, dead: false, country: de };
 const bot = { ...live, id: null, name: "BOT Example", bot: true, team: "TERRORIST", skillChange: 0, rank: 0, country: null };
 const row = { rank: 1, id: 42, name: "ExamplePlayer", country: de, skill: 2210, kills: 5321, deaths: 2410, headshots: 1904, kpd: 2.21, hpk: 0.3578, accuracy: 0.3163, connectionTime: 432000, firstConnect: 1735689600, lastEvent: 1767225600, activity: 98 };
@@ -297,7 +299,7 @@ export const endpoints: Endpoint[] = [
     summary: "All rankings",
     description: "Every ranking with its servers, the players online and the current number one.",
     schema: arr(RankingOverview),
-    example: [{ game: "css", name: "Counter-Strike: Source", baseGame: "css", servers: 2, players: 9, maxPlayers: 48, top: { id: 42, name: "ExamplePlayer", country: de }, topClan: { id: 3, tag: "[EX]" } }],
+    example: [{ game: "css", name: "Counter-Strike: Source", baseGame: "css", servers: 2, players: 9, bots: 0, maxPlayers: 48, top: { id: 42, name: "ExamplePlayer", country: de }, topClan: { id: 3, tag: "[EX]" } }],
   },
   {
     path: "/rankings/{game}",

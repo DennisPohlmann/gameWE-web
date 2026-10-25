@@ -3,10 +3,12 @@ import { MiniAvatar } from "@/components/mini-avatar";
 import { Flag, GameTag } from "@/components/ui";
 import { basePath } from "@/lib/base-path";
 import { LineChart } from "@/components/chart";
+import { PlayerCount } from "@/components/player-count";
 import { Rich } from "@/components/rich";
 import { VoiceBox } from "@/components/voice-box";
 import { everyDay, getClanFlags, getDailyActivityAll, getHourlyActivity, getPlayer, getRankingOverview, getSiteTotals, unlinkedBots } from "@/lib/data";
 import { dateFormat, fmtNum, localeOf, steamIds } from "@/lib/format";
+import { sumCounts } from "@/lib/player-count";
 import { getSteamProfile } from "@/lib/steam";
 import { fill, getDict } from "@/lib/i18n";
 
@@ -50,13 +52,13 @@ export default async function Home() {
     dateFmt.format((hourly.start + i * hourly.step) * 1000),
   );
   const activity = everyDay(rows, 30);
-  const online = rankings.reduce((n, r) => n + r.actPlayers, 0);
+  const online = sumCounts(rankings.map((r) => r.online));
   const dayLabel = (d: string) => `${d.slice(8, 10)}.${d.slice(5, 7)}.`;
   return (
     <>
       <VoiceBox />
       <section className="block">
-        <h3>{fill(t.rankingsCount, { n: fmtNum(online, lang) })}</h3>
+        <h3>{fill(t.rankingsCount, { n: fmtNum(online.real, lang) })}</h3>
         <div className="container">
           {rankings.length === 0 ? (
             <p className="notice">{t.noRankings}</p>
@@ -98,7 +100,7 @@ export default async function Home() {
                           r.maxPlayers > 0 && r.actPlayers >= r.maxPlayers ? "srv-full" : r.actPlayers > 0 ? "srv-nempty" : "srv-empty"
                         }
                       >
-                        {r.actPlayers}/{r.maxPlayers}
+                        <PlayerCount count={r.online} lang={lang} botsLabel={t.bots} />
                       </span>
                     </td>
                     <td>
@@ -129,6 +131,19 @@ export default async function Home() {
                   </tr>
                 ))}
               </tbody>
+              {rankings.length > 1 ? (
+                <tfoot>
+                  <tr className="ranking-total">
+                    <td colSpan={2}>{t.total}</td>
+                    <td className="hide-sm fit" />
+                    <td className="num">
+                      <PlayerCount count={online} lang={lang} botsLabel={t.bots} />
+                    </td>
+                    <td />
+                    <td className="hide-sm" />
+                  </tr>
+                </tfoot>
+              ) : null}
             </table>
           )}
           <p className="summary">

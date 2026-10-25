@@ -4,6 +4,8 @@ import { botProfiles, type LivePlayer, type Server } from "@/lib/data";
 import { countryName, fmtDuration, fmtNum, fmtPct, nowUnix, ratio } from "@/lib/format";
 import { baseGameOf, gameKind } from "@/lib/games";
 import type { Dict, Lang } from "@/lib/i18n";
+import { playerCount } from "@/lib/player-count";
+import { PlayerCount } from "./player-count";
 import { Flag } from "./ui";
 
 // Server rows as on gameME: name, game, address (steam://connect), map, map
@@ -60,7 +62,7 @@ export function ServerTable({ game, servers, head, t, lang }: { game: string; se
                 <td className="num hide-sm">{s.map_started ? fmtDuration(now - s.map_started) : "-"}</td>
                 <td className="num">
                   <span className={cls}>
-                    {s.act_players}/{s.max_players}
+                    <PlayerCount count={playerCount(s.act_players, s.bots, s.max_players)} lang={lang} botsLabel={t.bots} />
                   </span>
                 </td>
               </tr>

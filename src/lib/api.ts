@@ -4,6 +4,7 @@ import { basePath } from "./base-path";
 import { clientIp } from "./client-ip";
 import { activity } from "./format";
 import { getGame, getPlayer, getPlayerFlags, noProfile, type ClanRow, type LivePlayer, type MapRow, type RankingRow, type Server } from "./data";
+import { playerCount } from "./player-count";
 
 // Public read-only JSON API (/api/v1/...). Only data the website shows to
 // everyone: no IPs, no chat, no hidden players, no RCON or admin data.
@@ -91,6 +92,7 @@ export function apiServer(s: Server) {
     address: s.publicaddress || `${s.address}:${s.port}`,
     map: s.act_map || null,
     players: s.act_players,
+    bots: playerCount(s.act_players, s.bots, s.max_players).bots,
     maxPlayers: s.max_players,
     mapStarted: s.map_started || null,
     kills: s.kills,

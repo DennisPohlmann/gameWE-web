@@ -13,9 +13,17 @@ settings: [CONFIG.md](CONFIG.md).
 
 ## Pages
 
+Players online are shown as real players, the bots with the BOT tag (only
+when there are any) and the slots, e.g. `1 (31 BOT) / 48` or `1 / 48`: in
+the rankings on `/` and their total, in the server lists of a ranking and
+on the server page. The collector counts bots in `act_players`; the web
+takes the bots from the live view (`hlstats_Livestats`, uniqueId `BOT:...`)
+and shows `act_players` minus bots as real players (never below 0). The
+heading on `/` counts the real players.
+
 | URL | Content |
 |-----|---------|
-| `/` | all rankings with players online, best player (Steam picture, flag) and clan (flag of its members' most common country), load of the last 30 days |
+| `/` | all rankings with players online (with a total row when there are several), best player (Steam picture, flag) and clan (flag of its members' most common country), load of the last 30 days |
 | `/<game>` | a ranking: servers (flag of the server's country), live players per server by team, daily awards, activity |
 | `/<game>/servers/<id>` | one server: live view with the server's country flag, bots and flags, load graph of the last 24 hours (players, maps, uptime), counters, chat |
 | `/<game>/players` | ranking (sortable, search), `?view=new` for new players; country and city rankings with gameME's links: `?type=countryinfo` (all countries), `?type=countryinfo&valuecountry=de` (players of a country), `?type=cityinfo[&valuecountry=de]` (cities), `?type=cityinfo&valuecountry=de&valuecity=berlin` (players of a city; `valuecity` alone also works but joins cities of the same name) |

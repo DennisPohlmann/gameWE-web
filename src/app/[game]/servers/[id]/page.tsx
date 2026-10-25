@@ -6,9 +6,11 @@ import { statsOrigin } from "@/lib/site-url";
 import { notFound, redirect } from "next/navigation";
 import { ServerLoadChart } from "@/components/graphics";
 import { LiveTable, ServerTable } from "@/components/live";
+import { PlayerCount } from "@/components/player-count";
 import { Empty, PlayerLink, Section, Stats, TableWrap } from "@/components/ui";
 import { getChat, getLivePlayers, getPlayerFlags, getServer, getServerLoad } from "@/lib/data";
 import { fmtDateTime, fmtDuration, fmtNum, fmtPct, nowUnix, ratio } from "@/lib/format";
+import { playerCount } from "@/lib/player-count";
 import { fill, getDict } from "@/lib/i18n";
 import { shareMetadata } from "@/lib/share-meta";
 import { getSettings } from "@/lib/settings";
@@ -76,7 +78,7 @@ export default async function ServerPage({ params }: Props) {
             items={[
               [t.map, s.act_map || "-"],
               [t.time, s.map_started ? fmtDuration(now - s.map_started) : "-"],
-              [t.playersOnline, `${s.act_players}${s.max_players ? `/${s.max_players}` : ""}`],
+              [t.playersOnline, <PlayerCount key="online" count={playerCount(s.act_players, s.bots, s.max_players)} lang={lang} botsLabel={t.bots} slots={s.max_players > 0} />],
               [t.kills, fmtNum(s.kills, lang)],
               [t.hs, `${fmtNum(s.headshots, lang)} (${fmtPct(ratio(s.headshots, s.kills), lang)})`],
               [t.suicides, fmtNum(s.suicides, lang)],

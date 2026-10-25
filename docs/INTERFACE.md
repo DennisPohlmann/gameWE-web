@@ -41,7 +41,7 @@ parameters are ignored.
 | `/api` | documentation page (Scalar) with code examples in curl, PHP, Python and JavaScript |
 | `/api/openapi.json` | OpenAPI 3.1 description of `/api/v1` |
 | `/api/v1` | list of the endpoints and the link to the documentation |
-| `/api/v1/rankings` | all rankings with servers, players online, best player and clan |
+| `/api/v1/rankings` | all rankings with servers, players online (`players`, bots included, and `bots`), best player and clan |
 | `/api/v1/rankings/<game>?limit=10&offset=0` | one ranking: totals and the best players by points (limit 1-100) |
 | `/api/v1/rankings/<game>/players` | the ranking as a paged list; filters `country`, `city`, `clan`, `q` (name); `sort` by points, name, activity, time, kills, deaths, K:D, headshots, HS/kill, accuracy or first seen |
 | `/api/v1/rankings/<game>/stats?days=30` | totals and activity per day (players, kills, headshots) |
@@ -63,7 +63,7 @@ parameters are ignored.
 | `/api/v1/rankings/<game>/ranks/<index>/players` | the players of one rank |
 | `/api/v1/rankings/<game>/actions` | actions (bomb planted, ...) by count |
 | `/api/v1/rankings/<game>/teams` | teams and roles |
-| `/api/v1/rankings/<game>/servers` | servers of a ranking with the players online (name, team, points, kills; bots without an id) |
+| `/api/v1/rankings/<game>/servers` | servers of a ranking (`players` online with bots, `bots` among them) with the players online (name, team, points, kills; bots without an id) |
 | `/api/v1/rankings/<game>/servers/<id>` | one server of that ranking |
 | `/api/v1/rankings/<game>/servers/<id>/load?hours=24` | players on that server per 10 minutes (1-168 hours) |
 | `/api/v1/servers` | all servers |

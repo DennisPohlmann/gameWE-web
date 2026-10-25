@@ -4,6 +4,7 @@ import { adminQuery, likeOp, query, queryOne, sinceDays, type Param } from "./db
 import { addDays, dayOf, siteDay } from "./day";
 import { nowUnix, steamIds } from "./format";
 import { baseGameOf, GAME_HAS_DATA } from "./games";
+import { playerCount, sumCounts, type PlayerCount } from "./player-count";
 
 // All reads of the HLstatsX/gameME tables the collector fills.
 // Times are Unix seconds unless a field says otherwise.
@@ -97,6 +98,7 @@ export type Server = {
   publicaddress: string;
   name: string;
   act_players: number;
+  bots: number;
   max_players: number;
   act_map: string;
   map_started: number;
@@ -119,8 +121,12 @@ export type Server = {
 // (66/48), and hlstats_server_load still holds those spikes.
 const capped = (p: string) => `CASE WHEN ${p}max_players > 0 AND ${p}act_players > ${p}max_players THEN ${p}max_players ELSE ${p}act_players END`;
 
+// Bots online: the live rows of bots (uniqueId BOT:<name>); act_players
+// counts them too (player-count.ts caps them at act_players).
+const botsOnline = (p: string) => `(SELECT COUNT(*) FROM hlstats_Livestats lb WHERE lb.server_id = ${p}serverId AND lb.unique_id LIKE 'BOT%')`;
+
 // With the ranking's name and base game (hlstats_Games) for the Game column.
-const serverCols = `s.serverId, s.address, s.port, s.publicaddress, s.name, ${capped("s.")} AS act_players, s.max_players, s.act_map,
+const serverCols = `s.serverId, s.address, s.port, s.publicaddress, s.name, ${capped("s.")} AS act_players, ${botsOnline("s.")} AS bots, s.max_players, s.act_map,
   s.map_started, s.kills, s.headshots, s.suicides, s.rounds, s.players, s.ct_wins, s.ts_wins, s.bombs_planted,
   s.bombs_defused, s.country_code, s.game, g.name AS game_name, g.realgame`;
 const serverFrom = "hlstats_Servers s LEFT JOIN hlstats_Games g ON g.code = s.game";
@@ -1185,6 +1191,8 @@ export type RankingOverview = {
   realgame: string | null;
   actPlayers: number;
   maxPlayers: number;
+  // Players online split into real players and bots (playerCount per server).
+  online: PlayerCount;
   servers: number;
   topPlayerId: number | null;
   topPlayerName: string | null;
@@ -1197,10 +1205,20 @@ export type RankingOverview = {
 export async function getRankingOverview(): Promise<RankingOverview[]> {
   const [games, servers, tops, clans] = await Promise.all([
     getGames(),
-    query<{ game: string; act: number; max: number; n: number }>(
-      `SELECT TRIM(game) AS game, COALESCE(SUM(${capped("")}), 0) AS act, COALESCE(SUM(max_players), 0) AS max, COUNT(*) AS n
-       FROM hlstats_Servers GROUP BY game`,
-    ),
+    query<{ game: string; act: number; bots: number; max: number }>(
+      `SELECT TRIM(s.game) AS game, ${capped("s.")} AS act, ${botsOnline("s.")} AS bots, s.max_players AS max FROM hlstats_Servers s`,
+    ).then((rows) => {
+      const games = new Map<string, { act: number; max: number; n: number; counts: PlayerCount[] }>();
+      for (const r of rows) {
+        const g = games.get(r.game) ?? { act: 0, max: 0, n: 0, counts: [] };
+        g.act += Number(r.act) || 0;
+        g.max += Number(r.max) || 0;
+        g.n += 1;
+        g.counts.push(playerCount(r.act, r.bots, r.max));
+        games.set(r.game, g);
+      }
+      return [...games].map(([game, g]) => ({ game, act: g.act, max: g.max, n: g.n, online: sumCounts(g.counts) }));
+    }),
     // Best player per ranking: highest skill, ties by lowest id.
     query<{ game: string; playerId: number; name: string | null; flag: string | null; country: string | null }>(
       `SELECT TRIM(p.game) AS game, p.playerId, d.lastName AS name, l.flag, l.country
@@ -1230,6 +1248,7 @@ export async function getRankingOverview(): Promise<RankingOverview[]> {
       realgame: g.realgame,
       actPlayers: s?.act ?? 0,
       maxPlayers: s?.max ?? 0,
+      online: s?.online ?? { real: 0, bots: 0, max: 0 },
       servers: s?.n ?? 0,
       topPlayerId: p?.playerId ?? null,
       topPlayerName: p?.name ?? null,

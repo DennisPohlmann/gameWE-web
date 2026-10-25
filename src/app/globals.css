@@ -773,6 +773,10 @@ table.spaced { margin-top: 10px; }
 .swatch.loss { background: var(--chart-loss); }
 .load-chart svg { height: auto; max-width: 1100px; }
 .bot-tag { display: inline-block; width: 16px; height: 12px; margin-right: 2px; vertical-align: -1px; overflow: hidden; font: bold 7px/13px Verdana, sans-serif; letter-spacing: -0.4px; text-align: center; color: #fff; background: linear-gradient(#8a8f98, #5c616b); border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18), 0 1px 1px rgba(0, 0, 0, 0.25); }
+/* Players online "1 (31 BOT) / 48" (components/player-count.tsx): on one line, the tag right before ")". */
+.player-count { white-space: nowrap; }
+.player-count .bot-tag { margin-right: 0; }
+.ranking-total td { font-weight: bold; }
 
 .inline-form { display: inline-flex; gap: 4px; align-items: center; margin: 0; }
 .chart .dot { stroke: none; }
