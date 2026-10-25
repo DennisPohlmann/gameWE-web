@@ -183,6 +183,11 @@ small, .small { font-size: 12.5px; }
 .card > header h2, .section-head h2 { font-size: 15px; margin: 0; }
 .card > header .more { margin-left: auto; font-size: 13px; }
 .section-aside { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+/* Filter forms in a section head (chat, IPs): may shrink, a select with long
+   ranking names must not push the page wider. */
+.section-aside > * { min-width: 0; max-width: 100%; }
+form.search { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0; }
+form.search select { max-width: 100%; }
 .section > p, .card > p { margin: 14px 18px; }
 .card > p.settings-help, .section > p.settings-help { margin: 0; }
 .section > .form, .card > .form { padding: 16px 18px; }
@@ -273,7 +278,7 @@ select { padding-right: 28px; }
 .form label > small, .form small { font-weight: 400; color: var(--muted); }
 .form label.check, label.check { display: flex; gap: 8px; align-items: center; font-weight: 500; }
 .form .button { justify-self: start; }
-.form.box { margin: 16px 18px; padding: 14px; border: 1px dashed var(--line-2); border-radius: var(--radius); max-width: none; }
+.form.box { margin: 16px 18px; padding: 14px; border: 1px dashed var(--line-2); border-radius: var(--radius); max-width: none; overflow-wrap: anywhere; }
 .inline-form { display: inline-flex; gap: 6px; align-items: center; margin: 0; flex-wrap: wrap; }
 .inline { display: inline-flex; gap: 6px; align-items: center; font-weight: 500; }
 .link-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 8px; }
@@ -398,6 +403,9 @@ select { padding-right: 28px; }
   .savebar .btns .button { flex: 1; }
   .link-fields, .hl-fields { grid-template-columns: 1fr; }
   .searchbox { max-width: none; flex-basis: 100%; }
+  .section-aside { margin-left: 0; width: 100%; }
+  form.search { width: 100%; }
+  form.search select, form.search input:not([type="hidden"]) { flex: 1 1 140px; min-width: 0; }
   .hide-sm { display: none; }
   .adm-menu { position: fixed; right: 8px; left: 8px; top: 56px; width: auto; }
   /* Lists become cards: name first, values in a row, the button at the end. */
@@ -412,4 +420,14 @@ select { padding-right: 28px; }
   table.cards td.main .subt { display: inline; margin-left: 6px; }
   table.cards td.end { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); }
   table.cards td:empty { display: none; }
+  /* Rows with a form instead of an end button: the form gets its own full
+     line under the name (ranking servers: move-to select + button). */
+  table.cards.stack tr { padding-right: 14px; }
+  table.cards td.act { width: 100%; margin-top: 6px; }
+  table.cards td.act .inline-form { display: flex; flex-wrap: nowrap; width: 100%; }
+  table.cards td.act select { flex: 1 1 0; min-width: 0; }
+  /* Any other table that is neither a card list nor in a .table-wrap scrolls
+     on its own instead of widening the page (a select is as wide as its
+     longest option, a table never narrower than its content). */
+  .adm-main table:not(.cards):not(.table-wrap > table) { display: block; max-width: 100%; overflow-x: auto; }
 }

@@ -192,47 +192,47 @@ async function RankingServers({ gameId, code, lang, returnTo }: { gameId: string
   return (
     <Section id="servers" title={a.rankingServers}>
       {mine.length ? (
-        <table>
-          <tbody>
-            {mine.map((s) => (
-              <tr key={s.serverId}>
-                <td>
-                  <Link href={`/admin/servers/${s.serverId}`}>{s.name || `${s.address}:${s.port}`}</Link>
-                </td>
-                <td className="muted">
-                  {s.address}:{s.port}
-                </td>
-                <td>
-                  {targets.length ? (
-                    <form action={moveServerAction} className="inline-form">
-                      <input type="hidden" name="__id" value={gameId} />
-                      <input type="hidden" name="__returnTo" value={returnTo} />
-                      <input type="hidden" name="server" value={s.serverId} />
-                      <select {...noAutofill} name="target" aria-label={a.rankingRemoveTo} defaultValue="">
-                        <option value="" disabled>
-                          {a.rankingRemoveTo} …
-                        </option>
-                        {targets.map(([v, l]) => (
-                          <option key={v} value={v}>
-                            {l}
+        <>
+          <table className="cards stack">
+            <tbody>
+              {mine.map((s) => (
+                <tr key={s.serverId}>
+                  <td className="main wrap-cell">
+                    <Link href={`/admin/servers/${s.serverId}`}>{s.name || `${s.address}:${s.port}`}</Link>
+                  </td>
+                  <td className="muted nowrap">
+                    {s.address}:{s.port}
+                  </td>
+                  <td className="act">
+                    {targets.length ? (
+                      <form action={moveServerAction} className="inline-form">
+                        <input type="hidden" name="__id" value={gameId} />
+                        <input type="hidden" name="__returnTo" value={returnTo} />
+                        <input type="hidden" name="server" value={s.serverId} />
+                        <select {...noAutofill} name="target" aria-label={a.rankingRemoveTo} defaultValue="">
+                          <option value="" disabled>
+                            {a.rankingRemoveTo} …
                           </option>
-                        ))}
-                      </select>{" "}
-                      <button type="submit" className="button">
-                        {a.rankingRemove}
-                      </button>
-                    </form>
-                  ) : null}
-                </td>
-              </tr>
-            ))}
-            <tr>
-              <td colSpan={3}>
-                <small className="muted">{a.rankingRemoveHint}</small>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                          {targets.map(([v, l]) => (
+                            <option key={v} value={v}>
+                              {l}
+                            </option>
+                          ))}
+                        </select>{" "}
+                        <button type="submit" className="button">
+                          {a.rankingRemove}
+                        </button>
+                      </form>
+                    ) : null}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p>
+            <small className="muted">{a.rankingRemoveHint}</small>
+          </p>
+        </>
       ) : (
         <p>{a.rankingNoServers}</p>
       )}
