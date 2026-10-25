@@ -2,6 +2,7 @@ import Link from "next/link";
 import { resetRankingAction } from "../../actions";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { ResetForm } from "@/components/reset-form";
+import { SortableTable } from "@/components/sortable-table";
 import { Section, TableWrap } from "@/components/ui";
 import { optionList } from "@/lib/admin-data";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
@@ -195,34 +196,33 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
       {jobs.length ? (
         <Section title={t.recent}>
           <TableWrap>
-          <table>
-            <thead>
-              <tr>
-                <th>{t.colId}</th>
-                <th>{t.colGame}</th>
-                <th>{t.colMode}</th>
-                <th>{t.colStatus}</th>
-                <th>{t.colBy}</th>
-                <th>{t.colAt}</th>
-                <th>{t.colResult}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {jobs.map((j) => (
-                <tr key={j.id}>
-                  <td>
-                    <Link href={`/admin/reset?job=${j.id}`}>{j.id}</Link>
-                  </td>
-                  <td>{j.game}</td>
-                  <td>{modeName(j.mode)}</td>
-                  <td>{j.status}</td>
-                  <td>{j.requested_by}</td>
-                  <td>{when(Number(j.requested_at), locale)}</td>
-                  <td className="reset-result-cell">{j.result ?? ""}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <SortableTable
+            initial={0}
+            cols={[
+              { label: t.colId },
+              { label: t.colGame },
+              { label: t.colMode },
+              { label: t.colStatus },
+              { label: t.colBy },
+              { label: t.colAt },
+              { label: t.colResult, className: "reset-result-cell", noSort: true },
+            ]}
+            rows={jobs.map((j) => ({
+              key: j.id,
+              values: [Number(j.id), j.game, modeName(j.mode), j.status, j.requested_by, Number(j.requested_at), null],
+              cells: [
+                <Link key="id" href={`/admin/reset?job=${j.id}`}>
+                  {j.id}
+                </Link>,
+                j.game,
+                modeName(j.mode),
+                j.status,
+                j.requested_by,
+                when(Number(j.requested_at), locale),
+                j.result ?? "",
+              ],
+            }))}
+          />
           </TableWrap>
         </Section>
       ) : null}

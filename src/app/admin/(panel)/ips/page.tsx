@@ -8,6 +8,8 @@ import { noAutofill } from "@/lib/autofill";
 import { fmtDateTime, fmtNum, localeOf } from "@/lib/format";
 import { countIps, searchIps } from "@/lib/history";
 import { fill, getDict } from "@/lib/i18n";
+import { sortHeads, SortInputs } from "@/components/sort-head";
+import { ipSorts, sortState } from "@/lib/table-sort";
 
 const PERIODS = [7, 30, 90, 365];
 
@@ -25,12 +27,15 @@ export default async function AdminIps({ searchParams }: { searchParams: Promise
   const page = pageParam(sp.page);
   const limit = rowsParam(sp.rows, 100);
   const filter = { q: q || undefined, game: game || undefined, days: days || undefined };
+  const order = sortState(sp, ipSorts, "last");
   const [rows, total, games] = await Promise.all([
-    searchIps({ ...filter, limit, offset: (page - 1) * limit }),
+    searchIps({ ...filter, limit, offset: (page - 1) * limit, sort: order.sort, asc: order.asc }),
     countIps(filter),
     optionList("games", true),
   ]);
   const base = "/admin/ips";
+  const keep = { ...filter, ...order.keep, rows: limit !== 100 ? limit : undefined };
+  const th = sortHeads(order, base, keep);
   const gameName = new Map(games);
   return (
     <>
@@ -56,6 +61,7 @@ export default async function AdminIps({ searchParams }: { searchParams: Promise
                 </option>
               ))}
             </select>
+            <SortInputs keep={order.keep} />
             <input {...noAutofill} type="search" name="q" defaultValue={q} placeholder={t.search} aria-label={t.search} maxLength={100} />
             <button type="submit">{a.filter}</button>
           </Form>
@@ -67,14 +73,14 @@ export default async function AdminIps({ searchParams }: { searchParams: Promise
               <table>
                 <thead>
                   <tr>
-                    <th>{t.ipAddress}</th>
-                    <th>{t.player}</th>
-                    <th className="hide-sm">{t.steamId}</th>
-                    <th className="hide-sm">{t.ranking}</th>
-                    <th className="num">{t.connections}</th>
-                    <th className="hide-sm">{t.firstConnect}</th>
-                    <th>{t.lastConnect}</th>
-                    <th className="hide-sm">{t.ipHost}</th>
+                    {th(t.ipAddress, "ip", "")}
+                    {th(t.player, "name", "")}
+                    {th(t.steamId, "steam", "hide-sm")}
+                    {th(t.ranking, "game", "hide-sm")}
+                    {th(t.connections, "connects")}
+                    {th(t.firstConnect, "first", "hide-sm")}
+                    {th(t.lastConnect, "last", "")}
+                    {th(t.ipHost, "host", "hide-sm")}
                   </tr>
                 </thead>
                 <tbody>
@@ -111,7 +117,7 @@ export default async function AdminIps({ searchParams }: { searchParams: Promise
             </TableWrap>
             <Pager
               base={base}
-              params={{ game: game || undefined, q: q || undefined, days: days || undefined, rows: limit !== 100 ? limit : undefined }}
+              params={keep}
               page={page}
               pages={Math.max(1, Math.ceil(total / limit))}
               total={total}

@@ -7,6 +7,8 @@ import { getSettings } from "@/lib/settings";
 import { countChat, getChat, getPlayerFlags } from "@/lib/data";
 import { fmtDateTime, localeOf } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
+import { sortHeads, SortInputs } from "@/components/sort-head";
+import { sortState, timeSorts } from "@/lib/table-sort";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getDict()).t.chat };
@@ -27,14 +29,18 @@ export default async function ChatPage({
   const { pageSize, chatPublic } = await getSettings();
   const limit = rowsParam(sp.rows, pageSize);
   if (!chatPublic) notFound();
-  const [rows, total] = await Promise.all([getChat({ game, search: q, limit, offset: (page - 1) * limit }), countChat({ game, search: q })]);
+  const order = sortState(sp, timeSorts, "date");
+  const [rows, total] = await Promise.all([getChat({ game, search: q, limit, offset: (page - 1) * limit, asc: order.asc }), countChat({ game, search: q })]);
   const flags = await getPlayerFlags(rows.map((r) => r.playerId));
   const base = `/${game}/chat`;
+  const keep = { q: q || undefined, ...order.keep, rows: limit !== pageSize ? limit : undefined };
+  const th = sortHeads(order, base, keep);
   return (
     <Section
       title={t.chat}
       aside={
         <Form className="search" action={base} role="search">
+          <SortInputs keep={order.keep} />
           <input {...noAutofill} type="search" name="q" defaultValue={q} placeholder={t.search} aria-label={t.search} />
           <button type="submit">{t.search}</button>
         </Form>
@@ -46,7 +52,7 @@ export default async function ChatPage({
             <table>
               <thead>
                 <tr>
-                  <th>{t.date}</th>
+                  {th(t.date, "date", "")}
                   <th>{t.player}</th>
                   <th>{t.message}</th>
                   <th className="hide-sm">{t.server}</th>
@@ -69,7 +75,7 @@ export default async function ChatPage({
               </tbody>
             </table>
           </TableWrap>
-          <Pager base={base} params={{ q: q || undefined, rows: limit !== pageSize ? limit : undefined }} page={page} pages={Math.max(1, Math.ceil(total / limit))} total={total} rows={{ value: limit, options: ROW_OPTIONS }} locale={localeOf(lang)} labels={t} />
+          <Pager base={base} params={keep} page={page} pages={Math.max(1, Math.ceil(total / limit))} total={total} rows={{ value: limit, options: ROW_OPTIONS }} locale={localeOf(lang)} labels={t} />
         </>
       ) : (
         <Empty>{q ? t.noResults : t.noData}</Empty>

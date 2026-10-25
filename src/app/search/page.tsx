@@ -6,6 +6,8 @@ import { noAutofill } from "@/lib/autofill";
 import { getGames, searchClans, searchPlayers, unlinkedBots, type ClanHit, type SearchHit, type SearchIn } from "@/lib/data";
 import { fmtNum, kpd } from "@/lib/format";
 import { fill, getDict } from "@/lib/i18n";
+import { sortHeads, SortInputs } from "@/components/sort-head";
+import { sortRows, sortState } from "@/lib/table-sort";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getDict()).t.searchTitle };
@@ -35,6 +37,30 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
     if (by === "clans") clans = await searchClans(q, game);
     else players = await searchPlayers(q, by, game);
   }
+  // Results come in the order of the search; the heads sort them. The
+  // ranking sorts by its name.
+  const playerValues = {
+    order: () => 0,
+    name: (p: SearchHit) => p.name,
+    game: (p: SearchHit) => gameName.get(p.game) ?? p.game,
+    points: (p: SearchHit) => Number(p.skill),
+    kills: (p: SearchHit) => Number(p.kills),
+    kpd: (p: SearchHit) => kpd(Number(p.kills), Number(p.deaths)),
+  };
+  const clanValues = {
+    order: () => 0,
+    clan: (c: ClanHit) => c.tag || c.name,
+    game: (c: ClanHit) => gameName.get(c.game) ?? c.game,
+    members: (c: ClanHit) => Number(c.members),
+    points: (c: ClanHit) => (c.skill === null ? null : Number(c.skill)),
+  };
+  const playerOrder = sortState(sp, playerValues, "order");
+  const clanOrder = sortState(sp, clanValues, "order");
+  players = sortRows(players, playerValues, playerOrder.sort, playerOrder.asc);
+  clans = sortRows(clans, clanValues, clanOrder.sort, clanOrder.asc);
+  const keep = { q, st: by !== "names" ? by : undefined, game: game || undefined };
+  const pth = sortHeads(playerOrder, "/search", { ...keep, ...playerOrder.keep });
+  const cth = sortHeads(clanOrder, "/search", { ...keep, ...clanOrder.keep });
   const found = players.length + clans.length;
   const bots = await unlinkedBots(players.map((p) => Number(p.playerId)));
   const labels: Record<SearchIn, string> = { names: t.searchNames, uniqueid: t.searchSteam, clans: t.searchClans };
@@ -43,6 +69,7 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
     <>
       <Section title={t.searchTitle}>
         <Form action="/search" className="search-form" role="search">
+          <SortInputs keep={by === "clans" ? clanOrder.keep : playerOrder.keep} />
           <table className="stats">
             <tbody>
               <tr>
@@ -106,10 +133,10 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
               <table>
                 <thead>
                   <tr>
-                    <th>{t.clan}</th>
-                    <th>{t.ranking}</th>
-                    <th className="num">{t.members}</th>
-                    <th className="num">{t.points}</th>
+                    {cth(t.clan, "clan", "")}
+                    {cth(t.ranking, "game", "")}
+                    {cth(t.members, "members")}
+                    {cth(t.points, "points")}
                   </tr>
                 </thead>
                 <tbody>
@@ -135,11 +162,11 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
               <table>
                 <thead>
                   <tr>
-                    <th>{t.name}</th>
-                    <th>{t.ranking}</th>
-                    <th className="num">{t.points}</th>
-                    <th className="num hide-sm">{t.kills}</th>
-                    <th className="num hide-sm">{t.kpd}</th>
+                    {pth(t.name, "name", "")}
+                    {pth(t.ranking, "game", "")}
+                    {pth(t.points, "points")}
+                    {pth(t.kills, "kills", "num hide-sm")}
+                    {pth(t.kpd, "kpd", "num hide-sm")}
                   </tr>
                 </thead>
                 <tbody>

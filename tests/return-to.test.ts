@@ -10,6 +10,12 @@ test("the list keeps ranking, search, page and rows", () => {
   assert.equal(safeReturnTo(list, "awards"), list);
 });
 
+test("the list keeps its order", () => {
+  const list = listHref("servers", { game: "css", sort: "name", dir: "asc" });
+  assert.equal(list, "/admin/servers?game=css&sort=name&dir=asc");
+  assert.equal(safeReturnTo(list, "servers"), list);
+});
+
 test("the edit link carries the list, the plain list adds nothing", () => {
   const list = listHref("awards", { game: "css" });
   assert.equal(withReturnTo("/admin/awards/7", list, "awards"), "/admin/awards/7?returnTo=%2Fadmin%2Fawards%3Fgame%3Dcss");

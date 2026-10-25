@@ -283,7 +283,9 @@ img { border: 0; vertical-align: middle; }
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; text-align: left; font-variant-numeric: tabular-nums; }
 th, td { padding: 4px; vertical-align: middle; border: 1px solid var(--border); font-weight: normal; white-space: nowrap; }
-th { color: var(--th-text); background: var(--th-bg); }
+/* Column heads are bold in every table and skin; the sorted one is
+   underlined and carries the arrow. */
+th { color: var(--th-text); background: var(--th-bg); font-weight: bold; }
 td { color: var(--text); background: var(--surface); }
 th a { color: var(--th-text); }
 th.num, td.num { text-align: right; }
@@ -296,10 +298,22 @@ td.barcell .meter { justify-content: center; }
 th.fit, td.fit { width: 1%; padding-left: 8px; padding-right: 8px; }
 td.fit .game-tag { margin-left: 0; }
 td.wrap-cell, th.wrap-cell { white-space: normal; min-width: 120px; }
+/* Column widths of the server list. */
+th.w-46 { width: 46%; }
+th.w-36 { width: 36%; }
+th.w-16 { width: 16%; }
+th.w-15 { width: 15%; }
+th.w-14 { width: 14%; }
+th.w-12 { width: 12%; }
+th.w-9 { width: 9%; }
+th.w-8 { width: 8%; }
+th.w-7 { width: 7%; }
+th.w-5 { width: 5%; }
 th a.sort { text-decoration: none; }
+th a.sort:hover { text-decoration: underline; }
 th button.sort { padding: 0; font: inherit; color: var(--th-text); background: none; border: 0; cursor: pointer; text-decoration: none; }
 th button.sort:hover { text-decoration: underline; }
-th a.sort.active { font-weight: bold; text-decoration: underline; }
+th a.sort.active, th button.sort.active { font-weight: bold; text-decoration: underline; }
 tbody tr:hover td { background: var(--surface-2); }
 tr.group td { background: var(--row-group); font-weight: bold; }
 
@@ -312,6 +326,8 @@ tr.ranking-line td:first-child { padding-left: 10px; }
 a.rnk:hover { text-decoration: underline; }
 td.no-rb { border-right: 0; white-space: normal; }
 td.no-lb { border-left: 0; padding-right: 10px; }
+th.no-rb { border-right: 0; }
+th.no-lb { border-left: 0; }
 .icon-link { margin-left: 12px; }
 .icon {
   display: inline-block;
@@ -383,7 +399,8 @@ ul.sections a.active { color: var(--accent); }
 ul.sections a.active .sec-icon { background: radial-gradient(circle at 35% 30%, #ffb066, #c25e00); }
 
 /* Label/value tables of the info pages. */
-table.stats td.stats-key { width: 35%; color: var(--th-text); }
+/* The label column is bold, like the column heads. */
+table.stats td.stats-key { width: 35%; color: var(--th-text); font-weight: bold; }
 /* Position and points share the left half of the player summary's first row. */
 table.stats td.stats-key.pair { width: auto; }
 table.stats td.pair-value { text-align: center; }

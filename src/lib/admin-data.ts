@@ -71,7 +71,16 @@ function selectCols(e: Entity) {
   return cols.join(", ");
 }
 
-export async function listRows(e: Entity, opts: { game?: string; q?: string; page: number; pageSize?: number }) {
+// The column a list can be sorted by: a list field of the entity that is a
+// column of its table (or the joined player name). The name comes from the
+// entity definition, never from the URL; anything else gives null.
+export function listSortColumn(e: Entity, key: string): string | null {
+  const f = e.fields.find((x) => x.name === key && x.inList && !x.virtual && x.type !== "password" && x.type !== "secret");
+  if (!f) return null;
+  return e.joinCols && f.readonly && f.name === "lastName" ? "d.lastName" : `t.${f.name}`;
+}
+
+export async function listRows(e: Entity, opts: { game?: string; q?: string; page: number; pageSize?: number; sort?: string; asc?: boolean }) {
   const size = opts.pageSize ?? PAGE;
   const { parts, params } = fixedWhere(e, "t");
   if (opts.game && e.gameColumn) {
@@ -83,10 +92,13 @@ export async function listRows(e: Entity, opts: { game?: string; q?: string; pag
     for (const _ of e.search) params.push(`%${opts.q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`);
   }
   const where = parts.length ? `WHERE ${parts.join(" AND ")}` : "";
-  const order = e.order
-    .split(",")
-    .map((s) => (s.trim().includes(".") ? s.trim() : `t.${s.trim()}`))
-    .join(", ");
+  const sortCol = opts.sort ? listSortColumn(e, opts.sort) : null;
+  // A chosen column first; the entity's order and the key break ties.
+  const order = [
+    ...(sortCol ? [`${sortCol} ${opts.asc ? "ASC" : "DESC"}`] : []),
+    ...e.order.split(",").map((s) => (s.trim().includes(".") ? s.trim() : `t.${s.trim()}`)),
+    ...(sortCol ? [`t.${e.pk}`] : []),
+  ].join(", ");
   const [rows, [count]] = await Promise.all([
     adminQuery<Row>(`SELECT ${selectCols(e)} FROM ${e.table} t ${e.join ?? ""} ${where} ORDER BY ${order} LIMIT ? OFFSET ?`, [
       ...params,

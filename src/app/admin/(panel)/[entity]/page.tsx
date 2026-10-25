@@ -1,10 +1,13 @@
 import Form from "next/form";
+import { Fragment } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Empty, GameTag, Pager, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
 import { noAutofill } from "@/lib/autofill";
 import { localeOf } from "@/lib/format";
-import { listRows, optionList, withColumns } from "@/lib/admin-data";
+import { listRows, listSortColumn, optionList, withColumns } from "@/lib/admin-data";
+import { sortHeads, SortInputs } from "@/components/sort-head";
+import { sortState } from "@/lib/table-sort";
 import { allServers, rankingBaseGames } from "@/lib/admin-rankings";
 import { RankBadge, rankName } from "@/components/badges";
 import { getEntity, type Field } from "@/lib/admin-entities";
@@ -27,8 +30,14 @@ export default async function EntityList({ params, searchParams }: { params: Pro
   const q = strParam(sp.q);
   const page = pageParam(sp.page);
   const size = rowsParam(sp.rows, 50);
+  // Every list column that is a table column sorts the list; without a
+  // choice it keeps the entity's order.
+  const cols = e.fields.filter((f) => f.inList && f.name !== "realgame");
+  const sortable: Record<string, true> = { __default: true };
+  for (const f of cols) if (listSortColumn(e, f.name)) sortable[f.name] = true;
+  const order = sortState(sp, sortable, "__default");
   const [{ rows, total }, games, servers] = await Promise.all([
-    listRows(e, { game: game || undefined, q: q || undefined, page, pageSize: size }),
+    listRows(e, { game: game || undefined, q: q || undefined, page, pageSize: size, sort: order.sort === "__default" ? undefined : order.sort, asc: order.asc }),
     e.gameColumn ? optionList("games") : Promise.resolve([]),
     e.key === "games" ? allServers() : Promise.resolve([]),
   ]);
@@ -38,11 +47,11 @@ export default async function EntityList({ params, searchParams }: { params: Pro
   // Rankings list how many servers they have.
   const serverCount = (code: unknown) => servers.filter((s) => s.game === String(code ?? "").trim()).length;
   // The ranking's game shows as its own column (with the fallback above).
-  const cols = e.fields.filter((f) => f.inList && f.name !== "realgame");
   const gameCol = e.key === "games" || e.key === "servers";
   const base = `/admin/${e.key}`;
   // The edit page and its redirects come back to this list with its filters.
-  const listParams = { game: game || undefined, q: q || undefined, page: page > 1 ? page : undefined, rows: size !== 50 ? size : undefined };
+  const listParams = { game: game || undefined, q: q || undefined, page: page > 1 ? page : undefined, rows: size !== 50 ? size : undefined, ...order.keep };
+  const th = sortHeads(order, base, { ...listParams, page: undefined });
   const editHref = (id: string) => withReturnTo(`${base}/${encodeURIComponent(id)}`, listHref(e.key, listParams), e.key);
 
   return (
@@ -74,6 +83,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
                 </select>
               ) : null}
               {e.search ? <input {...noAutofill} type="search" name="q" defaultValue={q} aria-label={a.filter} /> : null}
+              <SortInputs keep={order.keep} />
               <button type="submit">{a.filter}</button>
             </Form>
           ) : null
@@ -85,9 +95,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
               <table>
                 <thead>
                   <tr>
-                    {cols.map((f) => (
-                      <th key={f.name}>{f.label[lang]}</th>
-                    ))}
+                    {cols.map((f) => (sortable[f.name] ? <Fragment key={f.name}>{th(f.label[lang], f.name, "")}</Fragment> : <th key={f.name}>{f.label[lang]}</th>))}
                     {gameCol ? <th>{a.baseGame}</th> : null}
                     {e.key === "games" ? <th className="num">{a.serverCount}</th> : null}
                     <th />
@@ -133,7 +141,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
             </TableWrap>
             <Pager
               base={base}
-              params={{ game: game || undefined, q: q || undefined, rows: size !== 50 ? size : undefined }}
+              params={{ ...listParams, page: undefined }}
               page={page}
               pages={Math.max(1, Math.ceil(total / size))}
               total={total}

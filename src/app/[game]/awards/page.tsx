@@ -4,6 +4,7 @@ import Link from "next/link";
 import { AwardBoard, AwardDayTable } from "@/components/award-board";
 import { AwardCalendar } from "@/components/award-calendar";
 import { RankBadge, Ribbon, RibbonLevel, rankName, ribbonClassName } from "@/components/badges";
+import { sortHeads } from "@/components/sort-head";
 import { Bar, Empty, Pager, PlayerLink, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
 import {
   getAwardDays,
@@ -21,14 +22,32 @@ import {
   reachedClass,
   ribbonFor,
   ribbonProgress,
+  type RibbonHolder,
 } from "@/lib/awards";
 import { getPlayerFlags } from "@/lib/data";
 import { siteDay } from "@/lib/day";
 import { activity, fmtDuration, fmtNum, fmtPct, localeOf } from "@/lib/format";
 import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
+import { rankPlayerSorts, sortRows, sortState, type SortState } from "@/lib/table-sort";
 
 type SP = Promise<Record<string, string | string[] | undefined>>;
+type Keep = Record<string, string | number | undefined>;
+
+// The most decorated players stand beside the ranks and ribbons tables, so
+// they sort with their own params.
+const DECO = { sortParam: "dsort", dirParam: "ddir" };
+type Decorated = Awaited<ReturnType<typeof getMostDecorated>>[number];
+const decoratedValues = {
+  wins: (p: Decorated) => Number(p.wins),
+  name: (p: Decorated) => p.name,
+};
+// Holders of one ribbon, most wins first.
+const holderValues = {
+  wins: (h: RibbonHolder) => Number(h.wins),
+  name: (h: RibbonHolder) => h.name,
+  last: (h: RibbonHolder) => h.last,
+};
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getDict()).t.awards };
@@ -48,6 +67,14 @@ export default async function AwardsPage({ params, searchParams }: { params: Pro
     ["ribbons", t.ribbons],
   ] as const;
   const current = tabs.some(([k]) => k === view) ? view : "";
+  const deco = sortState(sp, decoratedValues, "wins", DECO);
+  const rankOrder = sortState(sp, rankPlayerSorts, "kills");
+  const holderOrder = sortState(sp, holderValues, "wins");
+  const rows = rowsParam(sp.rows, 0) || undefined;
+  const page = pageParam(sp.page);
+  const rank = strParam(sp.rank);
+  const award = strParam(sp.award);
+  const cls = strParam(sp.class);
 
   return (
     <>
@@ -62,16 +89,16 @@ export default async function AwardsPage({ params, searchParams }: { params: Pro
           </span>
         </div>
       </div>
-      {current === "" ? <AwardBoard game={game} t={t} lang={lang} /> : null}
-      {current === "history" ? <History game={game} t={t} lang={lang} date={strParam(sp.date)} month={strParam(sp.month)} /> : null}
+      {current === "" ? <AwardBoard game={game} t={t} lang={lang} sort={{ sp, base, params: {} }} /> : null}
+      {current === "history" ? <History game={game} t={t} lang={lang} sp={sp} date={strParam(sp.date)} month={strParam(sp.month)} /> : null}
       {current === "ranks" ? (
-        <WithDecorated game={game} t={t} lang={lang}>
-          <Ranks game={game} t={t} lang={lang} rank={strParam(sp.rank)} page={pageParam(sp.page)} rows={sp.rows} />
+        <WithDecorated game={game} t={t} lang={lang} order={deco} base={base} params={{ view: "ranks", rank: rank || undefined, page: page > 1 ? page : undefined, rows, ...rankOrder.keep }}>
+          <Ranks game={game} t={t} lang={lang} rank={rank} page={page} rows={sp.rows} order={rankOrder} keep={deco.keep} />
         </WithDecorated>
       ) : null}
       {current === "ribbons" ? (
-        <WithDecorated game={game} t={t} lang={lang}>
-          <Ribbons game={game} t={t} lang={lang} award={strParam(sp.award)} cls={strParam(sp.class)} />
+        <WithDecorated game={game} t={t} lang={lang} order={deco} base={base} params={{ view: "ribbons", award: award || undefined, class: cls || undefined, ...holderOrder.keep }}>
+          <Ribbons game={game} t={t} lang={lang} award={award} cls={cls} order={holderOrder} keep={deco.keep} />
         </WithDecorated>
       ) : null}
     </>
@@ -84,7 +111,7 @@ type P = { game: string; t: Dict; lang: Lang };
 // Days can be picked up to the last day with stored awards (yesterday while
 // none are stored); today and later have no awards yet. Without a date, or
 // with one after that day, the last day is shown.
-async function History({ game, t, lang, date, month }: P & { date: string; month: string }) {
+async function History({ game, t, lang, sp, date, month }: P & { sp: Record<string, string | string[] | undefined>; date: string; month: string }) {
   const today = siteDay();
   const yesterday = siteDay(-1);
   const stored = await getLastAwardDay(game);
@@ -99,15 +126,25 @@ async function History({ game, t, lang, date, month }: P & { date: string; month
       <div className="block">
         <AwardCalendar base={`/${game}/awards?view=history`} month={mon} selected={day} today={today} last={last} stored={days} t={t} locale={localeOf(lang)} />
       </div>
-      <AwardDayTable game={game} day={day} t={t} lang={lang} />
+      <AwardDayTable game={game} day={day} t={t} lang={lang} sort={{ sp, base: `/${game}/awards`, params: { view: "history", date: valid(date) ? date : undefined, month: month === mon ? month : undefined } }} />
     </div>
   );
 }
 
 // gameME shows the most decorated players next to ranks and ribbons.
-async function WithDecorated({ game, t, lang, children }: P & { children: ReactNode }) {
-  const [top, ranks] = await Promise.all([getMostDecorated(game, 30), getRanks(game)]);
-  const flags = await getPlayerFlags(top.map((p) => p.playerId));
+async function WithDecorated({
+  game,
+  t,
+  lang,
+  order,
+  base,
+  params,
+  children,
+}: P & { order: SortState<keyof typeof decoratedValues>; base: string; params: Keep; children: ReactNode }) {
+  const [loaded, ranks] = await Promise.all([getMostDecorated(game, 30), getRanks(game)]);
+  const flags = await getPlayerFlags(loaded.map((p) => p.playerId));
+  const top = sortRows(loaded, decoratedValues, order.sort, order.asc);
+  const th = sortHeads(order, base, { ...params, ...order.keep }, DECO);
   return (
     <div className="awards-split">
       <Section title={t.mostDecorated}>
@@ -117,10 +154,8 @@ async function WithDecorated({ game, t, lang, children }: P & { children: ReactN
               <thead>
                 <tr>
                   <th className="num">#</th>
-                  <th>
-                    {t.player} / {t.currentRank}
-                  </th>
-                  <th className="num">{t.wins}</th>
+                  {th(`${t.player} / ${t.currentRank}`, "name", "")}
+                  {th(t.wins, "wins")}
                 </tr>
               </thead>
               <tbody>
@@ -156,7 +191,16 @@ async function WithDecorated({ game, t, lang, children }: P & { children: ReactN
   );
 }
 
-async function Ranks({ game, t, lang, rank: rawRank, page, rows }: P & { rank: string; page: number; rows: string | string[] | undefined }) {
+async function Ranks({
+  game,
+  t,
+  lang,
+  rank: rawRank,
+  page,
+  rows,
+  order,
+  keep,
+}: P & { rank: string; page: number; rows: string | string[] | undefined; order: SortState<keyof typeof rankPlayerSorts>; keep: Keep }) {
   const ranks = await getRanks(game);
   if (!ranks.length) return <Empty>{t.noData}</Empty>;
   const counts = await getRankCounts(game, ranks);
@@ -168,7 +212,9 @@ async function Ranks({ game, t, lang, rank: rawRank, page, rows }: P & { rank: s
   const sel = Number.isInteger(idx) ? ranks[idx] : undefined;
   const { pageSize, activityDays } = await getSettings();
   const limit = rowsParam(rows, pageSize);
-  const players = sel ? await getRankPlayers(game, sel, limit, (page - 1) * limit) : [];
+  const players = sel ? await getRankPlayers(game, sel, limit, (page - 1) * limit, order.sort, order.asc) : [];
+  const params = { view: "ranks", rank: sel?.index, rows: limit !== pageSize ? limit : undefined, ...keep, ...order.keep };
+  const th = sortHeads(order, `/${game}/awards`, params);
   const flags = await getPlayerFlags(players.map((p) => p.playerId));
   const total = counts.reduce((a, b) => a + b, 0);
 
@@ -197,12 +243,13 @@ async function Ranks({ game, t, lang, rank: rawRank, page, rows }: P & { rank: s
                   <thead>
                     <tr>
                       <th className="num">#</th>
-                      <th>{t.player}</th>
-                      <th className="num">{t.kills}</th>
+                      {th(t.player, "name", "")}
+                      {th(t.kills, "kills")}
+                      {/* Progress to the next rank: the kills again. */}
                       <th className="barcell">{t.share}</th>
-                      <th className="num">{t.points}</th>
-                      <th className="num hide-sm">{t.time}</th>
-                      <th className="barcell hide-sm">{t.activity}</th>
+                      {th(t.points, "skill")}
+                      {th(t.time, "time", "num hide-sm")}
+                      {th(t.activity, "activity", "barcell hide-sm")}
                     </tr>
                   </thead>
                   <tbody>
@@ -232,7 +279,7 @@ async function Ranks({ game, t, lang, rank: rawRank, page, rows }: P & { rank: s
               </TableWrap>
               <Pager
                 base={`/${game}/awards`}
-                params={{ view: "ranks", rank: sel.index, rows: limit !== pageSize ? limit : undefined }}
+                params={params}
                 page={page}
                 pages={Math.max(1, Math.ceil(counts[sel.index] / limit))}
                 total={counts[sel.index]}
@@ -252,15 +299,25 @@ async function Ranks({ game, t, lang, rank: rawRank, page, rows }: P & { rank: s
   );
 }
 
-async function Ribbons({ game, t, lang, award, cls: rawCls }: P & { award: string; cls: string }) {
+async function Ribbons({
+  game,
+  t,
+  lang,
+  award,
+  cls: rawCls,
+  order,
+  keep,
+}: P & { award: string; cls: string; order: SortState<keyof typeof holderValues>; keep: Keep }) {
   const [awards, leaders, classes, ranked] = await Promise.all([getAwards(game), getRibbonLeaders(game), getRibbonClasses(game), getRankedCount(game)]);
   const ci = Number.parseInt(rawCls, 10);
   const cls = Number.isInteger(ci) && ci >= 0 && ci < classes.length ? ci : null;
   const achieved = (n: number) => (n ? fill(t.achievedBy, { n: fmtNum(n, lang), pct: fmtPct(ranked ? n / ranked : 0, lang, 2) }) : t.noPlayers);
   const id = Number.parseInt(award, 10);
   const sel = awards.find((a) => a.awardId === id);
-  const holders = sel ? await getRibbonHolders(sel.awardId, 50) : [];
-  const flags = await getPlayerFlags(holders.map((h) => h.playerId));
+  const loaded = sel ? await getRibbonHolders(sel.awardId, 50) : [];
+  const flags = await getPlayerFlags(loaded.map((h) => h.playerId));
+  const holders = sortRows(loaded, holderValues, order.sort, order.asc);
+  const th = sortHeads(order, `/${game}/awards`, { view: "ribbons", award: sel?.awardId, class: cls ?? undefined, ...keep, ...order.keep });
   return (
     <>
       <Section title={t.ribbonsOverview}>
@@ -323,11 +380,12 @@ async function Ribbons({ game, t, lang, award, cls: rawCls }: P & { award: strin
                 <thead>
                   <tr>
                     <th className="num">#</th>
-                    <th>{t.player}</th>
+                    {th(t.player, "name", "")}
                     <th>{t.ribbons}</th>
+                    {/* The level follows the wins. */}
                     <th>{t.ribbonLevel}</th>
-                    <th className="num">{t.wins}</th>
-                    <th className="num">{t.lastWon}</th>
+                    {th(t.wins, "wins")}
+                    {th(t.lastWon, "last")}
                   </tr>
                 </thead>
                 <tbody>

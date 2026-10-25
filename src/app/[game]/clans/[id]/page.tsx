@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import { ShareBar } from "@/components/share-menu";
 import { notFound, redirect } from "next/navigation";
-import { RankingTable } from "@/components/ranking";
+import { RankingTable, rankingValues } from "@/components/ranking";
 import { Flag, Section, Stats } from "@/components/ui";
 import { getClan, getClanFlags, getClanMembers } from "@/lib/data";
 import { fmtDuration, fmtNum, fmtPct, kpd, ratio } from "@/lib/format";
 import { fill, getDict } from "@/lib/i18n";
 import { shareMetadata } from "@/lib/share-meta";
 import { getSettings } from "@/lib/settings";
+import { sortRows, sortState } from "@/lib/table-sort";
 
-type Props = { params: Promise<{ game: string; id: string }> };
+type Props = { params: Promise<{ game: string; id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 async function load(raw: string) {
   const id = Number.parseInt(raw, 10);
@@ -24,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return shareMetadata({ title: c.tag, page: `${t.clans}: ${c.tag}`, text: fill(t.shareTextClan, { name, site: siteName, members: fmtNum(c.members, lang) }) });
 }
 
-export default async function ClanPage({ params }: Props) {
+export default async function ClanPage({ params, searchParams }: Props) {
   const { game, id } = await params;
   const c = await load(id);
   if (!c) notFound();
@@ -32,6 +33,8 @@ export default async function ClanPage({ params }: Props) {
   const { lang, t } = await getDict();
   const [members, settings, flags] = await Promise.all([getClanMembers(c.clanId), getSettings(), getClanFlags([c.clanId])]);
   const flag = flags.get(c.clanId);
+  const order = sortState(await searchParams, rankingValues, "skill");
+  const sorted = sortRows(members, rankingValues, order.sort, order.asc);
   const home = /^https?:\/\//i.test(c.homepage ?? "") ? c.homepage : null;
   return (
     <>
@@ -61,7 +64,7 @@ export default async function ClanPage({ params }: Props) {
         />
       </Section>
       <Section title={t.members}>
-        <RankingTable game={game} rows={members} firstRank={1} activityDays={settings.activityDays} t={t} lang={lang} />
+        <RankingTable game={game} rows={sorted} firstRank={1} sort={{ current: order.sort, asc: order.asc, base: `/${game}/clans/${c.clanId}`, params: order.keep }} activityDays={settings.activityDays} t={t} lang={lang} />
       </Section>
     </>
   );

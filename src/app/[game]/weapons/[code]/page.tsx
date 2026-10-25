@@ -1,11 +1,24 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { sortHeads } from "@/components/sort-head";
 import { Empty, PlayerLink, Section, Stats, TableWrap } from "@/components/ui";
-import { getWeapon, getWeaponTop, getPlayerFlags } from "@/lib/data";
+import { getWeapon, getWeaponTop, getPlayerFlags, type TopRow } from "@/lib/data";
 import { fmtNum, fmtPct, ratio } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
+import { sortRows, sortState } from "@/lib/table-sort";
 
-type Props = { params: Promise<{ game: string; code: string }> };
+// Columns of the top players (a kills, b headshots, c shots, d hits); most
+// kills first, as loaded.
+const topValues = {
+  name: (r: TopRow) => r.name,
+  kills: (r: TopRow) => Number(r.a),
+  hs: (r: TopRow) => Number(r.b),
+  hpk: (r: TopRow) => ratio(Number(r.b), Number(r.a)),
+  shots: (r: TopRow) => Number(r.c),
+  acc: (r: TopRow) => ratio(Number(r.d), Number(r.c)),
+};
+
+type Props = { params: Promise<{ game: string; code: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { game, code } = await params;
@@ -14,13 +27,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: `${(await getDict()).t.weapons}: ${w.name}` };
 }
 
-export default async function WeaponPage({ params }: Props) {
+export default async function WeaponPage({ params, searchParams }: Props) {
   const { game, code } = await params;
   const w = await getWeapon(game, decodeURIComponent(code));
   if (!w) notFound();
   const { lang, t } = await getDict();
-  const top = await getWeaponTop(w.weaponId);
-  const flags = await getPlayerFlags(top.map((r) => r.playerId));
+  const loaded = await getWeaponTop(w.weaponId);
+  const flags = await getPlayerFlags(loaded.map((r) => r.playerId));
+  const order = sortState(await searchParams, topValues, "kills");
+  const top = sortRows(loaded, topValues, order.sort, order.asc);
+  const th = sortHeads(order, `/${game}/weapons/${encodeURIComponent(w.code)}`, {});
   return (
     <>
       <Section title={w.name}>
@@ -41,12 +57,12 @@ export default async function WeaponPage({ params }: Props) {
               <thead>
                 <tr>
                   <th className="num">#</th>
-                  <th>{t.player}</th>
-                  <th className="num">{t.kills}</th>
-                  <th className="num">{t.hs}</th>
-                  <th className="num">{t.hpk}</th>
-                  <th className="num hide-sm">{t.shots}</th>
-                  <th className="num">{t.acc}</th>
+                  {th(t.player, "name", "")}
+                  {th(t.kills, "kills")}
+                  {th(t.hs, "hs")}
+                  {th(t.hpk, "hpk")}
+                  {th(t.shots, "shots", "num hide-sm")}
+                  {th(t.acc, "acc")}
                 </tr>
               </thead>
               <tbody>

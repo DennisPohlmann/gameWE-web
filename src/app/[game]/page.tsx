@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
 import { BarChart, LineChart } from "@/components/chart";
-import { LiveTable, ServerTable } from "@/components/live";
+import { LiveTable, ServerTable, serverValues } from "@/components/live";
 import { Rich } from "@/components/rich";
 import { Section } from "@/components/ui";
 import { ServerLoadChart } from "@/components/graphics";
 import { everyDay, getDailyActivity, getHourlyActivity, getLivePlayers, getLiveMapPlayers, getMapServers, getServerLoad, getServers, getTotals } from "@/lib/data";
 import { dateFormat, fmtNum, fmtPct, localeOf, nowUnix, ratio } from "@/lib/format";
 import { fill, getDict } from "@/lib/i18n";
-import { AwardBoard } from "@/components/award-board";
+import { AwardBoard, awardBoardKeep } from "@/components/award-board";
 import { GameEvents } from "@/components/game-events";
 import { PlayerMap } from "@/components/player-map";
 import { mapMarkers, serverMarkers } from "@/lib/map-markers";
 import { getSettings } from "@/lib/settings";
 import { rankingTitle } from "@/lib/ranking-title";
+import { sortRows, sortState } from "@/lib/table-sort";
 
 const BUCKET = 900;
 
@@ -26,8 +27,15 @@ export async function generateMetadata({ params }: { params: Promise<{ game: str
 // Start page of a ranking, laid out like gameME's: participating servers with
 // a map of who is online and the players on each, the daily awards, then the
 // last 14 days.
-export default async function ServersPage({ params }: { params: Promise<{ game: string }> }) {
+export default async function ServersPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ game: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { game } = await params;
+  const sp = await searchParams;
   const { lang, t } = await getDict();
   const { mapLive, mapStyle } = await getSettings();
   const [servers, totals, live, activityRows, hourly, mapPlayers, mapServers] = await Promise.all([
@@ -80,6 +88,11 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
   // With several servers, the list of all of them and one graph of all of
   // them come first; a single server is shown only once.
   const multi = servers.length > 1;
+  // The list of all servers sorts by its column heads; the sections of the
+  // single servers below keep the configured order.
+  const order = sortState(sp, { ...serverValues, order: () => 0 }, "order");
+  const listed = order.sort === "order" ? servers : sortRows(servers, serverValues, order.sort, order.asc);
+  const boardKeep = awardBoardKeep(sp);
   const combined = multi ? combinedLoad(servers, loads, since, lang, t.total) : null;
   // Who is online right now, between the server list and the graphs.
   // Shown also when nobody is online (empty map), so the layout stays the same.
@@ -111,7 +124,15 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
       <Section title={t.participatingServers}>
         {multi ? (
           <>
-            <ServerTable game={game} servers={servers} t={t} lang={lang} head={head} details />
+            <ServerTable
+              game={game}
+              servers={listed}
+              details
+              sort={{ current: order.sort, asc: order.asc, base: `/${game}`, params: { ...order.keep, ...boardKeep } }}
+              t={t}
+              lang={lang}
+              head={head}
+            />
             {liveMap}
             {combined ? (
               <div className="box">
@@ -139,7 +160,7 @@ export default async function ServersPage({ params }: { params: Promise<{ game: 
       </Section>
 
 
-      <AwardBoard game={game} t={t} lang={lang} />
+      <AwardBoard game={game} t={t} lang={lang} sort={{ sp, base: `/${game}`, params: order.keep }} />
 
       <GameEvents game={game} t={t} lang={lang} />
 

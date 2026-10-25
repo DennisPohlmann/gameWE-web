@@ -2,6 +2,7 @@ import "server-only";
 import { getPlayerFlags } from "./data";
 import { dayRange, siteDay } from "./day";
 import { query } from "./db";
+import { rankPlayerSorts, type RankPlayerSort } from "./table-sort";
 
 // Daily awards, ribbons and ranks, as on gameME.
 //
@@ -391,13 +392,15 @@ async function rankCounts(game: string, ranks: Rank[]): Promise<number[]> {
 
 export type RankPlayer = { playerId: number; name: string | null; skill: number; kills: number; connection_time: number; last_event: number };
 
-export function getRankPlayers(game: string, rank: Rank, limit: number, offset: number) {
+export function getRankPlayers(game: string, rank: Rank, limit: number, offset: number, sort: RankPlayerSort = "kills", asc = false) {
   const upper = rank.next !== null ? `AND p.kills < ?` : "";
+  // The column comes from the allowlist, never from the URL itself.
+  const order = `${rankPlayerSorts[sort]} ${asc ? "ASC" : "DESC"}, p.playerId`;
   return query<RankPlayer>(
     `SELECT p.playerId, d.lastName AS name, p.skill, p.kills, p.connection_time, p.last_event
      FROM hlstats_Players p LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
      WHERE p.game = ? AND p.hideranking = 0 AND p.kills >= ? ${upper}
-     ORDER BY p.kills DESC, p.playerId LIMIT ? OFFSET ?`,
+     ORDER BY ${order} LIMIT ? OFFSET ?`,
     [game, rank.minimum, ...(rank.next !== null ? [rank.next] : []), limit, offset],
   );
 }

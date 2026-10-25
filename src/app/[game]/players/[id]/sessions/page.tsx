@@ -4,7 +4,9 @@ import { HistoryFrame, loadHistoryPlayer } from "@/components/player-history";
 import { Empty, Pager, ROW_OPTIONS, TableWrap, pageParam, rowsParam } from "@/components/ui";
 import { getPlayerHistory, getPlayerSkillBefore } from "@/lib/data";
 import { fmtDuration, fmtNum, fmtPct, ratio, localeOf } from "@/lib/format";
-import { getPlayerSessions } from "@/lib/history";
+import { getPlayerSessions, sessionValues } from "@/lib/history";
+import { sortHeads } from "@/components/sort-head";
+import { sortState } from "@/lib/table-sort";
 import { getDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 
@@ -24,8 +26,12 @@ export default async function SessionsPage({ params, searchParams }: Props) {
   const { lang, t } = await getDict();
   const { pageSize } = await getSettings();
   const limit = rowsParam(sp.rows, pageSize);
+  const order = sortState(sp, sessionValues, "date");
+  const base = `/${game}/players/${p.playerId}/sessions`;
+  const keep = { ...order.keep, rows: limit !== pageSize ? limit : undefined };
+  const th = sortHeads(order, base, keep);
   const [{ rows, total }, trend, before] = await Promise.all([
-    getPlayerSessions(p.playerId, limit, (page - 1) * limit),
+    getPlayerSessions(p.playerId, limit, (page - 1) * limit, order.sort, order.asc),
     getPlayerHistory(p.playerId, 60),
     getPlayerSkillBefore(p.playerId, 60),
   ]);
@@ -52,19 +58,19 @@ export default async function SessionsPage({ params, searchParams }: Props) {
             <table className="spaced">
               <thead>
                 <tr>
-                  <th>{t.date}</th>
-                  <th className="num">{t.change}</th>
-                  <th className="num">{t.points}</th>
-                  <th className="num">{t.time}</th>
-                  <th className="num hide-sm">{t.rounds}</th>
-                  <th className="num hide-sm">{t.wins}</th>
-                  <th className="num">{t.kills}</th>
-                  <th className="num">{t.deaths}</th>
-                  <th className="num">{t.kpd}</th>
-                  <th className="num hide-sm">{t.killStreak}</th>
-                  <th className="num hide-sm">{t.hs}</th>
-                  <th className="num hide-sm">{t.hpk}</th>
-                  <th className="num hide-sm">{t.acc}</th>
+                  {th(t.date, "date", "")}
+                  {th(t.change, "change")}
+                  {th(t.points, "points")}
+                  {th(t.time, "time")}
+                  {th(t.rounds, "rounds", "num hide-sm")}
+                  {th(t.wins, "wins", "num hide-sm")}
+                  {th(t.kills, "kills")}
+                  {th(t.deaths, "deaths")}
+                  {th(t.kpd, "kpd")}
+                  {th(t.killStreak, "streak", "num hide-sm")}
+                  {th(t.hs, "hs", "num hide-sm")}
+                  {th(t.hpk, "hpk", "num hide-sm")}
+                  {th(t.acc, "acc", "num hide-sm")}
                 </tr>
               </thead>
               <tbody>
@@ -91,7 +97,7 @@ export default async function SessionsPage({ params, searchParams }: Props) {
               </tbody>
             </table>
           </TableWrap>
-          <Pager base={`/${game}/players/${p.playerId}/sessions`} params={{ rows: limit !== pageSize ? limit : undefined }} page={page} pages={Math.max(1, Math.ceil(total / limit))} total={total} rows={{ value: limit, options: ROW_OPTIONS }} locale={localeOf(lang)} labels={t} />
+          <Pager base={base} params={keep} page={page} pages={Math.max(1, Math.ceil(total / limit))} total={total} rows={{ value: limit, options: ROW_OPTIONS }} locale={localeOf(lang)} labels={t} />
         </>
       ) : (
         <Empty>{t.noData}</Empty>

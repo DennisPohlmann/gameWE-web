@@ -5,6 +5,8 @@ import { countChat, getChat } from "@/lib/data";
 import { fmtDateTime, localeOf } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
+import { sortHeads } from "@/components/sort-head";
+import { sortState, timeSorts } from "@/lib/table-sort";
 
 type Props = { params: Promise<{ game: string; id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -21,7 +23,11 @@ export default async function PlayerChatPage({ params, searchParams }: Props) {
   const { lang, t } = await getDict();
   const { pageSize } = await getSettings();
   const limit = rowsParam(sp.rows, pageSize);
-  const [rows, total] = await Promise.all([getChat({ playerId: p.playerId, limit, offset: (page - 1) * limit }), countChat({ playerId: p.playerId })]);
+  const order = sortState(sp, timeSorts, "date");
+  const [rows, total] = await Promise.all([getChat({ playerId: p.playerId, limit, offset: (page - 1) * limit, asc: order.asc }), countChat({ playerId: p.playerId })]);
+  const base = `/${game}/players/${p.playerId}/chat`;
+  const keep = { ...order.keep, rows: limit !== pageSize ? limit : undefined };
+  const th = sortHeads(order, base, keep);
   return (
     <HistoryFrame game={game} id={p.playerId} name={p.name} t={t} tab="chat">
       {rows.length ? (
@@ -30,7 +36,7 @@ export default async function PlayerChatPage({ params, searchParams }: Props) {
             <table>
               <thead>
                 <tr>
-                  <th>{t.time}</th>
+                  {th(t.time, "date", "")}
                   <th>{t.message}</th>
                   <th className="hide-sm">{t.server}</th>
                 </tr>
@@ -49,7 +55,7 @@ export default async function PlayerChatPage({ params, searchParams }: Props) {
               </tbody>
             </table>
           </TableWrap>
-          <Pager base={`/${game}/players/${p.playerId}/chat`} params={{ rows: limit !== pageSize ? limit : undefined }} page={page} pages={Math.max(1, Math.ceil(total / limit))} total={total} rows={{ value: limit, options: ROW_OPTIONS }} locale={localeOf(lang)} labels={t} />
+          <Pager base={base} params={keep} page={page} pages={Math.max(1, Math.ceil(total / limit))} total={total} rows={{ value: limit, options: ROW_OPTIONS }} locale={localeOf(lang)} labels={t} />
         </>
       ) : (
         <Empty>{t.noData}</Empty>

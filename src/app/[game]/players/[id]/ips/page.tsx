@@ -4,8 +4,20 @@ import { Empty, TableWrap } from "@/components/ui";
 import { fmtDateTime, fmtNum } from "@/lib/format";
 import { getPlayerIps } from "@/lib/history";
 import { getDict } from "@/lib/i18n";
+import { sortHeads } from "@/components/sort-head";
+import { ipSortKey, sortRows, sortState } from "@/lib/table-sort";
+import type { PlayerIp } from "@/lib/history";
 
-type Props = { params: Promise<{ game: string; id: string }> };
+type Props = { params: Promise<{ game: string; id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
+
+// Columns of the address list; the last connect first, as loaded.
+const ipValues = {
+  last: (r: PlayerIp) => r.last,
+  first: (r: PlayerIp) => r.first,
+  connects: (r: PlayerIp) => r.connects,
+  ip: (r: PlayerIp) => ipSortKey(r.ip),
+  host: (r: PlayerIp) => r.hostname,
+};
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getDict();
@@ -14,11 +26,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
 // The addresses a player connected from. loadHistoryPlayer answers 404 to
 // anyone who is not signed in as admin.
-export default async function PlayerIpsPage({ params }: Props) {
+export default async function PlayerIpsPage({ params, searchParams }: Props) {
   const { game, id } = await params;
   const p = await loadHistoryPlayer(game, id, "ips");
   const { lang, t } = await getDict();
-  const rows = await getPlayerIps(p.playerId);
+  const order = sortState(await searchParams, ipValues, "last");
+  const rows = sortRows(await getPlayerIps(p.playerId), ipValues, order.sort, order.asc);
+  const th = sortHeads(order, `/${game}/players/${p.playerId}/ips`, {});
   return (
     <HistoryFrame game={game} id={p.playerId} name={p.name} t={t} tab="ips">
       <p className="muted">{t.ipAdminOnly}</p>
@@ -27,11 +41,11 @@ export default async function PlayerIpsPage({ params }: Props) {
           <table>
             <thead>
               <tr>
-                <th>{t.ipAddress}</th>
-                <th className="num">{t.connections}</th>
-                <th className="hide-sm">{t.firstConnect}</th>
-                <th>{t.lastConnect}</th>
-                <th className="hide-sm">{t.ipHost}</th>
+                {th(t.ipAddress, "ip", "")}
+                {th(t.connections, "connects")}
+                {th(t.firstConnect, "first", "hide-sm")}
+                {th(t.lastConnect, "last", "")}
+                {th(t.ipHost, "host", "hide-sm")}
               </tr>
             </thead>
             <tbody>

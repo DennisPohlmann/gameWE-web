@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Form from "next/form";
 import { AutoForm } from "@/components/auto-form";
+import { SortableTable } from "@/components/sortable-table";
 import { Bar, Section, TableWrap, strParam } from "@/components/ui";
 import { noAutofill } from "@/lib/autofill";
 import { getGames, getHelpActions, getHelpWeapons, getPointSettings } from "@/lib/data";
@@ -139,39 +140,35 @@ export default async function HelpPage({ searchParams }: { searchParams: SP }) {
           {gameTabs("actions")}
           {actions.length ? (
             <TableWrap>
-              <table>
-                <thead>
-                  <tr>
-                    <th>{t.helpColAction}</th>
-                    <th className="hide-sm">{t.helpColType}</th>
-                    <th className="num">{t.helpColPlayerReward}</th>
-                    <th className="num">{t.helpColTeamReward}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {actions.map((a) => (
-                    <tr key={`${a.game}-${a.code}`}>
-                      <td>{a.description || a.code}</td>
-                      <td className="hide-sm">
-                        {types(a).map(([, label]) => (
-                          <span key={label} className="help-type">
-                            {label}
-                          </span>
-                        ))}
-                      </td>
-                      <td className="num">{reward(Number(a.reward_player))}</td>
-                      <td className="num">
-                        {Number(a.reward_team) ? (
-                          <>
-                            {a.teamName || a.team ? <span className="muted">{a.teamName || a.team} </span> : null}
-                            {reward(Number(a.reward_team))}
-                          </>
-                        ) : null}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {/* Sorted in the browser, so the page stays at this question. */}
+              <SortableTable
+                initial={-1}
+                cols={[
+                  { label: t.helpColAction },
+                  { label: t.helpColType, className: "hide-sm", noSort: true },
+                  { label: t.helpColPlayerReward, className: "num" },
+                  { label: t.helpColTeamReward, className: "num" },
+                ]}
+                rows={actions.map((a) => ({
+                  key: `${a.game}-${a.code}`,
+                  values: [a.description || a.code, null, Number(a.reward_player), Number(a.reward_team) || null],
+                  cells: [
+                    a.description || a.code,
+                    types(a).map(([, label]) => (
+                      <span key={label} className="help-type">
+                        {label}
+                      </span>
+                    )),
+                    reward(Number(a.reward_player)),
+                    Number(a.reward_team) ? (
+                      <>
+                        {a.teamName || a.team ? <span className="muted">{a.teamName || a.team} </span> : null}
+                        {reward(Number(a.reward_team))}
+                      </>
+                    ) : null,
+                  ],
+                }))}
+              />
             </TableWrap>
           ) : (
             <p className="muted">{t.noData}</p>
@@ -185,28 +182,15 @@ export default async function HelpPage({ searchParams }: { searchParams: SP }) {
           {gameTabs("weapons")}
           {weapons.length ? (
             <TableWrap>
-              <table>
-                <thead>
-                  <tr>
-                    <th>{t.name}</th>
-                    <th className="hide-sm">{t.weapon}</th>
-                    <th className="barcell">{t.modifier}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {weapons.map((w) => (
-                    <tr key={`${w.game}-${w.code}`}>
-                      <td>{w.name}</td>
-                      <td className="hide-sm">
-                        <code>{w.code}</code>
-                      </td>
-                      <td className="barcell">
-                        <Bar value={Number(w.modifier) / maxMod} label={fmtNum(Number(w.modifier), lang, 2)} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <SortableTable
+                initial={-1}
+                cols={[{ label: t.name }, { label: t.weapon, className: "hide-sm" }, { label: t.modifier, className: "barcell" }]}
+                rows={weapons.map((w) => ({
+                  key: `${w.game}-${w.code}`,
+                  values: [w.name, w.code, Number(w.modifier)],
+                  cells: [w.name, <code key="c">{w.code}</code>, <Bar key="m" value={Number(w.modifier) / maxMod} label={fmtNum(Number(w.modifier), lang, 2)} />],
+                }))}
+              />
             </TableWrap>
           ) : (
             <p className="muted">{t.noData}</p>

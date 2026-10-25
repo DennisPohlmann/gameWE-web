@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Empty, Flag, Pager, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam } from "@/components/ui";
+import { Empty, Flag, Pager, ROW_OPTIONS, Section, SortTh, TableWrap, pageParam, rowsParam } from "@/components/ui";
 import { getSettings } from "@/lib/settings";
-import { countClans, getClanFlags, getClans } from "@/lib/data";
+import { clanSorts, countClans, getClanFlags, getClans } from "@/lib/data";
+import { sortState } from "@/lib/table-sort";
 import { fmtDuration, fmtNum, fmtPct, kpd, localeOf, ratio } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
 
@@ -23,7 +24,11 @@ export default async function ClansPage({
   const { lang, t } = await getDict();
   const { pageSize } = await getSettings();
   const limit = rowsParam(sp.rows, pageSize);
-  const [rows, total] = await Promise.all([getClans(game, limit, (page - 1) * limit), countClans(game)]);
+  const { sort, asc, keep } = sortState(sp, clanSorts, "skill");
+  const [rows, total] = await Promise.all([getClans(game, limit, (page - 1) * limit, sort, asc), countClans(game)]);
+  const base = `/${game}/clans`;
+  const keepParams = { ...keep, rows: limit !== pageSize ? limit : undefined };
+  const th = (label: string, key: keyof typeof clanSorts, cls = "num") => <SortTh label={label} sortKey={key} className={cls} current={sort} asc={asc} base={base} params={keepParams} />;
   const flags = await getClanFlags(rows.slice(0, limit).map((c) => c.clanId));
   return (
     <Section title={t.clans}>
@@ -34,14 +39,14 @@ export default async function ClansPage({
               <thead>
                 <tr>
                   <th className="num">#</th>
-                  <th>{t.name}</th>
-                  <th className="num">{t.members}</th>
-                  <th className="num">{t.avgPoints}</th>
-                  <th className="num hide-sm">{t.time}</th>
-                  <th className="num">{t.kills}</th>
-                  <th className="num hide-sm">{t.deaths}</th>
-                  <th className="num">{t.kpd}</th>
-                  <th className="num">{t.hpk}</th>
+                  {th(t.name, "tag", "")}
+                  {th(t.members, "members")}
+                  {th(t.avgPoints, "skill")}
+                  {th(t.time, "time", "num hide-sm")}
+                  {th(t.kills, "kills")}
+                  {th(t.deaths, "deaths", "num hide-sm")}
+                  {th(t.kpd, "kpd")}
+                  {th(t.hpk, "hpk")}
                 </tr>
               </thead>
               <tbody>
@@ -67,7 +72,7 @@ export default async function ClansPage({
               </tbody>
             </table>
           </TableWrap>
-          <Pager base={`/${game}/clans`} params={{ rows: limit !== pageSize ? limit : undefined }} page={page} pages={Math.max(1, Math.ceil(total / limit))} total={total} rows={{ value: limit, options: ROW_OPTIONS }} locale={localeOf(lang)} labels={t} />
+          <Pager base={base} params={keepParams} page={page} pages={Math.max(1, Math.ceil(total / limit))} total={total} rows={{ value: limit, options: ROW_OPTIONS }} locale={localeOf(lang)} labels={t} />
         </>
       ) : (
         <Empty>{t.noData}</Empty>

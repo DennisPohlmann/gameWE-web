@@ -5,6 +5,7 @@ import { AutoForm } from "@/components/auto-form";
 import { HeatmapView } from "@/components/heatmap";
 import { MiniAvatar } from "@/components/mini-avatar";
 import { Rich } from "@/components/rich";
+import { SortInputs } from "@/components/sort-head";
 import { Empty, Pager, PctBar, PlayerLink, ROW_OPTIONS, Section, SortTh, Stats, TableWrap, WinRatioBar, pageParam, rowsParam, strParam } from "@/components/ui";
 import { noAutofill } from "@/lib/autofill";
 import { basePath } from "@/lib/base-path";
@@ -105,6 +106,8 @@ export default async function MapPage({ params, searchParams }: Props) {
                 <option value="">{t.heatDeaths}</option>
                 <option value="killer">{t.heatKills}</option>
               </select>
+              {/* Switching the heatmap keeps the table's order and rows. */}
+              <SortInputs keep={{ sort: keep.sort, dir: keep.dir, rows: keep.rows ? String(keep.rows) : undefined }} />
               <noscript>
                 <button type="submit">{t.show}</button>
               </noscript>

@@ -7,17 +7,46 @@ import type { Dict, Lang } from "@/lib/i18n";
 import { playerCount } from "@/lib/player-count";
 import { LINUX_SVG, VAC_SVG, WINDOWS_SVG } from "@/lib/server-icons";
 import { PlayerCount } from "./player-count";
-import { Flag } from "./ui";
+import { Flag, SortTh } from "./ui";
+
+// Sort keys of the server list: name, map, map time, players online.
+export const serverValues = {
+  name: (s: Server) => s.name || `${s.address}:${s.port}`,
+  map: (s: Server) => s.act_map,
+  time: (s: Server) => (s.map_started ? nowUnix() - s.map_started : null),
+  players: (s: Server) => Number(s.act_players),
+};
+export type ServerSort = keyof typeof serverValues;
 
 // Server rows as on gameME: name, game, address (steam://connect), map, map
 // time, players. The game is the ranking's base game ("Counter-Strike:
 // Source"), else the ranking's name. `head` is an optional first header row spanning the table. The
 // flag of the server's country stands before its name. `details` adds the
 // server version with an OS icon and the VAC state as the last columns (the
-// ranking's start page only).
-export function ServerTable({ game, servers, head, details, t, lang }: { game: string; servers: Server[]; head?: ReactNode; details?: boolean; t: Dict; lang: Lang }) {
+// ranking's start page only). With `sort` the heads of name, map, time and
+// players sort the list (servers come sorted).
+export function ServerTable({
+  game,
+  servers,
+  head,
+  details,
+  sort,
+  t,
+  lang,
+}: {
+  game: string;
+  servers: Server[];
+  head?: ReactNode;
+  details?: boolean;
+  sort?: { current: string; asc: boolean; base: string; params: Record<string, string | number | undefined> };
+  t: Dict;
+  lang: Lang;
+}) {
   const now = nowUnix();
-  const w = details ? { server: "36%", game: "12%", address: "15%", map: "8%", time: "7%", players: "8%" } : { server: "46%", game: "14%", address: "16%", map: "8%", time: "8%", players: "8%" };
+  // Column widths as classes (w-46 = 46%), so sortable heads get them too.
+  const w = details ? { server: "w-36", game: "w-12", address: "w-15", map: "w-8", time: "w-7", players: "w-8" } : { server: "w-46", game: "w-14", address: "w-16", map: "w-8", time: "w-8", players: "w-8" };
+  const th = (label: string, key: ServerSort, cls: string) =>
+    sort ? <SortTh label={label} sortKey={key} className={cls} {...sort} /> : <th className={cls}>{label}</th>;
   return (
     <div className="table-wrap">
       <table>
@@ -28,30 +57,16 @@ export function ServerTable({ game, servers, head, details, t, lang }: { game: s
             </tr>
           ) : null}
           <tr>
-            <th style={{ width: w.server }}>{t.server}</th>
-            <th className="hide-sm" style={{ width: w.game }}>
-              {t.baseGame}
-            </th>
-            <th className="hide-sm" style={{ width: w.address }}>
-              {t.address}
-            </th>
-            <th style={{ width: w.map }}>
-              {t.map}
-            </th>
-            <th className="num hide-sm" style={{ width: w.time }}>
-              {t.time}
-            </th>
-            <th className="num" style={{ width: w.players }}>
-              {t.players}
-            </th>
+            {th(t.server, "name", w.server)}
+            <th className={`hide-sm ${w.game}`}>{t.baseGame}</th>
+            <th className={`hide-sm ${w.address}`}>{t.address}</th>
+            {th(t.map, "map", w.map)}
+            {th(t.time, "time", `num hide-sm ${w.time}`)}
+            {th(t.players, "players", `num ${w.players}`)}
             {details ? (
               <>
-                <th className="hide-sm" style={{ width: "9%" }}>
-                  {t.serverVersion}
-                </th>
-                <th className="center hide-sm" style={{ width: "5%" }}>
-                  {t.vac}
-                </th>
+                <th className="hide-sm w-9">{t.serverVersion}</th>
+                <th className="center hide-sm w-5">{t.vac}</th>
               </>
             ) : null}
           </tr>

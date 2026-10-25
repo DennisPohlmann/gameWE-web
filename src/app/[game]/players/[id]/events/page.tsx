@@ -7,6 +7,8 @@ import { noAutofill } from "@/lib/autofill";
 import { fmtDateTime, localeOf } from "@/lib/format";
 import { getPlayerFlags } from "@/lib/data";
 import { EVENT_KINDS, countPlayerEvents, getPlayerEvents, type EventKind } from "@/lib/history";
+import { sortHeads, SortInputs } from "@/components/sort-head";
+import { sortState, timeSorts } from "@/lib/table-sort";
 import { fill, getDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 
@@ -27,9 +29,12 @@ export default async function EventsPage({ params, searchParams }: Props) {
   const page = pageParam(sp.page);
   const type = strParam(sp.type) as EventKind;
   const kinds = EVENT_KINDS.includes(type) ? [type] : [...EVENT_KINDS];
-  const [rows, total] = await Promise.all([getPlayerEvents(p.playerId, kinds, limit, (page - 1) * limit), countPlayerEvents(p.playerId, kinds)]);
+  const order = sortState(sp, timeSorts, "date");
+  const [rows, total] = await Promise.all([getPlayerEvents(p.playerId, kinds, limit, (page - 1) * limit, order.asc), countPlayerEvents(p.playerId, kinds)]);
   const flags = await getPlayerFlags(rows.map((r) => r.other));
   const base = `/${game}/players/${p.playerId}/events`;
+  const keep = { type: kinds.length === 1 ? type : undefined, ...order.keep, rows: limit !== pageSize ? limit : undefined };
+  const th = sortHeads(order, base, keep);
 
   // The sentence of an event, with the other player as a link.
   const text = (e: (typeof rows)[number]): ReactNode => {
@@ -49,6 +54,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
   return (
     <HistoryFrame game={game} id={p.playerId} name={p.name} t={t} tab="events">
       <Form className="search" action={base}>
+        <SortInputs keep={order.keep} />
         <select {...noAutofill} name="type" defaultValue={kinds.length === 1 ? type : ""} aria-label={t.eventType}>
           <option value="">{t.allTypes}</option>
           {EVENT_KINDS.filter((k) => k !== "playeraction").map((k) => (
@@ -65,7 +71,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
             <table>
               <thead>
                 <tr>
-                  <th>{t.time}</th>
+                  {th(t.time, "date", "")}
                   <th>{t.eventType}</th>
                   <th>{t.eventText}</th>
                   <th className="hide-sm">{t.map}</th>
@@ -83,7 +89,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
               </tbody>
             </table>
           </TableWrap>
-          <Pager base={base} params={{ type: kinds.length === 1 ? type : undefined, rows: limit !== pageSize ? limit : undefined }} page={page} pages={Math.max(1, Math.ceil(total / limit))} total={total} rows={{ value: limit, options: ROW_OPTIONS }} locale={localeOf(lang)} labels={t} />
+          <Pager base={base} params={keep} page={page} pages={Math.max(1, Math.ceil(total / limit))} total={total} rows={{ value: limit, options: ROW_OPTIONS }} locale={localeOf(lang)} labels={t} />
         </>
       ) : (
         <Empty>{t.noData}</Empty>

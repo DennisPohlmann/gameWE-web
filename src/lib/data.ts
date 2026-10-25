@@ -968,7 +968,8 @@ function chatWhere(opts: { game?: string; playerId?: number; serverId?: number; 
   return { where, params };
 }
 
-export async function getChat(opts: { game?: string; playerId?: number; serverId?: number; search?: string; limit: number; offset: number }) {
+// Newest first; asc: oldest first (the only order: chat can be large).
+export async function getChat(opts: { game?: string; playerId?: number; serverId?: number; search?: string; limit: number; offset: number; asc?: boolean }) {
   const { where, params } = chatWhere(opts);
   return adminQuery<ChatRow>(
     `SELECT c.timestamp_id, c.playerId, d.lastName AS name, c.message_mode, c.message, s.name AS server
@@ -976,7 +977,7 @@ export async function getChat(opts: { game?: string; playerId?: number; serverId
      LEFT JOIN hlstats_Players_Data d ON d.playerId = c.playerId
      LEFT JOIN hlstats_Servers s ON s.serverId = c.server_id
      ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
-     ORDER BY c.timestamp_id DESC LIMIT ? OFFSET ?`,
+     ORDER BY c.timestamp_id ${opts.asc ? "ASC" : "DESC"}, c.playerId LIMIT ? OFFSET ?`,
     [...params, opts.limit, opts.offset],
   );
 }

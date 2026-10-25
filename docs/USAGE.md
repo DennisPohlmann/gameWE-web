@@ -68,6 +68,54 @@ least one server or player; the admin forms that assign a ranking list all.
 
 `<game>` is `hlstats_Games.code`, for example `css`.
 
+### Sorting tables
+
+Column heads are bold in every table and skin; in label/value tables
+(overview of a server, map, clan, weapon or action, player summary, search
+form) the label column is bold too. A click on the head of a column sorts
+the table by it (a second click the other way round); the sorted head is
+underlined, carries ▼ or ▲ and `aria-sort`. Numbers start with the highest
+value, empty values come last. Columns that only repeat another one (the
+rank `#`, share or progress bars next to their number, pictures, buttons)
+do not sort; a bar that is a value of its own (HS/kill, accuracy, activity)
+sorts by that value.
+
+Paged tables sort on the server with `?sort=<key>&dir=asc` (without `dir`
+descending); the pager, the rows choice and the filter forms keep the
+order, a new order starts on page 1, and an unknown key gives the table's
+default order. Tables with their own params, as a page shows more than one:
+
+| Page | Params | Keys |
+|------|--------|------|
+| `/` (rankings) | `sort`, `dir` | `name`, `game`, `players`, `top`, `clan` (default: the order of the rankings) |
+| `/<game>` server list | `sort`, `dir` | `name`, `map`, `time`, `players` (default: the configured order) |
+| `/<game>` and `/<game>/awards` daily awards | `asort`, `adir` | `award`, `winner`, `leader` |
+| `/<game>/awards?view=ranks\|ribbons` most decorated | `dsort`, `ddir` | `name`, `wins` |
+| `/<game>/awards?view=ranks&rank=N` | `sort`, `dir` | `name`, `kills` (default), `skill`, `time`, `activity` |
+| `/<game>/awards?view=ribbons&award=N` | `sort`, `dir` | `name`, `wins` (default), `last` |
+| `/<game>/awards?view=history` | `sort`, `dir` | `award`, `winner` |
+| `/<game>/clans` | `sort`, `dir` | `tag`, `members`, `skill` (default), `time`, `kills`, `deaths`, `kpd`, `hpk` |
+| `/<game>/clans/<id>` members | `sort`, `dir` | the keys of the player ranking (`skill` default, `name`, `activity`, `time`, `kills`, `deaths`, `kpd`, `hs`, `hpk`, `acc`) |
+| `/<game>/maps/<id>`, `/<game>/weapons/<code>`, `/<game>/actions/<id>` best players | `sort`, `dir` | `name`, `kills`, `deaths`, `kpd`, `hpk` (map); `name`, `kills`, `hs`, `hpk`, `shots`, `acc` (weapon); `name`, `count`, `points` (action) |
+| `/<game>/bans` | `sort`, `dir` | `name`, `type`, `reason`, `date`, `points`, `kpd`, `hpk`, `acc` (default: running bans first, newest first) |
+| `/<game>/chat`, `/<game>/players/<id>/chat`, `/<game>/players/<id>/events`, admin chat | `sort`, `dir` | `date` only (newest first; `dir=asc` oldest first): chat and events can hold millions of rows, the time is the column with an index |
+| `/<game>/players/<id>/sessions` | `sort`, `dir` | `date` (default), `change`, `points`, `time`, `rounds`, `wins`, `kills`, `deaths`, `kpd`, `streak`, `hs`, `hpk`, `acc`; another order than newest first reads up to 5000 days of the player |
+| `/<game>/players/<id>/awards` | `sort`, `dir` | `date` (default), `award` |
+| `/<game>/players/<id>/ips`, admin IP addresses | `sort`, `dir` | `ip`, `connects`, `first`, `last` (default), `host`; admin also `name`, `steam`, `game` |
+| `/search` | `sort`, `dir` | players: `name`, `game`, `points`, `kills`, `kpd`; clans: `clan`, `game`, `members`, `points` |
+| `/admin/<entity>` | `sort`, `dir` | every list column that is a column of the table (also kept when an edit page returns to the list) |
+
+The player ranking and the country and city rankings on `/<game>/players`
+sorted by their heads already (`sort`/`dir`), as does the weapons list.
+Small tables that are shown whole sort in the browser without
+reloading the page: on the player profile weapons, teams, actions, maps,
+victims and killers, names and kill statistics; on `/help` actions and
+weapon modifiers, on `/licenses` all lists, in the admin area the recent
+reset jobs. Without JavaScript they keep the server's order. Feeds without
+column heads (chat and awards on the profile and the server page, the
+latest events), the live players grouped by team and the award calendar
+keep their order.
+
 ## What the data depends on
 
 The collector does not fill every gameME table (see DB-SEMANTICS.md). The

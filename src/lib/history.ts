@@ -2,6 +2,7 @@ import "server-only";
 import { adminQuery, likeOp, query, queryOne, type Param } from "./db";
 import { steamIds } from "./format";
 import { dayChanges } from "./points-trend";
+import { awardWinSorts, ipSorts, sortRows, type AwardWinSort, type IpSort } from "./table-sort";
 
 // A player's history pages: events, daily sessions and won awards.
 
@@ -88,13 +89,14 @@ export async function countPlayerEvents(playerId: number, kinds: EventKind[]): P
   return counts.reduce((a, c) => a + Number(c?.n ?? 0), 0);
 }
 
-// Newest first. Each table contributes at most offset+limit rows, so a long
-// frag history is not read in full.
-export async function getPlayerEvents(playerId: number, kinds: EventKind[], limit: number, offset: number) {
+// Newest first (asc: oldest first). Each table contributes at most
+// offset+limit rows, so a long frag history is not read in full.
+export async function getPlayerEvents(playerId: number, kinds: EventKind[], limit: number, offset: number, asc = false) {
   const n = offset + limit;
-  const parts = sources(kinds).map((s) => `(${s} ORDER BY 1 DESC LIMIT ${Number(n)})`);
+  const dir = asc ? "ASC" : "DESC";
+  const parts = sources(kinds).map((s) => `(${s} ORDER BY 1 ${dir} LIMIT ${Number(n)})`);
   const rows = await query<PlayerEvent>(
-    `SELECT * FROM (${parts.join(" UNION ALL ")}) x ORDER BY ts DESC, kind LIMIT ? OFFSET ?`,
+    `SELECT * FROM (${parts.join(" UNION ALL ")}) x ORDER BY ts ${dir}, kind LIMIT ? OFFSET ?`,
     [...kinds.map(() => playerId), limit, offset],
   );
   const ids = [...new Set(rows.map((r) => Number(r.other)).filter((x) => x > 0))];
@@ -126,9 +128,48 @@ export type SessionDay = {
   hits: number;
 };
 
+type Session = SessionDay & { points_change: number };
+
+// Sort keys of the sessions table; date newest first is the default.
+export const sessionValues = {
+  date: (r: Session) => String(r.eventTime).slice(0, 10),
+  change: (r: Session) => r.points_change,
+  points: (r: Session) => Number(r.skill),
+  time: (r: Session) => Number(r.connection_time),
+  rounds: (r: Session) => Number(r.rounds),
+  wins: (r: Session) => Number(r.wins),
+  kills: (r: Session) => Number(r.kills),
+  deaths: (r: Session) => Number(r.deaths),
+  kpd: (r: Session) => Number(r.kills) / Math.max(1, Number(r.deaths)),
+  streak: (r: Session) => Number(r.kill_streak),
+  hs: (r: Session) => Number(r.headshots),
+  hpk: (r: Session) => (Number(r.kills) ? Number(r.headshots) / Number(r.kills) : null),
+  acc: (r: Session) => (Number(r.shots) ? Number(r.hits) / Number(r.shots) : null),
+};
+export type SessionSort = keyof typeof sessionValues;
+
+// Days read for another order than newest first: one row per day played,
+// so this is the whole history of nearly every player.
+const SESSION_SORT_DAYS = 5000;
+
 // points_change: the points against the day before, as in the player trend
-// (dayChanges); one row more is read for the oldest day of the page.
-export async function getPlayerSessions(playerId: number, limit: number, offset: number) {
+// (dayChanges); one row more is read for the oldest day of the page. Another
+// order than newest first reads the days (up to SESSION_SORT_DAYS), so each
+// change is still against the day before, and sorts them here.
+export async function getPlayerSessions(playerId: number, limit: number, offset: number, sort: SessionSort = "date", asc = false) {
+  if (sort !== "date" || asc) {
+    const [days, count] = await Promise.all([
+      query<SessionDay>(
+        `SELECT eventTime, skill, skill_change, connection_time, rounds, wins, kills, deaths, kill_streak, headshots, shots, hits
+         FROM hlstats_Players_History WHERE playerId = ? ORDER BY eventTime DESC LIMIT ?`,
+        [playerId, SESSION_SORT_DAYS],
+      ),
+      queryOne<{ n: number }>(`SELECT COUNT(*) AS n FROM hlstats_Players_History WHERE playerId = ?`, [playerId]),
+    ]);
+    const changes = dayChanges(days.map((r) => ({ skill: Number(r.skill), change: Number(r.skill_change) })), null);
+    const rows = sortRows(days.map((r, i) => ({ ...r, points_change: changes[i] })), sessionValues, sort, asc);
+    return { rows: rows.slice(offset, offset + limit), total: Math.min(Number(count?.n ?? 0), SESSION_SORT_DAYS) };
+  }
   const [all, count] = await Promise.all([
     query<SessionDay>(
       `SELECT eventTime, skill, skill_change, connection_time, rounds, wins, kills, deaths, kill_streak, headshots, shots, hits
@@ -145,12 +186,14 @@ export async function getPlayerSessions(playerId: number, limit: number, offset:
 
 export type AwardWin = { date: string; awardId: number; code: string; name: string; verb: string; winner_count: number };
 
-export async function getPlayerAwardWins(playerId: number, limit: number, offset: number) {
+export async function getPlayerAwardWins(playerId: number, limit: number, offset: number, sort: AwardWinSort = "date", asc = false) {
+  // The column comes from the allowlist; date and name break ties.
+  const order = `${awardWinSorts[sort]} ${asc ? "ASC" : "DESC"}, h.date DESC, a.name, a.awardId`;
   const [rows, count] = await Promise.all([
     query<AwardWin>(
       `SELECT h.date, a.awardId, a.code, a.name, a.verb, h.winner_count
        FROM hlstats_Awards_History h JOIN hlstats_Awards a ON a.awardId = h.award_id
-       WHERE h.winner_id = ? ORDER BY h.date DESC, a.name LIMIT ? OFFSET ?`,
+       WHERE h.winner_id = ? ORDER BY ${order} LIMIT ? OFFSET ?`,
       [playerId, limit, offset],
     ),
     queryOne<{ n: number }>(`SELECT COUNT(*) AS n FROM hlstats_Awards_History WHERE winner_id = ?`, [playerId]),
@@ -406,8 +449,10 @@ const IP_FROM = `FROM hlstats_Events_Connects c
      LEFT JOIN hlstats_Players p ON p.playerId = c.playerId
      LEFT JOIN hlstats_Players_Data d ON d.playerId = c.playerId`;
 
-export async function searchIps(f: IpFilter & { limit: number; offset: number }): Promise<IpHit[]> {
+export async function searchIps(f: IpFilter & { limit: number; offset: number; sort?: IpSort; asc?: boolean }): Promise<IpHit[]> {
   const { where, params } = ipWhere(f);
+  // The column comes from the allowlist; address and player break ties.
+  const order = `${ipSorts[f.sort ?? "last"]} ${f.asc ? "ASC" : "DESC"}, c.ipAddress, c.playerId`;
   const rows = await adminQuery<{
     ip: number | string;
     playerId: number;
@@ -423,7 +468,7 @@ export async function searchIps(f: IpFilter & { limit: number; offset: number })
             (SELECT MAX(u.uniqueId) FROM hlstats_PlayerUniqueIds u WHERE u.playerId = c.playerId) AS uniqueId,
             COUNT(*) AS connects, MIN(c.timestamp_id) AS first, MAX(c.timestamp_id) AS last, MAX(c.hostname) AS hostname
      ${IP_FROM} ${where}
-     GROUP BY c.ipAddress, c.playerId ORDER BY last DESC, c.playerId LIMIT ? OFFSET ?`,
+     GROUP BY c.ipAddress, c.playerId ORDER BY ${order} LIMIT ? OFFSET ?`,
     [...params, Math.max(1, Math.floor(f.limit)), Math.max(0, Math.floor(f.offset))],
   );
   return rows.map((r) => ({

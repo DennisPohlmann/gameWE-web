@@ -9,6 +9,8 @@ import { requireAdmin } from "@/lib/auth";
 import { countChat, getChat } from "@/lib/data";
 import { fmtDateTime } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
+import { sortHeads, SortInputs } from "@/components/sort-head";
+import { sortState, timeSorts } from "@/lib/table-sort";
 
 // All stored chat, for admins (the public pages show it only when
 // gamewe_chat_public is on).
@@ -23,12 +25,15 @@ export default async function AdminChat({ searchParams }: { searchParams: Promis
   const page = pageParam(sp.page);
   const limit = rowsParam(sp.rows, 100);
   const filter = { game: game || undefined, playerId: player || undefined, search: q || undefined };
+  const order = sortState(sp, timeSorts, "date");
   const [rows, total, games] = await Promise.all([
-    getChat({ ...filter, limit, offset: (page - 1) * limit }),
+    getChat({ ...filter, limit, offset: (page - 1) * limit, asc: order.asc }),
     countChat(filter),
     optionList("games", true),
   ]);
   const base = "/admin/chat";
+  const keep = { game: game || undefined, q: q || undefined, player: player || undefined, ...order.keep, rows: limit !== 100 ? limit : undefined };
+  const th = sortHeads(order, base, keep);
   return (
     <>
       <h1>{t.chat}</h1>
@@ -45,6 +50,7 @@ export default async function AdminChat({ searchParams }: { searchParams: Promis
               ))}
             </select>
             {player ? <input type="hidden" name="player" value={player} /> : null}
+            <SortInputs keep={order.keep} />
             <input {...noAutofill} type="search" name="q" defaultValue={q} placeholder={t.search} aria-label={t.search} />
             <button type="submit">{a.filter}</button>
           </Form>
@@ -61,7 +67,7 @@ export default async function AdminChat({ searchParams }: { searchParams: Promis
               <table>
                 <thead>
                   <tr>
-                    <th>{t.date}</th>
+                    {th(t.date, "date", "")}
                     <th>{t.player}</th>
                     <th>{t.message}</th>
                     <th className="hide-sm">{t.server}</th>
@@ -86,7 +92,7 @@ export default async function AdminChat({ searchParams }: { searchParams: Promis
             </TableWrap>
             <Pager
               base={base}
-              params={{ game: game || undefined, q: q || undefined, player: player || undefined, rows: limit !== 100 ? limit : undefined }}
+              params={keep}
               page={page}
               pages={Math.max(1, Math.ceil(total / limit))}
               total={total}

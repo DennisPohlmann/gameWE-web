@@ -5,6 +5,8 @@ import { Empty, Pager, ROW_OPTIONS, TableWrap, pageParam, rowsParam } from "@/co
 import { awardValue, getPlayerRibbons, getRibbonClasses, ribbonFor, ribbonProgress } from "@/lib/awards";
 import { fmtDuration, fmtNum, localeOf } from "@/lib/format";
 import { getPlayerAwardWins } from "@/lib/history";
+import { sortHeads } from "@/components/sort-head";
+import { awardWinSorts, sortState } from "@/lib/table-sort";
 import { getDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 
@@ -24,10 +26,14 @@ export default async function PlayerAwardsPage({ params, searchParams }: Props) 
   const { lang, t } = await getDict();
   const { pageSize } = await getSettings();
   const limit = rowsParam(sp.rows, pageSize);
+  const order = sortState(sp, awardWinSorts, "date");
+  const base = `/${game}/players/${p.playerId}/awards`;
+  const keep = { ...order.keep, rows: limit !== pageSize ? limit : undefined };
+  const th = sortHeads(order, base, keep);
   const [ribbons, classes, { rows, total }] = await Promise.all([
     getPlayerRibbons(p.playerId),
     getRibbonClasses(game),
-    getPlayerAwardWins(p.playerId, limit, (page - 1) * limit),
+    getPlayerAwardWins(p.playerId, limit, (page - 1) * limit, order.sort, order.asc),
   ]);
   return (
     <HistoryFrame game={game} id={p.playerId} name={p.name} t={t} tab="awards">
@@ -63,8 +69,9 @@ export default async function PlayerAwardsPage({ params, searchParams }: Props) 
             <table className="spaced">
               <thead>
                 <tr>
-                  <th>{t.date}</th>
-                  <th>{t.award}</th>
+                  {th(t.date, "date", "")}
+                  {th(t.award, "award", "")}
+                  {/* Values of different awards (kills, time, ...) do not compare. */}
                   <th>{t.description}</th>
                 </tr>
               </thead>
@@ -79,7 +86,7 @@ export default async function PlayerAwardsPage({ params, searchParams }: Props) 
               </tbody>
             </table>
           </TableWrap>
-          <Pager base={`/${game}/players/${p.playerId}/awards`} params={{ rows: limit !== pageSize ? limit : undefined }} page={page} pages={Math.max(1, Math.ceil(total / limit))} total={total} rows={{ value: limit, options: ROW_OPTIONS }} locale={localeOf(lang)} labels={t} />
+          <Pager base={base} params={keep} page={page} pages={Math.max(1, Math.ceil(total / limit))} total={total} rows={{ value: limit, options: ROW_OPTIONS }} locale={localeOf(lang)} labels={t} />
         </>
       ) : (
         <Empty>{t.noHistory}</Empty>

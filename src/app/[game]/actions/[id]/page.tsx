@@ -1,11 +1,20 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { sortHeads } from "@/components/sort-head";
 import { Empty, PlayerLink, Section, Stats, TableWrap } from "@/components/ui";
-import { getAction, getActionTop, getPlayerFlags } from "@/lib/data";
+import { getAction, getActionTop, getPlayerFlags, type TopRow } from "@/lib/data";
 import { fmtNum } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
+import { sortRows, sortState } from "@/lib/table-sort";
 
-type Props = { params: Promise<{ game: string; id: string }> };
+// Columns of the top players (a count, b points); most often first, as loaded.
+const topValues = {
+  name: (r: TopRow) => r.name,
+  count: (r: TopRow) => Number(r.a),
+  points: (r: TopRow) => Number(r.b),
+};
+
+type Props = { params: Promise<{ game: string; id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 async function load(raw: string) {
   const id = Number.parseInt(raw, 10);
@@ -18,14 +27,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: `${(await getDict()).t.actions}: ${a.description}` };
 }
 
-export default async function ActionPage({ params }: Props) {
+export default async function ActionPage({ params, searchParams }: Props) {
   const { game, id } = await params;
   const a = await load(id);
   if (!a) notFound();
   if (a.game !== game) redirect(`/${a.game}/actions/${a.id}`);
   const { lang, t } = await getDict();
-  const top = await getActionTop(a.id);
-  const flags = await getPlayerFlags(top.map((r) => r.playerId));
+  const loaded = await getActionTop(a.id);
+  const flags = await getPlayerFlags(loaded.map((r) => r.playerId));
+  const order = sortState(await searchParams, topValues, "count");
+  const top = sortRows(loaded, topValues, order.sort, order.asc);
+  const th = sortHeads(order, `/${game}/actions/${a.id}`, {});
   return (
     <>
       <Section title={a.description || a.code}>
@@ -45,9 +57,9 @@ export default async function ActionPage({ params }: Props) {
               <thead>
                 <tr>
                   <th className="num">#</th>
-                  <th>{t.player}</th>
-                  <th className="num">{t.count}</th>
-                  <th className="num">{t.points}</th>
+                  {th(t.player, "name", "")}
+                  {th(t.count, "count")}
+                  {th(t.points, "points")}
                 </tr>
               </thead>
               <tbody>

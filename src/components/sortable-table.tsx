@@ -1,31 +1,30 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { sortRows } from "@/lib/table-sort";
 
-export type SortCol = { label: ReactNode; className?: string };
+// noSort: a column whose order would only repeat another one (a share bar
+// next to its count) or has nothing to sort by.
+export type SortCol = { label: ReactNode; className?: string; noSort?: boolean };
 export type SortRow = { key: string | number; cells: ReactNode[]; values: (number | string | null)[] };
 
 // A table sorted in the browser by a click on a column head (again: the
 // other way round), for tables that are shown whole, like the weapons and
 // opponents of a player. Without JavaScript it keeps the server's order.
-export function SortableTable({ cols, rows, initial, className }: { cols: SortCol[]; rows: SortRow[]; initial: number; className?: string }) {
+// The look and the rules are those of the server-sorted tables (SortTh):
+// arrow and underline on the sorted head, aria-sort, empty values last.
+// initial -1 keeps the given order until a head is clicked.
+export function SortableTable({ cols, rows, initial, initialAsc = false, className }: { cols: SortCol[]; rows: SortRow[]; initial: number; initialAsc?: boolean; className?: string }) {
   const [by, setBy] = useState(initial);
-  const [asc, setAsc] = useState(false);
-  const sorted = [...rows].sort((a, b) => {
-    const x = a.values[by];
-    const y = b.values[by];
-    if (x === y) return 0;
-    if (x === null) return 1;
-    if (y === null) return -1;
-    const d = typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y));
-    return asc ? d : -d;
-  });
+  const [asc, setAsc] = useState(initialAsc);
+  const values = Object.fromEntries(cols.map((_, i) => [String(i), (r: SortRow) => r.values[i]]));
+  const sorted = by < 0 ? rows : sortRows(rows, values, String(by), asc);
   const click = (i: number) => {
     if (i === by) setAsc(!asc);
     else {
       setBy(i);
       // Names A to Z first, numbers highest first.
-      setAsc(typeof rows[0]?.values[i] === "string");
+      setAsc(typeof rows.find((r) => r.values[i] !== null)?.values[i] === "string");
     }
   };
   return (
@@ -34,10 +33,14 @@ export function SortableTable({ cols, rows, initial, className }: { cols: SortCo
         <tr>
           {cols.map((c, i) => (
             <th key={i} className={c.className} aria-sort={i === by ? (asc ? "ascending" : "descending") : undefined}>
-              <button type="button" className={i === by ? "sort active" : "sort"} onClick={() => click(i)}>
-                {c.label}
-                {i === by ? (asc ? " ▲" : " ▼") : ""}
-              </button>
+              {c.noSort ? (
+                c.label
+              ) : (
+                <button type="button" className={i === by ? "sort active" : "sort"} onClick={() => click(i)}>
+                  {c.label}
+                  {i === by ? (asc ? " ▲" : " ▼") : ""}
+                </button>
+              )}
             </th>
           ))}
         </tr>

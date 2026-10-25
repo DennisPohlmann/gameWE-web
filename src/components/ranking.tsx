@@ -4,6 +4,22 @@ import { unlinkedBots, type PlaceRow, type RankingRow } from "@/lib/data";
 import { activity, fmtDate, fmtDuration, fmtNum, fmtPct, kpd, ratio } from "@/lib/format";
 import type { Dict, Lang } from "@/lib/i18n";
 
+// The ranking's sort keys (rankingSorts in data.ts) as values of loaded
+// rows, for player lists that are shown whole (clan members).
+export const rankingValues = {
+  skill: (r: RankingRow) => Number(r.skill),
+  name: (r: RankingRow) => r.name,
+  activity: (r: RankingRow) => Number(r.last_event),
+  time: (r: RankingRow) => Number(r.connection_time),
+  kills: (r: RankingRow) => Number(r.kills),
+  deaths: (r: RankingRow) => Number(r.deaths),
+  kpd: (r: RankingRow) => kpd(Number(r.kills), Number(r.deaths)),
+  hs: (r: RankingRow) => Number(r.headshots),
+  hpk: (r: RankingRow) => ratio(Number(r.headshots), Number(r.kills)),
+  acc: (r: RankingRow) => ratio(Number(r.hits), Number(r.shots)),
+  new: (r: RankingRow) => Number(r.first_connect),
+};
+
 type SortProps = { current: string; asc: boolean; base: string; params: Record<string, string | number | undefined> };
 
 // Player table used by the ranking and the clan page. Without `sort` the

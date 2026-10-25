@@ -1,11 +1,12 @@
-// The admin list an edit page returns to (ranking, search, page and rows of
+// The admin list an edit page returns to (ranking, search, page, rows and order of
 // /admin/<entity>), carried as ?returnTo= through the edit page, its forms
 // and the redirects of the server actions. Only the list of the same entity
 // with its known parameters is accepted, so the value cannot redirect
 // anywhere else (open redirect). Run the tests with `npm test`.
 
-// The list parameters kept; anything else in returnTo is dropped.
-const LIST_PARAMS = ["game", "q", "page", "rows"] as const;
+// The list parameters kept; anything else in returnTo is dropped. sort and
+// dir are checked again by the list against the entity's columns.
+const LIST_PARAMS = ["game", "q", "page", "rows", "sort", "dir"] as const;
 const MAX_LEN = 512;
 
 // Appends query parameters to a relative href (undefined and "" are left out).

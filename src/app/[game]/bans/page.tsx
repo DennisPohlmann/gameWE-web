@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { sortHeads } from "@/components/sort-head";
 import { Empty, PctBar, PlayerLink, Section, TableWrap } from "@/components/ui";
 import { getBanPlayers, getBanRecords, getBannedPlayers, getPlayersBySteam, getRecentPlayers, type BanPlayer } from "@/lib/data";
 import { fmtNum, kpd, localeOf, nowUnix, ratio, steamIds } from "@/lib/format";
@@ -6,6 +7,7 @@ import { getDict, type Dict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import { getSourcebans, type SbState } from "@/lib/sourcebans";
 import { getSteamBans, steamBansAvailable } from "@/lib/steam";
+import { sortRows, sortState } from "@/lib/table-sort";
 
 // How many of the most recently active players are checked for Steam bans.
 const VAC_PLAYERS = 1000;
@@ -29,12 +31,29 @@ type BanRow = {
   old: boolean;
 };
 
+// Sort keys of the columns; by default running bans first, newest first.
+const banValues = {
+  order: () => 0,
+  name: (r: BanRow) => r.player.name,
+  type: (r: BanRow): string => r.kind,
+  reason: (r: BanRow) => r.reason,
+  date: (r: BanRow) => r.at,
+  points: (r: BanRow) => Number(r.player.skill),
+  kpd: (r: BanRow) => kpd(Number(r.player.kills), Number(r.player.deaths)),
+  hpk: (r: BanRow) => ratio(Number(r.player.headshots), Number(r.player.kills)),
+  acc: (r: BanRow) => ratio(Number(r.player.hits), Number(r.player.shots)),
+};
+
 // Banned players of a ranking, as one list like gameME's: bans the
 // collector recorded from the server logs, bans from SourceBans (address
 // under Settings → Bans) and VAC/game bans from Steam (STEAM_API_KEY).
-export default async function BansPage({ params }: { params: Promise<{ game: string }> }) {
+export default async function BansPage({ params, searchParams }: { params: Promise<{ game: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { game } = await params;
+  const sp = await searchParams;
   const { lang, t } = await getDict();
+  // The type sorts by its shown name.
+  const values = { ...banValues, type: (r: BanRow) => kindLabel(r.kind, t) };
+  const order = sortState(sp, values, "order");
   const { sourcebansUrl } = await getSettings();
 
   const [logged, records, sb, vac] = await Promise.all([
@@ -63,6 +82,8 @@ export default async function BansPage({ params }: { params: Promise<{ game: str
   }
   // Running bans first, newest first; without a date at the end.
   rows.sort((a, b) => Number(a.old) - Number(b.old) || (b.at ?? 0) - (a.at ?? 0));
+  const sorted = sortRows(rows, values, order.sort, order.asc);
+  const th = sortHeads(order, `/${game}/bans`, {});
 
   return (
     <Section
@@ -82,18 +103,18 @@ export default async function BansPage({ params }: { params: Promise<{ game: str
             <thead>
               <tr>
                 <th className="num">#</th>
-                <th>{t.name}</th>
-                <th>{t.banType}</th>
-                <th className="hide-sm">{t.banReason}</th>
-                <th>{t.banDate}</th>
-                <th className="num">{t.points}</th>
-                <th className="num hide-sm">{t.kpd}</th>
-                <th className="barcell">{t.hpk}</th>
-                <th className="barcell hide-sm">{t.acc}</th>
+                {th(t.name, "name", "")}
+                {th(t.banType, "type", "")}
+                {th(t.banReason, "reason", "hide-sm")}
+                {th(t.banDate, "date", "")}
+                {th(t.points, "points")}
+                {th(t.kpd, "kpd", "num hide-sm")}
+                {th(t.hpk, "hpk", "barcell")}
+                {th(t.acc, "acc", "barcell hide-sm")}
               </tr>
             </thead>
             <tbody>
-              {rows.slice(0, MAX_ROWS).map((r, i) => (
+              {sorted.slice(0, MAX_ROWS).map((r, i) => (
                 <tr key={`${r.kind}-${r.player.playerId}-${i}`} className={r.old ? "ban-old" : undefined}>
                   <td className="rank">{fmtNum(i + 1, lang)}</td>
                   <td>

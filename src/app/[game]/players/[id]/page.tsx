@@ -555,26 +555,15 @@ export default async function PlayerPage({ params, searchParams }: Props) {
         {teams.length ? (
           <Section title={t.teams}>
             <TableWrap>
-              <table>
-                <thead>
-                  <tr>
-                    <th>{t.team}</th>
-                    <th className="num">{t.joined}</th>
-                    <th className="barcell">{t.share}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {teams.map((x) => (
-                    <tr key={x.id}>
-                      <td>{x.name}</td>
-                      <td className="num">{fmtNum(x.joined, lang)}</td>
-                      <td className="barcell">
-                        <Bar value={ratio(x.joined, totalTeamJoins)} label={fmtPct(ratio(x.joined, totalTeamJoins), lang)} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <SortableTable
+                initial={1}
+                cols={[{ label: t.team }, { label: t.joined, className: "num" }, { label: t.share, className: "barcell", noSort: true }]}
+                rows={teams.map((x) => ({
+                  key: x.id,
+                  values: [x.name, x.joined, null],
+                  cells: [x.name, fmtNum(x.joined, lang), <Bar key="s" value={ratio(x.joined, totalTeamJoins)} label={fmtPct(ratio(x.joined, totalTeamJoins), lang)} />],
+                }))}
+              />
             </TableWrap>
           </Section>
         ) : null}
@@ -582,26 +571,21 @@ export default async function PlayerPage({ params, searchParams }: Props) {
         {actions.length ? (
           <Section title={t.actions}>
             <TableWrap>
-              <table>
-                <thead>
-                  <tr>
-                    <th>{t.actions}</th>
-                    <th className="num">{t.count}</th>
-                    <th className="num">{t.reward}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {actions.map((a) => (
-                    <tr key={a.id}>
-                      <td>
-                        <Link href={`/${game}/actions/${a.id}`}>{a.description}</Link>
-                      </td>
-                      <td className="num">{fmtNum(a.count, lang)}</td>
-                      <td className="num">{fmtNum(a.points, lang)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <SortableTable
+                initial={1}
+                cols={[{ label: t.actions }, { label: t.count, className: "num" }, { label: t.reward, className: "num" }]}
+                rows={actions.map((a) => ({
+                  key: a.id,
+                  values: [a.description, a.count, a.points],
+                  cells: [
+                    <Link key="a" href={`/${game}/actions/${a.id}`}>
+                      {a.description}
+                    </Link>,
+                    fmtNum(a.count, lang),
+                    fmtNum(a.points, lang),
+                  ],
+                }))}
+              />
             </TableWrap>
           </Section>
         ) : null}
@@ -609,30 +593,23 @@ export default async function PlayerPage({ params, searchParams }: Props) {
         {maps.length ? (
           <Section title={t.maps}>
             <TableWrap>
-              <table>
-                <thead>
-                  <tr>
-                    <th>{t.map}</th>
-                    <th className="num">{t.kills}</th>
-                    <th className="num">{t.deaths}</th>
-                    <th className="num">{t.kpd}</th>
-                    <th className="num">{t.hpk}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {maps.map((m) => (
-                    <tr key={m.id}>
-                      <td>
-                        <Link href={`/${game}/maps/${m.id}`}>{m.map}</Link>
-                      </td>
-                      <td className="num">{fmtNum(m.kills, lang)}</td>
-                      <td className="num">{fmtNum(m.deaths, lang)}</td>
-                      <td className="num">{fmtNum(kpd(m.kills, m.deaths), lang, 2)}</td>
-                      <td className="num">{fmtPct(ratio(m.headshots, m.kills), lang)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <SortableTable
+                initial={1}
+                cols={[{ label: t.map }, { label: t.kills, className: "num" }, { label: t.deaths, className: "num" }, { label: t.kpd, className: "num" }, { label: t.hpk, className: "num" }]}
+                rows={maps.map((m) => ({
+                  key: m.id,
+                  values: [m.map, m.kills, m.deaths, kpd(m.kills, m.deaths), ratio(m.headshots, m.kills)],
+                  cells: [
+                    <Link key="m" href={`/${game}/maps/${m.id}`}>
+                      {m.map}
+                    </Link>,
+                    fmtNum(m.kills, lang),
+                    fmtNum(m.deaths, lang),
+                    fmtNum(kpd(m.kills, m.deaths), lang, 2),
+                    fmtPct(ratio(m.headshots, m.kills), lang),
+                  ],
+                }))}
+              />
             </TableWrap>
           </Section>
         ) : null}
@@ -647,26 +624,15 @@ export default async function PlayerPage({ params, searchParams }: Props) {
         {names.length ? (
           <Section title={t.names}>
             <TableWrap>
-              <table>
-                <thead>
-                  <tr>
-                    <th>{t.name}</th>
-                    <th className="num">{t.time}</th>
-                    <th className="num">{t.kills}</th>
-                    <th className="num hide-sm">{t.lastUse}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {names.map((n) => (
-                    <tr key={n.name}>
-                      <td>{n.name}</td>
-                      <td className="num">{fmtDuration(n.connection_time)}</td>
-                      <td className="num">{fmtNum(n.kills, lang)}</td>
-                      <td className="num hide-sm">{n.lastuse ? `${n.lastuse.slice(0, 16)} UTC` : "-"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <SortableTable
+                initial={3}
+                cols={[{ label: t.name }, { label: t.time, className: "num" }, { label: t.kills, className: "num" }, { label: t.lastUse, className: "num hide-sm" }]}
+                rows={names.map((n) => ({
+                  key: n.name,
+                  values: [n.name, n.connection_time, n.kills, n.lastuse || null],
+                  cells: [n.name, fmtDuration(n.connection_time), fmtNum(n.kills, lang), n.lastuse ? `${n.lastuse.slice(0, 16)} UTC` : "-"],
+                }))}
+              />
             </TableWrap>
           </Section>
         ) : null}
@@ -767,26 +733,19 @@ function OpponentTable({
   return (
     <Section title={title}>
       <TableWrap>
-        <table>
-          <thead>
-            <tr>
-              <th>{t.player}</th>
-              <th className="num">{t.kills}</th>
-              <th className="num">{t.hpk}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((o) => (
-              <tr key={o.playerId}>
-                <td>
-                  <PlayerLink game={game} id={o.playerId} name={o.name} flag={flags.get(o.playerId)} />
-                </td>
-                <td className="num">{fmtNum(o.kills, lang)}</td>
-                <td className="num">{fmtPct(ratio(o.headshots, o.kills), lang)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <SortableTable
+          initial={1}
+          cols={[{ label: t.player }, { label: t.kills, className: "num" }, { label: t.hpk, className: "num" }]}
+          rows={rows.map((o) => ({
+            key: o.playerId,
+            values: [o.name ?? "", Number(o.kills), ratio(o.headshots, o.kills)],
+            cells: [
+              <PlayerLink key="p" game={game} id={o.playerId} name={o.name} flag={flags.get(o.playerId)} />,
+              fmtNum(o.kills, lang),
+              fmtPct(ratio(o.headshots, o.kills), lang),
+            ],
+          }))}
+        />
       </TableWrap>
     </Section>
   );

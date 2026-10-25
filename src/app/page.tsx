@@ -1,19 +1,33 @@
 import Link from "next/link";
 import { MiniAvatar } from "@/components/mini-avatar";
+import { sortHeads } from "@/components/sort-head";
 import { Flag, GameTag } from "@/components/ui";
 import { basePath } from "@/lib/base-path";
 import { LineChart } from "@/components/chart";
 import { PlayerCount } from "@/components/player-count";
 import { Rich } from "@/components/rich";
 import { VoiceBox } from "@/components/voice-box";
-import { everyDay, getClanFlags, getDailyActivityAll, getHourlyActivity, getPlayer, getRankingOverview, getSiteTotals, unlinkedBots } from "@/lib/data";
+import { everyDay, getClanFlags, getDailyActivityAll, getHourlyActivity, getPlayer, getRankingOverview, getSiteTotals, unlinkedBots, type RankingOverview } from "@/lib/data";
 import { dateFormat, fmtNum, localeOf, steamIds } from "@/lib/format";
 import { sumCounts } from "@/lib/player-count";
 import { getSteamProfile } from "@/lib/steam";
 import { fill, getDict } from "@/lib/i18n";
+import { sortRows, sortState } from "@/lib/table-sort";
+import { gameKind } from "@/lib/games";
+
+// Sort keys of the rankings list; by default the order of the rankings
+// (hlstats_Games), which is not a column of its own.
+const rankingListValues = {
+  order: () => 0,
+  name: (r: RankingOverview) => r.name,
+  game: (r: RankingOverview) => gameKind(r.realgame ?? "")?.name ?? r.realgame,
+  players: (r: RankingOverview) => Number(r.actPlayers),
+  top: (r: RankingOverview) => r.topPlayerName,
+  clan: (r: RankingOverview) => r.topClanTag,
+};
 
 // Start page: all rankings; their servers are listed on each ranking's page.
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { lang, t } = await getDict();
   let data;
   try {
@@ -27,7 +41,10 @@ export default async function Home() {
       </>
     );
   }
-  const [rankings, totals, rows, hourly] = data;
+  const [loaded, totals, rows, hourly] = data;
+  const order = sortState(await searchParams, rankingListValues, "order");
+  const rankings = sortRows(loaded, rankingListValues, order.sort, order.asc);
+  const th = sortHeads(order, "/", {});
   // Steam picture of each ranking's top player and the country of its top clan.
   const [avatars, clanFlags, bots] = await Promise.all([
     Promise.all(rankings.map((r) => (r.topPlayerId ? smallAvatar(r.topPlayerId) : null))),
@@ -66,11 +83,13 @@ export default async function Home() {
             <table className="rankings">
               <thead>
                 <tr>
-                  <th colSpan={2}>{t.ranking}</th>
-                  <th className="hide-sm fit">{t.baseGame}</th>
-                  <th className="num">{t.players}</th>
-                  <th>{t.topPlayer}</th>
-                  <th className="hide-sm">{t.topClan}</th>
+                  {/* Two cells like the rows below (name, links), drawn as one. */}
+                  {th(t.ranking, "name", "no-rb")}
+                  <th className="no-lb" />
+                  {th(t.baseGame, "game", "hide-sm fit")}
+                  {th(t.players, "players")}
+                  {th(t.topPlayer, "top", "")}
+                  {th(t.topClan, "clan", "hide-sm")}
                 </tr>
               </thead>
               <tbody>

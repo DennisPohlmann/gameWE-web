@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SortableTable } from "@/components/sortable-table";
 import { Section, TableWrap } from "@/components/ui";
 import { getDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
@@ -69,38 +70,33 @@ export default async function LicensesPage() {
   ];
   const table = (rows: Row[]) => (
     <TableWrap>
-      <table className="lic-table">
-        <thead>
-          <tr>
-            <th>{t.licName}</th>
-            <th>{t.licLicense}</th>
-            <th>{t.licUse}</th>
-            <th>{t.licLink}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map(([name, url, license, useDe, useEn]) => (
-            <tr key={name}>
-              <td>{name}</td>
-              <td className="nowrap">
-                {LICENSE_URL[license] ? (
-                  <a href={LICENSE_URL[license]} rel="noopener noreferrer" target="_blank">
-                    {license}
-                  </a>
-                ) : (
-                  license
-                )}
-              </td>
-              <td>{de ? useDe : useEn}</td>
-              <td className="wrap-cell">
-                <a href={url} rel="noopener noreferrer" target="_blank">
-                  {url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}
+      {/* In the order of the list until a head is clicked. */}
+      <SortableTable
+        className="lic-table"
+        initial={-1}
+        cols={[{ label: t.licName }, { label: t.licLicense, className: "nowrap" }, { label: t.licUse }, { label: t.licLink, className: "wrap-cell" }]}
+        rows={rows.map(([name, url, license, useDe, useEn]) => {
+          const link = url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
+          return {
+            key: name,
+            values: [name, license, de ? useDe : useEn, link],
+            cells: [
+              name,
+              LICENSE_URL[license] ? (
+                <a key="l" href={LICENSE_URL[license]} rel="noopener noreferrer" target="_blank">
+                  {license}
                 </a>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              ) : (
+                license
+              ),
+              de ? useDe : useEn,
+              <a key="u" href={url} rel="noopener noreferrer" target="_blank">
+                {link}
+              </a>,
+            ],
+          };
+        })}
+      />
     </TableWrap>
   );
   return (
