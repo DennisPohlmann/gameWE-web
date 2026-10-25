@@ -3,7 +3,7 @@ import type { MapMarker, ServerMarker } from "@/components/player-map";
 import { basePath } from "./base-path";
 import type { MapPlayer, MapServer } from "./data";
 import { FLAG_CODES } from "./flag-codes";
-import { flagEmoji, fmtDate, fmtNum, kpd } from "./format";
+import { flagEmoji, fmtDate, fmtDuration, fmtNum, kpd } from "./format";
 import type { Dict, Lang } from "./i18n";
 
 // Markers for the player map: avatar, link and the hover lines per player.
@@ -51,6 +51,8 @@ export function serverMarkers(servers: MapServer[], game: string, t: Dict): Serv
         [s.city, s.country_name].filter(Boolean).join(", "),
         `${t.address}: ${s.publicaddress || `${s.address}:${s.port}`}`,
         s.act_map ? `${t.map}: ${s.act_map}` : "",
+        // Uptime as on the server page; offline servers have none.
+        s.uptime ? `${t.uptime}: ${fmtDuration(s.uptime * 60)}` : "",
       ].filter(Boolean),
     };
   });

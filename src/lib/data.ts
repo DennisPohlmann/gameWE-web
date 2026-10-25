@@ -1549,20 +1549,24 @@ export type MapServer = {
   // Online while the collector keeps writing load samples (every 10
   // minutes), as on the server banner.
   online: boolean;
+  // Game server uptime in minutes from the latest of those samples, as on
+  // the server page; null when offline.
+  uptime: number | null;
 };
 
 // Game servers of a ranking at the GeoIP location the collector stores for
 // their address (hlstats_Servers lat/lng, a city or only a country's centre).
 // Servers without one (LAN address, no GeoIP database) are left out.
 export async function getMapServers(game: string): Promise<MapServer[]> {
-  const rows = await query<Omit<MapServer, "lat" | "lng" | "online"> & { lat: string; lng: string; online: number }>(
+  const rows = await query<Omit<MapServer, "lat" | "lng" | "online" | "uptime"> & { lat: string; lng: string; uptime: number | null }>(
     `SELECT s.serverId, s.name, s.address, s.port, s.publicaddress, s.act_map, s.city, s.country_name, s.country_code, s.lat, s.lng,
-            CASE WHEN EXISTS (SELECT 1 FROM hlstats_server_load l WHERE l.server_id = s.serverId AND l.timestamp >= ?) THEN 1 ELSE 0 END AS online
+            (SELECT l.uptime FROM hlstats_server_load l WHERE l.server_id = s.serverId AND l.timestamp >= ?
+             ORDER BY l.timestamp DESC LIMIT 1) AS uptime
      FROM hlstats_Servers s WHERE s.game = ? AND s.lat <> '' AND s.lng <> '' ORDER BY s.display_id, s.serverId`,
     [nowUnix() - 1800, game],
   );
   return rows
-    .map((r) => ({ ...r, serverId: Number(r.serverId), port: Number(r.port), lat: Number(r.lat), lng: Number(r.lng), online: Number(r.online) === 1 }))
+    .map((r) => ({ ...r, serverId: Number(r.serverId), port: Number(r.port), lat: Number(r.lat), lng: Number(r.lng), online: r.uptime !== null, uptime: r.uptime === null ? null : Number(r.uptime) }))
     .filter(onMap);
 }
 
