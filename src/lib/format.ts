@@ -50,9 +50,18 @@ export function fmtDuration(seconds: number | null | undefined): string {
   return d > 0 ? `${d}d ${hm}` : hm;
 }
 
-export function fmtDateTime(unix: number | null | undefined, lang: Lang): string {
+// `timeZone`: a client component passes the server's zone (siteTimeZone),
+// so that it renders the same text as the server and React does not throw
+// the server's table away for a visitor in another zone.
+export function fmtDateTime(unix: number | null | undefined, lang: Lang, timeZone?: string): string {
   if (!unix) return "-";
-  return dateFormat(locales[lang], { dateStyle: "medium", timeStyle: "short" }).format(unix * 1000);
+  return dateFormat(locales[lang], timeZone ? { dateStyle: "medium", timeStyle: "short", timeZone } : { dateStyle: "medium", timeStyle: "short" }).format(unix * 1000);
+}
+
+// The time zone the server renders dates in (TZ of the environment, else
+// the system's), for client components that render the same dates.
+export function siteTimeZone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 
 export function fmtDate(unix: number | null | undefined, lang: Lang): string {

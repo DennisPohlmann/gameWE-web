@@ -24,6 +24,7 @@ export function PlayerEventsLive({
   shown,
   game,
   lang,
+  timeZone,
   live,
   initial,
   initialFlags,
@@ -40,6 +41,8 @@ export function PlayerEventsLive({
   shown: number;
   game: string;
   lang: Lang;
+  // The server's time zone (siteTimeZone), so the times hydrate as sent.
+  timeZone: string;
   live: boolean;
   initial: PlayerEventRow[];
   initialFlags: Flags;
@@ -75,7 +78,7 @@ export function PlayerEventsLive({
             <tbody>
               {rows.map((e) => (
                 <tr key={e.id} className={`ev-${e.kind}${e.id === fresh ? " ev-new" : ""}`}>
-                  <td className="muted nowrap">{fmtDateTime(e.ts, lang)}</td>
+                  <td className="muted nowrap">{fmtDateTime(e.ts, lang, timeZone)}</td>
                   <td>{labels.evKind[e.kind]}</td>
                   <td className="wrap-cell">{text(e)}</td>
                   <td className="hide-sm muted">{e.map ?? "-"}</td>

@@ -4,7 +4,7 @@ import { HistoryFrame, loadHistoryPlayer } from "@/components/player-history";
 import { PlayerEventsLive } from "@/components/player-events-live";
 import { Empty, Pager, ROW_OPTIONS, pageParam, rowsParam, strParam } from "@/components/ui";
 import { noAutofill } from "@/lib/autofill";
-import { localeOf } from "@/lib/format";
+import { localeOf, siteTimeZone } from "@/lib/format";
 import { getPlayerFlags } from "@/lib/data";
 import { EVENT_KINDS, countPlayerEvents, getPlayerEvents, type EventKind } from "@/lib/history";
 import { sortHeads, SortInputs } from "@/components/sort-head";
@@ -72,6 +72,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
         shown={limit}
         game={game}
         lang={lang}
+        timeZone={siteTimeZone()}
         live={live}
         initial={rows.slice(0, limit)}
         initialFlags={Object.fromEntries(flags)}

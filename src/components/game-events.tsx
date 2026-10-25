@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { GameEventsLive } from "@/components/game-events-live";
+import { siteTimeZone } from "@/lib/format";
 import { getPlayerFlags } from "@/lib/data";
 import { getGameEvents, getPlayerGameEvents, hasEventServer, PLAYER_EVENTS } from "@/lib/history";
 import { getSettings } from "@/lib/settings";
@@ -22,6 +23,7 @@ export async function GameEvents({ game, t, lang }: { game: string; t: Dict; lan
       shown={10}
       game={game}
       lang={lang}
+      timeZone={siteTimeZone()}
       live={gameEvents === "live"}
       withServer={withServer}
       initial={rows}
@@ -49,6 +51,7 @@ export async function PlayerEvents({ game, playerId, t, lang }: { game: string; 
       shown={PLAYER_EVENTS}
       game={game}
       lang={lang}
+      timeZone={siteTimeZone()}
       live={playerEvents === "live"}
       withServer={withServer}
       initial={rows}

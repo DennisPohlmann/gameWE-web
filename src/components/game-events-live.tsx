@@ -146,6 +146,7 @@ export function GameEventsLive({
   shown,
   game,
   lang,
+  timeZone,
   live,
   withServer,
   initial,
@@ -160,6 +161,8 @@ export function GameEventsLive({
   shown: number;
   game: string;
   lang: Lang;
+  // The server's time zone (siteTimeZone), so the times hydrate as sent.
+  timeZone: string;
   live: boolean;
   withServer: boolean;
   initial: GameEvent[];
@@ -216,7 +219,7 @@ export function GameEventsLive({
             <tbody>
               {rows.map((e) => (
                 <tr key={e.id} className={`ev-${e.kind}${e.id === fresh ? " ev-new" : ""}`}>
-                  <td className="muted nowrap ev-time">{fmtDateTime(e.ts, lang)}</td>
+                  <td className="muted nowrap ev-time">{fmtDateTime(e.ts, lang, timeZone)}</td>
                   <td className="wrap-cell">{text(e)}</td>
                   {withServer ? (
                     <td className="hide-sm muted ev-name">{e.server || "-"}</td>
