@@ -135,6 +135,7 @@
   "avgPlayers24h": "Média de jogadores em 24 h",
   "trend14d": "Jogadores, abates e headshots dos últimos 14 dias",
   "trendKillsTitle": "Abates e headshots (por dia)",
+  "trendKillsDeathsTitle": "Abates e mortes (por dia)",
   "trendTotals": "Abates e headshots no total",
   "headshotsLabel": "Headshots",
   "leader_kills": "Mais abates",

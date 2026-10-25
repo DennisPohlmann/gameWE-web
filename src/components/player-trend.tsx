@@ -1,4 +1,4 @@
-import { ComboChart } from "./chart";
+import { BarChart, ComboChart } from "./chart";
 import { pointsTrend } from "@/lib/points-trend";
 import { siteDay } from "@/lib/day";
 import type { HistoryDay } from "@/lib/data";
@@ -34,6 +34,43 @@ export function PlayerTrend({
       bars={{ values: trend.map((d) => d.change), up: { label: t.skillGained, className: "gain" }, down: { label: t.skillLost, className: "loss" } }}
       axisTitles={{ left: t.points, right: t.pointsPerDay }}
       ariaLabel={t.playerTrend}
+      locale={locale}
+    />
+  );
+}
+
+// Second chart of the sessions page: kills and deaths per day, over the same
+// calendar days as the player trend (0 on days without play).
+export function PlayerKillsTrend({
+  history,
+  before,
+  locale,
+  t,
+}: {
+  history: Pick<HistoryDay, "eventTime" | "skill" | "skill_change" | "kills" | "deaths">[];
+  before: number | null;
+  locale: Lang;
+  t: { kills: string; deaths: string; trendKillsDeathsTitle: string; noData: string };
+}) {
+  const byDay = new Map(history.map((h) => [String(h.eventTime).slice(0, 10), h]));
+  const days = pointsTrend(
+    history.map((h) => ({ day: String(h.eventTime).slice(0, 10), skill: Number(h.skill), change: Number(h.skill_change) })),
+    before,
+    siteDay(),
+  ).map((d) => d.day);
+  if (!days.length) return <span className="muted">{t.noData}</span>;
+  const val = (d: string, k: "kills" | "deaths") => Number(byDay.get(d)?.[k] ?? 0);
+  return (
+    <BarChart
+      labels={days.map((d) => `${d.slice(8, 10)}.${d.slice(5, 7)}.`)}
+      series={[
+        { label: t.kills, values: days.map((d) => val(d, "kills")), className: "s2" },
+        { label: t.deaths, values: days.map((d) => val(d, "deaths")), className: "s3" },
+      ]}
+      height={220}
+      width={640}
+      title={t.trendKillsDeathsTitle}
+      ariaLabel={t.trendKillsDeathsTitle}
       locale={locale}
     />
   );

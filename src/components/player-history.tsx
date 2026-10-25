@@ -59,6 +59,7 @@ export async function HistoryFrame({
   name,
   t,
   tab,
+  back = true,
   children,
 }: {
   game: string;
@@ -66,6 +67,8 @@ export async function HistoryFrame({
   name: string | null;
   t: Dict;
   tab: HistoryTab;
+  // false: the page puts its own BackToPlayer lines (the sessions page).
+  back?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -75,11 +78,22 @@ export async function HistoryFrame({
           {t.playerHistory}: {name ?? `#${id}`}
         </h2>
       </header>
-      <p className="history-back">
-        <Link href={`/${game}/players/${id}`}>← {t.backToPlayer}</Link>
-      </p>
+      {back ? (
+        <p className="history-back">
+          <Link href={`/${game}/players/${id}`}>← {t.backToPlayer}</Link>
+        </p>
+      ) : null}
       <PlayerLinks game={game} id={id} name={name} t={t} active={tab} />
       {children}
     </section>
+  );
+}
+
+// gameME's "Back to Player Information", right-aligned above a box.
+export function BackToPlayer({ game, id, t }: { game: string; id: number; t: Pick<Dict, "backTo" | "playerInfo"> }) {
+  return (
+    <p className="back-to">
+      {t.backTo} <Link href={`/${game}/players/${id}`}>{t.playerInfo}</Link>
+    </p>
   );
 }

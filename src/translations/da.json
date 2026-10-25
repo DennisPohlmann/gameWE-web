@@ -135,6 +135,7 @@
   "avgPlayers24h": "Gns. spillere 24 t",
   "trend14d": "Spillere, drab og headshots de sidste 14 dage",
   "trendKillsTitle": "Drab og headshots (pr. dag)",
+  "trendKillsDeathsTitle": "Drab og dødsfald (pr. dag)",
   "trendTotals": "Drab og headshots i alt",
   "headshotsLabel": "Headshots",
   "leader_kills": "Flest drab",

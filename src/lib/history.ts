@@ -184,7 +184,25 @@ export async function getPlayerSessions(playerId: number, limit: number, offset:
   return { rows: page.map((r, i) => ({ ...r, points_change: changes[i] })), total: Number(count?.n ?? 0) };
 }
 
-export type AwardWin = { date: string; awardId: number; code: string; name: string; verb: string; winner_count: number };
+// All history days of a player for the sessions page, newest first, with
+// points_change as above; the page sorts and pages them itself (any column
+// can be sorted, the change needs the day before). At most SESSION_DAYS
+// days (about eleven years), one more is read for the oldest one's change.
+const SESSION_DAYS = 4000;
+
+export async function getPlayerSessionDays(playerId: number) {
+  const all = await query<SessionDay>(
+    `SELECT eventTime, skill, skill_change, connection_time, rounds, wins, kills, deaths, kill_streak, headshots, shots, hits
+     FROM hlstats_Players_History WHERE playerId = ? ORDER BY eventTime DESC LIMIT ?`,
+    [playerId, SESSION_DAYS + 1],
+  );
+  const days = all.slice(0, SESSION_DAYS);
+  const older = all.length > SESSION_DAYS ? Number(all[SESSION_DAYS].skill) : null;
+  const changes = dayChanges(days.map((r) => ({ skill: Number(r.skill), change: Number(r.skill_change) })), older);
+  return days.map((r, i) => ({ ...r, points_change: changes[i] }));
+}
+
+export type AwardWin ={ date: string; awardId: number; code: string; name: string; verb: string; winner_count: number };
 
 export async function getPlayerAwardWins(playerId: number, limit: number, offset: number, sort: AwardWinSort = "date", asc = false) {
   // The column comes from the allowlist; date and name break ties.

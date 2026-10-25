@@ -135,6 +135,7 @@
   "avgPlayers24h": "Gem. spelers 24 u",
   "trend14d": "Spelers, kills en headshots van de laatste 14 dagen",
   "trendKillsTitle": "Kills en headshots (per dag)",
+  "trendKillsDeathsTitle": "Kills en doden (per dag)",
   "trendTotals": "Kills en headshots in totaal",
   "headshotsLabel": "Headshots",
   "leader_kills": "Meeste kills",

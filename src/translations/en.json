@@ -135,6 +135,7 @@
   "avgPlayers24h": "Avg. players last 24h",
   "trend14d": "Players, kills and headshots over the last 14 days",
   "trendKillsTitle": "Kills and headshots (per day)",
+  "trendKillsDeathsTitle": "Kills and deaths (per day)",
   "trendTotals": "Kills and headshots in total",
   "headshotsLabel": "Headshots",
   "leader_kills": "Most kills",

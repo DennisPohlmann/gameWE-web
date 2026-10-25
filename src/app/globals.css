@@ -803,6 +803,14 @@ a.button { display: inline-block; text-decoration: none; }
 .player-links a { padding: 4px 12px; background: var(--panel); border: 1px solid var(--border); color: var(--soft); text-decoration: none; font-weight: bold; font-size: 11px; }
 .player-links a:hover, .player-links a.active { background: var(--accent); color: #000; border-color: var(--accent); }
 .history-back { margin: 4px 0; font-size: 11px; }
+/* Sessions page: "Back to Player information" right-aligned above each box,
+   the two summary charts side by side, the change icon after the number. */
+.back-to { margin: 6px 0; font-size: 11px; text-align: right; }
+.back-to a { text-decoration: underline; }
+.session-charts { text-align: left; }
+.change-arrow { display: inline-block; vertical-align: -2px; margin-left: 4px; }
+.change-arrow rect { fill: currentColor; }
+.change-arrow path { fill: var(--panel); }
 .award-summary { display: flex; flex-wrap: wrap; gap: 8px 14px; padding: 6px; }
 .award-sum-cell { display: flex; align-items: center; gap: 6px; min-width: 210px; }
 .award-sum-cell b { min-width: 34px; text-align: right; }

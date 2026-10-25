@@ -135,6 +135,7 @@
   "avgPlayers24h": "24 小时平均玩家",
   "trend14d": "最近 14 天的玩家、击杀和爆头",
   "trendKillsTitle": "击杀和爆头（每天）",
+  "trendKillsDeathsTitle": "击杀和死亡（每天）",
   "trendTotals": "击杀和爆头总数",
   "headshotsLabel": "爆头",
   "leader_kills": "最多击杀",

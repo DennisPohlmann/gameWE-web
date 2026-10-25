@@ -135,6 +135,7 @@
   "avgPlayers24h": "Moy. joueurs sur 24 h",
   "trend14d": "Joueurs, frags et headshots des 14 derniers jours",
   "trendKillsTitle": "Frags et headshots (par jour)",
+  "trendKillsDeathsTitle": "Frags et morts (par jour)",
   "trendTotals": "Frags et headshots au total",
   "headshotsLabel": "Headshots",
   "leader_kills": "Le plus de frags",
