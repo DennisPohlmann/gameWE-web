@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { BarChart, LineChart } from "@/components/chart";
 import { LiveTable, ServerTable } from "@/components/live";
 import { Rich } from "@/components/rich";
@@ -11,8 +12,16 @@ import { GameEvents } from "@/components/game-events";
 import { PlayerMap } from "@/components/player-map";
 import { mapMarkers, serverMarkers } from "@/lib/map-markers";
 import { getSettings } from "@/lib/settings";
+import { rankingTitle } from "@/lib/ranking-title";
 
 const BUCKET = 900;
+
+// The ranking's title template does not apply to the page of its own
+// segment, so the page fills it in itself: "<Ranking> Servers | <site>".
+export async function generateMetadata({ params }: { params: Promise<{ game: string }> }): Promise<Metadata> {
+  const [title, { t }] = await Promise.all([rankingTitle((await params).game), getDict()]);
+  return title ? { title: { absolute: title.template.replace("%s", t.servers) } } : {};
+}
 
 // Start page of a ranking, laid out like gameME's: participating servers with
 // a map of who is online and the players on each, the daily awards, then the

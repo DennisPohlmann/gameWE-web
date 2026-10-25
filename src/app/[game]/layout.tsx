@@ -7,17 +7,16 @@ import { currentAdmin } from "@/lib/auth";
 import { getGame } from "@/lib/data";
 import { getDict } from "@/lib/i18n";
 import { basePath } from "@/lib/base-path";
-import { getSettings, titleTemplate } from "@/lib/settings";
+import { getSettings } from "@/lib/settings";
+import { rankingTitle } from "@/lib/ranking-title";
 import { gameTemplate } from "@/lib/templates";
 
 // Pages of a ranking carry its name in the browser title (Settings →
-// Browser title in rankings), e.g. "GunGame Players | Clan".
+// Browser title in rankings), e.g. "GunGame Players | Clan". Absolute, so the
+// site's own title format is not added a second time (e.g. on a 404).
 export async function generateMetadata({ params }: { params: Promise<{ game: string }> }): Promise<Metadata> {
-  const { game: code } = await params;
-  const game = (await getGame(code)) ?? ((await currentAdmin()) ? await getGame(code, true) : undefined);
-  if (!game) return {};
-  const s = await getSettings();
-  return { title: titleTemplate(s.titleFormatRanking, { site: s.siteName, ranking: game.name }) };
+  const title = await rankingTitle((await params).game);
+  return title ? { title: { absolute: title.default, template: title.template } } : {};
 }
 
 export default async function GameLayout({ children, params }: { children: ReactNode; params: Promise<{ game: string }> }) {
