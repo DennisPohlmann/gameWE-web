@@ -795,9 +795,22 @@ async function SteamProfile({ steam64, ...rest }: ProfileProps & { steam64: stri
 
 // pending: Steam has not answered yet (the fallback while it is asked).
 function ProfileTable({ steam, pending = false, game, id, p, ids, isBot, location, age, fav, t, lang }: ProfileProps & { steam: SteamProfileData | null; pending?: boolean }) {
-  // The avatar sits in its own framed box beside the first eight rows (they
-  // are always there, with or without Steam data); the rows below it use
-  // the full width.
+  // As on gameME: the name runs across the full width, the avatar sits in
+  // its own framed box beside the seven rows from Clan to Steam name (they
+  // are always there, with or without Steam data) and the rows below use
+  // the full width again.
+  const avatar = (
+    <td rowSpan={7} className="avatar-cell">
+      {steam?.avatar ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={steam.avatar} alt={steam.name ?? ""} width={184} height={184} referrerPolicy="no-referrer" />
+      ) : (
+        <span className="avatar-none" aria-hidden="true">
+          {(p.name ?? "").replace(/[^\p{L}\p{N}]/gu, "").slice(0, 1).toUpperCase() || "?"}
+        </span>
+      )}
+    </td>
+  );
   return (
     <table className="stats profile">
       <thead>
@@ -808,24 +821,14 @@ function ProfileTable({ steam, pending = false, game, id, p, ids, isBot, locatio
       <tbody>
         <tr>
           <td className="stats-key">{t.name}:</td>
-          <td>
+          <td colSpan={2}>
             <b>
               <Flag code={p.flag} title={p.country} />
               {p.name ?? `#${id}`}
             </b>
           </td>
-          <td rowSpan={8} className="avatar-cell">
-            {steam?.avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={steam.avatar} alt={steam.name ?? ""} width={184} height={184} referrerPolicy="no-referrer" />
-            ) : (
-              <span className="avatar-none" aria-hidden="true">
-                {(p.name ?? "").replace(/[^\p{L}\p{N}]/gu, "").slice(0, 1).toUpperCase() || "?"}
-              </span>
-            )}
-          </td>
         </tr>
-        <Row k={t.clan} v={p.clanTag ? <Link href={`/${game}/clans/${p.clan}`}>{p.clanTag}</Link> : <i>{t.none}</i>} />
+        <Row k={t.clan} v={p.clanTag ? <Link href={`/${game}/clans/${p.clan}`}>{p.clanTag}</Link> : <i>{t.none}</i>} aside={avatar} />
         <Row k={t.location} v={location.length ? <>{location}</> : <i>{t.notSpecified}</i>} />
         <Row k={t.playerId} v={fmtNum(id, lang)} />
         <Row k={t.steamId} v={isBot ? t.bot : (ids?.steam2 ?? p.uniqueId ?? "-")} />
@@ -859,11 +862,13 @@ function ProfileTable({ steam, pending = false, game, id, p, ids, isBot, locatio
   );
 }
 
-function Row({ k, v, span = false }: { k: string; v: React.ReactNode; span?: boolean }) {
+// aside: a cell after the value that spans the following rows (the avatar).
+function Row({ k, v, span = false, aside }: { k: string; v: React.ReactNode; span?: boolean; aside?: React.ReactNode }) {
   return (
     <tr>
       <td className="stats-key">{k}:</td>
       <td colSpan={span ? 2 : 1}>{v}</td>
+      {aside}
     </tr>
   );
 }

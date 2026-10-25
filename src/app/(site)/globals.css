@@ -418,18 +418,19 @@ table.stats td.stats-key { width: 35%; color: var(--th-text); font-weight: bold;
 /* Position and points share the left half of the player summary's first row. */
 table.stats td.stats-key.pair { width: auto; }
 table.stats td.pair-value { text-align: center; }
-/* The player profile is as compact as HLstatsX's: rows of about 21px (2px
-   4px padding at the 11px font), the labels only as wide as their text and
-   the values next to them. The avatar sits in its own framed box beside the
-   first eight rows, small enough not to stretch them; the rows below use
-   the full width. */
+/* The player profile is laid out like gameME's and as compact as HLstatsX's:
+   rows of about 21px (2px 4px padding at the 11px font), the labels in a
+   column of 30 %, the name across the full width. The avatar sits in its
+   own framed box, centred in a column of 20 % beside the seven rows from
+   Clan to Steam name, small enough not to stretch them; the rows below
+   use the full width. */
 table.stats.profile th, table.stats.profile td { padding: 2px 4px; }
-table.stats.profile td.stats-key { width: 1%; }
-table.stats.profile td.avatar-cell { width: 1%; padding: 6px; vertical-align: middle; }
+table.stats.profile td.stats-key { width: 30%; }
+table.stats.profile td.avatar-cell { width: 20%; padding: 6px; text-align: center; vertical-align: middle; }
 @media (min-width: 601px) {
-  table.stats.profile td.avatar-cell img, table.stats.profile .avatar-none { width: 150px; height: 150px; }
+  table.stats.profile td.avatar-cell img, table.stats.profile .avatar-none { width: 140px; height: 140px; }
   table.stats.profile td.avatar-cell img { padding: 6px; }
-  table.stats.profile .avatar-none { font-size: 56px; }
+  table.stats.profile .avatar-none { font-size: 52px; }
 }
 /* The player summary is split like gameME's: the left half is four equal
    cells (position and points) and below them the radar, centred; the right
