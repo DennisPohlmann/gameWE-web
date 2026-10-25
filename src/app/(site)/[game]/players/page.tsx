@@ -12,7 +12,6 @@ import {
   getCityOptions,
   getCountryOptions,
   getMapPlayers,
-  getMapServers,
   getPlayerLiveServers,
   getPlaceRanking,
   getRanking,
@@ -22,7 +21,7 @@ import {
   type PlaceSort,
   type RankingSort,
 } from "@/lib/data";
-import { mapMarkers, serverMarkers } from "@/lib/map-markers";
+import { mapMarkers } from "@/lib/map-markers";
 import { parsePlaceQuery, placeTypes } from "@/lib/places";
 import { PLACE_SORT_DEFAULT, sortParam } from "@/lib/sorts";
 import { fmtNum, localeOf } from "@/lib/format";
@@ -72,7 +71,7 @@ export default async function PlayersPage({
   const { pageSize, activityDays, mapPlayers: showMap, mapStyle } = await getSettings();
   const limit = rowsParam(sp.rows, pageSize);
 
-  const [{ rows, total }, places, mapPlayers, mapServers, countries, states, cities] = await Promise.all([
+  const [{ rows, total }, places, mapPlayers, countries, states, cities] = await Promise.all([
     placeList
       ? { rows: [], total: 0 }
       : getRanking({
@@ -99,14 +98,13 @@ export default async function PlayersPage({
       : null,
     // The map follows the filter: the players of one country, state or city.
     showMap ? getMapPlayers(game, mapAll ? MAP_ALL_LIMIT : MAP_LIMIT, placeList && placeKind === "country" ? {} : { country, state, city }, "skill") : [],
-    showMap ? getMapServers(game) : [],
     getCountryOptions(game),
     placeKind === "state" ? getStateOptions(game, country) : [],
     placeKind === "city" ? getCityOptions(game, country) : [],
   ]);
-  // The top 10 map joins each player who is online right now to their
-  // server, as the live map does; with all players the lines would cover
-  // the map.
+  // The players map shows only players, no servers and no lines to them
+  // (the other maps keep them). On the top 10 the hover box of a player who
+  // is online right now names their server; all players skip that lookup.
   const online = mapAll ? new Map<number, { serverId: number; server: string }>() : await getPlayerLiveServers(game, mapPlayers.map((p) => p.playerId));
   const markers = mapMarkers(
     mapPlayers.map((p) => ({ ...p, ...online.get(p.playerId) })),
@@ -114,7 +112,6 @@ export default async function PlayersPage({
     t,
     lang,
   );
-  const serverPins = serverMarkers(mapServers, game, t);
   const pages = Math.max(1, Math.ceil((places ? places.total : total) / limit));
   const base = `/${game}/players`;
   const keep = {
@@ -207,16 +204,11 @@ export default async function PlayersPage({
           }
         >
           <div className="box">
-            <PlayerMap
-              markers={markers}
-              servers={serverPins}
-              style={mapStyle}
-            />
+            <PlayerMap markers={markers} style={mapStyle} />
             <p className="muted">
               {fill(mapAll ? t.playerMapHint : t.playerMapHintTop, {
                 n: fmtNum(markers.length, lang),
               })}
-              {serverPins.length ? ` ${t.playerMapServers}` : null}
             </p>
           </div>
         </Section>
