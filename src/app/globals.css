@@ -412,17 +412,24 @@ table.stats td.pair-value { text-align: center; }
 table.stats.profile td.stats-key { width: 1%; }
 /* In the summary the labels are only as wide as their text and wide screens
    give the room to the right-hand values, not to the radar and the labels.
-   In a narrow box (two columns on a small laptop) labels wrap and the trend
-   graphics shrink as on phones, so the table fits. */
+   In a narrow box (two columns on a small laptop, up to 600px) labels wrap
+   and the trend graphics shrink as on phones, so the table fits. */
 table.stats.summary td.stats-key { width: 1%; }
 table.stats.summary td:last-child { width: 40%; }
 .summary-box { container-type: inline-size; }
-@container (max-width: 520px) {
+@container (max-width: 600px) {
   table.stats.summary td { white-space: normal; }
   .summary-box .spark { width: 156px; min-width: 156px; height: auto; }
 }
 @container (max-width: 360px) {
   .summary-box .spark { width: 146px; min-width: 146px; }
+}
+/* In a wide box the radar column is only as wide as the chart (and the
+   position/points pairs above it): the rest goes to the values on the
+   right. */
+@container (min-width: 601px) {
+  table.stats.summary td:last-child { width: 100%; }
+  .summary-box .radar-wrap { width: 200px; max-width: none; }
 }
 table.stats th { font-weight: bold; }
 .cont-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 12px 2%; align-items: start; }
@@ -514,7 +521,7 @@ table.stats.spaced { margin-top: 10px; }
 td.avatar-cell { width: 1%; padding: 12px; text-align: center; vertical-align: middle; }
 td.avatar-cell img { display: block; width: 184px; height: 184px; aspect-ratio: 1; object-fit: cover; margin: 0 auto; padding: 8px; background: var(--panel); border: 1px solid #555; box-sizing: content-box; }
 .avatar-none { display: flex; margin: 0 auto; align-items: center; justify-content: center; width: 184px; height: 184px; background: radial-gradient(circle at 35% 30%, #444, #161616); color: #777; font-size: 64px; font-weight: bold; border: 1px solid #333; }
-td.radar-cell { width: 45%; text-align: center; vertical-align: middle; }
+td.radar-cell { width: 1%; text-align: center; vertical-align: middle; }
 .radar { width: 100%; max-width: 170px; height: auto; display: block; margin: 0 auto; }
 .radar-grid { fill: none; stroke: var(--chart-radar-grid); stroke-width: 1; }
 .radar-total { fill: color-mix(in srgb, var(--chart-radar-total) 28%, transparent); stroke: var(--chart-radar-total); stroke-width: 1.5; }
