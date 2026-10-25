@@ -1,5 +1,5 @@
 import "server-only";
-import type { MapMarker, ServerMarker } from "@/components/player-map";
+import type { MapMarker, ServerEntry, ServerMarker } from "@/components/player-map";
 import { basePath } from "./base-path";
 import type { MapPlayer, MapServer } from "./data";
 import { FLAG_CODES } from "./flag-codes";
@@ -31,29 +31,46 @@ export function mapMarkers(players: (MapPlayer & { server?: string | null })[], 
   });
 }
 
-// Markers for the game servers on the player map: link to the server page
-// and the hover lines (name, place, address as in the server list, map).
+// Markers for the game servers on the player map, one per place: servers at
+// the same point (coordinates rounded to 0.01°, about 1 km) share a marker.
+// Each server gets a link to its page and its hover details (address as in
+// the server list, map, uptime as on the server page).
 export function serverMarkers(servers: MapServer[], game: string, t: Dict): ServerMarker[] {
-  return servers.map((s) => {
+  const groups = new Map<string, ServerMarker>();
+  for (const s of servers) {
     const name = s.name || `${s.address}:${s.port}`;
     const code = (s.country_code ?? "").trim().toLowerCase();
     const svg = FLAG_CODES.has(code);
-    return {
-      id: s.serverId,
-      name,
+    const entry: ServerEntry = {
+      name: svg ? name : `${flagEmoji(code)} ${name}`.trim(),
       href: `${basePath}/${game}/servers/${s.serverId}`,
-      lat: s.lat,
-      lng: s.lng,
       online: s.online,
       flag: svg ? `${basePath}/flags/${code}.svg` : undefined,
       lines: [
-        svg ? name : `${flagEmoji(code)} ${name}`.trim(),
-        [s.city, s.country_name].filter(Boolean).join(", "),
         `${t.address}: ${s.publicaddress || `${s.address}:${s.port}`}`,
         s.act_map ? `${t.map}: ${s.act_map}` : "",
-        // Uptime as on the server page; offline servers have none.
+        // Offline servers have no uptime.
         s.uptime ? `${t.uptime}: ${fmtDuration(s.uptime * 60)}` : "",
       ].filter(Boolean),
     };
-  });
+    const key = `${s.lat.toFixed(2)},${s.lng.toFixed(2)}`;
+    const g = groups.get(key);
+    if (g) {
+      g.servers.push(entry);
+      g.online ||= s.online;
+    } else {
+      groups.set(key, {
+        id: s.serverId,
+        lat: s.lat,
+        lng: s.lng,
+        online: s.online,
+        place: [s.city, s.country_name].filter(Boolean).join(", "),
+        servers: [entry],
+      });
+    }
+  }
+  for (const g of groups.values()) {
+    if (g.servers.length > 1) g.title = [g.place, `${g.servers.length} ${t.servers}`].filter(Boolean).join(" · ");
+  }
+  return [...groups.values()];
 }

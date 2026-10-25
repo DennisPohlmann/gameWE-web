@@ -18,8 +18,13 @@ export type MapMarker = {
   lines: string[];
 };
 
-// A game server at its GeoIP location: drawn as a square, not an avatar.
-export type ServerMarker = Omit<MapMarker, "avatar" | "initial"> & { online?: boolean };
+// One game server: name (with the flag), page and hover details.
+export type ServerEntry = { name: string; href: string; online: boolean; flag?: string; lines: string[] };
+
+// The game servers at one GeoIP location: one square, not an avatar, with
+// the number of servers when there are several. online: any of them is.
+// title: heading of the hover box when there are several.
+export type ServerMarker = { id: number; lat: number; lng: number; online: boolean; place: string; title?: string; servers: ServerEntry[] };
 
 const NO_SERVERS: ServerMarker[] = [];
 
@@ -45,28 +50,40 @@ export function PlayerMap({ markers, servers = NO_SERVERS, style }: { markers: M
       el.current.classList.toggle("map-dark", !!tiles.dark);
       L.tileLayer(tiles.url, { maxZoom: tiles.maxZoom, attribution: tiles.attribution, subdomains: tiles.subdomains ?? "abc" }).addTo(map);
       const seen = new Map<string, number>();
-      // Spiral around the city in screen pixels, so it works at every zoom.
-      // Servers come first, so they keep the middle of their city.
-      const spread = (m: { lat: number; lng: number }) => {
-        const key = `${m.lat},${m.lng}`;
+      // Spiral around the city in screen pixels, so it works at every zoom
+      // (points within 0.01°, about 1 km, count as one place). Servers come
+      // first and keep the middle: their square takes the first `slots`
+      // places, so the players around it leave it and its number visible.
+      const spread = (m: { lat: number; lng: number }, slots = 1) => {
+        const key = `${m.lat.toFixed(2)},${m.lng.toFixed(2)}`;
         const n = seen.get(key) ?? 0;
-        seen.set(key, n + 1);
+        seen.set(key, n + slots);
         const r = n ? 17 * Math.sqrt(n) : 0;
         const a = n * 2.4;
         return [Math.round(r * Math.cos(a)), Math.round(r * Math.sin(a))];
       };
       for (const m of servers) {
-        const [dx, dy] = spread(m);
+        const [dx, dy] = spread(m, 4);
+        const one = m.servers.length === 1 ? m.servers[0] : null;
         const icon = L.divIcon({
-          className: m.online ? "map-server on" : "map-server",
-          // Same size as the player avatars, with a server rack inside.
-          html: `<a href="${esc(m.href)}" aria-label="${esc(m.name)}">${SERVER_ICON}</a>`,
+          className: `map-server${m.online ? " on" : ""}${one ? "" : " group"}`,
+          // Same size as the player avatars, with a server rack inside; with
+          // several servers the number of them over it.
+          html: one
+            ? `<a href="${esc(one.href)}" aria-label="${esc(one.name)}">${SERVER_ICON}</a>`
+            : `<a href="#" role="button" aria-label="${esc(m.title ?? m.place)}">${SERVER_ICON}<b>${m.servers.length}</b></a>`,
           iconSize: [30, 30],
           iconAnchor: [15 - dx, 15 - dy],
         });
-        L.marker([m.lat, m.lng], { icon, zIndexOffset: -1000 })
-          .bindTooltip(tip(m), { direction: "top", offset: [dx, dy - 14] })
+        const marker = L.marker([m.lat, m.lng], { icon, zIndexOffset: -1000 })
+          .bindTooltip(serverTip(m), { direction: "top", offset: [dx, dy - 14] })
           .addTo(map);
+        // Several servers: a click opens a box with a link to each of them.
+        if (!one) {
+          marker.bindPopup(serverLinks(m), { offset: [dx, dy - 14] });
+          marker.on("popupopen", () => marker.closeTooltip());
+          marker.getElement()?.querySelector("a")?.addEventListener("click", (e) => e.preventDefault());
+        }
       }
       const points: [number, number][] = [];
       for (const m of markers) {
@@ -104,6 +121,33 @@ function tip(m: { lines: string[]; flag?: string }) {
   return m.lines
     .map((l, i) => (i ? esc(l) : `<b>${m.flag ? `<span class="flag flag-svg" style="background-image:url('${esc(m.flag)}')"></span>` : ""}${esc(l)}</b>`))
     .join("<br>");
+}
+
+// Hover box of a server marker: one server as a player's (name, place,
+// details); several under the place, each with its status light.
+function serverTip(m: ServerMarker) {
+  if (m.servers.length === 1) {
+    const s = m.servers[0];
+    return tip({ flag: s.flag, lines: [s.name, m.place, ...s.lines].filter(Boolean) });
+  }
+  return (
+    `<b>${esc(m.title ?? m.place)}</b>` +
+    m.servers
+      .map(
+        (s) =>
+          `<div class="srv-row"><i class="srv-dot${s.online ? " on" : ""}"></i><b>${s.flag ? `<span class="flag flag-svg" style="background-image:url('${esc(s.flag)}')"></span>` : ""}${esc(s.name)}</b><br>${s.lines.map(esc).join(" · ")}</div>`,
+      )
+      .join("")
+  );
+}
+
+// Click box of a marker with several servers: a link to each server page.
+function serverLinks(m: ServerMarker) {
+  return (
+    `<b>${esc(m.title ?? m.place)}</b><ul class="srv-list">` +
+    m.servers.map((s) => `<li><i class="srv-dot${s.online ? " on" : ""}"></i><a href="${esc(s.href)}">${esc(s.name)}</a></li>`).join("") +
+    "</ul>"
+  );
 }
 
 function esc(s: string) {
