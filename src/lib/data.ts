@@ -5,6 +5,7 @@ import { addDays, dayOf, siteDay } from "./day";
 import { nowUnix, steamIds } from "./format";
 import { baseGameOf, GAME_HAS_DATA } from "./games";
 import { playerCount, sumCounts, type PlayerCount } from "./player-count";
+import { placeSorts, rankingSorts, type PlaceSort, type RankingSort } from "./sorts";
 
 // All reads of the HLstatsX/gameME tables the collector fills.
 // Times are Unix seconds unless a field says otherwise.
@@ -424,20 +425,7 @@ export type RankingRow = {
   globalRank?: number;
 };
 
-export const rankingSorts = {
-  skill: "p.skill",
-  name: "d.lastName",
-  activity: "p.last_event",
-  time: "p.connection_time",
-  kills: "p.kills",
-  deaths: "p.deaths",
-  kpd: "p.kills * 1.0 / GREATEST(p.deaths, 1)",
-  hs: "p.headshots",
-  hpk: "p.headshots * 1.0 / GREATEST(p.kills, 1)",
-  acc: "p.hits * 1.0 / GREATEST(p.shots, 1)",
-  new: "d.first_connect",
-} as const;
-export type RankingSort = keyof typeof rankingSorts;
+export { rankingSorts, type RankingSort } from "./sorts";
 
 export async function getRanking(opts: {
   game: string;
@@ -556,18 +544,7 @@ export type PlaceRow = PlaceOption & {
   last_event: number;
 };
 
-export const placeSorts = {
-  players: "players",
-  skill: "skill",
-  avg: "avgSkill",
-  kills: "kills",
-  deaths: "deaths",
-  kpd: "kills * 1.0 / GREATEST(deaths, 1)",
-  hpk: "headshots * 1.0 / GREATEST(kills, 1)",
-  time: "connection_time",
-  name: "name",
-} as const;
-export type PlaceSort = keyof typeof placeSorts;
+export { placeSorts, type PlaceSort } from "./sorts";
 
 export async function getPlaceRanking(opts: {
   game: string;

@@ -21,6 +21,7 @@ import {
   type RankingSort,
 } from "@/lib/data";
 import { mapMarkers, serverMarkers } from "@/lib/map-markers";
+import { PLACE_SORT_DEFAULT, sortParam } from "@/lib/sorts";
 import { fmtNum, localeOf } from "@/lib/format";
 import { fill, getDict } from "@/lib/i18n";
 
@@ -63,13 +64,8 @@ export default async function PlayersPage({
   const city = placeType === "cityinfo" && cityName0.length <= 80 ? cityName0 : "";
   const placeList = (placeType === "countryinfo" && !country) || (placeType === "cityinfo" && !city);
   const rawSort = strParam(sp.sort);
-  const sort: RankingSort =
-    rawSort in rankingSorts
-      ? (rawSort as RankingSort)
-      : view === "new"
-        ? "new"
-        : "skill";
-  const placeSort: PlaceSort = rawSort in placeSorts ? (rawSort as PlaceSort) : "players";
+  const sort: RankingSort = sortParam(rankingSorts, rawSort, view === "new" ? "new" : "skill");
+  const placeSort: PlaceSort = sortParam(placeSorts, rawSort, PLACE_SORT_DEFAULT);
   const asc = strParam(sp.dir) === "asc";
   const q = strParam(sp.q);
   const page = pageParam(sp.page);
