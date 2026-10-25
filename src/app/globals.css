@@ -788,6 +788,19 @@ a.button { display: inline-block; text-decoration: none; }
 .admin .server-card { background: var(--line-bg); color: var(--line-text); border: 1px solid var(--border); padding: 8px 10px; }
 .admin .server-card a { color: var(--line-text); }
 .admin .server-card h3 { font-size: 11px; margin-bottom: 4px; }
+/* Admin pages in every template: each section is a header strip with a card
+   below, intro texts and the save bar are cards of their own, all in the
+   template's own colours. Public pages keep their look. */
+.admin { gap: 18px; }
+.admin-nav nav a { padding: 3px 6px; }
+.admin-main > p:not(.notice), .admin-main > .lead { padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+.admin-main .section { margin: 0 0 18px; }
+.admin-main .section-head { align-items: center; margin: 0 0 4px; padding: 7px 10px; background: var(--th-bg); border: 1px solid var(--border); color: var(--th-text); }
+.admin-main .section-head h2 { margin: 0; padding: 0; font-size: 12px; color: inherit; }
+.admin-main .section-head h2::before, .admin-main .section-head h2::after { content: none; }
+.admin-main .section-aside { padding: 0; }
+.admin-main .section > .form { padding: 12px 14px; }
+.admin-main .section > :not(.section-head) + :not(.pager):not(.footnote) { margin-top: 6px; }
 .linkish { background: none; border: 0; padding: 0; color: var(--text); text-decoration: underline; cursor: pointer; text-align: left; }
 
 .form { display: grid; gap: 10px; max-width: 560px; }
@@ -799,8 +812,8 @@ a.button { display: inline-block; text-decoration: none; }
 .form .button { justify-self: start; }
 .form small { color: var(--muted); }
 .qr { display: block; width: 220px; max-width: 100%; height: auto; border: 1px solid var(--border); }
-/* Admin settings: full width, two or three fields per row. */
-.form.settings-grid { max-width: none; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 12px 24px; align-items: start; }
+/* Admin settings: full width, two fields per row (one on phones). */
+.form.settings-grid { max-width: none; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 24px; align-items: start; }
 .settings-grid .settings-help { grid-column: 1 / -1; margin: 0; color: var(--muted); }
 .link-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 6px; }
 .settings-save { margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
@@ -829,8 +842,11 @@ a.button { display: inline-block; text-decoration: none; }
 .login { max-width: 380px; margin: 30px auto; }
 .login h1 { margin-bottom: 10px; text-shadow: var(--title-shadow); }
 .login .notice { margin-bottom: 10px; }
+@media (max-width: 640px) {
+  .form.settings-grid { grid-template-columns: minmax(0, 1fr); }
+}
 
-@media (max-width: 800px) {
+@media (max-width: 900px) {
   .admin { grid-template-columns: 1fr; }
   .admin-nav { position: static; }
   .admin-nav nav { flex-direction: row; flex-wrap: wrap; gap: 2px 10px; }

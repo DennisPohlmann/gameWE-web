@@ -448,6 +448,9 @@ html[data-skin] .admin-nav nav a { border-radius: 3px; padding: 3px 6px; color: 
 html[data-skin] .admin-nav nav a:hover { background: var(--m-hover); color: var(--accent); text-decoration: none; }
 html[data-skin] .admin-title { color: var(--accent); }
 html[data-skin] .admin .server-card { border-radius: var(--m-radius); }
+/* Intro texts stay plain text on the page (the base layout puts them in a card). */
+html[data-skin] .admin-main > p:not(.notice), html[data-skin] .admin-main > .lead { padding: 0; background: none; border: 0; color: inherit; }
+html[data-skin] .admin-main > .lead:not(.notice) { color: var(--muted); }
 html[data-skin] .hl-row { border-radius: 4px; }
 html[data-skin] .login { padding: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--m-radius); }
 
