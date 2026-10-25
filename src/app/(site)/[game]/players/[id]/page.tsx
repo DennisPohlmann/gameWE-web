@@ -786,10 +786,9 @@ async function SteamProfile({ steam64, ...rest }: ProfileProps & { steam64: stri
 
 // pending: Steam has not answered yet (the fallback while it is asked).
 function ProfileTable({ steam, pending = false, game, id, p, ids, isBot, location, age, fav, t, lang }: ProfileProps & { steam: SteamProfileData | null; pending?: boolean }) {
-  // The avatar spans every row of the profile table, so the rows keep their
-  // compact height (HLstatsX's) instead of stretching to the picture: eight
-  // fixed rows, the Steam ones when there are Steam data, and five more.
-  const profileRows = 13 + (steam?.memberSince ? 1 : 0) + (steam ? 1 : 0);
+  // The avatar sits in its own framed box beside the first eight rows (they
+  // are always there, with or without Steam data); the rows below it use
+  // the full width.
   return (
     <table className="stats profile">
       <thead>
@@ -806,7 +805,7 @@ function ProfileTable({ steam, pending = false, game, id, p, ids, isBot, locatio
               {p.name ?? `#${id}`}
             </b>
           </td>
-          <td rowSpan={profileRows} className="avatar-cell">
+          <td rowSpan={8} className="avatar-cell">
             {steam?.avatar ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={steam.avatar} alt={steam.name ?? ""} width={184} height={184} referrerPolicy="no-referrer" />
@@ -835,26 +834,27 @@ function ProfileTable({ steam, pending = false, game, id, p, ids, isBot, locatio
           }
         />
         <Row k={t.steamName} v={steam?.name ?? <i>{pending ? "…" : t.notSpecified}</i>} />
-        {steam?.memberSince ? <Row k={t.memberSince} v={steam.memberSince} /> : null}
-        {steam ? <Row k="VAC" v={steam.vacBanned ? <span className="bad">{t.vacBanned}</span> : <span className="good">{t.vacClean}</span>} /> : null}
-        <Row k={t.lastConnect} v={`${age ?? fmtDateTime(p.last_event, lang)} (${fmtNum(p.total_connects, lang)} ${t.connections})`} />
-        <Row k={t.firstConnect} v={fmtDateTime(p.first_connect, lang)} />
-        <Row k={t.playTime} v={fmtDuration(p.connection_time)} />
-        <Row k={t.avgPing} v={p.average_ping ? `${p.average_ping} ms` : "-"} />
+        {steam?.memberSince ? <Row k={t.memberSince} v={steam.memberSince} span /> : null}
+        {steam ? <Row k="VAC" v={steam.vacBanned ? <span className="bad">{t.vacBanned}</span> : <span className="good">{t.vacClean}</span>} span /> : null}
+        <Row k={t.lastConnect} v={`${age ?? fmtDateTime(p.last_event, lang)} (${fmtNum(p.total_connects, lang)} ${t.connections})`} span />
+        <Row k={t.firstConnect} v={fmtDateTime(p.first_connect, lang)} span />
+        <Row k={t.playTime} v={fmtDuration(p.connection_time)} span />
+        <Row k={t.avgPing} v={p.average_ping ? `${p.average_ping} ms` : "-"} span />
         <Row
           k={t.favWeapon}
           v={fav ? <Link href={`/${game}/weapons/${encodeURIComponent(fav.code)}`}>{fav.name}</Link> : "-"}
+          span
         />
       </tbody>
     </table>
   );
 }
 
-function Row({ k, v }: { k: string; v: React.ReactNode }) {
+function Row({ k, v, span = false }: { k: string; v: React.ReactNode; span?: boolean }) {
   return (
     <tr>
       <td className="stats-key">{k}:</td>
-      <td>{v}</td>
+      <td colSpan={span ? 2 : 1}>{v}</td>
     </tr>
   );
 }

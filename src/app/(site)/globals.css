@@ -419,11 +419,18 @@ table.stats td.stats-key { width: 35%; color: var(--th-text); font-weight: bold;
 table.stats td.stats-key.pair { width: auto; }
 table.stats td.pair-value { text-align: center; }
 /* The player profile is as compact as HLstatsX's: rows of about 21px (2px
-   4px padding at the 11px font), the labels in a column of 30 %, the values
-   next to them and the avatar on the right over all rows. */
+   4px padding at the 11px font), the labels only as wide as their text and
+   the values next to them. The avatar sits in its own framed box beside the
+   first eight rows, small enough not to stretch them; the rows below use
+   the full width. */
 table.stats.profile th, table.stats.profile td { padding: 2px 4px; }
-table.stats.profile td.stats-key { width: 30%; }
-table.stats.profile td.avatar-cell { width: 1%; padding: 6px; vertical-align: top; }
+table.stats.profile td.stats-key { width: 1%; }
+table.stats.profile td.avatar-cell { width: 1%; padding: 6px; vertical-align: middle; }
+@media (min-width: 601px) {
+  table.stats.profile td.avatar-cell img, table.stats.profile .avatar-none { width: 150px; height: 150px; }
+  table.stats.profile td.avatar-cell img { padding: 6px; }
+  table.stats.profile .avatar-none { font-size: 56px; }
+}
 /* In the summary the labels are only as wide as their text and wide screens
    give the room to the right-hand values, not to the radar and the labels.
    In a narrow box (two columns on a small laptop, up to 600px) labels wrap
