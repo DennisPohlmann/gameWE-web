@@ -8,8 +8,12 @@ name: build
 # vX.Y.Z and creates the GitHub release; package and image then build that
 # tag, add the archive to the release and push the image tags <version>,
 # <major>.<minor> and latest. A manual run builds without publishing.
+# A pull request (e.g. from Dependabot) runs the same checks and builds
+# without publishing.
 on:
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
   workflow_dispatch:
 

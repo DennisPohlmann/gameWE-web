@@ -42,3 +42,20 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+
+  # Base image in the Dockerfile. Node majors stay a manual decision.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Berlin
+    cooldown:
+      default-days: 5
+    commit-message:
+      prefix: fix
+      include: scope
+    ignore:
+      - dependency-name: node
+        update-types: [version-update:semver-major]

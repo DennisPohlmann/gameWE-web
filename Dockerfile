@@ -7,9 +7,8 @@
 # All settings are environment variables, see .env.example. BASE_PATH (e.g.
 # /new behind a reverse proxy) is applied when the container starts.
 
-ARG NODE_IMAGE=node:24-trixie-slim
-
-FROM ${NODE_IMAGE} AS build
+# Base image written out in both FROM lines so Dependabot can update it.
+FROM node:24-trixie-slim AS build
 # Latest npm, without the "new version available" notice.
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false
 RUN npm install -g npm@latest
@@ -23,7 +22,7 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
     BASE_PATH=/__gamewe_base__
 RUN npm run build
 
-FROM ${NODE_IMAGE}
+FROM node:24-trixie-slim
 ARG VERSION=dev
 LABEL org.opencontainers.image.title="gamewe-web" \
       org.opencontainers.image.description="gameWE statistics website and admin area" \
