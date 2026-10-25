@@ -440,10 +440,15 @@ table.stats.summary td:last-child { width: 40%; }
 }
 /* In a wide box the radar column is only as wide as the chart (and the
    position/points pairs above it): the rest goes to the values on the
-   right. */
+   right. The chart is small enough that, with its legend and notes, it is
+   not taller than the seven rows beside it, so those rows keep their
+   height; its labels are a little larger so they stay readable and may
+   reach into the column's margin. */
 @container (min-width: 601px) {
   table.stats.summary td:last-child { width: 100%; }
-  .summary-box .radar-wrap { width: 200px; max-width: none; }
+  .summary-box .radar-wrap { width: 180px; max-width: none; }
+  .summary-box .radar-wrap .radar { max-width: 140px; overflow: visible; }
+  .summary-box .radar-label { font-size: 13px; }
 }
 table.stats th { font-weight: bold; }
 .cont-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 12px 2%; align-items: start; }
