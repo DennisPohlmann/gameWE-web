@@ -174,6 +174,13 @@ html[data-skin] .chart .area.s1 { fill: color-mix(in srgb, var(--chart-series-1)
 html[data-skin] .load-chart .area-players { fill: color-mix(in srgb, var(--chart-series-1) 24%, transparent); }
 ```
 
+### General statistics line
+
+The cards of the start page's "General statistics" draw a faint line of the
+last 30 days behind their text in `--stat-line`, by default the template's
+`--good` (green). Set `--stat-line` in `theme.css` for another colour; keep it
+calm, the text lies on top of it.
+
 ## Game designs
 
 Folders named `game-<game>` (e.g. `game-css`, `game-cstrike`, `game-tf`) are

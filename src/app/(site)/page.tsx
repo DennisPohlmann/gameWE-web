@@ -5,11 +5,23 @@ import { sortHeads } from "@/components/sort-head";
 import { Flag, GameTag, Skeleton } from "@/components/ui";
 import { basePath } from "@/lib/base-path";
 import { LineChart } from "@/components/chart";
+import { Sparkline } from "@/components/sparkline";
 import { PlayerCount } from "@/components/player-count";
 import { Rich } from "@/components/rich";
 import { VoiceBox } from "@/components/voice-box";
-import { everyDay, getClanFlags, getDailyActivityAll, getHourlyActivity, getRankingOverview, getSiteTotals, unlinkedBots, type RankingOverview } from "@/lib/data";
-import { dateFormat, fmtNum, localeOf } from "@/lib/format";
+import {
+  everyDay,
+  getActiveClansPerDay,
+  getClanFlags,
+  getDailyActivityAll,
+  getGeneralStats,
+  getHourlyActivity,
+  getRankingOverview,
+  getSiteTotals,
+  unlinkedBots,
+  type RankingOverview,
+} from "@/lib/data";
+import { dateFormat, fmtDateTime, fmtNum, localeOf } from "@/lib/format";
 import { sumCounts } from "@/lib/player-count";
 import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
 import { sortRows, sortState } from "@/lib/table-sort";
@@ -27,8 +39,9 @@ const rankingListValues = {
 };
 
 // Start page: all rankings; their servers are listed on each ranking's page.
-// The list is sent first; the load graph of the last 30 days (the slowest
-// query of the site) streams in below it (Suspense).
+// The list is sent first; the general statistics and the load graph of the
+// last 30 days (the slowest query of the site, shared by both) stream in
+// below it (Suspense).
 export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { lang, t } = await getDict();
   let data;
@@ -158,6 +171,16 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
       </section>
       <Suspense
         fallback={
+          <section className="block general-stats">
+            <h3>{t.generalStats}</h3>
+            <Skeleton rows={2} />
+          </section>
+        }
+      >
+        <GeneralStatsSection t={t} lang={lang} kills={totals.kills} />
+      </Suspense>
+      <Suspense
+        fallback={
           <section className="block">
             <h3>{t.load}</h3>
             <div className="container">
@@ -169,6 +192,57 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
         <LoadSection t={t} lang={lang} />
       </Suspense>
     </>
+  );
+}
+
+// Four cards (players, clans, servers, kills), each with its count, what is
+// going on now and a faint line of the last 30 days behind the text: players
+// online and servers with players (server load, else active players per day),
+// clans with an active member per day and kills per day. `kills` is the total
+// of the summary line above. A database error leaves the block out; a missing
+// line only leaves its card without one.
+async function GeneralStatsSection({ t, lang, kills }: { t: Dict; lang: Lang; kills: number }) {
+  let stats;
+  try {
+    stats = await getGeneralStats();
+  } catch (err) {
+    console.error("database:", err);
+    return null;
+  }
+  const [hourly, daily, clanDays] = await Promise.all([
+    getHourlyActivity(null, 30).catch(() => null),
+    getDailyActivityAll(30).catch(() => null),
+    getActiveClansPerDay(30).catch(() => null),
+  ]);
+  // Whole days only: today is not over yet and would end every line low.
+  const perDay = <T extends { day: string }>(rows: T[] | null, value: (r: T) => number) =>
+    rows ? everyDay(rows, 30).slice(0, -1).map((d) => (d.point ? value(d.point) : null)) : [];
+  const playersLine = hourly?.players.some((v) => v !== null) ? hourly.players : perDay(daily, (r) => Number(r.players));
+  const cards = [
+    { label: t.players, value: stats.players, sub: fill(t.gsPlayersNow, { n: fmtNum(stats.online, lang) }), line: playersLine },
+    { label: t.clans, value: stats.clans, sub: fill(t.gsClansIn, { n: fmtNum(stats.clanRankings, lang) }), line: perDay(clanDays, (r) => Number(r.n)) },
+    { label: t.servers, value: stats.servers, sub: fill(t.gsServersActive, { n: fmtNum(stats.serversActive, lang) }), line: hourly?.servers ?? [] },
+    {
+      label: t.kills,
+      value: kills,
+      sub: stats.lastKill ? fill(t.gsLastKill, { d: fmtDateTime(stats.lastKill, lang) }) : t.gsNoKill,
+      line: perDay(daily, (r) => Number(r.kills)),
+    },
+  ];
+  return (
+    <section className="block general-stats">
+      <h3>{t.generalStats}</h3>
+      <ul className="gs-cards">
+        {cards.map((c) => (
+          <li key={c.label} className="gs-card">
+            <Sparkline values={c.line} />
+            <span className="gs-label">{c.label}</span>
+            <span className="gs-value">{fmtNum(c.value, lang)}</span>
+            <span className="gs-sub">{c.sub}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

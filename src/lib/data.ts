@@ -315,7 +315,7 @@ export type DayPoint = { day: string; players: number; kills: number; headshots:
 
 // One entry per day (site's time zone) of the last `days` days, oldest first;
 // days without history stay null, so a chart shows the full range from the start.
-export function everyDay(rows: DayPoint[], days: number): { day: string; point: DayPoint | null }[] {
+export function everyDay<T extends { day: string }>(rows: T[], days: number): { day: string; point: T | null }[] {
   const byDay = new Map(rows.map((r) => [String(r.day).slice(0, 10), r]));
   const today = siteDay();
   return Array.from({ length: days }, (_, i) => {
@@ -334,10 +334,11 @@ export function getDailyActivity(game: string, days: number) {
   );
 }
 
-// Players online (hlstats_server_load, summed over the ranking's servers),
-// kills and headshots (hlstats_Events_Frags) per 15 minutes of the last days,
-// for the graphs on the start page and a ranking's page. Kept for five minutes per ranking.
-export type HourlyActivity = { start: number; step: number; players: (number | null)[]; kills: number[]; headshots: number[] };
+// Players online and servers with players (hlstats_server_load, over the
+// ranking's servers), kills and headshots (hlstats_Events_Frags) per 15
+// minutes of the last days, for the graphs on the start page and a ranking's
+// page. Kept for five minutes per ranking.
+export type HourlyActivity = { start: number; step: number; players: (number | null)[]; servers: (number | null)[]; kills: number[]; headshots: number[] };
 
 // Seconds per point of these graphs. The collector stores the server load every
 // 10 minutes, so each point holds one or two samples.
@@ -389,11 +390,15 @@ async function loadHourlyActivity(game: string | null, days: number): Promise<Ho
     }
   }
   const players = new Array<number | null>(n).fill(null);
+  const servers = new Array<number | null>(n).fill(null);
   for (const r of load) {
     const i = Number(r.h) - first;
-    if (i >= 0 && i < n) players[i] = Math.round(((players[i] ?? 0) + Number(r.p)) * 10) / 10;
+    if (i >= 0 && i < n) {
+      players[i] = Math.round(((players[i] ?? 0) + Number(r.p)) * 10) / 10;
+      servers[i] = (servers[i] ?? 0) + (Number(r.p) > 0 ? 1 : 0);
+    }
   }
-  return { start, step, players, kills, headshots };
+  return { start, step, players, servers, kills, headshots };
 }
 
 // ---------------------------------------------------------------- awards
@@ -1553,12 +1558,79 @@ export async function getSiteTotals(): Promise<SiteTotals> {
   return { ...base, kills: Number(k?.kills ?? 0), deaths: Number(k?.deaths ?? 0), headshots: Number(k?.headshots ?? 0) };
 }
 
-// Active players per day over all rankings.
-export function getDailyActivityAll(days: number) {
+// Active players per day over all rankings. Once per request (React cache):
+// the start page's load graph and its general statistics both ask.
+export const getDailyActivityAll = cache((days: number) => {
   return query<DayPoint>(
     `SELECT eventTime AS day, COUNT(DISTINCT playerId) AS players, SUM(kills) AS kills, SUM(headshots) AS headshots
      FROM hlstats_Players_History WHERE ${sinceDays("eventTime")}
      GROUP BY eventTime ORDER BY eventTime`,
+    [days],
+  );
+});
+
+// The start page's "General statistics" over the visible rankings, counted
+// like the lists count them: players without hidden ones, clans with at least
+// two visible members (and the rankings they are in), servers and those with
+// real players (bots left out, playerCount), players online, and the time of
+// the latest kill without a hidden player on either side.
+export type GeneralStats = {
+  players: number;
+  clans: number;
+  clanRankings: number;
+  servers: number;
+  serversActive: number;
+  online: number;
+  lastKill: number | null;
+};
+
+export async function getGeneralStats(): Promise<GeneralStats> {
+  const [p, c, s, k] = await Promise.all([
+    queryOne<{ n: number | string }>(
+      `SELECT COUNT(*) AS n FROM hlstats_Players p JOIN hlstats_Games g ON g.code = p.game AND g.hidden = '0' WHERE p.hideranking = 0`,
+    ),
+    queryOne<{ clans: number | string; rankings: number | string }>(
+      `SELECT COUNT(*) AS clans, COUNT(DISTINCT x.game) AS rankings
+       FROM (SELECT c.clanId, c.game FROM hlstats_Clans c
+             JOIN hlstats_Games g ON g.code = c.game AND g.hidden = '0'
+             JOIN hlstats_Players p ON p.clan = c.clanId AND p.hideranking = 0
+             GROUP BY c.clanId, c.game HAVING COUNT(p.playerId) >= 2) x`,
+    ),
+    query<{ act: number; bots: number; max: number }>(
+      `SELECT ${capped("s.")} AS act, ${await botsOnline("s.")} AS bots, s.max_players AS max
+       FROM hlstats_Servers s JOIN hlstats_Games g ON g.code = s.game AND g.hidden = '0'`,
+    ),
+    // Newest first along the timestamp index; stops at the first shown kill
+    // (NOT EXISTS keeps the index, an IN on the rankings sorts every frag).
+    queryOne<{ t: number | string }>(
+      `SELECT f.timestamp_id AS t FROM hlstats_Events_Frags f
+       WHERE NOT EXISTS (SELECT 1 FROM hlstats_Games g WHERE g.id = f.game_id AND g.hidden <> '0')
+         AND NOT ${hiddenSql("f.killerId")} AND NOT ${hiddenSql("f.victimId")}
+       ORDER BY f.timestamp_id DESC LIMIT 1`,
+    ),
+  ]);
+  const counts = s.map((r) => playerCount(r.act, r.bots, r.max));
+  return {
+    players: Number(p?.n ?? 0),
+    clans: Number(c?.clans ?? 0),
+    clanRankings: Number(c?.rankings ?? 0),
+    servers: s.length,
+    serversActive: counts.filter((x) => x.real > 0).length,
+    online: sumCounts(counts).real,
+    lastKill: k ? Number(k.t) : null,
+  };
+}
+
+// Clans with a visible member active that day (hlstats_Players_History; the
+// member's current clan) over the visible rankings, per day.
+export function getActiveClansPerDay(days: number) {
+  return query<{ day: string; n: number | string }>(
+    `SELECT h.eventTime AS day, COUNT(DISTINCT p.clan) AS n
+     FROM hlstats_Players_History h
+     JOIN hlstats_Players p ON p.playerId = h.playerId AND p.clan > 0 AND p.hideranking = 0
+     JOIN hlstats_Games g ON g.code = h.game AND g.hidden = '0'
+     WHERE ${sinceDays("h.eventTime")}
+     GROUP BY h.eventTime ORDER BY h.eventTime`,
     [days],
   );
 }

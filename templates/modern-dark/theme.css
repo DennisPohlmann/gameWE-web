@@ -450,6 +450,13 @@ html[data-skin] .share-bar-head svg { fill: var(--accent); stroke: var(--accent)
 html[data-skin] .share-b.native, html[data-skin] .share-b.link { color: var(--m-on-accent); }
 html[data-skin] .help-num { color: var(--m-on-accent); }
 html[data-skin] .award-cal td.sel a { color: var(--m-on-accent); }
+/* Start page, "General statistics": the cards get the rounded card look. */
+html[data-skin] .gs-cards { gap: 10px; }
+html[data-skin] .gs-card { padding: 12px 14px 22px; border-radius: var(--m-radius); }
+html[data-skin] .gs-label { font: 600 12px/1.3 var(--m-font); }
+html[data-skin] .gs-value { margin: 4px 0 2px; color: var(--m-strong); font: 700 24px/1.15 var(--m-font); }
+html[data-skin] .gs-sub { color: var(--muted); }
+
 html[data-skin] .player-map { border-color: var(--border); border-radius: var(--m-radius); }
 html[data-skin] .heatmap svg { border-radius: 4px; }
 

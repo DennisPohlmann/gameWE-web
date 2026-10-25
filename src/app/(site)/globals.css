@@ -295,6 +295,30 @@ img { border: 0; vertical-align: middle; }
 .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 0 2%; width: 95%; margin: 0 auto; }
 .grid-2 > .section { width: 100%; }
 
+/* Start page, "General statistics": four cards with a count, a line of text
+   and a faint line of the last 30 days behind them (components/sparkline.tsx).
+   The line takes --stat-line, else the template's --good (green); a halo in
+   the card's colour keeps the text readable where the line passes. */
+.gs-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.gs-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 84px;
+  padding: 10px 12px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.gs-spark { position: absolute; left: 0; bottom: 0; width: 100%; height: 46%; pointer-events: none; }
+.gs-spark .gs-line { fill: none; stroke: var(--stat-line, var(--good)); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; opacity: 0.4; }
+.gs-spark .gs-area { fill: var(--stat-line, var(--good)); opacity: 0.07; }
+.gs-label, .gs-value, .gs-sub { position: relative; display: block; text-shadow: 0 0 2px var(--surface), 0 0 4px var(--surface), 0 0 6px var(--surface); }
+.gs-label { color: var(--muted); font-weight: bold; }
+.gs-value { margin: 2px 0; color: var(--text); font-size: 20px; font-weight: bold; line-height: 1.2; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.gs-sub { color: var(--soft); }
+@media (max-width: 800px) {
+  .gs-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 /* ---------------------------------------------------------------- tables */
 
 .table-wrap { overflow-x: auto; }
