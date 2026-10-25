@@ -112,7 +112,16 @@ per browser and box). The live boxes ask `/<game>/events-feed` and
 `/<game>/players/<id>/events-feed` every 4 seconds while the tab is
 visible; both answer 404 unless their setting is "Sync". Both are kept for
 3 seconds per ranking or player; the player feed allows 60 requests per
-client IP and minute.
+client IP and minute. The heading of the player page's box links to the
+player's events page ("(Overview)").
+
+With "Latest events (player page)" on "Sync" the player's events page
+(`/<game>/players/<id>/events`) gets a "Live updates" switch next to the
+type filter, on its first page and sorted newest first. It is off on every
+visit (the list holds still) and not shared with the box on the player
+page; switched on, new events of the chosen type (or all types) run in at
+the top, from `/<game>/players/<id>/events-feed?list=<type>`. "Async" and
+"Off" leave the events page a plain list.
 
 ## Voice server
 

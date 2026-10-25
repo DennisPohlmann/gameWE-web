@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { GameEventsLive } from "@/components/game-events-live";
 import { getPlayerFlags } from "@/lib/data";
 import { getGameEvents, getPlayerGameEvents, hasEventServer, PLAYER_EVENTS } from "@/lib/history";
@@ -53,6 +54,15 @@ export async function PlayerEvents({ game, playerId, t, lang }: { game: string; 
       initial={rows}
       initialFlags={Object.fromEntries(flags)}
       labels={{ time: t.time, eventText: t.eventText, server: t.server, map: t.map, noData: t.noData, liveData: t.liveData, liveUpdates: t.liveUpdates, evText: t.evText }}
+      more={
+        <>
+          (
+          <Link className="th-link" href={`/${game}/players/${playerId}/events`}>
+            {t.overview}
+          </Link>
+          )
+        </>
+      }
     />
   );
 }

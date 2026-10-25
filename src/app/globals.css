@@ -745,12 +745,15 @@ a.button { display: inline-block; text-decoration: none; }
 .game-events td.wrap-cell { min-width: 0; overflow-wrap: anywhere; }
 /* A new row starts grey and fades to the row's own background (no "to"
    frame, so every skin keeps its colour); the text stays fully opaque. */
-.game-events tr.ev-new > td { animation: ev-glow 2.5s ease-out; }
+.game-events tr.ev-new > td, .player-events tr.ev-new > td { animation: ev-glow 2.5s ease-out; }
 @keyframes ev-glow { from { background-color: color-mix(in srgb, var(--text) 25%, var(--surface)); } }
-@media (prefers-reduced-motion: reduce) { .game-events tr.ev-new > td { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .game-events tr.ev-new > td, .player-events tr.ev-new > td { animation: none; } }
 /* Live tables: "(Live data)" next to the heading, a switch on the right that
    pauses the updates (player page). */
 .live-note { font-weight: normal; opacity: 0.85; }
+.section-head h2 a.th-link { color: inherit; }
+/* Events page: the filter form, the live switch on the right. */
+.events-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; }
 .live-switch { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-size: 11px; cursor: pointer; }
 .live-switch-track { position: relative; width: 28px; height: 14px; border-radius: 7px; background: var(--surface); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4); transition: background-color 0.2s; }
 .live-switch-track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%; background: var(--muted); transition: transform 0.2s, background-color 0.2s; }

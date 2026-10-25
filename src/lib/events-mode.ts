@@ -9,3 +9,10 @@ export function eventsMode(v: string | undefined): EventsMode {
   const s = v?.trim();
   return s === "static" || s === "off" ? s : "live";
 }
+
+// Whether the player's events page runs live: with the player page's setting
+// on "live", and only where new events belong on top (first page, newest
+// first). Static or off: the page is a plain list.
+export function eventsListLive(mode: EventsMode, page: number, asc: boolean): boolean {
+  return mode === "live" && page === 1 && !asc;
+}

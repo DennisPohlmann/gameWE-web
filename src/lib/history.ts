@@ -33,6 +33,9 @@ export type PlayerEvent = {
   map: string | null;
 };
 
+// A row of the events page, with the other player's name.
+export type PlayerEventRow = PlayerEvent & { otherName: string | null };
+
 // One SELECT per event table, all with the same columns. The IP address of
 // hlstats_Events_Connects is never read.
 function sources(kinds: EventKind[]): string[] {
@@ -91,7 +94,7 @@ export async function countPlayerEvents(playerId: number, kinds: EventKind[]): P
 
 // Newest first (asc: oldest first). Each table contributes at most
 // offset+limit rows, so a long frag history is not read in full.
-export async function getPlayerEvents(playerId: number, kinds: EventKind[], limit: number, offset: number, asc = false) {
+export async function getPlayerEvents(playerId: number, kinds: EventKind[], limit: number, offset: number, asc = false): Promise<PlayerEventRow[]> {
   const n = offset + limit;
   const dir = asc ? "ASC" : "DESC";
   const parts = sources(kinds).map((s) => `(${s} ORDER BY 1 ${dir} LIMIT ${Number(n)})`);
@@ -100,17 +103,28 @@ export async function getPlayerEvents(playerId: number, kinds: EventKind[], limi
     [...kinds.map(() => playerId), limit, offset],
   );
   const ids = [...new Set(rows.map((r) => Number(r.other)).filter((x) => x > 0))];
+  // A hidden opponent (bots stay) is shown without id and name, like in the
+  // live box (named()).
   const names = ids.length
-    ? await query<{ playerId: number; lastName: string }>(`SELECT playerId, lastName FROM hlstats_Players_Data WHERE playerId IN (?)`, [ids])
+    ? await query<{ playerId: number; lastName: string | null; hideranking: number | null; bot: number }>(
+        `SELECT d.playerId, d.lastName, p.hideranking,
+                CASE WHEN EXISTS (SELECT 1 FROM hlstats_PlayerUniqueIds u WHERE u.playerId = d.playerId AND u.uniqueId LIKE 'BOT%') THEN 1 ELSE 0 END AS bot
+         FROM hlstats_Players_Data d LEFT JOIN hlstats_Players p ON p.playerId = d.playerId WHERE d.playerId IN (?)`,
+        [ids],
+      )
     : [];
+  const hidden = new Set(names.filter((x) => Number(x.hideranking ?? 0) !== 0 && !Number(x.bot)).map((x) => Number(x.playerId)));
   const byId = new Map(names.map((x) => [Number(x.playerId), x.lastName]));
-  return rows.map((r) => ({
-    ...r,
-    ts: Number(r.ts),
-    num: Number(r.num),
-    other: Number(r.other),
-    otherName: byId.get(Number(r.other)) ?? null,
-  }));
+  return rows.map((r) => {
+    const other = hidden.has(Number(r.other)) ? 0 : Number(r.other);
+    return {
+      ...r,
+      ts: Number(r.ts),
+      num: Number(r.num),
+      other,
+      otherName: other ? (byId.get(other) ?? null) : null,
+    };
+  });
 }
 
 export type SessionDay = {
@@ -364,12 +378,12 @@ async function named(rows: RawEvent[], limit: number, self = 0): Promise<GameEve
     });
 }
 
-const gameCache = new Map<string, { at: number; value: Promise<GameEvent[]> }>();
+const gameCache = new Map<string, { at: number; value: Promise<unknown> }>();
 
 // Kept for 3 seconds per ranking (or player).
-function cached(key: string, load: () => Promise<GameEvent[]>): Promise<GameEvent[]> {
+function cached<T>(key: string, load: () => Promise<T>): Promise<T> {
   const hit = gameCache.get(key);
-  if (hit && Date.now() - hit.at < 3_000) return hit.value;
+  if (hit && Date.now() - hit.at < 3_000) return hit.value as Promise<T>;
   if (gameCache.size > 500) gameCache.clear();
   const value = load();
   gameCache.set(key, { at: Date.now(), value });
@@ -393,6 +407,12 @@ export const PLAYER_EVENTS = 25;
 // player page. The caller checks that the page may be shown.
 export function getPlayerGameEvents(playerId: number, limit: number): Promise<GameEvent[]> {
   return cached(`p|${playerId}|${limit}`, async () => named(await loadEvents(PLAYER_BY, playerId, limit), limit, playerId));
+}
+
+// The newest rows of the player's events page (one kind or all), for its
+// live table.
+export function getPlayerEventsFeed(playerId: number, kinds: EventKind[]): Promise<PlayerEventRow[]> {
+  return cached(`l|${playerId}|${kinds.length === 1 ? kinds[0] : ""}`, () => getPlayerEvents(playerId, kinds, PLAYER_EVENTS, 0));
 }
 
 // ---------------------------------------------------------------- admin: IP search

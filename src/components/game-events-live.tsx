@@ -7,16 +7,125 @@ import { fmtDateTime } from "@/lib/format";
 import type { GameEvent } from "@/lib/history";
 import type { Lang } from "@/translations/languages";
 
-type Flags = Record<number, { flag: string; country: string; nolink?: boolean }>;
+export type Flags = Record<number, { flag: string; country: string; nolink?: boolean }>;
 type Labels = { time: string; eventText: string; server: string; map: string; noData: string; liveData: string; liveUpdates: string; evText: Record<string, string> };
 
 const POLL_MS = 4_000;
 const keyOf = (e: GameEvent) => `${e.ts}-${e.kind}-${e.actor}-${e.other}-${e.code}`;
 // Two events can be identical (same second, player and action), so every
 // row gets its own id; a shared React key left stale rows behind.
-type Row = GameEvent & { id: number };
+type Row<T> = T & { id: number };
 let seq = 0;
-const withId = (e: GameEvent): Row => ({ ...e, id: ++seq });
+function withId<T>(e: T): Row<T> {
+  return { ...e, id: ++seq };
+}
+
+// The pause switch of a live list, kept per browser under `pauseKey`
+// ("off" while paused). Without `pauseKey` it is not kept and starts off on
+// every visit (events page). `resumed` is set when it is switched on again,
+// so the feed is asked right away.
+export function useLiveSwitch(pauseKey?: string) {
+  const [on, setOn] = useState(!!pauseKey);
+  const resumed = useRef(false);
+  useEffect(() => {
+    if (!pauseKey) return;
+    try {
+      if (localStorage.getItem(pauseKey) === "off") setOn(false);
+    } catch {}
+  }, [pauseKey]);
+  const toggle = () => {
+    resumed.current = !on;
+    setOn(!on);
+    if (!pauseKey) return;
+    try {
+      if (on) localStorage.setItem(pauseKey, "off");
+      else localStorage.removeItem(pauseKey);
+    } catch {}
+  };
+  return { on, toggle, resumed };
+}
+
+export function LiveSwitch({ on, toggle, label }: { on: boolean; toggle: () => void; label: string }) {
+  return (
+    <button type="button" role="switch" aria-checked={on} className="live-switch" onClick={toggle}>
+      <span className="live-switch-track" aria-hidden="true" />
+      {label}
+    </button>
+  );
+}
+
+// The rows of a live list: while `running` and the page is visible it asks
+// `feed` for the latest rows every few seconds and lets new ones run in at
+// the top one after another, spread over the time until the next ask; at
+// most `shown` rows stay. `fresh` is the id of the row that came in last.
+export function useLiveRows<T extends { ts: number }>({
+  feed,
+  running,
+  resumed,
+  shown,
+  initial,
+  initialFlags,
+  key,
+}: {
+  feed: string;
+  running: boolean;
+  resumed: { current: boolean };
+  shown: number;
+  initial: T[];
+  initialFlags: Flags;
+  // Identity of an event; a function defined outside the component.
+  key: (e: T) => string;
+}) {
+  const [data, setData] = useState<{ rows: Row<T>[]; flags: Flags; fresh: number }>(() => ({ rows: initial.slice(0, shown).map(withId), flags: initialFlags, fresh: 0 }));
+  const queue = useRef<T[]>([]);
+  const known = useRef(new Set(initial.map(key)));
+  const newest = useRef(initial.reduce((m, e) => Math.max(m, e.ts), 0));
+  useEffect(() => {
+    if (!running) return;
+    let drip: ReturnType<typeof setTimeout> | undefined;
+    const next = () => {
+      const e = queue.current.shift();
+      if (!e) return;
+      newest.current = Math.max(newest.current, e.ts);
+      const row = withId(e);
+      setData((d) => ({ rows: [row, ...d.rows].slice(0, shown), flags: d.flags, fresh: row.id }));
+      if (queue.current.length) drip = setTimeout(next, Math.max(250, Math.min(1500, POLL_MS / (queue.current.length + 1))));
+    };
+    const load = async () => {
+      if (document.visibilityState !== "visible") return;
+      try {
+        const r = await fetch(`${basePath}${feed}`, { cache: "no-store" });
+        if (!r.ok) return;
+        const j: { rows: T[]; flags: Flags } = await r.json();
+        // Only events at least as new as the newest one shown (or queued)
+        // run in, oldest first, so the newest ends up on top. Older ones
+        // that only now enter the window (e.g. after hidden players were
+        // filtered out) are not new and stay out.
+        const top = Math.max(newest.current, ...queue.current.map((e) => e.ts));
+        const add = j.rows.filter((e) => e.ts >= top && !known.current.has(key(e))).sort((a, b) => a.ts - b.ts);
+        if (!add.length) return;
+        for (const e of add) known.current.add(key(e));
+        if (known.current.size > 500) known.current = new Set(j.rows.map(key));
+        // After a long pause (hidden tab) only the latest ones run in.
+        queue.current = [...queue.current, ...add].slice(-shown);
+        setData((d) => ({ ...d, flags: { ...d.flags, ...j.flags } }));
+        clearTimeout(drip);
+        next();
+      } catch {}
+    };
+    // Switched on again: ask right away, then every few seconds.
+    if (resumed.current) {
+      resumed.current = false;
+      void load();
+    }
+    const id = setInterval(load, POLL_MS);
+    return () => {
+      clearInterval(id);
+      clearTimeout(drip);
+    };
+  }, [feed, running, resumed, shown, key]);
+  return data;
+}
 
 // The latest events of a ranking's start page or of one player (player
 // page), in a section of its own. Live: while the page is visible it asks
@@ -36,6 +145,7 @@ export function GameEventsLive({
   initial,
   initialFlags,
   labels,
+  more,
 }: {
   title: ReactNode;
   // Path of the JSON feed below the base path, e.g. "/cstrike/events-feed".
@@ -49,72 +159,11 @@ export function GameEventsLive({
   initial: GameEvent[];
   initialFlags: Flags;
   labels: Labels;
+  // After the heading, e.g. a link to the full list.
+  more?: ReactNode;
 }) {
-  const [data, setData] = useState<{ rows: Row[]; flags: Flags; fresh: number }>(() => ({ rows: initial.slice(0, shown).map(withId), flags: initialFlags, fresh: 0 }));
-  const queue = useRef<GameEvent[]>([]);
-  const known = useRef(new Set(initial.map(keyOf)));
-  const newest = useRef(initial.reduce((m, e) => Math.max(m, e.ts), 0));
-  const [on, setOn] = useState(true);
-  const resumed = useRef(false);
-  useEffect(() => {
-    try {
-      if (localStorage.getItem(pauseKey) === "off") setOn(false);
-    } catch {}
-  }, [pauseKey]);
-  const toggle = () => {
-    resumed.current = !on;
-    setOn(!on);
-    try {
-      if (on) localStorage.setItem(pauseKey, "off");
-      else localStorage.removeItem(pauseKey);
-    } catch {}
-  };
-  const running = live && on;
-  useEffect(() => {
-    if (!running) return;
-    let drip: ReturnType<typeof setTimeout> | undefined;
-    const next = () => {
-      const e = queue.current.shift();
-      if (!e) return;
-      newest.current = Math.max(newest.current, e.ts);
-      const row = withId(e);
-      setData((d) => ({ rows: [row, ...d.rows].slice(0, shown), flags: d.flags, fresh: row.id }));
-      if (queue.current.length) drip = setTimeout(next, Math.max(250, Math.min(1500, POLL_MS / (queue.current.length + 1))));
-    };
-    const load = async () => {
-      if (document.visibilityState !== "visible") return;
-      try {
-        const r = await fetch(`${basePath}${feed}`, { cache: "no-store" });
-        if (!r.ok) return;
-        const j: { rows: GameEvent[]; flags: Flags } = await r.json();
-        // Only events at least as new as the newest one shown (or queued)
-        // run in, oldest first, so the newest ends up on top. Older ones
-        // that only now enter the window (e.g. after hidden players were
-        // filtered out) are not new and stay out.
-        const top = Math.max(newest.current, ...queue.current.map((e) => e.ts));
-        const add = j.rows.filter((e) => e.ts >= top && !known.current.has(keyOf(e))).sort((a, b) => a.ts - b.ts);
-        if (!add.length) return;
-        for (const e of add) known.current.add(keyOf(e));
-        if (known.current.size > 500) known.current = new Set(j.rows.map(keyOf));
-        // After a long pause (hidden tab) only the latest ones run in.
-        queue.current = [...queue.current, ...add].slice(-shown);
-        setData((d) => ({ ...d, flags: { ...d.flags, ...j.flags } }));
-        clearTimeout(drip);
-        next();
-      } catch {}
-    };
-    // Switched on again: ask right away, then every few seconds.
-    if (resumed.current) {
-      resumed.current = false;
-      void load();
-    }
-    const id = setInterval(load, POLL_MS);
-    return () => {
-      clearInterval(id);
-      clearTimeout(drip);
-    };
-  }, [feed, running, shown]);
-  const { rows, flags, fresh } = data;
+  const { on, toggle, resumed } = useLiveSwitch(pauseKey);
+  const { rows, flags, fresh } = useLiveRows({ feed, running: live && on, resumed, shown, initial, initialFlags, key: keyOf });
   const fill = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k: string) => String(v[k] ?? ""));
   const text = (e: GameEvent): ReactNode => {
     const [before, after] = fill(labels.evText[e.kind] ?? "", { x: e.text || e.code || "?", n: e.num, old: e.text, new: e.code, p: "\u0000" }).split("\u0000");
@@ -135,16 +184,15 @@ export function GameEventsLive({
   const head = live ? (
     <>
       {title} <span className="live-note">({labels.liveData})</span>
+      {more ? <> {more}</> : null}
     </>
   ) : (
-    title
+    <>
+      {title}
+      {more ? <> {more}</> : null}
+    </>
   );
-  const aside = live ? (
-    <button type="button" role="switch" aria-checked={on} className="live-switch" onClick={toggle}>
-      <span className="live-switch-track" aria-hidden="true" />
-      {labels.liveUpdates}
-    </button>
-  ) : null;
+  const aside = live ? <LiveSwitch on={on} toggle={toggle} label={labels.liveUpdates} /> : null;
   return (
     <Section title={head} aside={aside}>
       {rows.length ? (
