@@ -155,8 +155,9 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const pc = (v: number | null) => fmtPct(v, lang);
   const kpm = (kills: number, secs: number) => (secs > 0 ? kills / (secs / 60) : 0);
   // Radar: the player's last two weeks against the average of all players
-  // active in them; radar.ts places the average on the middle ring, drops
-  // axes the game does not record and marks those without data.
+  // active in them; radar.ts places the average on the middle ring, keeps
+  // the four core axes, adds assists only when the game records them and
+  // marks the axes without data.
   const r14 = (num: number, den: number) => (last14.length ? { num, den } : null);
   const radarRatios: PlayerRatios = {
     kpd: r14(kills14, sum14("deaths")),

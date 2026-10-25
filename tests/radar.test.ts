@@ -88,12 +88,20 @@ test("the same values as the average: both on the middle ring", () => {
   }
 });
 
-test("axes the game does not record are left out, not drawn at zero", () => {
+test("assists the game does not record are left out: the diamond", () => {
   // CS:S: no assists are logged, so no player has one.
   const r = full();
   r.assists = { num: 0, den: 30 };
   const pts = radarPoints(r, avg({ assists: { num: 0, den: 3000 } }));
+  // K/D at the top, kills/min right, survived bottom, wins left.
   assert.deepEqual(pts.map((p) => p.key), ["kpd", "kpm", "survived", "wins"]);
+  assert.ok(pts.every((p) => !p.noData));
+});
+
+test("assists stay when only the player has one", () => {
+  const pts = radarPoints(full(), avg({ assists: { num: 0, den: 3000 } }));
+  assert.deepEqual(pts.map((p) => p.key), [...RADAR_KEYS]);
+  assert.equal(at(pts, "assists").rAvg, 0);
 });
 
 test("a player without rounds keeps the round axes, without data", () => {
@@ -108,7 +116,7 @@ test("a player without rounds keeps the round axes, without data", () => {
   assert.equal(wins.rAvg, AVG_RING); // the average is still drawn
 });
 
-test("never fewer than three axes: no rounds and no assists logged", () => {
+test("no rounds and no assists logged: exactly the four core axes, two greyed", () => {
   // CS:S player with kills but no rounds, on a server that logs neither.
   const r: PlayerRatios = {
     kpd: { num: 22, den: 9 },
@@ -119,8 +127,31 @@ test("never fewer than three axes: no rounds and no assists logged", () => {
   };
   const a = avg({ assists: { num: 0, den: 3000 }, survived: { num: 0, den: 0 }, wins: { num: 0, den: 0 } });
   const pts = radarPoints(r, a);
-  assert.equal(pts.length, 3);
-  assert.deepEqual(pts.filter((p) => !p.noData).map((p) => p.key), ["kpd", "kpm"]);
+  assert.deepEqual(pts.map((p) => p.key), ["kpd", "kpm", "survived", "wins"]);
+  assert.deepEqual(pts.map((p) => p.noData), [false, false, true, true]);
+  for (const k of ["survived", "wins"] as const) {
+    assert.equal(at(pts, k).r, null);
+    assert.equal(at(pts, k).rAvg, 0);
+  }
+});
+
+test("rounds without wins logged: the wins axis stays, greyed", () => {
+  // Rounds are played, but no server has a win trigger.
+  const r = full();
+  r.wins = { num: 0, den: 10 };
+  const pts = radarPoints(r, avg({ wins: { num: 0, den: 1000 } }));
+  assert.deepEqual(pts.map((p) => p.key), [...RADAR_KEYS]);
+  assert.equal(at(pts, "wins").noData, true);
+  assert.equal(at(pts, "wins").rAvg, 0);
+});
+
+test("no average at all: the core axes stay, assists only with a value", () => {
+  const r = full();
+  r.assists = { num: 0, den: 30 };
+  r.survived = { num: 0, den: 0 };
+  const pts = radarPoints(r, null);
+  assert.deepEqual(pts.map((p) => p.key), ["kpd", "kpm", "survived", "wins"]);
+  assert.deepEqual(pts.map((p) => p.noData), [false, false, true, false]);
 });
 
 test("no activity in the last 14 days: the average alone", () => {

@@ -11,12 +11,15 @@
 // the rings read 0.5×, 1×, 1.5× and 2× the average. Where the average is
 // zero (nothing to compare with), a fixed scale (FIXED_MAX) is used.
 //
-// An axis is left out when the game records no data for it (no active player
-// has a non-zero value: CS:S logs no assists, servers without win triggers
-// count no wins), as long as three axes remain. When the player has nothing
-// to divide by (no rounds, no play time, or no activity in the last 14 days)
-// the axis stays, marked noData, at the centre: the chart keeps its shape and
-// never falls below three axes.
+// The four core axes (K/D, kills per minute, survived, wins) are always
+// drawn, in this order, so the chart keeps its diamond: K/D at the top,
+// kills per minute on the right, survived at the bottom, wins on the left.
+// An axis without data (the player has nothing to divide by: no rounds, no
+// play time, no activity in the last 14 days; or the game records nothing
+// for it: servers without win triggers count no wins) stays, marked noData,
+// greyed at the centre. Assists are the only optional axis, placed between
+// kills per minute and survived: drawn only when the game records them (an
+// active player or the player has a non-zero value; CS:S logs none).
 
 export const RADAR_KEYS = ["kpd", "kpm", "assists", "survived", "wins"] as const;
 export type RadarKey = (typeof RADAR_KEYS)[number];
@@ -73,20 +76,21 @@ export type RadarPoint = {
 
 const clamp = (v: number) => Math.max(0, Math.min(1, v));
 
-// The axes to draw, in RADAR_KEYS order, at least three of them.
+// The axes to draw, in RADAR_KEYS order: the four core axes, and assists
+// when the game records them.
 export function radarPoints(ratios: PlayerRatios, average: RadarAverage | null): RadarPoint[] {
   const out: RadarPoint[] = [];
-  // Axes the game does not record: only used to fill up to three axes.
-  const unrecorded = new Set<RadarKey>();
   for (const key of RADAR_KEYS) {
     const value = axisValue(key, ratios[key]);
     const avg = axisValue(key, average?.ratios[key] ?? null);
     // No active player with a single non-zero value: the game does not record
     // this (unless the player has one: then it does).
     if (!avg && !value) {
-      // Without any average only K/D and kills per minute stay, at zero.
-      if (avg !== null || (key !== "kpd" && key !== "kpm")) unrecorded.add(key);
-      out.push({ key, value, avg, r: value === null ? null : 0, rAvg: 0, rel: null, noData: value === null || unrecorded.has(key) });
+      if (key === "assists") continue;
+      // Without any average K/D and kills per minute stay at zero; the
+      // round axes have no data.
+      const unrecorded = avg !== null || (key !== "kpd" && key !== "kpm");
+      out.push({ key, value, avg, r: value === null ? null : 0, rAvg: 0, rel: null, noData: value === null || unrecorded });
       continue;
     }
     if (avg) {
@@ -96,7 +100,5 @@ export function radarPoints(ratios: PlayerRatios, average: RadarAverage | null):
       out.push({ key, value, avg, r: value === null ? null : clamp(value / FIXED_MAX[key]), rAvg: 0, rel: null, noData: value === null });
     }
   }
-  // Unrecorded axes are dropped while more than three axes remain.
-  let drop = Math.min(unrecorded.size, out.length - 3);
-  return out.filter((p) => !(unrecorded.has(p.key) && drop-- > 0));
+  return out;
 }
