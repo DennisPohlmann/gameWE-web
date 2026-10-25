@@ -260,6 +260,17 @@ img { border: 0; vertical-align: middle; }
 .section-aside { padding-bottom: 10px; display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: flex-end; }
 .container { padding: 1px; overflow: auto; }
 
+/* Parts of a page that are still loading (ui.tsx Skeleton): grey lines
+   that breathe, or an empty box of the coming graph's or map's height. */
+.skeleton { animation: skel-breathe 1.4s ease-in-out infinite alternate; }
+.skeleton .skel-line { display: block; height: 11px; margin: 9px 0; border-radius: 3px; background: color-mix(in srgb, var(--text) 12%, transparent); }
+.skeleton .skel-line:nth-child(odd) { width: 72%; }
+.skeleton .skel-line:nth-child(3n) { width: 48%; }
+.skeleton-chart { height: 196px; margin: 0; background: var(--surface); border: 1px solid var(--border); }
+.skeleton-chart + .skeleton-chart { border-top: 0; }
+@keyframes skel-breathe { to { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+
 /* Content that is not a table sits in a dark box. */
 .box,
 .section > p,

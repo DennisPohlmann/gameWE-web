@@ -159,6 +159,17 @@ export function Section({ id, title, aside, children }: { id?: string; title: Re
   );
 }
 
+// Placeholder of a part of the page that is still loading (Suspense
+// fallback): a box with a few grey lines, a chart's height (chart) or the
+// given class (e.g. the map's). Decorative only; aria-busy marks the wait.
+export function Skeleton({ rows = 4, chart = false, className }: { rows?: number; chart?: boolean; className?: string }) {
+  return (
+    <div className={`skeleton${className ? ` ${className}` : chart ? " skeleton-chart" : " box"}`} aria-busy="true" aria-hidden="true">
+      {className || chart ? null : Array.from({ length: rows }, (_, i) => <span key={i} className="skel-line" />)}
+    </div>
+  );
+}
+
 export function TableWrap({ children }: { children: ReactNode }) {
   return <div className="table-wrap">{children}</div>;
 }

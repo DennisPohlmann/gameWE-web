@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Children } from "react";
+import { Children, Suspense } from "react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Bar, Empty, Flag, PctBar, PlayerLink, Section, TableWrap } from "@/components/ui";
@@ -16,7 +16,7 @@ import { PlayerEvents } from "@/components/game-events";
 import { ZONES } from "@/lib/zones";
 import { awardValue, getAwards, getPlayerRibbons, getRanks, getRibbonClasses, rankFor, ribbonFor, ribbonProgress } from "@/lib/awards";
 import { siteDay } from "@/lib/day";
-import { getSteamProfile } from "@/lib/steam";
+import { getSteamProfile, type SteamProfile as SteamProfileData } from "@/lib/steam";
 import { PlayerLinks, historyAccess } from "@/components/player-history";
 import { bannerUrl, statsOrigin } from "@/lib/site-url";
 import { shareMetadata } from "@/lib/share-meta";
@@ -28,6 +28,7 @@ import {
   getOpponents,
   getPlayerKillStats,
   getPlayer,
+  type PlayerDetail,
   getPlayerActions,
   getPlayerAwards,
   getPlayerFlags,
@@ -42,7 +43,7 @@ import {
   getPlayerWeapons,
 } from "@/lib/data";
 import { activity, fmtAge, fmtDateTime, fmtDuration, fmtNum, fmtPct, kpd, ratio, steamIds } from "@/lib/format";
-import { fill, getDict } from "@/lib/i18n";
+import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
 
 type Props = { params: Promise<{ game: string; id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -80,7 +81,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const { lang, t } = await getDict();
   const [settings, access] = await Promise.all([getSettings(), historyAccess()]);
   const ids = steamIds(p.uniqueId);
-  const [position, history, names, weapons, maps, teams, actions, victims, killers, killStats, awards, ranks, chat, steam, ribbons, allAwards, classes, sigUrl, origin, skillBefore] =
+  const [position, history, names, weapons, maps, teams, actions, victims, killers, killStats, awards, ranks, chat, ribbons, allAwards, classes, sigUrl, origin, skillBefore] =
     await Promise.all([
       p.hideranking ? Promise.resolve(null) : getPlayerPosition(game, p.skill),
       getPlayerHistory(id, 30),
@@ -95,7 +96,6 @@ export default async function PlayerPage({ params, searchParams }: Props) {
       getPlayerAwards(id),
       getRanks(game),
       access.chat ? getChat({ playerId: id, limit: 15, offset: 0 }) : Promise.resolve([]),
-      ids ? getSteamProfile(ids.steam64) : Promise.resolve(null),
       getPlayerRibbons(id),
       getAwards(game),
       getRibbonClasses(game),
@@ -202,71 +202,18 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const wonAwards = new Map(ribbons.map((r) => [r.awardId, r.wins]));
   const totalRibbonWins = ribbons.reduce((n, r) => n + r.wins, 0);
 
-  // The avatar spans every row of the profile table, so the rows keep their
-  // compact height (HLstatsX's) instead of stretching to the picture: eight
-  // fixed rows, the Steam ones when there are Steam data, and five more.
-  const profileRows = 13 + (steam?.memberSince ? 1 : 0) + (steam ? 1 : 0);
+  const profile = { game, id, p, ids, isBot, location, age, fav, t, lang };
 
   return (
     <>
       <Section title={t.playerInfo}>
         <div className="cont-2">
-          <table className="stats profile">
-            <thead>
-              <tr>
-                <th colSpan={3}>{t.playerProfile}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="stats-key">{t.name}:</td>
-                <td>
-                  <b>
-                    <Flag code={p.flag} title={p.country} />
-                    {p.name ?? `#${id}`}
-                  </b>
-                </td>
-                <td rowSpan={profileRows} className="avatar-cell">
-                  {steam?.avatar ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={steam.avatar} alt={steam.name ?? ""} width={184} height={184} referrerPolicy="no-referrer" />
-                  ) : (
-                    <span className="avatar-none" aria-hidden="true">
-                      {(p.name ?? "").replace(/[^\p{L}\p{N}]/gu, "").slice(0, 1).toUpperCase() || "?"}
-                    </span>
-                  )}
-                </td>
-              </tr>
-              <Row k={t.clan} v={p.clanTag ? <Link href={`/${game}/clans/${p.clan}`}>{p.clanTag}</Link> : <i>{t.none}</i>} />
-              <Row k={t.location} v={location.length ? <>{location}</> : <i>{t.notSpecified}</i>} />
-              <Row k={t.playerId} v={fmtNum(id, lang)} />
-              <Row k={t.steamId} v={isBot ? t.bot : (ids?.steam2 ?? p.uniqueId ?? "-")} />
-              <Row k="Steam ID3" v={ids?.steam3 ?? "-"} />
-              <Row
-                k={t.steamProfile}
-                v={
-                  ids ? (
-                    <a href={`https://steamcommunity.com/profiles/${ids.steam64}`} rel="noopener noreferrer" target="_blank">
-                      {ids.steam64}
-                    </a>
-                  ) : (
-                    "-"
-                  )
-                }
-              />
-              <Row k={t.steamName} v={steam?.name ?? <i>{t.notSpecified}</i>} />
-              {steam?.memberSince ? <Row k={t.memberSince} v={steam.memberSince} /> : null}
-              {steam ? <Row k="VAC" v={steam.vacBanned ? <span className="bad">{t.vacBanned}</span> : <span className="good">{t.vacClean}</span>} /> : null}
-              <Row k={t.lastConnect} v={`${age ?? fmtDateTime(p.last_event, lang)} (${fmtNum(p.total_connects, lang)} ${t.connections})`} />
-              <Row k={t.firstConnect} v={fmtDateTime(p.first_connect, lang)} />
-              <Row k={t.playTime} v={fmtDuration(p.connection_time)} />
-              <Row k={t.avgPing} v={p.average_ping ? `${p.average_ping} ms` : "-"} />
-              <Row
-                k={t.favWeapon}
-                v={fav ? <Link href={`/${game}/weapons/${encodeURIComponent(fav.code)}`}>{fav.name}</Link> : "-"}
-              />
-            </tbody>
-          </table>
+          {/* The Steam profile is asked after the page is sent: the table
+              comes without the Steam rows first and is swapped once the
+              answer is there, so a slow Steam never holds the page. */}
+          <Suspense fallback={<ProfileTable steam={null} pending {...profile} />}>
+            <SteamProfile steam64={ids?.steam64 ?? null} {...profile} />
+          </Suspense>
 
           {/* Summary and the history links below it share the right column. */}
           <div className="summary-box">
@@ -814,6 +761,92 @@ function OpponentTable({
         />
       </TableWrap>
     </Section>
+  );
+}
+
+type ProfileProps = {
+  game: string;
+  id: number;
+  p: PlayerDetail;
+  ids: ReturnType<typeof steamIds>;
+  isBot: boolean;
+  location: React.ReactNode[];
+  age: string | null;
+  fav: { code: string; name: string } | undefined;
+  t: Dict;
+  lang: Lang;
+};
+
+// The profile table with the Steam data, asked here so the rest of the page
+// does not wait for Steam (up to five seconds when it is slow or down).
+async function SteamProfile({ steam64, ...rest }: ProfileProps & { steam64: string | null }) {
+  const steam = steam64 ? await getSteamProfile(steam64) : null;
+  return <ProfileTable steam={steam} {...rest} />;
+}
+
+// pending: Steam has not answered yet (the fallback while it is asked).
+function ProfileTable({ steam, pending = false, game, id, p, ids, isBot, location, age, fav, t, lang }: ProfileProps & { steam: SteamProfileData | null; pending?: boolean }) {
+  // The avatar spans every row of the profile table, so the rows keep their
+  // compact height (HLstatsX's) instead of stretching to the picture: eight
+  // fixed rows, the Steam ones when there are Steam data, and five more.
+  const profileRows = 13 + (steam?.memberSince ? 1 : 0) + (steam ? 1 : 0);
+  return (
+    <table className="stats profile">
+      <thead>
+        <tr>
+          <th colSpan={3}>{t.playerProfile}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td className="stats-key">{t.name}:</td>
+          <td>
+            <b>
+              <Flag code={p.flag} title={p.country} />
+              {p.name ?? `#${id}`}
+            </b>
+          </td>
+          <td rowSpan={profileRows} className="avatar-cell">
+            {steam?.avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={steam.avatar} alt={steam.name ?? ""} width={184} height={184} referrerPolicy="no-referrer" />
+            ) : (
+              <span className="avatar-none" aria-hidden="true">
+                {(p.name ?? "").replace(/[^\p{L}\p{N}]/gu, "").slice(0, 1).toUpperCase() || "?"}
+              </span>
+            )}
+          </td>
+        </tr>
+        <Row k={t.clan} v={p.clanTag ? <Link href={`/${game}/clans/${p.clan}`}>{p.clanTag}</Link> : <i>{t.none}</i>} />
+        <Row k={t.location} v={location.length ? <>{location}</> : <i>{t.notSpecified}</i>} />
+        <Row k={t.playerId} v={fmtNum(id, lang)} />
+        <Row k={t.steamId} v={isBot ? t.bot : (ids?.steam2 ?? p.uniqueId ?? "-")} />
+        <Row k="Steam ID3" v={ids?.steam3 ?? "-"} />
+        <Row
+          k={t.steamProfile}
+          v={
+            ids ? (
+              <a href={`https://steamcommunity.com/profiles/${ids.steam64}`} rel="noopener noreferrer" target="_blank">
+                {ids.steam64}
+              </a>
+            ) : (
+              "-"
+            )
+          }
+        />
+        <Row k={t.steamName} v={steam?.name ?? <i>{pending ? "…" : t.notSpecified}</i>} />
+        {steam?.memberSince ? <Row k={t.memberSince} v={steam.memberSince} /> : null}
+        {steam ? <Row k="VAC" v={steam.vacBanned ? <span className="bad">{t.vacBanned}</span> : <span className="good">{t.vacClean}</span>} /> : null}
+        <Row k={t.lastConnect} v={`${age ?? fmtDateTime(p.last_event, lang)} (${fmtNum(p.total_connects, lang)} ${t.connections})`} />
+        <Row k={t.firstConnect} v={fmtDateTime(p.first_connect, lang)} />
+        <Row k={t.playTime} v={fmtDuration(p.connection_time)} />
+        <Row k={t.avgPing} v={p.average_ping ? `${p.average_ping} ms` : "-"} />
+        <Row
+          k={t.favWeapon}
+          v={fav ? <Link href={`/${game}/weapons/${encodeURIComponent(fav.code)}`}>{fav.name}</Link> : "-"}
+        />
+      </tbody>
+    </table>
   );
 }
 

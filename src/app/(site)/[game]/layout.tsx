@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { GameNav } from "@/components/nav";
 import { VoiceBox } from "@/components/voice-box";
 import { currentAdmin } from "@/lib/auth";
@@ -55,7 +55,10 @@ export default async function GameLayout({ children, params }: { children: React
           <i className={`skin-${skin.id}`} hidden />
         </>
       ) : null}
-      <VoiceBox />
+      {/* Asks the TeamSpeak server (up to 4 s when it is down): not before the page. */}
+      <Suspense fallback={null}>
+        <VoiceBox />
+      </Suspense>
       <div className="block">
         <h3>{t.sections}</h3>
         <div className="container sections-box">

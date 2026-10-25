@@ -418,6 +418,10 @@ server {
     location / {
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
+        # The pages are streamed: the frame comes first, the slower parts
+        # follow. Pass them on as they arrive instead of collecting the
+        # whole page first.
+        proxy_buffering off;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
@@ -448,6 +452,7 @@ location /stats/flags/ {
 location /stats {
     proxy_pass http://127.0.0.1:3000;
     proxy_http_version 1.1;
+    proxy_buffering off;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;

@@ -1,17 +1,17 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { MiniAvatar } from "@/components/mini-avatar";
 import { sortHeads } from "@/components/sort-head";
-import { Flag, GameTag } from "@/components/ui";
+import { Flag, GameTag, Skeleton } from "@/components/ui";
 import { basePath } from "@/lib/base-path";
 import { LineChart } from "@/components/chart";
 import { PlayerCount } from "@/components/player-count";
 import { Rich } from "@/components/rich";
 import { VoiceBox } from "@/components/voice-box";
-import { everyDay, getClanFlags, getDailyActivityAll, getHourlyActivity, getPlayer, getRankingOverview, getSiteTotals, unlinkedBots, type RankingOverview } from "@/lib/data";
-import { dateFormat, fmtNum, localeOf, steamIds } from "@/lib/format";
+import { everyDay, getClanFlags, getDailyActivityAll, getHourlyActivity, getRankingOverview, getSiteTotals, unlinkedBots, type RankingOverview } from "@/lib/data";
+import { dateFormat, fmtNum, localeOf } from "@/lib/format";
 import { sumCounts } from "@/lib/player-count";
-import { getSteamProfile } from "@/lib/steam";
-import { fill, getDict } from "@/lib/i18n";
+import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
 import { sortRows, sortState } from "@/lib/table-sort";
 import { gameKind } from "@/lib/games";
 
@@ -27,65 +27,40 @@ const rankingListValues = {
 };
 
 // Start page: all rankings; their servers are listed on each ranking's page.
+// The list is sent first; the load graph of the last 30 days (the slowest
+// query of the site) streams in below it (Suspense).
 export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { lang, t } = await getDict();
   let data;
   try {
-    data = await Promise.all([getRankingOverview(), getSiteTotals(), getDailyActivityAll(30), getHourlyActivity(null, 30)]);
+    data = await Promise.all([getRankingOverview(), getSiteTotals()]);
   } catch (err) {
     console.error("database:", err);
     return (
       <>
-        <VoiceBox />
+        <Suspense fallback={null}>
+          <VoiceBox />
+        </Suspense>
         <p className="notice error">{t.dbError}</p>
       </>
     );
   }
-  const [loaded, totals, rows, hourly] = data;
+  const [loaded, totals] = data;
   const order = sortState(await searchParams, rankingListValues, "order");
   const rankings = sortRows(loaded, rankingListValues, order.sort, order.asc);
   const th = sortHeads(order, "/", {});
-  // Steam picture of each ranking's top player and the country of its top clan.
-  const [avatars, clanFlags, bots] = await Promise.all([
-    Promise.all(rankings.map((r) => (r.topPlayerId ? smallAvatar(r.topPlayerId) : null))),
+  // The country of each ranking's top clan.
+  const [clanFlags, bots] = await Promise.all([
     getClanFlags(rankings.map((r) => r.topClanId ?? 0)).catch(() => new Map<number, { flag: string; country: string }>()),
     unlinkedBots(rankings.map((r) => r.topPlayerId ?? 0)).catch(() => new Set<number>()),
   ]);
-  const perHour = hourly.players.some((v) => v !== null);
-  const tipFmt = dateFormat(localeOf(lang), { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-  const dateFmt = dateFormat(localeOf(lang), { weekday: "short", day: "2-digit", month: "2-digit" });
-  // Hourly graph: a label at local midnight every few days.
-  // Hover text of each hour, e.g. "Mo., 20.10., 14:00".
-  const hourTips = hourly.players.map((_, i) =>
-    tipFmt.format((hourly.start + i * hourly.step) * 1000),
-  );
-  // Hour of each point ("14:00") and its day ("Do., 23.10."): the chart shows
-  // a line and the date at midnight and the times as far as they fit.
-  const hourLabels = hourly.players.map((_, i) => {
-    const d = new Date((hourly.start + i * hourly.step) * 1000);
-    return d.getMinutes() === 0 ? `${String(d.getHours()).padStart(2, "0")}:00` : "";
-  });
-  const hourDates = hourly.players.map((_, i) =>
-    dateFmt.format((hourly.start + i * hourly.step) * 1000),
-  );
-  const activity = everyDay(rows, 30);
   const online = sumCounts(rankings.map((r) => r.online));
-  const dayLabel = (d: string) => `${d.slice(8, 10)}.${d.slice(5, 7)}.`;
-  // The chart starts at the first point with data, so while the load has been
-  // recorded for less than the 30 days the caption names that first day.
-  const firstData = (values: (number | null)[]) => values.findIndex((v) => (v ?? 0) !== 0);
-  const hourFirst = firstData(hourly.players);
-  const dayFirst = firstData(activity.map((a) => (a.point ? Number(a.point.players) : null)));
-  const loadCaption = perHour
-    ? hourFirst * hourly.step >= 86400
-      ? fill(t.loadCaptionHourlySince, { d: dateFmt.format((hourly.start + hourFirst * hourly.step) * 1000) })
-      : t.loadCaptionHourly
-    : dayFirst > 0
-      ? fill(t.loadCaptionSince, { d: dayLabel(activity[dayFirst].day) })
-      : t.loadCaption;
   return (
     <>
-      <VoiceBox />
+      {/* Asks the TeamSpeak server (up to 4 s when it is down): not before the page. */}
+      <Suspense fallback={null}>
+        <VoiceBox />
+      </Suspense>
       <section className="block">
         <h3>{fill(t.rankingsCount, { n: fmtNum(online.real, lang) })}</h3>
         <div className="container">
@@ -105,7 +80,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                 </tr>
               </thead>
               <tbody>
-                {rankings.map((r, i) => (
+                {rankings.map((r) => (
                   <tr key={r.code} className="ranking-line">
                     <td className="no-rb">
                       <Link className="rnk" href={`/${r.code}`} title={r.name}>
@@ -137,7 +112,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                     <td>
                       {r.topPlayerId ? (
                         <>
-                          <MiniAvatar src={avatars[i]} fallback={`${basePath}/avatar-unknown.svg`} />
+                          {/* The Steam picture is fetched by the browser (/avatar), so a
+                              slow Steam does not hold the page; a missing one shows the
+                              placeholder. */}
+                          <MiniAvatar src={`${basePath}/avatar/${r.topPlayerId}`} fallback={`${basePath}/avatar-unknown.svg`} />
                           <Flag code={r.topPlayerFlag} title={r.topPlayerCountry} />{" "}
                           {bots.has(r.topPlayerId) ? (
                             r.topPlayerName || `#${r.topPlayerId}`
@@ -178,38 +156,83 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
           </p>
         </div>
       </section>
-      <section className="block">
-        <h3>{t.load}</h3>
-        <div className="container">
-          <div className="box">
-            {perHour ? (
-              <LineChart locale={lang} ariaLabel={loadCaption} labels={hourLabels} dates={hourDates} tips={hourTips} hourly legend series={[{ label: t.playersOnline, values: hourly.players, className: "s1" }]} />
-            ) : (
-              <LineChart
-                locale={lang}
-                ariaLabel={loadCaption}
-                legend
-                labels={activity.map((a) => dayLabel(a.day))}
-                series={[{ label: t.players, values: activity.map((a) => (a.point ? Number(a.point.players) : null)), className: "s1" }]}
-              />
-            )}
-            <p className="small center">{loadCaption}</p>
-          </div>
-        </div>
-      </section>
+      <Suspense
+        fallback={
+          <section className="block">
+            <h3>{t.load}</h3>
+            <div className="container">
+              <Skeleton chart />
+            </div>
+          </section>
+        }
+      >
+        <LoadSection t={t} lang={lang} />
+      </Suspense>
     </>
   );
 }
 
-// Small Steam avatar URL of a player; a slow Steam lookup is not waited for.
-async function smallAvatar(playerId: number): Promise<string | null> {
+// Players online over the last 30 days, per quarter hour where the collector
+// records the load, else per day. A database error here leaves the block out.
+async function LoadSection({ t, lang }: { t: Dict; lang: Lang }) {
+  let data;
   try {
-    const ids = steamIds((await getPlayer(playerId))?.uniqueId);
-    if (!ids) return null;
-    const timeout = new Promise<null>((r) => setTimeout(() => r(null), 1500));
-    const steam = await Promise.race([getSteamProfile(ids.steam64), timeout]);
-    return steam?.avatarSmall ?? steam?.avatar ?? null;
-  } catch {
+    data = await Promise.all([getDailyActivityAll(30), getHourlyActivity(null, 30)]);
+  } catch (err) {
+    console.error("database:", err);
     return null;
   }
+  const [rows, hourly] = data;
+  const perHour = hourly.players.some((v) => v !== null);
+  const tipFmt = dateFormat(localeOf(lang), { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  const dateFmt = dateFormat(localeOf(lang), { weekday: "short", day: "2-digit", month: "2-digit" });
+  // Hourly graph: a label at local midnight every few days.
+  // Hover text of each hour, e.g. "Mo., 20.10., 14:00".
+  const hourTips = hourly.players.map((_, i) =>
+    tipFmt.format((hourly.start + i * hourly.step) * 1000),
+  );
+  // Hour of each point ("14:00") and its day ("Do., 23.10."): the chart shows
+  // a line and the date at midnight and the times as far as they fit.
+  const hourLabels = hourly.players.map((_, i) => {
+    const d = new Date((hourly.start + i * hourly.step) * 1000);
+    return d.getMinutes() === 0 ? `${String(d.getHours()).padStart(2, "0")}:00` : "";
+  });
+  const hourDates = hourly.players.map((_, i) =>
+    dateFmt.format((hourly.start + i * hourly.step) * 1000),
+  );
+  const activity = everyDay(rows, 30);
+  const dayLabel = (d: string) => `${d.slice(8, 10)}.${d.slice(5, 7)}.`;
+  // The chart starts at the first point with data, so while the load has been
+  // recorded for less than the 30 days the caption names that first day.
+  const firstData = (values: (number | null)[]) => values.findIndex((v) => (v ?? 0) !== 0);
+  const hourFirst = firstData(hourly.players);
+  const dayFirst = firstData(activity.map((a) => (a.point ? Number(a.point.players) : null)));
+  const loadCaption = perHour
+    ? hourFirst * hourly.step >= 86400
+      ? fill(t.loadCaptionHourlySince, { d: dateFmt.format((hourly.start + hourFirst * hourly.step) * 1000) })
+      : t.loadCaptionHourly
+    : dayFirst > 0
+      ? fill(t.loadCaptionSince, { d: dayLabel(activity[dayFirst].day) })
+      : t.loadCaption;
+  return (
+    <section className="block">
+      <h3>{t.load}</h3>
+      <div className="container">
+        <div className="box">
+          {perHour ? (
+            <LineChart locale={lang} ariaLabel={loadCaption} labels={hourLabels} dates={hourDates} tips={hourTips} hourly legend series={[{ label: t.playersOnline, values: hourly.players, className: "s1" }]} />
+          ) : (
+            <LineChart
+              locale={lang}
+              ariaLabel={loadCaption}
+              legend
+              labels={activity.map((a) => dayLabel(a.day))}
+              series={[{ label: t.players, values: activity.map((a) => (a.point ? Number(a.point.players) : null)), className: "s1" }]}
+            />
+          )}
+          <p className="small center">{loadCaption}</p>
+        </div>
+      </div>
+    </section>
+  );
 }
