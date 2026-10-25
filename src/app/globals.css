@@ -385,7 +385,9 @@ td.radar-cell { width: 45%; text-align: center; vertical-align: middle; }
 .radar-total { fill: rgba(140, 170, 255, 0.28); stroke: #8ca0ff; stroke-width: 1.5; }
 .radar-current { fill: rgba(255, 128, 0, 0.35); stroke: var(--accent); stroke-width: 1.5; }
 .radar-label { fill: var(--soft); font-size: 10px; }
-.spark { display: block; width: 240px; max-width: 100%; height: auto; overflow: visible; }
+/* Natural size everywhere: a percentage max-width lets an auto-layout table
+   cell squeeze it to its min-content width. Phones scale it down below. */
+.spark { display: block; width: 240px; min-width: 240px; height: 18px; flex-shrink: 0; overflow: visible; }
 .spark .sp-pill text { fill: #fff; font-size: 10px; font-weight: bold; font-variant-numeric: tabular-nums; }
 .spark .sp-total rect { fill: #555; }
 .spark .sp-current rect { fill: #2f7dc0; }
@@ -527,6 +529,11 @@ a.button { display: inline-block; text-decoration: none; }
   .avatar-none { font-size: 36px; }
   td.radar-cell { width: auto; }
   .radar { width: 100%; max-width: 220px; height: auto; }
+  /* The summary's trend graphics keep a readable size; its labels and the
+     radar give way instead. */
+  table.stats.summary td { white-space: normal; overflow-wrap: normal; }
+  table.stats.summary td.stats-key { width: auto; }
+  .spark { width: 168px; min-width: 168px; height: auto; }
 }
 
 /* ---------------------------------------------------------------- admin */
