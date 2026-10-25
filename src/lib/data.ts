@@ -110,26 +110,31 @@ export type Server = {
   bombs_planted: number;
   bombs_defused: number;
   country_code: string | null;
+  game: string;
+  game_name: string | null;
+  realgame: string | null;
 };
 
 // Players online, at most the slots: older collectors kept kicked bots counted
 // (66/48), and hlstats_server_load still holds those spikes.
 const capped = (p: string) => `CASE WHEN ${p}max_players > 0 AND ${p}act_players > ${p}max_players THEN ${p}max_players ELSE ${p}act_players END`;
 
-const serverCols = `serverId, address, port, publicaddress, name, ${capped("")} AS act_players, max_players, act_map,
-  map_started, kills, headshots, suicides, rounds, players, ct_wins, ts_wins, bombs_planted,
-  bombs_defused, country_code`;
+// With the ranking's name and base game (hlstats_Games) for the Game column.
+const serverCols = `s.serverId, s.address, s.port, s.publicaddress, s.name, ${capped("s.")} AS act_players, s.max_players, s.act_map,
+  s.map_started, s.kills, s.headshots, s.suicides, s.rounds, s.players, s.ct_wins, s.ts_wins, s.bombs_planted,
+  s.bombs_defused, s.country_code, s.game, g.name AS game_name, g.realgame`;
+const serverFrom = "hlstats_Servers s LEFT JOIN hlstats_Games g ON g.code = s.game";
 
 export function getServers(game: string) {
   return query<Server>(
-    `SELECT ${serverCols} FROM hlstats_Servers WHERE game = ? ORDER BY display_id, serverId`,
+    `SELECT ${serverCols} FROM ${serverFrom} WHERE s.game = ? ORDER BY s.display_id, s.serverId`,
     [game],
   );
 }
 
 export function getServer(id: number) {
-  return queryOne<Server & { game: string }>(
-    `SELECT ${serverCols}, game FROM hlstats_Servers WHERE serverId = ?`,
+  return queryOne<Server>(
+    `SELECT ${serverCols} FROM ${serverFrom} WHERE s.serverId = ?`,
     [id],
   );
 }

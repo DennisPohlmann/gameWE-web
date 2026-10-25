@@ -2,11 +2,13 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { botProfiles, type LivePlayer, type Server } from "@/lib/data";
 import { countryName, fmtDuration, fmtNum, fmtPct, nowUnix, ratio } from "@/lib/format";
+import { baseGameOf, gameKind } from "@/lib/games";
 import type { Dict, Lang } from "@/lib/i18n";
 import { Flag } from "./ui";
 
-// Server rows as on gameME: name, address (steam://connect), map, map time,
-// players. `head` is an optional first header row spanning the table. The
+// Server rows as on gameME: name, game, address (steam://connect), map, map
+// time, players. The game is the ranking's base game ("Counter-Strike:
+// Source"), else the ranking's name. `head` is an optional first header row spanning the table. The
 // flag of the server's country stands before its name.
 export function ServerTable({ game, servers, head, t, lang }: { game: string; servers: Server[]; head?: ReactNode; t: Dict; lang: Lang }) {
   const now = nowUnix();
@@ -16,11 +18,14 @@ export function ServerTable({ game, servers, head, t, lang }: { game: string; se
         <thead>
           {head ? (
             <tr>
-              <th colSpan={5} className="wrap-cell">{head}</th>
+              <th colSpan={6} className="wrap-cell">{head}</th>
             </tr>
           ) : null}
           <tr>
-            <th style={{ width: "60%" }}>{t.server}</th>
+            <th style={{ width: "46%" }}>{t.server}</th>
+            <th className="hide-sm" style={{ width: "14%" }}>
+              {t.baseGame}
+            </th>
             <th className="hide-sm" style={{ width: "16%" }}>
               {t.address}
             </th>
@@ -47,6 +52,7 @@ export function ServerTable({ game, servers, head, t, lang }: { game: string; se
                     {s.name || addr}
                   </Link>
                 </td>
+                <td className="hide-sm">{gameKind(baseGameOf(s.game, s.realgame))?.name || s.game_name || "-"}</td>
                 <td className="hide-sm">
                   <a href={`steam://connect/${addr}/`}>{addr}</a>
                 </td>

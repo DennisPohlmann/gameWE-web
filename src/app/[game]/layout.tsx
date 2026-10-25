@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { GameNav } from "@/components/nav";
-import { GameTag } from "@/components/ui";
 import { VoiceBox } from "@/components/voice-box";
 import { currentAdmin } from "@/lib/auth";
 import { getGame } from "@/lib/data";
@@ -52,9 +51,7 @@ export default async function GameLayout({ children, params }: { children: React
       ) : null}
       <VoiceBox />
       <div className="block">
-        <h3>
-          {t.sections} <GameTag realgame={game.realgame} long />
-        </h3>
+        <h3>{t.sections}</h3>
         <div className="container sections-box">
           <GameNav game={game.code} items={items} />
         </div>

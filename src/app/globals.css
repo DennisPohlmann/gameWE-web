@@ -831,7 +831,6 @@ table.spaced { margin-top: 10px; }
 .game-tag { display: inline-block; margin-left: 6px; padding: 0 4px; border-radius: 2px; font-size: 9px; font-weight: bold; line-height: 14px; vertical-align: middle; color: #fff; background: #5a6b7c; white-space: nowrap; }
 .game-tag.goldsrc { background: #8a6d3b; }
 .game-tag.source { background: #3d6f99; }
-h3 .game-tag { font-size: 10px; }
 .map-title { margin: 0 0 6px; font-size: 12px; }
 .ban-type { display: inline-block; min-width: 4.5em; padding: 0 6px; border-radius: 3px; font: bold 10px/16px Verdana, sans-serif; text-align: center; white-space: nowrap; color: #fff; background: #6b6b6b; }
 .ban-vac { background: linear-gradient(#ffe680, #d9b300); color: #3a3000; }
@@ -1060,7 +1059,7 @@ html[data-os] .block > h3, html[data-os] .section-head h2 { font-size: 12px; }
 html[data-os] .small,
 html[data-os] .tabs-top a,
 html[data-os] table.player-livestats th,
-html[data-os] .game-tag, html[data-os] h3 .game-tag,
+html[data-os] .game-tag,
 html[data-os] .hl-badge, html[data-os] .help-type, html[data-os] .help-tile span,
 html[data-os] .admin-version, html[data-os] .admin-nav .admin-group,
 html[data-os] .decorated-rank, html[data-os] .ribbon-level,
