@@ -1054,7 +1054,8 @@ td.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9e
 /* ---------------------------------------------------------------- awards */
 
 .award-cal { width: auto; min-width: 280px; margin: 0 auto; border-collapse: collapse; text-align: center; }
-.award-cal caption { padding: 6px; font-size: 13px; }
+/* The month line belongs to the box: on the page (orange) the grey arrows were unreadable. */
+.award-cal caption { padding: 6px; font-size: 13px; background: var(--surface); border: 1px solid var(--border); border-bottom: 0; }
 .award-cal caption a { padding: 0 8px; font-size: 16px; text-decoration: none; }
 .award-cal th, .award-cal td { padding: 3px 7px; text-align: center; }
 .award-cal td a { display: inline-block; min-width: 22px; text-decoration: none; }

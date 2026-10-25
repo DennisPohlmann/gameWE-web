@@ -1,6 +1,6 @@
 /* gameWE template "green": like orange, with a green page */
 html[data-skin] {
-  --page: #23893f;
+  --page: #22863e;
   --page-pattern: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.06) 0 1px, transparent 1px 3px);
   --surface: #121212;
   --surface-2: #1e1e1e;
