@@ -497,28 +497,24 @@ export default async function PlayerPage({ params, searchParams }: Props) {
 
       {hitboxWeapons[0] && ZONES.some((z) => hitboxWeapons[0].hits[z] > 0) ? (
         <Section title={t.hitbox}>
-          <div className="cont-2">
-            <div className="box">
-              <Hitbox
-                weapons={hitboxWeapons}
-                locale={lang}
-                labels={{
-                  head: t.head,
-                  chest: t.chest,
-                  stomach: t.stomach,
-                  leftarm: t.leftarm,
-                  rightarm: t.rightarm,
-                  leftleg: t.leftleg,
-                  rightleg: t.rightleg,
-                  weapon: t.weapon,
-                  hits: t.hits,
-                  show: t.show,
-                }}
-                initial={hwParam((await searchParams).hw, hitboxWeapons.length)}
-              />
-            </div>
-            {/* Keeps the hitbox in the left column. */}
-            <div />
+          <div className="box hb-box">
+            <Hitbox
+              weapons={hitboxWeapons}
+              locale={lang}
+              labels={{
+                head: t.head,
+                chest: t.chest,
+                stomach: t.stomach,
+                leftarm: t.leftarm,
+                rightarm: t.rightarm,
+                leftleg: t.leftleg,
+                rightleg: t.rightleg,
+                weapon: t.weapon,
+                hits: t.hits,
+                show: t.show,
+              }}
+              initial={hwParam((await searchParams).hw, hitboxWeapons.length)}
+            />
           </div>
         </Section>
       ) : null}
