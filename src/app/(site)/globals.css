@@ -431,32 +431,44 @@ table.stats.profile td.avatar-cell { width: 1%; padding: 6px; vertical-align: mi
   table.stats.profile td.avatar-cell img { padding: 6px; }
   table.stats.profile .avatar-none { font-size: 56px; }
 }
-/* In the summary the labels are only as wide as their text and wide screens
-   give the room to the right-hand values, not to the radar and the labels.
-   In a narrow box (two columns on a small laptop, up to 600px) labels wrap
-   and the trend graphics shrink as on phones, so the table fits. */
-table.stats.summary td.stats-key { width: 1%; }
-table.stats.summary td:last-child { width: 40%; }
+/* The player summary is split like gameME's: the left half is four equal
+   cells (position and points) and below them the radar, centred; the right
+   half is the labels (24 %) and the values beside them. The rows below put
+   the label in the left half and the value in the right one. The radar is
+   small enough that, with its legend and notes, it is not taller than the
+   seven rows beside it, so those rows keep their height; its labels are a
+   little larger so they stay readable and may reach into its margin. */
 .summary-box { container-type: inline-size; }
-@container (max-width: 600px) {
-  table.stats.summary td { white-space: normal; }
+table.stats.summary col.sum-q { width: 12.5%; }
+table.stats.summary col.sum-key { width: 24%; }
+table.stats.summary col.sum-val { width: 26%; }
+table.stats.summary td.stats-key { width: auto; }
+table.stats.summary td.pair-value { white-space: normal; }
+table.stats.summary td.radar-cell { width: auto; }
+@container (min-width: 601px) {
+  table.stats.summary { table-layout: fixed; }
+  .summary-box .radar-wrap { width: auto; max-width: 100%; }
+  .summary-box .radar-wrap .radar { max-width: 140px; overflow: visible; }
+  .summary-box .radar-label { font-size: 13px; }
+}
+/* Up to about 960px the value column is too narrow for the full trend graphic. */
+@container (max-width: 960px) {
   .summary-box .spark { width: 156px; min-width: 156px; height: auto; }
+}
+/* In a narrow box (phones, up to 600px) the columns size to their content
+   and labels wrap, so the table fits. */
+@container (max-width: 600px) {
+  table.stats.summary col { width: auto; }
+  table.stats.summary td { white-space: normal; }
 }
 @container (max-width: 360px) {
   .summary-box .spark { width: 146px; min-width: 146px; }
 }
-/* In a wide box the radar column is only as wide as the chart (and the
-   position/points pairs above it): the rest goes to the values on the
-   right. The chart is small enough that, with its legend and notes, it is
-   not taller than the seven rows beside it, so those rows keep their
-   height; its labels are a little larger so they stay readable and may
-   reach into the column's margin. */
-@container (min-width: 601px) {
-  table.stats.summary td:last-child { width: 100%; }
-  .summary-box .radar-wrap { width: 180px; max-width: none; }
-  .summary-box .radar-wrap .radar { max-width: 140px; overflow: visible; }
-  .summary-box .radar-label { font-size: 13px; }
-}
+/* The history links under the summary and the note on the starred values
+   (last 14 days) share one line; on a narrow screen the note wraps below. */
+.summary-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin: 6px 0 10px; }
+.summary-box .summary-foot > .player-links { margin: 0; }
+.summary-foot > .footnote { margin: 0 0 0 auto; padding: 0; background: none; border: 0; font-style: italic; text-align: right; }
 table.stats th { font-weight: bold; }
 .cont-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 12px 2%; align-items: start; }
 .cont-2 > * { min-width: 0; }

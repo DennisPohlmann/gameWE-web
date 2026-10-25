@@ -490,6 +490,7 @@ html[data-skin] .load-chart .swatch.s2 { background: var(--chart-series-1); }
    so profile and summary stack. */
 html[data-skin] .cont-2:has(> table.stats.profile) { grid-template-columns: minmax(0, 1fr); }
 html[data-skin] .section > p.footnote { padding: 6px 2px 0; background: none; border: 0; color: var(--muted); }
+html[data-skin] .summary-foot > .footnote { color: var(--muted); }
 
 /* Player banner (forum signature) and server banner, see README.md */
 html[data-skin] {
