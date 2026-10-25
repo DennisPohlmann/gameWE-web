@@ -1,0 +1,67 @@
+{
+  "background": "#ffffff",
+  "border": "#dcdfe4",
+  "grid": "#eceef1",
+  "axis": "#646b75",
+  "axisStrong": "#3b424c",
+  "dayLine": "#c9ced5",
+  "guide": "#646b75",
+  "title": "#1d2127",
+  "legend": "#4c535d",
+  "dotEdge": "#ffffff",
+  "pieEdge": "#ffffff",
+  "barHover": "rgba(0, 0, 0, 0.05)",
+  "band": "#f6f7f9",
+  "bandOdd": "#eceef1",
+  "uptime": "#2e9e5e",
+  "gain": "#2e9e5e",
+  "loss": "#d64545",
+  "tooltip": {
+    "background": "#ffffff",
+    "text": "#1d2127",
+    "border": "#c3c8cf",
+    "title": "#9a4500"
+  },
+  "spark": {
+    "total": "#b8bec6",
+    "current": "#2f7dc0",
+    "totalLine": "#8a9099",
+    "currentLine": "#1f5fae"
+  },
+  "radar": {
+    "total": "#2f7dc0",
+    "current": "#c95c00"
+  },
+  "series": [
+    "#c95c00",
+    "#2f7dc0",
+    "#c62828",
+    "#2e9e5e",
+    "#7e57c2",
+    "#00897b",
+    "#5c6bc0",
+    "#6d6d6d"
+  ],
+  "servers": [
+    "#2f7dc0",
+    "#c62828",
+    "#2e9e5e",
+    "#7e57c2",
+    "#00897b",
+    "#5c6bc0",
+    "#6d6d6d",
+    "#8a9099"
+  ],
+  "pie": [
+    "#c95c00",
+    "#2f7dc0",
+    "#c62828",
+    "#2e9e5e",
+    "#7e57c2",
+    "#00897b",
+    "#5c6bc0",
+    "#6d6d6d",
+    "#8a9099"
+  ],
+  "heatmapBackground": "#0d1117"
+}

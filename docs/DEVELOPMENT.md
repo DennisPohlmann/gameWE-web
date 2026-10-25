@@ -13,6 +13,9 @@ npm run dev                    # http://localhost:3000
 
 Translations: [src/translations/README.md](../src/translations/README.md);
 design templates: [templates/README.md](../templates/README.md).
+The `modern-*` templates are generated: change
+`scripts/modern-templates/layout.css` or `scripts/modern-templates.mjs`,
+then run `npm run templates` (see "Modern templates" there).
 
 ## Build and check
 

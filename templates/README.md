@@ -121,6 +121,48 @@ Example (light charts on a dark template):
 The built-in templates each come with a `chart.json`; `orange/chart.json`
 lists every key.
 
+## Modern templates
+
+The `modern-*` templates (`modern-gold`, `modern-orange`, `modern-blue`,
+`modern-red`, `modern-green`, `modern-pink`, `modern-dark`, `modern-light`)
+change the layout as well as the colours: header with big accent-coloured
+links, the ranking's sections as a full-width bar under the header, one
+narrow centred column, rounded cards with a title strip, flat tables and
+filled areas under the chart lines. Unlike the other templates their
+`theme.css` carries layout rules after the variables, all scoped to
+`html[data-skin]` so they only apply while the template is loaded (and are
+rescoped like the variables when one is used as a game design).
+
+They share one layout and differ only in colours; their files are generated:
+
+- `scripts/modern-templates/layout.css`: the layout rules, written against
+  the usual variables and the `--m-*` variables of the family (`--m-bar`,
+  `--m-head`, `--m-zebra`, `--m-on-accent` for text on the accent colour, ...).
+- `scripts/modern-templates.mjs`: the colours of each variant (a dark and a
+  light base, the accent per variant), the chart colours and display names.
+
+After changing either, run `npm run templates` and commit the generated
+folders; `npm test` fails while they are out of date. A copy of a
+`modern-*` folder under another name is an ordinary template and can be
+edited directly.
+
+### Filled chart areas
+
+Line charts draw an (invisible) area under each line, so a template can fill
+it without code changes:
+
+| Selector | Area |
+| --- | --- |
+| `.chart .area.s1` … `.chart .area.s8` | under the lines of the line charts (series 1 to 8) |
+| `.load-chart .area-players` | under the players line of the server load chart |
+
+By default they have `fill: none`. The modern templates fill them, e.g.
+
+```css
+html[data-skin] .chart .area.s1 { fill: color-mix(in srgb, var(--chart-series-1) 24%, transparent); }
+html[data-skin] .load-chart .area-players { fill: color-mix(in srgb, var(--chart-series-1) 24%, transparent); }
+```
+
 ## Game designs
 
 Folders named `game-<game>` (`game-css`, `game-cstrike`, `game-tf`,

@@ -152,6 +152,18 @@ export function LineChart({
           ) : null,
         )}
         {hover ? <line className="guide" x1={x(hover.i)} x2={x(hover.i)} y1={pad.top} y2={height - pad.bottom} /> : null}
+        {/* Area under each line: not painted by default, a template can fill it (.chart .area). */}
+        {series.map((s) =>
+          runs(s.values).map((run) =>
+            run.length > 1 ? (
+              <polygon
+                key={`${s.label}-a${run[0]}`}
+                className={`area ${s.className}`}
+                points={`${run.map((i) => `${x(i).toFixed(1)},${y(s.values[i]!).toFixed(1)}`).join(" ")} ${x(run[run.length - 1]).toFixed(1)},${height - pad.bottom} ${x(run[0]).toFixed(1)},${height - pad.bottom}`}
+              />
+            ) : null,
+          ),
+        )}
         {series.map((s) =>
           runs(s.values).map((run) =>
             run.length > 1 ? (

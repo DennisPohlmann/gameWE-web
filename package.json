@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "tsc --noEmit",
     "test": "tsc -p tsconfig.test.json && node --test \"out/tests/tests/*.test.js\"",
-    "create-admin": "node scripts/create-admin.mjs"
+    "create-admin": "node scripts/create-admin.mjs",
+    "templates": "node scripts/modern-templates.mjs"
   },
   "dependencies": {
     "leaflet": "^1.9.4",

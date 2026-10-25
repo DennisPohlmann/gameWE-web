@@ -291,6 +291,13 @@ export function ServerLoadChart({
               {ddmm(t0)}
             </text>
           ) : null}
+          {/* Area under the players line: not painted by default, a template can fill it (.load-chart .area-players). */}
+          {n > 1 ? (
+            <polygon
+              className="area-players"
+              points={`${points.map((p) => `${x(p.timestamp).toFixed(1)},${yP(p.act_players).toFixed(1)}`).join(" ")} ${x(points[n - 1].timestamp).toFixed(1)},${H - pad.b} ${x(points[0].timestamp).toFixed(1)},${H - pad.b}`}
+            />
+          ) : null}
           <polyline className="line-up" points={points.map((p) => `${x(p.timestamp).toFixed(1)},${yU(p.uptime / 60).toFixed(1)}`).join(" ")} />
           <polyline className="line-players" points={points.map((p) => `${x(p.timestamp).toFixed(1)},${yP(p.act_players).toFixed(1)}`).join(" ")} />
           {/* A small dot at every sample, like on the graph of all servers. */}
