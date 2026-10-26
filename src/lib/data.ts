@@ -520,7 +520,12 @@ export async function getRanking(opts: {
   clan?: number;
   // Fill globalRank also without a country, state or city (API lists).
   withRank?: boolean;
+  // The inactive players instead: the collector moves players who have not
+  // played for a while to hlstats_PlayersInactive (same columns) and back
+  // when they return. They have no place in the ranking (no globalRank).
+  inactive?: boolean;
 }) {
+  const table = opts.inactive ? "hlstats_PlayersInactive" : "hlstats_Players";
   const where = [`p.game = ?`, `p.hideranking = 0`];
   const params: Param[] = [opts.game];
   if (opts.clan) {
@@ -544,14 +549,14 @@ export async function getRanking(opts: {
     params.push(opts.city.toLowerCase());
   }
   const local = !!(opts.country || opts.state || opts.city);
-  const from = `FROM hlstats_Players p
+  const from = `FROM ${table} p
     LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
     LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
     WHERE ${where.join(" AND ")}`;
   const order = `${rankingSorts[opts.sort]} ${opts.asc ? "ASC" : "DESC"}, p.playerId`;
   // Both joins match at most one row, so without a filter on them the count
-  // needs hlstats_Players only.
-  const countFrom = opts.search || local ? from : `FROM hlstats_Players p WHERE ${where.join(" AND ")}`;
+  // needs the players table only.
+  const countFrom = opts.search || local ? from : `FROM ${table} p WHERE ${where.join(" AND ")}`;
   const [rows, count] = await Promise.all([
     query<RankingRow>(
       `SELECT p.playerId, d.lastName AS name, p.skill, p.last_event, d.first_connect, p.connection_time,
@@ -561,7 +566,7 @@ export async function getRanking(opts: {
     ),
     queryOne<{ n: number }>(`SELECT COUNT(*) AS n ${countFrom}`, params),
   ]);
-  if (local || opts.withRank) {
+  if ((local || opts.withRank) && !opts.inactive) {
     const pos = await rankPositions(rows.map((r) => ({ game: opts.game, skill: r.skill })));
     for (const r of rows) r.globalRank = pos.get(`${opts.game}|${Number(r.skill)}`);
   }

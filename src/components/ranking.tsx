@@ -33,6 +33,7 @@ export async function RankingTable({
   firstRank,
   showRank = true,
   showFirstConnect = false,
+  showLastSeen = false,
   showGlobalRank = false,
   sort,
   activityDays,
@@ -44,6 +45,8 @@ export async function RankingTable({
   firstRank: number;
   showRank?: boolean;
   showFirstConnect?: boolean;
+  // Inactive players: the date of the last event instead of the activity bar.
+  showLastSeen?: boolean;
   // Country or city ranking: also the place in the whole ranking.
   showGlobalRank?: boolean;
   sort?: SortProps;
@@ -67,7 +70,7 @@ export async function RankingTable({
             {th(t.name, "name", "")}
             {showGlobalRank ? <th className="num hide-sm">{t.globalRank}</th> : null}
             {th(t.points, "skill")}
-            {showFirstConnect ? th(t.firstConnect, "new") : th(t.activity, "activity", "barcell hide-sm")}
+            {showFirstConnect ? th(t.firstConnect, "new") : showLastSeen ? th(t.lastSeen, "activity") : th(t.activity, "activity", "barcell hide-sm")}
             {th(t.time, "time", "num hide-sm")}
             {th(t.kills, "kills")}
             {th(t.deaths, "deaths", "num hide-sm")}
@@ -90,6 +93,8 @@ export async function RankingTable({
                 <td className="num">{fmtNum(r.skill, lang)}</td>
                 {showFirstConnect ? (
                   <td className="num">{fmtDate(r.first_connect, lang)}</td>
+                ) : showLastSeen ? (
+                  <td className="num">{fmtDate(r.last_event, lang)}</td>
                 ) : (
                   <td className="barcell hide-sm">
                     <PctBar value={act / 100} lang={lang} tone="activity" />

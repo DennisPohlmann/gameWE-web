@@ -50,10 +50,13 @@ export default async function PlayersPage({
   const sp = await searchParams;
   const { lang, t } = await getDict();
 
-  const view = strParam(sp.view) === "new" ? "new" : "";
+  const rawView = strParam(sp.view);
+  const view = rawView === "new" || rawView === "inactive" ? rawView : "";
+  const inactive = view === "inactive";
   const mapAll = strParam(sp.map) === "all";
   // Country, state and city rankings, with gameME's parameters (see places.ts).
-  const { type: placeType, country, state, city } = parsePlaceQuery({
+  // The inactive players are one plain list, without them.
+  const { type: placeType, country, state, city } = parsePlaceQuery(inactive ? {} : {
     type: strParam(sp.type),
     valuecountry: strParam(sp.valuecountry),
     valuestate: strParam(sp.valuestate),
@@ -63,7 +66,7 @@ export default async function PlayersPage({
   const placeList =
     (placeKind === "country" && !country) || (placeKind === "state" && !state) || (placeKind === "city" && !city);
   const rawSort = strParam(sp.sort);
-  const sort: RankingSort = sortParam(rankingSorts, rawSort, view === "new" ? "new" : "skill");
+  const sort: RankingSort = sortParam(rankingSorts, rawSort, view === "new" ? "new" : inactive ? "activity" : "skill");
   const placeSort: PlaceSort = sortParam(placeSorts, rawSort, PLACE_SORT_DEFAULT);
   const asc = strParam(sp.dir) === "asc";
   const q = strParam(sp.q);
@@ -84,6 +87,7 @@ export default async function PlayersPage({
           country,
           state,
           city,
+          inactive,
         }),
     placeList && placeKind
       ? getPlaceRanking({
@@ -129,7 +133,7 @@ export default async function PlayersPage({
   const rowOptions = { value: limit, options: [...new Set([pageSize, ...ROW_OPTIONS])].sort((a, b) => a - b) };
   // Rank numbers are positions only in the unfiltered points ranking (or
   // the points ranking of one country, state or city).
-  const showRank = sort === "skill" && !asc && !q;
+  const showRank = sort === "skill" && !asc && !q && !inactive;
   const local = !!(country || state || city);
   const countryName = countries.find((c) => c.code === country)?.name || country.toUpperCase();
   const cityOptions = cities.map((c) => ({
@@ -221,15 +225,21 @@ export default async function PlayersPage({
             </Link>
             <Link
               href={`${base}?view=new`}
-              className={view ? "active" : undefined}
+              className={view === "new" ? "active" : undefined}
             >
               {t.newPlayers}
+            </Link>
+            <Link
+              href={`${base}?view=inactive`}
+              className={inactive ? "active" : undefined}
+            >
+              {t.inactivePlayers}
             </Link>
           </span>
         }
         aside={
           <>
-          {placeForm}
+          {inactive ? null : placeForm}
           <Form className="search" action={base} role="search">
             {view ? <input type="hidden" name="view" value={view} /> : null}
             <input
@@ -268,6 +278,7 @@ export default async function PlayersPage({
           )
         ) : rows.length ? (
           <>
+            {inactive ? <p className="lead">{t.inactiveHint}</p> : null}
             {local ? (
               <p className="lead">
                 <Flag code={country} />
@@ -280,6 +291,7 @@ export default async function PlayersPage({
               firstRank={(page - 1) * limit + 1}
               showRank={showRank}
               showFirstConnect={view === "new"}
+              showLastSeen={inactive}
               showGlobalRank={local}
               sort={{ current: sort, asc, base, params: keep }}
               activityDays={activityDays}
