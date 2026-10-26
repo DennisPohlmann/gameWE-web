@@ -183,7 +183,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               </>
             ) : null}
             {" · "}
-            <Link href="/admin">Admin</Link>
+            <Link href="/admin" target="_blank" rel="noopener">
+              Admin
+            </Link>
           </p>
         </footer>
       </body>
