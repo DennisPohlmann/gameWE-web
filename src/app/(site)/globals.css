@@ -1007,9 +1007,24 @@ table.spaced { margin-top: 10px; }
 .ban-type { display: inline-block; min-width: 4.5em; padding: 0 6px; border-radius: 3px; font: bold 10px/16px Verdana, sans-serif; text-align: center; white-space: nowrap; color: #fff; background: #6b6b6b; }
 .ban-vac { background: linear-gradient(#ffe680, #d9b300); color: #3a3000; }
 .ban-sourcebans { background: linear-gradient(#f07a7a, #c0392b); }
-.ban-sourcemod, .ban-amx, .ban-engine { background: linear-gradient(#7aa7f0, #2b5fc0); }
+.ban-sourcebans, .ban-sourcemod, .ban-amx, .ban-engine { background: linear-gradient(#e0605a, #b0281e); }
 .ban-type.ban-lifted { background: #6b6b6b; color: #ddd; }
 tr.ban-old td { opacity: 0.7; }
+th.ban-type-col, td.ban-type-col { text-align: center; }
+/* The profile's "Bans" row: a long reason wraps instead of widening the table. */
+.ban-info { white-space: normal; overflow-wrap: anywhere; }
+/* The "!" before a banned player's name, as on gameME: yellow for VAC, red
+   for SourceBans and server bans. The reason shows on hover and on tap
+   (focus), in every skin with fixed colours. */
+.ban-mark { position: relative; display: inline-block; width: 14px; height: 14px; margin-right: 4px; border-radius: 2px; font: bold 11px/14px Verdana, sans-serif; text-align: center; vertical-align: -2px; cursor: help; color: #fff; background: #b0281e; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35); }
+.ban-mark.ban-mark-vac { color: #2b2200; background: #f5c518; }
+.ban-mark:focus { outline: 2px solid #f5c518; outline-offset: 1px; }
+.ban-badges { display: inline-flex; gap: 3px; justify-content: center; white-space: nowrap; }
+.ban-type[data-tip] { position: relative; cursor: help; }
+.ban-type[data-tip]:focus { outline: 2px solid #f5c518; outline-offset: 1px; }
+.ban-mark[data-tip]:hover::after, .ban-mark[data-tip]:focus::after, .ban-type[data-tip]:hover::after, .ban-type[data-tip]:focus::after { content: attr(data-tip); position: absolute; z-index: 30; left: 0; top: calc(100% + 4px); width: max-content; max-width: min(320px, 80vw); padding: 4px 7px; border-radius: 3px; font: normal 11px/1.4 Verdana, sans-serif; text-align: left; white-space: normal; color: #fff; background: #1e1e1e; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); }
+/* Badges sit in the middle of the row: their box opens to the left so it stays inside the table on a phone. */
+.ban-type[data-tip]:hover::after, .ban-type[data-tip]:focus::after { left: auto; right: 0; max-width: min(260px, 62vw); }
 td.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9em; }
 
 /* ---------------------------------------------------------------- hover values */

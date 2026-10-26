@@ -396,3 +396,24 @@ export function pageParam(v: string | string[] | undefined): number {
 export function strParam(v: string | string[] | undefined): string {
   return (Array.isArray(v) ? v[0] : v ?? "").trim().slice(0, 64);
 }
+
+// The "!" before a banned player's name (as gameME): yellow for VAC, red for
+// the other bans; the text (ban and reason) shows on hover and, focusable,
+// on a tap. Without a reason only "Banned".
+export function BanMark({ kind, text }: { kind: string; text: string }) {
+  return (
+    <span className={`ban-mark${kind === "vac" ? " ban-mark-vac" : ""}`} tabIndex={0} role="img" aria-label={text} data-tip={text}>
+      !
+    </span>
+  );
+}
+
+// A ban type badge (yellow VAC, red SourceBans and server bans) whose
+// details (reason, date, length) show on hover and, focusable, on a tap.
+export function BanBadge({ kind, label, text }: { kind: string; label: string; text: string }) {
+  return (
+    <span className={`ban-type ban-${kind === "vac" ? "vac" : kind === "sourcebans" ? "sourcebans" : "engine"}`} tabIndex={0} aria-label={text} data-tip={text}>
+      {label}
+    </span>
+  );
+}

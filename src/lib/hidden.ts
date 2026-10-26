@@ -1,7 +1,8 @@
 // Hidden players (hlstats_Players.hideranking <> 0: hidden by an admin or by
 // the player with !hide, or marked as banned) appear nowhere on the public
 // pages or in the public API: their own pages are 404 and every list leaves
-// them out. Bots are not hidden players. Only the live view of a server still
+// them out. Players banned in the ranking (2) are the exception on the bans
+// page and their profile page with the ban notice (noProfile(p, true)). Bots are not hidden players. Only the live view of a server still
 // lists them, without a link or id (see getLivePlayers). No imports, so the
 // tests can load it directly.
 

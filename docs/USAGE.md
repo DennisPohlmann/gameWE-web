@@ -45,7 +45,7 @@ again every 5 minutes. The heading on `/` counts the real players.
 | `/<game>/players/<id>/chat` | the player's chat messages |
 | `/<game>/chat` | chat log with search |
 | `/<game>/misc` | player countries, weekdays, connects per day, connect methods, server banners |
-| `/<game>/bans` | ban list like gameME's: bans of ranked players from the collector's ban records (`hlstats_Players_Bans`: type, date, reason), from SourceBans (reason, length, date) and, with a Steam Web API key (Admin → Settings → Steam), VAC/game bans from Steam; points, K/D, HS/kill and accuracy per player. Players the collector marked as banned (`hideranking = 2`) are hidden players and not listed (see below), so the list can be empty. |
+| `/<game>/bans` | ban list like gameME's: the running bans of the ranking's players from the collector's ban records (`hlstats_Players_Bans`: type, date, reason; `features.sourcebans` of the collector, which takes SourceBans-banned players out of the ranking while the ban runs), from SourceBans (reason, length, date) and, with a Steam Web API key (Admin → Settings → Steam), VAC/game bans from Steam; points, K/D, HS/kill and accuracy per player. Before each name a "!" in the colour of the ban type (yellow VAC, red SourceBans and server bans; the ban type column is centred) shows "Banned" and the reason on hover or tap. Players banned in the ranking (`hideranking = 2`) are listed, players hidden by an admin or by themselves are not. Expired and lifted bans are not shown; a SourceBans ban the collector recorded is listed once. |
 | `/search` | search players by name or Steam ID and clans by tag or name (`?q=...&st=names\|steam\|clans&game=<code>`) |
 | `/help` | help: how points are calculated (with the current settings), actions, weapon modifiers, chat commands |
 | `/voice` | detail page of the TeamSpeak server from the voice server box (click its name): channel tree with the people online (names can be hidden in the admin settings), server info (operating system with a small symbol, uptime, users, connections, security level, ping, version, host banner URL), traffic and the welcome message, and at the bottom the code of the TeamSpeak banner; live from the ServerQuery, kept for a minute; 404 unless TeamSpeak is the voice server |
@@ -184,8 +184,15 @@ website therefore computes some things itself:
   profile, sessions, events, awards and chat pages, events feed, banner,
   forum signature and avatar answer 404, and every ranking, list and table
   leaves them out (opponents, events with them on the other side, award
-  winners, clans, maps, weapons, actions, bans, search, chat, the player
-  maps and their lines). Only the live list of a server still shows them,
+  winners, clans, maps, weapons, actions, search, chat, the player
+  maps and their lines). Exception for banned players (`hideranking = 2`):
+  they are on the bans page, and their profile page (with its charts and
+  avatar, without the links to the history pages, which stay 404; not
+  indexed by search engines, no position) shows the ban. The profile's "Bans" row shows the running ban (the collector's
+  record, else the SourceBans list, else "Server" for a player hidden as
+  banned without details) with the "!", the type badge, reason, date and
+  length or end, and the VAC status from Steam when Steam answered; it is
+  left out when there is neither. Only the live list of a server still shows them,
   with their in-game name and live values but without a link or player id;
   the server's player count is unchanged. Bots are not hidden players. The
   admin area shows them as before.
@@ -266,8 +273,12 @@ website therefore computes some things itself:
   (LAN address, no GeoIP database, rows imported without one) are left out.
 - **SourceBans** (bans page): the public ban list
   (`index.php?p=banlist&page=N`) of the address under Settings → Bans is
-  read every 30 minutes, at most 100 pages, one after another. Both the
-  classic SourceBans/SB++ 1.x list and the SB++ 2026 one are understood.
+  read every 30 minutes, at most 100 pages, one after another. The classic
+  SourceBans/SB++ 1.x list, the SB++ 1.8 default theme (rows with a
+  "Steam ID / Invoked on / Ban length / Reason" detail list) and the SB++
+  2026 one are understood. When the list shows Steam IDs but no ban can be
+  read from it (another template), the bans page says so and the server
+  log gets a warning, instead of an empty list.
   Only public http(s) addresses without redirects are accepted, so the
   setting cannot reach localhost or the LAN; `SOURCEBANS_ALLOW_PRIVATE=1`
   allows that when SourceBans runs on the same network.

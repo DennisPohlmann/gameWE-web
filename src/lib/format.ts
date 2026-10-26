@@ -134,3 +134,10 @@ export function steamIds(uniqueId: string | null | undefined) {
 export function localeOf(lang: Lang): string {
   return locales[lang];
 }
+
+// Length of a ban in minutes as "2 d", "3 h" or "45 min".
+export function fmtBanMinutes(m: number): string {
+  if (m % 1440 === 0) return `${m / 1440} d`;
+  if (m % 60 === 0) return `${m / 60} h`;
+  return `${m} min`;
+}

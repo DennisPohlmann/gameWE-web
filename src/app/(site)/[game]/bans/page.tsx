@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { sortHeads } from "@/components/sort-head";
-import { Empty, PctBar, PlayerLink, Section, TableWrap } from "@/components/ui";
+import { BanBadge, BanMark, Empty, PctBar, PlayerLink, Section, TableWrap } from "@/components/ui";
+import { banKind, mainReason, markKind, mergeBans, type BanEntry } from "@/lib/ban-merge";
 import { gameHasShots, getBanPlayers, getBanRecords, getPlayersBySteam, getRecentPlayers, type BanPlayer } from "@/lib/data";
-import { fmtNum, kpd, localeOf, nowUnix, ratio, steamIds } from "@/lib/format";
-import { getDict, type Dict } from "@/lib/i18n";
+import { fmtBanMinutes, fmtDateTime, fmtNum, kpd, localeOf, nowUnix, ratio, steamIds } from "@/lib/format";
+import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import { getSourcebans, type SbState } from "@/lib/sourcebans";
 import { getSteamBans, steamBansAvailable } from "@/lib/steam";
@@ -17,25 +18,18 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getDict()).t.bans };
 }
 
-type Kind = "vac" | "sourcebans" | "sourcemod" | "amx" | "engine";
+// One ban of a player from one source, before the bans of a player are
+// merged into one row (ban-merge.ts).
+type Found = { player: BanPlayer; ban: BanEntry };
 
-type BanRow = {
-  player: BanPlayer;
-  kind: Kind;
-  // Unix seconds; null when the source gives no usable date.
-  at: number | null;
-  dateText: string;
-  reason: string;
-  length: string;
-  // Lifted or expired (SourceBans), shown greyed out.
-  old: boolean;
-};
+// A banned player with all running bans (VAC first); at is the newest.
+type BanRow = { player: BanPlayer; bans: BanEntry[]; at: number | null; dateText: string; reason: string };
 
-// Sort keys of the columns; by default running bans first, newest first.
+// Sort keys of the columns; by default newest first.
 const banValues = {
   order: () => 0,
   name: (r: BanRow) => r.player.name,
-  type: (r: BanRow): string => r.kind,
+  type: (r: BanRow): string => r.bans.map((b) => b.kind).join(","),
   reason: (r: BanRow) => r.reason,
   date: (r: BanRow) => r.at,
   points: (r: BanRow) => Number(r.player.skill),
@@ -51,8 +45,8 @@ export default async function BansPage({ params, searchParams }: { params: Promi
   const { game } = await params;
   const sp = await searchParams;
   const { lang, t } = await getDict();
-  // The type sorts by its shown name.
-  const values = { ...banValues, type: (r: BanRow) => kindLabel(r.kind, t) };
+  // The type sorts by its shown names.
+  const values = { ...banValues, type: (r: BanRow) => r.bans.map((b) => kindLabel(b.kind, t)).join(", ") };
   const order = sortState(sp, values, "order");
   // Counter-Strike 2 logs no shots: no accuracy column.
   const [{ sourcebansUrl }, shots, steamBans] = await Promise.all([getSettings(), gameHasShots(game), steamBansAvailable()]);
@@ -64,19 +58,17 @@ export default async function BansPage({ params, searchParams }: { params: Promi
   ]);
   const recordPlayers = await getBanPlayers(records.map((r) => Number(r.playerId)));
 
-  const rows: BanRow[] = [
-    ...records.flatMap((r): BanRow[] => {
-      const player = recordPlayers.get(Number(r.playerId));
-      if (!player) return [];
-      const kind = (["vac", "sourcebans", "sourcemod", "amx", "engine"] as const).find((k) => k === r.ban_type) ?? "engine";
-      const len = Number(r.length_minutes);
-      return [{ player, kind, at: Number(r.banned_at) || null, dateText: "", reason: r.reason ?? "", length: len ? fmtMinutes(len) : t.banStatePermanent, old: false }];
-    }),
-    ...(sb?.rows ?? []),
-    ...vac,
-  ];
-  // Running bans first, newest first; without a date at the end.
-  rows.sort((a, b) => Number(a.old) - Number(b.old) || (b.at ?? 0) - (a.at ?? 0));
+  const recordRows = records.flatMap((r): Found[] => {
+    const player = recordPlayers.get(Number(r.playerId));
+    if (!player) return [];
+    const len = Number(r.length_minutes);
+    return [{ player, ban: { kind: banKind(r.ban_type), at: Number(r.banned_at) || null, dateText: "", reason: r.reason ?? "", length: len ? fmtBanMinutes(len) : t.banStatePermanent, until: Number(r.ends_at) || null } }];
+  });
+  // A player is listed once, with one badge per kind of ban (a SourceBans
+  // ban the collector recorded and the same ban on the list are one).
+  const rows: BanRow[] = mergeBans([...recordRows, ...(sb?.rows ?? []), ...vac], (p) => Number(p.playerId)).map((m) => ({ ...m, reason: mainReason(m.bans) }));
+  // Newest first; without a date at the end.
+  rows.sort((a, b) => (b.at ?? 0) - (a.at ?? 0));
   const sorted = sortRows(rows, values, order.sort, order.asc);
   const th = sortHeads(order, `/${game}/bans`, {});
 
@@ -91,7 +83,13 @@ export default async function BansPage({ params, searchParams }: { params: Promi
         ) : null
       }
     >
-      {sb?.state === "loading" ? <p className="muted">{t.sbLoading}</p> : sb?.state === "error" ? <p className="muted">{t.sbError}</p> : null}
+      {sb?.state === "loading" ? (
+        <p className="muted">{t.sbLoading}</p>
+      ) : sb?.state === "error" ? (
+        <p className="muted">{t.sbError}</p>
+      ) : sb?.state === "unknown" ? (
+        <p className="muted">{t.sbUnknown}</p>
+      ) : null}
       {rows.length ? (
         <TableWrap>
           <table>
@@ -99,7 +97,7 @@ export default async function BansPage({ params, searchParams }: { params: Promi
               <tr>
                 <th className="num">#</th>
                 {th(t.name, "name", "")}
-                {th(t.banType, "type", "")}
+                {th(t.banType, "type", "ban-type-col")}
                 {th(t.banReason, "reason", "hide-sm")}
                 {th(t.banDate, "date", "")}
                 {th(t.points, "points")}
@@ -110,14 +108,17 @@ export default async function BansPage({ params, searchParams }: { params: Promi
             </thead>
             <tbody>
               {sorted.slice(0, MAX_ROWS).map((r, i) => (
-                <tr key={`${r.kind}-${r.player.playerId}-${i}`} className={r.old ? "ban-old" : undefined}>
+                <tr key={r.player.playerId}>
                   <td className="rank">{fmtNum(i + 1, lang)}</td>
                   <td>
+                    <BanMark kind={markKind(r.bans)} text={r.reason ? `${t.banned}: ${r.reason}` : t.banned} />
                     <PlayerLink game={game} id={r.player.playerId} name={r.player.name} flag={r.player.flag ? { flag: r.player.flag, country: r.player.country ?? "" } : null} />
                   </td>
-                  <td>
-                    <span className={`ban-type ban-${r.kind}${r.old ? " ban-lifted" : ""}`} title={[r.length, r.old ? t.banStateExpired : ""].filter(Boolean).join(" · ") || undefined}>
-                      {kindLabel(r.kind, t)}
+                  <td className="ban-type-col">
+                    <span className="ban-badges">
+                      {r.bans.map((b) => (
+                        <BanBadge key={b.kind} kind={b.kind} label={kindLabel(b.kind, t)} text={banTip(b, t, lang)} />
+                      ))}
                     </span>
                   </td>
                   <td className="hide-sm">{r.reason}</td>
@@ -145,35 +146,37 @@ export default async function BansPage({ params, searchParams }: { params: Promi
   );
 }
 
-function kindLabel(k: Kind, t: Dict): string {
+function kindLabel(k: BanEntry["kind"], t: Dict): string {
   return { vac: "VAC", sourcebans: "SourceBans", sourcemod: "SourceMod", amx: "AMX", engine: t.banTypeServer }[k];
 }
 
-function fmtMinutes(m: number): string {
-  if (m % 1440 === 0) return `${m / 1440} d`;
-  if (m % 60 === 0) return `${m / 60} h`;
-  return `${m} min`;
+// The tooltip of a badge: source, reason, date and length or end.
+function banTip(b: BanEntry, t: Dict, lang: Lang): string {
+  const date = b.at ? fmtDateTime(b.at, lang) : b.dateText;
+  const end = b.until ? fill(t.banUntil, { x: fmtDateTime(b.until, lang) }) : b.length;
+  return [kindLabel(b.kind, t), b.reason, date ? `${t.banDate} ${date}` : "", end].filter(Boolean).join(" · ");
 }
 
 async function sbRows(game: string, base: string) {
   const list = await getSourcebans(base);
-  if (!list) return { state: "loading" as const, rows: [] as BanRow[] };
+  if (!list) return { state: "loading" as const, rows: [] as Found[] };
   const players = await getPlayersBySteam(
     game,
     list.bans.map((b) => b.steam64),
   );
+  // Expired and lifted bans are not shown: the player is no longer banned.
   const old: Record<SbState, boolean> = { permanent: false, active: false, expired: true, unbanned: true };
-  const rows = list.bans.flatMap((ban): BanRow[] => {
+  const rows = list.bans.flatMap((ban): Found[] => {
     const player = players.get(ban.steam64);
-    if (!player) return [];
+    if (!player || old[ban.state]) return [];
     // SB++ 2026 gives an ISO time; the classic list a text in its own format.
     const t = /^\d{4}-\d\d-\d\dT/.test(ban.date) ? Date.parse(ban.date) : NaN;
-    return [{ player, kind: "sourcebans", at: Number.isNaN(t) ? null : Math.floor(t / 1000), dateText: ban.date, reason: ban.reason, length: ban.length, old: old[ban.state] }];
+    return [{ player, ban: { kind: "sourcebans", at: Number.isNaN(t) ? null : Math.floor(t / 1000), dateText: ban.date, reason: ban.reason, length: ban.length, until: null } }];
   });
-  return { state: list.ok ? ("ok" as const) : ("error" as const), rows };
+  return { state: !list.ok ? ("error" as const) : list.unknown ? ("unknown" as const) : ("ok" as const), rows };
 }
 
-async function vacRows(game: string): Promise<BanRow[]> {
+async function vacRows(game: string): Promise<Found[]> {
   const players = await getRecentPlayers(game, VAC_PLAYERS);
   const bySteam = new Map(
     players.flatMap((p) => {
@@ -183,10 +186,10 @@ async function vacRows(game: string): Promise<BanRow[]> {
   );
   const bans = await getSteamBans([...bySteam.keys()]);
   const now = nowUnix();
-  return [...bans].flatMap(([id, b]): BanRow[] => {
+  return [...bans].flatMap(([id, b]): Found[] => {
     const player = bySteam.get(id);
     if (!player || (b.vac <= 0 && b.game <= 0)) return [];
     // Steam gives the days since the last ban, so the date is to the day.
-    return [{ player, kind: "vac", at: now - b.days * 86400, dateText: "", reason: b.vac ? `${b.vac}× VAC` : `${b.game}× Game Ban`, length: "", old: false }];
+    return [{ player, ban: { kind: "vac", at: now - b.days * 86400, dateText: "", reason: b.vac ? `${b.vac}× VAC` : `${b.game}× Game Ban`, length: "", until: null } }];
   });
 }

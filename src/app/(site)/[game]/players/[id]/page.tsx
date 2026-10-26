@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { Bar, Empty, Flag, PctBar, PlayerLink, Section, TableWrap } from "@/components/ui";
+import { BanBadge, BanMark, Bar, Empty, Flag, PctBar, PlayerLink, Section, TableWrap } from "@/components/ui";
 import { SortableTable } from "@/components/sortable-table";
 import { RankBadge, Ribbon, RibbonLevel, rankName, ribbonClassName } from "@/components/badges";
 import { Spark } from "@/components/graphics";
@@ -24,6 +24,8 @@ import { bannerUrl, statsOrigin } from "@/lib/site-url";
 import { shareMetadata } from "@/lib/share-meta";
 import { imageStyles } from "@/lib/image-theme";
 import { getSettings } from "@/lib/settings";
+import { peekSourcebans } from "@/lib/sourcebans";
+import { banKind, mainReason, markKind, mergeBans, type BanEntry } from "@/lib/ban-merge";
 import { placeHref } from "@/components/ranking";
 import {
   getChat,
@@ -33,6 +35,7 @@ import {
   type PlayerDetail,
   getPlayerActions,
   getPlayerAwards,
+  getPlayerBans,
   getPlayerFlags,
   noProfile,
   getPlayerHistory,
@@ -45,7 +48,7 @@ import {
   getPlayerWeapons,
   gameHasShots,
 } from "@/lib/data";
-import { activity, fmtAge, fmtDateTime, fmtDuration, fmtNum, fmtPct, kpd, ratio, steamIds } from "@/lib/format";
+import { activity, fmtAge, fmtBanMinutes, fmtDateTime, fmtDuration, fmtNum, fmtPct, kpd, ratio, steamIds } from "@/lib/format";
 import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
 
 type Props = { params: Promise<{ game: string; id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -58,7 +61,7 @@ function playerId(raw: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const id = playerId((await params).id);
   const p = id ? await getPlayer(id) : undefined;
-  if (!p || (await noProfile(p))) return { title: `#${id}` };
+  if (!p || (await noProfile(p, true))) return { title: `#${id}` };
   const [{ lang, t }, { siteName }, position, image] = await Promise.all([
     getDict(),
     getSettings(),
@@ -78,7 +81,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const id = playerId(raw);
   if (!id) notFound();
   const p = await getPlayer(id);
-  if (!p || (await noProfile(p))) notFound();
+  if (!p || (await noProfile(p, true))) notFound();
   if (p.game !== game) redirect(`/${p.game}/players/${id}`);
 
   const { lang, t } = await getDict();
@@ -212,7 +215,8 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const totalRibbonWins = ribbons.reduce((n, r) => n + r.wins, 0);
 
   const stars = (await hallOfFameShown(game)) ? await getPlayerStars(game, id) : null;
-  const profile = { game, id, p, ids, isBot, location, age, fav, stars, t, lang };
+  const bans = await profileBans(p, ids?.steam64 ?? null, settings.sourcebansUrl, t);
+  const profile = { game, id, p, ids, isBot, location, age, fav, stars, bans, t, lang };
 
   return (
     <>
@@ -327,7 +331,8 @@ export default async function PlayerPage({ params, searchParams }: Props) {
           </table>
           {/* The history links and the note on the starred values share one line. */}
           <div className="summary-foot">
-            <PlayerLinks game={game} id={id} name={p.name} t={t} />
+            {/* A banned player's history pages stay closed (only the profile shows the ban). */}
+            {p.hideranking ? null : <PlayerLinks game={game} id={id} name={p.name} t={t} />}
             <p className="footnote">{t.last14}</p>
           </div>
           </div>
@@ -651,7 +656,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
         {killers.length ? <OpponentTable title={t.killers} rows={killers} game={game} t={t} lang={lang} flags={flags} /> : null}
       </div>
 
-      <PlayerEvents game={game} playerId={id} t={t} lang={lang} />
+      {p.hideranking ? null : <PlayerEvents game={game} playerId={id} t={t} lang={lang} />}
 
       <div className="grid-2">
         {names.length ? (
@@ -794,9 +799,44 @@ type ProfileProps = {
   age: string | null;
   fav: { code: string; name: string } | undefined;
   stars: StarCount | null;
+  bans: BanEntry[];
   t: Dict;
   lang: Lang;
 };
+
+// The running bans of the player shown in the profile: the collector's
+// records (hlstats_Players_Bans), the SourceBans list (as on the bans page,
+// read every 30 minutes; not waited for), and for a player hidden as banned
+// without either a server ban without details (a VAC kick or a permanent
+// server ban). The VAC ban from Steam is added in ProfileTable. Expired and
+// lifted bans are none.
+async function profileBans(p: PlayerDetail, steam64: string | null, sourcebansUrl: string, t: Dict): Promise<BanEntry[]> {
+  const out: BanEntry[] = [];
+  for (const rec of await getPlayerBans(p.playerId)) {
+    const len = Number(rec.length_minutes);
+    out.push({ kind: banKind(rec.ban_type), reason: rec.reason ?? "", at: Number(rec.banned_at) || null, dateText: "", length: len ? fmtBanMinutes(len) : t.banStatePermanent, until: Number(rec.ends_at) || null });
+  }
+  if (sourcebansUrl && steam64 && !out.some((b) => b.kind === "sourcebans")) {
+    const sb = peekSourcebans(sourcebansUrl)?.bans.find((b) => b.steam64 === steam64 && (b.state === "permanent" || b.state === "active"));
+    if (sb) {
+      const d = /^\d{4}-\d\d-\d\dT/.test(sb.date) ? Date.parse(sb.date) : NaN;
+      out.push({ kind: "sourcebans", reason: sb.reason, at: Number.isNaN(d) ? null : Math.floor(d / 1000), dateText: sb.date, length: sb.state === "permanent" ? t.banStatePermanent : sb.length, until: null });
+    }
+  }
+  if (!out.length && Number(p.hideranking) === 2) out.push({ kind: "engine", reason: "", at: null, dateText: "", length: "", until: null });
+  return out;
+}
+
+function banKindLabel(kind: string, t: Dict): string {
+  return ({ vac: "VAC", sourcebans: "SourceBans", sourcemod: "SourceMod", amx: "AMX" } as Record<string, string>)[kind] ?? t.banTypeServer;
+}
+
+// The tooltip of a ban badge: source, reason, date and length or end.
+function banTip(b: BanEntry, t: Dict, lang: Lang): string {
+  const date = b.at ? fmtDateTime(b.at, lang) : b.dateText;
+  const end = b.until ? fill(t.banUntil, { x: fmtDateTime(b.until, lang) }) : b.length;
+  return [banKindLabel(b.kind, t), b.reason, date ? `${t.banDate} ${date}` : "", end].filter(Boolean).join(" · ");
+}
 
 // The profile table with the Steam data, asked here so the rest of the page
 // does not wait for Steam (up to five seconds when it is slow or down).
@@ -806,7 +846,13 @@ async function SteamProfile({ steam64, ...rest }: ProfileProps & { steam64: stri
 }
 
 // pending: Steam has not answered yet (the fallback while it is asked).
-function ProfileTable({ steam, pending = false, game, id, p, ids, isBot, location, age, fav, stars, t, lang }: ProfileProps & { steam: SteamProfileData | null; pending?: boolean }) {
+function ProfileTable({ steam, pending = false, game, id, p, ids, isBot, location, age, fav, stars, bans: found, t, lang }: ProfileProps & { steam: SteamProfileData | null; pending?: boolean }) {
+  // With the VAC ban from Steam: one badge per kind, VAC first.
+  const vac: BanEntry[] = steam?.vacBanned ? [{ kind: "vac", reason: t.vacBanned, at: null, dateText: "", length: "", until: null }] : [];
+  const bans = mergeBans([...found, ...vac].map((ban) => ({ player: 0, ban })), () => 0)[0]?.bans ?? [];
+  const main = bans.filter((b) => b.kind !== "vac").sort((a, b) => (b.at ?? 0) - (a.at ?? 0))[0];
+  const reason = mainReason(bans);
+  const banText = bans.length ? (reason ? `${t.banned}: ${reason}` : t.banned) : "";
   // As on gameME: the name runs across the full width, the avatar sits in
   // its own framed box beside the seven rows from Clan to Steam name (they
   // are always there, with or without Steam data) and the rows below use
@@ -835,6 +881,7 @@ function ProfileTable({ steam, pending = false, game, id, p, ids, isBot, locatio
           <td className="stats-key">{t.name}:</td>
           <td colSpan={2}>
             <b>
+              {bans.length ? <BanMark kind={markKind(bans)} text={banText} /> : null}
               <Flag code={p.flag} title={p.country} />
               {p.name ?? `#${id}`}
             </b>
@@ -864,7 +911,40 @@ function ProfileTable({ steam, pending = false, game, id, p, ids, isBot, locatio
         />
         <Row k={t.steamName} v={steam?.name ?? <i>{pending ? "…" : t.notSpecified}</i>} />
         {steam?.memberSince ? <Row k={t.memberSince} v={steam.memberSince} span /> : null}
-        {steam ? <Row k="VAC" v={steam.vacBanned ? <span className="bad">{t.vacBanned}</span> : <span className="good">{t.vacClean}</span>} span /> : null}
+        {bans.length || steam ? (
+          <Row
+            k={t.bans}
+            v={
+              <span className="ban-info">
+                {bans.length ? (
+                  <>
+                    <BanMark kind={markKind(bans)} text={banText} />
+                    <span className="ban-badges">
+                      {bans.map((b) => (
+                        <BanBadge key={b.kind} kind={b.kind} label={banKindLabel(b.kind, t)} text={banTip(b, t, lang)} />
+                      ))}
+                    </span>{" "}
+                    <b>{t.banned}</b>
+                    {main ? (
+                      <>
+                        {main.reason ? ` · ${main.reason}` : ""}
+                        {main.at ? ` · ${t.banDate} ${fmtDateTime(main.at, lang)}` : main.dateText ? ` · ${t.banDate} ${main.dateText}` : ""}
+                        {main.until ? ` · ${fill(t.banUntil, { x: fmtDateTime(main.until, lang) })}` : main.length ? ` · ${main.length}` : ""}
+                      </>
+                    ) : (
+                      ` · ${t.vacBanned}`
+                    )}
+                  </>
+                ) : (
+                  <>
+                    VAC: <span className="good">{t.vacClean}</span>
+                  </>
+                )}
+              </span>
+            }
+            span
+          />
+        ) : null}
         <Row k={t.lastConnect} v={`${age ?? fmtDateTime(p.last_event, lang)} (${fmtNum(p.total_connects, lang)} ${t.connections})`} span />
         <Row k={t.firstConnect} v={fmtDateTime(p.first_connect, lang)} span />
         <Row k={t.playTime} v={fmtDuration(p.connection_time)} span />

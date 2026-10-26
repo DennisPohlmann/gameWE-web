@@ -3,16 +3,17 @@ import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import { env } from "./env";
 import { steamIds } from "./format";
+import { hasSteamIds, parseBans as parseRaw, type SbState } from "./sourcebans-parse";
 
 // Public ban list of a SourceBans / SourceBans++ installation, read from its
 // web pages (index.php?p=banlist&page=N), since SourceBans has no public API.
-// Understands the classic template (SourceBans 1.4 to SB++ 1.7) and the
-// SB++ 2026 one. The address is set by an admin; it must be a public
+// Understands the classic template (SourceBans 1.4 to SB++ 1.7), the
+// SB++ 1.8 default theme and the SB++ 2026 one (sourcebans-parse.ts). The address is set by an admin; it must be a public
 // http(s) address (no localhost or LAN, unless SOURCEBANS_ALLOW_PRIVATE=1),
 // the pages are read one after another with a pause, at most MAX_PAGES of
 // them, and the result is kept for half an hour.
 
-export type SbState = "permanent" | "active" | "expired" | "unbanned";
+export type { SbState };
 
 export type SbBan = {
   steam64: string;
@@ -45,11 +46,13 @@ export function sourcebansBase(v: string | undefined): string {
   }
 }
 
-let cache: { base: string; at: number; ok: boolean; bans: SbBan[] } | null = null;
+// unknown: the first page shows Steam IDs but no ban could be read from it
+// (a template this code does not know), so an empty list means nothing.
+let cache: { base: string; at: number; ok: boolean; unknown: boolean; bans: SbBan[] } | null = null;
 let inflight: Promise<void> | null = null;
 
 // All bans on the list (newest first); null while the first load runs.
-export async function getSourcebans(base: string): Promise<{ bans: SbBan[]; ok: boolean } | null> {
+export async function getSourcebans(base: string): Promise<{ bans: SbBan[]; ok: boolean; unknown: boolean } | null> {
   if (!base) return null;
   const fresh = cache && cache.base === base && Date.now() - cache.at < (cache.ok ? TTL : RETRY);
   if (!fresh) {
@@ -58,18 +61,31 @@ export async function getSourcebans(base: string): Promise<{ bans: SbBan[]; ok: 
     // a few seconds, later ones refresh in the background.
     if (!cache || cache.base !== base) await Promise.race([inflight, new Promise((r) => setTimeout(r, 8000))]);
   }
-  return cache && cache.base === base ? { bans: cache.bans, ok: cache.ok } : null;
+  return cache && cache.base === base ? { bans: cache.bans, ok: cache.ok, unknown: cache.unknown } : null;
+}
+
+// The bans read last, without waiting (null before the first load, which
+// this starts); for pages that must not wait for the ban list.
+export function peekSourcebans(base: string): { bans: SbBan[] } | null {
+  if (!base) return null;
+  void getSourcebans(base).catch(() => undefined);
+  return cache && cache.base === base ? { bans: cache.bans } : null;
 }
 
 async function load(base: string) {
   const bans: SbBan[] = [];
   const seen = new Set<string>();
   let ok = true;
+  let unknown = false;
   try {
     await checkHost(new URL(base).hostname);
     for (let page = 1; page <= MAX_PAGES; page++) {
       const html = await fetchPage(`${base}index.php?p=banlist&page=${page}`);
       const found = parseBans(html);
+      if (page === 1 && !found.length && hasSteamIds(html)) {
+        unknown = true;
+        console.warn(`SourceBans: ${base}index.php?p=banlist shows Steam IDs, but no ban could be read (unknown template)`);
+      }
       let added = 0;
       for (const b of found) {
         const key = `${b.steam64}|${b.date}|${b.reason}`;
@@ -88,7 +104,7 @@ async function load(base: string) {
   }
   // A failed refresh keeps the bans read before.
   if (!ok && cache?.base === base && cache.bans.length) cache = { ...cache, at: Date.now(), ok: false };
-  else cache = { base, at: Date.now(), ok, bans };
+  else cache = { base, at: Date.now(), ok, unknown, bans };
 }
 
 async function fetchPage(url: string): Promise<string> {
@@ -147,77 +163,11 @@ export function privateIp(ip: string): boolean {
 
 // ---------------------------------------------------------------- parsing
 
+// The bans of one page with their Steam IDs converted; bans without a valid
+// Steam ID are left out.
 export function parseBans(html: string): SbBan[] {
-  return html.includes('class="ban-row') ? parseNew(html) : parseClassic(html);
-}
-
-// SB++ 2026: one <tr class="ban-row ..." data-state="..."> per ban.
-function parseNew(html: string): SbBan[] {
-  const out: SbBan[] = [];
-  for (const chunk of html.split('<tr class="ban-row').slice(1)) {
-    const row = chunk.split(/<tr class="ban-row|<\/tbody>/)[0];
-    const ids = steamOf(row);
-    if (!ids) continue;
-    const state = /data-state="([a-z]+)"/.exec(row)?.[1] ?? "";
-    const reasonTd = /<td class="text-muted truncate"[^>]*?(?:title="([^"]*)")?[^>]*>([\s\S]*?)<\/td>/.exec(row);
-    out.push({
-      ...ids,
-      name: text(/ban-player-cell__name"[^>]*>([\s\S]*?)<\/a>/.exec(row)?.[1]),
-      reason: reasonTd ? text(reasonTd[1] ?? reasonTd[2].split("<div")[0]) : "",
-      length: text(/<td class="col-length[^"]*"[^>]*>([\s\S]*?)<\/td>/.exec(row)?.[1]),
-      date: /<time datetime="([^"]+)"/.exec(row)?.[1] ?? "",
-      state: state === "permanent" || state === "active" || state === "expired" || state === "unbanned" ? state : "active",
-    });
-  }
-  return out;
-}
-
-// Classic template: <tr class="opener ..."> with the summary, followed by a
-// sliding panel with "Steam ID", "Invoked on", "Banlength", "Reason" rows.
-function parseClassic(html: string): SbBan[] {
-  const out: SbBan[] = [];
-  for (const chunk of html.split(/<tr class="opener/).slice(1)) {
-    const ids = steamOf(chunk);
-    if (!ids) continue;
-    const field = (label: string) =>
-      text(new RegExp(`>\\s*${label}\\s*</td>\\s*<td[^>]*>([\\s\\S]*?)</td>`).exec(chunk)?.[1]);
-    const cls = /class="listtable_1_(permanent|banned|unbanned)"[^>]*>([\s\S]*?)<\/td>/.exec(chunk);
-    const length = field("Banlength") || text(cls?.[2]);
-    const state: SbState =
-      cls?.[1] === "permanent"
-        ? "permanent"
-        : cls?.[1] === "unbanned"
-          ? /expired/i.test(length) ? "expired" : "unbanned"
-          : "active";
-    out.push({
-      ...ids,
-      name: field("Player").replace(/\s+/g, " "),
-      reason: field("Reason"),
-      length: length.replace(/\s*\((?:Unbanned|Expired|Deleted)\)\s*$/i, ""),
-      date: field("Invoked on"),
-      state,
-    });
-  }
-  return out;
-}
-
-function steamOf(s: string) {
-  const m = /STEAM_[0-5]:([01]):(\d{1,10})/.exec(s) ?? /steamcommunity\.com\/profiles\/(7656119\d{10})/.exec(s);
-  const ids = m ? steamIds(m[0].startsWith("STEAM") ? `${m[1]}:${m[2]}` : m[1]) : null;
-  return ids ? { steam64: ids.steam64, steam2: ids.steam2 } : null;
-}
-
-function text(s: string | undefined): string {
-  return (s ?? "")
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#0?39;|&apos;/g, "'")
-    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n) < 0x110000 ? Number(n) : 32))
-    .replace(/&amp;/g, "&")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 300);
+  return parseRaw(html).flatMap(({ steam, ...b }) => {
+    const ids = steamIds(steam);
+    return ids ? [{ ...b, steam64: ids.steam64, steam2: ids.steam2 }] : [];
+  });
 }

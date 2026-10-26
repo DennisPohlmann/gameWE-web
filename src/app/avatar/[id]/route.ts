@@ -8,7 +8,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const m = /^\d{1,10}$/.exec((await params).id);
   const found = m ? await getPlayer(Number(m[0])) : undefined;
   // Hidden players (and bots without profiles) have no avatar either.
-  const p = found && !(await noProfile(found)) ? found : undefined;
+  const p = found && !(await noProfile(found, true)) ? found : undefined;
   const ids = steamIds(p?.uniqueId);
   const steam = ids ? await getSteamProfile(ids.steam64) : null;
   const url = steam?.avatarSmall ?? steam?.avatar;

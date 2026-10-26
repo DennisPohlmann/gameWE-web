@@ -1757,9 +1757,13 @@ export const isBotId = (uniqueId: string | null | undefined) => (uniqueId ?? "")
 // none, and a hidden player (hideranking <> 0; hidden.ts) always. Profile,
 // sessions, events, awards, chat, events feed, signature, banner and avatar
 // all ask this.
-export async function noProfile(p: { uniqueId: string | null; hideranking?: number | null }) {
+// With banned, a player hidden as banned (hideranking 2) keeps the profile
+// page (with the ban notice, not indexed); the public API and the lists
+// still leave them out. Hidden by an admin (1) or by the player (3): none.
+export async function noProfile(p: { uniqueId: string | null; hideranking?: number | null }, banned = false) {
   if (isBotId(p.uniqueId)) return !(await botProfiles());
-  return Number(p.hideranking ?? 0) !== 0;
+  const h = Number(p.hideranking ?? 0);
+  return h !== 0 && !(banned && h === 2);
 }
 
 // The bots among the ids that get no link (empty while bots have profiles).
@@ -1963,22 +1967,25 @@ export type BanPlayer = {
   hideranking: number;
 };
 
-const banPlayerSql = `SELECT p.playerId, d.lastName AS name, l.flag, l.country, u.uniqueId,
+// The players the bans page may show: ranked ones and those hidden as
+// banned (hideranking 2), not those hidden by an admin or by themselves.
+const bannedPlayerSql = `SELECT p.playerId, d.lastName AS name, l.flag, l.country, u.uniqueId,
     p.skill, p.kills, p.deaths, p.headshots, p.shots, p.hits, p.last_event, p.hideranking
   FROM hlstats_PlayerUniqueIds u
-  JOIN hlstats_Players p ON p.playerId = u.playerId AND p.hideranking = 0
+  JOIN hlstats_Players p ON p.playerId = u.playerId AND p.hideranking IN (0, 2)
   LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
   LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id`;
 
-// Ban records with type, date and reason (hlstats_Players_Bans, collector
-// 1.7). Empty when the table does not exist yet.
-export type BanRecord = { playerId: number; ban_type: string; length_minutes: number; reason: string | null; banned_at: number };
+// Running bans the collector recorded (hlstats_Players_Bans,
+// features.sourcebans, collector migration "player-bans"). Empty when the table does
+// not exist yet; ended bans are not shown.
+export type BanRecord = { playerId: number; ban_type: string; length_minutes: number; reason: string | null; banned_at: number; ends_at: number };
 
 export async function getBanRecords(game: string, limit: number): Promise<BanRecord[]> {
   try {
     return await query<BanRecord>(
-      `SELECT b.player_id AS playerId, b.ban_type, b.length_minutes, b.reason, b.banned_at
-       FROM hlstats_Players_Bans b WHERE b.game = ? ORDER BY b.banned_at DESC LIMIT ?`,
+      `SELECT b.player_id AS playerId, b.ban_type, b.length_minutes, b.reason, b.banned_at, b.ends_at
+       FROM hlstats_Players_Bans b WHERE b.game = ? AND b.active = 1 ORDER BY b.banned_at DESC LIMIT ?`,
       [game, limit],
     );
   } catch {
@@ -1986,17 +1993,32 @@ export async function getBanRecords(game: string, limit: number): Promise<BanRec
   }
 }
 
-// The players of the given ids, as shown on the bans page.
+// The running bans of a player recorded by the collector, newest first.
+export async function getPlayerBans(playerId: number): Promise<BanRecord[]> {
+  try {
+    return await query<BanRecord>(
+      `SELECT b.player_id AS playerId, b.ban_type, b.length_minutes, b.reason, b.banned_at, b.ends_at
+       FROM hlstats_Players_Bans b WHERE b.player_id = ? AND b.active = 1 ORDER BY b.banned_at DESC LIMIT 10`,
+      [playerId],
+    );
+  } catch {
+    return [];
+  }
+}
+
+// The players of the given ids, as shown on the bans page (also those
+// hidden as banned).
 export async function getBanPlayers(ids: number[]): Promise<Map<number, BanPlayer>> {
   const uniq = [...new Set(ids.filter((x) => x > 0))];
   if (!uniq.length) return new Map();
-  const rows = await query<BanPlayer>(`${banPlayerSql} WHERE p.playerId IN (?)`, [uniq]);
+  const rows = await query<BanPlayer>(`${bannedPlayerSql} WHERE p.playerId IN (?)`, [uniq]);
   return new Map(rows.map((r) => [Number(r.playerId), r]));
 }
 
-// The most recently active ranked players, for the VAC check.
+// The most recently active players of the bans page (ranked or banned in
+// the ranking), for the VAC check.
 export function getRecentPlayers(game: string, limit: number) {
-  return query<BanPlayer>(`${banPlayerSql} WHERE p.game = ? ORDER BY p.last_event DESC LIMIT ?`, [game, limit]);
+  return query<BanPlayer>(`${bannedPlayerSql} WHERE p.game = ? ORDER BY p.last_event DESC LIMIT ?`, [game, limit]);
 }
 
 // Ranked players of a game by SteamID64. The collector stores the ID as
@@ -2014,7 +2036,7 @@ export async function getPlayersBySteam(game: string, steam64s: string[]): Promi
   const out = new Map<string, BanPlayer>();
   const all = [...forms.keys()];
   for (let i = 0; i < all.length; i += 1000) {
-    const rows = await query<BanPlayer>(`${banPlayerSql} WHERE u.game = ? AND u.uniqueId IN (?)`, [game, all.slice(i, i + 1000)]);
+    const rows = await query<BanPlayer>(`${bannedPlayerSql} WHERE u.game = ? AND u.uniqueId IN (?)`, [game, all.slice(i, i + 1000)]);
     for (const r of rows) {
       const s = forms.get(r.uniqueId);
       if (s) out.set(s, r);
