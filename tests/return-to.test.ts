@@ -2,7 +2,7 @@
 // its known parameters comes back. Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { addParams, listHref, safeReturnTo, withReturnTo } from "../src/lib/return-to.ts";
+import { addParams, backPath, listHref, safeReturnTo, withReturnTo } from "../src/lib/return-to.ts";
 
 test("the list keeps ranking, search, page and rows", () => {
   const list = listHref("awards", { game: "css", q: "head shot", page: 3, rows: 100 });
@@ -52,4 +52,24 @@ test("the list keeps the state filter", () => {
   const list = listHref("players", { game: "css", status: "banned" });
   assert.equal(list, "/admin/players?game=css&status=banned");
   assert.equal(safeReturnTo(list, "players"), list);
+});
+
+test("back to the referring page: same host, path and query only", () => {
+  const host = "stats.example.org";
+  assert.equal(backPath("https://stats.example.org/new/css/players?x=1", host, "/new/"), "/new/css/players?x=1");
+  assert.equal(backPath("http://stats.example.org/new/help", host, "/new/"), "/new/help");
+  // Absolute URLs of other hosts, other schemes and junk give the start page.
+  assert.equal(backPath("https://evil.example/phish", host, "/new/"), "/new/");
+  assert.equal(backPath("https://stats.example.org.evil.example/x", host, "/new/"), "/new/");
+  assert.equal(backPath("https://stats.example.org:8443/x", host, "/new/"), "/new/");
+  assert.equal(backPath("javascript:alert(1)", host, "/new/"), "/new/");
+  assert.equal(backPath("ftp://stats.example.org/x", host, "/new/"), "/new/");
+  assert.equal(backPath("not a url", host, "/"), "/");
+  assert.equal(backPath(null, host, "/"), "/");
+  assert.equal(backPath("https://stats.example.org/x", null, "/"), "/");
+  // A path that a browser would read as another host: //host and /\host.
+  assert.equal(backPath("https://stats.example.org//evil.example/x", host, "/"), "/");
+  assert.equal(backPath("https://stats.example.org/\\evil.example/x", host, "/"), "/");
+  assert.equal(backPath("https://stats.example.org/%5C/evil.example", host, "/"), "/%5C/evil.example");
+  assert.equal(backPath("https://stats.example.org/%2F/evil.example", host, "/"), "/%2F/evil.example");
 });

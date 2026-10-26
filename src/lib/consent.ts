@@ -64,20 +64,6 @@ export function externalImage(consent: Consent, url: string | null | undefined):
   return consent.steam && url ? url : null;
 }
 
-// Where to go back to after saving: the page the form was on, same host
-// only, as path and query; else the site's start page. A path starting
-// with // or /\ would be read as another host ("//evil.example/x").
-export function backPath(referer: string | null, host: string | null, fallback: string): string {
-  if (!referer || !host) return fallback;
-  try {
-    const u = new URL(referer);
-    if (u.host !== host || !/^https?:$/.test(u.protocol) || /^\/[\/\\]/.test(u.pathname)) return fallback;
-    return u.pathname + u.search;
-  } catch {
-    return fallback;
-  }
-}
-
 // A POST from another site must not change the choice. Browsers send
 // Sec-Fetch-Site and Origin on a form POST; Origin is "null" under a
 // no-referrer policy, so Sec-Fetch-Site decides first. Without either the

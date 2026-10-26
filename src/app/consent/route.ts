@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { cookieSecure } from "@/lib/auth";
 import { basePath } from "@/lib/base-path";
-import { CONSENT_COOKIE, CONSENT_MAX_AGE, backPath, chosenCategories, parseConsent, sameOrigin, serializeConsent } from "@/lib/consent";
+import { CONSENT_COOKIE, CONSENT_MAX_AGE, chosenCategories, parseConsent, sameOrigin, serializeConsent } from "@/lib/consent";
+import { backPath } from "@/lib/return-to";
 
 // POST /consent: stores the visitor's choice from the cookie banner, the
 // settings dialog, the privacy page or a placeholder's "Always allow" in the

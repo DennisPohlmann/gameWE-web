@@ -6,7 +6,6 @@ import { test } from "node:test";
 import {
   CONSENT_VERSION,
   NO_CONSENT,
-  backPath,
   chosenCategories,
   externalImage,
   parseConsent,
@@ -60,12 +59,3 @@ test("the choice is only taken from the site itself", () => {
   assert.equal(sameOrigin("https://stats.example.org", "stats.example.org", "same-site"), false);
 });
 
-test("back to the page the form was on, same host only", () => {
-  assert.equal(backPath("https://stats.example.org/new/css/players?x=1", "stats.example.org", "/new/"), "/new/css/players?x=1");
-  assert.equal(backPath("https://evil.example/phish", "stats.example.org", "/new/"), "/new/");
-  assert.equal(backPath("javascript:alert(1)", "stats.example.org", "/new/"), "/new/");
-  assert.equal(backPath(null, "stats.example.org", "/"), "/");
-  assert.equal(backPath("not a url", "stats.example.org", "/"), "/");
-  assert.equal(backPath("https://stats.example.org//evil.example/x", "stats.example.org", "/"), "/");
-  assert.equal(backPath("https://stats.example.org/%2F/evil.example", "stats.example.org", "/"), "/%2F/evil.example");
-});

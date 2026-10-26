@@ -23,6 +23,21 @@ export function listHref(entity: string, params: Partial<Record<(typeof LIST_PAR
   return addParams(`/admin/${entity}`, params);
 }
 
+// The page a visitor came from (Referer), to go back to after a GET or
+// POST that only sets a cookie (language switch, cookie consent): same
+// host only, as path and query; else `fallback` (the site's start page). A path starting
+// with // or /\ would be read as another host ("//evil.example/x").
+export function backPath(referer: string | null, host: string | null, fallback: string): string {
+  if (!referer || !host) return fallback;
+  try {
+    const u = new URL(referer);
+    if (u.host !== host || !/^https?:$/.test(u.protocol) || /^\/[\/\\]/.test(u.pathname)) return fallback;
+    return u.pathname + u.search;
+  } catch {
+    return fallback;
+  }
+}
+
 // The validated list URL from a returnTo value; the plain list otherwise.
 export function safeReturnTo(raw: unknown, entity: string): string {
   const plain = `/admin/${entity}`;
