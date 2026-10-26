@@ -63,7 +63,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
           <AreaTabs t={text} className="adm-areas" />
         </Suspense>
         <span className="adm-spacer" />
-        <a className="adm-tool adm-hide-m" href={`${basePath}/`}>
+        <a className="adm-tool adm-hide-m" href={`${basePath}/`} target="_blank" rel="noopener">
           <Icon name="external" />
           {a.toSite}
         </a>
@@ -84,7 +84,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
               <Icon name="lock" />
               {u.myAccount}
             </Link>
-            <a href={`${basePath}/`}>
+            <a href={`${basePath}/`} target="_blank" rel="noopener">
               <Icon name="external" />
               {a.toSite}
             </a>

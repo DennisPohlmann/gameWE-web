@@ -2,7 +2,10 @@
    public pages (those are in app/(site)/globals.css and templates/). Light
    and dark: data-theme on <html> (user menu), otherwise the device setting.
    Phones (< 900px): the side menu becomes a drawer (#adm-nav), a bottom bar
-   holds the three areas, tables turn into cards. */
+   holds the three areas, tables turn into cards. Grid tracks are minmax(0, …)
+   and the page clips sideways: one element wider than the phone must not make
+   the page wider (iOS Safari then lays the whole page out at that width and
+   cuts off the right side, top bar included). */
 
 :root {
   --bg: #f4f5f7;
@@ -362,14 +365,15 @@ select { padding-right: 28px; }
 
 @media (max-width: 1100px) {
   .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .two { grid-template-columns: 1fr; }
+  .two { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 900px) {
   .adm-top { height: 52px; padding: 0 10px; gap: 8px; }
   .adm-icon-btn { display: inline-grid; place-items: center; }
   .adm-areas, .adm-hide-m, .adm-brand small { display: none; }
-  .adm-shell { grid-template-columns: 1fr; min-height: calc(100vh - 52px); }
+  .adm-shell { grid-template-columns: minmax(0, 1fr); min-height: calc(100vh - 52px); overflow-x: clip; }
+  .adm-brand { min-width: 0; }
   .adm-side { position: fixed; z-index: 40; top: 0; left: 0; bottom: 0; width: 86vw; max-width: 330px; height: auto; transform: translateX(-104%); transition: transform 0.2s ease; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45); padding-top: 10px; }
   .adm-side .adm-side-head { display: flex; align-items: center; justify-content: space-between; padding: 2px 6px 10px 10px; }
   .adm-side-head .adm-brand { color: var(--text); }
@@ -383,9 +387,10 @@ select { padding-right: 28px; }
   .adm-bottom a, .adm-bottom label { flex: 1; display: grid; justify-items: center; gap: 2px; padding: 6px 0; font-size: 11px; font-weight: 600; color: var(--muted); border-radius: 8px; cursor: pointer; }
   .adm-bottom a.on { color: var(--accent-text); background: var(--accent-soft); }
   .adm-bottom a:hover { text-decoration: none; }
-  .adm-main { padding: 16px 14px 96px; }
+  .adm-main { padding: 16px 14px 96px; overflow-wrap: break-word; }
   h1, .page-head h1 { font-size: 21px; }
   .page-head { gap: 12px; }
+  .page-head > div { flex-basis: 100%; }
   .page-head .actions { width: 100%; }
   .page-head .actions .button { flex: 1; }
   .page-head > .adm-gtag { display: none; }
@@ -393,15 +398,16 @@ select { padding-right: 28px; }
   .kpis { gap: 10px; }
   .kpi { padding: 12px 14px; }
   .kpi .v { font-size: 22px; }
-  .quick { grid-template-columns: 1fr 1fr; }
+  .quick { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pill, .game-tag { white-space: normal; max-width: 100%; }
   .card > header, .section-head { padding: 12px 14px; }
-  .field { grid-template-columns: 1fr; padding: 14px; }
+  .field { grid-template-columns: minmax(0, 1fr); padding: 14px; }
   .field .c { max-width: none; }
   .savebar { margin: 8px -14px 0; bottom: calc(58px + env(safe-area-inset-bottom)); padding: 10px 14px; }
   .savebar .msg { display: none; }
   .savebar .btns { margin: 0; width: 100%; }
   .savebar .btns .button { flex: 1; }
-  .link-fields, .hl-fields { grid-template-columns: 1fr; }
+  .link-fields, .hl-fields { grid-template-columns: minmax(0, 1fr); }
   .searchbox { max-width: none; flex-basis: 100%; }
   .section-aside { margin-left: 0; width: 100%; }
   form.search { width: 100%; }

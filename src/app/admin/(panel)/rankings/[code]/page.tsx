@@ -90,7 +90,7 @@ export default async function RankingPage({ params }: { params: Promise<{ code: 
         }
         actions={
           <>
-            <a className="button" href={`${basePath}/${encodeURIComponent(r.code)}`}>
+            <a className="button" href={`${basePath}/${encodeURIComponent(r.code)}`} target="_blank" rel="noopener">
               <Icon name="external" />
               {u.viewPublic}
             </a>
