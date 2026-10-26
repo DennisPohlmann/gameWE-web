@@ -459,7 +459,7 @@ For monitoring, `/-/metrics` gives Prometheus metrics once a token is set
 | Times are off by hours, or the date (awards, "yesterday") changes only at 01:00/02:00 | `TZ` is not set (the container is UTC otherwise). Web and collector need the same `TZ`. |
 | A ranking shows no game, or the game cannot be chosen | The database was not created with the current collector init script (column `hlstats_Games.realgame` missing). Create it again with the init script, then set the game under Admin → Rankings. Servers take the game of their ranking. |
 | "Reset ranking" shows a hint | It needs collector 0.1.0 or newer and a database created with its init script (table `hlstats_gamewe_jobs`). |
-| Ranking pages or the latest events take seconds with a large database (e.g. imported HLstatsX players and events) | The event tables lack the index by ranking and time: update the collector, its migration `event-indexes` adds it (`gamewe db status` shows it). On MariaDB also check `key_buffer_size` and `concurrent_insert` (collector docs/DATABASE.md, "Large databases"). |
+| Ranking pages, the player list or the latest events take seconds with a large database (e.g. imported HLstatsX players and events) | The tables lack the indexes by ranking: update the collector, its migrations `event-indexes` (event tables) and `player-indexes` (`hlstats_Players` by points and by last seen) add them (`gamewe db status` shows them). On MariaDB also check `key_buffer_size` and `concurrent_insert` (collector docs/DATABASE.md, "Large databases"). |
 
 ## 8. Uninstall
 

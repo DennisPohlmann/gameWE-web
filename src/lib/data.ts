@@ -1,8 +1,10 @@
 import "server-only";
 import { cache } from "react";
-import { adminQuery, likeOp, query, queryOne, sinceDays, type Param } from "./db";
+import { adminQuery, dialect, likeOp, query, queryOne, sinceDays, type Param } from "./db";
 import { BOT_POINTS_PREFIX, botSettingKeys, botSettingOn, RANK_BOTS_PREFIX } from "./bot-settings";
 import { addDays, dayOf, siteDay } from "./day";
+import { ttlCache } from "./ttl-cache";
+import { connectTypes, miscCountries, placeOptions, type PlaceCount, type PlaceOption } from "./place-counts";
 import { nowUnix, steamIds } from "./format";
 import { baseGameOf, GAME_HAS_DATA, gameKind } from "./games";
 import { allClansSql, allPlayersSql } from "./general-stats";
@@ -36,8 +38,12 @@ function like(s: string): string {
 }
 
 // Place in the ranking (1 + players with more points) for each game and skill,
-// keyed "game|skill". One pass over a ranking's players per 100 skills instead
-// of one COUNT per row, which scans the ranking again for every row.
+// keyed "game|skill". With the index game_skill (game, hideranking, skill,
+// playerId, collector migration 18) both reads stay in the index: the players
+// above the best of the skills are counted, and the players between the
+// lowest and the best skill are read per skill. A page of the ranking spans
+// a narrow band of points, so that is a few hundred index entries instead of
+// a pass over every player of the ranking.
 async function rankPositions(players: { game: string; skill: number }[]): Promise<Map<string, number>> {
   const out = new Map<string, number>();
   const byGame = new Map<string, Set<number>>();
@@ -46,24 +52,45 @@ async function rankPositions(players: { game: string; skill: number }[]): Promis
     skills.add(Number(p.skill));
     byGame.set(p.game, skills);
   }
-  const jobs: Promise<void>[] = [];
-  for (const [game, set] of byGame) {
-    const all = [...set];
-    for (let i = 0; i < all.length; i += 100) {
-      const skills = all.slice(i, i + 100);
-      jobs.push(
-        queryOne<Record<string, number | string | null>>(
-          `SELECT ${skills.map((_, j) => `SUM(CASE WHEN skill > ? THEN 1 ELSE 0 END) AS s${j}`).join(", ")}
-           FROM hlstats_Players WHERE game = ? AND hideranking = 0`,
-          [...skills, game],
-        ).then((r) => {
-          skills.forEach((skill, j) => out.set(`${game}|${skill}`, Number(r?.[`s${j}`] ?? 0) + 1));
-        }),
-      );
-    }
-  }
-  await Promise.all(jobs);
+  await Promise.all(
+    [...byGame].map(async ([game, set]) => {
+      const skills = [...set].sort((a, b) => b - a);
+      const top = skills[0];
+      const low = skills[skills.length - 1];
+      const [above, band] = await Promise.all([
+        queryOne<{ n: number }>(`SELECT COUNT(*) AS n FROM hlstats_Players WHERE game = ? AND hideranking = 0 AND skill > ?`, [game, top]),
+        top > low
+          ? query<{ skill: number; n: number }>(
+              `SELECT skill, COUNT(*) AS n FROM hlstats_Players
+               WHERE game = ? AND hideranking = 0 AND skill > ? AND skill <= ? GROUP BY skill`,
+              [game, low, top],
+            )
+          : [],
+      ]);
+      // Players per skill in the band, best first; a skill's place is 1 +
+      // everyone above it.
+      const counts = band.map((r) => ({ skill: Number(r.skill), n: Number(r.n) })).sort((a, b) => b.skill - a.skill);
+      let higher = Number(above?.n ?? 0);
+      let i = 0;
+      for (const skill of skills) {
+        while (i < counts.length && counts[i].skill > skill) higher += counts[i++].n;
+        out.set(`${game}|${skill}`, higher + 1);
+      }
+    }),
+  );
   return out;
+}
+
+// The players of one country, state or city (a WHERE on l.flag, l.state or
+// l.city): read from the matching locations to their players. Left to itself
+// MariaDB walks the whole ranking by the index game_skill and looks up each
+// player's location, which takes seconds for a city ranking or a small
+// country; STRAIGHT_JOIN keeps this order there.
+function placeJoins(table: string) {
+  const join = dialect() === "mariadb" ? "STRAIGHT_JOIN" : "JOIN";
+  return `hlstats_Players_Locations l
+    ${join} hlstats_Players_Data d ON d.location_id = l.id
+    ${join} ${table} p ON p.playerId = d.playerId`;
 }
 
 // ---------------------------------------------------------------- games
@@ -199,12 +226,21 @@ export async function getServer(id: number) {
 
 export type Totals = { players: number; newPlayers: number; kills: number; headshots: number; servers: number };
 
-export async function getTotals(game: string): Promise<Totals> {
-  const [p, s] = await Promise.all([
-    queryOne<{ players: number; newPlayers: number }>(
-      `SELECT COUNT(*) AS players, COALESCE(SUM(CASE WHEN d.first_connect >= ? THEN 1 ELSE 0 END), 0) AS newPlayers
-       FROM hlstats_Players p LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
-       WHERE p.game = ?`,
+// Counted over all players of the ranking: kept for a minute (ttl-cache.ts).
+const totalsCache = ttlCache<Totals>(60_000, 600_000);
+
+export function getTotals(game: string): Promise<Totals> {
+  return totalsCache(game, () => loadTotals(game));
+}
+
+async function loadTotals(game: string): Promise<Totals> {
+  const [p, fresh, s] = await Promise.all([
+    queryOne<{ players: number }>(`SELECT COUNT(*) AS players FROM hlstats_Players WHERE game = ?`, [game]),
+    // From the few players of the last day (index first_connect), not by
+    // joining every player of the ranking.
+    queryOne<{ n: number }>(
+      `SELECT COUNT(*) AS n FROM hlstats_Players_Data d JOIN hlstats_Players p ON p.playerId = d.playerId
+       WHERE d.first_connect >= ? AND p.game = ?`,
       [nowUnix() - 86400, game],
     ),
     queryOne<{ kills: number; headshots: number; servers: number }>(
@@ -214,8 +250,8 @@ export async function getTotals(game: string): Promise<Totals> {
     ),
   ]);
   return {
-    players: p?.players ?? 0,
-    newPlayers: p?.newPlayers ?? 0,
+    players: Number(p?.players ?? 0),
+    newPlayers: Number(fresh?.n ?? 0),
     kills: s?.kills ?? 0,
     headshots: s?.headshots ?? 0,
     servers: s?.servers ?? 0,
@@ -507,7 +543,19 @@ export type RankingRow = {
 
 export { rankingSorts, type RankingSort } from "./sorts";
 
-export async function getRanking(opts: {
+type RankingOpts = Parameters<typeof loadRanking>[0];
+type RankingResult = Awaited<ReturnType<typeof loadRanking>>;
+
+// A page of the ranking sorts all players of the ranking (hundreds of
+// thousands after an import): kept for 30 seconds per page, sort and place
+// (ttl-cache.ts); a search always asks the database.
+const rankingCache = ttlCache<RankingResult>(30_000, 300_000, 500);
+
+export function getRanking(opts: RankingOpts): Promise<RankingResult> {
+  return opts.search ? loadRanking(opts) : rankingCache(JSON.stringify(opts), () => loadRanking(opts));
+}
+
+async function loadRanking(opts: {
   game: string;
   sort: RankingSort;
   asc: boolean;
@@ -553,16 +601,17 @@ export async function getRanking(opts: {
   const local = !!(opts.country || opts.state || opts.city);
   const joins = `LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
     LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id`;
-  const from = `FROM ${table} p
-    ${joins}
+  const from = `FROM ${local ? placeJoins(table) : `${table} p
+    ${joins}`}
     WHERE ${where.join(" AND ")}`;
   const dir = opts.asc ? "ASC" : "DESC";
-  // The inactive players can be hundreds of thousands (an imported
-  // HLstatsX database): there the tie-breaker runs in the sort's direction,
-  // so the index game_activity (game, hideranking, last_event, playerId)
-  // serves the default order, and a page sorted by a column of the players
-  // table is picked by playerId first and only its rows are joined.
-  const order = `${rankingSorts[opts.sort]} ${dir}, p.playerId${opts.inactive ? ` ${dir}` : ""}`;
+  // A ranking can have hundreds of thousands of players (an imported
+  // HLstatsX database): the tie-breaker runs in the sort's direction, so the
+  // indexes game_skill (game, hideranking, skill, playerId) and game_activity
+  // (game, hideranking, last_event, playerId) serve the default orders, and a
+  // page of inactive players sorted by a column of the players table is
+  // picked by playerId first and only its rows are joined.
+  const order = `${rankingSorts[opts.sort]} ${dir}, p.playerId ${dir}`;
   const narrow = opts.inactive && !opts.search && !local && rankingSorts[opts.sort].startsWith("p.");
   const cols = `SELECT p.playerId, d.lastName AS name, p.skill, p.last_event, d.first_connect, p.connection_time,
               p.kills, p.deaths, p.headshots, p.shots, p.hits, l.flag, l.country`;
@@ -609,67 +658,58 @@ function inactiveCount(sql: string, params: Param[]): Promise<{ n: number } | un
 // ---------------------------------------------------------------- countries, states and cities
 
 // Countries, states and cities with ranked players, most players first (for
-// the selects above the ranking).
-export type PlaceOption = { code: string; name: string; state: string; city: string; players: number };
+// the selects above the ranking), from the players per location (playerPlaces).
+export type { PlaceOption } from "./place-counts";
 
-// Counted over all players of a ranking, so kept for five minutes.
-const countryCache = new Map<string, { at: number; value: Promise<PlaceOption[]> }>();
-
-export function getCountryOptions(game: string): Promise<PlaceOption[]> {
-  const hit = countryCache.get(game);
-  if (hit && Date.now() - hit.at < 300_000) return hit.value;
-  if (countryCache.size > 100) countryCache.clear();
-  const value = loadCountryOptions(game);
-  value.catch(() => countryCache.delete(game));
-  countryCache.set(game, { at: Date.now(), value });
-  return value;
+export async function getCountryOptions(game: string): Promise<PlaceOption[]> {
+  return placeOptions(await playerPlaces(game), "country");
 }
-
-function loadCountryOptions(game: string): Promise<PlaceOption[]> {
-  return placeOptions(
-    `SELECT LOWER(l.flag) AS code, MAX(l.country) AS name, '' AS state, '' AS city, COUNT(*) AS players
-     FROM hlstats_Players p
-     JOIN hlstats_Players_Data d ON d.playerId = p.playerId
-     JOIN hlstats_Players_Locations l ON l.id = d.location_id
-     WHERE p.game = ? AND p.hideranking = 0 AND l.flag <> ''
-     GROUP BY LOWER(l.flag) ORDER BY players DESC, code LIMIT 300`,
-    [game],
-  );
-}
-
-// States are names (GeoIP subdivision). HLstatsX stored legacy region codes
-// of at most 3 characters ("02" for Bavaria) instead; the collector replaces
-// them on the next lookup, until then such players are not counted.
-const STATE_NAME = `CHAR_LENGTH(l.state) > 3`;
 
 export async function getStateOptions(game: string, country: string): Promise<PlaceOption[]> {
-  return placeOptions(
-    `SELECT LOWER(l.flag) AS code, MAX(l.country) AS name, l.state, '' AS city, COUNT(*) AS players
-     FROM hlstats_Players p
-     JOIN hlstats_Players_Data d ON d.playerId = p.playerId
-     JOIN hlstats_Players_Locations l ON l.id = d.location_id
-     WHERE p.game = ? AND p.hideranking = 0 AND ${STATE_NAME} AND l.flag <> ''${country ? " AND LOWER(l.flag) = ?" : ""}
-     GROUP BY LOWER(l.flag), l.state ORDER BY players DESC, l.state LIMIT 500`,
-    country ? [game, country] : [game],
-  );
+  return placeOptions(await playerPlaces(game), "state", country);
 }
 
 export async function getCityOptions(game: string, country: string): Promise<PlaceOption[]> {
-  return placeOptions(
-    `SELECT LOWER(l.flag) AS code, MAX(l.country) AS name, '' AS state, l.city, COUNT(*) AS players
-     FROM hlstats_Players p
-     JOIN hlstats_Players_Data d ON d.playerId = p.playerId
-     JOIN hlstats_Players_Locations l ON l.id = d.location_id
-     WHERE p.game = ? AND p.hideranking = 0 AND l.city <> '' AND l.flag <> ''${country ? " AND LOWER(l.flag) = ?" : ""}
-     GROUP BY LOWER(l.flag), l.city ORDER BY players DESC, l.city LIMIT 500`,
-    country ? [game, country] : [game],
-  );
+  return placeOptions(await playerPlaces(game), "city", country);
 }
 
-async function placeOptions(sql: string, params: Param[]) {
-  const rows = await query<PlaceOption>(sql, params);
-  return rows.map((r) => ({ ...r, players: Number(r.players) }));
+// The players of a ranking per location, connect method and hidden state:
+// one pass over all players (a second or more with hundreds of thousands)
+// for the Misc page and the place selects together. Kept for ten minutes,
+// then the old counts are still shown for up to a day while one reload runs
+// in the background (ttl-cache.ts), so only the first view after a start
+// waits. On MariaDB the player data is read in table order and the players
+// by primary key (STRAIGHT_JOIN): about half the time of the other way round.
+const placesCache = ttlCache<PlaceCount[]>(600_000, 86_400_000);
+
+function playerPlaces(game: string): Promise<PlaceCount[]> {
+  return placesCache(game, async () => {
+    const straight = dialect() === "mariadb" ? "STRAIGHT_JOIN " : "";
+    const rows = await query<{ lid: number | null; flag: string | null; country: string | null; state: string | null; city: string | null; type: number; hidden: number; n: number }>(
+      `SELECT l.id AS lid, l.flag, l.country, l.state, l.city, x.type, x.hidden, x.n
+       FROM (SELECT ${straight}d.location_id, d.connect_type AS type, CASE WHEN p.hideranking = 0 THEN 0 ELSE 1 END AS hidden, COUNT(*) AS n
+             FROM hlstats_Players_Data d
+             JOIN hlstats_Players p ON p.playerId = d.playerId
+             WHERE p.game = ?
+             GROUP BY d.location_id, d.connect_type, CASE WHEN p.hideranking = 0 THEN 0 ELSE 1 END) x
+       LEFT JOIN hlstats_Players_Locations l ON l.id = x.location_id`,
+      [game],
+    );
+    return rows.map((r) => ({
+      flag: r.flag,
+      country: r.country,
+      state: r.state,
+      city: r.city,
+      located: r.lid !== null,
+      type: Number(r.type),
+      hidden: Number(r.hidden) !== 0,
+      n: Number(r.n),
+    }));
+  });
 }
+
+// States are names, not the legacy region codes of HLstatsX (isStateName).
+const STATE_NAME = `CHAR_LENGTH(l.state) > 3`;
 
 // Ranking of countries, states or cities: summed and averaged player values.
 export type PlaceRow = PlaceOption & {
@@ -684,6 +724,12 @@ export type PlaceRow = PlaceOption & {
 
 export { placeSorts, type PlaceSort } from "./sorts";
 
+// A place ranking sums all players of the ranking (or of one country): the
+// whole ordered list is read once and kept for ten minutes per ranking, kind,
+// country and sort, then reloaded in the background for up to a day
+// (ttl-cache.ts); the pages are slices of it.
+const placeRankingCache = ttlCache<PlaceRow[]>(600_000, 86_400_000, 500);
+
 export async function getPlaceRanking(opts: {
   game: string;
   kind: PlaceKind;
@@ -693,6 +739,12 @@ export async function getPlaceRanking(opts: {
   limit: number;
   offset: number;
 }) {
+  const { limit, offset, ...key } = opts;
+  const all = await placeRankingCache(JSON.stringify(key), () => loadPlaceRanking(key));
+  return { rows: all.slice(offset, offset + limit), total: all.length };
+}
+
+async function loadPlaceRanking(opts: { game: string; kind: PlaceKind; country: string; sort: PlaceSort; asc: boolean }): Promise<PlaceRow[]> {
   const where = [`p.game = ?`, `p.hideranking = 0`, `l.flag <> ''`];
   const params: Param[] = [opts.game];
   // States and cities are grouped within their country, so places with the
@@ -709,16 +761,13 @@ export async function getPlaceRanking(opts: {
       COUNT(*) AS players, SUM(p.skill) AS skill, ROUND(AVG(p.skill)) AS avgSkill,
       SUM(p.kills) AS kills, SUM(p.deaths) AS deaths, SUM(p.headshots) AS headshots,
       SUM(p.connection_time) AS connection_time, MAX(p.last_event) AS last_event
-    FROM hlstats_Players p
+    FROM ${opts.country ? placeJoins("hlstats_Players") : `hlstats_Players p
     JOIN hlstats_Players_Data d ON d.playerId = p.playerId
-    JOIN hlstats_Players_Locations l ON l.id = d.location_id
+    JOIN hlstats_Players_Locations l ON l.id = d.location_id`}
     WHERE ${where.join(" AND ")} GROUP BY ${group}`;
   const order = `${placeSorts[opts.sort]} ${opts.asc ? "ASC" : "DESC"}, code, state, city`;
-  const [rows, count] = await Promise.all([
-    query<PlaceRow>(`SELECT * FROM (${inner}) x ORDER BY ${order} LIMIT ? OFFSET ?`, [...params, opts.limit, opts.offset]),
-    queryOne<{ n: number }>(`SELECT COUNT(*) AS n FROM (${inner}) x`, params),
-  ]);
-  return { rows: rows.map((r) => ({ ...r, players: Number(r.players), skill: Number(r.skill), avgSkill: Number(r.avgSkill), kills: Number(r.kills), deaths: Number(r.deaths), headshots: Number(r.headshots), connection_time: Number(r.connection_time) })), total: Number(count?.n ?? 0) };
+  const rows = await query<PlaceRow>(`SELECT * FROM (${inner}) x ORDER BY ${order}`, params);
+  return rows.map((r) => ({ ...r, players: Number(r.players), skill: Number(r.skill), avgSkill: Number(r.avgSkill), kills: Number(r.kills), deaths: Number(r.deaths), headshots: Number(r.headshots), connection_time: Number(r.connection_time) }));
 }
 
 export type PlayerDetail = {
@@ -1684,65 +1733,94 @@ export type MiscStats = {
 };
 
 // Countries of the ranked players, connects per day and per weekday.
-export async function getMiscStats(game: string, days: number): Promise<MiscStats> {
-  const now = Math.floor(Date.now() / 1000);
-  const yearAgo = now - 365 * 86400;
-  const gameId = `(SELECT id FROM hlstats_Games WHERE code = ?)`;
-  const [countries, connects, history, types] = await Promise.all([
-    query<{ flag: string | null; country: string | null; n: number }>(
-      `SELECT l.flag, l.country, COUNT(*) AS n
-       FROM hlstats_Players p
-       JOIN hlstats_Players_Data d ON d.playerId = p.playerId
-       LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
-       WHERE p.game = ? AND p.hideranking = 0
-       GROUP BY l.flag, l.country ORDER BY n DESC`,
-      [game],
-    ),
-    // Per hour, so the hours can be put into the days of the site's time zone
-    // (exact for zones with whole-hour offsets).
-    query<{ h: number; n: number }>(
-      `SELECT FLOOR(c.timestamp_id / 3600) AS h, COUNT(*) AS n
+// Countries, connect types and a year of connects and play time: counted
+// over all players and events of the ranking, so kept for ten minutes, then
+// the old numbers are still shown for up to a day while one reload runs in
+// the background (ttl-cache.ts).
+const miscCache = ttlCache<MiscStats>(600_000, 86_400_000);
+
+export function getMiscStats(game: string, days: number): Promise<MiscStats> {
+  return miscCache(`${game}|${days}|${siteDay()}`, () => loadMiscStats(game, days));
+}
+
+// The year of connects (per hour) and play time (per day) behind the Misc
+// page, up to two days ago. Past hours and days do not change any more, and
+// reading a year of a large ranking's events takes seconds (and on MyISAM
+// holds back the collector's writes to those tables meanwhile), so this part
+// is read every six hours (then reloaded in the background, ttl-cache.ts);
+// each view's reload only reads the rows since `cut`.
+type MiscYear = { cut: number; cutDay: string; hours: Map<number, number>; days: Map<string, number> };
+const miscYearCache = ttlCache<MiscYear>(6 * 3_600_000, 86_400_000);
+
+const MISC_CONNECTS = `SELECT FLOOR(c.timestamp_id / 3600) AS h, COUNT(*) AS n
        FROM hlstats_Events_Connects c
-       WHERE c.game_id = ${gameId} AND c.timestamp_id >= ?
-       GROUP BY FLOOR(c.timestamp_id / 3600) ORDER BY h`,
-      [game, yearAgo],
+       WHERE c.game_id = (SELECT id FROM hlstats_Games WHERE code = ?) AND c.timestamp_id >= ?`;
+const MISC_HISTORY = `SELECT eventTime AS day, SUM(connection_time) AS secs
+       FROM hlstats_Players_History WHERE game = ? AND eventTime >= ?`;
+
+function dayText(day: string | Date) {
+  return typeof day === "string" ? day.slice(0, 10) : new Date(day).toISOString().slice(0, 10);
+}
+
+async function miscRows(game: string, from: number, fromDay: string, to?: { cut: number; cutDay: string }) {
+  const [connects, history] = await Promise.all([
+    query<{ h: number; n: number }>(
+      `${MISC_CONNECTS}${to ? " AND c.timestamp_id < ?" : ""} GROUP BY FLOOR(c.timestamp_id / 3600)`,
+      to ? [game, from, to.cut] : [game, from],
     ),
-    query<{ day: string; secs: number }>(
-      `SELECT eventTime AS day, SUM(connection_time) AS secs
-       FROM hlstats_Players_History WHERE game = ? AND ${sinceDays("eventTime")}
-       GROUP BY eventTime`,
-      [game, 365],
-    ),
-    query<{ type: number; n: number }>(
-      `SELECT d.connect_type AS type, COUNT(*) AS n
-       FROM hlstats_Players p JOIN hlstats_Players_Data d ON d.playerId = p.playerId
-       WHERE p.game = ? AND d.connect_type > 0
-       GROUP BY d.connect_type ORDER BY n DESC`,
-      [game],
+    query<{ day: string | Date; secs: number }>(
+      `${MISC_HISTORY}${to ? " AND eventTime < ?" : ""} GROUP BY eventTime`,
+      to ? [game, fromDay, to.cutDay] : [game, fromDay],
     ),
   ]);
+  return {
+    hours: new Map(connects.map((c) => [Number(c.h), Number(c.n)])),
+    days: new Map(history.map((h) => [dayText(h.day), Number(h.secs)])),
+  };
+}
+
+function loadMiscYear(game: string): Promise<MiscYear> {
+  return miscYearCache(game, async () => {
+    const now = Math.floor(Date.now() / 1000);
+    // A day more than the page shows: the year moves on while this is kept.
+    const cut = Math.floor(now / 3600) * 3600 - 2 * 86400;
+    const cutDay = siteDay(-2);
+    const rows = await miscRows(game, now - 366 * 86400, siteDay(-366), { cut, cutDay });
+    return { cut, cutDay, ...rows };
+  });
+}
+
+async function loadMiscStats(game: string, days: number): Promise<MiscStats> {
+  const now = Math.floor(Date.now() / 1000);
+  const yearAgo = now - 365 * 86400;
+  const yearAgoDay = siteDay(-365);
+  // Countries and connect methods come from the players per location
+  // (playerPlaces), shared with the place selects of the player list.
+  const [places, year] = await Promise.all([playerPlaces(game), loadMiscYear(game)]);
+  const recent = await miscRows(game, year.cut, year.cutDay);
+  // Per hour, so the hours can be put into the days of the site's time zone
+  // (exact for zones with whole-hour offsets).
+  const connects = [...year.hours, ...recent.hours].filter(([h]) => h * 3600 >= yearAgo);
+  const history = [...year.days, ...recent.days].filter(([d]) => d >= yearAgoDay);
   // Monday = 0.
   const weekday = (day: string) => (new Date(`${day}T00:00:00Z`).getUTCDay() + 6) % 7;
   const weekdays = Array.from({ length: 7 }, () => ({ connects: 0, seconds: 0 }));
   const byDay = new Map<string, number>();
-  for (const c of connects) {
-    const d = dayOf(Number(c.h) * 3600);
-    byDay.set(d, (byDay.get(d) ?? 0) + Number(c.n));
+  for (const [h, n] of connects) {
+    const d = dayOf(h * 3600);
+    byDay.set(d, (byDay.get(d) ?? 0) + n);
   }
   for (const [d, n] of byDay) weekdays[weekday(d)].connects += n;
-  for (const h of history) {
-    const d = typeof h.day === "string" ? h.day.slice(0, 10) : new Date(h.day).toISOString().slice(0, 10);
-    weekdays[weekday(d)].seconds += Number(h.secs);
-  }
+  for (const [d, secs] of history) weekdays[weekday(d)].seconds += secs;
   const today = siteDay();
   return {
-    countries: countries.map((c) => ({ flag: (c.flag ?? "").trim(), country: (c.country ?? "").trim(), n: Number(c.n) })),
+    countries: miscCountries(places),
     connectsPerDay: Array.from({ length: days }, (_, i) => {
       const day = addDays(today, i - days + 1);
       return { day, n: byDay.get(day) ?? 0 };
     }),
     weekdays,
-    connectTypes: types.map((t) => ({ type: Number(t.type), n: Number(t.n) })),
+    connectTypes: connectTypes(places),
   };
 }
 
@@ -1870,11 +1948,24 @@ export type MapPlayer = {
 // for the player map. Only the GeoIP city point is used, never an address.
 // place: only players of that country, state and/or city (country, state or city ranking).
 // order "skill": the best players of the ranking; "recent": the most recently active.
-export async function getMapPlayers(
+// The map reads the players of the whole ranking with a location: kept for
+// two minutes per ranking, place and order (ttl-cache.ts).
+const mapPlayersCache = ttlCache<MapPlayer[]>(120_000, 600_000);
+
+export function getMapPlayers(
   game: string,
   limit: number,
   place: { country?: string; state?: string; city?: string } = {},
   order: "skill" | "recent" = "recent",
+): Promise<MapPlayer[]> {
+  return mapPlayersCache(JSON.stringify([game, limit, place, order]), () => loadMapPlayers(game, limit, place, order));
+}
+
+async function loadMapPlayers(
+  game: string,
+  limit: number,
+  place: { country?: string; state?: string; city?: string },
+  order: "skill" | "recent",
 ): Promise<MapPlayer[]> {
   const params: Param[] = [game];
   let where = "";
@@ -1892,11 +1983,11 @@ export async function getMapPlayers(
   }
   const rows = await query<Omit<MapPlayer, "lat" | "lng"> & { lat: string; lng: string }>(
     `SELECT p.playerId, d.lastName AS name, p.skill, p.kills, p.deaths, p.last_event, l.flag, l.country, l.city, l.lat, l.lng
-     FROM hlstats_Players p
+     FROM ${where ? placeJoins("hlstats_Players") : `hlstats_Players p
      JOIN hlstats_Players_Data d ON d.playerId = p.playerId
-     JOIN hlstats_Players_Locations l ON l.id = d.location_id
+     JOIN hlstats_Players_Locations l ON l.id = d.location_id`}
      WHERE p.game = ? AND p.hideranking = 0 AND l.lat <> '' AND l.lng <> ''${where}
-     ORDER BY ${order === "skill" ? "p.skill DESC" : "p.last_event DESC"}, p.playerId LIMIT ?`,
+     ORDER BY ${order === "skill" ? "p.skill DESC" : "p.last_event DESC"}, p.playerId DESC LIMIT ?`, // index game_skill / game_activity
     [...params, limit],
   );
   return withRanks(game, rows.map(mapRow).filter(onMap));
@@ -2231,7 +2322,7 @@ export async function getPointSettings() {
 // Best players of a ranking for the sitemap (visible ones only).
 export function getSitemapPlayers(game: string, limit: number) {
   return query<{ playerId: number; last_event: number }>(
-    `SELECT playerId, last_event FROM hlstats_Players WHERE game = ? AND hideranking = 0 ORDER BY skill DESC, playerId LIMIT ?`,
+    `SELECT playerId, last_event FROM hlstats_Players WHERE game = ? AND hideranking = 0 ORDER BY skill DESC, playerId DESC LIMIT ?`,
     [game, limit],
   );
 }
