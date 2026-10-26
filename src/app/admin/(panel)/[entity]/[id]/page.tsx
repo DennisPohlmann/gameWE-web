@@ -12,6 +12,7 @@ import { getEntity } from "@/lib/admin-entities";
 import { adminDict } from "@/lib/admin-i18n";
 import { requireAdmin } from "@/lib/auth";
 import { fill, getAdminLang } from "@/lib/i18n";
+import { presetRanking, rankingServersHref } from "@/lib/ranking-preset";
 import { safeReturnTo } from "@/lib/return-to";
 
 type SP = Promise<Record<string, string | undefined>>;
@@ -32,11 +33,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
   const sp = await searchParams;
   // The list (ranking, search, page) this page was opened from.
   const returnTo = safeReturnTo(sp.returnTo, e.key);
-  // Rankings are managed on /admin/rankings; their plain list is only the editor's.
-  const back = e.key === "games" && returnTo === "/admin/games" ? "/admin/rankings" : returnTo;
   const r0 = row as Record<string, unknown>;
-  // Counter-Strike 2 servers log over HTTP and have no log secret.
-  const cs2 = e.key === "servers" && !isNew && (await rankingBaseGames()).get(String(r0.game ?? "").trim()) === "cs2";
   const title = String(r0.lastName ?? r0.name ?? r0.tag ?? r0.username ?? r0.code ?? id);
   const optionSets = Object.fromEntries(
     await Promise.all(
@@ -45,6 +42,15 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
       ),
     ),
   );
+  // A new server from a ranking's page ("Add server", ?game=): that ranking is
+  // preset and locked, unknown codes are ignored.
+  const preset = isNew && e.key === "servers" ? presetRanking(sp.game, (optionSets.games ?? []).map(([c]) => c)) : null;
+  const presetLabel = preset ? (optionSets.games ?? []).find(([c]) => c === preset)?.[1] ?? preset : null;
+  // Rankings are managed on /admin/rankings; their plain list is only the editor's.
+  const back = preset ? rankingServersHref(preset) : e.key === "games" && returnTo === "/admin/games" ? "/admin/rankings" : returnTo;
+  // Counter-Strike 2 servers log over HTTP and have no log secret.
+  const serverGame = preset ?? (isNew ? "" : String(r0.game ?? "").trim());
+  const cs2 = e.key === "servers" && serverGame !== "" && (await rankingBaseGames()).get(serverGame) === "cs2";
   const badField = e.fields.find((f) => f.name === sp.field);
   const error =
     sp.error === "field"
@@ -68,7 +74,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
       <PageHead
         crumbs={[
           [e.key === "users" ? a.ui.areaSettings : a.ui.areaRankings, e.key === "users" ? "/admin/settings" : "/admin/rankings"],
-          [e.label[lang], back],
+          [preset ? (presetLabel ?? preset) : e.label[lang], back],
           [isNew ? a.new : title],
         ]}
         title={isNew ? `${e.label[lang]}: ${a.new}` : title}
@@ -103,14 +109,18 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
           <input type="hidden" name="__entity" value={e.key} />
           <input type="hidden" name="__id" value={id} />
           <input type="hidden" name="__returnTo" value={returnTo} />
+          {preset ? <input type="hidden" name="__ranking" value={preset} /> : null}
           {e.fields.filter((f) => isNew || !f.virtual).map((f) => {
-            const value = kept(f.name) ?? (row as Record<string, string | number | null>)[f.name];
+            const value = (preset && f.name === "game" ? preset : kept(f.name)) ?? (row as Record<string, string | number | null>)[f.name];
             const locked = f.readonly || (f.createOnly && !isNew);
+            // The preset ranking is the only choice (the save sets it anyway).
             const opts = Array.isArray(f.options)
               ? f.options.map(([v, l]): [string, string] => [v, typeof l === "string" ? l : l[lang]])
-              : f.options
-                ? optionSets[f.options]
-                : null;
+              : preset && f.name === "game"
+                ? optionSets.games.filter(([c]) => c === preset)
+                : f.options
+                  ? optionSets[f.options]
+                  : null;
             return (
               <label key={f.name}>
                 {f.label[lang]}
@@ -145,7 +155,9 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
                     maxLength={f.max}
                   />
                 )}
-                {cs2 && f.name === "log_secret" ? (
+                {preset && f.name === "game" ? (
+                  <small className="muted">{fill(a.serverForRanking, { r: presetLabel ?? preset })}</small>
+                ) : cs2 && f.name === "log_secret" ? (
                   <small className="muted">{a.cs2LogSecret}</small>
                 ) : f.help ? (
                   <small className="muted">{f.help[lang]}</small>

@@ -24,6 +24,7 @@ import { saveRankingBlockVac, saveRankingBots } from "@/lib/admin-ranking-bots";
 import { invalidateHallOfFame } from "@/lib/hall-of-fame";
 import { MAX_EVERY, parseSchedule, scheduleValue } from "@/lib/hall-period";
 import { addParams, safeReturnTo, withReturnTo } from "@/lib/return-to";
+import { presetRanking, rankingServersHref } from "@/lib/ranking-preset";
 import { discordGuild, discordInvite, tsDisplay, tsHost, tsLink } from "@/lib/voice";
 import { checkCode, consumeStep, newSecret, readSecret, removeSecret, storeSecret } from "@/lib/totp";
 
@@ -110,9 +111,13 @@ export async function saveAction(form: FormData) {
       redirect(editHref(e.key, id, form, { error: "mismatch" }));
     }
   }
+  // A new server from a ranking's page ("Add server") goes into that ranking
+  // (only an existing one) and the save returns there.
+  const ranking = e.key === "servers" && id === null ? presetRanking(form.get("__ranking"), (await optionList("games")).map(([c]) => c)) : null;
+  if (ranking) form.set("game", ranking);
   // One server per IP and port: point to the existing one instead of the
   // database's duplicate key error, and keep the input of a new server.
-  const kept = e.key === "servers" && id === null ? keptValues(e, form) : {};
+  const kept = e.key === "servers" && id === null ? { ...keptValues(e, form), game: ranking ?? undefined } : {};
   if (e.key === "servers") {
     const address = canonicalIp(String(form.get("address") ?? "").trim());
     const port = Number(String(form.get("port") ?? "").trim());
@@ -130,7 +135,7 @@ export async function saveAction(form: FormData) {
     if (e.key === "servers" && isDuplicateKey(err)) redirect(editHref(e.key, rawId, form, { error: "duplicate", ...kept }));
     const msg = err instanceof Error ? err.message.slice(0, 200) : "?";
     console.error("admin save:", err);
-    redirect(editHref(e.key, rawId, form, { error: "db", msg }));
+    redirect(editHref(e.key, rawId, form, { error: "db", msg, game: ranking ?? undefined }));
   }
   // A new ranking takes the definitions of its template.
   if (e.key === "games" && id === null) {
@@ -149,6 +154,7 @@ export async function saveAction(form: FormData) {
       }
     }
   }
+  if (ranking) redirect(rankingServersHref(ranking, { saved: "server" }));
   redirect(editHref(e.key, saved, form, { saved: "1" }));
 }
 

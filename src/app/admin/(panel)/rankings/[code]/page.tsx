@@ -12,6 +12,7 @@ import { adminQuery } from "@/lib/db";
 import { localeOf } from "@/lib/format";
 import { gameKind } from "@/lib/games";
 import { getAdminLang } from "@/lib/i18n";
+import { newServerHref } from "@/lib/ranking-preset";
 import { BotsCard } from "./bots-card";
 import { VacCard } from "./vac-card";
 import { rankingBlockVac } from "@/lib/admin-ranking-bots";
@@ -115,15 +116,18 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
       />
       <div className={isAdmin ? "grid two" : "grid"}>
         {isAdmin ? (
-          <section className="card">
+          <section className="card" id="servers">
             <header>
               <h2>{u.serversHere}</h2>
-              {isAdmin ? (
-                <Link className="more" href={`/admin/games/${r.id}#servers`}>
-                  {u.assignServers}
-                </Link>
-              ) : null}
+              <Link className="more" href={`/admin/games/${r.id}#servers`}>
+                {u.assignServers}
+              </Link>
+              <Link className="button small primary" href={newServerHref(r.code)}>
+                <Icon name="plus" />
+                {u.addServer}
+              </Link>
             </header>
+            {sp.saved === "server" ? <p className="notice">{u.serverAdded}</p> : null}
             {servers.length ? (
               <table className="cards">
                 <thead>

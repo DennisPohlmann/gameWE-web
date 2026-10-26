@@ -65,8 +65,8 @@ again every 5 minutes. The heading on `/` counts the real players.
 A ranking is a row of `hlstats_Games` that you create in the admin area
 (Rankings, e.g. "Assault"), optionally copying weapons, actions, teams, roles,
 awards and ranks from an existing ranking. Servers are assigned on the
-ranking's page (this sets `hlstats_Servers.game`); the collector picks the
-change up within a minute. The start page lists every ranking that has servers;
+ranking's page (this sets `hlstats_Servers.game`), or created there right
+away with "Add server"; the collector picks the change up within a minute. The start page lists every ranking that has servers;
 the servers are listed on the ranking's page. Rankings without servers serve
 as templates. The ranking choices on the search and help pages and the
 ranking filters of the admin chat and IP pages list only rankings with at
@@ -360,7 +360,10 @@ menu button), and lists turn into cards on narrow screens:
 - **Rankings** (`/admin/rankings`): all rankings, the ones with servers
   first. The ranking chosen at the top of the side menu applies to everything
   below it: its overview (`/admin/rankings/<code>`: servers with address, map
-  and players now, number of players, clans and definitions), servers,
+  and players now, number of players, clans and definitions; "Add server"
+  in its servers card opens the new-server form, `/admin/servers/new?game=<code>`,
+  with the ranking preset and locked, and saving returns to the ranking's
+  page; a `game` that is not an existing ranking is ignored), servers,
   players, clans, weapons, actions, teams, roles, awards, ranks and the reset.
   "All rankings" in the same menu shows the lists without a filter.
 - **Settings** (`/admin/settings/<page>`): one page per topic, each with its
@@ -383,8 +386,8 @@ What the admin area edits:
 - **Servers:** the collector only accepts logs from servers registered here
   (IP address, port, game, RCON password). Each IP address and port exists
   only once: saving a server with the IP and port of another one is refused
-  with a link to the existing server, and the form keeps its input (never the
-  RCON password or log secret). The address is stored in the form the
+  with a link to the existing server, and the form keeps its input and the
+  ranking preset by "Add server" (never the RCON password or log secret). The address is stored in the form the
   collector matches log packets by (IPv4 without leading zeros, IPv6
   compressed in lower case, IPv4-mapped IPv6 as IPv4), so `192.000.002.010` and
   `192.0.2.10` are the same server. The RCON password is write-only in
