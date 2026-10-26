@@ -35,7 +35,10 @@ const ACTION = `${basePath}/consent`;
 export const PRIVACY_HREF = `${basePath}/privacy#consent`;
 
 // The form with the categories and the three buttons; also on the privacy
-// page (server-rendered there). Checkbox state follows the stored choice.
+// page (server-rendered there). Checkbox state follows the stored choice:
+// the key makes React build the boxes anew when the stored choice changes
+// (after a save the page is refreshed in place, and the boxes would keep
+// what was ticked before).
 export function ConsentForm({ consent, t, idPrefix }: { consent: Consent; t: ConsentText; idPrefix: string }) {
   const row = (id: string, title: string, text: string, input: ReactNode) => (
     <div className="consent-cat">
@@ -47,7 +50,7 @@ export function ConsentForm({ consent, t, idPrefix }: { consent: Consent; t: Con
     </div>
   );
   return (
-    <form method="post" action={ACTION} className="consent-form" data-consent-form="">
+    <form key={`${consent.answered}-${consent.maps}-${consent.steam}`} method="post" action={ACTION} className="consent-form" data-consent-form="">
       <fieldset>
         <legend className="sr-only">{t.title}</legend>
         {row(
@@ -122,6 +125,12 @@ export function ConsentRoot({ consent, t }: { consent: Consent; t: ConsentText }
       if (!form?.matches?.("form[data-consent-form]")) return;
       e.preventDefault();
       const body = new FormData(form, e.submitter as HTMLButtonElement | null);
+      // "Necessary only" and "Accept all" set the boxes at once, before the
+      // answer is there.
+      const choice = body.get("choice");
+      if (choice === "necessary" || choice === "all") {
+        for (const box of form.querySelectorAll<HTMLInputElement>("input[type=checkbox][name]")) box.checked = choice === "all";
+      }
       setState("saving");
       try {
         const res = await fetch(form.action, { method: "POST", body, redirect: "manual", credentials: "same-origin" });
