@@ -94,8 +94,11 @@ export default async function MapPage({ params, searchParams }: Props) {
     <>
       <Section title={t.mapDetails} aside={back}>
         <div className="box map-details">
-          <div className="map-image" role="img" aria-label={m.map}>
-            ?
+          {/* No map pictures yet: a placeholder, centred in its column. */}
+          <div className="map-image-cell">
+            <div className="map-image" role="img" aria-label={m.map}>
+              ?
+            </div>
           </div>
           <div className="map-facts">
             <h3>{m.map}</h3>
