@@ -177,4 +177,6 @@ the site where required:
 | CARTO basemaps | CC BY 3.0 | map style, non-commercial use up to 75,000 map views a month |
 | OpenTopoMap | CC BY-SA 3.0 | map style |
 | Humanitarian OSM Team, OSM France | CC0 / ODbL | map style |
+| Sentinel-2 cloudless (EOX IT Services GmbH) | CC BY-NC-SA 4.0 | satellite view, contains modified Copernicus Sentinel data; labels: EOX overlay of OpenStreetMap data (ODbL) |
+| Esri World Imagery and reference layers | Esri terms of use | satellite view (optional), free with an ArcGIS account for non-commercial use up to 1 million tiles a month |
 | Steam Web API, steamcommunity.com | Steam Web API Terms of Use | avatars, profile data, VAC/game bans |

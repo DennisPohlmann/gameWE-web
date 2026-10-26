@@ -961,6 +961,24 @@ table.spaced { margin-top: 10px; }
 .player-map { height: 420px; width: 100%; border: 1px solid #aaa; background: #fff; }
 .player-map.map-dark { background: #1d1f22; }
 .map-dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.85); }
+.player-map.map-sat { background: #0b1a2a; }
+/* "Map / Satellite" switch top right, in the look of Leaflet's zoom buttons
+   (white in every design, like the map's own controls). */
+.map-view { display: flex; background: #fff; }
+.map-view button { margin: 0; padding: 0 10px; height: 30px; border: 0; border-radius: 0; background: #fff; color: #333; font: 12px/30px Verdana, Arial, sans-serif; cursor: pointer; }
+.map-view button + button { border-left: 1px solid #ccc; }
+.map-view button:first-child { border-radius: 2px 0 0 2px; }
+.map-view button:last-child { border-radius: 0 2px 2px 0; }
+.map-view button:hover { background: #f4f4f4; }
+.map-view button[aria-pressed="true"] { background: #e4e4e4; color: #000; box-shadow: inset 0 -2px 0 #0078a8; }
+.map-view button:focus-visible { outline: 2px solid #0078a8; outline-offset: -2px; }
+@media (pointer: coarse) {
+  .map-view button { height: 36px; line-height: 36px; }
+}
+/* Leaflet's own controls keep their colours on the white control ground,
+   also where a design colours every link (modern designs). */
+.player-map .leaflet-bar a { color: #000; }
+.player-map .leaflet-control-attribution a { color: #0078a8; }
 .map-avatar a { position: relative; display: block; width: 30px; height: 30px; text-decoration: none; }
 .map-avatar img,
 .map-avatar span { display: block; width: 30px; height: 30px; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px #555, 0 1px 3px rgba(0, 0, 0, 0.5); background: #666; }

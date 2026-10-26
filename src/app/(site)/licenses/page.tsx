@@ -47,6 +47,7 @@ const LICENSE_URL: Record<string, string> = {
   "ODbL 1.0": "https://opendatacommons.org/licenses/odbl/1-0/",
   "CC BY 3.0": "https://creativecommons.org/licenses/by/3.0/",
   "CC BY-SA 3.0": "https://creativecommons.org/licenses/by-sa/3.0/",
+  "CC BY-NC-SA 4.0": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
 };
 
 const SOFTWARE: Row[] = [
@@ -73,7 +74,7 @@ const ASSETS: Row[] = [
 // Licenses of the software, data and graphics gameWE uses.
 export default async function LicensesPage() {
   const { lang, t } = await getDict();
-  const { geoipCredit } = await getSettings();
+  const { geoipCredit, mapSatellite } = await getSettings();
   const de = lang === "de";
   const data: Row[] = [
     ...(geoipCredit === "dbip"
@@ -95,6 +96,20 @@ export default async function LicensesPage() {
     ["CARTO basemaps", "https://carto.com/attributions", "CC BY 3.0", "Kartenkacheln, je nach Kartenstil", "Map tiles, depending on the map style"],
     ["OpenTopoMap", "https://opentopomap.org/about", "CC BY-SA 3.0", "Kartenkacheln im Stil Topo", "Map tiles of the topo style"],
     ["Humanitarian OSM Team, OSM France", "https://www.hotosm.org/", "CC0 / ODbL", "Kartenkacheln im Stil HOT", "Map tiles of the HOT style"],
+    ...(mapSatellite === "eox"
+      ? ([
+          [
+            "Sentinel-2 cloudless (EOX IT Services GmbH)",
+            "https://s2maps.eu",
+            "CC BY-NC-SA 4.0",
+            "Satellitenansicht der Spielerkarten (enthält veränderte Copernicus-Sentinel-Daten), Beschriftung aus OpenStreetMap-Daten",
+            "Satellite view of the player maps (contains modified Copernicus Sentinel data), labels from OpenStreetMap data",
+          ],
+        ] as Row[])
+      : []),
+    ...(mapSatellite === "esri"
+      ? ([["Esri World Imagery", "https://www.esri.com/en-us/legal/terms/full-master-agreement", "Esri", "Satellitenansicht der Spielerkarten mit Beschriftung", "Satellite view of the player maps with labels"]] as Row[])
+      : []),
   ];
   const table = (rows: Row[]) => (
     <TableWrap>

@@ -244,6 +244,32 @@ const definitions: Omit<SettingGroup, "area">[] = [
           en: "The credit is shown bottom right in the map. CARTO is free only for non-commercial sites up to 75,000 map views a month.",
         },
       },
+      {
+        key: "gamewe_map_satellite",
+        label: { de: "Satellitenansicht", en: "Satellite view" },
+        type: "choice",
+        def: "eox",
+        choices: [
+          ["eox", { de: "Sentinel-2 cloudless (EOX, ohne Schlüssel)", en: "Sentinel-2 cloudless (EOX, no key)" }],
+          ["esri", { de: "Esri World Imagery (schärfer, ArcGIS-Konto)", en: "Esri World Imagery (sharper, ArcGIS account)" }],
+          ["off", { de: "Aus: kein Umschalter", en: "Off: no switch" }],
+        ],
+        help: {
+          de: "Umschalter „Karte / Satellit“ oben rechts in den Spielerkarten, mit Orts- und Straßennamen über dem Satellitenbild. EOX: Server in der EU, kein Konto; frei für nicht-kommerzielle Seiten (CC BY-NC-SA 4.0), scharf bis etwa Stadtebene, Beschriftung ebenfalls von EOX (OpenStreetMap-Daten). Esri: scharf bis auf Straßenebene, Server in den USA; frei nur mit einem kostenlosen ArcGIS-Konto, ohne Einnahmen und unter 1 Million Kacheln im Monat. Der Browser des Besuchers lädt die Bilder direkt beim Anbieter.",
+          en: "\"Map / Satellite\" switch top right in the player maps, with place and street names over the imagery. EOX: servers in the EU, no account; free for non-commercial sites (CC BY-NC-SA 4.0), sharp down to about a city, labels also from EOX (OpenStreetMap data). Esri: sharp down to streets, servers in the US; free only with a free ArcGIS account, no revenue and under 1 million tiles a month. The visitor's browser loads the imagery directly from the provider.",
+        },
+      },
+      {
+        key: "gamewe_map_esri_key",
+        label: { de: "ArcGIS-API-Schlüssel (Esri)", en: "ArcGIS API key (Esri)" },
+        type: "text",
+        def: "",
+        show: { key: "gamewe_map_satellite", value: "esri" },
+        help: {
+          de: "Aus deinem kostenlosen ArcGIS-Konto (developers.arcgis.com), mit Zugriff auf die Basiskarten. Der Schlüssel ist nicht geheim: der Browser jedes Besuchers bekommt ihn in den Kachel-Adressen. Beschränke ihn im ArcGIS-Konto auf die Adresse deiner Seite.",
+          en: "From your free ArcGIS account (developers.arcgis.com), with access to the basemaps. The key is not secret: every visitor's browser gets it in the tile addresses. Restrict it to your site's address in the ArcGIS account.",
+        },
+      },
     ],
   },
   {
@@ -532,7 +558,7 @@ export const settingGroups: SettingGroup[] = [
     area: "website",
     title: { de: "Karten & Ereignisse", en: "Maps & events" },
     help: helpOf("maps"),
-    items: pick("gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_game_events", "gamewe_player_events"),
+    items: pick("gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_map_satellite", "gamewe_map_esri_key", "gamewe_game_events", "gamewe_player_events"),
   },
   { id: "seo", area: "website", title: { de: "Suchmaschinen", en: "Search engines" }, help: helpOf("seo"), items: definitions.find((g) => g.id === "seo")!.items },
   { id: "voice", area: "services", title: { de: "Voiceserver", en: "Voice server" }, help: helpOf("voice"), items: definitions.find((g) => g.id === "voice")!.items },
