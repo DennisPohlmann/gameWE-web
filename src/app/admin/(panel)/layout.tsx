@@ -12,14 +12,15 @@ import { ADMIN_THEMES, getAdminTheme } from "@/lib/admin-theme";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { basePath } from "@/lib/base-path";
 import { gameKind } from "@/lib/games";
-import { getAdminLang, getDict } from "@/lib/i18n";
+import { fill, getAdminLang, getDict } from "@/lib/i18n";
+import { updateStatus } from "@/lib/updates";
 
 // Frame of every admin page after the login: top bar with the three areas
 // and the user menu, the side menu of the area (a drawer on phones, opened
 // by the checkbox #adm-nav without script) and a bottom bar on phones.
 export default async function PanelLayout({ children }: { children: ReactNode }) {
   const user = await requireAdmin();
-  const [{ t: site }, lang, theme, rankings] = await Promise.all([getDict(), getAdminLang(), getAdminTheme(), rankingSummaries()]);
+  const [{ t: site }, lang, theme, rankings, status] = await Promise.all([getDict(), getAdminLang(), getAdminTheme(), rankingSummaries(), updateStatus()]);
   const a = adminDict(lang);
   const u = a.ui;
   const label = (key: string) => entities.find((e) => e.key === key)?.label[lang] ?? key;
@@ -41,7 +42,11 @@ export default async function PanelLayout({ children }: { children: ReactNode })
     ips: a.ips,
   } as NavText;
   const isAdmin = user.acclevel >= LEVEL_ADMIN;
-  const footer = [`gameWE web ${process.env.APP_VERSION ? `v${process.env.APP_VERSION}` : "?"}`, inDocker() ? "Docker" : u.noDocker];
+  // Versions, and a link to the release of each available update (cached
+  // answers only; the overview page asks GitHub, lib/updates.ts).
+  const footer: Parameters<typeof AdminSidebar>[0]["footer"] = [`gameWE web ${process.env.APP_VERSION ? `v${process.env.APP_VERSION}` : "?"}`, inDocker() ? "Docker" : u.noDocker];
+  if (status.collector) footer.push(`Collector v${status.collector.slice(0, 32)}`);
+  for (const up of status.updates) footer.push({ text: `${up.component === "web" ? "Web" : "Collector"}: ${fill(u.footUpdate, { v: `v${up.latest}` })}`, href: up.url });
   const themeIcon = { auto: "auto", light: "sun", dark: "moon" } as const;
   const themeLabel = { auto: u.themeAuto, light: u.themeLight, dark: u.themeDark };
 

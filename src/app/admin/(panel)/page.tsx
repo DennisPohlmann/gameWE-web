@@ -9,6 +9,7 @@ import { adminQuery } from "@/lib/db";
 import { localeOf } from "@/lib/format";
 import { fill, getAdminLang } from "@/lib/i18n";
 import { readSecret } from "@/lib/totp";
+import { updateStatus } from "@/lib/updates";
 
 // The collector writes gamewe_heartbeat every minute; older than this it
 // counts as silent.
@@ -26,7 +27,7 @@ export default async function AdminHome() {
   const midnight = new Date();
   midnight.setHours(0, 0, 0, 0);
   const secret = adminSecret();
-  const [rankings, players, [totals], [servers], beat, totp] = await Promise.all([
+  const [rankings, players, [totals], [servers], beat, totp, status] = await Promise.all([
     rankingSummaries(),
     countByRanking("hlstats_Players", "game"),
     adminQuery<{ n: number | string; hidden: number | string; today: number | string }>(
@@ -38,6 +39,7 @@ export default async function AdminHome() {
     ),
     adminQuery<{ value: string }>(`SELECT value FROM hlstats_Options WHERE keyname = 'gamewe_heartbeat'`).catch(() => []),
     secret ? readSecret(user.username, secret).catch(() => null) : Promise.resolve(undefined),
+    updateStatus(true),
   ]);
   const active = rankings.filter((r) => r.servers > 0 || (players.get(r.code) ?? 0) > 0);
   const templates = rankings.filter((r) => !active.includes(r));
@@ -47,7 +49,8 @@ export default async function AdminHome() {
   const since = beatAt > 0 ? new Date(beatAt * 1000).toLocaleString(localeOf(lang), { dateStyle: "short", timeStyle: "short" }) : "?";
   const noGame = active.filter((r) => !r.base);
 
-  const todo: { tone: "bad" | "warn" | "acc"; icon: Parameters<typeof Icon>[0]["name"]; title: string; text: string; href: string; link: string }[] = [];
+  // external: href is a page outside the admin area (a GitHub release).
+  const todo: { tone: "bad" | "warn" | "acc"; icon: Parameters<typeof Icon>[0]["name"]; title: string; text: string; href: string; link: string; external?: boolean }[] = [];
   if (totp === null)
     todo.push({ tone: "bad", icon: "lock", title: fill(u.att2fa, { u: user.username }), text: u.att2faText, href: "/admin/account", link: u.att2faLink });
   if (!beatOk)
@@ -69,6 +72,16 @@ export default async function AdminHome() {
       link: u.attNoGameLink,
     });
   }
+  for (const up of status.updates)
+    todo.push({
+      tone: "acc",
+      icon: "download",
+      title: fill(u.attUpdate, { name: up.component === "web" ? "gameWE web" : "gameWE collector", v: `v${up.latest}` }),
+      text: fill(u.attUpdateText, { cur: `v${up.current}` }),
+      href: up.url,
+      link: u.attUpdateLink,
+      external: true,
+    });
   if (isAdmin && Number(servers?.n ?? 0) === 0)
     todo.push({ tone: "acc", icon: "server", title: u.attNoServers, text: u.attNoServersText, href: "/admin/servers/new", link: u.attNoServersLink });
 
@@ -188,9 +201,9 @@ export default async function AdminHome() {
             </header>
             <ul className="todo">
               {todo.length ? (
-                todo.map((x) => (
-                  <li key={x.title}>
-                    <Link className="todo-link" href={x.href}>
+                todo.map((x) => {
+                  const body = (
+                    <>
                       <span className={`ic ${x.tone}`}>
                         <Icon name={x.icon} />
                       </span>
@@ -198,9 +211,22 @@ export default async function AdminHome() {
                         <b>{x.title}</b>
                         {x.text} <span style={{ color: "var(--accent-text)" }}>{x.link} →</span>
                       </span>
-                    </Link>
-                  </li>
-                ))
+                    </>
+                  );
+                  return (
+                    <li key={x.title}>
+                      {x.external ? (
+                        <a className="todo-link" href={x.href} target="_blank" rel="noopener noreferrer">
+                          {body}
+                        </a>
+                      ) : (
+                        <Link className="todo-link" href={x.href}>
+                          {body}
+                        </Link>
+                      )}
+                    </li>
+                  );
+                })
               ) : (
                 <li>
                   <span className="ic ok">

@@ -11,7 +11,8 @@ on MariaDB/MySQL or PostgreSQL. It
   (hitbox, weapons, maps, history), clans, daily awards, ribbons and ranks,
   weapons, actions, maps with kill heatmaps, chat and bans,
 - has an admin area with its own light and dark design for desktop and
-  phone: an overview of what needs attention, ranking management (rankings,
+  phone: an overview of what needs attention (also a newer release of the
+  web or the collector), ranking management (rankings,
   servers, players, definitions, ranking resets) and settings (website,
   services, collector, users with optional TOTP),
 - offers a read-only public JSON API with paged lists of players, countries,

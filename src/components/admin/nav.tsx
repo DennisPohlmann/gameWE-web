@@ -140,7 +140,9 @@ export function AdminSidebar({
   rankings: NavRanking[];
   groups: NavGroup[];
   isAdmin: boolean;
-  footer: string[];
+  // Lines below the menu; one with href is a link to an external page
+  // (the release of an available update).
+  footer: (string | { text: string; href: string })[];
 }) {
   const { pathname, parts, seg, area, game } = useWhere();
   // Close the phone menu after a click on one of its links.
@@ -303,9 +305,15 @@ export function AdminSidebar({
         </>
       )}
       <div className="adm-side-foot">
-        {footer.map((l) => (
-          <span key={l}>{l}</span>
-        ))}
+        {footer.map((l) =>
+          typeof l === "string" ? (
+            <span key={l}>{l}</span>
+          ) : (
+            <a key={l.href} className="adm-update" href={l.href} target="_blank" rel="noopener noreferrer">
+              {l.text}
+            </a>
+          ),
+        )}
       </div>
     </>
   );

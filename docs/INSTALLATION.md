@@ -368,7 +368,8 @@ tar -xzf gamewe-web-<version>-linux-amd64.tar.gz -C / --exclude=./etc/gamewe/web
 systemctl daemon-reload && systemctl restart gamewe-web
 ```
 
-Read the [CHANGELOG](../CHANGELOG.md) for new settings; new entries in
+The admin overview shows when a newer release is out
+([USAGE.md](USAGE.md), update check). Read the [CHANGELOG](../CHANGELOG.md) for new settings; new entries in
 `.env.example` are optional unless the changelog says otherwise.
 
 ### Logs

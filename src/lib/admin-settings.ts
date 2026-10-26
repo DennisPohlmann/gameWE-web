@@ -174,6 +174,16 @@ const definitions: Omit<SettingGroup, "area">[] = [
           en: "At least 16 characters, e.g. openssl rand -hex 24. Empty: /-/metrics is off. Prometheus sends it as \"Authorization: Bearer <token>\". Never shown; leave empty to keep it.",
         },
       },
+      {
+        key: "gamewe_update_check",
+        label: { de: "Nach Updates suchen", en: "Check for updates" },
+        type: "bool",
+        def: "1",
+        help: {
+          de: "Fragt alle 6 Stunden bei GitHub (ohne Konto) nach dem neuesten Release von Web und Collector und zeigt ein Update in der Übersicht des Admin-Bereichs. Installiert nichts. Nein: keine Anfrage an GitHub.",
+          en: "Asks GitHub (without an account) every 6 hours for the latest release of the web and the collector and shows an update on the admin overview. Installs nothing. No: no request to GitHub.",
+        },
+      },
       { key: "gamewe_chat_public", label: { de: "Chat öffentlich zeigen", en: "Show chat publicly" }, type: "bool", def: "0", help: { de: "Nein: den Chat sehen nur Admins unter Administration → Chat.", en: "No: only admins see the chat, under Administration → Chat." } },
     ],
   },
@@ -482,10 +492,10 @@ export const settingGroups: SettingGroup[] = [
     area: "services",
     title: { de: "Monitoring", en: "Monitoring" },
     help: {
-      de: "Kennzahlen der Webseite für Prometheus unter /-/metrics.",
-      en: "Metrics of the website for Prometheus under /-/metrics.",
+      de: "Kennzahlen der Webseite für Prometheus unter /-/metrics und die Suche nach Updates.",
+      en: "Metrics of the website for Prometheus under /-/metrics and the check for updates.",
     },
-    items: pick("gamewe_metrics_token"),
+    items: pick("gamewe_metrics_token", "gamewe_update_check"),
   },
   { id: "points", area: "collector", title: { de: "Punkte", en: "Points" }, help: helpOf("points"), items: definitions.find((g) => g.id === "points")!.items },
   {
@@ -522,13 +532,17 @@ export const definedSettings = definitions.flatMap((g) => g.items);
 // TOTP secrets of the admin users and the secrets of the form above.
 export const HIDDEN_OPTION_PREFIXES = ["gamewe_totp", "gamewe_ts_query_password", "gamewe_metrics_token"];
 // Written by the collector, shown read-only.
-export const READONLY_OPTIONS = ["gamewe_heartbeat"];
+export const READONLY_OPTIONS = ["gamewe_heartbeat", "gamewe_collector_version"];
 
 // Meaning of known keys that have no field above (raw list of the settings page).
 export const RAW_OPTION_HELP: Record<string, L> = {
   gamewe_heartbeat: {
     de: "Schreibt der Collector jede Minute (Unix-Zeit seiner letzten Runde); keine Einstellung.",
     en: "Written by the collector every minute (Unix time of its last poll); not a setting.",
+  },
+  gamewe_collector_version: {
+    de: "Schreibt der Collector beim Start (seine Version); die Übersicht vergleicht sie mit dem neuesten Release. Keine Einstellung.",
+    en: "Written by the collector at start (its version); the overview compares it with the latest release. Not a setting.",
   },
   gamewe_ignore_bots: {
     de: "Veraltet, ersetzt durch „Bots ranken“ unter Collector. Ein Collector-Update löscht den Schlüssel.",

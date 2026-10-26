@@ -315,7 +315,22 @@ menu button), and lists turn into cards on narrow screens:
   players right now), players (and how many are hidden or banned), players
   active today, whether the collector reports in (`gamewe_heartbeat`), the
   rankings with their state, what needs attention (own TOTP off, collector
-  silent, active ranking without a game, no server yet) and quick links.
+  silent, active ranking without a game, no server yet, an update of the web
+  or the collector) and quick links. The side menu ends with the running
+  versions of the web and the collector and, when there is one, a link to
+  the newer release.
+- **Update check**: the admin area asks GitHub (`api.github.com`, without a
+  token, from the web server) for the latest release of gameWE-web and
+  gameWE-collector and compares it with the running web (`APP_VERSION`) and
+  the version the collector writes at its start (`gamewe_collector_version`,
+  collector 0.17 and later; an older collector is just not compared). The
+  answer is kept for 6 hours, after a failure the next request waits an
+  hour; offline or after 4 seconds nothing is shown. Only the overview page
+  asks GitHub, the other pages use the kept answer. Nothing is downloaded or
+  installed: the notice links to the release, the steps are under "Update" in
+  [INSTALLATION.md](INSTALLATION.md). Admin → Settings → Monitoring, "Check
+  for updates" (`gamewe_update_check`, default on) turns it off; then no
+  request goes to GitHub.
 - **Rankings** (`/admin/rankings`): all rankings, the ones with servers
   first. The ranking chosen at the top of the side menu applies to everything
   below it: its overview (`/admin/rankings/<code>`: servers with address, map
