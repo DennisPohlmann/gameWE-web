@@ -37,11 +37,12 @@ test("all zero: a flat line at the bottom", () => {
   assert.equal(p.line, `M0 ${SPARK_H - 0.5}L50 ${SPARK_H - 0.5}L100 ${SPARK_H - 0.5}`);
 });
 
-test("a gap breaks the line", () => {
+test("a gap is bridged: one line, one area", () => {
   const p = sparkPaths([4, 4, null, 2, 2]);
   assert.ok(p);
-  assert.equal(p.line.match(/M/g)?.length, 2);
-  assert.equal(p.area.match(/Z/g)?.length, 2);
+  assert.equal(p.line.match(/M/g)?.length, 1);
+  assert.equal(p.line.match(/L/g)?.length, 3);
+  assert.equal(p.area.match(/Z/g)?.length, 1);
   // Negative values (none expected) stay at the bottom.
   assert.ok(sparkPaths([-5, 5])?.line.startsWith(`M0 ${SPARK_H}`));
 });

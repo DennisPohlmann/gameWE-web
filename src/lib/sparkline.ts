@@ -25,8 +25,9 @@ export function sparkSeries(values: (number | null)[], max = 90): (number | null
 }
 
 // The line (`line`) and the closed area below it (`area`) of a series, from
-// 0 at the bottom to its highest value near the top; a gap (null) breaks the
-// line. null when fewer than two points have values.
+// 0 at the bottom to its highest value near the top; a gap (null) inside the
+// series is bridged by a straight line to the next value, so the line never
+// stops in the middle. null when fewer than two points have values.
 export function sparkPaths(series: (number | null)[]): { line: string; area: string } | null {
   if (series.filter((v) => v !== null).length < 2) return null;
   const top = Math.max(...series.map((v) => v ?? 0));
@@ -34,19 +35,8 @@ export function sparkPaths(series: (number | null)[]): { line: string; area: str
   const pad = 2;
   const y = (v: number) => (top > 0 ? SPARK_H - (v / top) * (SPARK_H - pad) : SPARK_H - 0.5);
   const r = (n: number) => String(Math.round(n * 100) / 100);
-  const runs: [number, number][][] = [];
-  let run: [number, number][] = [];
-  series.forEach((v, i) => {
-    if (v === null) {
-      if (run.length) runs.push(run);
-      run = [];
-    } else run.push([i * step, y(Math.max(0, v))]);
-  });
-  if (run.length) runs.push(run);
-  const line = runs.map((pts) => pts.map(([x, py], i) => `${i ? "L" : "M"}${r(x)} ${r(py)}`).join("")).join("");
-  const area = runs
-    .filter((pts) => pts.length > 1)
-    .map((pts) => `M${r(pts[0][0])} ${SPARK_H}${pts.map(([x, py]) => `L${r(x)} ${r(py)}`).join("")}L${r(pts[pts.length - 1][0])} ${SPARK_H}Z`)
-    .join("");
+  const pts = series.flatMap((v, i): [number, number][] => (v === null ? [] : [[i * step, y(Math.max(0, v))]]));
+  const line = pts.map(([x, py], i) => `${i ? "L" : "M"}${r(x)} ${r(py)}`).join("");
+  const area = `M${r(pts[0][0])} ${SPARK_H}${pts.map(([x, py]) => `L${r(x)} ${r(py)}`).join("")}L${r(pts[pts.length - 1][0])} ${SPARK_H}Z`;
   return { line, area };
 }

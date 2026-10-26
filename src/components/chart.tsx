@@ -7,7 +7,9 @@ import { ChartHead } from "./chart-head";
 // (or a finger) over it marks the nearest point in time and shows the
 // values of all lines there.
 
-// null leaves a gap, e.g. days before the first data.
+// null is a point without data: before the first and after the last value
+// nothing is drawn, a gap in between is bridged (the line goes straight to
+// the next value, without a dot where the data is missing).
 type Series = { label: string; values: (number | null)[]; className: string };
 
 export function LineChart({
@@ -154,7 +156,7 @@ export function LineChart({
         {hover ? <line className="guide" x1={x(hover.i)} x2={x(hover.i)} y1={pad.top} y2={height - pad.bottom} /> : null}
         {/* Area under each line: not painted by default, a template can fill it (.chart .area). */}
         {series.map((s) =>
-          runs(s.values).map((run) =>
+          [present(s.values)].map((run) =>
             run.length > 1 ? (
               <polygon
                 key={`${s.label}-a${run[0]}`}
@@ -165,7 +167,7 @@ export function LineChart({
           ),
         )}
         {series.map((s) =>
-          runs(s.values).map((run) =>
+          [present(s.values)].map((run) =>
             run.length > 1 ? (
               <polyline
                 key={`${s.label}-${run[0]}`}
@@ -529,16 +531,8 @@ function niceStep(raw: number): number {
   return m * p;
 }
 
-// Index runs of consecutive non-null values.
-function runs(values: (number | null)[]): number[][] {
-  const out: number[][] = [];
-  let cur: number[] = [];
-  values.forEach((v, i) => {
-    if (v === null) {
-      if (cur.length) out.push(cur);
-      cur = [];
-    } else cur.push(i);
-  });
-  if (cur.length) out.push(cur);
-  return out;
+// Indexes of the values that are there: one line through all of them, so
+// a gap in the data does not break it off.
+function present(values: (number | null)[]): number[] {
+  return values.flatMap((v, i) => (v === null || v === undefined ? [] : [i]));
 }
