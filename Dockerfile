@@ -7,8 +7,9 @@
 # All settings are environment variables, see .env.example. BASE_PATH (e.g.
 # /new behind a reverse proxy) is applied when the container starts.
 
-# Base image written out in both FROM lines so Dependabot can update it.
-FROM node:24-trixie-slim AS build
+# Base image written out in both FROM lines, pinned by digest, so Dependabot
+# can update it (a new digest behind the same tag is a Debian or Node patch).
+FROM node:24-trixie-slim@sha256:43b9ba1142b8dcf33fa8f922ca1be85714adc444e0586c7cf7726daaeabc1bea AS build
 # Latest npm, without the "new version available" notice.
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false
 RUN npm install -g npm@latest
@@ -22,7 +23,7 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
     BASE_PATH=/__gamewe_base__
 RUN npm run build
 
-FROM node:24-trixie-slim
+FROM node:24-trixie-slim@sha256:43b9ba1142b8dcf33fa8f922ca1be85714adc444e0586c7cf7726daaeabc1bea
 ARG VERSION=dev
 LABEL org.opencontainers.image.title="gamewe-web" \
       org.opencontainers.image.description="gameWE statistics website and admin area" \
@@ -30,11 +31,19 @@ LABEL org.opencontainers.image.title="gamewe-web" \
       org.opencontainers.image.version="${VERSION}"
 WORKDIR /app
 # Owned by node: scripts/set-base-path.sh edits server.js here at start.
-# The latest npm too, for npm run create-admin in the container.
-RUN chown node:node /app && npm install -g npm@latest && npm cache clean --force
+# Debian security updates that are newer than the base image. npm, npx,
+# corepack and yarn (where the base still has it) are not needed at run time
+# (create-admin runs with node directly) and only add packages for the image
+# scan to find.
+RUN chown node:node /app \
+ && apt-get update \
+ && apt-get upgrade -y \
+ && rm -rf /var/lib/apt/lists/* \
+ && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+      /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+      /opt/yarn-* /usr/local/bin/yarn /usr/local/bin/yarnpkg /root/.npm
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
-    NPM_CONFIG_UPDATE_NOTIFIER=false \
     GAMEWE_DOCKER=1 \
     HOSTNAME=0.0.0.0 \
     PORT=3000 \
