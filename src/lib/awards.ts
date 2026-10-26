@@ -3,13 +3,14 @@ import { hiddenSql } from "./hidden";
 import { getPlayerFlags } from "./data";
 import { dayRange, siteDay } from "./day";
 import { query } from "./db";
+import { PLAYER_AWARDS } from "./player-awards";
 import { rankPlayerSorts, type RankPlayerSort } from "./table-sort";
 
 // Daily awards, ribbons and ranks, as on gameME.
 //
 // hlstats_Awards defines the awards of a game: W = most kills with the weapon
 // `code`, O = most of the action `code`, and a few player awards (type O or P
-// with the codes in PLAYER_AWARDS) taken from the day's hlstats_Players_History.
+// with the codes in PLAYER_AWARDS, of any type) taken from the day's hlstats_Players_History.
 // The collector stores each day's winner in hlstats_Awards_History; the web
 // computes the running day itself (and the previous day while nothing is
 // stored yet). Winning an award again and again earns a ribbon of that award,
@@ -36,16 +37,7 @@ function cached<T>(key: string, ttl: number, load: () => Promise<T>): Promise<T>
   return value;
 }
 
-export const PLAYER_AWARDS: Record<string, string> = {
-  most_kills: "kills",
-  most_deaths: "deaths",
-  most_suicides: "suicides",
-  most_headshots: "headshots",
-  most_damage: "damage",
-  most_improved: "skill_change",
-  longest_playtime: "connection_time",
-  longest_killstreak: "kill_streak",
-};
+export { PLAYER_AWARDS };
 
 // Ping samples (one per minute online, 0 left out) a player needs on a day
 // for the latency award, as LatencyMinSamples in the collector.
