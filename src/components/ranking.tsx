@@ -1,5 +1,7 @@
 import { Flag, PctBar, PlayerLink, SortTh, TableWrap } from "@/components/ui";
 import Link from "next/link";
+import { RankCell } from "@/components/rank-cell";
+import { getRanks } from "@/lib/awards";
 import { gameHasShots, unlinkedBots, type PlaceRow, type RankingRow } from "@/lib/data";
 import { activity, fmtDate, fmtDuration, fmtNum, fmtPct, kpd, ratio } from "@/lib/format";
 import type { Dict, Lang } from "@/lib/i18n";
@@ -15,6 +17,7 @@ export const rankingValues = {
   activity: (r: RankingRow) => Number(r.last_event),
   time: (r: RankingRow) => Number(r.connection_time),
   kills: (r: RankingRow) => Number(r.kills),
+  career: (r: RankingRow) => Number(r.kills),
   deaths: (r: RankingRow) => Number(r.deaths),
   kpd: (r: RankingRow) => kpd(Number(r.kills), Number(r.deaths)),
   hs: (r: RankingRow) => Number(r.headshots),
@@ -60,7 +63,7 @@ export async function RankingTable({
     ) : (
       <th className={cls}>{label}</th>
     );
-  const [bots, shots] = await Promise.all([unlinkedBots(rows.map((r) => r.playerId)), gameHasShots(game)]);
+  const [bots, shots, ranks] = await Promise.all([unlinkedBots(rows.map((r) => r.playerId)), gameHasShots(game), getRanks(game)]);
   return (
     <TableWrap>
       <table>
@@ -68,6 +71,7 @@ export async function RankingTable({
           <tr>
             {showRank ? <th className="num">#</th> : null}
             {th(t.name, "name", "")}
+            {ranks.length ? th(t.careerRank, "career", "rankcell") : null}
             {showGlobalRank ? <th className="num hide-sm">{t.globalRank}</th> : null}
             {th(t.points, "skill")}
             {showFirstConnect ? th(t.firstConnect, "new") : showLastSeen ? th(t.lastSeen, "activity") : th(t.activity, "activity", "barcell hide-sm")}
@@ -89,6 +93,11 @@ export async function RankingTable({
                 <td>
                   <PlayerLink game={game} id={r.playerId} name={r.name} flag={{ flag: r.flag, country: r.country }} plain={bots.has(r.playerId)} />
                 </td>
+                {ranks.length ? (
+                  <td className="rankcell">
+                    <RankCell kills={Number(r.kills)} ranks={ranks} t={t} lang={lang} />
+                  </td>
+                ) : null}
                 {showGlobalRank ? <td className="num hide-sm">{fmtNum(Number(r.globalRank ?? 0), lang)}</td> : null}
                 <td className="num">{fmtNum(r.skill, lang)}</td>
                 {showFirstConnect ? (

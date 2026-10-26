@@ -657,6 +657,14 @@ td.career { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; p
 .rank-tip-state.current { color: var(--accent-text); font-weight: bold; }
 .rank-tip-state.locked { color: var(--muted); }
 .rank-tip .bar { margin: 3px 0 1px; }
+/* Rank column of the player tables: a small badge with the same detail box. */
+th.rankcell, td.rankcell { text-align: center; width: 1%; white-space: nowrap; }
+td.rankcell { padding-top: 0; padding-bottom: 0; line-height: 0; }
+/* Silver insignia (stars, bars) need an edge on the light skins. */
+/* The badge may not make the row taller than its text (skins set the padding). */
+td.rankcell .rank-tip-btn, td.rankcell .rank-none { vertical-align: middle; margin: -4px 0; }
+td.rankcell svg { filter: drop-shadow(0 0 0.6px rgba(0, 0, 0, 0.7)); }
+.rank-none { display: inline-block; min-width: 20px; line-height: 20px; color: var(--muted); }
 td.ribbon-wall { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 10px; }
 td.ribbon-wall a { text-decoration: none; }
 img.sig { max-width: 100%; height: auto; }

@@ -54,7 +54,7 @@ website's # column) and `rank` (the place in the whole ranking by points);
 | `/api/v1` | list of the endpoints and the link to the documentation |
 | `/api/v1/rankings` | all rankings with servers, players online (`players`, bots included, and `bots`), best player and clan |
 | `/api/v1/rankings/<game>?limit=10&offset=0` | one ranking: totals and the best players by points (limit 1-100, offset 0-1000000; anything else `400`) |
-| `/api/v1/rankings/<game>/players` | the ranking as a paged list; filters `country`, `state`, `city`, `clan`, `q` (name); `sort` by points, name, activity, time, kills, deaths, K:D, headshots, HS/kill, accuracy or first seen |
+| `/api/v1/rankings/<game>/players` | the ranking as a paged list; filters `country`, `state`, `city`, `clan`, `q` (name); `sort` by points, name, activity, time, kills, career rank (`career`, by kills), deaths, K:D, headshots, HS/kill, accuracy or first seen |
 | `/api/v1/rankings/<game>/stats?days=30` | totals and activity per day (players, kills, headshots) |
 | `/api/v1/rankings/<game>/countries` | country ranking (players, points, kills summed per country), by total points by default (`?sort=players` for the number of players) |
 | `/api/v1/rankings/<game>/countries/<code>` | one country with its place in the country ranking by total points |

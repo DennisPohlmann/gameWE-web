@@ -8,6 +8,8 @@ export const rankingSorts = {
   activity: "p.last_event",
   time: "p.connection_time",
   kills: "p.kills",
+  // Career ranks go by kills, so the rank order is the kill order.
+  career: "p.kills",
   deaths: "p.deaths",
   kpd: "p.kills * 1.0 / GREATEST(p.deaths, 1)",
   hs: "p.headshots",

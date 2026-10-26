@@ -3,6 +3,7 @@ import { hiddenSql } from "./hidden";
 import { getPlayerFlags } from "./data";
 import { dayRange, siteDay } from "./day";
 import { query } from "./db";
+import type { Rank } from "./career";
 import { PLAYER_AWARDS } from "./player-awards";
 import { rankPlayerSorts, type RankPlayerSort } from "./table-sort";
 
@@ -350,7 +351,7 @@ export function getRibbonHolders(awardId: number, limit: number) {
 
 // ---------------------------------------------------------------- ranks
 
-export type Rank = { index: number; name: string; minimum: number; next: number | null };
+export { rankFor, rankStep, type Rank } from "./career";
 
 export async function getRanks(game: string): Promise<Rank[]> {
   const rows = await query<{ name: string; minimum: number }>(
@@ -360,10 +361,6 @@ export async function getRanks(game: string): Promise<Rank[]> {
     [game],
   );
   return rows.map((r, i) => ({ index: i, name: r.name, minimum: r.minimum ?? 0, next: rows[i + 1]?.minimum ?? null }));
-}
-
-export function rankFor(kills: number, ranks: Rank[]): Rank | undefined {
-  return [...ranks].reverse().find((r) => kills >= r.minimum);
 }
 
 // Number of ranked players in each rank, in one pass.
