@@ -203,8 +203,8 @@ function Channels({ list, t }: { list: VoiceChannel[]; t: Dict }) {
             <ul className="voice-clients">
               {c.clients.map((u, i) => (
                 <li key={i} className={u.away ? "away" : undefined}>
-                  <span className={`voice-user${u.deaf ? " deaf" : u.muted ? " muted" : ""}`} aria-hidden="true" /> {u.name}
-                  {u.country ? <> <Flag code={u.country} /></> : null}
+                  <span className={`voice-user${u.deaf ? " deaf" : u.muted ? " muted" : ""}`} aria-hidden="true" /> {u.country ? <Flag code={u.country} /> : null}
+                  {u.name}
                   {u.away ? <span className="muted"> ({t.voiceAway})</span> : null}
                   {u.deaf ? <span className="muted"> ({t.voiceDeaf})</span> : u.muted ? <span className="muted"> ({t.voiceMuted})</span> : null}
                 </li>
