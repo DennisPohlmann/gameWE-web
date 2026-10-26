@@ -3,6 +3,7 @@ import { SortableTable } from "@/components/sortable-table";
 import { Section, TableWrap } from "@/components/ui";
 import { getDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
+import npm from "@/lib/npm-licenses.json";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getDict()).t.licenses };
@@ -11,6 +12,29 @@ export async function generateMetadata(): Promise<Metadata> {
 // [name, link, license, use in German, use in English]; the license name
 // links to its text (LICENSE_URL).
 type Row = [string, string, string, string, string];
+
+// The npm packages: generated from package-lock.json by scripts/licenses.mjs
+// (before every build; npm test fails when the file is stale).
+type NpmRow = { name: string; version: string; license: string; platform?: boolean; note?: string };
+const NPM = npm as NpmRow[];
+
+// The version shown after a name of the lists below, from the npm list.
+const VERSION_OF: Record<string, string> = {
+  "Next.js": "next",
+  "React, React DOM": "react",
+  "Satori, resvg (@vercel/og)": "@vercel/og",
+  Leaflet: "leaflet",
+  mysql2: "mysql2",
+  "node-postgres (pg)": "pg",
+  "Scalar API Reference": "@scalar/api-reference",
+  uqr: "uqr",
+  "server-only": "server-only",
+};
+
+function withVersion(name: string): string {
+  const v = NPM.find((r) => r.name === VERSION_OF[name])?.version;
+  return v ? `${name} ${v}` : name;
+}
 
 const LICENSE_URL: Record<string, string> = {
   MIT: "https://opensource.org/license/mit",
@@ -29,6 +53,7 @@ const SOFTWARE: Row[] = [
   ["Next.js", "https://github.com/vercel/next.js", "MIT", "Webserver und Seiten", "Web server and pages"],
   ["React, React DOM", "https://github.com/facebook/react", "MIT", "Oberfläche", "User interface"],
   ["Satori, resvg (@vercel/og)", "https://github.com/vercel/satori", "MPL-2.0", "Signatur- und Serverbanner-Bilder", "Signature and server banner pictures"],
+  ["Yoga (in @vercel/og)", "https://github.com/facebook/yoga", "MIT", "Layout der Signatur- und Bannerbilder", "Layout of the signature and banner pictures"],
   ["Leaflet", "https://leafletjs.com", "BSD-2-Clause", "Weltkarte der Spieler", "World map of the players"],
   ["mysql2", "https://github.com/sidorares/node-mysql2", "MIT", "MySQL/MariaDB-Zugriff", "MySQL/MariaDB access"],
   ["node-postgres (pg)", "https://github.com/brianc/node-postgres", "MIT", "PostgreSQL-Zugriff", "PostgreSQL access"],
@@ -65,6 +90,7 @@ export default async function LicensesPage() {
           ],
         ] as Row[])
       : []),
+    ["Steam Web API (Valve)", "https://steamcommunity.com/dev/apiterms", "Steam Web API Terms of Use", "Steam-Namen, Profilbilder und VAC-Status", "Steam names, profile pictures and VAC status"],
     ["OpenStreetMap", "https://www.openstreetmap.org/copyright", "ODbL 1.0", "Kartendaten (© OpenStreetMap contributors)", "Map data (© OpenStreetMap contributors)"],
     ["CARTO basemaps", "https://carto.com/attributions", "CC BY 3.0", "Kartenkacheln, je nach Kartenstil", "Map tiles, depending on the map style"],
     ["OpenTopoMap", "https://opentopomap.org/about", "CC BY-SA 3.0", "Kartenkacheln im Stil Topo", "Map tiles of the topo style"],
@@ -81,9 +107,9 @@ export default async function LicensesPage() {
           const link = url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
           return {
             key: name,
-            values: [name, license, de ? useDe : useEn, link],
+            values: [withVersion(name), license, de ? useDe : useEn, link],
             cells: [
-              name,
+              withVersion(name),
               LICENSE_URL[license] ? (
                 <a key="l" href={LICENSE_URL[license]} rel="noopener noreferrer" target="_blank">
                   {license}
@@ -109,6 +135,27 @@ export default async function LicensesPage() {
       <Section title={t.licSoftware}>{table(SOFTWARE)}</Section>
       <Section title={t.licData}>{table(data)}</Section>
       <Section title={t.licAssets}>{table(ASSETS)}</Section>
+      <Section title={t.licNpm}>
+        <p className="lead">{t.licNpmIntro}</p>
+        <TableWrap>
+          <SortableTable
+            className="lic-table"
+            initial={0}
+            cols={[{ label: t.licName }, { label: t.licVersion, className: "nowrap" }, { label: t.licLicense }]}
+            rows={NPM.map((r) => ({
+              key: `${r.name}@${r.version}`,
+              values: [r.name, r.version, r.license],
+              cells: [
+                <a key="n" href={`https://www.npmjs.com/package/${r.name}/v/${r.version}`} rel="noopener noreferrer" target="_blank">
+                  {r.name}
+                </a>,
+                r.version,
+                r.platform ? `${r.license} (${t.licPlatform})` : r.license,
+              ],
+            }))}
+          />
+        </TableWrap>
+      </Section>
     </>
   );
 }

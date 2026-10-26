@@ -11,10 +11,13 @@ All licenses below are compatible with GPL-3.0-or-later.
 
 ## npm packages (production)
 
-From `npm ls --omit=dev --all` for gameWE web 0.1.0 (linux-x64). Optional
-platform packages that are not installed on linux-x64 (other `@img/sharp-*`
-and `@next/swc-*` builds) are left out; they carry the same licenses as their
-linux-x64 counterparts.
+Every package of a production install (`npm ci --omit=dev`, linux-x64).
+The same list with versions is generated from `package-lock.json` by
+`scripts/licenses.mjs` before every build (`src/lib/npm-licenses.json`, shown
+on `/licenses`); `npm test` fails when a package of it is missing here or its
+version differs. Optional platform packages that are not installed on
+linux-x64 (other `@img/sharp-*` and `@next/swc-*` builds) are left out; they
+carry the same licenses as their linux-x64 counterparts.
 
 ### MIT
 
@@ -70,6 +73,7 @@ linux-x64 counterparts.
 | detect-libc | 2.1.2 | https://github.com/lovell/detect-libc |
 | baseline-browser-mapping | 2.11.30 | https://github.com/web-platform-dx/baseline-browser-mapping |
 | long | 5.3.2 | https://github.com/dcodeIO/long.js |
+| @opentelemetry/api | 1.9.0 | https://github.com/open-telemetry/opentelemetry-js (optional peer dependency of Next.js, tracing interface only) |
 
 ### LGPL-3.0-or-later
 
@@ -77,6 +81,12 @@ linux-x64 counterparts.
 |---------|---------|---------|
 | @img/sharp-libvips-linux-x64 | 1.3.4 | https://github.com/lovell/sharp-libvips (prebuilt libvips and its libraries; the package lists them in its README and `versions.json`) |
 | @img/sharp-libvips-linuxmusl-x64 | 1.3.4 | https://github.com/lovell/sharp-libvips |
+
+### Apache-2.0 AND LGPL-3.0-or-later AND MIT
+
+| Package | Version | Project |
+|---------|---------|---------|
+| @img/sharp-wasm32 | 0.35.5 | https://github.com/lovell/sharp (WebAssembly build of sharp and libvips, the fallback without a native build) |
 
 ### BSD-2-Clause
 
@@ -131,7 +141,7 @@ the links above.
 
 The page `/api` renders the OpenAPI description of the public API with the
 self-hosted browser bundle of **Scalar API Reference**
-(`@scalar/api-reference` 1.73.1, devDependency, https://github.com/scalar/scalar,
+(`@scalar/api-reference` 1.75.1, devDependency, https://github.com/scalar/scalar,
 MIT). `npm run build` copies `dist/browser/standalone.js` to
 `public/vendor/scalar/standalone.js` together with Scalar's MIT license text
 (`public/vendor/scalar/LICENSE.txt`); nothing is loaded from Scalar's

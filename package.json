@@ -4,8 +4,8 @@
   "private": true,
   "license": "GPL-3.0-or-later",
   "scripts": {
-    "dev": "node scripts/vendor.mjs && next dev",
-    "build": "node scripts/vendor.mjs && next build",
+    "dev": "node scripts/vendor.mjs && node scripts/licenses.mjs && next dev",
+    "build": "node scripts/vendor.mjs && node scripts/licenses.mjs && next build",
     "start": "next start",
     "lint": "tsc --noEmit",
     "test": "tsc -p tsconfig.test.json && node --test \"out/tests/tests/*.test.js\"",

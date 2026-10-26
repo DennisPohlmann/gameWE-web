@@ -32,7 +32,14 @@ npm run build
 `npm run dev` and `npm run build` first run `scripts/vendor.mjs`: it copies
 the Scalar browser bundle (devDependency `@scalar/api-reference`) to
 `public/vendor/scalar/` (git-ignored) for the `/api` page and stops when a
-route under `src/app/api/v1` is missing in `src/lib/openapi.ts`.
+route under `src/app/api/v1` is missing in `src/lib/openapi.ts`. Then
+`scripts/licenses.mjs` writes `src/lib/npm-licenses.json` (every package of
+a production install with version and license, from `package-lock.json`,
+for the `/licenses` page). After a dependency change run
+`node scripts/licenses.mjs` and commit the file together with the lock
+file; `npm test` fails while it is stale, while a license is not
+GPL-compatible or while `THIRD-PARTY-LICENSES.md` lacks a package or names
+another version.
 
 ```bash
 make package    # dist/gamewe-web-<version>-linux-amd64.tar.gz + .sha256
