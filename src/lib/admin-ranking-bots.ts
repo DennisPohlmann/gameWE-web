@@ -1,6 +1,6 @@
 import "server-only";
 import { adminExec, adminQuery, upsert } from "./db";
-import { botSettingKeys, botSettingOn } from "./bot-settings";
+import { blockVacKey, blockVacOn, botSettingKeys, botSettingOn } from "./bot-settings";
 
 // Admin side of the bot settings of one ranking (lib/bot-settings.ts):
 // whether its bots are ranked, whether kills with bots give points and
@@ -35,4 +35,16 @@ export async function saveRankingBots(game: string, next: RankingBots): Promise<
     [to, game, from, game],
   );
   return r.affectedRows;
+}
+
+// The VAC block of one ranking (gamewe_block_vac_<game>, off by default).
+// The collector applies a change within a minute; switched off, it ends the
+// ranking's VAC records and their players are back in the ranking.
+export async function rankingBlockVac(game: string): Promise<boolean> {
+  const rows = await adminQuery<{ value: string | null }>(`SELECT value FROM hlstats_Options WHERE keyname = ?`, [blockVacKey(game)]);
+  return blockVacOn(rows[0]?.value);
+}
+
+export async function saveRankingBlockVac(game: string, on: boolean): Promise<void> {
+  await adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [blockVacKey(game), on ? "1" : "0"]);
 }

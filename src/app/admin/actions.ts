@@ -20,7 +20,7 @@ import { invalidateSteamKey } from "@/lib/steam";
 import { listTemplates } from "@/lib/templates";
 import { jobsAvailable, queueReset, resetMode } from "@/lib/reset";
 import { hallSettings, saveHallSettings } from "@/lib/admin-hall";
-import { saveRankingBots } from "@/lib/admin-ranking-bots";
+import { saveRankingBlockVac, saveRankingBots } from "@/lib/admin-ranking-bots";
 import { invalidateHallOfFame } from "@/lib/hall-of-fame";
 import { MAX_EVERY, parseSchedule, scheduleValue } from "@/lib/hall-period";
 import { addParams, safeReturnTo, withReturnTo } from "@/lib/return-to";
@@ -431,6 +431,20 @@ export async function rankingBotsAction(form: FormData) {
   const n = await saveRankingBots(game, next);
   console.info(`gameWE: bots of ranking ${game} ${next.ranked ? "ranked" : "hidden"}, ${next.points ? "with" : "without"} points, kills of bots ${next.kills ? "counted" : "not counted"}${n ? ` (${n} bots changed)` : ""}, by ${user.username}`);
   redirect(`/admin/rankings/${encodeURIComponent(game)}?bots=saved${n ? `&n=${n}` : ""}#bots`);
+}
+
+// The VAC block of one ranking (gamewe_block_vac_<game>), on the ranking's
+// admin page: admins only.
+export async function rankingVacAction(form: FormData) {
+  const user = await requireAdmin(LEVEL_ADMIN);
+  const game = String(form.get("game") ?? "");
+  const games = await optionList("games");
+  if (!games.some(([code]) => code === game)) redirect("/admin/rankings");
+  // The switch sends a hidden 0 and, when on, a 1 as well.
+  const on = form.getAll("block").map(String).includes("1");
+  await saveRankingBlockVac(game, on);
+  console.info(`gameWE: VAC block of ranking ${game} ${on ? "on" : "off"}, by ${user.username}`);
+  redirect(`/admin/rankings/${encodeURIComponent(game)}?vac=saved#vac`);
 }
 
 // Scheduled ranking reset and hall of fame of one ranking (lib/admin-hall.ts),

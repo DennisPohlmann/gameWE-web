@@ -287,6 +287,18 @@ website therefore computes some things itself:
 - **VAC and game bans** (bans page) need the Steam Web API key; the 1000 most
   recently active players of the ranking are checked, 100 per call, every
   12 hours.
+- **Block VAC-banned players** (Admin → Rankings → a ranking, card "VAC
+  block", off by default; `hlstats_Options` `gamewe_block_vac_<game>`, also
+  `gamewe game set CODE -block-vac=true` of the collector): the
+  collector checks every connecting player with the Steam Web API; a
+  player with a VAC ban on record is kicked ("VAC ban on record"), taken
+  out of the ranking and listed only on the bans page (yellow VAC badge,
+  type `vac` of the collector's ban records). The collector reads only the
+  key stored under Settings → Steam, not `STEAM_API_KEY` of the website's
+  environment: the card and the ranking's header say so when no key is
+  stored. The servers need an RCON password for the kick. Without a key or
+  when Steam does not answer nobody is blocked. Switched off again, the
+  ranking's VAC blocks end and the players are back in the ranking.
 
 ## Admin area
 

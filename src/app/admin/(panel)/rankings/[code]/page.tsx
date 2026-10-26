@@ -13,6 +13,9 @@ import { localeOf } from "@/lib/format";
 import { gameKind } from "@/lib/games";
 import { getAdminLang } from "@/lib/i18n";
 import { BotsCard } from "./bots-card";
+import { VacCard } from "./vac-card";
+import { rankingBlockVac } from "@/lib/admin-ranking-bots";
+import { steamKeyStored } from "@/lib/steam";
 import { HallOfFameCard } from "./hall-of-fame-card";
 
 // The lists of a ranking with their table and ranking column (constants).
@@ -45,6 +48,8 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
   const q = `?game=${encodeURIComponent(r.code)}`;
   // Server addresses and RCON-related settings are for level 100 only (as the
   // server list itself).
+  // The VAC block and whether the collector has a Steam key for it.
+  const [vacBlock, vacKey] = await Promise.all([rankingBlockVac(r.code), steamKeyStored()]);
   const [servers, ...counts] = await Promise.all([
     !isAdmin
       ? Promise.resolve([])
@@ -90,6 +95,7 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
             ) : (
               <span className="pill">{u.stTemplate}</span>
             )}
+            {vacBlock ? <span className={vacKey ? "pill" : "pill warn"}>{vacKey ? a.vacBlockOn : a.vacBlockNoKey}</span> : null}
           </>
         }
         actions={
@@ -196,6 +202,7 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
         </section>
       </div>
       {isAdmin ? <BotsCard game={r.code} lang={lang} status={sp.bots} changed={sp.n} /> : null}
+      {isAdmin ? <VacCard game={r.code} lang={lang} on={vacBlock} keyStored={vacKey} status={sp.vac} /> : null}
       {isAdmin ? <HallOfFameCard game={r.code} lang={lang} status={hof} /> : null}
     </>
   );

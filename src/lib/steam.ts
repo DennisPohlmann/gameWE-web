@@ -1,5 +1,5 @@
 import "server-only";
-import { steamApiKey } from "./config";
+import { steamApiKey, steamKey } from "./config";
 import { query } from "./db";
 import { getSettings } from "./settings";
 
@@ -65,6 +65,18 @@ async function apiKey(): Promise<string | null> {
   }
   keyCache = { at: Date.now(), value: steamApiKey(stored) };
   return keyCache.value;
+}
+
+// Whether a valid key is stored in the database (gamewe_steam_api_key):
+// the collector's VAC block (hlstats_Games.block_vac) reads only that one,
+// not STEAM_API_KEY of the website's environment. The key is not returned.
+export async function steamKeyStored(): Promise<boolean> {
+  try {
+    const v = (await query<{ value: string }>(`SELECT value FROM hlstats_Options WHERE keyname = ?`, ["gamewe_steam_api_key"]))[0]?.value;
+    return steamKey(v) !== null;
+  } catch {
+    return false;
+  }
 }
 
 // After saving the Steam settings (admin action).
