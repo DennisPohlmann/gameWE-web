@@ -6,7 +6,7 @@ import { Empty, Flag, Pager, PlayerLink, Section, TableWrap, pageParam } from "@
 import { RankBadge, rankName } from "@/components/badges";
 import { HallStars } from "@/components/hall-stars";
 import { fmtDuration, fmtNum, fmtPct, localeOf } from "@/lib/format";
-import { getHallOfFame, hallOfFameShown, periodLabel, starTable, type HallEntry, type HallRow } from "@/lib/hall-of-fame";
+import { getHallOfFame, hallOfFameShown, hallSteam, periodLabel, starTable, type HallEntry, type HallRow, type HallSteam } from "@/lib/hall-of-fame";
 import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -31,6 +31,8 @@ export default async function HallOfFamePage({ params, searchParams }: { params:
   const stars = starTable(rows);
   const locale = localeOf(lang);
   const shownStars = allStars ? stars : stars.slice(0, STAR_ROWS);
+  const shownRows = rows.slice((page - 1) * PERIODS, page * PERIODS);
+  const steam = await hallSteam(shownRows);
   // Points of places 1 to 3 per period, oldest first.
   const old = [...rows].reverse();
   const pointSeries = [t.hofGold, t.hofSilver, t.hofBronze].map((label, i) => ({
@@ -95,8 +97,8 @@ export default async function HallOfFamePage({ params, searchParams }: { params:
               <LineChart locale={lang} ariaLabel={t.hofPointsChart} height={200} labels={old.map((r) => periodLabel(r, locale, t.hofWeek, true))} tips={old.map((r) => periodLabel(r, locale, t.hofWeek))} series={pointSeries} trimStart={false} fromZero={false} legend />
             </Section>
           ) : null}
-          {rows.slice((page - 1) * PERIODS, page * PERIODS).map((r) => (
-            <Period key={r.start} game={game} row={r} t={t} lang={lang} locale={locale} />
+          {shownRows.map((r) => (
+            <Period key={r.start} game={game} row={r} steam={steam} t={t} lang={lang} locale={locale} />
           ))}
           {rows.length > PERIODS ? (
             <div className="section">
@@ -113,7 +115,7 @@ export default async function HallOfFamePage({ params, searchParams }: { params:
   );
 }
 
-function Period({ game, row, t, lang, locale }: { game: string; row: HallRow; t: Dict; lang: Lang; locale: string }) {
+function Period({ game, row, steam, t, lang, locale }: { game: string; row: HallRow; steam: Map<number, HallSteam>; t: Dict; lang: Lang; locale: string }) {
   const date = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString(locale, { timeZone: "UTC" });
   const range = row.end > row.start ? `${date(row.start)} – ${date(row.end)}` : date(row.start);
   return (
@@ -136,7 +138,7 @@ function Period({ game, row, t, lang, locale }: { game: string; row: HallRow; t:
       <ol className="hof-podium">
         {row.places.map((e, i) => (
           <li key={i} className={`hof-card hof-place-${i + 1}`}>
-            <Card game={game} place={i + 1} e={e} t={t} lang={lang} />
+            <Card game={game} place={i + 1} e={e} steam={e ? steam.get(e.playerId) : undefined} t={t} lang={lang} />
           </li>
         ))}
       </ol>
@@ -144,7 +146,9 @@ function Period({ game, row, t, lang, locale }: { game: string; row: HallRow; t:
   );
 }
 
-function Card({ game, place, e, t, lang }: { game: string; place: number; e: HallEntry | null; t: Dict; lang: Lang }) {
+// The player's name now (Steam, else the database) with the Steam avatar; the
+// name of the period below it when it was a different one.
+function Card({ game, place, e, steam, t, lang }: { game: string; place: number; e: HallEntry | null; steam?: HallSteam; t: Dict; lang: Lang }) {
   const medal = (
     <span className="hof-medal" aria-label={fill(t.hofPlace, { n: place })}>
       {place}
@@ -168,18 +172,24 @@ function Card({ game, place, e, t, lang }: { game: string; place: number; e: Hal
     [t.hofStreak, fmtNum(e.killStreak, lang)],
     [t.playTime, fmtDuration(e.connectionTime)],
   ];
+  const name = steam?.name ?? e.currentName ?? e.name;
   return (
     <>
       {medal}
+      {steam?.avatar ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img className="hof-avatar" src={steam.avatar} alt="" width={64} height={64} loading="lazy" referrerPolicy="no-referrer" />
+      ) : null}
       <div className="hof-name">
-        {e.playerId > 0 ? (
-          <PlayerLink game={game} id={e.playerId} name={e.name} flag={{ flag: e.flag, country: e.country }} />
+        {e.playerId > 0 && e.currentName !== null ? (
+          <PlayerLink game={game} id={e.playerId} name={name} flag={{ flag: e.flag, country: e.country }} />
         ) : (
           <>
             <Flag code={e.flag} title={e.country} /> <span className="player">{e.name}</span>
           </>
         )}
       </div>
+      {name !== e.name ? <div className="hof-then">{fill(t.hofThen, { name: e.name })}</div> : null}
       <div className="hof-skill">
         {fmtNum(e.skill, lang)} <span>{t.points}</span>
       </div>

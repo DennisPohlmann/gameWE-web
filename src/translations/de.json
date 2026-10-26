@@ -572,6 +572,7 @@
   "hofEmpty": "Es gab noch keinen Reset. Die drei Besten erscheinen hier nach dem ersten geplanten Reset.",
   "hofPlayersInPeriod": "{n} Spieler",
   "hofPlace": "Platz {n}",
+  "hofThen": "damals: {name}",
   "hofWeek": "KW {n}",
   "hofRankTip": "Rang am Ende der Periode",
   "hofStreak": "Beste Serie",

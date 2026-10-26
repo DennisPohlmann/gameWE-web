@@ -1271,6 +1271,9 @@ html[data-os] .sig-code { font: 11px ui-monospace, "Cascadia Mono", Consolas, Me
 .hof-place-1 .hof-medal::before { content: "♛"; position: absolute; top: -17px; font-size: 18px; color: var(--medal); text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6); }
 .hof-name { font-weight: bold; font-size: 1.05em; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hof-place-1 .hof-name { font-size: 1.2em; }
+.hof-avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid var(--medal); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35); background: var(--surface); }
+.hof-place-1 .hof-avatar { width: 80px; height: 80px; }
+.hof-then { margin-top: -4px; font-size: 0.85em; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hof-skill { font-size: 1.5em; font-weight: bold; color: color-mix(in srgb, var(--medal) 72%, var(--text)); text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25); font-variant-numeric: tabular-nums; }
 .hof-place-1 .hof-skill { font-size: 1.85em; }
 .hof-skill span { font-size: 0.5em; font-weight: normal; color: var(--muted); text-shadow: none; }

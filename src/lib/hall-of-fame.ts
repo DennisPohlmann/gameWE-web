@@ -1,24 +1,32 @@
 import "server-only";
+import { steamIds } from "./format";
+import { getSteamProfile } from "./steam";
 import { hiddenSql } from "./hidden";
 import { query } from "./db";
-import { parseSchedule, type HallPeriod, type HallUnit } from "./hall-period";
+import { parseSchedule, podium, type HallPeriod, type HallUnit } from "./hall-period";
 
 export { periodLabel, type HallPeriod } from "./hall-period";
 
 // Hall of fame of a ranking. When the collector resets a ranking on its
-// schedule (every N days, weeks, months or years), it first copies the best three
+// schedule (every N days, weeks, months or years), it first copies the best
 // players of the ending period into hlstats_gamewe_hall_of_fame: one row per
 // place, with the values of that moment (name, country and stats), so an
-// entry stays as it was even after the player is renamed or deleted. Rows
-// are never changed afterwards.
+// entry stays as it was even after the player is renamed or deleted.
+// Collector 0.19 stored three places, newer ones five.
 //
-// A player who is hidden now is left out of every list (place shown empty),
-// as on all public pages.
+// The podium shows the first three entries an admin did not remove
+// (column removed, collector migration 16) whose player is not hidden now
+// (as on all public pages): the ones below move up, so with five stored a
+// removed or hidden player is replaced by the fourth. With fewer entries
+// the places stay empty.
 
 export type HallEntry = {
-  place: number;
+  place: number; // on the podium (after moving up)
+  stored: number; // the place the collector stored
   playerId: number;
-  name: string;
+  name: string; // as stored at the end of the period
+  currentName: string | null; // the player's name now (hlstats_Players_Data), null when deleted
+  uniqueId: string | null;
   flag: string;
   country: string;
   skill: number;
@@ -67,7 +75,27 @@ type Raw = {
   rank_name: string | null;
   weapon_name: string | null;
   hidden: number;
+  removed: number;
+  current_name: string | null;
+  unique_id: string | null;
 };
+
+// Collector migration 16 adds the column removed; before it nothing is
+// removed. Checked again every 5 minutes.
+let removedColumn: { at: number; has: boolean } | null = null;
+
+export async function hasRemovedColumn(): Promise<boolean> {
+  if (removedColumn && Date.now() - removedColumn.at < 300_000) return removedColumn.has;
+  let has = true;
+  try {
+    await query(`SELECT removed FROM hlstats_gamewe_hall_of_fame WHERE 1 = 0`);
+  } catch {
+    has = false;
+  }
+  removedColumn = { at: Date.now(), has };
+  return has;
+}
+
 
 // Dates come back as Date (Postgres) or string (MariaDB); both as YYYY-MM-DD.
 function day(v: string | Date): string {
@@ -85,31 +113,37 @@ function every(v: number): number {
 
 // All periods of a ranking, newest first, each with its three places.
 export async function getHallOfFame(game: string): Promise<HallRow[]> {
+  const removed = (await hasRemovedColumn()) ? "h.removed" : "0";
   const rows = await query<Raw>(
     `SELECT h.unit, h.every, h.period_start, h.period_end, h.reset_at, h.players, h.place, h.player_id, h.name, h.flag, h.country,
             h.skill, h.kills, h.deaths, h.headshots, h.shots, h.hits, h.kill_streak, h.connection_time, h.fav_weapon, h.rank_name,
-            w.name AS weapon_name,
-            CASE WHEN ${hiddenSql("h.player_id")} THEN 1 ELSE 0 END AS hidden
+            w.name AS weapon_name, d.lastName AS current_name,
+            (SELECT MIN(u.uniqueId) FROM hlstats_PlayerUniqueIds u WHERE u.playerId = h.player_id) AS unique_id,
+            CASE WHEN ${hiddenSql("h.player_id")} THEN 1 ELSE 0 END AS hidden, ${removed} AS removed
      FROM hlstats_gamewe_hall_of_fame h
      LEFT JOIN hlstats_Weapons w ON w.game = h.game AND w.code = h.fav_weapon
+     LEFT JOIN hlstats_Players_Data d ON d.playerId = h.player_id
      WHERE h.game = ?
      ORDER BY h.period_start DESC, h.place`,
     [game],
   );
   const out: HallRow[] = [];
+  const entries: (HallEntry & { removed: boolean; hidden: boolean })[][] = [];
   for (const r of rows) {
     const start = day(r.period_start);
     let row = out.at(-1);
     if (!row || row.start !== start) {
       row = { unit: unit(r.unit), every: every(r.every), start, end: day(r.period_end), resetAt: Number(r.reset_at), players: Number(r.players), places: [null, null, null] };
       out.push(row);
+      entries.push([]);
     }
-    const place = Number(r.place);
-    if (place < 1 || place > 3 || Number(r.hidden)) continue;
-    row.places[place - 1] = {
-      place,
+    entries.at(-1)!.push({
+      place: 0,
+      stored: Number(r.place),
       playerId: Number(r.player_id),
       name: r.name,
+      currentName: r.current_name,
+      uniqueId: r.unique_id,
       flag: r.flag,
       country: r.country,
       skill: Number(r.skill),
@@ -123,9 +157,18 @@ export async function getHallOfFame(game: string): Promise<HallRow[]> {
       favWeapon: r.fav_weapon,
       favWeaponName: r.weapon_name,
       rankName: r.rank_name ?? "",
-    };
+      removed: Number(r.removed) !== 0,
+      hidden: Number(r.hidden) !== 0,
+    });
   }
-  return out;
+  out.forEach((row, i) => {
+    for (const e of podium(entries[i])) {
+      const { removed: _r, hidden: _h, ...entry } = e;
+      row.places[e.place - 1] = entry;
+    }
+  });
+  // A period whose entries were all removed is left out.
+  return out.filter((row, i) => entries[i].some((e) => !e.removed));
 }
 
 // Stars per player from the periods above: gold for place 1, silver for 2,
@@ -136,7 +179,7 @@ export function starTable(rows: HallRow[]): StarHolder[] {
   for (const row of rows) {
     for (const e of row.places) {
       if (!e || e.playerId <= 0) continue;
-      const h = by.get(e.playerId) ?? { playerId: e.playerId, name: e.name, flag: e.flag, country: e.country, last: row.start, gold: 0, silver: 0, bronze: 0 };
+      const h = by.get(e.playerId) ?? { playerId: e.playerId, name: e.currentName ?? e.name, flag: e.flag, country: e.country, last: row.start, gold: 0, silver: 0, bronze: 0 };
       if (e.place === 1) h.gold++;
       else if (e.place === 2) h.silver++;
       else h.bronze++;
@@ -146,19 +189,36 @@ export function starTable(rows: HallRow[]): StarHolder[] {
   return [...by.values()].sort((a, b) => b.gold - a.gold || b.silver - a.silver || b.bronze - a.bronze || b.last.localeCompare(a.last) || a.name.localeCompare(b.name));
 }
 
-// Stars of one player in a ranking (profile page).
-export async function getPlayerStars(game: string, playerId: number): Promise<StarCount & { periods: (HallPeriod & { place: number })[] }> {
-  const rows = await query<{ place: number; period_start: string | Date; period_end: string | Date; unit: string; every: number }>(
-    `SELECT place, period_start, period_end, unit, every FROM hlstats_gamewe_hall_of_fame WHERE game = ? AND player_id = ? ORDER BY period_start DESC`,
-    [game, playerId],
+// The players' Steam profiles now (name and avatar) for the cards of the
+// shown periods, by player id. Players without a Steam ID (bots, deleted
+// players) and lookups slower than three seconds are left out; the card then
+// shows the name from the database.
+export type HallSteam = { name: string | null; avatar: string | null };
+
+export async function hallSteam(rows: HallRow[]): Promise<Map<number, HallSteam>> {
+  const ids = new Map<number, string>();
+  for (const row of rows) {
+    for (const e of row.places) {
+      const s = e?.currentName !== null && e?.uniqueId ? steamIds(e.uniqueId) : null;
+      if (e && s) ids.set(e.playerId, s.steam64);
+    }
+  }
+  const out = new Map<number, HallSteam>();
+  const slow = new Promise<null>((r) => setTimeout(() => r(null), 3000));
+  await Promise.all(
+    [...ids].map(async ([id, steam64]) => {
+      const p = await Promise.race([getSteamProfile(steam64).catch(() => null), slow]);
+      if (p && (p.name || p.avatar)) out.set(id, { name: p.name, avatar: p.avatar });
+    }),
   );
-  const periods = rows.map((r) => ({ place: Number(r.place), start: day(r.period_start), end: day(r.period_end), unit: unit(r.unit), every: every(r.every) }));
-  return {
-    gold: periods.filter((p) => p.place === 1).length,
-    silver: periods.filter((p) => p.place === 2).length,
-    bronze: periods.filter((p) => p.place === 3).length,
-    periods,
-  };
+  return out;
+}
+
+// Stars of one player in a ranking (profile page), counted like the star
+// table (after moving up).
+export async function getPlayerStars(game: string, playerId: number): Promise<StarCount> {
+  const s = starTable(await getHallOfFame(game)).find((h) => h.playerId === playerId);
+  return { gold: s?.gold ?? 0, silver: s?.silver ?? 0, bronze: s?.bronze ?? 0 };
 }
 
 // Whether the ranking shows the hall of fame (tab, page, stars in profiles).
@@ -176,12 +236,14 @@ export async function hallOfFameShown(game: string): Promise<boolean> {
   let value = false;
   try {
     const rows = await query<{ keyname: string; value: string }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [
-      [`gamewe_hof_${game}`, `gamewe_reset_schedule_${game}`],
+      [`gamewe_hof_${game}`, `gamewe_reset_schedule_${game}`, "gamewe_reset_schedule"],
     ]);
     const o = Object.fromEntries(rows.map((r) => [r.keyname, (r.value ?? "").trim()]));
     const entries = (await query(`SELECT 1 AS x FROM hlstats_gamewe_hall_of_fame WHERE game = ? LIMIT 1`, [game])).length > 0;
     const set = o[`gamewe_hof_${game}`];
-    value = set === "1" || (set !== "0" && (!!parseSchedule(o[`gamewe_reset_schedule_${game}`] ?? "") || entries));
+    // Without an own schedule the ranking follows the one for all rankings.
+    const schedule = o[`gamewe_reset_schedule_${game}`] || o["gamewe_reset_schedule"] || "";
+    value = set === "1" || (set !== "0" && (!!parseSchedule(schedule) || entries));
   } catch {
     value = false;
   }

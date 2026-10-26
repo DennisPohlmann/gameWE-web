@@ -7,11 +7,13 @@ import { countByRanking, rankingSummaries } from "@/lib/admin-rankings";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { localeOf } from "@/lib/format";
 import { getAdminLang } from "@/lib/i18n";
+import { GlobalHallCard } from "./global-hall-card";
 
 // All rankings with their game, servers, players and state; the way into
 // each ranking's own pages.
-export default async function RankingsPage() {
+export default async function RankingsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const user = await requireAdmin();
+  const hof = (await searchParams).hof;
   const lang = await getAdminLang();
   const a = adminDict(lang);
   const u = a.ui;
@@ -90,6 +92,7 @@ export default async function RankingsPage() {
           </tbody>
         </table>
       </section>
+      {isAdmin ? <GlobalHallCard lang={lang} status={hof} rankings={rankings} /> : null}
     </>
   );
 }

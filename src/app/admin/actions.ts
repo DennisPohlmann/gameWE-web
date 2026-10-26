@@ -19,7 +19,7 @@ import { steamKey } from "@/lib/config";
 import { invalidateSteamKey } from "@/lib/steam";
 import { listTemplates } from "@/lib/templates";
 import { jobsAvailable, queueReset, resetMode } from "@/lib/reset";
-import { hallSettings, saveHallSettings } from "@/lib/admin-hall";
+import { globalHall, hallSettings, saveGlobalHall, saveHallSettings, setHallRemoved } from "@/lib/admin-hall";
 import { saveRankingBlockVac, saveRankingBots } from "@/lib/admin-ranking-bots";
 import { invalidateHallOfFame } from "@/lib/hall-of-fame";
 import { MAX_EVERY, parseSchedule, scheduleValue } from "@/lib/hall-period";
@@ -456,29 +456,78 @@ export async function rankingVacAction(form: FormData) {
 // Scheduled ranking reset and hall of fame of one ranking (lib/admin-hall.ts),
 // on the ranking's admin page: admins only. Turning a schedule on or changing
 // it must be confirmed (the ranking is then reset at the end of every period).
+// The schedule of the hall of fame forms: every N units with the start day
+// of the period (day of the month, weekday or date). null: invalid input.
+function scheduleFromForm(form: FormData): string | null {
+  const unit = String(form.get("unit") ?? "");
+  const every = Number(form.get("every") ?? 1);
+  if (!Number.isInteger(every) || every < 1 || every > MAX_EVERY || !["day", "week", "month", "quarter", "year"].includes(unit)) return null;
+  let anchor = "";
+  if (unit === "month" || unit === "quarter") anchor = String(form.get("mday") ?? "1");
+  else if (unit === "week") anchor = String(form.get("wday") ?? "1");
+  else if (unit === "year") anchor = `${String(form.get("ymonth") ?? "1").padStart(2, "0")}-${String(form.get("yday") ?? "1").padStart(2, "0")}`;
+  const s = parseSchedule(anchor ? `${every} ${unit}@${anchor}` : `${every} ${unit}`);
+  return s ? scheduleValue(s) : null;
+}
+
 export async function hallOfFameSettingsAction(form: FormData) {
   const user = await requireAdmin(LEVEL_ADMIN);
   const game = String(form.get("game") ?? "");
   const games = await optionList("games");
   if (!games.some(([code]) => code === game)) redirect("/admin/rankings");
   const back = `/admin/rankings/${encodeURIComponent(game)}`;
-  const unit = String(form.get("unit") ?? "");
-  const every = Number(form.get("every") ?? 1);
+  const src = String(form.get("source") ?? "");
   const mode = resetMode(form.get("mode"));
   const page = String(form.get("page") ?? "");
-  let schedule = "";
-  if (unit !== "off") {
-    const s = Number.isInteger(every) && every >= 1 && every <= MAX_EVERY ? parseSchedule(`${every} ${unit}`) : null;
-    if (!s) redirect(`${back}?hof=input#hall-of-fame`);
-    schedule = scheduleValue(s);
-  }
-  if (!mode || (page !== "auto" && page !== "on" && page !== "off")) redirect(`${back}?hof=input#hall-of-fame`);
+  if ((src !== "global" && src !== "own" && src !== "off") || !mode || (page !== "auto" && page !== "on" && page !== "off")) redirect(`${back}?hof=input#hall-of-fame`);
+  const schedule = src === "own" ? scheduleFromForm(form) : "";
+  if (schedule === null) redirect(`${back}?hof=input#hall-of-fame`);
   const now = await hallSettings(game);
   if (!now.table) redirect(`${back}?hof=table#hall-of-fame`);
+  const after = src === "global" ? scheduleValue(now.global.schedule) : schedule;
+  const afterMode = src === "global" ? now.global.mode : mode;
+  const changed = after !== scheduleValue(now.effective) || (after && afterMode !== now.effectiveMode);
+  if (after && changed && form.get("understood") !== "yes") redirect(`${back}?hof=confirm#hall-of-fame`);
+  await saveHallSettings(game, src, schedule, mode, page);
+  invalidateHallOfFame();
+  const what = src === "global" ? "as for all rankings" : schedule ? `${schedule} (${mode})` : "off";
+  console.info(`gameWE: reset schedule of ranking ${game} set to ${what}, hall of fame page ${page}, by ${user.username}`);
+  redirect(`${back}?hof=saved#hall-of-fame`);
+}
+
+// The reset schedule for all rankings (Admin > Rankings).
+export async function globalHallAction(form: FormData) {
+  const user = await requireAdmin(LEVEL_ADMIN);
+  const back = "/admin/rankings";
+  const mode = resetMode(form.get("mode"));
+  const schedule = form.get("unit") === "off" ? "" : scheduleFromForm(form);
+  if (schedule === null || !mode) redirect(`${back}?hof=input#hall-of-fame`);
+  const now = await globalHall();
   const changed = schedule !== scheduleValue(now.schedule) || (schedule && mode !== now.mode);
   if (schedule && changed && form.get("understood") !== "yes") redirect(`${back}?hof=confirm#hall-of-fame`);
-  await saveHallSettings(game, schedule, mode, page);
+  await saveGlobalHall(schedule, mode);
   invalidateHallOfFame();
-  console.info(`gameWE: reset schedule of ranking ${game} set to ${schedule || "off"}${schedule ? ` (${mode})` : ""}, hall of fame page ${page}, by ${user.username}`);
+  console.info(`gameWE: reset schedule for all rankings set to ${schedule ? `${schedule} (${mode})` : "off"}, by ${user.username}`);
   redirect(`${back}?hof=saved#hall-of-fame`);
+}
+
+// Removes or brings back hall of fame entries: one place, or a whole period
+// (place empty).
+export async function hallEntryAction(form: FormData) {
+  const user = await requireAdmin(LEVEL_ADMIN);
+  const game = String(form.get("game") ?? "");
+  const games = await optionList("games");
+  if (!games.some(([code]) => code === game)) redirect("/admin/rankings");
+  const back = `/admin/rankings/${encodeURIComponent(game)}/hall-of-fame`;
+  const start = String(form.get("start") ?? "");
+  const placeRaw = String(form.get("place") ?? "");
+  const place = placeRaw === "" ? null : Number(placeRaw);
+  const op = String(form.get("op") ?? "");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || (place !== null && (!Number.isInteger(place) || place < 1 || place > 99)) || (op !== "remove" && op !== "restore"))
+    redirect(`${back}?hof=input`);
+  if (op === "remove" && form.get("confirm") !== "yes") redirect(`${back}?hof=confirm#p-${start}`);
+  const n = await setHallRemoved(game, start, place, op === "remove");
+  invalidateHallOfFame();
+  console.info(`gameWE: hall of fame of ranking ${game}, period ${start}${place === null ? "" : ` place ${place}`}: ${op === "remove" ? "removed" : "restored"} ${n} entries, by ${user.username}`);
+  redirect(`${back}?hof=${op === "remove" ? "removed" : "restored"}#p-${start}`);
 }

@@ -572,6 +572,7 @@
   "hofEmpty": "No reset has been run yet. The best three players appear here after the first scheduled reset.",
   "hofPlayersInPeriod": "{n} players",
   "hofPlace": "Place {n}",
+  "hofThen": "then: {name}",
   "hofWeek": "Week {n}",
   "hofRankTip": "Rank reached at the end of the period",
   "hofStreak": "Best streak",

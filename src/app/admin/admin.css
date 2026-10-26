@@ -444,4 +444,24 @@ select { padding-right: 28px; }
 /* Ranking page: scheduled reset, "every N unit" in one row. */
 .hof-every { display: flex; gap: 8px; align-items: center; font-weight: 400; }
 .hof-every input { width: 80px; }
+.hof-form .hof-num { width: 80px; }
+.hof-form fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
+.hof-form legend { font-weight: 600; margin-bottom: 4px; }
+.hof-source label.check { flex-wrap: wrap; }
+.hof-source label.check small { flex-basis: 100%; padding-left: 24px; }
+.hof-own { display: grid; gap: 14px; padding-left: 14px; border-left: 2px solid var(--line-2); }
+.hof-form:has(input[name="source"]:not([value="own"]):checked) .hof-own { display: none; }
+/* The start-day fields of the selected unit only. */
+.hof-form .hof-anchor { display: none; }
+.hof-form:has(select[name="unit"] option[value="month"]:checked) .hof-mday,
+.hof-form:has(select[name="unit"] option[value="quarter"]:checked) .hof-mday,
+.hof-form:has(select[name="unit"] option[value="week"]:checked) .hof-wday,
+.hof-form:has(select[name="unit"] option[value="year"]:checked) .hof-ydate { display: grid; }
+.hof-form:has(select[name="unit"] option[value="off"]:checked) .hof-mode { display: none; }
+.hof-links { display: flex; gap: 14px; flex-wrap: wrap; }
+.hof-op { display: inline; }
+details.hof-confirm { display: inline-block; }
+details.hof-confirm > summary { list-style: none; cursor: pointer; }
+details.hof-confirm > summary::-webkit-details-marker { display: none; }
+details.hof-confirm[open] > summary { display: none; }
 #hall-of-fame { margin-top: 18px; }
