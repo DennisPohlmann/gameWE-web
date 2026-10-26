@@ -1049,20 +1049,27 @@ table.spaced { margin-top: 10px; }
 .ban-sourcebans { background: linear-gradient(#f07a7a, #c0392b); }
 .ban-sourcebans, .ban-sourcemod, .ban-amx, .ban-engine { background: linear-gradient(#e0605a, #b0281e); }
 .ban-type.ban-lifted { background: #6b6b6b; color: #ddd; }
+/* The source checked but the ban does not apply: grey. */
+.ban-type.ban-off { background: #8a8a8a; color: #f2f2f2; opacity: 0.45; font-weight: normal; }
 tr.ban-old td { opacity: 0.7; }
 th.ban-type-col, td.ban-type-col { text-align: center; }
 /* The profile's "Bans" row: a long reason wraps instead of widening the table. */
 .ban-info { white-space: normal; overflow-wrap: anywhere; }
-/* The "!" before a banned player's name, as on gameME: yellow for VAC, red
-   for SourceBans and server bans. The reason shows on hover and on tap
-   (focus), in every skin with fixed colours. */
-.ban-mark { position: relative; display: inline-block; width: 14px; height: 14px; margin-right: 4px; border-radius: 2px; font: bold 11px/14px Verdana, sans-serif; text-align: center; vertical-align: -2px; cursor: help; color: #fff; background: #b0281e; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35); }
+/* The "!" behind a banned player's name, as on gameME, at the height of the
+   flag: yellow for VAC, red for SourceBans and server bans, split diagonally
+   (red top left, yellow bottom right) when both run. The reason shows on
+   hover and on tap (focus), in every skin with fixed colours. */
+.ban-mark { position: relative; display: inline-block; width: 12px; height: 12px; margin-left: 4px; border-radius: 2px; font: bold 10px/12px Verdana, sans-serif; text-align: center; vertical-align: -1px; cursor: help; color: #fff; background: #b0281e; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35); }
+.ban-mark > span { position: absolute; inset: 0; }
 .ban-mark.ban-mark-vac { color: #2b2200; background: #f5c518; }
+.ban-mark.ban-mark-both { background: linear-gradient(to bottom right, #b0281e 50%, #f5c518 50%); text-shadow: 0 0 2px #000, 0 0 1px #000; }
 .ban-mark:focus { outline: 2px solid #f5c518; outline-offset: 1px; }
 .ban-badges { display: inline-flex; gap: 3px; justify-content: center; white-space: nowrap; }
 .ban-type[data-tip] { position: relative; cursor: help; }
 .ban-type[data-tip]:focus { outline: 2px solid #f5c518; outline-offset: 1px; }
 .ban-mark[data-tip]:hover::after, .ban-mark[data-tip]:focus::after, .ban-type[data-tip]:hover::after, .ban-type[data-tip]:focus::after { content: attr(data-tip); position: absolute; z-index: 30; left: 0; top: calc(100% + 4px); width: max-content; max-width: min(320px, 80vw); padding: 4px 7px; border-radius: 3px; font: normal 11px/1.4 Verdana, sans-serif; text-align: left; white-space: normal; color: #fff; background: #1e1e1e; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); }
+/* The mark lists every ban, one per line. */
+.ban-mark[data-tip]:hover::after, .ban-mark[data-tip]:focus::after { white-space: pre-line; }
 /* Badges sit in the middle of the row: their box opens to the left so it stays inside the table on a phone. */
 .ban-type[data-tip]:hover::after, .ban-type[data-tip]:focus::after { left: auto; right: 0; max-width: min(260px, 62vw); }
 td.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9em; }

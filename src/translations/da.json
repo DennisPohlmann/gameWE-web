@@ -368,6 +368,8 @@
   "memberSince": "Medlem siden",
   "vacBanned": "VAC-udelukket",
   "vacClean": "Ingen VAC-udelukkelse",
+  "banNone": "{x}: ingen udelukkelse",
+  "notListed": "ikke opført",
   "realName": "Rigtigt navn",
   "onlineState": "Status",
   "playerInfo": "Spilleroplysninger",

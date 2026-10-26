@@ -398,22 +398,26 @@ export function strParam(v: string | string[] | undefined): string {
   return (Array.isArray(v) ? v[0] : v ?? "").trim().slice(0, 64);
 }
 
-// The "!" before a banned player's name (as gameME): yellow for VAC, red for
-// the other bans; the text (ban and reason) shows on hover and, focusable,
-// on a tap. Without a reason only "Banned".
-export function BanMark({ kind, text }: { kind: string; text: string }) {
+// The "!" behind a banned player's name (as gameME), at the height of the
+// flag: yellow for VAC, red for the other bans, split diagonally (red at the
+// top left, yellow at the bottom right) when both run; the text (bans and
+// reason) shows on hover and, focusable, on a tap.
+export function BanMark({ kind, text }: { kind: "vac" | "red" | "both"; text: string }) {
   return (
-    <span className={`ban-mark${kind === "vac" ? " ban-mark-vac" : ""}`} tabIndex={0} role="img" aria-label={text} data-tip={text}>
-      !
+    // The "!" sits in an inner box, so the mark lines up with the flag
+    // (an inline box without text sits on its bottom edge, like the flag).
+    <span className={`ban-mark ban-mark-${kind}`} tabIndex={0} role="img" aria-label={text} data-tip={text}>
+      <span aria-hidden="true">!</span>
     </span>
   );
 }
 
-// A ban type badge (yellow VAC, red SourceBans and server bans) whose
-// details (reason, date, length) show on hover and, focusable, on a tap.
-export function BanBadge({ kind, label, text }: { kind: string; label: string; text: string }) {
+// A ban type badge (yellow VAC, red SourceBans and server bans; grey when
+// the ban does not apply) whose details (reason, date, length) show on
+// hover and, focusable, on a tap.
+export function BanBadge({ kind, label, text, off = false }: { kind: string; label: string; text: string; off?: boolean }) {
   return (
-    <span className={`ban-type ban-${kind === "vac" ? "vac" : kind === "sourcebans" ? "sourcebans" : "engine"}`} tabIndex={0} aria-label={text} data-tip={text}>
+    <span className={`ban-type ban-${kind === "vac" ? "vac" : kind === "sourcebans" ? "sourcebans" : "engine"}${off ? " ban-off" : ""}`} tabIndex={0} aria-label={text} data-tip={text}>
       {label}
     </span>
   );

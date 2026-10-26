@@ -368,6 +368,8 @@
   "memberSince": "Участник с",
   "vacBanned": "Бан VAC",
   "vacClean": "Нет бана VAC",
+  "banNone": "{x}: бана нет",
+  "notListed": "вне рейтинга",
   "realName": "Настоящее имя",
   "onlineState": "Статус",
   "playerInfo": "Информация об игроке",

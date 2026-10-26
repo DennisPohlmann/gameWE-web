@@ -46,7 +46,7 @@ again every 5 minutes. The heading on `/` counts the real players.
 | `/<game>/chat` | chat log with search |
 | `/<game>/events` | all events of the ranking (the kinds of the "Latest events" box on the start page: connects, entries, leaves, team, role and name changes, actions, team bonuses, kills, suicides, teamkills; never chat or addresses) over the last hour, 24 hours (default) or 7 days (`?period=1h\|24h\|7d`): a chart of the events over time in five groups (kills, actions, joins and leaves, team/role/name changes, suicides and teamkills; per 5 minutes or per hour), the share of each type (count and percent; a click filters the list by it), and the list newest first with time, type, event, server and map, a type filter (`?type=`, "Action" includes actions on another player) and a pager (at most the newest 5,000 rows; a note says so when the period holds more). Rows with a hidden or banned player on either side are left out of the list and the counts alike. Follows the admin setting "Latest events (ranking start page)": "Sync" adds a "Live updates" switch (on by default, kept per browser) that lets new events run in on the first page, "Async" shows a plain list, "Off" removes the tab and the page (404). The "Events" tab sits between "Teams" and "Chat"; the "Overview" link in the heading of the start page's box opens the page |
 | `/<game>/misc` | player countries, weekdays, connects per day, connect methods, server banners |
-| `/<game>/bans` | ban list like gameME's: the running bans of the ranking's players from the collector's ban records (`hlstats_Players_Bans`: type, date, reason; `features.sourcebans` of the collector, which takes SourceBans-banned players out of the ranking while the ban runs), from SourceBans (reason, length, date) and, with a Steam Web API key (Admin → Settings → Steam), VAC/game bans from Steam; points, K/D, HS/kill and accuracy per player. Before each name a "!" in the colour of the ban type (yellow VAC, red SourceBans and server bans; the ban type column is centred) shows "Banned" and the reason on hover or tap. Players banned in the ranking (`hideranking = 2`) are listed, players hidden by an admin or by themselves are not. Expired and lifted bans are not shown; a SourceBans ban the collector recorded is listed once. |
+| `/<game>/bans` | ban list like gameME's: the running bans of the ranking's players from the collector's ban records (`hlstats_Players_Bans`: type, date, reason; `features.sourcebans` of the collector, which takes SourceBans-banned players out of the ranking while the ban runs), from SourceBans (reason, length, date) and, with a Steam Web API key (Admin → Settings → Steam), VAC/game bans from Steam; K/D, HS/kill and accuracy per player (no points: a banned player has none). 50 players per page (pager below, `?page=`, `?rows=`); sorting covers the whole list. Behind each name, at the height of the flag, a "!" in the colour of the ban (yellow VAC, red SourceBans and server bans, split diagonally red/yellow when both run) shows every running ban with reason, date and length on hover or tap. The ban type column (centred) always shows VAC and SourceBans side by side (each only when the site checks it: Steam Web API key, SourceBans address), the one that does not apply in grey; a server ban gets its own badge only when one runs; the details of each ban show on hover or tap. Players banned in the ranking (`hideranking = 2`) are listed, players hidden by an admin or by themselves are not. Expired and lifted bans are not shown; a SourceBans ban the collector recorded is listed once. |
 | `/search` | search players by name or Steam ID and clans by tag or name (`?q=...&st=names\|steam\|clans&game=<code>`) |
 | `/help` | help: how points are calculated (with the current settings), actions, weapon modifiers, chat commands |
 | `/voice` | detail page of the TeamSpeak server from the voice server box (click its name): channel tree with the people online (country flag before the name; names can be hidden in the admin settings), server info (operating system with a small symbol, uptime, users, connections, security level, ping, version, host banner URL), traffic and the welcome message, and at the bottom the code of the TeamSpeak banner; live from the ServerQuery, kept for a minute; 404 unless TeamSpeak is the voice server |
@@ -112,7 +112,7 @@ default order. Tables with their own params, as a page shows more than one:
 | `/<game>/clans` | `sort`, `dir` | `tag`, `members`, `skill` (default), `time`, `kills`, `deaths`, `kpd`, `hpk` |
 | `/<game>/clans/<id>` members | `sort`, `dir` | the keys of the player ranking (`skill` default, `name`, `activity`, `time`, `kills`, `career` (career rank, by kills), `deaths`, `kpd`, `hs`, `hpk`, `acc`) |
 | `/<game>/maps/<id>`, `/<game>/weapons/<code>`, `/<game>/actions/<id>` best players | `sort`, `dir` | `name`, `kills`, `deaths`, `kpd`, `hpk` (map); `name`, `kills`, `hs`, `hpk`, `shots`, `acc` (weapon); `name`, `count`, `points` (action) |
-| `/<game>/bans` | `sort`, `dir` | `name`, `type`, `reason`, `date`, `points`, `kpd`, `hpk`, `acc` (default: running bans first, newest first) |
+| `/<game>/bans` | `sort`, `dir` | `name`, `type`, `reason`, `date`, `kpd`, `hpk`, `acc` (default: running bans first, newest first) |
 | `/<game>/chat`, `/<game>/events`, `/<game>/players/<id>/chat`, `/<game>/players/<id>/events`, admin chat | `sort`, `dir` | `date` only (newest first; `dir=asc` oldest first): chat and events can hold millions of rows, the time is the column with an index |
 | `/<game>/players/<id>/sessions` | `sort`, `dir` | `date` (default), `change`, `points`, `time`, `rounds`, `wins`, `kills`, `deaths`, `kpd`, `streak`, `hs`, `hpk`, `acc`; another order than newest first reads up to 5000 days of the player |
 | `/<game>/players/<id>/awards` | `sort`, `dir` | `date` (default), `award` |
@@ -192,11 +192,14 @@ website therefore computes some things itself:
   maps and their lines). Exception for banned players (`hideranking = 2`):
   they are on the bans page, and their profile page (with its charts and
   avatar, without the links to the history pages, which stay 404; not
-  indexed by search engines, no position) shows the ban. The profile's "Bans" row shows the running ban (the collector's
-  record, else the SourceBans list, else "Server" for a player hidden as
-  banned without details) with the "!", the type badge, reason, date and
-  length or end, and the VAC status from Steam when Steam answered; it is
-  left out when there is neither. Only the live list of a server still shows them,
+  indexed by search engines, no forum signature; position "not listed" and
+  no points) shows the ban: a "!" behind the name as on the bans page, and
+  the "Bans" row with the VAC and SourceBans badges side by side (grey when
+  that ban does not apply; VAC once Steam answered) for the running bans
+  (the collector's record, else the SourceBans list, else "Server" for a
+  player hidden as banned without details), their reason, date and length
+  or end on hover or tap. Without a ban the row shows the VAC status from
+  Steam when Steam answered; it is left out when there is neither. Only the live list of a server still shows them,
   with their in-game name and live values but without a link or player id;
   the server's player count is unchanged. Bots are not hidden players. The
   admin area shows them as before.

@@ -368,6 +368,8 @@
   "memberSince": "Члан од",
   "vacBanned": "VAC бан",
   "vacClean": "Без VAC бана",
+  "banNone": "{x}: без бана",
+  "notListed": "није рангиран",
   "realName": "Право име",
   "onlineState": "Статус",
   "playerInfo": "Информације о играчу",

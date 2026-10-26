@@ -368,6 +368,8 @@
   "memberSince": "注册时间",
   "vacBanned": "VAC 封禁",
   "vacClean": "无 VAC 封禁",
+  "banNone": "{x}：无封禁",
+  "notListed": "未上榜",
   "realName": "真实姓名",
   "onlineState": "状态",
   "playerInfo": "玩家信息",

@@ -372,6 +372,8 @@
   "memberSince": "Member since",
   "vacBanned": "VAC ban",
   "vacClean": "No VAC ban",
+  "banNone": "{x}: not banned",
+  "notListed": "not listed",
   "realName": "Real name",
   "onlineState": "Status",
   "playerInfo": "Player information",

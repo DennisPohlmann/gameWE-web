@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { sortHeads } from "@/components/sort-head";
-import { BanBadge, BanMark, Empty, PctBar, PlayerLink, Section, TableWrap } from "@/components/ui";
-import { banKind, mainReason, markKind, mergeBans, type BanEntry } from "@/lib/ban-merge";
+import { BanBadges, banKindLabel, NameBanMark } from "@/components/ban-badges";
+import { Empty, Pager, PctBar, PlayerLink, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam } from "@/components/ui";
+import { banKind, mainReason, mergeBans, type BanEntry, type BanKind } from "@/lib/ban-merge";
 import { gameHasShots, getBanPlayers, getBanRecords, getPlayersBySteam, getRecentPlayers, type BanPlayer } from "@/lib/data";
-import { fmtBanMinutes, fmtDateTime, fmtNum, kpd, localeOf, nowUnix, ratio, steamIds } from "@/lib/format";
-import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
+import { fmtBanMinutes, fmtNum, kpd, localeOf, nowUnix, ratio, steamIds } from "@/lib/format";
+import { getDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import { getSourcebans, type SbState } from "@/lib/sourcebans";
 import { getSteamBans, steamBansAvailable } from "@/lib/steam";
@@ -13,6 +14,8 @@ import { sortRows, sortState } from "@/lib/table-sort";
 // How many of the most recently active players are checked for Steam bans.
 const VAC_PLAYERS = 1000;
 const MAX_ROWS = 500;
+// Rows per page unless the visitor picks another number.
+const PER_PAGE = 50;
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getDict()).t.bans };
@@ -32,7 +35,6 @@ const banValues = {
   type: (r: BanRow): string => r.bans.map((b) => b.kind).join(","),
   reason: (r: BanRow) => r.reason,
   date: (r: BanRow) => r.at,
-  points: (r: BanRow) => Number(r.player.skill),
   kpd: (r: BanRow) => kpd(Number(r.player.kills), Number(r.player.deaths)),
   hpk: (r: BanRow) => ratio(Number(r.player.headshots), Number(r.player.kills)),
   acc: (r: BanRow) => ratio(Number(r.player.hits), Number(r.player.shots)),
@@ -46,7 +48,7 @@ export default async function BansPage({ params, searchParams }: { params: Promi
   const sp = await searchParams;
   const { lang, t } = await getDict();
   // The type sorts by its shown names.
-  const values = { ...banValues, type: (r: BanRow) => r.bans.map((b) => kindLabel(b.kind, t)).join(", ") };
+  const values = { ...banValues, type: (r: BanRow) => r.bans.map((b) => banKindLabel(b.kind, t)).join(", ") };
   const order = sortState(sp, values, "order");
   // Counter-Strike 2 logs no shots: no accuracy column.
   const [{ sourcebansUrl }, shots, steamBans] = await Promise.all([getSettings(), gameHasShots(game), steamBansAvailable()]);
@@ -69,8 +71,16 @@ export default async function BansPage({ params, searchParams }: { params: Promi
   const rows: BanRow[] = mergeBans([...recordRows, ...(sb?.rows ?? []), ...vac], (p) => Number(p.playerId)).map((m) => ({ ...m, reason: mainReason(m.bans) }));
   // Newest first; without a date at the end.
   rows.sort((a, b) => (b.at ?? 0) - (a.at ?? 0));
-  const sorted = sortRows(rows, values, order.sort, order.asc);
-  const th = sortHeads(order, `/${game}/bans`, {});
+  const sorted = sortRows(rows, values, order.sort, order.asc).slice(0, MAX_ROWS);
+  // Only one page of rows is drawn; sorting covers all of them.
+  const limit = rowsParam(sp.rows, PER_PAGE);
+  const pages = Math.max(1, Math.ceil(sorted.length / limit));
+  const page = Math.min(pageParam(sp.page), pages);
+  const offset = (page - 1) * limit;
+  const keep = { ...order.keep, rows: limit !== PER_PAGE ? limit : undefined };
+  const th = sortHeads(order, `/${game}/bans`, { rows: keep.rows });
+  // VAC and SourceBans side by side whenever the site checks them.
+  const always: BanKind[] = [...(steamBans ? (["vac"] as const) : []), ...(sourcebansUrl ? (["sourcebans"] as const) : [])];
 
   return (
     <Section
@@ -100,30 +110,24 @@ export default async function BansPage({ params, searchParams }: { params: Promi
                 {th(t.banType, "type", "ban-type-col")}
                 {th(t.banReason, "reason", "hide-sm")}
                 {th(t.banDate, "date", "")}
-                {th(t.points, "points")}
                 {th(t.kpd, "kpd", "num hide-sm")}
                 {th(t.hpk, "hpk", "barcell")}
                 {shots ? th(t.acc, "acc", "barcell hide-sm") : null}
               </tr>
             </thead>
             <tbody>
-              {sorted.slice(0, MAX_ROWS).map((r, i) => (
+              {sorted.slice(offset, offset + limit).map((r, i) => (
                 <tr key={r.player.playerId}>
-                  <td className="rank">{fmtNum(i + 1, lang)}</td>
+                  <td className="rank">{fmtNum(offset + i + 1, lang)}</td>
                   <td>
-                    <BanMark kind={markKind(r.bans)} text={r.reason ? `${t.banned}: ${r.reason}` : t.banned} />
                     <PlayerLink game={game} id={r.player.playerId} name={r.player.name} flag={r.player.flag ? { flag: r.player.flag, country: r.player.country ?? "" } : null} />
+                    <NameBanMark bans={r.bans} t={t} lang={lang} />
                   </td>
                   <td className="ban-type-col">
-                    <span className="ban-badges">
-                      {r.bans.map((b) => (
-                        <BanBadge key={b.kind} kind={b.kind} label={kindLabel(b.kind, t)} text={banTip(b, t, lang)} />
-                      ))}
-                    </span>
+                    <BanBadges bans={r.bans} always={always} t={t} lang={lang} />
                   </td>
                   <td className="hide-sm">{r.reason}</td>
                   <td>{r.at ? new Date(r.at * 1000).toLocaleString(localeOf(lang), { dateStyle: "medium", timeStyle: "short" }) : r.dateText || "–"}</td>
-                  <td className="num">{fmtNum(Number(r.player.skill), lang)}</td>
                   <td className="num hide-sm">{fmtNum(kpd(Number(r.player.kills), Number(r.player.deaths)), lang, 2)}</td>
                   <td className="barcell">
                     <PctBar value={ratio(Number(r.player.headshots), Number(r.player.kills))} lang={lang} />
@@ -138,23 +142,15 @@ export default async function BansPage({ params, searchParams }: { params: Promi
             </tbody>
           </table>
         </TableWrap>
+      ) : null}
+      {rows.length ? (
+        <Pager base={`/${game}/bans`} params={keep} page={page} pages={pages} total={sorted.length} rows={{ value: limit, options: ROW_OPTIONS }} locale={localeOf(lang)} labels={t} />
       ) : (
         <Empty>{t.bansNone}</Empty>
       )}
       <p className="muted">{t.bansHint}</p>
     </Section>
   );
-}
-
-function kindLabel(k: BanEntry["kind"], t: Dict): string {
-  return { vac: "VAC", sourcebans: "SourceBans", sourcemod: "SourceMod", amx: "AMX", engine: t.banTypeServer }[k];
-}
-
-// The tooltip of a badge: source, reason, date and length or end.
-function banTip(b: BanEntry, t: Dict, lang: Lang): string {
-  const date = b.at ? fmtDateTime(b.at, lang) : b.dateText;
-  const end = b.until ? fill(t.banUntil, { x: fmtDateTime(b.until, lang) }) : b.length;
-  return [kindLabel(b.kind, t), b.reason, date ? `${t.banDate} ${date}` : "", end].filter(Boolean).join(" · ");
 }
 
 async function sbRows(game: string, base: string) {

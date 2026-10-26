@@ -368,6 +368,8 @@
   "memberSince": "Lid sinds",
   "vacBanned": "VAC-ban",
   "vacClean": "Geen VAC-ban",
+  "banNone": "{x}: geen ban",
+  "notListed": "niet vermeld",
   "realName": "Echte naam",
   "onlineState": "Status",
   "playerInfo": "Spelersinformatie",

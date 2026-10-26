@@ -17,10 +17,23 @@ export function banKind(v: string | null | undefined): BanKind {
   return ORDER.find((k) => k === v) ?? "engine";
 }
 
-// The colour of the "!" before the name: red as soon as a ban other than
-// VAC runs, yellow for VAC alone.
-export function markKind(bans: BanEntry[]): "vac" | "red" {
-  return bans.some((b) => b.kind !== "vac") ? "red" : "vac";
+// The colour of the "!" behind the name: yellow for VAC alone, red for the
+// other bans (SourceBans, server bans), "both" (split red/yellow) when a
+// VAC ban and another one run.
+export function markKind(bans: BanEntry[]): "vac" | "red" | "both" {
+  const vac = bans.some((b) => b.kind === "vac");
+  const red = bans.some((b) => b.kind !== "vac");
+  return vac && red ? "both" : vac ? "vac" : "red";
+}
+
+// The badges of a banned player: VAC and SourceBans always side by side
+// (those in `always`, i.e. the sources the site checks; ban null = does not
+// apply, shown grey), server bans only when one runs; in badge order.
+export function banSlots(bans: BanEntry[], always: BanKind[]): { kind: BanKind; ban: BanEntry | null }[] {
+  return ORDER.flatMap((kind) => {
+    const ban = bans.find((b) => b.kind === kind) ?? null;
+    return ban || always.includes(kind) ? [{ kind, ban }] : [];
+  });
 }
 
 // The bans of each player (by key) in badge order, one ban per kind (the

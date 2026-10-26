@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { BanBadge, BanMark, Bar, Empty, Flag, PctBar, PlayerLink, Section, TableWrap } from "@/components/ui";
+import { BanBadges, NameBanMark } from "@/components/ban-badges";
+import { Bar, Empty, Flag, PctBar, PlayerLink, Section, TableWrap } from "@/components/ui";
 import { SortableTable } from "@/components/sortable-table";
 import { RankBadge, Ribbon, RibbonLevel, rankName, ribbonClassName } from "@/components/badges";
 import { Spark } from "@/components/graphics";
@@ -27,7 +28,7 @@ import { getSettings } from "@/lib/settings";
 import { externalImage } from "@/lib/consent";
 import { getConsent } from "@/lib/consent-server";
 import { peekSourcebans } from "@/lib/sourcebans";
-import { banKind, mainReason, markKind, mergeBans, type BanEntry } from "@/lib/ban-merge";
+import { banKind, mergeBans, type BanEntry, type BanKind } from "@/lib/ban-merge";
 import { placeHref } from "@/components/ranking";
 import {
   getChat,
@@ -50,7 +51,7 @@ import {
   getPlayerWeapons,
   gameHasShots,
 } from "@/lib/data";
-import { activity, fmtAge, fmtBanMinutes, fmtDateTime, fmtDuration, fmtNum, fmtPct, kpd, ratio, steamIds } from "@/lib/format";
+import { activity, fmtAge, fmtBanMinutes, fmtDate, fmtDateTime, fmtDuration, fmtNum, fmtPct, kpd, ratio, steamIds } from "@/lib/format";
 import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
 
 type Props = { params: Promise<{ game: string; id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -218,7 +219,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
 
   const stars = (await hallOfFameShown(game)) ? await getPlayerStars(game, id) : null;
   const bans = await profileBans(p, ids?.steam64 ?? null, settings.sourcebansUrl, t);
-  const profile = { game, id, p, ids, isBot, location, age, fav, stars, bans, t, lang };
+  const profile = { game, id, p, ids, isBot, location, age, fav, stars, bans, sourcebans: !!settings.sourcebansUrl, t, lang };
 
   return (
     <>
@@ -254,16 +255,23 @@ export default async function PlayerPage({ params, searchParams }: Props) {
             <tbody>
               <tr>
                 <td className="stats-key pair">{t.position}:</td>
+                {/* A banned player (the only hidden one with a profile) has no place and no points. */}
                 <td className="pair-value">
-                  <b>{position ? fmtNum(position, lang) : "-"}</b>
+                  {p.hideranking ? <i className="muted">{t.notListed}</i> : <b>{position ? fmtNum(position, lang) : "-"}</b>}
                 </td>
                 <td className="stats-key pair">{t.points}:</td>
                 <td className="pair-value">
-                  <b>{fmtNum(p.skill, lang)}</b>{" "}
-                  <span className={p.last_skill_change >= 0 ? "good" : "bad"}>
-                    ({p.last_skill_change > 0 ? "+" : ""}
-                    {fmtNum(p.last_skill_change, lang)})
-                  </span>
+                  {p.hideranking ? (
+                    "–"
+                  ) : (
+                    <>
+                      <b>{fmtNum(p.skill, lang)}</b>{" "}
+                      <span className={p.last_skill_change >= 0 ? "good" : "bad"}>
+                        ({p.last_skill_change > 0 ? "+" : ""}
+                        {fmtNum(p.last_skill_change, lang)})
+                      </span>
+                    </>
+                  )}
                 </td>
                 <td className="stats-key">{t.activity}:</td>
                 <td className="barcell">
@@ -452,28 +460,31 @@ export default async function PlayerPage({ params, searchParams }: Props) {
             ) : null}
           </div>
           <div>
-            <table className="stats">
-              <thead>
-                <tr>
-                  <th>{t.forumSignature}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>
-                    <SigCode
-                      base={sigUrl.replace(/\.png$/, "")}
-                      styles={imgStyles}
-                      link={`${origin}/${game}/players/${id}`}
-                      alt={`${t.forumSignature}: ${p.name ?? id}`}
-                      width={400}
-                      height={100}
-                      labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgSkinDefault, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
-                    />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            {/* A banned player has no banner (it is 404), so no signature box either. */}
+            {p.hideranking ? null : (
+              <table className="stats">
+                <thead>
+                  <tr>
+                    <th>{t.forumSignature}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <SigCode
+                        base={sigUrl.replace(/\.png$/, "")}
+                        styles={imgStyles}
+                        link={`${origin}/${game}/players/${id}`}
+                        alt={`${t.forumSignature}: ${p.name ?? id}`}
+                        width={400}
+                        height={100}
+                        labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgSkinDefault, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            )}
             {allAwards.length ? (
               <table className="stats spaced">
                 <thead>
@@ -802,6 +813,7 @@ type ProfileProps = {
   fav: { code: string; name: string } | undefined;
   stars: StarCount | null;
   bans: BanEntry[];
+  sourcebans: boolean; // the site checks SourceBans (address set)
   t: Dict;
   lang: Lang;
 };
@@ -829,16 +841,6 @@ async function profileBans(p: PlayerDetail, steam64: string | null, sourcebansUr
   return out;
 }
 
-function banKindLabel(kind: string, t: Dict): string {
-  return ({ vac: "VAC", sourcebans: "SourceBans", sourcemod: "SourceMod", amx: "AMX" } as Record<string, string>)[kind] ?? t.banTypeServer;
-}
-
-// The tooltip of a ban badge: source, reason, date and length or end.
-function banTip(b: BanEntry, t: Dict, lang: Lang): string {
-  const date = b.at ? fmtDateTime(b.at, lang) : b.dateText;
-  const end = b.until ? fill(t.banUntil, { x: fmtDateTime(b.until, lang) }) : b.length;
-  return [banKindLabel(b.kind, t), b.reason, date ? `${t.banDate} ${date}` : "", end].filter(Boolean).join(" · ");
-}
 
 // The profile table with the Steam data, asked here so the rest of the page
 // does not wait for Steam (up to five seconds when it is slow or down).
@@ -850,14 +852,21 @@ async function SteamProfile({ steam64, ...rest }: ProfileProps & { steam64: stri
   return <ProfileTable steam={steam} {...rest} />;
 }
 
+// "Member since" in the site's date format, without a time: Steam's API
+// gives YYYY-MM-DD (taken at noon UTC so no time zone moves the day), the
+// community page a text such as "December 4, 2024"; anything else as it is.
+function memberDate(v: string, lang: Lang): string {
+  const ms = Date.parse(/^\d{4}-\d\d-\d\d$/.test(v) ? `${v}T12:00:00Z` : v);
+  return Number.isNaN(ms) ? v : fmtDate(Math.floor(ms / 1000), lang);
+}
+
 // pending: Steam has not answered yet (the fallback while it is asked).
-function ProfileTable({ steam, pending = false, game, id, p, ids, isBot, location, age, fav, stars, bans: found, t, lang }: ProfileProps & { steam: SteamProfileData | null; pending?: boolean }) {
+function ProfileTable({ steam, pending = false, game, id, p, ids, isBot, location, age, fav, stars, bans: found, sourcebans, t, lang }: ProfileProps & { steam: SteamProfileData | null; pending?: boolean }) {
   // With the VAC ban from Steam: one badge per kind, VAC first.
   const vac: BanEntry[] = steam?.vacBanned ? [{ kind: "vac", reason: t.vacBanned, at: null, dateText: "", length: "", until: null }] : [];
   const bans = mergeBans([...found, ...vac].map((ban) => ({ player: 0, ban })), () => 0)[0]?.bans ?? [];
-  const main = bans.filter((b) => b.kind !== "vac").sort((a, b) => (b.at ?? 0) - (a.at ?? 0))[0];
-  const reason = mainReason(bans);
-  const banText = bans.length ? (reason ? `${t.banned}: ${reason}` : t.banned) : "";
+  // VAC and SourceBans side by side when the site checks them (grey when not banned there).
+  const always: BanKind[] = [...(steam ? (["vac"] as const) : []), ...(sourcebans ? (["sourcebans"] as const) : [])];
   // As on gameME: the name runs across the full width, the avatar sits in
   // its own framed box beside the seven rows from Clan to Steam name (they
   // are always there, with or without Steam data) and the rows below use
@@ -886,9 +895,9 @@ function ProfileTable({ steam, pending = false, game, id, p, ids, isBot, locatio
           <td className="stats-key">{t.name}:</td>
           <td colSpan={2}>
             <b>
-              {bans.length ? <BanMark kind={markKind(bans)} text={banText} /> : null}
               <Flag code={p.flag} title={p.country} />
               {p.name ?? `#${id}`}
+              <NameBanMark bans={bans} t={t} lang={lang} />
             </b>
             {stars && stars.gold + stars.silver + stars.bronze ? (
               <Link href={`/${game}/hall-of-fame`} className="hof-profile-stars">
@@ -915,31 +924,14 @@ function ProfileTable({ steam, pending = false, game, id, p, ids, isBot, locatio
           }
         />
         <Row k={t.steamName} v={steam?.name ?? <i>{pending ? "…" : t.notSpecified}</i>} />
-        {steam?.memberSince ? <Row k={t.memberSince} v={steam.memberSince} span /> : null}
+        {steam?.memberSince ? <Row k={t.memberSince} v={memberDate(steam.memberSince, lang)} span /> : null}
         {bans.length || steam ? (
           <Row
             k={t.bans}
             v={
               <span className="ban-info">
                 {bans.length ? (
-                  <>
-                    <BanMark kind={markKind(bans)} text={banText} />
-                    <span className="ban-badges">
-                      {bans.map((b) => (
-                        <BanBadge key={b.kind} kind={b.kind} label={banKindLabel(b.kind, t)} text={banTip(b, t, lang)} />
-                      ))}
-                    </span>{" "}
-                    <b>{t.banned}</b>
-                    {main ? (
-                      <>
-                        {main.reason ? ` · ${main.reason}` : ""}
-                        {main.at ? ` · ${t.banDate} ${fmtDateTime(main.at, lang)}` : main.dateText ? ` · ${t.banDate} ${main.dateText}` : ""}
-                        {main.until ? ` · ${fill(t.banUntil, { x: fmtDateTime(main.until, lang) })}` : main.length ? ` · ${main.length}` : ""}
-                      </>
-                    ) : (
-                      ` · ${t.vacBanned}`
-                    )}
-                  </>
+                  <BanBadges bans={bans} always={always} t={t} lang={lang} />
                 ) : (
                   <>
                     VAC: <span className="good">{t.vacClean}</span>

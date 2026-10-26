@@ -368,6 +368,8 @@
   "memberSince": "Membro desde",
   "vacBanned": "Ban VAC",
   "vacClean": "Sem ban VAC",
+  "banNone": "{x}: sem ban",
+  "notListed": "não classificado",
   "realName": "Nome real",
   "onlineState": "Estado",
   "playerInfo": "Informações do jogador",
