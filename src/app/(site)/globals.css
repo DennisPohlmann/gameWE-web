@@ -295,11 +295,11 @@ img { border: 0; vertical-align: middle; }
 .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 0 2%; width: 95%; margin: 0 auto; }
 .grid-2 > .section { width: 100%; }
 
-/* Start page, "General statistics": four cards with a count, a line of text
+/* Start page, "General statistics": five cards with a count, a line of text
    and a faint line of the last 30 days behind them (components/sparkline.tsx).
    The line takes --stat-line, else the template's --good (green); a halo in
    the card's colour keeps the text readable where the line passes. */
-.gs-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.gs-cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
 .gs-card {
   position: relative;
   overflow: hidden;
@@ -315,8 +315,10 @@ img { border: 0; vertical-align: middle; }
 .gs-label { color: var(--muted); font-weight: bold; }
 .gs-value { margin: 2px 0; color: var(--text); font-size: 20px; font-weight: bold; line-height: 1.2; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .gs-sub { color: var(--soft); }
-@media (max-width: 800px) {
+/* Narrow screens: two per row, the last card of an odd count takes the row. */
+@media (max-width: 900px) {
   .gs-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gs-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
 
 /* ---------------------------------------------------------------- tables */

@@ -300,6 +300,7 @@
   "gsServersActive": "{n} са играчима сада",
   "gsLastKill": "Последњи кил {d}",
   "gsNoKill": "Још нема кила",
+  "gsHeadshotShare": "{p} од свих убистава",
   "loadCaption": "Активни играчи по дану, последњих 30 дана",
   "loadCaptionHourly": "Играчи на мрежи по сату (сви сервери), последњих 30 дана",
   "loadCaptionHourlySince": "Играчи на мрежи по сату (сви сервери), од {d}",

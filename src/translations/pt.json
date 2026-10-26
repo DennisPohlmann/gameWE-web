@@ -300,6 +300,7 @@
   "gsServersActive": "{n} com jogadores agora",
   "gsLastKill": "Último kill {d}",
   "gsNoKill": "Ainda sem kills",
+  "gsHeadshotShare": "{p} dos abates",
   "loadCaption": "Jogadores ativos por dia, últimos 30 dias",
   "loadCaptionHourly": "Jogadores online por hora (todos os servidores), últimos 30 dias",
   "loadCaptionHourlySince": "Jogadores online por hora (todos os servidores), desde {d}",

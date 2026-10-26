@@ -300,6 +300,7 @@
   "gsServersActive": "{n} med spillere nu",
   "gsLastKill": "Seneste kill {d}",
   "gsNoKill": "Intet kill endnu",
+  "gsHeadshotShare": "{p} af drabene",
   "loadCaption": "Aktive spillere pr. dag, sidste 30 dage",
   "loadCaptionHourly": "Spillere online pr. time (alle servere), sidste 30 dage",
   "loadCaptionHourlySince": "Spillere online pr. time (alle servere), siden {d}",

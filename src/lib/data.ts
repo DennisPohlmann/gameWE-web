@@ -1572,9 +1572,9 @@ export const getDailyActivityAll = cache((days: number) => {
 // The start page's "General statistics" over the visible rankings, counted
 // like the lists count them: players without hidden ones, clans with at least
 // two visible members (and the rankings they are in), servers and those with
-// real players (bots left out, playerCount), players online, all kills (as in
-// the API's totals) and the time of the latest kill without a hidden player
-// on either side.
+// real players (bots left out, playerCount), players online, all kills and
+// headshots (as in the API's totals) and the time of the latest kill without
+// a hidden player on either side.
 export type GeneralStats = {
   players: number;
   clans: number;
@@ -1583,11 +1583,12 @@ export type GeneralStats = {
   serversActive: number;
   online: number;
   kills: number;
+  headshots: number;
   lastKill: number | null;
 };
 
 export async function getGeneralStats(): Promise<GeneralStats> {
-  const [p, c, s, kills, k] = await Promise.all([
+  const [p, c, s, sums, k] = await Promise.all([
     queryOne<{ n: number | string }>(
       `SELECT COUNT(*) AS n FROM hlstats_Players p JOIN hlstats_Games g ON g.code = p.game AND g.hidden = '0' WHERE p.hideranking = 0`,
     ),
@@ -1602,8 +1603,9 @@ export async function getGeneralStats(): Promise<GeneralStats> {
       `SELECT ${capped("s.")} AS act, ${await botsOnline("s.")} AS bots, s.max_players AS max
        FROM hlstats_Servers s JOIN hlstats_Games g ON g.code = s.game AND g.hidden = '0'`,
     ),
-    queryOne<{ n: number | string | null }>(
-      `SELECT SUM(p.kills) AS n FROM hlstats_Players p JOIN hlstats_Games g ON g.code = p.game AND g.hidden = '0'`,
+    queryOne<{ kills: number | string | null; headshots: number | string | null }>(
+      `SELECT SUM(p.kills) AS kills, SUM(p.headshots) AS headshots
+       FROM hlstats_Players p JOIN hlstats_Games g ON g.code = p.game AND g.hidden = '0'`,
     ),
     // Newest first along the timestamp index; stops at the first shown kill
     // (NOT EXISTS keeps the index, an IN on the rankings sorts every frag).
@@ -1622,7 +1624,8 @@ export async function getGeneralStats(): Promise<GeneralStats> {
     servers: s.length,
     serversActive: counts.filter((x) => x.real > 0).length,
     online: sumCounts(counts).real,
-    kills: Number(kills?.n ?? 0),
+    kills: Number(sums?.kills ?? 0),
+    headshots: Number(sums?.headshots ?? 0),
     lastKill: k ? Number(k.t) : null,
   };
 }

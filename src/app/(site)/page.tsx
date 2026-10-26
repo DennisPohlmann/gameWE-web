@@ -19,7 +19,7 @@ import {
   unlinkedBots,
   type RankingOverview,
 } from "@/lib/data";
-import { dateFormat, fmtDateTime, fmtNum, localeOf } from "@/lib/format";
+import { dateFormat, fmtDateTime, fmtNum, fmtPct, localeOf } from "@/lib/format";
 import { sumCounts } from "@/lib/player-count";
 import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
 import { sortRows, sortState } from "@/lib/table-sort";
@@ -181,10 +181,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
   );
 }
 
-// Four cards (players, clans, servers, kills), each with its count, what is
-// going on now and a faint line of the last 30 days behind the text: players
-// online and servers with players (server load, else active players per day),
-// clans with an active member per day and kills per day. A database error
+// Five cards (players, clans, servers, kills, headshots), each with its count,
+// what is going on now and a faint line of the last 30 days behind the text:
+// players online and servers with players (server load, else active players
+// per day), clans with an active member per day, kills and headshots per day
+// (with their share of the kills below the headshots). A database error
 // leaves the block out; a missing line only leaves its card without one.
 async function GeneralStatsSection({ t, lang }: { t: Dict; lang: Lang }) {
   let stats;
@@ -212,6 +213,12 @@ async function GeneralStatsSection({ t, lang }: { t: Dict; lang: Lang }) {
       value: stats.kills,
       sub: stats.lastKill ? fill(t.gsLastKill, { d: fmtDateTime(stats.lastKill, lang) }) : t.gsNoKill,
       line: perDay(daily, (r) => Number(r.kills)),
+    },
+    {
+      label: t.headshotsLabel,
+      value: stats.headshots,
+      sub: fill(t.gsHeadshotShare, { p: fmtPct(stats.kills > 0 ? stats.headshots / stats.kills : null, lang) }),
+      line: perDay(daily, (r) => Number(r.headshots ?? 0)),
     },
   ];
   return (

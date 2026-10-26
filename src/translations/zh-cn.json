@@ -300,6 +300,7 @@
   "gsServersActive": "{n} 台有玩家",
   "gsLastKill": "最近击杀 {d}",
   "gsNoKill": "暂无击杀",
+  "gsHeadshotShare": "占击杀的 {p}",
   "loadCaption": "每日活跃玩家，最近 30 天",
   "loadCaptionHourly": "每小时在线玩家（所有服务器），最近 30 天",
   "loadCaptionHourlySince": "每小时在线玩家（所有服务器），自 {d} 起",

@@ -300,6 +300,7 @@
   "gsServersActive": "{n} met spelers nu",
   "gsLastKill": "Laatste kill {d}",
   "gsNoKill": "Nog geen kill",
+  "gsHeadshotShare": "{p} van de kills",
   "loadCaption": "Actieve spelers per dag, laatste 30 dagen",
   "loadCaptionHourly": "Spelers online per uur (alle servers), laatste 30 dagen",
   "loadCaptionHourlySince": "Spelers online per uur (alle servers), sinds {d}",
