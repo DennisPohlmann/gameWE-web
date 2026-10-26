@@ -293,8 +293,6 @@
   "rankingsCount": "排行榜（{n} 名玩家線上）",
   "topPlayer": "最佳玩家",
   "topClan": "最佳戰隊",
-  "siteSummary": "<b>{p}</b> 名玩家和 <b>{c}</b> 支戰隊，分佈在 <b>{s}</b> 台伺服器的 <b>{g}</b> 個排行榜中",
-  "siteKills": "<b>{k}</b> 次擊殺 · <b>{d}</b> 次死亡 · <b>{h}</b> 次爆頭",
   "load": "負載",
   "generalStats": "總體統計",
   "gsPlayersNow": "{n} 人正在遊戲",

@@ -295,8 +295,6 @@
   "rankingsCount": "Ranglisten ({n} Spieler online)",
   "topPlayer": "Bester Spieler",
   "topClan": "Bester Clan",
-  "siteSummary": "<b>{p}</b> Spieler und <b>{c}</b> Clans in <b>{g}</b> Ranglisten auf <b>{s}</b> Servern",
-  "siteKills": "<b>{k}</b> Kills · <b>{d}</b> Tode · <b>{h}</b> Headshots",
   "load": "Auslastung",
   "generalStats": "Allgemeine Statistik",
   "gsPlayersNow": "{n} spielen gerade",

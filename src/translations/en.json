@@ -295,8 +295,6 @@
   "rankingsCount": "Rankings ({n} players online)",
   "topPlayer": "Top player",
   "topClan": "Top clan",
-  "siteSummary": "<b>{p}</b> players and <b>{c}</b> clans ranked in <b>{g}</b> rankings on <b>{s}</b> servers",
-  "siteKills": "<b>{k}</b> kills · <b>{d}</b> deaths · <b>{h}</b> headshots",
   "load": "Load",
   "generalStats": "General statistics",
   "gsPlayersNow": "{n} playing now",

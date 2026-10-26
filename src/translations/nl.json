@@ -293,8 +293,6 @@
   "rankingsCount": "Ranglijsten ({n} spelers online)",
   "topPlayer": "Beste speler",
   "topClan": "Beste clan",
-  "siteSummary": "<b>{p}</b> spelers en <b>{c}</b> clans gerangschikt in <b>{g}</b> ranglijsten op <b>{s}</b> servers",
-  "siteKills": "<b>{k}</b> kills · <b>{d}</b> doden · <b>{h}</b> headshots",
   "load": "Belasting",
   "generalStats": "Algemene statistieken",
   "gsPlayersNow": "{n} spelen nu",

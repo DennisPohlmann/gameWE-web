@@ -7,7 +7,6 @@ import { basePath } from "@/lib/base-path";
 import { LineChart } from "@/components/chart";
 import { Sparkline } from "@/components/sparkline";
 import { PlayerCount } from "@/components/player-count";
-import { Rich } from "@/components/rich";
 import { VoiceBox } from "@/components/voice-box";
 import {
   everyDay,
@@ -17,7 +16,6 @@ import {
   getGeneralStats,
   getHourlyActivity,
   getRankingOverview,
-  getSiteTotals,
   unlinkedBots,
   type RankingOverview,
 } from "@/lib/data";
@@ -46,7 +44,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
   const { lang, t } = await getDict();
   let data;
   try {
-    data = await Promise.all([getRankingOverview(), getSiteTotals()]);
+    data = await getRankingOverview();
   } catch (err) {
     console.error("database:", err);
     return (
@@ -58,7 +56,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
       </>
     );
   }
-  const [loaded, totals] = data;
+  const loaded = data;
   const order = sortState(await searchParams, rankingListValues, "order");
   const rankings = sortRows(loaded, rankingListValues, order.sort, order.asc);
   const th = sortHeads(order, "/", {});
@@ -155,18 +153,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
               </tbody>
             </table>
           )}
-          <p className="summary">
-            <Rich
-              text={fill(t.siteSummary, {
-                p: fmtNum(totals.players, lang),
-                c: fmtNum(totals.clans, lang),
-                g: fmtNum(totals.games, lang),
-                s: fmtNum(totals.servers, lang),
-              })}
-            />
-            {" · "}
-            <Rich text={fill(t.siteKills, { k: fmtNum(totals.kills, lang), d: fmtNum(totals.deaths, lang), h: fmtNum(totals.headshots, lang) })} />
-          </p>
         </div>
       </section>
       <Suspense
@@ -177,7 +163,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
           </section>
         }
       >
-        <GeneralStatsSection t={t} lang={lang} kills={totals.kills} />
+        <GeneralStatsSection t={t} lang={lang} />
       </Suspense>
       <Suspense
         fallback={
@@ -198,10 +184,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
 // Four cards (players, clans, servers, kills), each with its count, what is
 // going on now and a faint line of the last 30 days behind the text: players
 // online and servers with players (server load, else active players per day),
-// clans with an active member per day and kills per day. `kills` is the total
-// of the summary line above. A database error leaves the block out; a missing
-// line only leaves its card without one.
-async function GeneralStatsSection({ t, lang, kills }: { t: Dict; lang: Lang; kills: number }) {
+// clans with an active member per day and kills per day. A database error
+// leaves the block out; a missing line only leaves its card without one.
+async function GeneralStatsSection({ t, lang }: { t: Dict; lang: Lang }) {
   let stats;
   try {
     stats = await getGeneralStats();
@@ -224,7 +209,7 @@ async function GeneralStatsSection({ t, lang, kills }: { t: Dict; lang: Lang; ki
     { label: t.servers, value: stats.servers, sub: fill(t.gsServersActive, { n: fmtNum(stats.serversActive, lang) }), line: hourly?.servers ?? [] },
     {
       label: t.kills,
-      value: kills,
+      value: stats.kills,
       sub: stats.lastKill ? fill(t.gsLastKill, { d: fmtDateTime(stats.lastKill, lang) }) : t.gsNoKill,
       line: perDay(daily, (r) => Number(r.kills)),
     },

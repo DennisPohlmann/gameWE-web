@@ -293,8 +293,6 @@
   "rankingsCount": "Rankingi ({n} graczy online)",
   "topPlayer": "Najlepszy gracz",
   "topClan": "Najlepszy klan",
-  "siteSummary": "<b>{p}</b> graczy i <b>{c}</b> klanów w <b>{g}</b> rankingach na <b>{s}</b> serwerach",
-  "siteKills": "<b>{k}</b> zabójstw · <b>{d}</b> zgonów · <b>{h}</b> headshotów",
   "load": "Obciążenie",
   "generalStats": "Statystyki ogólne",
   "gsPlayersNow": "{n} gra teraz",

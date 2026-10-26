@@ -293,8 +293,6 @@
   "rankingsCount": "Ranglister ({n} spillere online)",
   "topPlayer": "Bedste spiller",
   "topClan": "Bedste klan",
-  "siteSummary": "<b>{p}</b> spillere og <b>{c}</b> klaner placeret på <b>{g}</b> ranglister på <b>{s}</b> servere",
-  "siteKills": "<b>{k}</b> drab · <b>{d}</b> dødsfald · <b>{h}</b> headshots",
   "load": "Belastning",
   "generalStats": "Generel statistik",
   "gsPlayersNow": "{n} spiller nu",

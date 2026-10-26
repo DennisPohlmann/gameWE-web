@@ -293,8 +293,6 @@
   "rankingsCount": "Classements ({n} joueurs en ligne)",
   "topPlayer": "Meilleur joueur",
   "topClan": "Meilleur clan",
-  "siteSummary": "<b>{p}</b> joueurs et <b>{c}</b> clans classés dans <b>{g}</b> classements sur <b>{s}</b> serveurs",
-  "siteKills": "<b>{k}</b> frags · <b>{d}</b> morts · <b>{h}</b> headshots",
   "load": "Charge",
   "generalStats": "Statistiques générales",
   "gsPlayersNow": "{n} en jeu",
