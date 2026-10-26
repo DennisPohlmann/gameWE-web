@@ -27,7 +27,13 @@ optional `chart.json` sets the colours of its charts (section "Charts"
 there). `DB_TYPE` selects the database: `mariadb` (default,
 also for MySQL) or `postgres`. `DB_PORT`
 defaults to 3306 or 5432 accordingly. Both use the same table and column
-names; on PostgreSQL they are unquoted, so they are stored in lower case. The
+names; on PostgreSQL they are unquoted, so they are stored in lower case.
+`DB_TABLE_PREFIX` is the prefix of the table names (default `hlstats`:
+`hlstats_Players`; `gw` or `gw_`: `gw_Players`), for a database created
+with another prefix (HLstatsX:CE `DB_PREFIX`) or several installations in
+one database. It must be the same as `database.table_prefix` of the
+collector (a letter, then letters, digits and `_`, at most 16 characters).
+The documentation names the tables `hlstats_*`; read your prefix instead. The
 admin area can
 override the site name, browser title format, header logo, favicon, site
 URL, banner, header links, activity days and page size through

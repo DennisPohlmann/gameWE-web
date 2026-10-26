@@ -1,6 +1,7 @@
 import "server-only";
 import { siteDay } from "./day";
 import { env } from "./env";
+import { DEFAULT_TABLE_PREFIX, normalizeTablePrefix, prefixSql } from "./table-prefix";
 import { readFileSync } from "node:fs";
 import mysql from "mysql2/promise";
 import pg from "pg";
@@ -176,8 +177,13 @@ function postgresDriver(user: string | undefined, password: string | undefined, 
   };
 }
 
+// The queries name the tables hlstats_*; with DB_TABLE_PREFIX (the
+// collector's database.table_prefix) the driver rewrites them (table-prefix.ts).
 function createDriver(user: string | undefined, password: string | undefined, limit: number): Driver {
-  return isPg() ? postgresDriver(user, password, limit) : mariadbDriver(user, password, limit);
+  const d = isPg() ? postgresDriver(user, password, limit) : mariadbDriver(user, password, limit);
+  const prefix = normalizeTablePrefix(env("DB_TABLE_PREFIX"));
+  if (prefix === DEFAULT_TABLE_PREFIX) return d;
+  return { run: (sql, params) => d.run(prefixSql(prefix, sql), params) };
 }
 
 declare global {

@@ -127,6 +127,9 @@ DB_HOST=127.0.0.1
 # 3306 for mariadb, 5432 for postgres
 DB_PORT=3306
 DB_NAME=gamewe
+# Only if the tables have another prefix than hlstats_ (the collector's
+# database.table_prefix, see CONFIG.md)
+#DB_TABLE_PREFIX=hlstats
 # Read-only user for the public pages
 DB_USER=gamewe_web
 DB_PASSWORD=change-me

@@ -70,6 +70,15 @@ const tls = ["", "off", "disable", "disabled", "false", "0"].includes(tlsMode)
       rejectUnauthorized: !["skip-verify", "insecure"].includes(tlsMode),
       ...(e.DB_TLS_CA ? { ca: readFileSync(e.DB_TLS_CA, "utf8") } : {}),
     };
+// DB_TABLE_PREFIX as in src/lib/table-prefix.ts: hlstats -> hlstats_Users.
+let prefix = (e.DB_TABLE_PREFIX ?? "").trim().replace(/_$/, "") || "hlstats";
+if (prefix.length > 16 || !/^[A-Za-z][A-Za-z0-9_]*$/.test(prefix) || prefix.endsWith("_") ||
+  (prefix.toLowerCase() !== "hlstats" && prefix.toLowerCase().startsWith("hlstats_")) || prefix.toLowerCase() === "gamewe") {
+  console.error(`DB_TABLE_PREFIX "${e.DB_TABLE_PREFIX}": a letter, then letters, digits and _, at most 16 characters`);
+  process.exit(2);
+}
+const users = `${prefix}_Users`;
+const options = `${prefix}_Options`;
 const conn = {
   host: e.DB_HOST ?? "127.0.0.1",
   port: Number(e.DB_PORT ?? (pg ? 5432 : 3306)),
@@ -84,25 +93,25 @@ if (pg) {
   const db = new postgres.Client({ ...conn, ssl: tls ?? false });
   await db.connect();
   await db.query(
-    `INSERT INTO hlstats_Users (username, password, acclevel, playerId) VALUES ($1, $2, 100, 0)
+    `INSERT INTO ${users} (username, password, acclevel, playerId) VALUES ($1, $2, 100, 0)
      ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password, acclevel = 100`,
     [name, hash],
   );
-  if (totp) await db.query(`DELETE FROM hlstats_Options WHERE keyname IN ($1, $2)`, [totpKey, pendingKey]);
-  if (totpSecret) await db.query(`INSERT INTO hlstats_Options (keyname, value) VALUES ($1, $2)`, [totpKey, seal(totpSecret)]);
-  issuer = (await db.query(`SELECT value FROM hlstats_Options WHERE keyname = 'sitename'`)).rows[0]?.value;
+  if (totp) await db.query(`DELETE FROM ${options} WHERE keyname IN ($1, $2)`, [totpKey, pendingKey]);
+  if (totpSecret) await db.query(`INSERT INTO ${options} (keyname, value) VALUES ($1, $2)`, [totpKey, seal(totpSecret)]);
+  issuer = (await db.query(`SELECT value FROM ${options} WHERE keyname = 'sitename'`)).rows[0]?.value;
   await db.end();
 } else {
   const { default: mysql } = await import("mysql2/promise");
   const db = await mysql.createConnection({ ...conn, charset: "utf8mb4", ssl: tls });
   await db.query(
-    `INSERT INTO hlstats_Users (username, password, acclevel, playerId) VALUES (?, ?, 100, 0)
+    `INSERT INTO ${users} (username, password, acclevel, playerId) VALUES (?, ?, 100, 0)
      ON DUPLICATE KEY UPDATE password = VALUES(password), acclevel = 100`,
     [name, hash],
   );
-  if (totp) await db.query(`DELETE FROM hlstats_Options WHERE keyname IN (?, ?)`, [totpKey, pendingKey]);
-  if (totpSecret) await db.query(`INSERT INTO hlstats_Options (keyname, value) VALUES (?, ?)`, [totpKey, seal(totpSecret)]);
-  issuer = (await db.query(`SELECT value FROM hlstats_Options WHERE keyname = 'sitename'`))[0][0]?.value;
+  if (totp) await db.query(`DELETE FROM ${options} WHERE keyname IN (?, ?)`, [totpKey, pendingKey]);
+  if (totpSecret) await db.query(`INSERT INTO ${options} (keyname, value) VALUES (?, ?)`, [totpKey, seal(totpSecret)]);
+  issuer = (await db.query(`SELECT value FROM ${options} WHERE keyname = 'sitename'`))[0][0]?.value;
   await db.end();
 }
 console.log(`Admin user "${name}" is ready. Password: ${password}`);
