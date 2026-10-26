@@ -44,7 +44,7 @@ updates:
         patterns: ["*"]
 
   # Base image in the Dockerfile, pinned by digest: a new digest behind the
-  # same tag is a Debian or Node patch, so it is checked daily with a short
+  # same tag is an Alpine or Node patch, so it is checked daily with a short
   # cooldown. Node majors stay a manual decision.
   - package-ecosystem: docker
     directory: /

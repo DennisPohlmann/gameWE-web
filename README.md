@@ -78,7 +78,7 @@ Server addresses, server names, the domain and Steam IDs are blurred.
 
 - The [gameWE collector](https://github.com/DennisPohlmann/gameWE-collector)
   with its database: MariaDB 11.4 or 12.3, or PostgreSQL 17 or 18
-- Docker (the image brings Node.js 24 LTS on Debian 13), or Node.js 22 or
+- Docker (the image brings Node.js 24 LTS on Alpine Linux), or Node.js 22 or
   newer for the tar.gz (Node.js 24 LTS recommended)
 - A reverse proxy with TLS (nginx, Caddy, Apache) in front of port 3000
 

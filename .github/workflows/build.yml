@@ -11,8 +11,8 @@ name: build
 # A pull request (e.g. from Dependabot) runs the same checks and builds
 # without publishing. The image is built and scanned with Trivy first
 # (image-scan); a fixable HIGH or CRITICAL vulnerability stops the release.
-# Once a week (schedule) edge is rebuilt from main, to take in the Debian
-# updates of apt-get upgrade without waiting for a commit.
+# Once a week (schedule) edge is rebuilt from main, to take in the Alpine
+# updates of apk upgrade without waiting for a commit.
 on:
   push:
     branches: [main]
