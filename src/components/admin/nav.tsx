@@ -300,7 +300,6 @@ export function AdminSidebar({
           <h4>{t.navAdvanced}</h4>
           <nav>
             <Item href="/admin/settings/raw" icon="code" label={t.rawOptions} on={seg === "settings" && parts[2] === "raw"} />
-            {groupLinks("advanced", { older: "clock" })}
           </nav>
         </>
       )}

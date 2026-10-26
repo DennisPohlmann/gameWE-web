@@ -5,7 +5,7 @@ import { PageHead } from "@/components/admin/page-head";
 import { HeaderLinksEditor, type EditorRow, type HeaderLinksText } from "@/components/header-links-editor";
 import { headerOrder } from "@/lib/header-links";
 import { dicts } from "@/translations";
-import { optionList, rawOptions } from "@/lib/admin-data";
+import { rawOptions } from "@/lib/admin-data";
 import { adminDict } from "@/lib/admin-i18n";
 import { RAW_GROUP, RAW_OPTION_HELP, READONLY_OPTIONS, allSettings, settingGroups, type Setting } from "@/lib/admin-settings";
 import { requireAdmin } from "@/lib/auth";
@@ -38,10 +38,9 @@ export default async function SettingsPage({
   const u = a.ui;
   const sp = await searchParams;
   const items = group?.items ?? [];
-  const [rows, games, templates, raw] = await Promise.all([
+  const [rows, templates, raw] = await Promise.all([
     // All settings: some pages show values of others (header links: SourceBans).
     adminQuery<{ keyname: string; value: string }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [allSettings.map((s) => s.key)]),
-    items.some((s) => s.type === "game") ? optionList("games") : Promise.resolve([]),
     items.some((s) => s.type === "template") ? listTemplates() : Promise.resolve([]),
     isRaw ? rawOptions() : Promise.resolve([]),
   ]);
@@ -104,7 +103,6 @@ export default async function SettingsPage({
                   fromEnv={source(s.key) === "env" ? ENV_FALLBACK[s.key as keyof typeof ENV_FALLBACK] : undefined}
                   readOnly={s.minLevel !== undefined && user.acclevel < s.minLevel}
                   lang={lang}
-                  games={games}
                   templates={templates}
                   stored={values[s.key] !== undefined && values[s.key] !== ""}
                   bad={bad?.key === s.key}
@@ -137,7 +135,6 @@ function SettingField({
   s,
   value,
   lang,
-  games,
   templates,
   stored,
   bad,
@@ -149,7 +146,6 @@ function SettingField({
   fromEnv?: string;
   readOnly: boolean;
   lang: Lang;
-  games: [string, string][];
   templates: { id: string; name: { de: string; en: string } }[];
   stored: boolean;
   bad: boolean;
@@ -204,17 +200,6 @@ function SettingField({
           </label>
         ) : null}
       </>
-    );
-  } else if (s.type === "game") {
-    control = (
-      <select {...noAutofill} id={id} name={s.key} defaultValue={v}>
-        <option value="">-</option>
-        {games.map(([code, name]) => (
-          <option key={code} value={code}>
-            {name}
-          </option>
-        ))}
-      </select>
     );
   } else {
     control = (

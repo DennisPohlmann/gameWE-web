@@ -18,7 +18,7 @@ export type Setting = {
   // "home": the Home tab, "Label|URL" with optional parts; "order": the
   // order of the header tabs (lib/header-links.ts). Both, like "link", are
   // edited in the header links list of the group with `id: "header"`.
-  type: "text" | "number" | "bool" | "game" | "choice" | "link" | "template" | "secret" | "home" | "order";
+  type: "text" | "number" | "bool" | "choice" | "link" | "template" | "secret" | "home" | "order";
   // For "choice": value and label of each option.
   choices?: [string, L][];
   def: string;
@@ -28,16 +28,13 @@ export type Setting = {
   // Shown only while the setting `key` has `value` (e.g. TeamSpeak fields
   // only when TeamSpeak is chosen as voice server).
   show?: { key: string; value: string };
-  // Old keys the website does not need: written only when filled in or
-  // already stored, so saving the page creates no empty rows.
-  optional?: boolean;
   // Admin level needed to change it (default: every admin). The field is
   // read-only below it and saveSettingsAction refuses a value.
   minLevel?: number;
 };
 
 // One page of the settings (/admin/settings/<id>) in one area of the menu.
-export type SettingArea = "website" | "services" | "collector" | "advanced";
+export type SettingArea = "website" | "services" | "collector";
 export type SettingGroup = { id: string; area: SettingArea; title: L; help?: L; items: Setting[] };
 
 const TS = { key: "gamewe_voice_type", value: "teamspeak" };
@@ -446,42 +443,35 @@ const definitions: Omit<SettingGroup, "area">[] = [
       { key: "gamewe_store_locations", label: { de: "Kill- und Todespositionen speichern (Heatmap)", en: "Store kill and death positions (heatmap)" }, type: "bool", def: "1", help: { de: "Die Plugin-Cvar gamewe_log_locations muss dafür 1 sein.", en: "The plugin cvar gamewe_log_locations must be 1 for this." } },
       { key: "gamewe_idle_timeout", label: { de: "Besuch endet nach (s ohne Logzeile)", en: "A visit ends after (s without a log line)" }, type: "number", def: "300", min: 0, max: 86400, help: { de: "Für Bots höchstens 3 Minuten; 0 = nie.", en: "At most 3 minutes for bots; 0 = never." } },
       { key: "gamewe_log_lines", label: { de: "Jede Logzeile ins Journal schreiben", en: "Write every log line to the journal" }, type: "bool", def: "1" },
-    ],
-  },
-  {
-    id: "older",
-    title: { de: "Ältere Optionen", en: "Older options" },
-    help: {
-      de: "Schlüssel aus HLstatsX:CE und älteren gameWE-Versionen. Die Webseite braucht sie nicht; sie bleiben für eigene Erweiterungen und ältere Collector-Installationen einstellbar. Leere Felder legen keinen Eintrag an.",
-      en: "Keys from HLstatsX:CE and older gameWE versions. The website does not need them; they stay settable for own extensions and older collector installations. Empty fields create no row.",
-    },
-    items: [
-      { key: "contact", label: { de: "Kontaktangabe (E-Mail oder URL)", en: "Contact (e-mail or URL)" }, type: "text", def: "", optional: true, help: { de: "Aus HLstatsX:CE. Text oder leer.", en: "From HLstatsX:CE. Text or empty." } },
       {
-        key: "siteurl",
-        label: { de: "Basis-URL der Seite (HLstatsX)", en: "Base URL of the site (HLstatsX)" },
-        type: "text",
-        def: "",
-        optional: true,
-        help: { de: "URL oder leer. Für den Link des Seitennamens gilt „Link des Seitennamens“ unter Webseite.", en: "URL or empty. The site name link is \"Link of the site name\" under Website." },
-      },
-      {
-        key: "gamewe_default_game",
-        label: { de: "Spiel, das zuerst gezeigt wird (alt)", en: "Game shown first (old)" },
-        type: "game",
-        def: "",
-        optional: true,
-        help: { de: "Aus älteren Versionen; die aktuelle Webseite wertet ihn nicht aus.", en: "From older versions; the current website does not use it." },
-      },
-      {
-        key: "gamewe_geoip_db",
-        label: { de: "GeoIP-Datenbank (veraltet)", en: "GeoIP database (obsolete)" },
-        type: "text",
-        def: "",
-        optional: true,
+        key: "gamewe_player_reset",
+        label: { de: "Spieler dürfen ihre Stats zurücksetzen (!gamewe_reset)", en: "Players may reset their stats (!gamewe_reset)" },
+        type: "bool",
+        def: "0",
         help: {
-          de: "Pfad einer .mmdb auf dem Collector-Rechner. Gilt nur, wenn die config.yaml des Collectors kein geoip.path hat und der Wert nicht der alte Standard /var/lib/gamewe/GeoLite2-City.mmdb ist.",
-          en: "Path of an .mmdb on the collector's machine. Used only when the collector's config.yaml has no geoip.path and the value is not the old default /var/lib/gamewe/GeoLite2-City.mmdb.",
+          de: "Bestätigt mit !gamewe_reset 1 innerhalb von 30 Sekunden; nie für gebannte oder vom Admin versteckte Spieler. Nur einschalten, wenn die Server ihre Logs mit sv_logsecret schicken: ein gefälschtes Logpaket könnte sonst die Stats jedes Spielers löschen.",
+          en: "Confirmed with !gamewe_reset 1 within 30 seconds; never for banned players or players hidden by an admin. Turn it on only when the servers send their logs with sv_logsecret: otherwise a faked log packet could reset any player's stats.",
+        },
+      },
+      { key: "gamewe_player_reset_cooldown", label: { de: "Wartezeit bis zum nächsten Zurücksetzen (h)", en: "Wait before the next reset (h)" }, type: "number", def: "24", min: 0, max: 87600, help: { de: "0 = keine Wartezeit.", en: "0 = no wait." } },
+      {
+        key: "gamewe_console_events",
+        label: { de: "Punkte jedes Kills in der Konsole zeigen", en: "Show the points of every kill in the console" },
+        type: "bool",
+        def: "0",
+        help: {
+          de: "Killer und Opfer, bei Aktionen der Spieler, bekommen die Punkte in die Konsole; Spieler schalten es mit !gamewe_display 0 ab. Ein RCON-Befehl pro Spieler und Ereignis.",
+          en: "Killer and victim, for actions the player, get the points in the console; players turn it off with !gamewe_display 0. One RCON command per player and event.",
+        },
+      },
+      {
+        key: "gamewe_global_chat",
+        label: { de: "Aktionen mit Punkten im Chat ansagen", en: "Announce actions with points in the chat" },
+        type: "bool",
+        def: "0",
+        help: {
+          de: "Spieler- und Spieler-gegen-Spieler-Aktionen mit Punkten und Teamsiege; Spieler schalten es mit !gamewe_chat 0 ab. Ein RCON-Befehl pro Ereignis und Sprache.",
+          en: "Player and player-vs-player actions with points and team wins; players turn it off with !gamewe_chat 0. One RCON command per event and language.",
         },
       },
     ],
@@ -563,9 +553,19 @@ export const settingGroups: SettingGroup[] = [
       de: "Antworten des Collectors auf !rank, !top10 und Co. über RCON.",
       en: "The collector's replies to !rank, !top10 etc. over RCON.",
     },
-    items: pick("gamewe_commands", "gamewe_menu_time", "gamewe_rcon_timeout", "gamewe_command_display", "gamewe_command_prefix", "gamewe_raw_messages"),
+    items: pick(
+      "gamewe_commands",
+      "gamewe_menu_time",
+      "gamewe_rcon_timeout",
+      "gamewe_command_display",
+      "gamewe_command_prefix",
+      "gamewe_raw_messages",
+      "gamewe_console_events",
+      "gamewe_global_chat",
+      "gamewe_player_reset",
+      "gamewe_player_reset_cooldown",
+    ),
   },
-  { id: "older", area: "advanced", title: { de: "Ältere Optionen", en: "Older options" }, help: helpOf("older"), items: definitions.find((g) => g.id === "older")!.items },
 ];
 
 // The page with the raw hlstats_Options rows (no group of its own).
@@ -592,12 +592,28 @@ export const RAW_OPTION_HELP: Record<string, L> = {
     en: "Written by the collector at start (its version); the overview compares it with the latest release. Not a setting.",
   },
   gamewe_ignore_bots: {
-    de: "Veraltet, ersetzt durch „Bots ranken“ unter Collector. Ein Collector-Update löscht den Schlüssel.",
-    en: "Obsolete, replaced by \"Rank bots\" under Collector. A collector update deletes the key.",
+    de: "Veraltet, ersetzt durch „Bots ranken“ unter Collector. Der Collector liest 1 noch als „Bots ranken: Nein“; „Bots ranken“ einstellen und die Zeile löschen.",
+    en: "Obsolete, replaced by \"Rank bots\" under Collector. The collector still reads 1 as \"Rank bots: No\"; set \"Rank bots\" and delete the row.",
   },
   gamewe_daily_awards: {
-    de: "Veraltet, ersetzt durch features.daily_awards in der config.yaml. Ein Collector-Update löscht den Schlüssel.",
-    en: "Obsolete, replaced by features.daily_awards in config.yaml. A collector update deletes the key.",
+    de: "Veraltet, ersetzt durch features.daily_awards in der config.yaml. Wirkt nicht mehr; ein Collector-Update löscht den Schlüssel.",
+    en: "Obsolete, replaced by features.daily_awards in config.yaml. Has no effect; a collector update deletes the key.",
+  },
+  gamewe_default_game: {
+    de: "Veraltet, die Webseite wertet ihn nicht aus. Ein Collector-Update löscht den Schlüssel.",
+    en: "Obsolete, the website does not use it. A collector update deletes the key.",
+  },
+  gamewe_geoip_db: {
+    de: "Veraltet: Pfad einer .mmdb auf dem Collector-Rechner. Gilt nur, wenn die config.yaml kein geoip.path hat; besser dort eintragen und die Zeile löschen.",
+    en: "Obsolete: path of an .mmdb on the collector's machine. Used only when config.yaml has no geoip.path; better set it there and delete the row.",
+  },
+  contact: {
+    de: "Aus HLstatsX:CE, die Webseite wertet ihn nicht aus. Leer löscht ein Collector-Update den Schlüssel.",
+    en: "From HLstatsX:CE, the website does not use it. When empty, a collector update deletes the key.",
+  },
+  siteurl: {
+    de: "Aus HLstatsX:CE, die Webseite wertet ihn nicht aus (Link des Seitennamens: unter Allgemein). Leer löscht ein Collector-Update den Schlüssel.",
+    en: "From HLstatsX:CE, the website does not use it (site name link: under General). When empty, a collector update deletes the key.",
   },
 };
 

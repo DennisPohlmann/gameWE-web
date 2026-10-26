@@ -227,12 +227,6 @@ export async function saveSettingsAction(form: FormData) {
   const bad: (field: string) => never = (field) => badField(page, field);
   const items = group?.items ?? [];
   const values: [string, string][] = [];
-  // Rows that exist now: optional settings are only written when filled in
-  // or already stored.
-  const optional = items.filter((s) => s.optional).map((s) => s.key);
-  const stored = new Set(
-    optional.length ? (await adminQuery<{ keyname: string }>(`SELECT keyname FROM hlstats_Options WHERE keyname IN (?)`, [optional])).map((r) => r.keyname) : [],
-  );
   for (const s of items) {
     if (s.minLevel !== undefined && user.acclevel < s.minLevel) {
       // Read-only for this admin: a sent value is refused, nothing is written.
@@ -310,8 +304,6 @@ export async function saveSettingsAction(form: FormData) {
       const base = sourcebansBase(v);
       if (!base) bad(s.key);
       values.push([s.key, base]);
-      continue;
-    } else if (s.optional && !v && !stored.has(s.key)) {
       continue;
     }
     values.push([s.key, v]);

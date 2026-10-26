@@ -336,8 +336,6 @@ export const entities: Entity[] = [
       },
       { name: "minimum", label: { de: "Ab Kills", en: "From kills" }, type: "number", inList: true, required: true },
       { name: "game_code", label: { de: "Rangliste", en: "Ranking" }, type: "select", options: "games", inList: true, required: true },
-      { name: "code", label: { de: "Code (optional)", en: "Code (optional)" }, type: "text", max: 128, help: { de: "Aus HLstatsX übernommen, gameWE nutzt ihn nicht.", en: "Taken over from HLstatsX, gameWE does not use it." } },
-      { name: "img_file", label: { de: "Bilddatei (alt)", en: "Image file (legacy)" }, type: "text", max: 128, help: { de: "Aus HLstatsX übernommen, gameWE zeichnet die Abzeichen selbst und nutzt die Datei nicht.", en: "Taken over from HLstatsX; gameWE draws the insignia itself and does not use the file." } },
     ],
     order: "game_code, minimum",
     gameColumn: "game_code",

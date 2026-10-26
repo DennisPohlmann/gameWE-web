@@ -343,13 +343,14 @@ menu button), and lists turn into cards on narrow screens:
   events, search engines), Services (voice server, SourceBans, Steam, monitoring),
   Collector (points, recording & privacy, in-game commands), Moderation (chat,
   IP addresses), Access (users, my account & 2FA) and Advanced (all options
-  (raw), older options).
+  (raw)).
 
 What the admin area edits:
 
 - **Settings:** the website settings and the collector's `gamewe_*` options
   (points per kill, headshot bonus, penalties, win triggers, rank bots, chat and IP
-  storage, in-game commands, RCON timeout). The collector picks them up within
+  storage, in-game commands, RCON timeout, the players' own stats reset, points
+  in the console and actions in the chat). The collector picks them up within
   a minute. A page saves only its own settings. All other `hlstats_Options`
   rows (own, old HLstatsX and obsolete keys) are on Advanced → All options
   (raw), where they can be changed, deleted or added; TOTP secrets are never
