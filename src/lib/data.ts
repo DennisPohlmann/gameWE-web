@@ -551,28 +551,59 @@ export async function getRanking(opts: {
     params.push(opts.city.toLowerCase());
   }
   const local = !!(opts.country || opts.state || opts.city);
+  const joins = `LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+    LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id`;
   const from = `FROM ${table} p
-    LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
-    LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
+    ${joins}
     WHERE ${where.join(" AND ")}`;
-  const order = `${rankingSorts[opts.sort]} ${opts.asc ? "ASC" : "DESC"}, p.playerId`;
+  const dir = opts.asc ? "ASC" : "DESC";
+  // The inactive players can be hundreds of thousands (an imported
+  // HLstatsX database): there the tie-breaker runs in the sort's direction,
+  // so the index game_activity (game, hideranking, last_event, playerId)
+  // serves the default order, and a page sorted by a column of the players
+  // table is picked by playerId first and only its rows are joined.
+  const order = `${rankingSorts[opts.sort]} ${dir}, p.playerId${opts.inactive ? ` ${dir}` : ""}`;
+  const narrow = opts.inactive && !opts.search && !local && rankingSorts[opts.sort].startsWith("p.");
+  const cols = `SELECT p.playerId, d.lastName AS name, p.skill, p.last_event, d.first_connect, p.connection_time,
+              p.kills, p.deaths, p.headshots, p.shots, p.hits, l.flag, l.country`;
   // Both joins match at most one row, so without a filter on them the count
   // needs the players table only.
   const countFrom = opts.search || local ? from : `FROM ${table} p WHERE ${where.join(" AND ")}`;
+  const countSql = `SELECT COUNT(*) AS n ${countFrom}`;
   const [rows, count] = await Promise.all([
-    query<RankingRow>(
-      `SELECT p.playerId, d.lastName AS name, p.skill, p.last_event, d.first_connect, p.connection_time,
-              p.kills, p.deaths, p.headshots, p.shots, p.hits, l.flag, l.country
-       ${from} ORDER BY ${order} LIMIT ? OFFSET ?`,
-      [...params, opts.limit, opts.offset],
-    ),
-    queryOne<{ n: number }>(`SELECT COUNT(*) AS n ${countFrom}`, params),
+    narrow
+      ? query<RankingRow>(
+          `${cols}
+           FROM (SELECT p.playerId FROM ${table} p WHERE ${where.join(" AND ")} ORDER BY ${order} LIMIT ? OFFSET ?) x
+           JOIN ${table} p ON p.playerId = x.playerId
+           ${joins}
+           ORDER BY ${order}`,
+          [...params, opts.limit, opts.offset],
+        )
+      : query<RankingRow>(`${cols} ${from} ORDER BY ${order} LIMIT ? OFFSET ?`, [...params, opts.limit, opts.offset]),
+    // Counting the inactive players of a large ranking takes a while; the
+    // number changes only when the collector moves players, so it is kept
+    // for a minute (not while searching).
+    opts.inactive && !opts.search ? inactiveCount(countSql, params) : queryOne<{ n: number }>(countSql, params),
   ]);
   if ((local || opts.withRank) && !opts.inactive) {
     const pos = await rankPositions(rows.map((r) => ({ game: opts.game, skill: r.skill })));
     for (const r of rows) r.globalRank = pos.get(`${opts.game}|${Number(r.skill)}`);
   }
   return { rows, total: count?.n ?? 0 };
+}
+
+const inactiveCountCache = new Map<string, { at: number; value: Promise<{ n: number } | undefined> }>();
+
+function inactiveCount(sql: string, params: Param[]): Promise<{ n: number } | undefined> {
+  const key = `${sql}|${JSON.stringify(params)}`;
+  const hit = inactiveCountCache.get(key);
+  if (hit && Date.now() - hit.at < 60_000) return hit.value;
+  if (inactiveCountCache.size > 200) inactiveCountCache.clear();
+  const value = queryOne<{ n: number }>(sql, params);
+  value.catch(() => inactiveCountCache.delete(key));
+  inactiveCountCache.set(key, { at: Date.now(), value });
+  return value;
 }
 
 // ---------------------------------------------------------------- countries, states and cities
