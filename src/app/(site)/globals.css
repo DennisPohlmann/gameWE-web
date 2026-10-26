@@ -817,6 +817,9 @@ a.button { display: inline-block; text-decoration: none; }
   body { margin: 8px 4px; }
   .block, .section, .grid-2 { width: 100%; }
   .search input { width: 120px; }
+  /* Filter forms with several fields (events) shrink their selects to fit. */
+  .search { max-width: 100%; }
+  .search select { min-width: 0; flex: 0 1 auto; }
   .hide-sm { display: none; }
   .icon-link { display: block; margin: 2px 0; }
   /* Player page: everything fits the phone's width. */
