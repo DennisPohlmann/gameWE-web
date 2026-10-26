@@ -165,7 +165,7 @@ export function ServerFlag({ code, lang }: { code: string | null | undefined; la
 // team blue, the second red, everyone else (spectators, unassigned) grey.
 export async function LiveTable({ game, players, t, lang }: { game: string; players: LivePlayer[]; t: Dict; lang: Lang }) {
   // Counter-Strike 2 logs no shots: no accuracy column.
-  const [botLinks, shots] = await Promise.all([botProfiles(), gameHasShots(game)]);
+  const [botLinks, shots] = await Promise.all([botProfiles(game), gameHasShots(game)]);
   const teams = new Map<string, LivePlayer[]>();
   for (const p of players) {
     const k = p.team || "";

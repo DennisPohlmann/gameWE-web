@@ -12,6 +12,7 @@ import { adminQuery } from "@/lib/db";
 import { localeOf } from "@/lib/format";
 import { gameKind } from "@/lib/games";
 import { getAdminLang } from "@/lib/i18n";
+import { BotsCard } from "./bots-card";
 import { HallOfFameCard } from "./hall-of-fame-card";
 
 // The lists of a ranking with their table and ranking column (constants).
@@ -31,7 +32,8 @@ const LISTS: [string, IconName, string, string][] = [
 export default async function RankingPage({ params, searchParams }: { params: Promise<{ code: string }>; searchParams: Promise<Record<string, string | undefined>> }) {
   const user = await requireAdmin();
   const code = decodeURIComponent((await params).code);
-  const hof = (await searchParams).hof;
+  const sp = await searchParams;
+  const hof = sp.hof;
   const rankings = await rankingSummaries();
   const r = rankings.find((x) => x.code === code);
   if (!r) notFound();
@@ -193,6 +195,7 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
           </ul>
         </section>
       </div>
+      {isAdmin ? <BotsCard game={r.code} lang={lang} status={sp.bots} changed={sp.n} /> : null}
       {isAdmin ? <HallOfFameCard game={r.code} lang={lang} status={hof} /> : null}
     </>
   );

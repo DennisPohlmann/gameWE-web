@@ -4,7 +4,7 @@ import { AutoForm } from "@/components/auto-form";
 import { SortableTable } from "@/components/sortable-table";
 import { Bar, Section, TableWrap, strParam } from "@/components/ui";
 import { noAutofill } from "@/lib/autofill";
-import { getGames, getHelpActions, getHelpWeapons, getPointSettings } from "@/lib/data";
+import { botRankings, getGames, getHelpActions, getHelpWeapons, getPointSettings } from "@/lib/data";
 import { gameKind } from "@/lib/games";
 import { fmtNum } from "@/lib/format";
 import { fill, getDict } from "@/lib/i18n";
@@ -25,7 +25,7 @@ export default async function HelpPage({ searchParams }: { searchParams: SP }) {
   const rawGame = strParam(sp.game);
   // Actions and weapons per ranking: the first ranking unless one is chosen.
   const game = games.some((g) => g.code === rawGame) ? rawGame : (games[0]?.code ?? "");
-  const [actions, weapons, pts] = await Promise.all([getHelpActions(game), getHelpWeapons(game), getPointSettings()]);
+  const [actions, weapons, pts, bots] = await Promise.all([getHelpActions(game), getHelpWeapons(game), getPointSettings(), botRankings()]);
   const yn = (v: string) => (v === "1" ? t.yes : t.no);
   const signed = (n: number) => (n > 0 ? `+${fmtNum(n, lang)}` : fmtNum(n, lang));
   const questions = [
@@ -135,7 +135,7 @@ export default async function HelpPage({ searchParams }: { searchParams: SP }) {
             <li>{t.helpStreak}</li>
             <li>{t.helpWin}</li>
             <li>{t.helpFloor}</li>
-            {pts.gamewe_rank_bots ? null : <li>{t.helpBots}</li>}
+            {bots.points(game) ? null : <li>{t.helpBots}</li>}
           </ul>
           <h3>{t.helpActionsIntro}</h3>
           {gameTabs("actions")}

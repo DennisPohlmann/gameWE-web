@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { adminQuery, likeOp, query, queryOne, sinceDays, type Param } from "./db";
+import { BOT_POINTS_PREFIX, botSettingKeys, botSettingOn, RANK_BOTS_PREFIX } from "./bot-settings";
 import { addDays, dayOf, siteDay } from "./day";
 import { nowUnix, steamIds } from "./format";
 import { baseGameOf, GAME_HAS_DATA, gameKind } from "./games";
@@ -1727,8 +1728,8 @@ export async function getPlayerFlags(ids: number[]) {
   const uniq = [...new Set(ids.filter((x) => x > 0))];
   if (!uniq.length) return new Map<number, PlayerFlag>();
   // Bots get the code "bot": Flag shows the BOT tag in the flag's place.
-  const rows = await query<{ playerId: number; flag: string | null; country: string | null; bot: number }>(
-    `SELECT p.playerId, l.flag, l.country,
+  const rows = await query<{ playerId: number; game: string; flag: string | null; country: string | null; bot: number }>(
+    `SELECT p.playerId, p.game, l.flag, l.country,
             CASE WHEN EXISTS (SELECT 1 FROM hlstats_PlayerUniqueIds u WHERE u.playerId = p.playerId AND u.uniqueId LIKE 'BOT%') THEN 1 ELSE 0 END AS bot
      FROM hlstats_Players p
      LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
@@ -1736,20 +1737,36 @@ export async function getPlayerFlags(ids: number[]) {
      WHERE p.playerId IN (?)`,
     [uniq],
   );
-  const nolink = !(await botProfiles());
+  const ranked = await botRankings();
   return new Map<number, PlayerFlag>(
     rows
       .filter((r) => Number(r.bot) || r.flag)
-      .map((r) => [Number(r.playerId), Number(r.bot) ? { flag: "bot", country: "Bot", nolink } : { flag: r.flag as string, country: r.country ?? "" }]),
+      .map((r) => [
+        Number(r.playerId),
+        Number(r.bot) ? { flag: "bot", country: "Bot", nolink: !ranked(String(r.game).trim()) } : { flag: r.flag as string, country: r.country ?? "" },
+      ]),
   );
 }
 
 // nolink: a bot without a profile (see botProfiles), shown as plain text.
 export type PlayerFlag = { flag: string; country: string; nolink?: boolean };
 
-// Bots have a profile only while the collector ranks them (gamewe_rank_bots).
-// Otherwise their names are plain text and their profile pages answer 404.
-export const botProfiles = cache(async () => Boolean((await getPointSettings()).gamewe_rank_bots));
+// The bot settings of every ranking (lib/bot-settings.ts): ranked(game)
+// and points(game), true for a ranking without a stored value.
+export const botRankings = cache(async () => {
+  const rows = await query<{ keyname: string; value: string | null }>(
+    `SELECT keyname, value FROM hlstats_Options WHERE keyname LIKE ? OR keyname LIKE ?`,
+    [`${RANK_BOTS_PREFIX}%`, `${BOT_POINTS_PREFIX}%`],
+  );
+  const m = new Map(rows.map((r) => [r.keyname, r.value]));
+  const ranked = (game: string) => botSettingOn(m.get(botSettingKeys(game).ranked));
+  return Object.assign(ranked, { points: (game: string) => botSettingOn(m.get(botSettingKeys(game).points)) });
+});
+
+// Bots have a profile only in a ranking that ranks them
+// (gamewe_rank_bots_<game>). Otherwise their names are plain text and their
+// profile pages answer 404.
+export const botProfiles = async (game: string) => (await botRankings())(game);
 
 export const isBotId = (uniqueId: string | null | undefined) => (uniqueId ?? "").toUpperCase().startsWith("BOT");
 
@@ -1757,24 +1774,23 @@ export const isBotId = (uniqueId: string | null | undefined) => (uniqueId ?? "")
 // none, and a hidden player (hideranking <> 0; hidden.ts) always. Profile,
 // sessions, events, awards, chat, events feed, signature, banner and avatar
 // all ask this.
-// With banned, a player hidden as banned (hideranking 2) keeps the profile
-// page (with the ban notice, not indexed); the public API and the lists
-// still leave them out. Hidden by an admin (1) or by the player (3): none.
-export async function noProfile(p: { uniqueId: string | null; hideranking?: number | null }, banned = false) {
-  if (isBotId(p.uniqueId)) return !(await botProfiles());
+export async function noProfile(p: { uniqueId: string | null; game: string; hideranking?: number | null }, banned = false) {
+  if (isBotId(p.uniqueId)) return !(await botProfiles(String(p.game).trim()));
   const h = Number(p.hideranking ?? 0);
   return h !== 0 && !(banned && h === 2);
 }
 
-// The bots among the ids that get no link (empty while bots have profiles).
+// The bots among the ids that get no link: those of rankings that do not
+// rank bots.
 export async function unlinkedBots(ids: number[]) {
   const uniq = [...new Set(ids.filter((x) => x > 0))];
-  if (!uniq.length || (await botProfiles())) return new Set<number>();
-  const rows = await query<{ playerId: number }>(
-    `SELECT DISTINCT playerId FROM hlstats_PlayerUniqueIds WHERE playerId IN (?) AND uniqueId LIKE 'BOT%'`,
+  if (!uniq.length) return new Set<number>();
+  const rows = await query<{ playerId: number; game: string }>(
+    `SELECT DISTINCT playerId, game FROM hlstats_PlayerUniqueIds WHERE playerId IN (?) AND uniqueId LIKE 'BOT%'`,
     [uniq],
   );
-  return new Set(rows.map((r) => Number(r.playerId)));
+  const ranked = await botRankings();
+  return new Set(rows.filter((r) => !ranked(String(r.game).trim())).map((r) => Number(r.playerId)));
 }
 
 // Country of each clan: the most common country among its members (ties by
@@ -2171,7 +2187,7 @@ export function getHelpWeapons(game: string) {
 
 // The collector's point settings (defaults as in collector 1.6).
 export async function getPointSettings() {
-  const defs = { gamewe_start_skill: 1000, gamewe_kill_points: 5, gamewe_headshot_bonus: 0, gamewe_suicide_penalty: 5, gamewe_teamkill_penalty: 10, gamewe_rank_bots: 0 };
+  const defs = { gamewe_start_skill: 1000, gamewe_kill_points: 5, gamewe_headshot_bonus: 0, gamewe_suicide_penalty: 5, gamewe_teamkill_penalty: 10 };
   const rows = await query<{ keyname: string; value: string }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [Object.keys(defs)]);
   const out = { ...defs };
   for (const r of rows) {

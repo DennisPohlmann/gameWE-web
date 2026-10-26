@@ -7,7 +7,7 @@ import { headerOrder } from "@/lib/header-links";
 import { dicts } from "@/translations";
 import { rawOptions } from "@/lib/admin-data";
 import { adminDict } from "@/lib/admin-i18n";
-import { RAW_GROUP, RAW_OPTION_HELP, READONLY_OPTIONS, allSettings, settingGroups, type Setting } from "@/lib/admin-settings";
+import { RAW_GROUP, rawOptionHelp, READONLY_OPTIONS, allSettings, settingGroups, type Setting } from "@/lib/admin-settings";
 import { requireAdmin } from "@/lib/auth";
 import { ENV_FALLBACK, envFormValues, valueSource } from "@/lib/config";
 import { noAutofill } from "@/lib/autofill";
@@ -239,7 +239,7 @@ function RawFields({ raw, lang }: { raw: { keyname: string; value: string }[]; l
     <>
       {raw.length ? null : <p className="settings-help">{a.rawNone}</p>}
       {raw.map((r, i) => {
-        const help = RAW_OPTION_HELP[r.keyname]?.[lang] ?? a.rawUnknown;
+        const help = rawOptionHelp(r.keyname, lang) ?? a.rawUnknown;
         return (
           <div className="field" key={r.keyname}>
             <div className="l">

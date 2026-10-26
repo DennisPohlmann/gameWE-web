@@ -96,7 +96,7 @@ website's # column) and `rank` (the place in the whole ranking by points);
 
 Unknown rankings, servers, players and other ids, and unknown paths under
 `/api/v1`, give `404` with `{"error":"not found"}`; for `/api/v1/players/<id>/...` also hidden and
-banned players, players of hidden rankings and bots while "Rank bots" is off.
+banned players, players of hidden rankings and bots of rankings whose "Bots in the ranking" is off.
 
 The OpenAPI description is written in `src/lib/openapi.ts` (one entry per
 route, with schema and a made-up example answer); `/api/v1` lists the same
@@ -122,7 +122,7 @@ URLs.
 | `/sig/<playerId>.png`, `/banner/<serverId>.png` | old URLs, aliases of the two above (same picture, no redirect) |
 
 A player or server that does not belong to `<game>`, a hidden ranking and a
-bot while "Rank bots" is off give `404`, and so do players hidden from the
+bot of a ranking whose "Bots in the ranking" is off give `404`, and so do players hidden from the
 ranking or banned (as their profile). The TeamSpeak
 banner gives `404` unless TeamSpeak is the voice server (Admin → Settings →
 Voice server).

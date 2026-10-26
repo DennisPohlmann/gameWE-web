@@ -20,6 +20,7 @@ import { invalidateSteamKey } from "@/lib/steam";
 import { listTemplates } from "@/lib/templates";
 import { jobsAvailable, queueReset, resetMode } from "@/lib/reset";
 import { hallSettings, saveHallSettings } from "@/lib/admin-hall";
+import { saveRankingBots } from "@/lib/admin-ranking-bots";
 import { invalidateHallOfFame } from "@/lib/hall-of-fame";
 import { MAX_EVERY, parseSchedule, scheduleValue } from "@/lib/hall-period";
 import { addParams, safeReturnTo, withReturnTo } from "@/lib/return-to";
@@ -414,6 +415,22 @@ export async function resetRankingAction(form: FormData) {
   }
   console.info(`gameWE: reset of ranking ${game} (${mode}) queued as job ${job.id} by ${user.username}${job.existing ? " (already queued)" : ""}`);
   redirect(`/admin/reset?job=${job.id}${job.existing ? "&existing=1" : ""}`);
+}
+
+// Bot settings of one ranking (lib/admin-ranking-bots.ts), on the ranking's
+// admin page: admins only. Switching the ranking of bots also shows or hides
+// the ranking's existing bots.
+export async function rankingBotsAction(form: FormData) {
+  const user = await requireAdmin(LEVEL_ADMIN);
+  const game = String(form.get("game") ?? "");
+  const games = await optionList("games");
+  if (!games.some(([code]) => code === game)) redirect("/admin/rankings");
+  // The switches send a hidden 0 and, when on, a 1 as well.
+  const on = (name: string) => form.getAll(name).map(String).includes("1");
+  const next = { ranked: on("ranked"), points: on("points"), kills: on("kills") };
+  const n = await saveRankingBots(game, next);
+  console.info(`gameWE: bots of ranking ${game} ${next.ranked ? "ranked" : "hidden"}, ${next.points ? "with" : "without"} points, kills of bots ${next.kills ? "counted" : "not counted"}${n ? ` (${n} bots changed)` : ""}, by ${user.username}`);
+  redirect(`/admin/rankings/${encodeURIComponent(game)}?bots=saved${n ? `&n=${n}` : ""}#bots`);
 }
 
 // Scheduled ranking reset and hall of fame of one ranking (lib/admin-hall.ts),

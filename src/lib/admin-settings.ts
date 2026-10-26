@@ -411,7 +411,6 @@ const definitions: Omit<SettingGroup, "area">[] = [
     id: "collector",
     title: { de: "Collector", en: "Collector" },
     items: [
-      { key: "gamewe_rank_bots", label: { de: "Bots ranken (in Ranglisten und Awards)", en: "Rank bots (in rankings and awards)" }, type: "bool", def: "0", help: { de: "Bots werden immer erfasst und auf den Serverseiten mit ihren Stats gezeigt. Nein: sie erscheinen nicht in Ranglisten und Awards, ihre Namen sind nicht verlinkt und ihre Profilseiten antworten 404. Gilt für neu erfasste Bots; bestehende sind einzeln unter Spieler änderbar.", en: "Bots are always recorded and shown with their stats on the server pages. No: they stay out of rankings and awards, their names are not linked and their profile pages answer 404. Applies to newly recorded bots; existing ones can be changed under Players." } },
       { key: "gamewe_server_load", label: { de: "Server-Auslastung aufzeichnen", en: "Record server load" }, type: "bool", def: "1", help: { de: "Alle 10 Minuten ein Eintrag je Server, für die Grafik auf der Serverseite.", en: "One row per server every 10 minutes, for the graph on the server page." } },
       { key: "gamewe_store_chat", label: { de: "Chat speichern", en: "Store chat" }, type: "bool", def: "1", help: { de: "Personenbezogene Daten, gehört in die Datenschutzerklärung. Ob Besucher den Chat sehen, steht unter Webseite.", en: "Personal data; mention it in your privacy policy. Whether visitors see the chat is set under Website." } },
       { key: "gamewe_store_player_ip", label: { de: "Spieler-IPs speichern", en: "Store player IPs" }, type: "bool", def: "1", help: { de: "Personenbezogene Daten, gehört in die Datenschutzerklärung. Nur Admins sehen sie.", en: "Personal data; mention it in your privacy policy. Only admins see them." } },
@@ -543,7 +542,7 @@ export const settingGroups: SettingGroup[] = [
       de: "Was der Collector speichert. Der Collector übernimmt Änderungen innerhalb einer Minute.",
       en: "What the collector stores. The collector picks up changes within a minute.",
     },
-    items: pick("gamewe_rank_bots", "gamewe_server_load", "gamewe_store_chat", "gamewe_store_player_ip", "gamewe_store_locations", "gamewe_idle_timeout", "gamewe_log_lines"),
+    items: pick("gamewe_server_load", "gamewe_store_chat", "gamewe_store_player_ip", "gamewe_store_locations", "gamewe_idle_timeout", "gamewe_log_lines"),
   },
   {
     id: "commands",
@@ -592,8 +591,12 @@ export const RAW_OPTION_HELP: Record<string, L> = {
     en: "Written by the collector at start (its version); the overview compares it with the latest release. Not a setting.",
   },
   gamewe_ignore_bots: {
-    de: "Veraltet, ersetzt durch „Bots ranken“ unter Collector. Der Collector liest 1 noch als „Bots ranken: Nein“; „Bots ranken“ einstellen und die Zeile löschen.",
-    en: "Obsolete, replaced by \"Rank bots\" under Collector. The collector still reads 1 as \"Rank bots: No\"; set \"Rank bots\" and delete the row.",
+    de: "Veraltet: Die Bot-Einstellungen stehen jetzt pro Ranking (Rankings → Ranking → Bots). Ein Collector-Update (Migration 15) übernimmt den Wert und löscht den Schlüssel.",
+    en: "Obsolete: the bot settings are per ranking now (Rankings → ranking → Bots). A collector update (migration 15) takes over the value and deletes the key.",
+  },
+  gamewe_rank_bots: {
+    de: "Veraltet: Die Bot-Einstellungen stehen jetzt pro Ranking (Rankings → Ranking → Bots). Ein Collector-Update (Migration 15) übernimmt den Wert in jedes Ranking und löscht den Schlüssel.",
+    en: "Obsolete: the bot settings are per ranking now (Rankings → ranking → Bots). A collector update (migration 15) copies the value to every ranking and deletes the key.",
   },
   gamewe_daily_awards: {
     de: "Veraltet, ersetzt durch features.daily_awards in der config.yaml. Wirkt nicht mehr; ein Collector-Update löscht den Schlüssel.",
@@ -616,6 +619,35 @@ export const RAW_OPTION_HELP: Record<string, L> = {
     en: "From HLstatsX:CE, the website does not use it (site name link: under General). When empty, a collector update deletes the key.",
   },
 };
+
+// Meaning of keys per ranking (<prefix><game>) without a field here.
+export const RAW_PREFIX_HELP: [string, L][] = [
+  [
+    "gamewe_rank_bots_",
+    {
+      de: "Bots dieses Rankings ranken (1) oder ausblenden (0). Einstellbar auf der Ranking-Seite unter „Bots“.",
+      en: "Rank (1) or hide (0) the bots of this ranking. Set on the ranking's page under \"Bots\".",
+    },
+  ],
+  [
+    "gamewe_bot_points_",
+    {
+      de: "Punkte für Kills mit Bots in diesem Ranking (1) oder keine (0). Einstellbar auf der Ranking-Seite unter „Bots“.",
+      en: "Points for kills with bots in this ranking (1) or none (0). Set on the ranking's page under \"Bots\".",
+    },
+  ],
+  [
+    "gamewe_bot_kills_",
+    {
+      de: "Kills an Bots zählen in diesem Ranking als Kills (1) oder nicht (0), z. B. für den Karriere-Rang. Einstellbar auf der Ranking-Seite unter „Bots“.",
+      en: "Kills of bots count as kills in this ranking (1) or not (0), e.g. for the career rank. Set on the ranking's page under \"Bots\".",
+    },
+  ],
+];
+
+export function rawOptionHelp(key: string, lang: "de" | "en"): string | undefined {
+  return (RAW_OPTION_HELP[key] ?? RAW_PREFIX_HELP.find(([p]) => key.startsWith(p))?.[1])?.[lang];
+}
 
 const settingKeys = new Set(allSettings.map((s) => s.key.toLowerCase()));
 

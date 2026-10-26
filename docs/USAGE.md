@@ -54,7 +54,7 @@ again every 5 minutes. The heading on `/` counts the real players.
 | `/<game>/players/<id>/events-feed` | the latest 25 events of one player as JSON (kills and deaths, actions by and against the player, team bonuses), the same rows the profile shows (live box on the player page; 404 unless the admin setting "Latest events (player page)" is "Sync", for unknown players, players of another ranking and hidden rankings; 60 requests per IP and minute, then `429`). With `?list=` (empty for all types, or an event type such as `kill`): the latest 25 rows of the player's events page with that filter instead (live table of the events page). `?since=` as above |
 | `/api` | documentation of the public JSON API: every endpoint with parameters, example answers and code for curl, PHP, Python and JavaScript (Scalar, self-hosted); the OpenAPI description is `/api/openapi.json` |
 | `/api/v1/...` | public JSON API, see [INTERFACE.md](INTERFACE.md) |
-| `/banner/<game>/player/<playerId>.png` | player banner (forum signature, 400x100) with rank insignia, position and activity; in the banner of the active skin (game design or main template) by default, `/banner/<game>/player/<playerId>-<template>.png` in that of another template (old `-classic` URLs and unknown templates give the default, removed built-in templates such as `-blue` their replacement; a template without banner definition the Dark banner, see `templates/README.md`); the profile offers the code as BBCode, HTML, Markdown or image URL; 404 if the player is not in that ranking, for hidden rankings and for bots while "Rank bots" is off; hidden players get it without their position |
+| `/banner/<game>/player/<playerId>.png` | player banner (forum signature, 400x100) with rank insignia, position and activity; in the banner of the active skin (game design or main template) by default, `/banner/<game>/player/<playerId>-<template>.png` in that of another template (old `-classic` URLs and unknown templates give the default, removed built-in templates such as `-blue` their replacement; a template without banner definition the Dark banner, see `templates/README.md`); the profile offers the code as BBCode, HTML, Markdown or image URL; 404 if the player is not in that ranking, for hidden rankings and for bots of rankings whose "Bots in the ranking" is off; hidden players get it without their position |
 | `/banner/<game>/server/<serverId>.png` | server banner (560x95) with address, status, players, map and the last 24 hours; `-<template>` as above; code on the server page and the Misc page; 404 if the server is not in that ranking |
 | `/banner/teamspeak.png` | TeamSpeak banner (560x95, the server banner's look) with live data only, no history: name with flag, shown address, status, users online of the slots with a fill bar, channels, uptime and server type; offline banner when the query fails; never the server password, the query login or the query port; `-<template>` as above; code at the bottom of `/voice`; 404 unless TeamSpeak is the voice server |
 | `/sig/<playerId>.png`, `/banner/<serverId>.png` | old URLs of the two banners (also with `-<template>`), kept as aliases that answer the same picture, so signatures already posted in forums keep working |
@@ -225,10 +225,11 @@ website therefore computes some things itself:
   `hlstats_Players_Data.location_id` and `hlstats_Livestats.cli_location_id`
   point to `hlstats_Players_Locations`. The footer shows the credit the
   GeoIP database requires (setting "GeoIP credit": `dbip`, `maxmind` or empty).
-- **Bots** appear in the live view with a BOT tag; new bots
-  are hidden from rankings unless "Rank bots" is on. While it is off, bot
-  names are plain text everywhere (no link to a profile) and a bot's
-  profile pages and `/api/v1/players/<id>` answer 404.
+- **Bots** appear in the live view with a BOT tag. Per ranking (Admin →
+  Rankings → ranking → Bots) they are ranked like players (the default) or
+  hidden; while a ranking hides them, their names are plain text everywhere
+  (no link to a profile) and a bot's profile pages and
+  `/api/v1/players/<id>` answer 404.
 - **Server load graph** reads `hlstats_server_load` (one row per server and
   10 minutes).
 - **Player events** never read the IP address of `hlstats_Events_Connects`.
@@ -359,7 +360,7 @@ menu button), and lists turn into cards on narrow screens:
 What the admin area edits:
 
 - **Settings:** the website settings and the collector's `gamewe_*` options
-  (points per kill, headshot bonus, penalties, win triggers, rank bots, chat and IP
+  (points per kill, headshot bonus, penalties, win triggers, chat and IP
   storage, in-game commands, RCON timeout, the players' own stats reset, points
   in the console and actions in the chat). The collector picks them up within
   a minute. A page saves only its own settings. All other `hlstats_Options`
@@ -438,6 +439,25 @@ What the admin area edits:
   (`gamewe_reset_schedule_<code>`, `gamewe_reset_mode_<code>`,
   `gamewe_hof_<code>`; the collector writes `gamewe_reset_last_<code>`).
   From the console: `gamewe halloffame schedule CODE [EVERY] -mode MODE`.
+- **Bots** (level 100, on the ranking's overview `/admin/rankings/<code>`):
+  three switches per ranking, all on by default. "Bots in the ranking": bots
+  are ranked like players (they can be number 1, win awards, have profile
+  pages); off, they stay out of the ranking and the awards, their names are
+  not linked and their profiles answer 404 (the live view and the server
+  pages still show them). Switching also hides or shows the ranking's
+  existing bots at once (`hideranking` 0 ↔ 1; banned bots stay hidden).
+  "Points for bot kills": off, kills with bots (either side) still count as
+  kills, deaths and for the kill-based ranks, but change nobody's points;
+  the help page then says so for that ranking. "Bot kills count as kills":
+  off, a kill of a bot is stored (events, weapons, maps) but not added to
+  the player's kills and headshots, so it raises neither the kill ranking,
+  K/D nor the career rank. Stored in `hlstats_Options`
+  (`gamewe_rank_bots_<code>`, `gamewe_bot_points_<code>`,
+  `gamewe_bot_kills_<code>`, read by the
+  collector within a minute; the global "Rank bots" setting of web 0.25 and
+  older is gone, collector migration 15 copies its value to every ranking).
+  From the console: `gamewe game set CODE -rank-bots=true|false
+  -bot-points=true|false -bot-kills=true|false`.
 - **Chat** and **IP addresses:** all stored chat messages and connect
   addresses, searchable (IP or its start, Steam ID, name, host name), for
   admins only.
