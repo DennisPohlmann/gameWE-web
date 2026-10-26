@@ -11,6 +11,7 @@ import { RAW_GROUP, rawOptionHelp, READONLY_OPTIONS, allSettings, settingGroups,
 import { requireAdmin } from "@/lib/auth";
 import { ENV_FALLBACK, envFormValues, valueSource } from "@/lib/config";
 import { noAutofill } from "@/lib/autofill";
+import { pageSizeStep } from "@/lib/page-size";
 import { adminQuery } from "@/lib/db";
 import { fill, getAdminLang } from "@/lib/i18n";
 import { replacedTemplate } from "@/lib/skin-fallback";
@@ -51,6 +52,8 @@ export default async function SettingsPage({
   const source = (key: string) => (key in ENV_FALLBACK ? valueSource(key as keyof typeof ENV_FALLBACK, values[key]) : "db");
   // Older installations have no voice type yet: preselect what is set up.
   if (items.some((s) => s.key === "gamewe_voice_type")) values.gamewe_voice_type = voiceType(values);
+  // An old free page size (e.g. 30 or 500) shows as the step the site uses.
+  if (values.gamewe_page_size) values.gamewe_page_size = String(pageSizeStep(values.gamewe_page_size) ?? values.gamewe_page_size);
   // Fields that depend on a choice are hidden by CSS while the choice
   // differs, so switching needs no script.
   const conditional = [...new Set(items.flatMap((s) => (s.show ? [`${s.show.key}=${s.show.value}`] : [])))];

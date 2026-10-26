@@ -1,6 +1,7 @@
 import type { L } from "./admin-entities";
 import { FLAG_CODES } from "./flag-codes";
 import { LINK_SLOTS } from "./header-links";
+import { DEFAULT_PAGE_SIZE, PAGE_SIZES } from "./page-size";
 import { LANGUAGES } from "../translations/languages";
 
 // Header links: validation and order live in lib/header-links.ts.
@@ -103,7 +104,17 @@ const definitions: Omit<SettingGroup, "area">[] = [
         },
       },
       { key: "MinActivity", label: { de: "Tage bis 0 % Aktivität", en: "Days until 0 % activity" }, type: "number", def: "28", min: 1, max: 3650 },
-      { key: "gamewe_page_size", label: { de: "Zeilen pro Seite", en: "Rows per page" }, type: "number", def: "50", min: 10, max: 500 },
+      {
+        key: "gamewe_page_size",
+        label: { de: "Zeilen pro Seite", en: "Rows per page" },
+        type: "choice",
+        choices: PAGE_SIZES.map((n): [string, L] => [String(n), { de: String(n), en: String(n) }]),
+        def: String(DEFAULT_PAGE_SIZE),
+        help: {
+          de: "Wie viele Zeilen jede Tabelle zuerst zeigt. Besucher können unter der Tabelle eine andere Stufe wählen.",
+          en: "How many rows every table shows first. Visitors can pick another step below the table.",
+        },
+      },
       { key: "gamewe_site_url", label: { de: "Link des Seitennamens", en: "Link of the site name" }, type: "text", def: "", help: { de: "z. B. https://example.org (Navigationsleiste)", en: "e.g. https://example.org (navigation bar)" } },
       { key: "gamewe_sig_brand", label: { de: "Text der Forum-Signatur", en: "Forum signature text" }, type: "text", def: "", help: { de: "Steht unten rechts im Signaturbild. Leer: Seitentitel.", en: "Shown bottom right in the signature image. Empty: site title." } },
       { key: "gamewe_geoip_credit", label: { de: "GeoIP-Quellenangabe", en: "GeoIP credit" }, type: "text", def: "dbip", help: { de: "„dbip“ (DB-IP Lite, Pflicht nach CC BY 4.0), „maxmind“ (GeoLite2) oder leer.", en: "\"dbip\" (DB-IP Lite, required by CC BY 4.0), \"maxmind\" (GeoLite2) or empty." } },

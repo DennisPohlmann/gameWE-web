@@ -1,5 +1,6 @@
 import { env } from "./env";
 import { isLang, type Lang } from "../translations/languages";
+import { DEFAULT_PAGE_SIZE, pageSizeStep } from "./page-size";
 
 // Site settings that older installations set in the environment. They live in
 // hlstats_Options now (Admin → Settings); each one is read in this order: the
@@ -19,7 +20,7 @@ export const ENV_FALLBACK = {
   gamewe_steam_api_key: "STEAM_API_KEY",
 } as const;
 
-export const DEFAULTS = { siteName: "gameWE", defaultLang: "de" as Lang, activityDays: 28, pageSize: 50, steamProfiles: true };
+export const DEFAULTS = { siteName: "gameWE", defaultLang: "de" as Lang, activityDays: 28, pageSize: DEFAULT_PAGE_SIZE, steamProfiles: true };
 
 const set = (v: string | undefined) => (v ?? "").trim();
 
@@ -57,7 +58,7 @@ export function envBacked(o: Record<string, string | undefined>, get: Get = env)
     siteName: set(o.sitename) || set(get("SITE_NAME")) || DEFAULTS.siteName,
     defaultLang: lang(o.gamewe_default_lang) ?? lang(get("DEFAULT_LANG")) ?? DEFAULTS.defaultLang,
     activityDays: int(o.MinActivity, 3650) ?? int(get("ACTIVITY_DAYS"), 3650) ?? DEFAULTS.activityDays,
-    pageSize: int(o.gamewe_page_size, 500) ?? int(get("PAGE_SIZE"), 500) ?? DEFAULTS.pageSize,
+    pageSize: pageSizeStep(o.gamewe_page_size) ?? pageSizeStep(get("PAGE_SIZE")) ?? DEFAULTS.pageSize,
     steamProfiles: onOff(o.gamewe_steam_profiles) ?? onOff(get("STEAM_PROFILES")) ?? DEFAULTS.steamProfiles,
   };
 }

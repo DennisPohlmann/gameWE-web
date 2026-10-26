@@ -132,7 +132,7 @@ export default async function PlayersPage({
     map: mapAll ? "all" : undefined,
     rows: limit !== pageSize ? limit : undefined,
   };
-  const rowOptions = { value: limit, options: [...new Set([pageSize, ...ROW_OPTIONS])].sort((a, b) => a - b) };
+  const rowOptions = { value: limit, options: ROW_OPTIONS };
   // Rank numbers are positions only in the unfiltered points ranking (or
   // the points ranking of one country, state or city).
   const showRank = sort === "skill" && !asc && !q && !inactive;

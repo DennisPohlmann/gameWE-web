@@ -38,7 +38,8 @@ test("invalid values fall through to the next source", () => {
 
 test("numbers are capped like the admin form", () => {
   assert.equal(envBacked({ MinActivity: "99999" }, noEnv).activityDays, 3650);
-  assert.equal(envBacked({}, fromEnv({ PAGE_SIZE: "100000" })).pageSize, 500);
+  // Rows per page snap to the steps of the dropdown, at most 250.
+  assert.equal(envBacked({}, fromEnv({ PAGE_SIZE: "100000" })).pageSize, 250);
 });
 
 test("the Steam API key: database, else environment, only 32 hex digits", () => {
@@ -76,10 +77,12 @@ test("admin fields: language list, bounds, switch and a write-only key for level
   assert.equal(key?.type, "secret");
   assert.equal(key?.minLevel, 100);
   assert.ok(hiddenOption("gamewe_steam_api_key"), "the key must never be listed as a raw option");
-  for (const k of ["MinActivity", "gamewe_page_size"]) {
-    const s = by.get(k);
-    assert.equal(s?.type, "number");
-    assert.ok(s?.min !== undefined && s.max !== undefined && s.min >= 1);
-  }
+  const days = by.get("MinActivity");
+  assert.equal(days?.type, "number");
+  assert.ok(days?.min !== undefined && days.max !== undefined && days.min >= 1);
+  const rows = by.get("gamewe_page_size");
+  assert.equal(rows?.type, "choice");
+  assert.deepEqual(rows?.choices?.map(([c]) => c), ["10", "25", "50", "100", "250"]);
+  assert.equal(rows?.def, "50");
   assert.equal(settingGroups.find((g) => g.items.some((s) => s.key === "gamewe_steam_api_key"))?.id, "steam");
 });

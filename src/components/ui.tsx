@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { AutoForm } from "@/components/auto-form";
 import { noAutofill } from "@/lib/autofill";
+import { PAGE_SIZES } from "@/lib/page-size";
 import { FLAG_CODES, flagPos } from "@/lib/flag-codes";
 import { gameKind } from "@/lib/games";
 import { shareText, winBarSplit } from "@/lib/shares";
@@ -380,8 +381,8 @@ export function Pager({
   );
 }
 
-// Rows per page a visitor can pick, besides the configured page size.
-export const ROW_OPTIONS = [25, 50, 100, 250];
+// Rows per page a visitor can pick; the configured page size is one of them.
+export const ROW_OPTIONS: number[] = [...PAGE_SIZES];
 
 export function rowsParam(v: string | string[] | undefined, fallback: number): number {
   const n = Number.parseInt(Array.isArray(v) ? v[0] : (v ?? ""), 10);

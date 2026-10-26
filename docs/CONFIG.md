@@ -78,7 +78,7 @@ removed from `web.env`.
 | General → Site title | `sitename` | `SITE_NAME` | `gameWE` | text |
 | General → Default language | `gamewe_default_lang` | `DEFAULT_LANG` | `de` | a language code from [Languages](#languages) |
 | General → Days until 0 % activity | `MinActivity` | `ACTIVITY_DAYS` | `28` | 1-3650 |
-| General → Rows per page | `gamewe_page_size` | `PAGE_SIZE` | `50` | 10-500 |
+| General → Rows per page | `gamewe_page_size` | `PAGE_SIZE` | `50` | `10`, `25`, `50`, `100` or `250` (other values use the next lower step) |
 | Steam → Fetch Steam profiles | `gamewe_steam_profiles` | `STEAM_PROFILES` (`on`/`off`) | on | `1` / `0` |
 | Steam → Steam Web API key | `gamewe_steam_api_key` | `STEAM_API_KEY` | - | 32 hex characters |
 | Monitoring → Token for /-/metrics | `gamewe_metrics_token` | `GAMEWE_METRICS_TOKEN` | - | at least 16 characters |

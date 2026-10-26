@@ -89,9 +89,10 @@ rank `#`, share or progress bars next to their number, pictures, buttons)
 do not sort; a bar that is a value of its own (HS/kill, accuracy, activity)
 sorts by that value.
 
-Paged tables end in a pager: "Go to" (page field), "Show rows", the
-number of entries and pages, and the buttons |◀ (first page), ◀ (previous),
-▶ (next) and ▶| (last page); a button that does not apply on the current
+Paged tables end in a pager: "Go to" (page field), "Show rows" (10, 25,
+50, 100 or 250; the first view uses Admin → Settings → General → Rows per
+page, the same steps), the number of entries and pages, and the buttons
+|◀ (first page), ◀ (previous), ▶ (next) and ▶| (last page); a button that does not apply on the current
 page is greyed out. The admin lists use the same pager.
 
 Paged tables sort on the server with `?sort=<key>&dir=asc` (without `dir`
