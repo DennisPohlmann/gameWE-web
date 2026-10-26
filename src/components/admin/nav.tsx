@@ -38,6 +38,7 @@ export type NavText = Record<
   | "navAdvanced"
   | "navAccount"
   | "rawOptions"
+  | "privacy"
   | "myAccount"
   | "areas"
   | "start"
@@ -282,7 +283,10 @@ export function AdminSidebar({
       ) : (
         <>
           <h4>{t.navWebsite}</h4>
-          <nav>{groupLinks("website", { general: "globe", design: "palette", header: "header", maps: "map", seo: "search" })}</nav>
+          <nav>
+            {groupLinks("website", { general: "globe", design: "palette", header: "header", maps: "map", seo: "search" })}
+            <Item href="/admin/privacy" icon="shield" label={t.privacy} on={seg === "privacy"} />
+          </nav>
           <h4>{t.navServices}</h4>
           <nav>{groupLinks("services", { voice: "headset", bans: "ban", steam: "user", monitoring: "pulse" })}</nav>
           <h4>{t.navCollector}</h4>

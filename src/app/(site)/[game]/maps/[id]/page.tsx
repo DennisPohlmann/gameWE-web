@@ -4,6 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import { AutoForm } from "@/components/auto-form";
 import { HeatmapView, type HeatShow } from "@/components/heatmap";
 import { MiniAvatar } from "@/components/mini-avatar";
+import { externalImage } from "@/lib/consent";
+import { getConsent } from "@/lib/consent-server";
 import { Rich } from "@/components/rich";
 import { SortInputs } from "@/components/sort-head";
 import { Empty, Pager, PctBar, PlayerLink, ROW_OPTIONS, Section, SortTh, Stats, TableWrap, WinRatioBar, pageParam, rowsParam, strParam } from "@/components/ui";
@@ -46,6 +48,7 @@ export default async function MapPage({ params, searchParams }: Props) {
   if (m.game !== game) redirect(`/${m.game}/maps/${m.id}`);
   const sp = await searchParams;
   const { lang, t } = await getDict();
+  const consent = await getConsent();
   // Heatmap of kills and deaths (default), only where the killers stood or
   // only where players died.
   const pos = strParam(sp.pos);
@@ -176,7 +179,7 @@ export default async function MapPage({ params, searchParams }: Props) {
                       <tr key={r.playerId}>
                         <td className="rank">{fmtNum((page - 1) * limit + i + 1, lang)}</td>
                         <td>
-                          <MiniAvatar src={flag?.flag === "bot" ? null : `${basePath}/avatar/${r.playerId}`} fallback={`${basePath}/avatar-unknown.svg`} />{" "}
+                          <MiniAvatar src={flag?.flag === "bot" ? null : externalImage(consent, `${basePath}/avatar/${r.playerId}`)} fallback={`${basePath}/avatar-unknown.svg`} />{" "}
                           <PlayerLink game={game} id={r.playerId} name={r.name} flag={flag} />
                         </td>
                         <td className="num hide-sm">{r.rank ? fmtNum(r.rank, lang) : "–"}</td>

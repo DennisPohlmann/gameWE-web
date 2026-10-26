@@ -24,6 +24,8 @@ import { bannerUrl, statsOrigin } from "@/lib/site-url";
 import { shareMetadata } from "@/lib/share-meta";
 import { imageStyles } from "@/lib/image-theme";
 import { getSettings } from "@/lib/settings";
+import { externalImage } from "@/lib/consent";
+import { getConsent } from "@/lib/consent-server";
 import { peekSourcebans } from "@/lib/sourcebans";
 import { banKind, mainReason, markKind, mergeBans, type BanEntry } from "@/lib/ban-merge";
 import { placeHref } from "@/components/ranking";
@@ -841,7 +843,10 @@ function banTip(b: BanEntry, t: Dict, lang: Lang): string {
 // The profile table with the Steam data, asked here so the rest of the page
 // does not wait for Steam (up to five seconds when it is slow or down).
 async function SteamProfile({ steam64, ...rest }: ProfileProps & { steam64: string | null }) {
-  const steam = steam64 ? await getSteamProfile(steam64) : null;
+  const [found, consent] = await Promise.all([steam64 ? getSteamProfile(steam64) : null, getConsent()]);
+  // The picture comes from Steam's image servers: only with consent, else
+  // the placeholder with the initial.
+  const steam = found && { ...found, avatar: externalImage(consent, found.avatar), avatarSmall: externalImage(consent, found.avatarSmall) };
   return <ProfileTable steam={steam} {...rest} />;
 }
 

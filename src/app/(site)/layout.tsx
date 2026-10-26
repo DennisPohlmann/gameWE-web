@@ -13,6 +13,8 @@ import { ShareMenu } from "@/components/share-menu";
 import { basePath } from "@/lib/base-path";
 import { FLAG_SPRITE_URL } from "@/lib/flag-codes";
 import { Crumbs } from "@/components/crumbs";
+import { ConsentRoot, PRIVACY_HREF } from "@/components/consent";
+import { getConsent } from "@/lib/consent-server";
 import { getGames } from "@/lib/data";
 import { resolveTemplate, themeStyle } from "@/lib/templates";
 import "./globals.css";
@@ -69,7 +71,7 @@ async function clientOs(): Promise<"win" | "mac" | undefined> {
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const { lang, t } = await getDict();
   const { siteName, siteUrl, logoUrl, headerLogo, links, headerHome, headerOrder, geoipCredit, skin, sourcebansUrl } = await getSettings();
-  const [games, template, os] = await Promise.all([getGames().catch(() => []), resolveTemplate(skin), clientOs()]);
+  const [games, template, os, consent] = await Promise.all([getGames().catch(() => []), resolveTemplate(skin), clientOs(), getConsent()]);
   const theme = template ? await themeStyle(template) : null;
   const sections = {
     "": t.servers,
@@ -92,6 +94,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <style>{`.flag-svg{background-image:url(${basePath}${FLAG_SPRITE_URL})}`}</style>
       </head>
       <body>
+        {/* First in the page, so keyboard and screen reader users reach it
+            first; shown fixed at the bottom, so nothing moves. */}
+        <ConsentRoot consent={consent} t={t.consent} />
         <header className="header">
           <Link href="/" className={headerLogo ? "logo logo-img" : "logo"} title={siteName}>
             {headerLogo ? (
@@ -133,7 +138,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             statistics={t.statistics}
             games={Object.fromEntries(games.map((g) => [g.code, g.name]))}
             sections={sections}
-            pages={{ search: t.searchTitle, help: t.help, licenses: t.licenses, api: t.api }}
+            pages={{ search: t.searchTitle, help: t.help, licenses: t.licenses, privacy: t.privacy.title, api: t.api }}
           />
           <ShareMenu labels={{ share: t.share, copy: t.shareCopy, copied: t.copied, email: t.shareEmail }} />
           <span className="langs" aria-label={t.language}>
@@ -157,7 +162,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           {/* The full credits are on /licenses; the GeoIP licenses ask for a
               link on every page that shows their data, so it stays here, short. */}
           <p className="small">
-            {t.poweredBy} · <Link href="/licenses">{t.licenses}</Link> · <Link href="/api">{t.api}</Link>
+            {t.poweredBy} · <Link href="/privacy">{t.privacy.title}</Link> ·{" "}
+            <a href={PRIVACY_HREF} data-consent-open="">
+              {t.consent.footerLink}
+            </a>{" "}
+            · <Link href="/licenses">{t.licenses}</Link> · <Link href="/api">{t.api}</Link>
             {geoipCredit === "dbip" ? (
               <>
                 {" · "}

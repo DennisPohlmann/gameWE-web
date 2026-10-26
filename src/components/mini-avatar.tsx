@@ -14,6 +14,6 @@ export function MiniAvatar({ src, fallback }: { src: string | null; fallback: st
   }, []);
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img ref={ref} className="mini-avatar" src={failed || !src ? fallback : src} alt="" width={20} height={20} onError={() => setFailed(true)} />
+    <img ref={ref} className="mini-avatar" src={failed || !src ? fallback : src} alt="" width={20} height={20} referrerPolicy="no-referrer" onError={() => setFailed(true)} />
   );
 }

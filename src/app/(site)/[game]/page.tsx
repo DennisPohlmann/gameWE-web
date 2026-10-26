@@ -10,7 +10,8 @@ import { dateFormat, fmtNum, fmtPct, localeOf, nowUnix, ratio } from "@/lib/form
 import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
 import { AwardBoard, awardBoardKeep } from "@/components/award-board";
 import { GameEvents } from "@/components/game-events";
-import { PlayerMap } from "@/components/player-map";
+import { MapGate } from "@/components/map-gate";
+import { mapGateProps } from "@/lib/consent-server";
 import { mapMarkers, serverMarkers } from "@/lib/map-markers";
 import { getSettings } from "@/lib/settings";
 import type { Totals } from "@/lib/data";
@@ -161,13 +162,13 @@ export default async function ServersPage({
 
 // The map of who is online right now and the ranking's servers.
 async function LiveMapBox({ game, style, t, lang }: { game: string; style: string; t: Dict; lang: Lang }) {
-  const [mapPlayers, mapServers] = await Promise.all([getLiveMapPlayers(game), getMapServers(game)]);
+  const [mapPlayers, mapServers, gate] = await Promise.all([getLiveMapPlayers(game), getMapServers(game), mapGateProps(style)]);
   const markers = mapMarkers(mapPlayers, game, t, lang);
   const serverPins = serverMarkers(mapServers, game, t);
   return (
     <div className="box">
       <h4 className="map-title">{t.playerMapLive}</h4>
-      <PlayerMap markers={markers} servers={serverPins} style={style} />
+      <MapGate {...gate} markers={markers} servers={serverPins} style={style} />
       <p className="muted">
         {markers.length ? fill(t.playerMapLiveHint, { n: String(markers.length) }) : t.playerMapLiveEmpty}
         {serverPins.length ? ` ${t.playerMapServers}` : null}

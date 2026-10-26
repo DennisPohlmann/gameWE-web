@@ -20,6 +20,7 @@ Everything else is set in the admin area (Admin → Settings) and stored in
 5. [Search engines and sharing](#search-engines-and-sharing)
 6. [Voice server](#voice-server)
 7. [Access log](#access-log)
+8. [Privacy and cookie consent](#privacy-and-cookie-consent)
 
 ## Database, time zone and designs
 
@@ -231,3 +232,40 @@ plus the response time, with the client address from the last
 `docker logs gamewe-web`, systemd: `journalctl -u gamewe-web`).
 `ACCESS_LOG=off` turns it off, `ACCESS_LOG=all` also logs the health checks
 (`/healthz`), which are left out by default.
+
+## Privacy and cookie consent
+
+The public pages ask on the first visit with a banner fixed at the bottom
+("Necessary only", "Accept all", "Settings"), in the style of the German
+TTDSG § 25 and the GDPR. Without consent the browser loads nothing from other
+hosts; with it the optional categories are:
+
+| Category | What the browser then loads | Without consent |
+|---|---|---|
+| Maps (`maps`) | map tiles of the player maps from the tile set of Admin → Settings → Maps (OpenStreetMap, OSM France, OpenTopoMap or CARTO) and the satellite and label layers | a box of the map's size with "Load map" (this time only, needs JavaScript) and "Always allow" |
+| Steam pictures (`steam`) | the players' profile pictures from Steam's image servers (profile, start page, map pages, avatars on the maps via `/avatar/<id>`) | the local placeholder; `/avatar/<id>` answers 404 |
+
+The choice is kept in the cookie `gamewe_consent` (`<version>.<categories>`,
+e.g. `1.maps-steam`, `1.` for necessary only; 12 months, `HttpOnly`,
+`SameSite=Lax` so it is also sent when a visitor follows a link from a forum,
+`Secure` behind HTTPS) and can be changed at any time with "Cookie settings"
+in the footer or on `/privacy#consent`. A new consent version
+(`CONSENT_VERSION` in `src/lib/consent.ts`) asks everybody again. The forms
+post to `/consent` and work without JavaScript; requests from other sites
+(`Sec-Fetch-Site`/`Origin`) are refused. The admin area shows no banner.
+
+Not behind consent, because they are settings the visitor makes or are
+needed: the language cookie `gamewe_lang`, the live switches in
+`localStorage` (`gamewe-live-events`, `gamewe-live-player-events`), the map
+view `gamewe-map-view`, and the admin cookies. Steam profile data (names, the
+addresses of the pictures, VAC status), the Discord widget, TeamSpeak and
+SourceBans are fetched by the server, so the visitor's IP address does not
+reach them. Pictures entered in the settings with an address on another
+server (logo, header logo, icons) load without consent; `/privacy` names
+their hosts and Admin → Settings → Website → Privacy warns about them, so
+better put them on this server.
+
+The page `/privacy` lists all of this itself, from the settings
+(`src/lib/privacy-inventory.ts`; a new cookie, storage key or outside host
+belongs there), together with the operator's part from Admin → Settings →
+Website → Privacy. It is an aid, not legal advice.

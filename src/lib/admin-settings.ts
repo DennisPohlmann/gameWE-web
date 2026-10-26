@@ -579,8 +579,10 @@ export const allSettings = settingGroups.flatMap((g) => g.items);
 export const definedSettings = definitions.flatMap((g) => g.items);
 
 // hlstats_Options rows that are never listed or written as raw values:
-// TOTP secrets of the admin users and the secrets of the form above.
-export const HIDDEN_OPTION_PREFIXES = ["gamewe_totp", "gamewe_ts_query_password", "gamewe_metrics_token", "gamewe_steam_api_key"];
+// TOTP secrets of the admin users, the secrets of the form above and the
+// privacy page's keys (their own page, /admin/privacy; the address and the
+// text hold line breaks a raw value may not have).
+export const HIDDEN_OPTION_PREFIXES = ["gamewe_totp", "gamewe_ts_query_password", "gamewe_metrics_token", "gamewe_steam_api_key", "gamewe_privacy_"];
 // Written by the collector, shown read-only.
 export const READONLY_OPTIONS = ["gamewe_heartbeat", "gamewe_collector_version"];
 

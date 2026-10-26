@@ -15,6 +15,7 @@ import { canonicalIp } from "@/lib/ip";
 import { LEVEL_ADMIN, adminSecret, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, requireAdmin } from "@/lib/auth";
 import { adminExec, adminQuery, upsert } from "@/lib/db";
 import { imageUrl, invalidateSettings } from "@/lib/settings";
+import { operatorValues } from "@/lib/privacy-operator";
 import { steamKey } from "@/lib/config";
 import { invalidateSteamKey } from "@/lib/steam";
 import { listTemplates } from "@/lib/templates";
@@ -349,6 +350,18 @@ export async function saveSettingsAction(form: FormData) {
   invalidateSettings();
   invalidateSteamKey();
   redirect(`/admin/settings/${page}?saved=1`);
+}
+
+// The operator's part of the privacy page (Admin → Website → Privacy):
+// checked and split by lib/privacy-operator.ts, written with the admin user.
+export async function savePrivacyAction(form: FormData) {
+  await requireAdmin();
+  const res = operatorValues(form);
+  if ("field" in res) redirect(`/admin/privacy?field=${res.field}`);
+  for (const [k, v] of res.values) {
+    await adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [k, v]);
+  }
+  redirect("/admin/privacy?saved=1");
 }
 
 // TOTP for the signed-in user's own account: a new secret waits as "pending"

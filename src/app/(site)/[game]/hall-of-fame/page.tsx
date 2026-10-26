@@ -8,6 +8,8 @@ import { HallStars } from "@/components/hall-stars";
 import { fmtDuration, fmtNum, fmtPct, localeOf } from "@/lib/format";
 import { getHallOfFame, hallOfFameShown, hallSteam, periodLabel, starTable, type HallEntry, type HallRow, type HallSteam } from "@/lib/hall-of-fame";
 import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
+import { externalImage } from "@/lib/consent";
+import { getConsent } from "@/lib/consent-server";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getDict()).t.hallOfFame };
@@ -32,7 +34,9 @@ export default async function HallOfFamePage({ params, searchParams }: { params:
   const locale = localeOf(lang);
   const shownStars = allStars ? stars : stars.slice(0, STAR_ROWS);
   const shownRows = rows.slice((page - 1) * PERIODS, page * PERIODS);
-  const steam = await hallSteam(shownRows);
+  const [found, consent] = await Promise.all([hallSteam(shownRows), getConsent()]);
+  // The pictures come from Steam's image servers: only with consent.
+  const steam = new Map([...found].map(([id, p]) => [id, { ...p, avatar: externalImage(consent, p.avatar) }]));
   // Points of places 1 to 3 per period, oldest first.
   const old = [...rows].reverse();
   const pointSeries = [t.hofGold, t.hofSilver, t.hofBronze].map((label, i) => ({

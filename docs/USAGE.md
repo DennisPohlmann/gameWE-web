@@ -51,6 +51,8 @@ again every 5 minutes. The heading on `/` counts the real players.
 | `/help` | help: how points are calculated (with the current settings), actions, weapon modifiers, chat commands |
 | `/voice` | detail page of the TeamSpeak server from the voice server box (click its name): channel tree with the people online (names can be hidden in the admin settings), server info (operating system with a small symbol, uptime, users, connections, security level, ping, version, host banner URL), traffic and the welcome message, and at the bottom the code of the TeamSpeak banner; live from the ServerQuery, kept for a minute; 404 unless TeamSpeak is the voice server |
 | `/licenses` | licenses of the software, data, map tiles, flags and fonts gameWE uses |
+| `/privacy` | privacy policy: the operator's details (Admin → Settings → Website → Privacy), the visitor's consent settings (`#consent`, works without JavaScript), and lists the site builds itself from the settings: cookies and browser storage, the other hosts the browser loads from (with the consent category that gates them), the services only the server asks, the access log, the game statistics and the visitor's rights; see [CONFIG.md](CONFIG.md#privacy-and-cookie-consent) |
+| `/consent` | `POST` only (the cookie banner's and the privacy page's forms): stores the choice in the cookie `gamewe_consent` and goes back to the page; `GET` leads to `/privacy#consent` |
 | `/<game>/events-feed` | the latest 10 events of a ranking as JSON, all event types except chat, without hidden or banned players (live box on the start page; 404 unless the admin setting "Latest events" is "Sync"). With `?list=` (empty for all types, or a type of the events page's filter such as `kill`) and `&period=1h\|24h\|7d`: the latest 25 rows of the events page with that filter instead (live table of the events page; 60 requests per IP and minute, then `429`). With `?since=<unix seconds>&seen=<n>`: `204` without a body when no event is newer than `since` and no more than `n` events have that second |
 | `/<game>/players/<id>/events-feed` | the latest 25 events of one player as JSON (kills and deaths, actions by and against the player, team bonuses), the same rows the profile shows (live box on the player page; 404 unless the admin setting "Latest events (player page)" is "Sync", for unknown players, players of another ranking and hidden rankings; 60 requests per IP and minute, then `429`). With `?list=` (empty for all types, or an event type such as `kill`): the latest 25 rows of the player's events page with that filter instead (live table of the events page). `?since=` as above |
 | `/api` | documentation of the public JSON API: every endpoint with parameters, example answers and code for curl, PHP, Python and JavaScript (Scalar, self-hosted); the OpenAPI description is `/api/openapi.json` |
@@ -368,7 +370,7 @@ menu button), and lists turn into cards on narrow screens:
   "All rankings" in the same menu shows the lists without a filter.
 - **Settings** (`/admin/settings/<page>`): one page per topic, each with its
   own save bar: Website (general, design & logo, header & links, maps &
-  events, search engines), Services (voice server, SourceBans, Steam, monitoring),
+  events, search engines, privacy), Services (voice server, SourceBans, Steam, monitoring),
   Collector (points, recording & privacy, in-game commands), Moderation (chat,
   IP addresses), Access (users, my account & 2FA) and Advanced (all options
   (raw)).
@@ -383,6 +385,14 @@ What the admin area edits:
   rows (own, old HLstatsX and obsolete keys) are on Advanced → All options
   (raw), where they can be changed, deleted or added; TOTP secrets are never
   listed. The old address `/admin/options` redirects there.
+- **Privacy** (`/admin/privacy`): the controller's name, postal address,
+  contact e-mail and an optional free text (plain text; blank lines make
+  paragraphs, `https://` addresses and e-mail addresses become links) for
+  `/privacy`, stored in `hlstats_Options` (`gamewe_privacy_name`,
+  `gamewe_privacy_address`, `gamewe_privacy_email`, the text split over
+  `gamewe_privacy_text_1` … `_25`; not on the raw options page). The page
+  also names pictures from the settings that are on other servers. The
+  generated privacy policy is an aid, not legal advice.
 - **Servers:** the collector only accepts logs from servers registered here
   (IP address, port, game, RCON password). Each IP address and port exists
   only once: saving a server with the IP and port of another one is refused

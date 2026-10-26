@@ -531,3 +531,10 @@ async function loadDiscord(id: string): Promise<{ name: string; online: number }
   discordCache = { at: Date.now(), id, value };
   return value;
 }
+
+// Which voice server is set up (privacy page: Discord's widget is asked by
+// the server).
+export async function voiceKind(): Promise<VoiceType> {
+  const o = await options();
+  return o ? voiceType(o) : "none";
+}

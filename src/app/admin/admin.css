@@ -178,6 +178,8 @@ small, .small { font-size: 12.5px; }
 .notice { margin: 0 0 14px; padding: 10px 14px; border-radius: 8px; background: var(--ok-soft); color: var(--ok); border: 1px solid color-mix(in srgb, var(--ok) 30%, transparent); }
 .notice.error { background: var(--bad-soft); color: var(--bad); border-color: color-mix(in srgb, var(--bad) 30%, transparent); }
 .notice.info { background: var(--accent-soft); color: var(--accent-text); border-color: transparent; }
+.notice.warn { display: flex; gap: 8px; align-items: flex-start; background: var(--warn-soft); color: var(--warn); border-color: color-mix(in srgb, var(--warn) 35%, transparent); font-weight: 600; }
+.notice.warn svg { flex: none; margin-top: 2px; }
 .empty { color: var(--muted); padding: 18px; margin: 0; }
 
 /* cards, sections */

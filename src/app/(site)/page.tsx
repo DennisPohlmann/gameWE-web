@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { MiniAvatar } from "@/components/mini-avatar";
+import { externalImage } from "@/lib/consent";
+import { getConsent } from "@/lib/consent-server";
 import { sortHeads } from "@/components/sort-head";
 import { Flag, GameTag, Skeleton } from "@/components/ui";
 import { basePath } from "@/lib/base-path";
@@ -42,6 +44,7 @@ const rankingListValues = {
 // below it (Suspense).
 export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { lang, t } = await getDict();
+  const consent = await getConsent();
   let data;
   try {
     data = await getRankingOverview();
@@ -124,9 +127,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                       {r.topPlayerId ? (
                         <>
                           {/* The Steam picture is fetched by the browser (/avatar), so a
-                              slow Steam does not hold the page; a missing one shows the
-                              placeholder. */}
-                          <MiniAvatar src={`${basePath}/avatar/${r.topPlayerId}`} fallback={`${basePath}/avatar-unknown.svg`} />
+                              slow Steam does not hold the page; a missing one, or one
+                              without consent to Steam pictures, shows the placeholder. */}
+                          <MiniAvatar src={externalImage(consent, `${basePath}/avatar/${r.topPlayerId}`)} fallback={`${basePath}/avatar-unknown.svg`} />
                           <Flag code={r.topPlayerFlag} title={r.topPlayerCountry} />{" "}
                           {bots.has(r.topPlayerId) ? (
                             r.topPlayerName || `#${r.topPlayerId}`

@@ -7,7 +7,8 @@ import { Empty, Flag, Pager, Section, pageParam, strParam, ROW_OPTIONS, rowsPara
 import { noAutofill } from "@/lib/autofill";
 import { getSettings } from "@/lib/settings";
 import { AutoForm } from "@/components/auto-form";
-import { PlayerMap } from "@/components/player-map";
+import { MapGate } from "@/components/map-gate";
+import { mapGateProps } from "@/lib/consent-server";
 import {
   getCityOptions,
   getCountryOptions,
@@ -116,6 +117,7 @@ export default async function PlayersPage({
     t,
     lang,
   );
+  const gate = await mapGateProps(mapStyle);
   const pages = Math.max(1, Math.ceil((places ? places.total : total) / limit));
   const base = `/${game}/players`;
   const keep = {
@@ -208,7 +210,7 @@ export default async function PlayersPage({
           }
         >
           <div className="box">
-            <PlayerMap markers={markers} style={mapStyle} />
+            <MapGate {...gate} markers={markers} style={mapStyle} />
             <p className="muted">
               {fill(mapAll ? t.playerMapHint : t.playerMapHintTop, {
                 n: fmtNum(markers.length, lang),
