@@ -528,5 +528,7 @@
   "recentEvents": "Derniers événements",
   "goTo": "Aller à :",
   "showRows": "Lignes affichées :",
-  "entriesOnPages": "{n} entrées sur {p} pages"
+  "entriesOnPages": "{n} entrées sur {p} pages",
+  "hofWeek": "Sem. {n}",
+  "hofRankTip": "Rang atteint à la fin de la période"
 }

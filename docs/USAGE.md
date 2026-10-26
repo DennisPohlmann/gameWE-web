@@ -32,6 +32,7 @@ again every 5 minutes. The heading on `/` counts the real players.
 | `/<game>/servers/<id>` | one server: live view with the server's country flag, bots and flags, load graph of the last 24 hours (players, maps, uptime), counters, chat |
 | `/<game>/players` | ranking (sortable, search), `?view=new` for new players, `?view=inactive` for inactive players (`hlstats_PlayersInactive`: players the collector moved out of the ranking after a long time without playing; sorted by last seen, without rank numbers and place filters); country, state and city rankings with gameME's links: `?type=countryinfo` (all countries), `?type=countryinfo&valuecountry=de` (players of a country), `?type=stateinfo[&valuecountry=de]` (states: the GeoIP subdivision, e.g. German Bundesland or US state, counted per country; players whose location has no state name, such as the legacy region codes HLstatsX wrote, are left out until the collector looks them up again), `?type=stateinfo&valuecountry=de&valuestate=bavaria` (players of a state), `?type=cityinfo[&valuecountry=de]` (cities), `?type=cityinfo&valuecountry=de&valuecity=berlin` (players of a city; `valuecity` alone also works but joins cities of the same name) |
 | `/<game>/players/<id>` | player profile: Steam avatar and data (laid out like gameME's and as compact as HLstatsX's: rows of about 21px, the labels in a column of 30 %, the name across the full width, the avatar centred beside the rows from Clan to Steam name with the same gap on all four sides (the table cell is its frame) and the rows below across the full width; in every skin), summary laid out like gameME's (left half: position and points, below them the radar; right half: labels and values; the rows below with the label in the left and the value in the right half; the "last 14 days" note on the line of the history links) with radar (K/D, kills per minute, assists per kill, survived and won rounds of the player over the last 14 days against the average of all ranked players of the game active in those 14 days, i.e. their pooled ratio; the average sits on the middle ring and the player relative to it, the outer ring is twice the average; the four core axes K/D (top), kills per minute (right), survived (bottom) and won rounds (left) are always drawn, assists only as a fifth axis when the game records them; axes without data for the player or the game (no rounds, no win triggers) stay greyed at the centre with "no data", and without activity in the last 14 days only the average is drawn with a note; the average is a dashed outline with hollow points and the player a solid filled shape with filled points (the legend shows the same line styles), the average drawn over the player's shape, so both stay visible when they are equal; hover, tap or focus an axis for its values in a box that never covers the axis label), assists (with the assisted kills only when the collector counted any) and trend pills, player trend (its "Overview" link opens the sessions page), rank and career (hover, tap or focus a career badge for a box with the rank's kill range, whether the player reached it, and for the current rank and the ranks not reached yet the player's kills and the kills still to go with a progress bar; Escape or a tap elsewhere closes it), ribbons, forum signature, hitbox (one card centred across the section; values and lines in the skin's text colour; the neck zone only when the player has neck hits, which only Counter-Strike 2 logs), weapons, maps, opponents, latest events of the player (live, see the admin setting) |
+| `/<game>/hall-of-fame` | hall of fame ("Ruhmeshalle" in German) of a ranking with a scheduled reset: the star table (how often a player was first, second or third of a period: gold, silver and bronze stars, most gold first; the top 10, `?stars=all` all), the points of places 1 to 3 per period as a graph, and every period newest first (6 per page, `?page=`) with its podium: place, name, points, the rank reached (badge), kills, deaths, K/D, headshots %, accuracy, best kill streak, time played and favourite weapon, as the collector stored them at the end of the period. Hidden players are left out (their place stays empty). The tab after "Players" and the page exist only while the page is on for the ranking (see Admin → Rankings); the player profile then shows the player's stars next to the name |
 | `/<game>/clans`, `/<game>/clans/<id>` | clans and members |
 | `/<game>/awards` | daily awards with a calendar (`?date=YYYY-MM-DD`, `?month=YYYY-MM`); `?view=history`, `?view=ranks`, `?view=ribbons` (with most decorated players, `&class=N` filters a ribbon class) |
 | `/<game>/weapons`, `/<game>/weapons/<code>` | weapons like gameME's ("From a total of X kills with Y headshots"; weapon code, name, modifier, kills, kills %, headshots, headshots % and Hpk as bars; kills % and headshots % are shares of all kills and headshots, Hpk is headshots per kill of the weapon; sortable: `?sort=code\|name\|modifier\|kills\|headshots\|hpk&dir=asc`), best players per weapon |
@@ -406,7 +407,25 @@ What the admin area edits:
   irreversibly" and confirming there. It cannot be undone, so back up the
   database first. The admin database user needs `SELECT` and `INSERT` on
   `hlstats_gamewe_jobs` (the init script grants it). From the console:
-  `gamewe reset CODE -mode player-stats|all-stats|all`.
+  `gamewe reset CODE -mode player-stats|all-stats|all`. The job list also
+  shows the scheduled resets (by `schedule`).
+- **Hall of fame & scheduled reset** (level 100, on the ranking's overview
+  `/admin/rankings/<code>`, needs a collector with the table
+  `hlstats_gamewe_hall_of_fame`): resets the ranking every N days, weeks,
+  months, quarters or years, in one of the three kinds above. At the end of
+  every period the collector stores the best three players in the hall of
+  fame and then resets; the periods follow the calendar in the collector's
+  time zone (weeks from Monday, months from the 1st; every 2 months always
+  Jan–Feb, Mar–Apr, ...). A new or changed schedule starts with the period
+  now running (the collector sets its start within a minute), so saving never
+  resets at once; turning one on or changing it needs the tick "I understand
+  that the statistics ... will be reset". The card shows since when the
+  current period runs and the date of the next reset. "Hall of Fame" page:
+  Automatic (shown while a reset is scheduled or entries exist), Always show,
+  or Hide (the entries stay). Stored in `hlstats_Options`
+  (`gamewe_reset_schedule_<code>`, `gamewe_reset_mode_<code>`,
+  `gamewe_hof_<code>`; the collector writes `gamewe_reset_last_<code>`).
+  From the console: `gamewe halloffame schedule CODE [EVERY] -mode MODE`.
 - **Chat** and **IP addresses:** all stored chat messages and connect
   addresses, searchable (IP or its start, Steam ID, name, host name), for
   admins only.

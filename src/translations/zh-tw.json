@@ -528,5 +528,7 @@
   "recentEvents": "最新事件",
   "goTo": "跳到：",
   "showRows": "每頁列數：",
-  "entriesOnPages": "共 {n} 筆，{p} 頁"
+  "entriesOnPages": "共 {n} 筆，{p} 頁",
+  "hofWeek": "第{n}週",
+  "hofRankTip": "週期結束時的軍階"
 }

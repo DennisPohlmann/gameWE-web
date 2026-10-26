@@ -47,19 +47,19 @@ export async function collectorRunning(): Promise<boolean> {
 
 export async function openJob(game: string): Promise<ResetJob | undefined> {
   const rows = await adminQuery<ResetJob>(
-    `SELECT ${COLS} FROM hlstats_gamewe_jobs WHERE job_type = 'reset' AND game = ? AND status IN ('pending', 'running') ORDER BY id LIMIT 1`,
+    `SELECT ${COLS} FROM hlstats_gamewe_jobs WHERE job_type IN ('reset', 'scheduled-reset') AND game = ? AND status IN ('pending', 'running') ORDER BY id LIMIT 1`,
     [game],
   );
   return rows[0];
 }
 
 export async function getJob(id: number): Promise<ResetJob | undefined> {
-  const rows = await adminQuery<ResetJob>(`SELECT ${COLS} FROM hlstats_gamewe_jobs WHERE id = ? AND job_type = 'reset'`, [id]);
+  const rows = await adminQuery<ResetJob>(`SELECT ${COLS} FROM hlstats_gamewe_jobs WHERE id = ? AND job_type IN ('reset', 'scheduled-reset')`, [id]);
   return rows[0];
 }
 
 export async function recentJobs(limit = 10): Promise<ResetJob[]> {
-  return adminQuery<ResetJob>(`SELECT ${COLS} FROM hlstats_gamewe_jobs WHERE job_type = 'reset' ORDER BY id DESC LIMIT ${Math.max(1, Math.floor(limit))}`);
+  return adminQuery<ResetJob>(`SELECT ${COLS} FROM hlstats_gamewe_jobs WHERE job_type IN ('reset', 'scheduled-reset') ORDER BY id DESC LIMIT ${Math.max(1, Math.floor(limit))}`);
 }
 
 // Returns the new job id, or the id of the job already queued for that game.

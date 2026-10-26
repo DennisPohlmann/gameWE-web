@@ -12,6 +12,7 @@ import { adminQuery } from "@/lib/db";
 import { localeOf } from "@/lib/format";
 import { gameKind } from "@/lib/games";
 import { getAdminLang } from "@/lib/i18n";
+import { HallOfFameCard } from "./hall-of-fame-card";
 
 // The lists of a ranking with their table and ranking column (constants).
 const LISTS: [string, IconName, string, string][] = [
@@ -27,9 +28,10 @@ const LISTS: [string, IconName, string, string][] = [
 
 // One ranking: its servers, how many players, clans and definitions it has,
 // and the ways to edit, reset or view it.
-export default async function RankingPage({ params }: { params: Promise<{ code: string }> }) {
+export default async function RankingPage({ params, searchParams }: { params: Promise<{ code: string }>; searchParams: Promise<Record<string, string | undefined>> }) {
   const user = await requireAdmin();
   const code = decodeURIComponent((await params).code);
+  const hof = (await searchParams).hof;
   const rankings = await rankingSummaries();
   const r = rankings.find((x) => x.code === code);
   if (!r) notFound();
@@ -191,6 +193,7 @@ export default async function RankingPage({ params }: { params: Promise<{ code: 
           </ul>
         </section>
       </div>
+      {isAdmin ? <HallOfFameCard game={r.code} lang={lang} status={hof} /> : null}
     </>
   );
 }

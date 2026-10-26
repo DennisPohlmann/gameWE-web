@@ -17,6 +17,9 @@ import { adminExec, adminQuery, upsert } from "@/lib/db";
 import { imageUrl, invalidateSettings } from "@/lib/settings";
 import { listTemplates } from "@/lib/templates";
 import { jobsAvailable, queueReset, resetMode } from "@/lib/reset";
+import { hallSettings, saveHallSettings } from "@/lib/admin-hall";
+import { invalidateHallOfFame } from "@/lib/hall-of-fame";
+import { MAX_EVERY, parseSchedule, scheduleValue } from "@/lib/hall-period";
 import { addParams, safeReturnTo, withReturnTo } from "@/lib/return-to";
 import { discordGuild, discordInvite, tsDisplay, tsHost, tsLink } from "@/lib/voice";
 import { checkCode, consumeStep, newSecret, readSecret, removeSecret, storeSecret } from "@/lib/totp";
@@ -410,4 +413,34 @@ export async function resetRankingAction(form: FormData) {
   }
   console.info(`gameWE: reset of ranking ${game} (${mode}) queued as job ${job.id} by ${user.username}${job.existing ? " (already queued)" : ""}`);
   redirect(`/admin/reset?job=${job.id}${job.existing ? "&existing=1" : ""}`);
+}
+
+// Scheduled ranking reset and hall of fame of one ranking (lib/admin-hall.ts),
+// on the ranking's admin page: admins only. Turning a schedule on or changing
+// it must be confirmed (the ranking is then reset at the end of every period).
+export async function hallOfFameSettingsAction(form: FormData) {
+  const user = await requireAdmin(LEVEL_ADMIN);
+  const game = String(form.get("game") ?? "");
+  const games = await optionList("games");
+  if (!games.some(([code]) => code === game)) redirect("/admin/rankings");
+  const back = `/admin/rankings/${encodeURIComponent(game)}`;
+  const unit = String(form.get("unit") ?? "");
+  const every = Number(form.get("every") ?? 1);
+  const mode = resetMode(form.get("mode"));
+  const page = String(form.get("page") ?? "");
+  let schedule = "";
+  if (unit !== "off") {
+    const s = Number.isInteger(every) && every >= 1 && every <= MAX_EVERY ? parseSchedule(`${every} ${unit}`) : null;
+    if (!s) redirect(`${back}?hof=input#hall-of-fame`);
+    schedule = scheduleValue(s);
+  }
+  if (!mode || (page !== "auto" && page !== "on" && page !== "off")) redirect(`${back}?hof=input#hall-of-fame`);
+  const now = await hallSettings(game);
+  if (!now.table) redirect(`${back}?hof=table#hall-of-fame`);
+  const changed = schedule !== scheduleValue(now.schedule) || (schedule && mode !== now.mode);
+  if (schedule && changed && form.get("understood") !== "yes") redirect(`${back}?hof=confirm#hall-of-fame`);
+  await saveHallSettings(game, schedule, mode, page);
+  invalidateHallOfFame();
+  console.info(`gameWE: reset schedule of ranking ${game} set to ${schedule || "off"}${schedule ? ` (${mode})` : ""}, hall of fame page ${page}, by ${user.username}`);
+  redirect(`${back}?hof=saved#hall-of-fame`);
 }

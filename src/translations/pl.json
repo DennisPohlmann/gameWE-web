@@ -528,5 +528,7 @@
   "recentEvents": "Ostatnie zdarzenia",
   "goTo": "Przejdź do:",
   "showRows": "Pokaż wiersze:",
-  "entriesOnPages": "{n} wpisów na {p} stronach"
+  "entriesOnPages": "{n} wpisów na {p} stronach",
+  "hofWeek": "Tydz. {n}",
+  "hofRankTip": "Ranga na koniec okresu"
 }

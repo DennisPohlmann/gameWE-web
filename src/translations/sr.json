@@ -528,5 +528,7 @@
   "recentEvents": "Poslednji događaji",
   "goTo": "Idi na:",
   "showRows": "Prikaži redova:",
-  "entriesOnPages": "{n} unosa na {p} strana"
+  "entriesOnPages": "{n} unosa na {p} strana",
+  "hofWeek": "Нед. {n}",
+  "hofRankTip": "Чин на крају периода"
 }

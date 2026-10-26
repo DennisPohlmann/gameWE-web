@@ -16,6 +16,8 @@ import { PlayerEvents } from "@/components/game-events";
 import { ZONES } from "@/lib/zones";
 import { awardValue, getAwards, getPlayerRibbons, getRanks, getRibbonClasses, rankFor, ribbonFor, ribbonProgress } from "@/lib/awards";
 import { siteDay } from "@/lib/day";
+import { HallStars } from "@/components/hall-stars";
+import { getPlayerStars, hallOfFameShown, type StarCount } from "@/lib/hall-of-fame";
 import { getSteamProfile, type SteamProfile as SteamProfileData } from "@/lib/steam";
 import { PlayerLinks, historyAccess } from "@/components/player-history";
 import { bannerUrl, statsOrigin } from "@/lib/site-url";
@@ -209,7 +211,8 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const wonAwards = new Map(ribbons.map((r) => [r.awardId, r.wins]));
   const totalRibbonWins = ribbons.reduce((n, r) => n + r.wins, 0);
 
-  const profile = { game, id, p, ids, isBot, location, age, fav, t, lang };
+  const stars = (await hallOfFameShown(game)) ? await getPlayerStars(game, id) : null;
+  const profile = { game, id, p, ids, isBot, location, age, fav, stars, t, lang };
 
   return (
     <>
@@ -790,6 +793,7 @@ type ProfileProps = {
   location: React.ReactNode[];
   age: string | null;
   fav: { code: string; name: string } | undefined;
+  stars: StarCount | null;
   t: Dict;
   lang: Lang;
 };
@@ -802,7 +806,7 @@ async function SteamProfile({ steam64, ...rest }: ProfileProps & { steam64: stri
 }
 
 // pending: Steam has not answered yet (the fallback while it is asked).
-function ProfileTable({ steam, pending = false, game, id, p, ids, isBot, location, age, fav, t, lang }: ProfileProps & { steam: SteamProfileData | null; pending?: boolean }) {
+function ProfileTable({ steam, pending = false, game, id, p, ids, isBot, location, age, fav, stars, t, lang }: ProfileProps & { steam: SteamProfileData | null; pending?: boolean }) {
   // As on gameME: the name runs across the full width, the avatar sits in
   // its own framed box beside the seven rows from Clan to Steam name (they
   // are always there, with or without Steam data) and the rows below use
@@ -834,6 +838,11 @@ function ProfileTable({ steam, pending = false, game, id, p, ids, isBot, locatio
               <Flag code={p.flag} title={p.country} />
               {p.name ?? `#${id}`}
             </b>
+            {stars && stars.gold + stars.silver + stars.bronze ? (
+              <Link href={`/${game}/hall-of-fame`} className="hof-profile-stars">
+                <HallStars gold={stars.gold} silver={stars.silver} bronze={stars.bronze} label={fill(t.hofStarsTip, { gold: stars.gold, silver: stars.silver, bronze: stars.bronze })} />
+              </Link>
+            ) : null}
           </td>
         </tr>
         <Row k={t.clan} v={p.clanTag ? <Link href={`/${game}/clans/${p.clan}`}>{p.clanTag}</Link> : <i>{t.none}</i>} aside={avatar} />

@@ -1214,3 +1214,52 @@ html[data-os] .decorated-rank, html[data-os] .ribbon-level,
 html[data-os] .spark .sp-pill text { font-size: 11px; }
 html[data-os] .hs { font-size: 10px; }
 html[data-os] .sig-code { font: 11px ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+
+/* Hall of fame: stars (gold, silver, bronze), the star table and one podium
+   of three cards per reset period (place 1 in the middle and raised). */
+.hof-stars { display: inline-flex; gap: 3px; white-space: nowrap; letter-spacing: 1px; line-height: 1; vertical-align: middle; }
+.hof-star { font-size: 1.05em; }
+.hof-star small { font-size: 0.75em; margin-left: 1px; letter-spacing: 0; color: var(--text); }
+.hof-gold { color: color-mix(in srgb, #f5c400 88%, var(--text)); text-shadow: 0 0 1px rgba(120, 80, 0, 0.9), 0 0 6px rgba(245, 196, 0, 0.45); }
+.hof-silver { color: color-mix(in srgb, #b8c1cc 80%, var(--text)); text-shadow: 0 0 1px rgba(60, 70, 80, 0.9), 0 0 5px rgba(196, 204, 214, 0.35); }
+.hof-bronze { color: #d4823c; text-shadow: 0 0 1px rgba(90, 40, 0, 0.9), 0 0 5px rgba(212, 130, 60, 0.35); }
+.hof-profile-stars { margin-left: 8px; text-decoration: none; }
+.hof-stars-table td.num, .hof-stars-table th.num { width: 1%; text-align: center; white-space: nowrap; }
+.hof-stars-table tbody tr:nth-child(-n + 3) td:first-child { font-weight: bold; color: var(--accent-text); }
+
+.hof-podium { list-style: none; margin: 0; padding: 18px 10px 10px; display: grid; grid-template-columns: 1fr 1.12fr 1fr; gap: 12px; align-items: end; background: var(--surface); border: 1px solid var(--border); }
+.hof-card { --medal: #c4ccd6; --medal-dark: #6b7480; position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 26px 12px 12px; background: var(--panel); border: 1px solid var(--border); border-top: 3px solid var(--medal); border-radius: 6px; text-align: center; min-width: 0; }
+.hof-place-1 { --medal: #f5c400; --medal-dark: #8a6a00; order: 2; padding-top: 34px; padding-bottom: 18px; background: linear-gradient(color-mix(in srgb, var(--medal) 14%, var(--panel)), var(--panel) 55%); }
+.hof-place-2 { order: 1; }
+.hof-place-3 { --medal: #d4823c; --medal-dark: #7a3f10; order: 3; }
+.hof-medal { position: absolute; top: -17px; left: 50%; transform: translateX(-50%); width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-weight: bold; font-size: 16px; color: #1a1a1a; background: radial-gradient(circle at 35% 30%, #fff 0, var(--medal) 45%, var(--medal-dark) 100%); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); }
+.hof-place-1 .hof-medal { width: 40px; height: 40px; top: -21px; font-size: 20px; }
+.hof-place-1 .hof-medal::before { content: "♛"; position: absolute; top: -17px; font-size: 18px; color: var(--medal); text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6); }
+.hof-name { font-weight: bold; font-size: 1.05em; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hof-place-1 .hof-name { font-size: 1.2em; }
+.hof-skill { font-size: 1.5em; font-weight: bold; color: color-mix(in srgb, var(--medal) 72%, var(--text)); text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25); font-variant-numeric: tabular-nums; }
+.hof-place-1 .hof-skill { font-size: 1.85em; }
+.hof-skill span { font-size: 0.5em; font-weight: normal; color: var(--muted); text-shadow: none; }
+.hof-values { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 10px; width: 100%; margin: 4px 0 0; font-size: 0.92em; }
+.hof-values div { display: flex; justify-content: space-between; gap: 6px; padding: 2px 0; border-bottom: 1px dotted var(--border); }
+.hof-values dt { color: var(--muted); }
+.hof-values dd { margin: 0; font-weight: bold; font-variant-numeric: tabular-nums; }
+.hof-weapon { font-size: 0.9em; color: var(--muted); }
+.hof-rank { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; color: var(--text); font-size: 0.92em; font-weight: bold; text-decoration: none; }
+.hof-rank span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hof-rank svg { flex: none; }
+.hof-rank:hover span { text-decoration: underline; }
+.hof-laurel { filter: saturate(1.2); }
+
+@media (max-width: 700px) {
+  .hof-podium { grid-template-columns: 1fr; gap: 26px; padding-top: 26px; }
+  .hof-card, .hof-place-1 { order: 0; }
+  .hof-stars-table .hof-count { display: none; }
+}
+.chart .hof-g, .swatch.hof-g { stroke: #e0b000; background: #e0b000; }
+.chart .hof-s, .swatch.hof-s { stroke: #9aa6b4; background: #9aa6b4; }
+.chart .hof-b, .swatch.hof-b { stroke: #c8742e; background: #c8742e; }
+.chart .dot.hof-g { fill: #e0b000; }
+.chart .dot.hof-s { fill: #9aa6b4; }
+.chart .dot.hof-b { fill: #c8742e; }
+.chart .area.hof-g, .chart .area.hof-s, .chart .area.hof-b { display: none; }

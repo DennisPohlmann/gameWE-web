@@ -528,5 +528,7 @@
   "recentEvents": "Laatste gebeurtenissen",
   "goTo": "Ga naar:",
   "showRows": "Rijen tonen:",
-  "entriesOnPages": "{n} items op {p} pagina's"
+  "entriesOnPages": "{n} items op {p} pagina's",
+  "hofWeek": "Week {n}",
+  "hofRankTip": "Rang aan het einde van de periode"
 }

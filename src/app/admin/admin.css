@@ -438,3 +438,8 @@ select { padding-right: 28px; }
      longest option, a table never narrower than its content). */
   .adm-main table:not(.cards):not(.table-wrap > table) { display: block; max-width: 100%; overflow-x: auto; }
 }
+
+/* Ranking page: scheduled reset, "every N unit" in one row. */
+.hof-every { display: flex; gap: 8px; align-items: center; font-weight: 400; }
+.hof-every input { width: 80px; }
+#hall-of-fame { margin-top: 18px; }

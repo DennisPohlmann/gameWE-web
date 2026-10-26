@@ -5,6 +5,7 @@ import { GameNav } from "@/components/nav";
 import { VoiceBox } from "@/components/voice-box";
 import { currentAdmin } from "@/lib/auth";
 import { getGame } from "@/lib/data";
+import { hallOfFameShown } from "@/lib/hall-of-fame";
 import { getDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import { rankingTitle } from "@/lib/ranking-title";
@@ -30,6 +31,7 @@ export default async function GameLayout({ children, params }: { children: React
   const items = [
     { href: "", label: t.servers, icon: "🖥" },
     { href: "/players", label: t.players, icon: "👤" },
+    ...((await hallOfFameShown(game.code)) ? [{ href: "/hall-of-fame", label: t.hallOfFame, icon: "⭐" }] : []),
     { href: "/clans", label: t.clans, icon: "👥" },
     { href: "/awards", label: t.awards, icon: "🏆" },
     { href: "/weapons", label: t.weapons, icon: "🔫" },

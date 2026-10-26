@@ -528,5 +528,7 @@
   "recentEvents": "Последние события",
   "goTo": "Перейти к:",
   "showRows": "Показать строк:",
-  "entriesOnPages": "{n} записей на {p} страницах"
+  "entriesOnPages": "{n} записей на {p} страницах",
+  "hofWeek": "Нед. {n}",
+  "hofRankTip": "Звание в конце периода"
 }

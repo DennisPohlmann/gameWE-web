@@ -528,5 +528,7 @@
   "recentEvents": "Seneste hændelser",
   "goTo": "Gå til:",
   "showRows": "Vis rækker:",
-  "entriesOnPages": "{n} poster på {p} sider"
+  "entriesOnPages": "{n} poster på {p} sider",
+  "hofWeek": "Uge {n}",
+  "hofRankTip": "Rang ved periodens slutning"
 }
