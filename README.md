@@ -100,7 +100,7 @@ and the reverse proxy: [docs/INSTALLATION.md](docs/INSTALLATION.md).
 | File | Content |
 |------|---------|
 | [docs/INSTALLATION.md](docs/INSTALLATION.md) | installation step by step: database users, settings file, container, tar.gz, reverse proxy, update, troubleshooting, removal |
-| [docs/CONFIG.md](docs/CONFIG.md) | environment variables, languages, search engines, voice server, access log |
+| [docs/CONFIG.md](docs/CONFIG.md) | environment variables, settings moved into the database, languages, search engines, voice server, access log |
 | [docs/USAGE.md](docs/USAGE.md) | pages, where the data comes from, admin area, health and monitoring |
 | [docs/INTERFACE.md](docs/INTERFACE.md) | database access and the public JSON API |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | local development, building, CI and releases |

@@ -155,24 +155,14 @@ BASE_PATH=
 
 # ---- Display ----
 TZ=Europe/Berlin
-SITE_NAME=gameWE
-# en, de, ru, es, fr, pt, pt-br, nl, da, pl, sr, zh-tw or zh-cn
-DEFAULT_LANG=de
-ACTIVITY_DAYS=28
-PAGE_SIZE=50
 
 # ---- Optional ----
 # Own design templates, one subfolder each (see templates/README.md)
 #TEMPLATES_DIR=/etc/gamewe/web/templates
-# Steam avatars and VAC status (on/off), optional Steam Web API key
-#STEAM_PROFILES=on
-#STEAM_API_KEY=
 # 1 when SourceBans runs on the same machine or LAN
 #SOURCEBANS_ALLOW_PRIVATE=0
 # Access log on stdout: on, off or all
 #ACCESS_LOG=on
-# Token for /-/metrics (Prometheus), at least 16 characters; empty: off
-#GAMEWE_METRICS_TOKEN=
 ```
 
 ### Example: container, database on the Docker host
@@ -207,24 +197,23 @@ BASE_PATH=
 # ---- Display ----
 # The container is UTC without TZ.
 TZ=Europe/Berlin
-SITE_NAME=gameWE
-DEFAULT_LANG=de
-ACTIVITY_DAYS=28
-PAGE_SIZE=50
 
 # ---- Optional ----
 # Own templates: mount a folder and point here, e.g.
 # -v /etc/gamewe/web/templates:/app/custom-templates:ro
 #TEMPLATES_DIR=/app/custom-templates
-#STEAM_PROFILES=on
-#STEAM_API_KEY=
 #SOURCEBANS_ALLOW_PRIVATE=0
 #ACCESS_LOG=on
-#GAMEWE_METRICS_TOKEN=
 ```
 
-Most site settings (title, logo, favicon, voice server, SourceBans, design,
-header links) are set later in the admin area and stored in the database.
+The site settings (title, default language, activity days, rows per page,
+logo, favicon, design, header links, voice server, SourceBans, Steam
+profiles and the Steam Web API key, the /-/metrics token) are set later in
+the admin area and stored in the database. An older `web.env` with
+`SITE_NAME`, `DEFAULT_LANG`, `ACTIVITY_DAYS`, `PAGE_SIZE`, `STEAM_PROFILES`,
+`STEAM_API_KEY` or `GAMEWE_METRICS_TOKEN` keeps working: each one is used
+while the setting is not stored, and saving its settings page moves the
+value into the database (see [CONFIG.md](CONFIG.md#settings-that-moved-into-the-database)).
 
 
 

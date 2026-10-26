@@ -1,8 +1,11 @@
 import "server-only";
-import { env } from "./env";
+import { steamApiKey } from "./config";
+import { query } from "./db";
+import { getSettings } from "./settings";
 
 // Public Steam community profile of a player (avatar, name, VAC status ...).
-// With STEAM_API_KEY the Steam Web API is used (up to 100 players per call);
+// With a Steam Web API key (Admin → Settings → Steam, before that
+// STEAM_API_KEY in the environment) the Steam Web API is used (up to 100 players per call);
 // without it the XML view of steamcommunity.com, which needs no key but
 // blocks many requests in a row, so those calls are throttled and paused
 // after a refusal. Results are kept for a day; a failed or slow lookup just
@@ -32,20 +35,41 @@ function remember(steam64: string, value: SteamProfile | null, retryIn = RETRY) 
 }
 
 export async function getSteamProfile(steam64: string): Promise<SteamProfile | null> {
-  if (!/^\d{17}$/.test(steam64) || process.env.STEAM_PROFILES === "off") return null;
+  if (!/^\d{17}$/.test(steam64) || !(await getSettings()).steamProfiles) return null;
   const hit = cache.get(steam64);
   if (hit && Date.now() - hit.at < TTL) return hit.value;
   let p = inflight.get(steam64);
   if (!p) {
-    p = (apiKey() ? viaApi(steam64) : viaXml(steam64)).finally(() => inflight.delete(steam64));
+    const key = await apiKey();
+    // Another call may have started the same lookup while the key was read.
+    p = inflight.get(steam64);
+    if (p) return p;
+    p = (key ? viaApi(steam64) : viaXml(steam64)).finally(() => inflight.delete(steam64));
     inflight.set(steam64, p);
   }
   return p;
 }
 
-function apiKey(): string | null {
-  const k = env("STEAM_API_KEY") ?? "";
-  return /^[0-9A-Fa-f]{32}$/.test(k) ? k : null;
+// The key from gamewe_steam_api_key, else STEAM_API_KEY; read with the
+// public (SELECT-only) user and kept for 30 seconds. Never logged or sent to
+// the browser.
+let keyCache: { at: number; value: string | null } | null = null;
+
+async function apiKey(): Promise<string | null> {
+  if (keyCache && Date.now() - keyCache.at < 30_000) return keyCache.value;
+  let stored: string | undefined;
+  try {
+    stored = (await query<{ value: string }>(`SELECT value FROM hlstats_Options WHERE keyname = ?`, ["gamewe_steam_api_key"]))[0]?.value;
+  } catch {
+    // Database down: the environment alone.
+  }
+  keyCache = { at: Date.now(), value: steamApiKey(stored) };
+  return keyCache.value;
+}
+
+// After saving the Steam settings (admin action).
+export function invalidateSteamKey() {
+  keyCache = null;
 }
 
 // ---------------------------------------------------------------- Web API
@@ -80,7 +104,7 @@ type Summary = {
 };
 
 async function loadBatch(ids: string[]) {
-  const key = apiKey();
+  const key = await apiKey();
   if (!key || !ids.length) return;
   const q = ids.join(",");
   try {
@@ -232,14 +256,14 @@ export type SteamBans = { vac: number; game: number; days: number; community: bo
 const BAN_TTL = 12 * 3600 * 1000;
 const banCache = new Map<string, { at: number; value: SteamBans }>();
 
-export function steamBansAvailable(): boolean {
-  return apiKey() !== null && process.env.STEAM_PROFILES !== "off";
+export async function steamBansAvailable(): Promise<boolean> {
+  return (await getSettings()).steamProfiles && (await apiKey()) !== null;
 }
 
 export async function getSteamBans(ids: string[]): Promise<Map<string, SteamBans>> {
   const out = new Map<string, SteamBans>();
-  const key = apiKey();
-  if (!key || process.env.STEAM_PROFILES === "off") return out;
+  const key = (await getSettings()).steamProfiles ? await apiKey() : null;
+  if (!key) return out;
   const missing: string[] = [];
   for (const id of new Set(ids.filter((x) => /^\d{17}$/.test(x)))) {
     const hit = banCache.get(id);

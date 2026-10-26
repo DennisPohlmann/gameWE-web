@@ -1,6 +1,7 @@
 import type { L } from "./admin-entities";
 import { FLAG_CODES } from "./flag-codes";
 import { LINK_SLOTS } from "./header-links";
+import { LANGUAGES } from "../translations/languages";
 
 // Header links: validation and order live in lib/header-links.ts.
 export { homeValue, linkValue } from "./header-links";
@@ -30,6 +31,9 @@ export type Setting = {
   // Old keys the website does not need: written only when filled in or
   // already stored, so saving the page creates no empty rows.
   optional?: boolean;
+  // Admin level needed to change it (default: every admin). The field is
+  // read-only below it and saveSettingsAction refuses a value.
+  minLevel?: number;
 };
 
 // One page of the settings (/admin/settings/<id>) in one area of the menu.
@@ -88,6 +92,17 @@ const definitions: Omit<SettingGroup, "area">[] = [
         help: {
           de: "Wie oben, dazu {ranking} = Name der Rangliste. Beispiel: „GunGame Spieler | GERMANY RELOADED“, die Startseite einer Rangliste „GunGame | GERMANY RELOADED“.",
           en: "As above, plus {ranking} = name of the ranking. Example: \"GunGame Players | GERMANY RELOADED\", a ranking's start page \"GunGame | GERMANY RELOADED\".",
+        },
+      },
+      {
+        key: "gamewe_default_lang",
+        label: { de: "Standardsprache", en: "Default language" },
+        type: "choice",
+        choices: LANGUAGES.map((l): [string, L] => [l.code, { de: `${l.name} (${l.code})`, en: `${l.name} (${l.code})` }]),
+        def: "de",
+        help: {
+          de: "Für Besucher ohne gewählte Sprache, wenn ihr Browser keine der Sprachen der Seite wünscht. Umschalten können sie unten auf der Seite.",
+          en: "For visitors who picked no language and whose browser asks for none of the site's languages. They can switch at the bottom of the page.",
         },
       },
       { key: "MinActivity", label: { de: "Tage bis 0 % Aktivität", en: "Days until 0 % activity" }, type: "number", def: "28", min: 1, max: 3650 },
@@ -235,6 +250,37 @@ const definitions: Omit<SettingGroup, "area">[] = [
         help: {
           de: "z. B. https://bans.example.org/ – die öffentliche Ban-Liste wird alle 30 Minuten gelesen (bis 100 Seiten). Nur öffentliche Adressen, keine Weiterleitung.",
           en: "e.g. https://bans.example.org/ – the public ban list is read every 30 minutes (up to 100 pages). Public addresses only, no redirects.",
+        },
+      },
+    ],
+  },
+  {
+    id: "steam",
+    title: { de: "Steam", en: "Steam" },
+    help: {
+      de: "Avatare, Namen und VAC-Status der Spieler von Steam für Spielerprofile, Spielerkarten und Signaturen.",
+      en: "Players' avatars, names and VAC status from Steam for player profiles, player maps and signatures.",
+    },
+    items: [
+      {
+        key: "gamewe_steam_profiles",
+        label: { de: "Steam-Profile abrufen", en: "Fetch Steam profiles" },
+        type: "bool",
+        def: "1",
+        help: {
+          de: "Aus: keine Abfragen bei Steam; Profile zeigen dann Buchstaben statt Avataren und keinen VAC-Status.",
+          en: "Off: no requests to Steam; profiles then show letters instead of avatars and no VAC status.",
+        },
+      },
+      {
+        key: "gamewe_steam_api_key",
+        label: { de: "Steam-Web-API-Key", en: "Steam Web API key" },
+        type: "secret",
+        def: "",
+        minLevel: 100,
+        help: {
+          de: "Optional, 32 Hex-Zeichen von https://steamcommunity.com/dev/apikey. Damit kommen die Avatare zu je 100 über die Steam-API statt einzeln von steamcommunity.com (das viele Abrufe hintereinander sperrt), und die Bans-Seite zeigt VAC- und Spiel-Bans. Wird nie angezeigt; leer lassen behält ihn. Nur Admins mit Level 100.",
+          en: "Optional, 32 hex characters from https://steamcommunity.com/dev/apikey. With it avatars come 100 at a time from the Steam API instead of one by one from steamcommunity.com (which blocks many requests in a row), and the bans page shows VAC and game bans. Never shown; leave empty to keep it. Admins with level 100 only.",
         },
       },
     ],
@@ -459,7 +505,7 @@ export const settingGroups: SettingGroup[] = [
     area: "website",
     title: { de: "Allgemein", en: "General" },
     help: { de: "Name, Titel und Grundwerte der Webseite.", en: "Name, titles and basic values of the website." },
-    items: pick("sitename", "gamewe_title_format", "gamewe_title_ranking", "gamewe_site_url", "gamewe_page_size", "MinActivity", "gamewe_chat_public", "gamewe_geoip_credit"),
+    items: pick("sitename", "gamewe_default_lang", "gamewe_title_format", "gamewe_title_ranking", "gamewe_site_url", "gamewe_page_size", "MinActivity", "gamewe_chat_public", "gamewe_geoip_credit"),
   },
   {
     id: "design",
@@ -487,6 +533,7 @@ export const settingGroups: SettingGroup[] = [
   { id: "seo", area: "website", title: { de: "Suchmaschinen", en: "Search engines" }, help: helpOf("seo"), items: definitions.find((g) => g.id === "seo")!.items },
   { id: "voice", area: "services", title: { de: "Voiceserver", en: "Voice server" }, help: helpOf("voice"), items: definitions.find((g) => g.id === "voice")!.items },
   { id: "bans", area: "services", title: { de: "SourceBans", en: "SourceBans" }, help: helpOf("bans"), items: pick("gamewe_sourcebans_url") },
+  { id: "steam", area: "services", title: { de: "Steam", en: "Steam" }, help: helpOf("steam"), items: definitions.find((g) => g.id === "steam")!.items },
   {
     id: "monitoring",
     area: "services",
@@ -530,7 +577,7 @@ export const definedSettings = definitions.flatMap((g) => g.items);
 
 // hlstats_Options rows that are never listed or written as raw values:
 // TOTP secrets of the admin users and the secrets of the form above.
-export const HIDDEN_OPTION_PREFIXES = ["gamewe_totp", "gamewe_ts_query_password", "gamewe_metrics_token"];
+export const HIDDEN_OPTION_PREFIXES = ["gamewe_totp", "gamewe_ts_query_password", "gamewe_metrics_token", "gamewe_steam_api_key"];
 // Written by the collector, shown read-only.
 export const READONLY_OPTIONS = ["gamewe_heartbeat", "gamewe_collector_version"];
 

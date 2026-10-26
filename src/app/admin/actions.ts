@@ -15,6 +15,8 @@ import { canonicalIp } from "@/lib/ip";
 import { LEVEL_ADMIN, adminSecret, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, requireAdmin } from "@/lib/auth";
 import { adminExec, adminQuery, upsert } from "@/lib/db";
 import { imageUrl, invalidateSettings } from "@/lib/settings";
+import { steamKey } from "@/lib/config";
+import { invalidateSteamKey } from "@/lib/steam";
 import { listTemplates } from "@/lib/templates";
 import { jobsAvailable, queueReset, resetMode } from "@/lib/reset";
 import { hallSettings, saveHallSettings } from "@/lib/admin-hall";
@@ -216,7 +218,7 @@ function badField(group: string, field: string): never {
 // One settings page (/admin/settings/<group>) is one form: only the settings
 // of that group, or on the raw page the raw rows, are read and written.
 export async function saveSettingsAction(form: FormData) {
-  await requireAdmin();
+  const user = await requireAdmin();
   const groupSent = String(form.get("group") ?? "");
   const group = settingGroups.find((g) => g.id === groupSent);
   const isRaw = groupSent === RAW_GROUP;
@@ -232,6 +234,11 @@ export async function saveSettingsAction(form: FormData) {
     optional.length ? (await adminQuery<{ keyname: string }>(`SELECT keyname FROM hlstats_Options WHERE keyname IN (?)`, [optional])).map((r) => r.keyname) : [],
   );
   for (const s of items) {
+    if (s.minLevel !== undefined && user.acclevel < s.minLevel) {
+      // Read-only for this admin: a sent value is refused, nothing is written.
+      if (form.get(s.key) || form.get(`${s.key}__clear`)) bad(s.key);
+      continue;
+    }
     if (s.type === "order") {
       // Sent by the header links list; without it the stored order stays.
       const v = form.get(s.key);
@@ -256,7 +263,8 @@ export async function saveSettingsAction(form: FormData) {
       if (form.get(`${s.key}__clear`) === "1") values.push([s.key, ""]);
       else if (v) {
         if (v.length > 255 || /[\r\n]/.test(v)) bad(s.key);
-        values.push([s.key, v]);
+        if (s.key === "gamewe_steam_api_key" && !steamKey(v)) bad(s.key);
+        values.push([s.key, s.key === "gamewe_steam_api_key" ? v.trim() : v]);
       }
       continue;
     }
@@ -340,6 +348,7 @@ export async function saveSettingsAction(form: FormData) {
   }
   for (const k of removed) await adminExec(`DELETE FROM hlstats_Options WHERE keyname = ?`, [k]);
   invalidateSettings();
+  invalidateSteamKey();
   redirect(`/admin/settings/${page}?saved=1`);
 }
 

@@ -1,8 +1,12 @@
 # gameWE - web: configuration
 
-All settings of the website are environment variables, read from
-`/etc/gamewe/web/web.env` (tar.gz) or the container's `--env-file`; every
-variable is listed with a comment in [`.env.example`](../.env.example), and
+The environment (`/etc/gamewe/web/web.env` for the tar.gz, the container's
+`--env-file`) holds only what the website needs before it can reach the
+database or what must not be changeable from the browser: database access,
+`ADMIN_SECRET`, `BASE_PATH`, `TZ`, `TEMPLATES_DIR`, `ACCESS_LOG`,
+`SOURCEBANS_ALLOW_PRIVATE`, `ADMIN_COOKIE_SECURE` and the runtime variables
+(`PORT`, `HOSTNAME`, `NODE_ENV`). Every variable is listed with a comment in
+[`.env.example`](../.env.example), and
 [INSTALLATION.md](INSTALLATION.md#2-the-settings-file) has complete examples.
 Everything else is set in the admin area (Admin → Settings) and stored in
 `hlstats_Options`.
@@ -10,15 +14,16 @@ Everything else is set in the admin area (Admin → Settings) and stored in
 ## Contents
 
 1. [Database, time zone and designs](#database-time-zone-and-designs)
-2. [Header links](#header-links)
-3. [Languages](#languages)
-4. [Search engines and sharing](#search-engines-and-sharing)
-5. [Voice server](#voice-server)
-6. [Access log](#access-log)
+2. [Settings that moved into the database](#settings-that-moved-into-the-database)
+3. [Header links](#header-links)
+4. [Languages](#languages)
+5. [Search engines and sharing](#search-engines-and-sharing)
+6. [Voice server](#voice-server)
+7. [Access log](#access-log)
 
 ## Database, time zone and designs
 
-All settings are environment variables, see `.env.example`. `TZ` (e.g.
+The environment variables are listed in `.env.example`. `TZ` (e.g.
 `Europe/Berlin`) sets the time zone of all times on the site and when a day
 starts (awards, daily charts); without it the Docker image uses UTC. Set the
 collector to the same zone. `TEMPLATES_DIR` adds a folder of your own design
@@ -34,10 +39,9 @@ with another prefix (HLstatsX:CE `DB_PREFIX`) or several installations in
 one database. It must be the same as `database.table_prefix` of the
 collector (a letter, then letters, digits and `_`, at most 16 characters).
 The documentation names the tables `hlstats_*`; read your prefix instead. The
-admin area can
-override the site name, browser title format, header logo, favicon, site
-URL, banner, header links, activity days and page size through
-`hlstats_Options`. Logo and favicon are given as a path (`/images/logo.png`,
+admin area sets the site name, default language, browser title format,
+header logo, favicon, site URL, banner, header links, activity days and page
+size through `hlstats_Options`. Logo and favicon are given as a path (`/images/logo.png`,
 relative to the domain) or an http(s) URL, there is no upload; the logo is
 scaled to the header's height, a PNG with a transparent background fits
 best. The default design is "dark"; the built-in designs are `dark`,
@@ -57,6 +61,39 @@ TLS to the database is off by default (`DB_TLS=off`, `disable` works too).
 With `DB_TLS=required` the server certificate is verified (CA file in
 `DB_TLS_CA` for a private CA) and the connection never falls back to
 plaintext; `skip-verify` encrypts without checking the certificate.
+
+## Settings that moved into the database
+
+These settings were environment variables in older versions. They are now
+set in the admin area and stored in `hlstats_Options`; each is read from the
+database first, then from its old variable (so an existing `web.env` keeps
+working), then the default. An invalid value counts as not set. While a
+field's value still comes from the environment, the settings page says so;
+saving the page writes it into the database, after which the variable can be
+removed from `web.env`.
+
+| Admin → Settings | `hlstats_Options` key | Old variable | Default | Values |
+|---|---|---|---|---|
+| General → Site title | `sitename` | `SITE_NAME` | `gameWE` | text |
+| General → Default language | `gamewe_default_lang` | `DEFAULT_LANG` | `de` | a language code from [Languages](#languages) |
+| General → Days until 0 % activity | `MinActivity` | `ACTIVITY_DAYS` | `28` | 1-3650 |
+| General → Rows per page | `gamewe_page_size` | `PAGE_SIZE` | `50` | 10-500 |
+| Steam → Fetch Steam profiles | `gamewe_steam_profiles` | `STEAM_PROFILES` (`on`/`off`) | on | `1` / `0` |
+| Steam → Steam Web API key | `gamewe_steam_api_key` | `STEAM_API_KEY` | - | 32 hex characters |
+| Monitoring → Token for /-/metrics | `gamewe_metrics_token` | `GAMEWE_METRICS_TOKEN` | - | at least 16 characters |
+
+The Steam Web API key (https://steamcommunity.com/dev/apikey) and the
+metrics token are write-only: the form shows only whether they are set (also
+when set in the environment), an empty field keeps them and "clear" removes
+the stored value. Only admins with level 100 can change the Steam key. They
+are never sent to the browser or listed under the raw options. The public
+pages read these rows with the read-only database user, like every other
+setting.
+
+`SOURCEBANS_ALLOW_PRIVATE` and `ADMIN_COOKIE_SECURE` stay in the
+environment on purpose: the first is the guard against requests to the
+local network, and a wrong cookie setting set from the browser could lock
+every admin out.
 
 ## Header links
 
@@ -91,8 +128,9 @@ returns to the section whose button was pressed.
 The site comes in 13 languages: en, de, ru, es, fr, pt, pt-br, nl, da, pl,
 sr, zh-tw and zh-cn. The texts are in `src/translations/` (see its README);
 missing texts fall back to English. Visitors pick a language with the flags
-in the footer; without a choice the browser's language is used, then
-`DEFAULT_LANG`. The admin area is in German or English.
+in the footer; without a choice the browser's language is used, then the
+default language (Admin → Settings → General, before that `DEFAULT_LANG`).
+The admin area is in German or English.
 
 ## Search engines and sharing
 

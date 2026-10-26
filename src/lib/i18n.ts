@@ -1,7 +1,7 @@
 import "server-only";
 import { cookies, headers } from "next/headers";
 import { cache } from "react";
-import { config } from "./config";
+import { getSettings } from "./settings";
 import { dicts, type Dict } from "@/translations";
 import { LANGUAGES, LANG_COOKIE, isLang, type Lang } from "@/translations/languages";
 
@@ -11,7 +11,7 @@ export type { Dict, Lang };
 export const LANGS: Lang[] = LANGUAGES.map((l) => l.code);
 
 // The language from the cookie (flags in the header), else the browser's
-// Accept-Language, else DEFAULT_LANG. Once per request (React cache): the
+// Accept-Language, else the default language of the settings. Once per request (React cache): the
 // layouts, the metadata and the page all ask.
 export const getLang = cache(async (): Promise<Lang> => {
   const c = (await cookies()).get(LANG_COOKIE)?.value;
@@ -22,7 +22,7 @@ export const getLang = cache(async (): Promise<Lang> => {
     const hit = fromTag(tag);
     if (hit) return hit;
   }
-  return config.defaultLang;
+  return (await getSettings()).defaultLang;
 });
 
 function fromTag(tag: string): Lang | null {

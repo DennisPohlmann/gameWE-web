@@ -188,7 +188,7 @@
   "banType": "Type ban",
   "banTypeServer": "Server",
   "bansNone": "Geen speler van deze ranglijst is verbannen.",
-  "bansHint": "Uit de serverlogs (VAC-kicks en permanente bans), uit SourceBans als het adres is ingesteld en, met STEAM_API_KEY, VAC- en gamebans volgens Steam.",
+  "bansHint": "Uit de serverlogs (VAC-kicks en permanente bans), uit SourceBans als het adres is ingesteld en, met een Steam Web API-sleutel, VAC- en gamebans volgens Steam.",
   "sbBans": "SourceBans",
   "sbBansHint": "Spelers van deze ranglijst die in SourceBans staan. Reden en duur komen uit de openbare lijst.",
   "sbOpen": "Banlijst openen",

@@ -188,7 +188,7 @@
   "banType": "封禁类型",
   "banTypeServer": "服务器",
   "bansNone": "此排行榜中没有被封禁的玩家。",
-  "bansHint": "来自服务器日志（VAC 踢出和永久封禁）、SourceBans（若已设置地址），以及在设置 STEAM_API_KEY 后来自 Steam 的 VAC 和游戏封禁。",
+  "bansHint": "来自服务器日志（VAC 踢出和永久封禁）、SourceBans（若已设置地址），以及在设置 Steam Web API 密钥 后来自 Steam 的 VAC 和游戏封禁。",
   "sbBans": "SourceBans",
   "sbBansHint": "此排行榜中列在 SourceBans 的玩家。原因和时长来自公开列表。",
   "sbOpen": "打开封禁列表",

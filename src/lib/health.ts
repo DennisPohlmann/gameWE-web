@@ -1,6 +1,7 @@
 import "server-only";
 import { timingSafeEqual } from "node:crypto";
 import { existsSync } from "node:fs";
+import { env } from "./env";
 import { query } from "./db";
 
 // Health endpoints after GitLab's: /-/health, /-/liveness, /-/readiness and
@@ -31,18 +32,18 @@ export function inDocker() {
   return process.env.GAMEWE_DOCKER === "1" || existsSync("/.dockerenv");
 }
 
-// /-/metrics is off until a token is set: GAMEWE_METRICS_TOKEN in the
-// environment or gamewe_metrics_token in the settings (at least 16 characters).
+// /-/metrics is off until a token is set: gamewe_metrics_token in the settings,
+// else GAMEWE_METRICS_TOKEN in the environment (at least 16 characters).
 // Prometheus sends it as "Authorization: Bearer <token>".
 async function metricsToken(): Promise<string> {
-  const env = process.env.GAMEWE_METRICS_TOKEN?.trim() ?? "";
-  if (env) return env;
+  let stored = "";
   try {
     const rows = await query<{ value: string }>(`SELECT value FROM hlstats_Options WHERE keyname = ?`, ["gamewe_metrics_token"]);
-    return rows[0]?.value?.trim() ?? "";
+    stored = rows[0]?.value?.trim() ?? "";
   } catch {
-    return "";
+    // Database down: the environment alone.
   }
+  return stored || (env("GAMEWE_METRICS_TOKEN") ?? "");
 }
 
 export async function metricsAccess(req: Request): Promise<"ok" | "off" | "denied"> {

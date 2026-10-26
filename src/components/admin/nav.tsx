@@ -284,7 +284,7 @@ export function AdminSidebar({
           <h4>{t.navWebsite}</h4>
           <nav>{groupLinks("website", { general: "globe", design: "palette", header: "header", maps: "map", seo: "search" })}</nav>
           <h4>{t.navServices}</h4>
-          <nav>{groupLinks("services", { voice: "headset", bans: "ban", monitoring: "pulse" })}</nav>
+          <nav>{groupLinks("services", { voice: "headset", bans: "ban", steam: "user", monitoring: "pulse" })}</nav>
           <h4>{t.navCollector}</h4>
           <nav>{groupLinks("collector", { points: "points", capture: "shield", commands: "terminal" })}</nav>
           <h4>{t.navModeration}</h4>

@@ -188,7 +188,7 @@
   "banType": "Ban-Typ",
   "banTypeServer": "Server",
   "bansNone": "Kein Spieler dieser Rangliste ist gebannt.",
-  "bansHint": "Aus den Server-Logs (VAC-Kicks und permanente Server-Bans), aus SourceBans, wenn die Adresse eingestellt ist, und mit STEAM_API_KEY die VAC- und Spiel-Bans laut Steam.",
+  "bansHint": "Aus den Server-Logs (VAC-Kicks und permanente Server-Bans), aus SourceBans, wenn die Adresse eingestellt ist, und mit einem Steam-Web-API-Key die VAC- und Spiel-Bans laut Steam.",
   "sbBans": "SourceBans",
   "sbBansHint": "Spieler dieser Rangliste, die in SourceBans stehen. Grund und Dauer kommen aus der öffentlichen Ban-Liste.",
   "sbOpen": "Ban-Liste öffnen",

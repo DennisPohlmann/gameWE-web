@@ -45,7 +45,7 @@ again every 5 minutes. The heading on `/` counts the real players.
 | `/<game>/players/<id>/chat` | the player's chat messages |
 | `/<game>/chat` | chat log with search |
 | `/<game>/misc` | player countries, weekdays, connects per day, connect methods, server banners |
-| `/<game>/bans` | ban list like gameME's: bans of ranked players from the collector's ban records (`hlstats_Players_Bans`: type, date, reason), from SourceBans (reason, length, date) and, with `STEAM_API_KEY`, VAC/game bans from Steam; points, K/D, HS/kill and accuracy per player. Players the collector marked as banned (`hideranking = 2`) are hidden players and not listed (see below), so the list can be empty. |
+| `/<game>/bans` | ban list like gameME's: bans of ranked players from the collector's ban records (`hlstats_Players_Bans`: type, date, reason), from SourceBans (reason, length, date) and, with a Steam Web API key (Admin → Settings → Steam), VAC/game bans from Steam; points, K/D, HS/kill and accuracy per player. Players the collector marked as banned (`hideranking = 2`) are hidden players and not listed (see below), so the list can be empty. |
 | `/search` | search players by name or Steam ID and clans by tag or name (`?q=...&st=names\|steam\|clans&game=<code>`) |
 | `/help` | help: how points are calculated (with the current settings), actions, weapon modifiers, chat commands |
 | `/voice` | detail page of the TeamSpeak server from the voice server box (click its name): channel tree with the people online (names can be hidden in the admin settings), server info (operating system with a small symbol, uptime, users, connections, security level, ping, version, host banner URL), traffic and the welcome message, and at the bottom the code of the TeamSpeak banner; live from the ServerQuery, kept for a minute; 404 unless TeamSpeak is the voice server |
@@ -148,9 +148,9 @@ website therefore computes some things itself:
 - **Steam data** in the profile (avatar, name, VAC status) is read from the
   public profile on steamcommunity.com and kept for a day. No API key is
   needed, but steamcommunity.com blocks many requests in a row, so they are
-  throttled; with `STEAM_API_KEY` the Steam Web API is used instead (100
-  players per call), which is recommended for the player maps.
-  `STEAM_PROFILES=off` turns it off.
+  throttled; with a Steam Web API key (Admin → Settings → Steam) the Steam
+  Web API is used instead (100 players per call), which is recommended for
+  the player maps. "Fetch Steam profiles" on the same page turns it off.
 - **Activity chart** comes from `hlstats_Players_History`, not `hlstats_Trend`.
 - **Counter-Strike 2** logs no shots (there is no weaponstats plugin), so
   the ranking, profile, sessions, weapon, map, live and ban pages of a CS2
@@ -271,7 +271,7 @@ website therefore computes some things itself:
   Only public http(s) addresses without redirects are accepted, so the
   setting cannot reach localhost or the LAN; `SOURCEBANS_ALLOW_PRIVATE=1`
   allows that when SourceBans runs on the same network.
-- **VAC and game bans** (bans page) need `STEAM_API_KEY`; the 1000 most
+- **VAC and game bans** (bans page) need the Steam Web API key; the 1000 most
   recently active players of the ranking are checked, 100 per call, every
   12 hours.
 
@@ -340,7 +340,7 @@ menu button), and lists turn into cards on narrow screens:
   "All rankings" in the same menu shows the lists without a filter.
 - **Settings** (`/admin/settings/<page>`): one page per topic, each with its
   own save bar: Website (general, design & logo, header & links, maps &
-  events, search engines), Services (voice server, SourceBans, monitoring),
+  events, search engines), Services (voice server, SourceBans, Steam, monitoring),
   Collector (points, recording & privacy, in-game commands), Moderation (chat,
   IP addresses), Access (users, my account & 2FA) and Advanced (all options
   (raw), older options).
@@ -449,7 +449,8 @@ otherwise 503. Health endpoints after GitLab's:
 | `/-/metrics` | Prometheus text: version, process memory and uptime, database up and latency, servers, players online and ranked players per visible ranking |
 
 `/-/metrics` is off (404) until a token of at least 16 characters is set,
-in the admin settings ("Token für /-/metrics") or as `GAMEWE_METRICS_TOKEN`.
+in the admin settings (Monitoring → "Token for /-/metrics"; before that
+`GAMEWE_METRICS_TOKEN`, which is still read while no token is stored).
 Prometheus sends it as `Authorization: Bearer <token>`:
 
 ```yaml

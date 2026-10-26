@@ -188,7 +188,7 @@
   "banType": "Type udelukkelse",
   "banTypeServer": "Server",
   "bansNone": "Ingen spiller på denne rangliste er udelukket.",
-  "bansHint": "Fra serverloggene (VAC-kicks og permanente udelukkelser), fra SourceBans hvis adressen er sat og, med STEAM_API_KEY, VAC- og spiludelukkelser ifølge Steam.",
+  "bansHint": "Fra serverloggene (VAC-kicks og permanente udelukkelser), fra SourceBans hvis adressen er sat og, med en Steam Web API-nøgle, VAC- og spiludelukkelser ifølge Steam.",
   "sbBans": "SourceBans",
   "sbBansHint": "Spillere på denne rangliste, som står i SourceBans. Årsag og varighed kommer fra den offentlige liste.",
   "sbOpen": "Åbn udelukkelseslisten",

@@ -1,5 +1,6 @@
 import "server-only";
-import { config } from "./config";
+import { envBacked } from "./config";
+import type { Lang } from "@/translations/languages";
 import { eventsMode, type EventsMode } from "./events-mode";
 import { query } from "./db";
 import { mapStyleId } from "./map-styles";
@@ -9,8 +10,9 @@ import { LINK_SLOTS, type HeaderLink, type TabId, headerOrder, parseHome, parseL
 export { LINK_SLOTS, safeUrl };
 export type { HeaderLink };
 
-// Site settings: hlstats_Options (editable in the admin area) wins over the
-// environment. Cached for 30 seconds per server process.
+// Site settings: hlstats_Options (editable in the admin area); the few that
+// older installations set in the environment fall back to it (lib/config.ts).
+// Cached for 30 seconds per server process.
 
 // Search engine keywords when none are set in the admin area.
 export const SEO_KEYWORDS = "game server statistics, player ranking, stats, awards, counter-strike, gameWE";
@@ -27,6 +29,10 @@ export type Settings = {
   seoTwitter: string;
   activityDays: number;
   pageSize: number;
+  // Language for visitors without a cookie or a matching browser language.
+  defaultLang: Lang;
+  // Steam avatars, names and VAC status from Steam (lib/steam.ts).
+  steamProfiles: boolean;
   // Link of the site name in the breadcrumb, e.g. the community's homepage.
   siteUrl: string;
   // Image shown centred under the header (absolute URL or path).
@@ -108,11 +114,6 @@ export function titleTemplate(format: string, vars: Record<string, string>): { t
 
 let cache: { at: number; value: Settings } | null = null;
 
-function positive(v: string | undefined, fallback: number, max: number) {
-  const n = Number.parseInt(v ?? "", 10);
-  return Number.isFinite(n) && n > 0 ? Math.min(n, max) : fallback;
-}
-
 function geoip(v: string | undefined): Settings["geoipCredit"] {
   const s = (v ?? "dbip").trim().toLowerCase();
   return s === "dbip" || s === "maxmind" ? s : "";
@@ -128,21 +129,24 @@ export async function getSettings(): Promise<Settings> {
   try {
     const rows = await query<{ keyname: string; value: string }>(
       `SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`,
-      [["sitename", "MinActivity", "gamewe_page_size", "gamewe_site_url", "gamewe_logo_url", "gamewe_header_logo", "gamewe_favicon", "gamewe_apple_icon", "gamewe_title_format", "gamewe_title_ranking", "gamewe_geoip_credit", "gamewe_sig_brand", "gamewe_chat_public", "gamewe_game_events", "gamewe_player_events", "gamewe_skin", "gamewe_game_skins", "gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_sourcebans_url", "gamewe_seo_description", "gamewe_seo_keywords", "gamewe_seo_image", "gamewe_seo_index", "gamewe_seo_twitter", "gamewe_header_home", "gamewe_header_order", ...linkKeys]],
+      [["sitename", "MinActivity", "gamewe_page_size", "gamewe_default_lang", "gamewe_steam_profiles", "gamewe_site_url", "gamewe_logo_url", "gamewe_header_logo", "gamewe_favicon", "gamewe_apple_icon", "gamewe_title_format", "gamewe_title_ranking", "gamewe_geoip_credit", "gamewe_sig_brand", "gamewe_chat_public", "gamewe_game_events", "gamewe_player_events", "gamewe_skin", "gamewe_game_skins", "gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_sourcebans_url", "gamewe_seo_description", "gamewe_seo_keywords", "gamewe_seo_image", "gamewe_seo_index", "gamewe_seo_twitter", "gamewe_header_home", "gamewe_header_order", ...linkKeys]],
     );
     o = Object.fromEntries(rows.map((r) => [r.keyname, r.value]));
   } catch {
     // Database down: fall back to the environment so the error page still has a title.
   }
+  const base = envBacked(o);
   const value: Settings = {
-    siteName: o.sitename?.trim() || config.siteName,
+    siteName: base.siteName,
     seoDescription: (o.gamewe_seo_description ?? "").trim().slice(0, 300),
     seoKeywords: (o.gamewe_seo_keywords ?? "").trim().slice(0, 255) || SEO_KEYWORDS,
     seoImage: safeUrl(o.gamewe_seo_image),
     seoIndex: o.gamewe_seo_index?.trim() !== "0",
     seoTwitter: /^@?[A-Za-z0-9_]{1,15}$/.test(o.gamewe_seo_twitter?.trim() ?? "") ? `@${o.gamewe_seo_twitter.trim().replace(/^@/, "")}` : "",
-    activityDays: positive(o.MinActivity, config.activityDays, 3650),
-    pageSize: positive(o.gamewe_page_size, config.pageSize, 500),
+    activityDays: base.activityDays,
+    pageSize: base.pageSize,
+    defaultLang: base.defaultLang,
+    steamProfiles: base.steamProfiles,
     siteUrl: safeUrl(o.gamewe_site_url),
     logoUrl: safeUrl(o.gamewe_logo_url),
     headerLogo: imageUrl(o.gamewe_header_logo),
@@ -154,7 +158,7 @@ export async function getSettings(): Promise<Settings> {
     headerHome: parseHome(o.gamewe_header_home),
     headerOrder: headerOrder(o.gamewe_header_order),
     geoipCredit: geoip(o.gamewe_geoip_credit),
-    sigBrand: o.gamewe_sig_brand?.trim() || o.sitename?.trim() || config.siteName,
+    sigBrand: o.gamewe_sig_brand?.trim() || base.siteName,
     chatPublic: o.gamewe_chat_public?.trim() === "1",
     gameEvents: eventsMode(o.gamewe_game_events),
     playerEvents: eventsMode(o.gamewe_player_events),

@@ -46,7 +46,7 @@ const banValues = {
 
 // Banned players of a ranking, as one list like gameME's: bans the
 // collector recorded from the server logs, bans from SourceBans (address
-// under Settings → Bans) and VAC/game bans from Steam (STEAM_API_KEY).
+// under Settings → Bans) and VAC/game bans from Steam (Steam Web API key, Settings → Steam).
 export default async function BansPage({ params, searchParams }: { params: Promise<{ game: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { game } = await params;
   const sp = await searchParams;
@@ -55,12 +55,12 @@ export default async function BansPage({ params, searchParams }: { params: Promi
   const values = { ...banValues, type: (r: BanRow) => kindLabel(r.kind, t) };
   const order = sortState(sp, values, "order");
   // Counter-Strike 2 logs no shots: no accuracy column.
-  const [{ sourcebansUrl }, shots] = await Promise.all([getSettings(), gameHasShots(game)]);
+  const [{ sourcebansUrl }, shots, steamBans] = await Promise.all([getSettings(), gameHasShots(game), steamBansAvailable()]);
 
   const [records, sb, vac] = await Promise.all([
     getBanRecords(game, MAX_ROWS),
     sourcebansUrl ? sbRows(game, sourcebansUrl) : null,
-    steamBansAvailable() ? vacRows(game) : [],
+    steamBans ? vacRows(game) : [],
   ]);
   const recordPlayers = await getBanPlayers(records.map((r) => Number(r.playerId)));
 

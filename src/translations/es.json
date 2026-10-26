@@ -188,7 +188,7 @@
   "banType": "Tipo de baneo",
   "banTypeServer": "Servidor",
   "bansNone": "Ningún jugador de este ranking está baneado.",
-  "bansHint": "De los logs del servidor (expulsiones VAC y baneos permanentes), de SourceBans si está configurada su dirección y, con STEAM_API_KEY, los baneos VAC y de juego según Steam.",
+  "bansHint": "De los logs del servidor (expulsiones VAC y baneos permanentes), de SourceBans si está configurada su dirección y, con una clave de la API web de Steam, los baneos VAC y de juego según Steam.",
   "sbBans": "SourceBans",
   "sbBansHint": "Jugadores de este ranking que figuran en SourceBans. Motivo y duración vienen de la lista pública.",
   "sbOpen": "Abrir lista de baneos",

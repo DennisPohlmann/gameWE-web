@@ -9,6 +9,7 @@ import { optionList, rawOptions } from "@/lib/admin-data";
 import { adminDict } from "@/lib/admin-i18n";
 import { RAW_GROUP, RAW_OPTION_HELP, READONLY_OPTIONS, allSettings, settingGroups, type Setting } from "@/lib/admin-settings";
 import { requireAdmin } from "@/lib/auth";
+import { ENV_FALLBACK, envFormValues, valueSource } from "@/lib/config";
 import { noAutofill } from "@/lib/autofill";
 import { adminQuery } from "@/lib/db";
 import { fill, getAdminLang } from "@/lib/i18n";
@@ -27,7 +28,7 @@ export default async function SettingsPage({
   params: Promise<{ group: string }>;
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  await requireAdmin();
+  const user = await requireAdmin();
   const { group: groupId } = await params;
   const group = settingGroups.find((g) => g.id === groupId);
   const isRaw = groupId === RAW_GROUP;
@@ -45,6 +46,10 @@ export default async function SettingsPage({
     isRaw ? rawOptions() : Promise.resolve([]),
   ]);
   const values: Record<string, string> = Object.fromEntries(rows.map((r) => [r.keyname, r.value]));
+  // Settings that older installations set in the environment (lib/config.ts):
+  // where the value comes from, and the environment's value while none is stored.
+  const envValues = envFormValues();
+  const source = (key: string) => (key in ENV_FALLBACK ? valueSource(key as keyof typeof ENV_FALLBACK, values[key]) : "db");
   // Older installations have no voice type yet: preselect what is set up.
   if (items.some((s) => s.key === "gamewe_voice_type")) values.gamewe_voice_type = voiceType(values);
   // Fields that depend on a choice are hidden by CSS while the choice
@@ -95,7 +100,9 @@ export default async function SettingsPage({
                 <SettingField
                   key={s.key}
                   s={s}
-                  value={values[s.key]}
+                  value={values[s.key] || (source(s.key) === "env" ? envValues[s.key] : undefined)}
+                  fromEnv={source(s.key) === "env" ? ENV_FALLBACK[s.key as keyof typeof ENV_FALLBACK] : undefined}
+                  readOnly={s.minLevel !== undefined && user.acclevel < s.minLevel}
                   lang={lang}
                   games={games}
                   templates={templates}
@@ -134,9 +141,13 @@ function SettingField({
   templates,
   stored,
   bad,
+  fromEnv,
+  readOnly,
 }: {
   s: Setting;
   value: string | undefined;
+  fromEnv?: string;
+  readOnly: boolean;
   lang: Lang;
   games: [string, string][];
   templates: { id: string; name: { de: string; en: string } }[];
@@ -182,10 +193,12 @@ function SettingField({
       </select>
     );
   } else if (s.type === "secret") {
+    // Only "set" or "not set", never the value (also not one from the environment).
+    const placeholder = readOnly ? (stored || fromEnv ? a.secretSetLocked : a.secretEmpty) : stored ? a.secretSet : fromEnv ? a.secretSetEnv : a.secretEmpty;
     control = (
       <>
-        <input {...noAutofill} id={id} name={s.key} type="password" placeholder={stored ? a.secretSet : a.secretEmpty} maxLength={255} />
-        {stored ? (
+        <input {...noAutofill} id={id} name={s.key} type="password" placeholder={placeholder} maxLength={255} disabled={readOnly} aria-invalid={bad || undefined} />
+        {stored && !readOnly ? (
           <label className="check">
             <input type="checkbox" name={`${s.key}__clear`} value="1" /> {a.secretClear}
           </label>
@@ -225,6 +238,8 @@ function SettingField({
           <label htmlFor={id}>{s.label[lang]}</label>
         </b>
         {s.help ? <span>{s.help[lang]}</span> : null}
+        {fromEnv && s.type !== "secret" ? <span className="env-note">{fill(a.fromEnv, { v: fromEnv })}</span> : null}
+        {readOnly ? <span className="env-note">{fill(a.levelOnly, { n: String(s.minLevel) })}</span> : null}
         <code>{s.key}</code>
       </div>
       <div className="c">{control}</div>
