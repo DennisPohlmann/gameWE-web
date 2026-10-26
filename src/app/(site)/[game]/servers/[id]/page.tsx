@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { ShareBar } from "@/components/share-menu";
 import { SigCode } from "@/components/sig-code";
 import { imageStyles } from "@/lib/image-theme";
 import { statsOrigin } from "@/lib/site-url";
@@ -47,9 +46,6 @@ export default async function ServerPage({ params }: Props) {
 
   return (
     <>
-      <div className="page-share">
-        <ShareBar labels={{ share: t.shareThis, copy: t.shareCopy, copied: t.copied, email: t.shareEmail }} />
-      </div>
       <Section title={t.liveView}>
         <ServerTable game={game} servers={[s]} t={t} lang={lang} />
         {load24.length > 1 ? (

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { ShareBar } from "@/components/share-menu";
 import { notFound, redirect } from "next/navigation";
 import { RankingTable, rankingValues } from "@/components/ranking";
 import { Flag, Section, Stats } from "@/components/ui";
@@ -38,9 +37,6 @@ export default async function ClanPage({ params, searchParams }: Props) {
   const home = /^https?:\/\//i.test(c.homepage ?? "") ? c.homepage : null;
   return (
     <>
-      <div className="page-share">
-        <ShareBar labels={{ share: t.shareThis, copy: t.shareCopy, copied: t.copied, email: t.shareEmail }} />
-      </div>
       <Section
         title={
           <>

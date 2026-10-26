@@ -515,7 +515,6 @@
   "shareTextPlayerHidden": "Mira a {name} en {site}.",
   "shareTextClan": "Mira el clan {name} en {site}: {members} miembros.",
   "shareTextServer": "¡Juega con nosotros en {name}! Estadísticas en vivo en {site}.",
-  "shareThis": "Compartir esta página",
   "seoDescription": "Estadísticas en vivo de nuestros servidores: rankings de jugadores, premios, armas, mapas y quién está jugando ahora.",
   "licenses": "Licencias",
   "licIntro": "gameWE se distribuye bajo GPL-3.0-or-later. Esta página enumera el software, los datos y los gráficos de terceros que usamos, con sus licencias.",

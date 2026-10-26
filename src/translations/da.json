@@ -515,7 +515,6 @@
   "shareTextPlayerHidden": "Se {name} på {site}.",
   "shareTextClan": "Se klanen {name} på {site}: {members} medlemmer.",
   "shareTextServer": "Spil med os på {name}! Live-statistik på {site}.",
-  "shareThis": "Del denne side",
   "seoDescription": "Live-statistik for vores spilservere: ranglister, priser, våben, baner og hvem der spiller lige nu.",
   "licenses": "Licenser",
   "licIntro": "gameWE er licenseret under GPL-3.0-or-later. Denne side viser den software, de data og den grafik fra andre, som vi bruger, med deres licenser.",

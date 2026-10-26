@@ -43,55 +43,6 @@ function ShareIcon({ size }: { size: number }) {
   );
 }
 
-// The share bar at the top of the clan and server pages: the
-// share text and every target as its own button, no menu to open first.
-export function ShareBar({ labels }: { labels: Labels }) {
-  const [copied, setCopied] = useState(false);
-  const [native, setNative] = useState(false);
-  const [text, setText] = useState("");
-  useEffect(() => {
-    setNative(typeof navigator.share === "function");
-    setText(page().title);
-  }, []);
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(page().url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {}
-  };
-  return (
-    <div className="share-bar">
-      <div className="share-bar-head">
-        <ShareIcon size={16} />
-        <div>
-          <strong>{labels.share}</strong>
-          {text ? <span className="share-bar-text">{text}</span> : null}
-        </div>
-      </div>
-      <div className="share-bar-btns">
-        {native ? (
-          <button type="button" className="share-b native" onClick={() => navigator.share(page()).catch(() => {})}>
-            <ShareIcon size={12} />
-            {labels.share}
-          </button>
-        ) : null}
-        <button type="button" className="share-b link" onClick={copy}>
-          {copied ? labels.copied : labels.copy}
-        </button>
-        {TARGETS.map(([name, cls, make]) => (
-          <button key={cls} type="button" className={`share-b ${cls}`} onClick={() => open(make)}>
-            {name}
-          </button>
-        ))}
-        <button type="button" className="share-b mail" onClick={() => open(mail)}>
-          {labels.email}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // The small share button in the nav bar of every page.
 export function ShareMenu({ labels }: { labels: Labels }) {
   const [shown, setOpen] = useState(false);

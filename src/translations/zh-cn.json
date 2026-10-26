@@ -515,7 +515,6 @@
   "shareTextPlayerHidden": "在 {site} 查看 {name}。",
   "shareTextClan": "在 {site} 查看战队 {name}：{members} 名成员。",
   "shareTextServer": "来 {name} 和我们一起玩！实时统计见 {site}。",
-  "shareThis": "分享此页面",
   "seoDescription": "我们游戏服务器的实时统计：玩家排行、奖项、武器、地图以及当前在线的玩家。",
   "licenses": "许可证",
   "licIntro": "gameWE 以 GPL-3.0-or-later 许可发布。本页列出我们使用的第三方软件、数据和图形及其许可证。",

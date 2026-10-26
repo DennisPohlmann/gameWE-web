@@ -71,8 +71,7 @@ html[data-skin] .page {
   margin: 0 auto;
   padding: 20px var(--m-gutter) 28px;
 }
-html[data-skin] .page > p, html[data-skin] .page > .notice, html[data-skin] .page > .lead,
-html[data-skin] .page-share { width: auto; margin: 0 0 14px; }
+html[data-skin] .page > p, html[data-skin] .page > .notice, html[data-skin] .page > .lead { width: auto; margin: 0 0 14px; }
 
 /* Footer: dark bar, muted links, the credit line on the right. */
 html[data-skin] .footer {
@@ -357,9 +356,6 @@ html[data-skin] .rank-cell:hover, html[data-skin] .ribbon-cell:hover { backgroun
 html[data-skin] td.avatar-cell img { border-radius: 4px; }
 html[data-skin] .avatar-none { border-radius: 4px; background: var(--m-avatar); }
 html[data-skin] .map-image { border-radius: 4px; }
-html[data-skin] .share-bar { border-left-width: 1px; border-radius: var(--m-radius); box-shadow: none; }
-html[data-skin] .share-bar-head svg { fill: var(--accent); stroke: var(--accent); }
-html[data-skin] .share-b.native, html[data-skin] .share-b.link { color: var(--m-on-accent); }
 html[data-skin] .help-num { color: var(--m-on-accent); }
 html[data-skin] .award-cal td.sel a { color: var(--m-on-accent); }
 /* Start page, "General statistics": the cards get the rounded card look. */
