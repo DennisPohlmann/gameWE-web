@@ -25,19 +25,22 @@ export default async function GameLayout({ children, params }: { children: React
   const game = (await getGame(code)) ?? ((await currentAdmin()) ? await getGame(code, true) : undefined);
   if (!game) notFound();
   const { t } = await getDict();
-  const { chatPublic, gameSkins } = await getSettings();
+  const { chatPublic, gameEvents, gameSkins } = await getSettings();
   const skin = gameSkins ? await gameTemplate(game.realgame, game.code) : null;
   const theme = skin ? await themeStyle(skin, true) : null;
+  // In groups: the start page and who plays, honours, the game's statistics,
+  // what happens on the servers (events, chat), the rest.
   const items = [
     { href: "", label: t.servers, icon: "🖥" },
     { href: "/players", label: t.players, icon: "👤" },
-    ...((await hallOfFameShown(game.code)) ? [{ href: "/hall-of-fame", label: t.hallOfFame, icon: "⭐" }] : []),
     { href: "/clans", label: t.clans, icon: "👥" },
+    ...((await hallOfFameShown(game.code)) ? [{ href: "/hall-of-fame", label: t.hallOfFame, icon: "⭐" }] : []),
     { href: "/awards", label: t.awards, icon: "🏆" },
     { href: "/weapons", label: t.weapons, icon: "🔫" },
     { href: "/actions", label: t.actions, icon: "🎯" },
     { href: "/maps", label: t.maps, icon: "🗺" },
     { href: "/teams", label: t.teams, icon: "🚩" },
+    ...(gameEvents !== "off" ? [{ href: "/events", label: t.events, icon: "⚡" }] : []),
     ...(chatPublic ? [{ href: "/chat", label: t.chat, icon: "💬" }] : []),
     { href: "/misc", label: t.misc, icon: "📊" },
     { href: "/bans", label: t.bans, icon: "🚫" },

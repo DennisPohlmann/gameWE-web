@@ -536,6 +536,24 @@
   "licUse": "Verwendung",
   "licLink": "Link",
   "recentEvents": "Letzte Ereignisse",
+  "events": "Events",
+  "eventsOverTime": "Events im Zeitverlauf",
+  "eventShares": "Anteil nach Typ",
+  "eventsTotal": "{n} Events",
+  "period": "Zeitraum",
+  "periods": {
+    "1h": "Letzte Stunde",
+    "24h": "Letzte 24 Stunden",
+    "7d": "Letzte 7 Tage"
+  },
+  "evGroup": {
+    "kills": "Kills",
+    "actions": "Aktionen",
+    "joins": "Kommen und Gehen",
+    "changes": "Team, Rolle und Name",
+    "deaths": "Selbstmorde und Teamkills"
+  },
+  "eventsCapped": "Die Liste zeigt die neuesten {n} von {total} Events; für die übrigen einen Typ oder einen kürzeren Zeitraum wählen.",
   "goTo": "Gehe zu:",
   "showRows": "Zeilen anzeigen:",
   "entriesOnPages": "{n} Einträge auf {p} Seiten",

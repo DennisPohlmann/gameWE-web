@@ -367,15 +367,15 @@ async function named(rows: RawEvent[], limit: number, self = 0): Promise<GameEve
   return shownEvents(rows, people, limit, self).map((r) => ({ ...r, ts: Number(r.ts), num: Number(r.num), server: r.server ?? "" }));
 }
 
-const gameCache = new Map<string, { at: number; value: Promise<unknown> }>();
+const gameCache = new Map<string, { at: number; ms: number; value: Promise<unknown> }>();
 
-// Kept for 3 seconds per ranking (or player).
-function cached<T>(key: string, load: () => Promise<T>): Promise<T> {
+// Kept for 3 seconds per ranking (or player), or `ms`.
+function cached<T>(key: string, load: () => Promise<T>, ms = 3_000): Promise<T> {
   const hit = gameCache.get(key);
-  if (hit && Date.now() - hit.at < 3_000) return hit.value as Promise<T>;
+  if (hit && Date.now() - hit.at < hit.ms) return hit.value as Promise<T>;
   if (gameCache.size > 500) gameCache.clear();
   const value = load();
-  gameCache.set(key, { at: Date.now(), value });
+  gameCache.set(key, { at: Date.now(), ms, value });
   value.catch(() => gameCache.delete(key));
   return value;
 }
@@ -387,6 +387,103 @@ export function getGameEvents(game: string, limit: number): Promise<GameEvent[]>
     // More rows than shown, as hidden players are dropped afterwards.
     return named(await loadEvents(GAME_BY, Number(g.id), limit * 3), limit);
   });
+}
+
+// ---------------------------------------------------------------- events page
+
+// The events page of a ranking (/<game>/events): every kind of the start
+// page's box over a period, with a type filter and a pager, and the counts
+// per kind and time step for its chart. Unlike the box, rows with a hidden
+// or banned player on either side are left out in SQL, so the counts, the
+// pager and the list agree.
+
+// Player columns of each kind: the actor and, for events on another player,
+// the other side (constants, never input).
+const ACTOR_COL: Record<GameEventKind, string> = {
+  connect: "e.playerId",
+  entry: "e.playerId",
+  disconnect: "e.playerId",
+  team: "e.playerId",
+  role: "e.playerId",
+  name: "e.playerId",
+  action: "e.playerId",
+  playeraction: "e.playerId",
+  teambonus: "e.playerId",
+  kill: "e.killerId",
+  suicide: "e.playerId",
+  teamkill: "e.killerId",
+};
+const OTHER_COL: Partial<Record<GameEventKind, string>> = { playeraction: "e.victimId", kill: "e.victimId", teamkill: "e.victimId" };
+const EVENT_TABLE: Record<GameEventKind, string> = {
+  connect: "hlstats_Events_Connects",
+  entry: "hlstats_Events_Entries",
+  disconnect: "hlstats_Events_Disconnects",
+  team: "hlstats_Events_ChangeTeam",
+  role: "hlstats_Events_ChangeRole",
+  name: "hlstats_Events_ChangeName",
+  action: "hlstats_Events_PlayerActions",
+  playeraction: "hlstats_Events_PlayerPlayerActions",
+  teambonus: "hlstats_Events_TeamBonuses",
+  kill: "hlstats_Events_Frags",
+  suicide: "hlstats_Events_Suicides",
+  teamkill: "hlstats_Events_Teamkills",
+};
+
+// SQL condition: neither side of an event of `kind` is a hidden player.
+function shownSides(kind: GameEventKind): string {
+  const other = OTHER_COL[kind];
+  return `NOT ${hiddenSql(ACTOR_COL[kind])}${other ? ` AND NOT ${hiddenSql(other)}` : ""}`;
+}
+
+async function gameIdOf(game: string): Promise<number | undefined> {
+  const g = await queryOne<{ id: number }>(`SELECT id FROM hlstats_Games WHERE code = ?`, [game]);
+  return g ? Number(g.id) : undefined;
+}
+
+// Events of `kinds` since `from` (unix seconds), newest first (asc: oldest
+// first). Each table contributes at most offset+limit rows; the event
+// tables have an index on the time, not on the ranking.
+export async function getGameEventList(game: string, kinds: GameEventKind[], from: number, limit: number, offset: number, asc = false): Promise<GameEvent[]> {
+  const id = await gameIdOf(game);
+  if (id === undefined || !kinds.length) return [];
+  const withServer = await hasEventServer();
+  const dir = asc ? "ASC" : "DESC";
+  const parts = kinds.map((k) => `(${gameSource(k, "e.game_id", withServer)} AND e.timestamp_id >= ? AND ${shownSides(k)} ORDER BY 1 ${dir} LIMIT ${Number(offset + limit)})`);
+  const rows = await query<RawEvent>(`SELECT * FROM (${parts.join(" UNION ALL ")}) x ORDER BY ts ${dir}, kind LIMIT ? OFFSET ?`, [
+    ...kinds.flatMap(() => [id, from]),
+    limit,
+    offset,
+  ]);
+  return named(rows, limit);
+}
+
+// The newest rows of the events page with one type filter, for its live
+// table (asked every few seconds by every open page).
+export function getGameEventListFeed(game: string, kinds: GameEventKind[], from: number): Promise<GameEvent[]> {
+  return cached(`e|${game}|${kinds.join(",")}|${from}`, () => getGameEventList(game, kinds, from, PLAYER_EVENTS, 0));
+}
+
+// Events per kind and chart step since `from` (step 0 starts at `from`),
+// for the chart and the shares of the events page. Kept for 60 seconds.
+export function getGameEventCounts(game: string, from: number, step: number): Promise<{ kind: string; b: number; n: number }[]> {
+  return cached(
+    `c|${game}|${from}|${step}`,
+    async () => {
+      const id = await gameIdOf(game);
+      if (id === undefined) return [];
+      const parts = GAME_EVENT_KINDS.map(
+        (k) =>
+          `SELECT '${k}' AS kind, FLOOR((e.timestamp_id - ?) / ?) AS b, COUNT(*) AS n FROM ${EVENT_TABLE[k]} e
+           WHERE e.game_id = ? AND e.timestamp_id >= ? AND ${shownSides(k)} GROUP BY 2`,
+      );
+      const rows = await query<{ kind: string; b: number | string; n: number | string }>(
+        parts.join(" UNION ALL "),
+        GAME_EVENT_KINDS.flatMap(() => [from, step, id, from]),
+      );
+      return rows.map((r) => ({ kind: r.kind, b: Number(r.b), n: Number(r.n) }));
+    },
+    60_000,
+  );
 }
 
 // Rows of the live box on the player page.

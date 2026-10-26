@@ -536,6 +536,24 @@
   "licUse": "Used for",
   "licLink": "Link",
   "recentEvents": "Latest events",
+  "events": "Events",
+  "eventsOverTime": "Events over time",
+  "eventShares": "Share by type",
+  "eventsTotal": "{n} events",
+  "period": "Period",
+  "periods": {
+    "1h": "Last hour",
+    "24h": "Last 24 hours",
+    "7d": "Last 7 days"
+  },
+  "evGroup": {
+    "kills": "Kills",
+    "actions": "Actions",
+    "joins": "Joins and leaves",
+    "changes": "Team, role and name",
+    "deaths": "Suicides and teamkills"
+  },
+  "eventsCapped": "The list shows the newest {n} of {total} events; choose a type or a shorter period for the others.",
   "goTo": "Go to:",
   "showRows": "Show rows:",
   "entriesOnPages": "{n} entries on {p} pages",

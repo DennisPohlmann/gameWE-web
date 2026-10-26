@@ -8,7 +8,8 @@ import type { Dict, Lang } from "@/lib/i18n";
 
 // The latest events of a ranking on its start page: "X killed Y with Z",
 // bonuses, joins, team changes; live in the browser unless the admin
-// setting says static or off. PlayerEvents: the same for one player.
+// setting says static or off; "Overview" opens the events page.
+// PlayerEvents: the same for one player.
 export async function GameEvents({ game, t, lang }: { game: string; t: Dict; lang: Lang }) {
   const { gameEvents } = await getSettings();
   if (gameEvents === "off") return null;
@@ -29,6 +30,15 @@ export async function GameEvents({ game, t, lang }: { game: string; t: Dict; lan
       initial={rows}
       initialFlags={Object.fromEntries(flags)}
       labels={{ time: t.time, eventText: t.eventText, server: t.server, map: t.map, noData: t.noData, liveData: t.liveData, liveUpdates: t.liveUpdates, evText: t.evText }}
+      more={
+        <>
+          (
+          <Link className="th-link" href={`/${game}/events`}>
+            {t.overview}
+          </Link>
+          )
+        </>
+      }
     />
   );
 }

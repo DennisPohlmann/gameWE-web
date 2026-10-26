@@ -164,6 +164,10 @@ const definitions: Omit<SettingGroup, "area">[] = [
         type: "choice",
         def: "live",
         choices: EVENT_MODES,
+        help: {
+          de: "Gilt auch für die Seite „Events“ einer Rangliste (alle Ereignisse mit Diagramm und Liste). Aus: kein Reiter „Events“, die Seite gibt es nicht.",
+          en: "Also applies to a ranking's \"Events\" page (all events with a chart and a list). Off: no \"Events\" tab, the page does not exist.",
+        },
       },
       {
         key: "gamewe_player_events",

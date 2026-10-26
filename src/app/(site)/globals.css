@@ -850,6 +850,17 @@ a.button { display: inline-block; text-decoration: none; }
 .section-head h2 a.th-link { color: inherit; }
 /* Events page: the filter form, the live switch on the right. */
 .events-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; }
+/* Events of a ranking: the chart over time and the share of each type side
+   by side in one box (stacked where a column would be narrower than about
+   520px: phones, the narrower modern skins), between the filter bar and the
+   list. */
+.box.events-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 14px 2%; align-items: start; margin: 10px 0 12px; }
+.event-shares { margin: 0; }
+.event-share-table { width: 100%; }
+.event-share-table td:first-child { white-space: nowrap; }
+.event-share-table td:first-child .swatch { display: inline-block; vertical-align: middle; }
+.event-share-table td.barcell { width: 40%; }
+.event-share-table tr.active td { font-weight: bold; }
 .live-switch { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-size: 11px; cursor: pointer; }
 .live-switch-track { position: relative; width: 28px; height: 14px; border-radius: 7px; background: var(--surface); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4); transition: background-color 0.2s; }
 .live-switch-track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%; background: var(--muted); transition: transform 0.2s, background-color 0.2s; }

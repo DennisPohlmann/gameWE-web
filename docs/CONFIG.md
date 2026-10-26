@@ -168,7 +168,15 @@ when nothing newer has happened (the usual case), so the browser has nothing to 
 404 unless their setting is "Sync". Both are kept for 3 seconds per
 ranking or player; the player feed allows 60 requests per client IP and
 minute. The heading of the player page's box links to the
-player's events page ("(Overview)").
+player's events page ("(Overview)"), the heading of the start page's box
+to the ranking's events page (`/<game>/events`, "(Overview)").
+
+"Latest events (ranking start page)" also decides about the ranking's
+events page (the "Events" tab): all events of the ranking over the last
+hour, 24 hours or 7 days with a chart over time, the share of each type and
+a list with type filter and pager. "Sync": a "Live updates" switch (on by
+default, kept per browser) lets new events run in on its first page, sorted
+newest first; "Async": a plain list; "Off": no tab and the page is 404.
 
 With "Latest events (player page)" on "Sync" the player's events page
 (`/<game>/players/<id>/events`) gets a "Live updates" switch next to the

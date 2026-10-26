@@ -12,7 +12,7 @@ export type Flags = Record<number, { flag: string; country: string; nolink?: boo
 type Labels = { time: string; eventText: string; server: string; map: string; noData: string; liveData: string; liveUpdates: string; evText: Record<string, string> };
 
 const POLL_MS = 4_000;
-const keyOf = (e: GameEvent) => `${e.ts}-${e.kind}-${e.actor}-${e.other}-${e.code}`;
+export const keyOf = (e: GameEvent) => `${e.ts}-${e.kind}-${e.actor}-${e.other}-${e.code}`;
 // Two events can be identical (same second, player and action), so every
 // row gets its own id; a shared React key left stale rows behind.
 type Row<T> = T & { id: number };
@@ -133,6 +133,26 @@ export function useLiveRows<T extends { ts: number }>({
   return data;
 }
 
+// The sentence of an event: the actor as a link, the verb, the other player
+// as a link ("?" for a hidden or unknown one), HS for a headshot kill.
+export function GameEventText({ e, game, flags, evText }: { e: GameEvent; game: string; flags: Flags; evText: Record<string, string> }) {
+  const fill = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k: string) => String(v[k] ?? ""));
+  const [before, after] = fill(evText[e.kind] ?? "", { x: e.text || e.code || "?", n: e.num, old: e.text, new: e.code, p: "\u0000" }).split("\u0000");
+  return (
+    <>
+      {e.actor ? <PlayerLink game={game} id={e.actor} name={e.actorName} flag={flags[e.actor]} /> : "?"} <span className="ev-verb">{before}</span>
+      {after !== undefined ? e.other ? <PlayerLink game={game} id={e.other} name={e.otherName} flag={flags[e.other]} /> : "?" : null}
+      {after}
+      {e.kind === "kill" && e.num ? (
+        <>
+          {" "}
+          <span className="hs" title="Headshot">HS</span>
+        </>
+      ) : null}
+    </>
+  );
+}
+
 // The latest events of a ranking's start page or of one player (player
 // page), in a section of its own. Live: while the page is visible it asks
 // `feed` for new events every few seconds and lets them run in at the top
@@ -173,23 +193,7 @@ export function GameEventsLive({
 }) {
   const { on, toggle, resumed } = useLiveSwitch(pauseKey);
   const { rows, flags, fresh } = useLiveRows({ feed, running: live && on, resumed, shown, initial, initialFlags, key: keyOf });
-  const fill = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k: string) => String(v[k] ?? ""));
-  const text = (e: GameEvent): ReactNode => {
-    const [before, after] = fill(labels.evText[e.kind] ?? "", { x: e.text || e.code || "?", n: e.num, old: e.text, new: e.code, p: "\u0000" }).split("\u0000");
-    return (
-      <>
-        {e.actor ? <PlayerLink game={game} id={e.actor} name={e.actorName} flag={flags[e.actor]} /> : "?"} <span className="ev-verb">{before}</span>
-        {after !== undefined ? e.other ? <PlayerLink game={game} id={e.other} name={e.otherName} flag={flags[e.other]} /> : "?" : null}
-        {after}
-        {e.kind === "kill" && e.num ? (
-          <>
-            {" "}
-            <span className="hs" title="Headshot">HS</span>
-          </>
-        ) : null}
-      </>
-    );
-  };
+  const text = (e: GameEvent) => <GameEventText e={e} game={game} flags={flags} evText={labels.evText} />;
   const head = live ? (
     <>
       {title} <span className="live-note">({labels.liveData})</span>
