@@ -118,7 +118,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <nav className="tabs-top" aria-label={siteName}>
             {headerTabs(
               { order: headerOrder, home: headerHome, links, sourcebansUrl },
-              { home: t.contents, search: t.searchTitle, help: t.help, licenses: t.licenses },
+              { home: t.contents, search: t.searchTitle, help: t.help, licenses: t.licenses, privacy: t.privacy.title },
             ).map((tab) =>
               tab.kind === "page" ? (
                 <Link key={tab.id} href={tab.href}>

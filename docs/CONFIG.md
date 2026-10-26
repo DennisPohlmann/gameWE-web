@@ -104,7 +104,9 @@ drag it by its handle; the order is saved with the settings.
 
 - **Home**: name and address can be changed; both are optional (empty name:
   the translated "Home", empty address: the start page of the statistics).
-- **Search, Help, Licenses**: built in, can only be moved.
+- **Search, Help, Licenses, Privacy**: built in, can only be moved. Privacy
+  (`/privacy`) came later: a stored order without it gets it right after
+  Licenses.
 - **SourceBans**: listed only while an address is set under Settings → Bans,
   can only be moved. It is left out of the header when an own link already
   points to that address or is called "SourceBans".
@@ -113,10 +115,10 @@ drag it by its handle; the order is saved with the settings.
   tab. "Add own link" puts a new one at the end, ✕ removes it on saving.
 
 Stored in `hlstats_Options`: `gamewe_header_order` (comma-separated ids
-`home`, `search`, `help`, `licenses`, `sourcebans`, `link1` … `link6`),
+`home`, `search`, `help`, `licenses`, `privacy`, `sourcebans`, `link1` … `link6`),
 `gamewe_header_home` (`Name|URL`, both parts optional) and `gamewe_link_1` …
 `gamewe_link_6` (`Name|URL`). Without `gamewe_header_order`, as on older
-installations, the order is Home, Search, Help, Licenses, SourceBans, then
+installations, the order is Home, Search, Help, Licenses, Privacy, SourceBans, then
 the own links by number; ids missing from a stored order are added in that
 order, unknown ones are ignored. Existing links keep their number and data.
 

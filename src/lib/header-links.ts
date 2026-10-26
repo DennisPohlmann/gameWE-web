@@ -7,7 +7,7 @@ export const LINK_SLOTS = 6;
 
 // Built-in tabs: Home can get its own label and address
 // (gamewe_header_home, "Label|URL"), the others can only be moved.
-export const BUILTIN_TABS = ["home", "search", "help", "licenses", "sourcebans"] as const;
+export const BUILTIN_TABS = ["home", "search", "help", "licenses", "privacy", "sourcebans"] as const;
 export type BuiltinTab = (typeof BUILTIN_TABS)[number];
 export type TabId = BuiltinTab | `link${number}`;
 
@@ -25,7 +25,8 @@ export function safeUrl(v: string | undefined): string {
 
 // The stored order with every id exactly once: unknown and repeated ids are
 // dropped, missing ones (new installation, slots added later) follow in the
-// default order.
+// default order. Privacy, added later than the others, goes right after
+// Licenses when a stored order lacks it.
 export function headerOrder(v: string | undefined): TabId[] {
   const known = new Set<string>(DEFAULT_ORDER);
   const seen = new Set<string>();
@@ -33,7 +34,10 @@ export function headerOrder(v: string | undefined): TabId[] {
     const s = id.trim().toLowerCase();
     if (known.has(s)) seen.add(s);
   }
-  return [...seen, ...DEFAULT_ORDER.filter((id) => !seen.has(id))] as TabId[];
+  const order = [...seen] as TabId[];
+  const at = order.indexOf("licenses");
+  if (at >= 0 && !seen.has("privacy")) order.splice(at + 1, 0, "privacy");
+  return [...order, ...DEFAULT_ORDER.filter((id) => !order.includes(id))];
 }
 
 // A stored tab address: like safeUrl, but no protocol-relative "//host",
@@ -117,7 +121,7 @@ export type HeaderTab = {
 // link already points there.
 export function headerTabs(
   s: { order: TabId[]; home: HeaderLink; links: (HeaderLink | null)[]; sourcebansUrl: string },
-  t: { home: string; search: string; help: string; licenses: string },
+  t: { home: string; search: string; help: string; licenses: string; privacy: string },
 ): HeaderTab[] {
   const own = s.links.filter((l): l is HeaderLink => l !== null);
   const sbLinked = own.some((l) => l.url.replace(/\/?(index\.php)?$/i, "/") === s.sourcebansUrl || /^sourcebans$/i.test(l.label));
@@ -126,7 +130,7 @@ export function headerTabs(
     if (id === "home") {
       const url = s.home.url;
       tabs.push({ id, label: s.home.label || t.home, href: url || "/", kind: !url || url === "/" ? "page" : url.startsWith("/") ? "path" : "external" });
-    } else if (id === "search" || id === "help" || id === "licenses") {
+    } else if (id === "search" || id === "help" || id === "licenses" || id === "privacy") {
       tabs.push({ id, label: t[id], href: `/${id}`, kind: "page" });
     } else if (id === "sourcebans") {
       if (s.sourcebansUrl && !sbLinked) tabs.push({ id, label: "SourceBans", href: s.sourcebansUrl, kind: "external" });

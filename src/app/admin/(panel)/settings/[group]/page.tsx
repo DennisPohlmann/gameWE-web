@@ -287,8 +287,8 @@ function headerRows(values: Record<string, string>, t: (typeof dicts)[keyof type
       const [label = "", url = ""] = (values.gamewe_header_home ?? "").split("|");
       return { id, kind: "home", label, url, hidden: false };
     }
-    if (id === "search" || id === "help" || id === "licenses") {
-      return { id, kind: "builtin", label: id === "search" ? t.searchTitle : t[id], url: "", hidden: false };
+    if (id === "search" || id === "help" || id === "licenses" || id === "privacy") {
+      return { id, kind: "builtin", label: id === "search" ? t.searchTitle : id === "privacy" ? t.privacy.title : t[id], url: "", hidden: false };
     }
     if (id === "sourcebans") return { id, kind: "sourcebans", label: sourcebans, url: "", hidden: !values.gamewe_sourcebans_url?.trim() };
     const v = values[`gamewe_link_${id.slice(4)}`] ?? "";

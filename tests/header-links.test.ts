@@ -4,13 +4,13 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { DEFAULT_ORDER, headerOrder, headerTabs, homeValue, linkProblem, linkValue, parseHome, parseLink } from "../src/lib/header-links.ts";
 
-const t = { home: "Home", search: "Search", help: "Help", licenses: "Licenses" };
+const t = { home: "Home", search: "Search", help: "Help", licenses: "Licenses", privacy: "Privacy" };
 const ids = (tabs: { id: string }[]) => tabs.map((x) => x.id);
 
 test("no stored order keeps the old default order", () => {
   assert.deepEqual(headerOrder(undefined), DEFAULT_ORDER);
   assert.deepEqual(headerOrder(""), DEFAULT_ORDER);
-  assert.deepEqual(DEFAULT_ORDER.slice(0, 6), ["home", "search", "help", "licenses", "sourcebans", "link1"]);
+  assert.deepEqual(DEFAULT_ORDER.slice(0, 7), ["home", "search", "help", "licenses", "privacy", "sourcebans", "link1"]);
 });
 
 test("stored order wins; unknown and repeated ids are dropped, missing ones appended", () => {
@@ -18,7 +18,7 @@ test("stored order wins; unknown and repeated ids are dropped, missing ones appe
   assert.deepEqual(o.slice(0, 3), ["link2", "home", "help"]);
   assert.equal(o.length, DEFAULT_ORDER.length);
   assert.equal(new Set(o).size, o.length);
-  assert.deepEqual(o.slice(3), ["search", "licenses", "sourcebans", "link1", "link3", "link4", "link5", "link6"]);
+  assert.deepEqual(o.slice(3), ["search", "licenses", "privacy", "sourcebans", "link1", "link3", "link4", "link5", "link6"]);
 });
 
 test("an existing installation without order renders as before", () => {
@@ -27,17 +27,24 @@ test("an existing installation without order renders as before", () => {
     { order: headerOrder(undefined), home: parseHome(undefined), links: [parseLink("Info|https://example.org/info"), null, null, null, null, null], sourcebansUrl: "https://bans.example.org/" },
     t,
   );
-  assert.deepEqual(ids(tabs), ["home", "search", "help", "licenses", "sourcebans", "link1"]);
+  assert.deepEqual(ids(tabs), ["home", "search", "help", "licenses", "privacy", "sourcebans", "link1"]);
   assert.deepEqual(tabs[0], { id: "home", label: "Home", href: "/", kind: "page" });
-  assert.equal(tabs[5].label, "Info");
-  assert.equal(tabs[5].kind, "external");
+  assert.deepEqual(tabs[4], { id: "privacy", label: "Privacy", href: "/privacy", kind: "page" });
+  assert.equal(tabs[6].label, "Info");
+  assert.equal(tabs[6].kind, "external");
 });
 
 test("tabs follow the saved order; SourceBans only when configured", () => {
   const links = [parseLink("Info|/info"), null, parseLink("Forum|https://example.org"), null, null, null];
   const order = headerOrder("link3,licenses,home,sourcebans,link1");
-  assert.deepEqual(ids(headerTabs({ order, home: parseHome(""), links, sourcebansUrl: "" }, t)), ["link3", "licenses", "home", "link1", "search", "help"]);
-  assert.deepEqual(ids(headerTabs({ order, home: parseHome(""), links, sourcebansUrl: "https://bans.example.org/" }, t)).slice(0, 4), ["link3", "licenses", "home", "sourcebans"]);
+  assert.deepEqual(ids(headerTabs({ order, home: parseHome(""), links, sourcebansUrl: "" }, t)), ["link3", "licenses", "privacy", "home", "link1", "search", "help"]);
+  assert.deepEqual(ids(headerTabs({ order, home: parseHome(""), links, sourcebansUrl: "https://bans.example.org/" }, t)).slice(0, 5), ["link3", "licenses", "privacy", "home", "sourcebans"]);
+});
+
+test("Privacy: after Licenses in an order saved before it existed, else where it was saved", () => {
+  assert.deepEqual(headerOrder("home,licenses,search,help,sourcebans").slice(0, 3), ["home", "licenses", "privacy"]);
+  assert.deepEqual(headerOrder("privacy,home,licenses,search").slice(0, 3), ["privacy", "home", "licenses"]);
+  assert.equal(headerOrder("home,licenses").filter((id) => id === "privacy").length, 1);
 });
 
 test("SourceBans tab is left out when an own link already points there", () => {
