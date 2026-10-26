@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { hallOfFameSettingsAction } from "../../../actions";
 import { HallScheduleFields, hallT, scheduleText } from "@/components/admin/hall-schedule";
+import { noAutofill } from "@/lib/autofill";
 import { basePath } from "@/lib/base-path";
 import { hallSettings } from "@/lib/admin-hall";
 import { nextStart } from "@/lib/hall-period";
@@ -112,7 +113,7 @@ export async function HallOfFameCard({ game, lang, status }: { game: string; lan
         </div>
         <label>
           {t.page}
-          <select name="page" defaultValue={s.page}>
+          <select {...noAutofill} name="page" defaultValue={s.page}>
             {(["auto", "on", "off"] as const).map((p) => (
               <option key={p} value={p}>
                 {t.pages[p]}

@@ -1,3 +1,4 @@
+import { noAutofill } from "@/lib/autofill";
 import { MAX_EVERY, type Schedule } from "@/lib/hall-period";
 import type { Lang } from "@/lib/i18n";
 import { RESET_MODES, type ResetMode } from "@/lib/reset-modes";
@@ -59,8 +60,8 @@ export function HallScheduleFields({ lang, schedule, mode, withOff }: { lang: La
         {t.every}
         <span className="hof-every">
           <span>{t.all}</span>
-          <input type="number" name="every" min={1} max={MAX_EVERY} defaultValue={every} />
-          <select name="unit" defaultValue={unit}>
+          <input {...noAutofill} type="number" name="every" min={1} max={MAX_EVERY} defaultValue={every} />
+          <select {...noAutofill} name="unit" defaultValue={unit}>
             {units.map((u) => (
               <option key={u} value={u}>
                 {t.units[u]}
@@ -72,12 +73,12 @@ export function HallScheduleFields({ lang, schedule, mode, withOff }: { lang: La
       </label>
       <label className="hof-anchor hof-mday">
         {t.mday}
-        <input type="number" name="mday" min={1} max={28} defaultValue={schedule?.unit === "month" ? day : 1} className="hof-num" />
+        <input {...noAutofill} type="number" name="mday" min={1} max={28} defaultValue={schedule?.unit === "month" ? day : 1} className="hof-num" />
         <small>{t.mdayHelp}</small>
       </label>
       <label className="hof-anchor hof-wday">
         {t.wday}
-        <select name="wday" defaultValue={schedule?.unit === "week" ? day : 1}>
+        <select {...noAutofill} name="wday" defaultValue={schedule?.unit === "week" ? day : 1}>
           {t.wdays.map((d, i) => (
             <option key={d} value={i + 1}>
               {d}
@@ -88,8 +89,8 @@ export function HallScheduleFields({ lang, schedule, mode, withOff }: { lang: La
       <label className="hof-anchor hof-ydate">
         {t.ydate}
         <span className="hof-every">
-          <input type="number" name="yday" min={1} max={28} defaultValue={schedule?.unit === "year" ? day : 1} className="hof-num" />
-          <select name="ymonth" defaultValue={schedule?.unit === "year" ? schedule.month : 1}>
+          <input {...noAutofill} type="number" name="yday" min={1} max={28} defaultValue={schedule?.unit === "year" ? day : 1} className="hof-num" />
+          <select {...noAutofill} name="ymonth" defaultValue={schedule?.unit === "year" ? schedule.month : 1}>
             {t.months.map((m, i) => (
               <option key={m} value={i + 1}>
                 {m}
@@ -101,7 +102,7 @@ export function HallScheduleFields({ lang, schedule, mode, withOff }: { lang: La
       </label>
       <label className="hof-mode">
         {t.mode}
-        <select name="mode" defaultValue={mode}>
+        <select {...noAutofill} name="mode" defaultValue={mode}>
           {RESET_MODES.map((m) => (
             <option key={m} value={m}>
               {t.modes[m]}
