@@ -4,6 +4,7 @@ import { adminQuery, likeOp, query, queryOne, sinceDays, type Param } from "./db
 import { addDays, dayOf, siteDay } from "./day";
 import { nowUnix, steamIds } from "./format";
 import { baseGameOf, GAME_HAS_DATA, gameKind } from "./games";
+import { allClansSql, allPlayersSql } from "./general-stats";
 import { hiddenSql, liveEntry } from "./hidden";
 import { LOAD_INTERVAL_MAX, type MapSort } from "./map-table";
 import { playerCount, sumCounts, type PlayerCount } from "./player-count";
@@ -1574,9 +1575,9 @@ export const getDailyActivityAll = cache((days: number) => {
   );
 });
 
-// The start page's "General statistics" over the visible rankings, counted
-// like the lists count them: players without hidden ones, clans with at least
-// two visible members (and the rankings they are in), servers and those with
+// The start page's "General statistics" over the visible rankings: all
+// players (also inactive and hidden ones, bots left out) and all clans (and
+// the rankings they are in; general-stats.ts), servers and those with
 // real players (bots left out, playerCount), players online, all kills and
 // headshots (as in the API's totals) and the time of the latest kill without
 // a hidden player on either side.
@@ -1594,16 +1595,8 @@ export type GeneralStats = {
 
 export async function getGeneralStats(): Promise<GeneralStats> {
   const [p, c, s, sums, k] = await Promise.all([
-    queryOne<{ n: number | string }>(
-      `SELECT COUNT(*) AS n FROM hlstats_Players p JOIN hlstats_Games g ON g.code = p.game AND g.hidden = '0' WHERE p.hideranking = 0`,
-    ),
-    queryOne<{ clans: number | string; rankings: number | string }>(
-      `SELECT COUNT(*) AS clans, COUNT(DISTINCT x.game) AS rankings
-       FROM (SELECT c.clanId, c.game FROM hlstats_Clans c
-             JOIN hlstats_Games g ON g.code = c.game AND g.hidden = '0'
-             JOIN hlstats_Players p ON p.clan = c.clanId AND p.hideranking = 0
-             GROUP BY c.clanId, c.game HAVING COUNT(p.playerId) >= 2) x`,
-    ),
+    queryOne<{ n: number | string }>(allPlayersSql),
+    queryOne<{ clans: number | string; rankings: number | string }>(allClansSql),
     query<{ act: number; bots: number; max: number }>(
       `SELECT ${capped("s.")} AS act, ${await botsOnline("s.")} AS bots, s.max_players AS max
        FROM hlstats_Servers s JOIN hlstats_Games g ON g.code = s.game AND g.hidden = '0'`,
