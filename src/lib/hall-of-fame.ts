@@ -3,7 +3,7 @@ import { steamIds } from "./format";
 import { getSteamProfile } from "./steam";
 import { hiddenSql } from "./hidden";
 import { query } from "./db";
-import { parseSchedule, podium, type HallPeriod, type HallUnit } from "./hall-period";
+import { podium, type HallPeriod, type HallUnit } from "./hall-period";
 
 export { periodLabel, type HallPeriod } from "./hall-period";
 
@@ -222,12 +222,12 @@ export async function getPlayerStars(game: string, playerId: number): Promise<St
 }
 
 // Whether the ranking shows the hall of fame (tab, page, stars in profiles).
-// Admin > Rankings sets it per ranking (hlstats_Options
-// gamewe_hof_<game>: "1" on, "0" off). Unset it follows the reset schedule
-// (gamewe_reset_schedule_<game>, e.g. "month", "2 week", "quarter"): on
-// while one is set, and on while entries exist from an earlier schedule.
-// Never without the table (a collector before the hall of fame). Every page
-// of a ranking asks (the tab), so the answer is kept for 30 seconds.
+// Admin > Rankings sets it per ranking (hlstats_Options gamewe_hof_<game>:
+// "1" always, "0" never). Unset (automatic) only while the ranking has
+// entries an admin did not remove: the tab appears with the first reset and
+// goes again when the entries are deleted. Never without the table (a
+// collector before the hall of fame). Every page of a ranking asks (the
+// tab), so the answer is kept for 30 seconds.
 const shownCache = new Map<string, { at: number; value: boolean }>();
 
 export async function hallOfFameShown(game: string): Promise<boolean> {
@@ -235,15 +235,11 @@ export async function hallOfFameShown(game: string): Promise<boolean> {
   if (hit && Date.now() - hit.at < 30_000) return hit.value;
   let value = false;
   try {
-    const rows = await query<{ keyname: string; value: string }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [
-      [`gamewe_hof_${game}`, `gamewe_reset_schedule_${game}`, "gamewe_reset_schedule"],
-    ]);
-    const o = Object.fromEntries(rows.map((r) => [r.keyname, (r.value ?? "").trim()]));
-    const entries = (await query(`SELECT 1 AS x FROM hlstats_gamewe_hall_of_fame WHERE game = ? LIMIT 1`, [game])).length > 0;
-    const set = o[`gamewe_hof_${game}`];
-    // Without an own schedule the ranking follows the one for all rankings.
-    const schedule = o[`gamewe_reset_schedule_${game}`] || o["gamewe_reset_schedule"] || "";
-    value = set === "1" || (set !== "0" && (!!parseSchedule(schedule) || entries));
+    const rows = await query<{ value: string }>(`SELECT value FROM hlstats_Options WHERE keyname = ?`, [`gamewe_hof_${game}`]);
+    const removed = (await hasRemovedColumn()) ? " AND removed = 0" : "";
+    const entries = (await query(`SELECT 1 AS x FROM hlstats_gamewe_hall_of_fame WHERE game = ?${removed} LIMIT 1`, [game])).length > 0;
+    const set = (rows[0]?.value ?? "").trim();
+    value = set === "1" || (set !== "0" && entries);
   } catch {
     value = false;
   }
