@@ -3,7 +3,7 @@ import { envBacked } from "./config";
 import type { Lang } from "@/translations/languages";
 import { eventsMode, type EventsMode } from "./events-mode";
 import { query } from "./db";
-import { esriKey, mapStyleId, satelliteId, type SatelliteId } from "./map-styles";
+import { cartoKey, esriKey, mapStyleId, satelliteId, type SatelliteId } from "./map-styles";
 import { sourcebansBase } from "./sourcebans";
 import { LINK_SLOTS, type HeaderLink, type TabId, headerOrder, parseHome, parseLink, safeUrl } from "./header-links";
 
@@ -77,6 +77,8 @@ export type Settings = {
   mapPlayers: boolean;
   // Tile set, see lib/map-styles.ts ("auto": matches the design).
   mapStyle: string;
+  // CARTO API key for the CARTO map styles (public: it goes to the browser).
+  mapCartoKey: string;
   // Satellite view of the player maps (lib/map-styles.ts): provider or "off",
   // and the ArcGIS API key for Esri (public: it goes to the browser).
   mapSatellite: SatelliteId;
@@ -133,7 +135,7 @@ export async function getSettings(): Promise<Settings> {
   try {
     const rows = await query<{ keyname: string; value: string }>(
       `SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`,
-      [["sitename", "MinActivity", "gamewe_page_size", "gamewe_default_lang", "gamewe_steam_profiles", "gamewe_site_url", "gamewe_logo_url", "gamewe_header_logo", "gamewe_favicon", "gamewe_apple_icon", "gamewe_title_format", "gamewe_title_ranking", "gamewe_geoip_credit", "gamewe_sig_brand", "gamewe_chat_public", "gamewe_game_events", "gamewe_player_events", "gamewe_skin", "gamewe_game_skins", "gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_map_satellite", "gamewe_map_esri_key", "gamewe_sourcebans_url", "gamewe_seo_description", "gamewe_seo_keywords", "gamewe_seo_image", "gamewe_seo_index", "gamewe_seo_twitter", "gamewe_header_home", "gamewe_header_order", ...linkKeys]],
+      [["sitename", "MinActivity", "gamewe_page_size", "gamewe_default_lang", "gamewe_steam_profiles", "gamewe_site_url", "gamewe_logo_url", "gamewe_header_logo", "gamewe_favicon", "gamewe_apple_icon", "gamewe_title_format", "gamewe_title_ranking", "gamewe_geoip_credit", "gamewe_sig_brand", "gamewe_chat_public", "gamewe_game_events", "gamewe_player_events", "gamewe_skin", "gamewe_game_skins", "gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_map_carto_key", "gamewe_map_satellite", "gamewe_map_esri_key", "gamewe_sourcebans_url", "gamewe_seo_description", "gamewe_seo_keywords", "gamewe_seo_image", "gamewe_seo_index", "gamewe_seo_twitter", "gamewe_header_home", "gamewe_header_order", ...linkKeys]],
     );
     o = Object.fromEntries(rows.map((r) => [r.keyname, r.value]));
   } catch {
@@ -169,7 +171,8 @@ export async function getSettings(): Promise<Settings> {
     gameSkins: o.gamewe_game_skins?.trim() === "1",
     mapLive: o.gamewe_map_live?.trim() !== "0",
     mapPlayers: o.gamewe_map_players?.trim() !== "0",
-    mapStyle: mapStyleId(o.gamewe_map_style),
+    mapStyle: mapStyleId(o.gamewe_map_style, cartoKey(o.gamewe_map_carto_key)),
+    mapCartoKey: cartoKey(o.gamewe_map_carto_key),
     mapSatellite: satelliteId(o.gamewe_map_satellite),
     mapEsriKey: esriKey(o.gamewe_map_esri_key),
     sourcebansUrl: sourcebansBase(o.gamewe_sourcebans_url),

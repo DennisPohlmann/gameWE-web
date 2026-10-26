@@ -2,7 +2,7 @@
 // choice, the ArcGIS key and the layers. Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { esriKey, mapSatellite, satelliteId, satelliteLayers } from "../src/lib/map-styles.ts";
+import { cartoKey, esriKey, mapSatellite, mapStyleId, mapStyles, satelliteId, satelliteLayers, tileUrl } from "../src/lib/map-styles.ts";
 
 const texts = { mapViewMap: "Map", mapViewSatellite: "Satellite", mapView: "Map view" };
 
@@ -52,4 +52,19 @@ test("off: no layers and no switch", () => {
   assert.deepEqual(satelliteLayers("off"), []);
   assert.equal(mapSatellite({ mapSatellite: "off", mapEsriKey: "" }, texts), undefined);
   assert.deepEqual(mapSatellite({ mapSatellite: "eox", mapEsriKey: "" }, texts)?.satellite, "Satellite");
+});
+
+test("CARTO styles need a CARTO key, otherwise the map matches the design", () => {
+  for (const s of ["carto-light", "carto-voyager", "carto-dark"]) {
+    assert.equal(mapStyleId(s), "auto");
+    assert.equal(mapStyleId(s, "abcdef0123456789"), s);
+    assert.equal(tileUrl(mapStyles[s], "abcdef0123456789"), `${mapStyles[s].url}?key=abcdef0123456789`);
+    assert.equal(tileUrl(mapStyles[s]), mapStyles[s].url);
+  }
+  assert.equal(mapStyleId("osm"), "osm");
+  assert.equal(mapStyleId("nope", "abcdef0123456789"), "auto");
+  assert.equal(tileUrl(mapStyles.osm, "abcdef0123456789"), mapStyles.osm.url);
+  assert.equal(cartoKey("abcdef0123456789"), "abcdef0123456789");
+  assert.equal(cartoKey("abc&key=x"), "");
+  assert.equal(cartoKey("short"), "");
 });

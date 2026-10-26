@@ -69,7 +69,7 @@ export default async function ServersPage({
         </div>
       }
     >
-      <LiveMapBox game={game} style={mapStyle} satellite={mapSatellite(settings, t)} t={t} lang={lang} />
+      <LiveMapBox game={game} style={mapStyle} cartoKey={settings.mapCartoKey} satellite={mapSatellite(settings, t)} t={t} lang={lang} />
     </Suspense>
   ) : null;
   const head = (
@@ -163,14 +163,28 @@ export default async function ServersPage({
 }
 
 // The map of who is online right now and the ranking's servers.
-async function LiveMapBox({ game, style, satellite, t, lang }: { game: string; style: string; satellite?: MapSatellite; t: Dict; lang: Lang }) {
+async function LiveMapBox({
+  game,
+  style,
+  cartoKey,
+  satellite,
+  t,
+  lang,
+}: {
+  game: string;
+  style: string;
+  cartoKey: string;
+  satellite?: MapSatellite;
+  t: Dict;
+  lang: Lang;
+}) {
   const [mapPlayers, mapServers, gate] = await Promise.all([getLiveMapPlayers(game), getMapServers(game), mapGateProps(style)]);
   const markers = mapMarkers(mapPlayers, game, t, lang);
   const serverPins = serverMarkers(mapServers, game, t);
   return (
     <div className="box">
       <h4 className="map-title">{t.playerMapLive}</h4>
-      <MapGate {...gate} markers={markers} servers={serverPins} style={style} satellite={satellite} />
+      <MapGate {...gate} markers={markers} servers={serverPins} style={style} cartoKey={cartoKey} satellite={satellite} />
       <p className="muted">
         {markers.length ? fill(t.playerMapLiveHint, { n: String(markers.length) }) : t.playerMapLiveEmpty}
         {serverPins.length ? ` ${t.playerMapServers}` : null}

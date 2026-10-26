@@ -2,7 +2,7 @@
 
 import "leaflet/dist/leaflet.css";
 import { useEffect, useRef } from "react";
-import { mapStyles, type MapSatellite, type MapStyle } from "@/lib/map-styles";
+import { mapStyles, tileUrl, type MapSatellite, type MapStyle } from "@/lib/map-styles";
 import { VAC_SVG } from "@/lib/server-icons";
 
 export type MapMarker = {
@@ -48,16 +48,19 @@ const SERVER_ICON =
 // from the same city are spread in a spiral around it so all stay visible.
 // style: a key of mapStyles, or "auto" (OpenStreetMap, dark on dark designs).
 // servers: the ranking's game servers, as squares under the players.
+// cartoKey: the site's CARTO key, for a CARTO style.
 // satellite: layers and texts of the "Map / Satellite" switch (none: no switch).
 export function PlayerMap({
   markers,
   servers = NO_SERVERS,
   style,
+  cartoKey = "",
   satellite,
 }: {
   markers: MapMarker[];
   servers?: ServerMarker[];
   style: string;
+  cartoKey?: string;
   satellite?: MapSatellite;
 }) {
   const el = useRef<HTMLDivElement>(null);
@@ -69,7 +72,7 @@ export function PlayerMap({
       map = L.map(el.current, { scrollWheelZoom: false, worldCopyJump: true });
       const box = el.current;
       const tiles = mapStyles[style] ?? mapStyles[darkPage(box) ? "osm-dark" : "osm"];
-      const layer = (t: MapStyle) => L.tileLayer(t.url, { maxZoom: t.maxZoom, attribution: t.attribution, subdomains: t.subdomains ?? "abc" });
+      const layer = (t: MapStyle) => L.tileLayer(tileUrl(t, cartoKey), { maxZoom: t.maxZoom, attribution: t.attribution, subdomains: t.subdomains ?? "abc" });
       const mapLayers = [layer(tiles)];
       const satLayers = satellite?.layers.map(layer) ?? [];
       // Map or satellite view: the other one's layers leave the map (and stop
@@ -223,7 +226,7 @@ export function PlayerMap({
       gone = true;
       map?.remove();
     };
-  }, [markers, servers, style, satellite]);
+  }, [markers, servers, style, cartoKey, satellite]);
   return <div ref={el} className="player-map" />;
 }
 

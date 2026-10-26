@@ -1,6 +1,8 @@
 // Tile sets for the player maps (components/player-map.tsx). All are free to
-// use with the attribution shown; CARTO only for non-commercial sites up to
-// 75,000 map views a month (https://carto.com/basemaps).
+// use with the attribution shown. CARTO now needs a (free) API key
+// (https://carto.com/basemaps/apikey, up to 5 million tiles a month); without
+// one its tiles show only "API KEY REQUIRED", so its styles then fall back to
+// "auto" (mapStyleId below).
 
 export type MapStyle = {
   url: string;
@@ -9,6 +11,8 @@ export type MapStyle = {
   subdomains?: string;
   // Dark look made from the light tiles with a CSS filter (globals.css .map-dark).
   dark?: boolean;
+  // CARTO tiles: the site's CARTO key is added to the address.
+  carto?: boolean;
 };
 
 const OSM = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
@@ -30,15 +34,29 @@ export const mapStyles: Record<string, MapStyle> = {
     attribution: `${OSM}, SRTM | &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)`,
     maxZoom: 17,
   },
-  "carto-light": { url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png", subdomains: "abcd", attribution: CARTO, maxZoom: 19 },
-  "carto-voyager": { url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png", subdomains: "abcd", attribution: CARTO, maxZoom: 19 },
-  "carto-dark": { url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png", subdomains: "abcd", attribution: CARTO, maxZoom: 19 },
+  "carto-light": { url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png", subdomains: "abcd", attribution: CARTO, maxZoom: 19, carto: true },
+  "carto-voyager": { url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png", subdomains: "abcd", attribution: CARTO, maxZoom: 19, carto: true },
+  "carto-dark": { url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png", subdomains: "abcd", attribution: CARTO, maxZoom: 19, carto: true },
 };
 
 // "auto" (default): OpenStreetMap, dark when the design has a dark background.
-export function mapStyleId(v: string | undefined): string {
+// A CARTO style without a CARTO key is "auto" too.
+export function mapStyleId(v: string | undefined, cartoKey = ""): string {
   const s = (v ?? "").trim();
-  return s in mapStyles ? s : "auto";
+  if (!(s in mapStyles)) return "auto";
+  return mapStyles[s].carto && !cartoKey ? "auto" : s;
+}
+
+// A CARTO API key: it goes to every visitor's browser in the tile addresses
+// (public, like Esri's), so only the characters a key has; anything else: none.
+export function cartoKey(v: string | undefined): string {
+  const s = (v ?? "").trim();
+  return /^[A-Za-z0-9._-]{8,255}$/.test(s) ? s : "";
+}
+
+// The tile address of a style, with the CARTO key where it needs one.
+export function tileUrl(t: MapStyle, key = ""): string {
+  return t.carto && key ? `${t.url}?key=${encodeURIComponent(key)}` : t.url;
 }
 
 // Satellite view of the player maps: a "Map / Satellite" switch in the map

@@ -212,7 +212,7 @@ export default async function PlayersPage({
           }
         >
           <div className="box">
-            <MapGate {...gate} markers={markers} style={mapStyle} satellite={mapSatellite(settings, t)} />
+            <MapGate {...gate} markers={markers} style={mapStyle} cartoKey={settings.mapCartoKey} satellite={mapSatellite(settings, t)} />
             <p className="muted">
               {fill(mapAll ? t.playerMapHint : t.playerMapHintTop, {
                 n: fmtNum(markers.length, lang),

@@ -240,8 +240,18 @@ const definitions: Omit<SettingGroup, "area">[] = [
           ["carto-dark", { de: "CARTO Dark Matter (dunkel)", en: "CARTO Dark Matter (dark)" }],
         ],
         help: {
-          de: "Die Quellenangabe steht unten rechts in der Karte. CARTO ist nur für nicht-kommerzielle Seiten bis 75.000 Kartenaufrufe im Monat frei.",
-          en: "The credit is shown bottom right in the map. CARTO is free only for non-commercial sites up to 75,000 map views a month.",
+          de: "Die Quellenangabe steht unten rechts in der Karte. Die CARTO-Stile brauchen einen CARTO-Schlüssel (Feld darunter); ohne ihn zeigt die Karte den Stil „Passend zum Design“.",
+          en: "The credit is shown bottom right in the map. The CARTO styles need a CARTO key (field below); without one the map shows the \"Matching the design\" style.",
+        },
+      },
+      {
+        key: "gamewe_map_carto_key",
+        label: { de: "CARTO-API-Schlüssel", en: "CARTO API key" },
+        type: "text",
+        def: "",
+        help: {
+          de: "Nur für die CARTO-Kartenstile. Kostenlos und ohne Konto unter carto.com/basemaps/apikey, gedacht für nicht-kommerzielle Seiten, bis 5 Millionen Kacheln im Monat. Der Schlüssel ist nicht geheim: der Browser jedes Besuchers bekommt ihn in den Kachel-Adressen.",
+          en: "Only for the CARTO map styles. Free and without an account at carto.com/basemaps/apikey, meant for non-commercial sites, up to 5 million tiles a month. The key is not secret: every visitor's browser gets it in the tile addresses.",
         },
       },
       {
@@ -558,7 +568,7 @@ export const settingGroups: SettingGroup[] = [
     area: "website",
     title: { de: "Karten & Ereignisse", en: "Maps & events" },
     help: helpOf("maps"),
-    items: pick("gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_map_satellite", "gamewe_map_esri_key", "gamewe_game_events", "gamewe_player_events"),
+    items: pick("gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_map_carto_key", "gamewe_map_satellite", "gamewe_map_esri_key", "gamewe_game_events", "gamewe_player_events"),
   },
   { id: "seo", area: "website", title: { de: "Suchmaschinen", en: "Search engines" }, help: helpOf("seo"), items: definitions.find((g) => g.id === "seo")!.items },
   { id: "voice", area: "services", title: { de: "Voiceserver", en: "Voice server" }, help: helpOf("voice"), items: definitions.find((g) => g.id === "voice")!.items },

@@ -243,8 +243,11 @@ website therefore computes some things itself:
 - **Player maps** (world map above the ranking, "online now" map on a
   ranking's page) can be turned off one by one under Settings → Player maps,
   which also sets the map style: matching the design (OpenStreetMap, dark
-  on dark designs), OpenStreetMap, OSM Humanitarian, OpenTopoMap or CARTO
-  (CARTO only for non-commercial sites up to 75,000 map views a month). The
+  on dark designs), OpenStreetMap, OSM Humanitarian, OpenTopoMap or CARTO.
+  The CARTO styles need a CARTO API key (free, without an account, at
+  carto.com/basemaps/apikey, meant for non-commercial sites, up to 5 million
+  tiles a month; setting "CARTO API key", public like every tile key);
+  without one a stored CARTO style shows the "matching the design" map. The
   visitor's browser loads the tiles directly from the provider; the credit
   is shown in the map. A "Map / Satellite" switch top right in each map
   shows satellite imagery with place and street names over it (Settings →

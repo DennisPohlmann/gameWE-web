@@ -174,7 +174,7 @@ the site where required:
 | IP to City Lite (DB-IP.com) | CC BY 4.0 | GeoIP data of the collector, credit "IP Geolocation by DB-IP" |
 | GeoLite2 (MaxMind) | GeoLite2 EULA | alternative GeoIP data of the collector |
 | OpenStreetMap data and tiles | ODbL 1.0 | "© OpenStreetMap contributors" |
-| CARTO basemaps | CC BY 3.0 | map style, non-commercial use up to 75,000 map views a month |
+| CARTO basemaps | CC BY 3.0 | map style, needs a free CARTO API key, non-commercial use up to 5 million tiles a month |
 | OpenTopoMap | CC BY-SA 3.0 | map style |
 | Humanitarian OSM Team, OSM France | CC0 / ODbL | map style |
 | Sentinel-2 cloudless (EOX IT Services GmbH) | CC BY-NC-SA 4.0 | satellite view, contains modified Copernicus Sentinel data; labels: EOX overlay of OpenStreetMap data (ODbL) |
