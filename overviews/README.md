@@ -18,7 +18,13 @@ map they are. The site reads two folders, like the design templates:
     game's radar pictures, with the game's calibration;
   - `css/`: the 18 stock maps of Counter-Strike: Source (de_nuke with the
     lower level), drawn from the map files themselves by
-    `scripts/overviews/radar.py`.
+    `scripts/overviews/radar.py`;
+  - `tf/` (Team Fortress 2, 228 maps), `dods/` (Day of Defeat: Source, 9),
+    `hl2mp/` (Half-Life 2 Deathmatch, 7), `insurgency/` (48), `nmrih/`
+    (No More Room in Hell, 34), `fof/` (Fistful of Frags, 34) and `zps/`
+    (Zombie Panic! Source, 27): the stock maps of the games' dedicated
+    servers, drawn the same way (test, training and background maps left
+    out).
 - `OVERVIEWS_DIR` (environment, e.g. `/etc/gamewe/web/overviews`): your own
   folder, read in addition. A file with the same name as a built-in one wins.
 

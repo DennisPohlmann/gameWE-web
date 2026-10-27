@@ -3,9 +3,9 @@
 `radar.py` draws the top-down radar picture of a Source map (BSP version
 19-21: CS:S, DoD:S, HL2DM, TF2, ...) and writes its calibration for
 `overviews/` (see [overviews/README.md](../../overviews/README.md)). The
-built-in pictures of `overviews/css/`, `overviews/dods/` and
-`overviews/hl2mp/` are made with it from the stock maps of the games'
-dedicated servers.
+built-in pictures of `overviews/css/`, `dods/`, `fof/`, `hl2mp/`,
+`insurgency/`, `nmrih/`, `tf/` and `zps/` are made with it from the stock
+maps of the games' dedicated servers.
 
 How it works: the floors are the upward faces of the map (displacements
 included); the walkable areas of the map's navigation mesh (`<map>.nav`)
@@ -21,9 +21,15 @@ python3 -I scripts/overviews/radar.py <map>.bsp <map>.nav <map>.png <map>.json [
 
 - Without a navigation mesh pass `-` instead of the `.nav`; then the
   walkable floor is worked out from the spawn points: floor points with room
-  for a player that can be reached on foot (steps up to 20 units, jumps up
-  to 44, any drop). Rarely walked spots behind ladders or lifts may be
-  missing.
+  for a player that can be reached on foot (steps and jumps up to 44 units,
+  drops up to 400), leaving out water, slime, hurting areas (`trigger_hurt`)
+  and solid wall entities (`func_brush`, `func_wall`). Rarely walked spots
+  behind ladders or lifts may be missing, and a few maps get an area too
+  many; the calibration stays exact. A `.nav` that cannot be read (e.g.
+  Insurgency's and NMRiH's newer format) is handled the same way.
+- `run_all.py <bsp folder> <out folder> [workers]` draws every `<game>/<map>.bsp`
+  below the first folder (with `<map>.nav` next to it, if there is one) into
+  `<out folder>/<game>/`, several at a time; pictures that exist are kept.
 - A fifth argument (a height, e.g. `-495` for de_nuke) also writes
   `<map>_lower.png` with only what lies below it, and `lower_split` into the
   calibration.
