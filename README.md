@@ -115,6 +115,7 @@ and the reverse proxy: [docs/INSTALLATION.md](docs/INSTALLATION.md).
 |------------|------|
 | [gameWE-collector](https://github.com/DennisPohlmann/gameWE-collector) | receives the game server logs and fills the database |
 | [gameWE-web](https://github.com/DennisPohlmann/gameWE-web) | statistics website and admin area (this repository) |
+| [gameWE-web-content](https://github.com/DennisPohlmann/gameWE-web-content) | extra design templates and map pictures, as archives ready to unpack into `/var/lib/gamewe/web/templates` and `/var/lib/gamewe/web/overviews` |
 | [gameWE-plugin-sourcemod](https://github.com/DennisPohlmann/gameWE-plugin-sourcemod) | game server plugin for Source games |
 | [gameWE-plugin-amxmodx](https://github.com/DennisPohlmann/gameWE-plugin-amxmodx) | game server plugin for GoldSrc games |
 
