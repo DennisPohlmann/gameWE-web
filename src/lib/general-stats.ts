@@ -4,8 +4,9 @@
 // to hlstats_PlayersInactive (a player in both tables after a crash counts
 // once), whatever their hideranking (hidden, banned, the old "inactive" 3), only
 // bots left out; every clan of hlstats_Clans, also one without (active)
-// members. A count shows no player. No imports, so the tests can load it
-// directly.
+// members; kills and headshots of the players of both tables (a player in
+// both counts once, from hlstats_Players). A count shows no player. No
+// imports, so the tests can load it directly.
 
 const visibleGame = (t: string) => `JOIN hlstats_Games g ON g.code = ${t}.game AND g.hidden = '0'`;
 
@@ -23,3 +24,11 @@ export const allPlayersSql = `SELECT
 
 export const allClansSql = `SELECT COUNT(*) AS clans, COUNT(DISTINCT c.game) AS rankings
   FROM hlstats_Clans c ${visibleGame("c")}`;
+
+// Kills and headshots of both tables, so they do not drop when the collector
+// moves inactive players to hlstats_PlayersInactive.
+export const allKillsSql = `SELECT SUM(t.kills) AS kills, SUM(t.headshots) AS headshots FROM (
+  SELECT SUM(p.kills) AS kills, SUM(p.headshots) AS headshots FROM hlstats_Players p ${visibleGame("p")}
+  UNION ALL
+  SELECT SUM(i.kills) AS kills, SUM(i.headshots) AS headshots FROM hlstats_PlayersInactive i ${visibleGame("i")}
+   WHERE NOT EXISTS (SELECT 1 FROM hlstats_Players p WHERE p.playerId = i.playerId)) t`;

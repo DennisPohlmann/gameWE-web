@@ -2,7 +2,7 @@
 // Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { allClansSql, allPlayersSql } from "../src/lib/general-stats.ts";
+import { allClansSql, allKillsSql, allPlayersSql } from "../src/lib/general-stats.ts";
 
 test("players count active and inactive players, without a hideranking filter", () => {
   assert.match(allPlayersSql, /FROM hlstats_Players p JOIN hlstats_Games/);
@@ -19,4 +19,12 @@ test("players count active and inactive players, without a hideranking filter", 
 test("clans count every clan of the visible games, members or not", () => {
   assert.match(allClansSql, /FROM hlstats_Clans c JOIN hlstats_Games g ON g\.code = c\.game AND g\.hidden = '0'/);
   assert.doesNotMatch(allClansSql, /hlstats_Players|HAVING|GROUP BY|c\.hidden/);
+});
+
+test("kills and headshots count active and inactive players, each player once", () => {
+  assert.match(allKillsSql, /FROM hlstats_Players p JOIN hlstats_Games g ON g\.code = p\.game AND g\.hidden = '0'/);
+  assert.match(allKillsSql, /FROM hlstats_PlayersInactive i JOIN hlstats_Games g ON g\.code = i\.game AND g\.hidden = '0'/);
+  assert.match(allKillsSql, /UNION ALL/);
+  assert.match(allKillsSql, /WHERE NOT EXISTS \(SELECT 1 FROM hlstats_Players p WHERE p\.playerId = i\.playerId\)/);
+  assert.doesNotMatch(allKillsSql, /hideranking/);
 });

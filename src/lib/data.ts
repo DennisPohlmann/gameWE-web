@@ -7,7 +7,7 @@ import { ttlCache } from "./ttl-cache";
 import { connectTypes, miscCountries, placeOptions, type PlaceCount, type PlaceOption } from "./place-counts";
 import { nowUnix, steamIds } from "./format";
 import { baseGameOf, GAME_HAS_DATA, gameKind } from "./games";
-import { allClansSql, allPlayersSql } from "./general-stats";
+import { allClansSql, allKillsSql, allPlayersSql } from "./general-stats";
 import { hiddenSql, liveEntry } from "./hidden";
 import { LOAD_INTERVAL_MAX, type MapSort } from "./map-table";
 import { playerCount, sumCounts, type PlayerCount } from "./player-count";
@@ -1702,7 +1702,7 @@ export const getDailyActivityAll = cache((days: number) => {
 // players (also inactive and hidden ones, bots left out) and all clans (and
 // the rankings they are in; general-stats.ts), servers and those with
 // real players (bots left out, playerCount), players online, all kills and
-// headshots (as in the API's totals) and the time of the latest kill without
+// headshots (also those of inactive players, general-stats.ts) and the time of the latest kill without
 // a hidden player on either side.
 export type GeneralStats = {
   players: number;
@@ -1724,10 +1724,7 @@ export async function getGeneralStats(): Promise<GeneralStats> {
       `SELECT ${capped("s.")} AS act, ${await botsOnline("s.")} AS bots, s.max_players AS max
        FROM hlstats_Servers s JOIN hlstats_Games g ON g.code = s.game AND g.hidden = '0'`,
     ),
-    queryOne<{ kills: number | string | null; headshots: number | string | null }>(
-      `SELECT SUM(p.kills) AS kills, SUM(p.headshots) AS headshots
-       FROM hlstats_Players p JOIN hlstats_Games g ON g.code = p.game AND g.hidden = '0'`,
-    ),
+    queryOne<{ kills: number | string | null; headshots: number | string | null }>(allKillsSql),
     // Newest first along the timestamp index; stops at the first shown kill
     // (NOT EXISTS keeps the index, an IN on the rankings sorts every frag).
     queryOne<{ t: number | string }>(
