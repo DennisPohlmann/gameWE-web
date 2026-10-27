@@ -11,7 +11,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
 sys.path.insert(0, __import__("os").path.dirname(__file__))
-from bsp import BLOCKS_PLAYER, SURF_NODRAW, SURF_SKY, SURF_SKY2D, SURF_TRIGGER, Bsp  # noqa: E402
+from bsp import BLOCKS_PLAYER, CONTENTS_SLIME, CONTENTS_WATER, SURF_NODRAW, SURF_SKY, SURF_SKY2D, SURF_TRIGGER, Bsp  # noqa: E402
 
 SIZE = 2048
 REF = 1024
@@ -141,14 +141,69 @@ def floor_faces(bsp):
 SPAWNS = ("info_player_", "info_player_teamspawn", "info_player_deathmatch", "info_player_start")
 
 
+# Highest drop the walk takes: deeper falls kill (or lead off the map).
+MAX_DROP = 400
+
+
+def hurt_boxes(bsp):
+    """Bounds of the trigger_hurt brushes (pits, the sea, the map's edge)."""
+    out = []
+    for e in bsp.entities:
+        m = e.get("model", "")
+        if e.get("classname") == "trigger_hurt" and m.startswith("*") and m[1:].isdigit() and int(m[1:]) < len(bsp.models):
+            mm = bsp.models[int(m[1:])]
+            o = np.zeros(3)
+            if "origin" in e:
+                try:
+                    o = np.array([float(v) for v in e["origin"].split()])
+                except ValueError:
+                    pass
+            out.append((mm["mins"] + o, mm["maxs"] + o))
+    return out
+
+
+# Brush entities that always stand in the way (invisible walls and the like).
+WALLS = ("func_brush", "func_wall", "func_wall_toggle")
+
+
+def wall_models(bsp):
+    """(head node, origin) of the solid wall entities."""
+    out = []
+    for e in bsp.entities:
+        m = e.get("model", "")
+        if e.get("classname") not in WALLS or not (m.startswith("*") and m[1:].isdigit() and int(m[1:]) < len(bsp.models)):
+            continue
+        if e.get("Solidity") == "1" or e.get("StartDisabled") == "1":
+            continue
+        o = np.zeros(3)
+        if "origin" in e:
+            try:
+                o = np.array([float(v) for v in e["origin"].split()])
+            except ValueError:
+                pass
+        out.append((int(bsp.models[int(m[1:])]["head"]), o))
+    return out
+
+
+def blocked(bsp, walls, pts):
+    """Points inside the world's or a wall entity's solid brushes."""
+    b = (bsp.contents(pts) & BLOCKS_PLAYER) != 0
+    for head, o in walls:
+        b |= (bsp.contents(pts - o, head) & BLOCKS_PLAYER) != 0
+    return b
+
+
 def synth_nav(bsp, floors, cell=16.0):
     """Walkable cells without a navigation mesh: floor points with room for
     a player, reached from the spawn points by walking (steps up to 20
-    units, jumps up to 44, any drop). Returns squares like nav areas."""
+    units, jumps up to 44, drops up to MAX_DROP), not under water and not
+    in a trigger_hurt. Returns squares like nav areas."""
     pts = []
     for poly in floors:
-        p0, p1, p2 = poly[0], poly[1], poly[2]
-        n = np.cross(p1 - p0, p2 - p0)
+        # Newell's normal: faces often start with collinear vertices
+        p0 = poly[0]
+        nxt = np.roll(poly, -1, axis=0)
+        n = np.array([np.sum((poly[:, 1] - nxt[:, 1]) * (poly[:, 2] + nxt[:, 2])), np.sum((poly[:, 2] - nxt[:, 2]) * (poly[:, 0] + nxt[:, 0])), np.sum((poly[:, 0] - nxt[:, 0]) * (poly[:, 1] + nxt[:, 1]))])
         if abs(n[2]) < 1e-6:
             continue
         x0, x1 = poly[:, 0].min(), poly[:, 0].max()
@@ -162,12 +217,11 @@ def synth_nav(bsp, floors, cell=16.0):
         inside = np.ones(len(gx), dtype=bool)
         m = len(poly)
         # convex face (Source faces are convex): same side of every edge
-        sign = None
+        # (the turning direction from the normal, seen from above)
+        sign = np.sign(n[2])
         for i in range(m):
             a, b = poly[i], poly[(i + 1) % m]
             c = (b[0] - a[0]) * (gy - a[1]) - (b[1] - a[1]) * (gx - a[0])
-            if sign is None:
-                sign = np.sign(c.sum()) or 1.0
             inside &= c * sign >= -1e-6
         if not inside.any():
             continue
@@ -177,10 +231,15 @@ def synth_nav(bsp, floors, cell=16.0):
     if not pts:
         return []
     P = np.concatenate(pts)
+    walls = wall_models(bsp)
     # room for a player: not in a wall at the feet, the waist and the head
     ok = np.ones(len(P), dtype=bool)
     for h in (8, 36, 64):
-        ok &= (bsp.contents(P + [0, 0, h]) & BLOCKS_PLAYER) == 0
+        ok &= ~blocked(bsp, walls, P + [0, 0, h])
+    # not under water (sea, deep pools) and not in a trigger_hurt (death pits)
+    ok &= (bsp.contents(P + [0, 0, 36]) & (CONTENTS_WATER | CONTENTS_SLIME)) == 0
+    for lo, hi in hurt_boxes(bsp):
+        ok &= ~np.all((P + [0, 0, 8] >= lo) & (P + [0, 0, 8] <= hi), axis=1)
     P = P[ok]
     # one point per cell and height (8 units)
     key = np.stack([np.floor(P[:, 0] / cell), np.floor(P[:, 1] / cell), np.round(P[:, 2] / 8)], axis=1).astype(np.int64)
@@ -220,7 +279,7 @@ def synth_nav(bsp, floors, cell=16.0):
                     if seen[j]:
                         continue
                     dz = P[j, 2] - P[i, 2]
-                    if dz <= 44:
+                    if -MAX_DROP <= dz <= 44:
                         cand.append((i, j))
         if not cand:
             break
@@ -228,7 +287,7 @@ def synth_nav(bsp, floors, cell=16.0):
         mid = (P[a[:, 0]] + P[a[:, 1]]) / 2
         top = np.maximum(P[a[:, 0], 2], P[a[:, 1], 2])
         q = np.stack([mid[:, 0], mid[:, 1], top + 40], axis=1)
-        free = (bsp.contents(q) & BLOCKS_PLAYER) == 0
+        free = ~blocked(bsp, walls, q)
         for (i, j), f in zip(cand, free):
             if f and not seen[j]:
                 seen[j] = True
@@ -342,7 +401,14 @@ def draw(canvas, floors, navpolys):
 def render(bsp_path, nav_path, out_png, out_json, split=None):
     bsp = Bsp(bsp_path)
     floors = floor_faces(bsp)
-    navpolys = nav_polys(read_nav(nav_path)[1]) if nav_path != "-" else synth_nav(bsp, floors)
+    navpolys = None
+    if nav_path != "-":
+        try:
+            navpolys = nav_polys(read_nav(nav_path)[1])
+        except Exception as e:  # another game's nav version: walk it instead
+            print(f"nav unreadable ({e}), walking the map", file=sys.stderr)
+    if navpolys is None:
+        navpolys = synth_nav(bsp, floors)
     ref = np.concatenate(navpolys) if navpolys else np.concatenate(floors)
     minx, maxx = ref[:, 0].min(), ref[:, 0].max()
     miny, maxy = ref[:, 1].min(), ref[:, 1].max()

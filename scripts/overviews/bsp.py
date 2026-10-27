@@ -6,6 +6,8 @@ import numpy as np
 
 CONTENTS_SOLID = 0x1
 CONTENTS_WINDOW = 0x2
+CONTENTS_SLIME = 0x10
+CONTENTS_WATER = 0x20
 CONTENTS_GRATE = 0x8
 CONTENTS_MOVEABLE = 0x4000
 CONTENTS_PLAYERCLIP = 0x10000
@@ -115,10 +117,11 @@ class Bsp:
                 tris.append([pts[i, j], pts[i + 1, j + 1], pts[i, j + 1]])
         return np.array(tris)
 
-    def contents(self, pts):
-        """Leaf contents at each point (n, 3), through the world BSP tree."""
+    def contents(self, pts, head=None):
+        """Leaf contents at each point (n, 3), through the world BSP tree (or
+        the tree of a brush model, from its head node)."""
         pts = np.asarray(pts, dtype=np.float64)
-        node = np.full(len(pts), self.models[0]["head"], dtype=np.int64)
+        node = np.full(len(pts), self.models[0]["head"] if head is None else head, dtype=np.int64)
         normals = self.planes["n"].astype(np.float64)
         dists = self.planes["d"].astype(np.float64)
         planes_of = self.nodes["plane"].astype(np.int64)
