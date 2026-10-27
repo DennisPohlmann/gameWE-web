@@ -30,6 +30,7 @@ export type NavText = Record<
   | "noRankingSub"
   | "overview"
   | "resetRanking"
+  | "jobs"
   | "navWebsite"
   | "navServices"
   | "navCollector"
@@ -69,7 +70,7 @@ const RANKING_LISTS = ["servers", "players", "clans", "weapons", "actions", "tea
 function where(pathname: string, params: URLSearchParams) {
   const parts = pathname.split("/").filter(Boolean);
   const seg = parts[1] ?? "";
-  const area: Area = seg === "" ? "home" : RANKING_SEGMENTS.includes(seg) ? "rankings" : "settings";
+  const area: Area = seg === "" || seg === "jobs" ? "home" : RANKING_SEGMENTS.includes(seg) ? "rankings" : "settings";
   let game = params.get("game") ?? "";
   if (!game && seg === "rankings" && parts[2] && parts[2] !== "new") game = decodeURIComponent(parts[2]);
   if (!game) {
@@ -196,6 +197,7 @@ export function AdminSidebar({
           <h4>{t.start}</h4>
           <nav>
             <Item href="/admin" icon="home" label={t.areaHome} on={seg === ""} />
+            <Item href="/admin/jobs" icon="clock" label={t.jobs} on={seg === "jobs"} />
           </nav>
           <h4>{t.areas}</h4>
           <nav>
@@ -290,7 +292,10 @@ export function AdminSidebar({
           <h4>{t.navServices}</h4>
           <nav>{groupLinks("services", { voice: "headset", bans: "ban", steam: "user", monitoring: "pulse" })}</nav>
           <h4>{t.navCollector}</h4>
-          <nav>{groupLinks("collector", { points: "points", capture: "shield", commands: "terminal" })}</nav>
+          <nav>
+            {groupLinks("collector", { points: "points", capture: "shield", commands: "terminal" })}
+            <Item href="/admin/jobs" icon="clock" label={t.jobs} on={false} />
+          </nav>
           <h4>{t.navModeration}</h4>
           <nav>
             <Item href="/admin/chat" icon="chat" label={t.chat} on={seg === "chat"} />

@@ -260,6 +260,10 @@ export default async function AdminHome() {
                 <Icon name="chat" />
                 {u.qChat}
               </Link>
+              <Link href="/admin/jobs">
+                <Icon name="clock" />
+                {u.qJobs}
+              </Link>
             </div>
           </section>
         </div>

@@ -351,6 +351,18 @@ menu button), and lists turn into cards on narrow screens:
   or the collector) and quick links. The side menu ends with the running
   versions of the web and the collector and, when there is one, a link to
   the newer release.
+- **Jobs** (`/admin/jobs`, in the menu under Overview and Settings →
+  Collector): what the collector does next, with the time and how long
+  until then: the daily awards and the move of inactive players (time and
+  time zone from its config.yaml, or "off"), and the scheduled reset of
+  each ranking with a schedule (rankings with the same reset share one
+  line). Below the queue (waiting and running jobs of
+  `hlstats_gamewe_jobs`, with the progress of a running move) and the last
+  30 finished jobs with state, duration and result; the page reloads
+  every 5 seconds while a job waits or runs. The times come from the
+  collector (`gamewe_next_*` in `hlstats_Options`, written with its
+  heartbeat; collector 0.27.0 or newer, an older one shows only the
+  resets without a time). Read only; from the console `gamewe jobs`.
 - **Update check**: the admin area asks GitHub (`api.github.com`, without a
   token, from the web server) for the latest release of gameWE-web and
   gameWE-collector and compares it with the running web (`APP_VERSION`) and
