@@ -38,6 +38,7 @@ export async function RankingTable({
   showFirstConnect = false,
   showLastSeen = false,
   showGlobalRank = false,
+  inactive,
   sort,
   activityDays,
   t,
@@ -52,6 +53,10 @@ export async function RankingTable({
   showLastSeen?: boolean;
   // Country or city ranking: also the place in the whole ranking.
   showGlobalRank?: boolean;
+  // Clan page: the inactive members in the same table below the active
+  // ones, under their own heading, so both have the same columns; all rows
+  // also get a last seen column.
+  inactive?: { title: string; rows: RankingRow[] };
   sort?: SortProps;
   activityDays: number;
   t: Dict;
@@ -63,7 +68,50 @@ export async function RankingTable({
     ) : (
       <th className={cls}>{label}</th>
     );
-  const [bots, shots, ranks] = await Promise.all([unlinkedBots(rows.map((r) => r.playerId)), gameHasShots(game), getRanks(game)]);
+  const gone = inactive?.rows ?? [];
+  const [bots, shots, ranks] = await Promise.all([unlinkedBots([...rows, ...gone].map((r) => r.playerId)), gameHasShots(game), getRanks(game)]);
+  const columns = (showRank ? 1 : 0) + 1 + (ranks.length ? 1 : 0) + (showGlobalRank ? 1 : 0) + 2 + (inactive ? 1 : 0) + 6 + (shots ? 1 : 0);
+  const row = (r: RankingRow, rank: number | null) => {
+    const act = activity(r.last_event, activityDays);
+    return (
+      <tr key={r.playerId}>
+        {showRank ? <td className="rank">{rank === null ? "-" : fmtNum(rank, lang)}</td> : null}
+        <td>
+          <PlayerLink game={game} id={r.playerId} name={r.name} flag={{ flag: r.flag, country: r.country }} plain={bots.has(r.playerId)} />
+        </td>
+        {ranks.length ? (
+          <td className="rankcell">
+            <RankCell kills={Number(r.kills)} ranks={ranks} t={t} lang={lang} />
+          </td>
+        ) : null}
+        {showGlobalRank ? <td className="num hide-sm">{fmtNum(Number(r.globalRank ?? 0), lang)}</td> : null}
+        <td className="num">{fmtNum(r.skill, lang)}</td>
+        {showFirstConnect ? (
+          <td className="num">{fmtDate(r.first_connect, lang)}</td>
+        ) : showLastSeen ? (
+          <td className="num">{fmtDate(r.last_event, lang)}</td>
+        ) : (
+          <td className="barcell hide-sm">
+            <PctBar value={act / 100} lang={lang} tone="activity" />
+          </td>
+        )}
+        {inactive ? <td className="num hide-sm">{fmtDate(r.last_event, lang)}</td> : null}
+        <td className="num hide-sm">{fmtDuration(r.connection_time)}</td>
+        <td className="num">{fmtNum(r.kills, lang)}</td>
+        <td className="num hide-sm">{fmtNum(r.deaths, lang)}</td>
+        <td className="num">{fmtNum(kpd(r.kills, r.deaths), lang, 2)}</td>
+        <td className="num hide-sm">{fmtNum(r.headshots, lang)}</td>
+        <td className="barcell">
+          <PctBar value={ratio(r.headshots, r.kills)} lang={lang} />
+        </td>
+        {shots ? (
+          <td className="barcell hide-sm">
+            <PctBar value={ratio(r.hits, r.shots)} lang={lang} />
+          </td>
+        ) : null}
+      </tr>
+    );
+  };
   return (
     <TableWrap>
       <table>
@@ -75,6 +123,7 @@ export async function RankingTable({
             {showGlobalRank ? <th className="num hide-sm">{t.globalRank}</th> : null}
             {th(t.points, "skill")}
             {showFirstConnect ? th(t.firstConnect, "new") : showLastSeen ? th(t.lastSeen, "activity") : th(t.activity, "activity", "barcell hide-sm")}
+            {inactive ? th(t.lastSeen, "activity", "num hide-sm") : null}
             {th(t.time, "time", "num hide-sm")}
             {th(t.kills, "kills")}
             {th(t.deaths, "deaths", "num hide-sm")}
@@ -84,48 +133,17 @@ export async function RankingTable({
             {shots ? th(t.acc, "acc", "barcell hide-sm") : null}
           </tr>
         </thead>
-        <tbody>
-          {rows.map((r, i) => {
-            const act = activity(r.last_event, activityDays);
-            return (
-              <tr key={r.playerId}>
-                {showRank ? <td className="rank">{fmtNum(firstRank + i, lang)}</td> : null}
-                <td>
-                  <PlayerLink game={game} id={r.playerId} name={r.name} flag={{ flag: r.flag, country: r.country }} plain={bots.has(r.playerId)} />
-                </td>
-                {ranks.length ? (
-                  <td className="rankcell">
-                    <RankCell kills={Number(r.kills)} ranks={ranks} t={t} lang={lang} />
-                  </td>
-                ) : null}
-                {showGlobalRank ? <td className="num hide-sm">{fmtNum(Number(r.globalRank ?? 0), lang)}</td> : null}
-                <td className="num">{fmtNum(r.skill, lang)}</td>
-                {showFirstConnect ? (
-                  <td className="num">{fmtDate(r.first_connect, lang)}</td>
-                ) : showLastSeen ? (
-                  <td className="num">{fmtDate(r.last_event, lang)}</td>
-                ) : (
-                  <td className="barcell hide-sm">
-                    <PctBar value={act / 100} lang={lang} tone="activity" />
-                  </td>
-                )}
-                <td className="num hide-sm">{fmtDuration(r.connection_time)}</td>
-                <td className="num">{fmtNum(r.kills, lang)}</td>
-                <td className="num hide-sm">{fmtNum(r.deaths, lang)}</td>
-                <td className="num">{fmtNum(kpd(r.kills, r.deaths), lang, 2)}</td>
-                <td className="num hide-sm">{fmtNum(r.headshots, lang)}</td>
-                <td className="barcell">
-                  <PctBar value={ratio(r.headshots, r.kills)} lang={lang} />
-                </td>
-                {shots ? (
-                  <td className="barcell hide-sm">
-                    <PctBar value={ratio(r.hits, r.shots)} lang={lang} />
-                  </td>
-                ) : null}
-              </tr>
-            );
-          })}
-        </tbody>
+        <tbody>{rows.map((r, i) => row(r, firstRank + i))}</tbody>
+        {gone.length ? (
+          <tbody>
+            <tr>
+              <th colSpan={columns} className="group">
+                {inactive?.title}
+              </th>
+            </tr>
+            {gone.map((r) => row(r, null))}
+          </tbody>
+        ) : null}
       </table>
     </TableWrap>
   );

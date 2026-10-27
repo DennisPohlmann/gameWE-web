@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Empty, Flag, Pager, ROW_OPTIONS, Section, SortTh, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
+import { Empty, Flag, Pager, PctBar, ROW_OPTIONS, Section, SortTh, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
 import { getSettings } from "@/lib/settings";
 import { clanSorts, countClans, countInactiveClans, getClanFlags, getClans, getInactiveClans } from "@/lib/data";
 import { sortState } from "@/lib/table-sort";
-import { fmtDate, fmtDuration, fmtNum, fmtPct, kpd, localeOf, ratio } from "@/lib/format";
+import { fmtDate, fmtDuration, fmtNum, kpd, localeOf, ratio } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -68,7 +68,7 @@ export default async function ClansPage({
                   {th(t.kills, "kills", narrow)}
                   {th(t.deaths, "deaths", "num hide-sm")}
                   {th(t.kpd, "kpd", narrow)}
-                  {th(t.hpk, "hpk", narrow)}
+                  {th(t.hpk, "hpk", inactive ? "barcell hide-sm" : "barcell")}
                 </tr>
               </thead>
               <tbody>
@@ -89,7 +89,9 @@ export default async function ClansPage({
                     <td className={narrow}>{fmtNum(c.kills, lang)}</td>
                     <td className="num hide-sm">{fmtNum(c.deaths, lang)}</td>
                     <td className={narrow}>{fmtNum(kpd(c.kills, c.deaths), lang, 2)}</td>
-                    <td className={narrow}>{fmtPct(ratio(c.headshots, c.kills), lang)}</td>
+                    <td className={inactive ? "barcell hide-sm" : "barcell"}>
+                      <PctBar value={ratio(c.headshots, c.kills)} lang={lang} />
+                    </td>
                   </tr>
                 ))}
               </tbody>

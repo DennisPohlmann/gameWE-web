@@ -48,11 +48,10 @@ export default async function ClanPage({ params, searchParams }: Props) {
       }
     : c;
   const flag = (await getClanFlags([c.clanId], inactive)).get(c.clanId);
-  const sp = await searchParams;
-  const order = sortState(sp, rankingValues, "skill");
+  const order = sortState(await searchParams, rankingValues, "skill");
   const sorted = sortRows(members, rankingValues, order.sort, order.asc);
-  const goneOrder = sortState(sp, rankingValues, "activity", { sortParam: "isort", dirParam: "idir" });
-  const goneSorted = sortRows(gone, rankingValues, goneOrder.sort, goneOrder.asc);
+  // The inactive members follow in the same table, in the same order.
+  const goneSorted = sortRows(gone, rankingValues, order.sort, order.asc);
   const base = `/${game}/clans/${c.clanId}`;
   const home = /^https?:\/\//i.test(c.homepage ?? "") ? c.homepage : null;
   return (
@@ -80,26 +79,18 @@ export default async function ClanPage({ params, searchParams }: Props) {
           ]}
         />
       </Section>
-      {members.length || !gone.length ? (
-        <Section title={t.members}>
-          <RankingTable game={game} rows={sorted} firstRank={1} sort={{ current: order.sort, asc: order.asc, base, params: { ...goneOrder.keep, ...order.keep } }} activityDays={settings.activityDays} t={t} lang={lang} />
-        </Section>
-      ) : null}
-      {gone.length ? (
-        <Section title={t.inactiveMembers}>
-          <RankingTable
-            game={game}
-            rows={goneSorted}
-            firstRank={1}
-            showRank={false}
-            showLastSeen
-            sort={{ current: goneOrder.sort, asc: goneOrder.asc, base, params: order.keep, sortParam: "isort", dirParam: "idir" }}
-            activityDays={settings.activityDays}
-            t={t}
-            lang={lang}
-          />
-        </Section>
-      ) : null}
+      <Section title={t.members}>
+        <RankingTable
+          game={game}
+          rows={sorted}
+          firstRank={1}
+          inactive={{ title: t.inactiveMembers, rows: goneSorted }}
+          sort={{ current: order.sort, asc: order.asc, base, params: order.keep }}
+          activityDays={settings.activityDays}
+          t={t}
+          lang={lang}
+        />
+      </Section>
     </>
   );
 }
