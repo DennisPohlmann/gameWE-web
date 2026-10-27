@@ -502,7 +502,7 @@
   "heatLatest": "Mostrando os {n} mais recentes de cada tipo.",
   "heatNone": "Ainda sem posições. O collector as salva para jogos Source (os logs GoldSrc não as têm).",
   "playerMapHintTop": "Os {n} melhores jogadores desta lista com local conhecido (cidade por GeoIP). Passe o mouse sobre uma imagem para detalhes, clique para abrir o perfil.",
-  "playerMapServers": "Os quadrados são os servidores de jogo deste ranking (local por GeoIP); passe o mouse para ver nome, endereço e mapa, clique para abrir o servidor.",
+  "playerMapServers": "Os hexágonos são os servidores de jogo deste ranking (local por GeoIP); passe o mouse para ver nome, endereço e mapa, clique para abrir o servidor.",
   "mapTop10": "Top 10",
   "mapAllPlayers": "Todos os jogadores",
   "helpStartPoints": "Pontos iniciais",

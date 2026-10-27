@@ -26,7 +26,7 @@ export type MapMarker = {
 // title of the VAC shield after the name, only when it is VAC-secured.
 export type ServerEntry = { id: number; name: string; href: string; online: boolean; flag?: string; vac?: string; lines: string[] };
 
-// The game servers at one GeoIP location: one square, not an avatar, with
+// The game servers at one GeoIP location: one hexagon, not an avatar, with
 // the number of servers when there are several. online: any of them is.
 // title: heading of the hover box when there are several.
 export type ServerMarker = { id: number; lat: number; lng: number; online: boolean; place: string; title?: string; servers: ServerEntry[] };
@@ -38,16 +38,21 @@ const NO_SERVERS: ServerMarker[] = [];
 const PACKET_SPEED = 40;
 const PACKET_MIN_RUN = 1.5;
 
-// Two rack units with a status light (.led, coloured in CSS) and a slot each.
+// Three slim rack units, each with a status light (.led, coloured in CSS).
 const SERVER_ICON =
-  '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
-  '<rect x="3" y="3.5" width="18" height="7" rx="2"/><rect x="3" y="13.5" width="18" height="7" rx="2"/>' +
-  '<path d="M12 7h5M12 17h5"/><circle class="led" cx="7" cy="7" r="1.8"/><circle class="led" cx="7" cy="17" r="1.8"/></svg>';
+  '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">' +
+  '<rect x="3.5" y="3" width="17" height="5.2" rx="1.6"/><rect x="3.5" y="9.4" width="17" height="5.2" rx="1.6"/><rect x="3.5" y="15.8" width="17" height="5.2" rx="1.6"/>' +
+  '<path class="slot" d="M6.5 5.6h6M6.5 12h6M6.5 18.4h6"/>' +
+  '<circle class="led" cx="17" cy="5.6" r="1.35"/><circle class="led" cx="17" cy="12" r="1.35"/><circle class="led" cx="17" cy="18.4" r="1.35"/></svg>';
+
+// The hexagon behind a server marker: a white edge around the dark face
+// (both cut out in CSS, see .map-server .hex).
+const SERVER_HEX = '<span class="hex" aria-hidden="true"><span></span></span>';
 
 // OpenStreetMap with one Steam avatar per player at their GeoIP city. Players
 // from the same city are spread in a spiral around it so all stay visible.
 // style: a key of mapStyles, or "auto" (OpenStreetMap, dark on dark designs).
-// servers: the ranking's game servers, as squares under the players.
+// servers: the ranking's game servers, as hexagons under the players.
 export function PlayerMap({ markers, servers = NO_SERVERS, style }: { markers: MapMarker[]; servers?: ServerMarker[]; style: string }) {
   const el = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -62,7 +67,7 @@ export function PlayerMap({ markers, servers = NO_SERVERS, style }: { markers: M
       const seen = new Map<string, number>();
       // Spiral around the city in screen pixels, so it works at every zoom
       // (points within 0.01°, about 1 km, count as one place). Servers come
-      // first and keep the middle: their square takes the first `slots`
+      // first and keep the middle: their hexagon takes the first `slots`
       // places, so the players around it leave it and its number visible.
       const spread = (m: { lat: number; lng: number }, slots = 1) => {
         const key = `${m.lat.toFixed(2)},${m.lng.toFixed(2)}`;
@@ -72,28 +77,30 @@ export function PlayerMap({ markers, servers = NO_SERVERS, style }: { markers: M
         const a = n * 2.4;
         return [Math.round(r * Math.cos(a)), Math.round(r * Math.sin(a))];
       };
-      // Where each server's square is drawn, for the lines to its players.
+      // Where each server's hexagon is drawn, for the lines to its players.
       const serverAt = new Map<number, { pos: [number, number]; online: boolean }>();
       for (const m of servers) {
         const [dx, dy] = spread(m, 4);
         for (const s of m.servers) serverAt.set(s.id, { pos: [m.lat, m.lng], online: s.online });
-        const one = m.servers.length === 1 ? m.servers[0] : null;
+        const n = m.servers.length;
+        const one = n === 1 ? m.servers[0] : null;
         const icon = L.divIcon({
-          className: `map-server${m.online ? " on" : ""}${one ? "" : " group"}`,
-          // Same size as the player avatars, with a server rack inside; with
-          // several servers the number of them over it.
+          className: `map-server${m.online ? " on" : ""}${one ? "" : " group"}${n > 99 ? " many" : ""}${m.servers.some((s) => !s.online) && m.online ? " part" : ""}`,
+          // A hexagon a little larger than the player avatars, with a server
+          // rack inside; with several servers their number and one status
+          // light instead (part: some of them are offline).
           html: one
-            ? `<a href="${esc(one.href)}" aria-label="${esc(one.name)}">${SERVER_ICON}</a>`
-            : `<a href="#" role="button" aria-label="${esc(m.title ?? m.place)}">${SERVER_ICON}<b>${m.servers.length}</b></a>`,
-          iconSize: [30, 30],
-          iconAnchor: [15 - dx, 15 - dy],
+            ? `<a href="${esc(one.href)}" aria-label="${esc(one.name)}">${SERVER_HEX}${SERVER_ICON}</a>`
+            : `<a href="#" role="button" aria-label="${esc(m.title ?? m.place)}">${SERVER_HEX}<i class="led"></i><b>${n}</b></a>`,
+          iconSize: [34, 34],
+          iconAnchor: [17 - dx, 17 - dy],
         });
         const marker = L.marker([m.lat, m.lng], { icon, zIndexOffset: -1000 })
-          .bindTooltip(serverTip(m), { direction: "top", offset: [dx, dy - 14] })
+          .bindTooltip(serverTip(m), { direction: "top", offset: [dx, dy - 16] })
           .addTo(map);
         // Several servers: a click opens a box with a link to each of them.
         if (!one) {
-          marker.bindPopup(serverLinks(m), { offset: [dx, dy - 14] });
+          marker.bindPopup(serverLinks(m), { offset: [dx, dy - 16] });
           marker.on("popupopen", () => marker.closeTooltip());
           marker.getElement()?.querySelector("a")?.addEventListener("click", (e) => e.preventDefault());
         }

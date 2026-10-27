@@ -502,7 +502,7 @@
   "heatLatest": "De nieuwste {n} van elk worden getoond.",
   "heatNone": "Nog geen posities. De collector slaat ze op voor Source-games (GoldSrc-logs hebben ze niet).",
   "playerMapHintTop": "De {n} beste spelers van deze lijst met bekende locatie (stad via GeoIP). Beweeg over een afbeelding voor details, klik om het profiel te openen.",
-  "playerMapServers": "De vierkanten zijn de gameservers van deze ranglijst (locatie via GeoIP); beweeg erover voor naam, adres en map, klik om de server te openen.",
+  "playerMapServers": "De zeshoeken zijn de gameservers van deze ranglijst (locatie via GeoIP); beweeg erover voor naam, adres en map, klik om de server te openen.",
   "mapTop10": "Top 10",
   "mapAllPlayers": "Alle spelers",
   "helpStartPoints": "Startpunten",

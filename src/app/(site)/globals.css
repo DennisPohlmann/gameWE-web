@@ -978,17 +978,27 @@ table.spaced { margin-top: 10px; }
 .map-avatar img { position: absolute; top: 0; left: 0; object-fit: cover; opacity: 0; transition: opacity 0.2s; }
 .map-avatar img.ok { opacity: 1; }
 .map-avatar:hover { z-index: 1000 !important; }
-/* Game servers: squares, unlike the round player avatars. */
-.map-server a { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: 2px solid #fff; border-radius: 7px; color: #fff; background: linear-gradient(#4b5666, #232a33); box-shadow: 0 0 0 1px #555, 0 1px 3px rgba(0, 0, 0, 0.5); }
-.map-server svg { display: block; }
+/* Game servers: hexagons, unlike the round player avatars. The edge, face
+   and rack keep their colours on every design and map (also where a design
+   colours every link). */
+.player-map .map-server a { position: relative; display: block; width: 34px; height: 34px; color: #e9eef5; text-decoration: none; isolation: isolate; }
+.map-server .hex { position: absolute; inset: 0; filter: drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.8)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)); }
+.map-server .hex span,
+.map-server .hex span::before { position: absolute; inset: 0; clip-path: polygon(50% 3.5%, 90.3% 26.8%, 90.3% 73.2%, 50% 96.5%, 9.7% 73.2%, 9.7% 26.8%); background: #fff; }
+.map-server .hex span::before { content: ""; inset: 2.4px; background: radial-gradient(120% 100% at 35% 5%, #4a5668, #1a2029 70%); }
+.map-server a > svg { position: absolute; left: 8px; top: 8px; display: block; }
+.map-server .slot { opacity: 0.6; }
 /* Status lights: green while the server is online (load samples of the last
    30 minutes), red when not. They glow like a lighthouse: fade on with the
    glow, stay lit a moment, fade off, stay dark, once per cycle; offline more
-   slowly. Only opacity is animated, so it stays cheap. */
-.map-server a { position: relative; --led: #ff5a4f; --glow: rgba(255, 70, 60, 0.6); --cycle: 5s; }
+   slowly. Only opacity is animated, so it stays cheap. The glow is a soft
+   round light behind the hexagon. Several servers of which only some are
+   online (part): orange. */
+.map-server a { --led: #ff5a4f; --glow: rgba(255, 70, 60, 0.6); --cycle: 5s; }
 .map-server.on a { --led: #6dff8a; --glow: rgba(80, 230, 110, 0.65); --cycle: 4s; }
+.map-server.part a { --led: #ffb020; --glow: rgba(255, 170, 30, 0.65); }
 .map-server .led { fill: var(--led); stroke: none; animation: led-flash var(--cycle) ease-in-out infinite; }
-.map-server a::after { content: ""; position: absolute; inset: -4px; border-radius: 10px; box-shadow: 0 0 10px 3px var(--glow); pointer-events: none; animation: glow-flash var(--cycle) ease-in-out infinite; }
+.map-server a::after { content: ""; position: absolute; inset: -9px; z-index: -1; border-radius: 50%; background: radial-gradient(circle, var(--glow) 45%, transparent 70%); pointer-events: none; animation: glow-flash var(--cycle) ease-in-out infinite; }
 @keyframes led-flash {
   0%, 65%, 100% { opacity: 0.2; }
   25%, 40% { opacity: 1; }
@@ -1002,10 +1012,11 @@ table.spaced { margin-top: 10px; }
   .map-server a::after { opacity: 0.6; }
 }
 .map-server:hover { z-index: 1000 !important; }
-/* Several servers at one place: the rack fades back behind their number;
-   the status lights stay visible on the left. */
-.map-server.group svg rect, .map-server.group svg path { opacity: 0.35; }
-.map-server.group b { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding-left: 7px; color: #fff; font: bold 13px/1 Verdana, sans-serif; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9); pointer-events: none; }
+/* Several servers at one place: their number in the middle of the hexagon,
+   one status light above it. */
+.map-server.group i.led { position: absolute; z-index: 1; left: 14px; top: 6px; width: 6px; height: 6px; border-radius: 50%; background: var(--led); box-shadow: 0 0 4px var(--led); }
+.map-server.group b { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center; padding-top: 4px; color: #fff; font: 800 13px/1 system-ui, "Segoe UI", Roboto, Arial, sans-serif; font-variant-numeric: tabular-nums; letter-spacing: -0.2px; pointer-events: none; }
+.map-server.many b { font-size: 10px; }
 /* Lines from the players to their server, under the markers. */
 .map-link { stroke: #8a94a3; stroke-opacity: 0.6; }
 .map-link.on { stroke: #34c759; stroke-opacity: 0.55; }

@@ -253,7 +253,7 @@ website therefore computes some things itself:
   rank (the same position as on the ranking and the player page: 1 + ranked
   players with more points, hidden players not counted), points, kills, K/D
   and the server or last connect. Both maps also show the ranking's game
-  servers as squares at the location the collector stores for their address
+  servers as hexagons at the location the collector stores for their address
   (`hlstats_Servers` `lat`/`lng` from GeoIP: a city, or only the country's
   centre when GeoIP knows no city). The map always opens with all players and
   all servers in view; on the "who is playing now" map a thin line joins each
@@ -264,18 +264,19 @@ website therefore computes some things itself:
   between player and server, at the same speed on every line (about 40
   pixels per second, so a longer line takes longer; still, in the middle of the line, when the system asks
   for reduced motion). Servers at the same place (coordinates
-  equal after rounding to 0.01°, about 1 km) share one square that shows
-  their number; hovering lists them all, each with a green or red status
+  equal after rounding to 0.01°, about 1 km) share one hexagon that shows
+  their number in the middle with one status light above it; hovering lists them all, each with a green or red status
   dot, and a click opens a box with a link to each server page. Hovering a
   single server shows name (with the VAC shield of the server list when the
   server is VAC-secured, also in the list of several), city and country, address (the public address
   if set, as in the server list), the current map and, while the server is
   online, its uptime (from the latest load sample, as on the server page);
   a click opens the server page. The status lights in the
-  square glow slowly like a lighthouse (fade on, stay lit a moment, fade
+  hexagon glow slowly like a lighthouse (fade on, stay lit a moment, fade
   off, stay dark; once every 4 s): green while a server there is online
   (load samples of the last 30 minutes, as on the server banner), red and
-  every 5 s when not; with reduced motion set in the system they stay lit
+  every 5 s when not; a shared hexagon is green when all its servers are
+  online, orange when only some are and red when none is; with reduced motion set in the system they stay lit
   without glowing on and off. Servers without a location
   (LAN address, no GeoIP database, rows imported without one) are left out.
 - **SourceBans** (bans page): the public ban list
