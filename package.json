@@ -1,6 +1,6 @@
 {
   "name": "gamewe-web",
-  "version": "0.33.3",
+  "version": "0.33.4",
   "private": true,
   "license": "GPL-3.0-or-later",
   "scripts": {
