@@ -53,6 +53,7 @@ COPY --from=build --chown=node:node /src/.next/static ./.next/static
 COPY --from=build --chown=node:node /src/public ./public
 COPY --from=build --chown=node:node /src/scripts ./scripts
 COPY --from=build --chown=node:node /src/templates ./templates
+COPY --from=build --chown=node:node /src/overviews ./overviews
 COPY --from=build --chown=node:node /src/LICENSE /src/THIRD-PARTY-LICENSES.md ./
 USER node
 EXPOSE 3000

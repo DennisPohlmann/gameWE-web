@@ -42,6 +42,7 @@ Layout of a complete installation (collector and website on one machine):
 | `/etc/gamewe/web/` | root:gamewe 0750 | website settings |
 | `/etc/gamewe/web/web.env` | root:gamewe 0640 | website settings file (section 2) |
 | `/etc/gamewe/web/templates/` | root:gamewe 0750 | optional own designs (`TEMPLATES_DIR`) |
+| `/etc/gamewe/web/overviews/` | root:gamewe 0750 | optional map overviews for the heatmap (`OVERVIEWS_DIR`) |
 | `/opt/gamewe/web/` | root | website program (tar.gz) |
 | `/etc/systemd/system/gamewe-collector.service`, `gamewe-web.service` | root 0644 | systemd units |
 
@@ -159,6 +160,8 @@ TZ=Europe/Berlin
 # ---- Optional ----
 # Own design templates, one subfolder each (see templates/README.md)
 #TEMPLATES_DIR=/etc/gamewe/web/templates
+# Own map overviews for the heatmap (see overviews/README.md)
+#OVERVIEWS_DIR=/etc/gamewe/web/overviews
 # 1 when SourceBans runs on the same machine or LAN
 #SOURCEBANS_ALLOW_PRIVATE=0
 # Access log on stdout: on, off or all
@@ -202,6 +205,8 @@ TZ=Europe/Berlin
 # Own templates: mount a folder and point here, e.g.
 # -v /etc/gamewe/web/templates:/app/custom-templates:ro
 #TEMPLATES_DIR=/app/custom-templates
+# Own map overviews: -v /etc/gamewe/web/overviews:/app/custom-overviews:ro
+#OVERVIEWS_DIR=/app/custom-overviews
 #SOURCEBANS_ALLOW_PRIVATE=0
 #ACCESS_LOG=on
 ```
@@ -275,9 +280,11 @@ services:
     # Database on this host, listening on 127.0.0.1 only: use the host
     # network instead of ports.
     # network_mode: host
-    # Own design templates (TEMPLATES_DIR=/app/custom-templates):
+    # Own design templates (TEMPLATES_DIR=/app/custom-templates) and map
+    # overviews (OVERVIEWS_DIR=/app/custom-overviews):
     # volumes:
     #   - /etc/gamewe/web/templates:/app/custom-templates:ro
+    #   - /etc/gamewe/web/overviews:/app/custom-overviews:ro
 ```
 
 ```bash
@@ -330,7 +337,7 @@ systemctl status gamewe-web
 The archive contains:
 
 ```
-/opt/gamewe/web/                        the server (server.js), scripts, templates
+/opt/gamewe/web/                        the server (server.js), scripts, templates, overviews
 /etc/gamewe/web/web.env                 commented settings
 /etc/systemd/system/gamewe-web.service  systemd unit
 ```

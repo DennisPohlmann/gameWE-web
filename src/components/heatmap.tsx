@@ -1,12 +1,14 @@
 import { useId } from "react";
 import type { Heatmap } from "@/lib/heatmap";
+import type { Frame } from "@/lib/overview-format";
 
 // Kill and death positions as dots, like gameME's map tracking: deaths red,
 // kills blue, headshots blue with a white centre, drawn in that order so
 // headshots stay on top. Every kind is one path of zero-length round-capped
 // segments, drawn twice (dark edge, then colour); the strokes do not scale,
 // so a dot stays about 6px on every screen. North (higher y in the game) is
-// up.
+// up. With an overview (the map's radar picture, src/lib/overviews.ts) the
+// picture lies under the dots and the view shows all of it.
 
 export type HeatShow = "all" | "killer" | "victim";
 
@@ -20,16 +22,27 @@ export function HeatmapView({
   label,
   title,
   labels,
+  overview,
 }: {
   heat: Heatmap;
+  overview?: (Frame & { href: string }) | null;
   show: HeatShow;
   label: string;
   title: string;
   labels: { kills: string; headshots: string; deaths: string };
 }) {
   const id = useId().replace(/:/g, "");
-  const { minX, minY, width, height } = heat;
-  const pad = Math.max(width, height) * 0.03;
+  // The view: the dots; with a picture all of it, and any dot beside it.
+  let { minX, minY, width, height } = heat;
+  if (overview) {
+    const x1 = Math.max(minX + width, overview.x + overview.width);
+    const y1 = Math.max(minY + height, overview.y);
+    minX = Math.min(minX, overview.x);
+    minY = Math.min(minY, overview.y - overview.height);
+    width = x1 - minX;
+    height = y1 - minY;
+  }
+  const pad = overview ? 0 : Math.max(width, height) * 0.03;
   const kills = show !== "victim";
   const deaths = show !== "killer";
   const layers: [string, string, [number, number, ...number[]][]][] = [];
@@ -66,6 +79,7 @@ export function HeatmapView({
             <path key={key} id={key} d={path(dots)} vectorEffect="non-scaling-stroke" />
           ))}
         </defs>
+        {overview ? <image className="heat-overview" href={overview.href} x={overview.x} y={-overview.y} width={overview.width} height={overview.height} preserveAspectRatio="none" /> : null}
         <g className="heat-dots" fill="none" strokeLinecap="round">
           {layers.map(([kind, key]) => (
             <g key={key} className={kind}>

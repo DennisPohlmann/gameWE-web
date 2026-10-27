@@ -15,6 +15,8 @@ import { countMapKillers, gameHasShots, getGame, getMap, getMapAccuracy, getMapG
 import { fmtDuration, fmtNum, fmtPct, kpd, localeOf, ratio } from "@/lib/format";
 import { DOTS, getHeatmap, heatLevel } from "@/lib/heatmap";
 import { levelParam, levelSplit } from "@/lib/map-levels";
+import { insideShare } from "@/lib/overview-format";
+import { getOverview, noteMismatch } from "@/lib/overviews";
 import { fill, getDict } from "@/lib/i18n";
 import { kpm, mapPlayTime, mapSort } from "@/lib/map-table";
 import { getSettings } from "@/lib/settings";
@@ -68,11 +70,19 @@ export default async function MapPage({ params, searchParams }: Props) {
     gameHasShots(game),
     getGame(game, true),
   ]);
+  // The map's overview picture under the dots, from the overview folders
+  // (src/lib/overviews.ts); its calibration may name a lower level too.
+  const overview = fullHeat ? await getOverview(game, g?.realgame, m.map).catch(() => null) : null;
   // Maps with two levels (Counter-Strike 2's de_nuke, de_vertigo): the
   // heatmap shows the upper or the lower level alone on request.
-  const split = levelSplit(g?.realgame, m.map);
+  const split = levelSplit(g?.realgame, m.map) ?? overview?.lowerSplit ?? null;
   const level = split === null ? null : levelParam(strParam(sp.lv));
   const heat = fullHeat && split !== null && level ? heatLevel(fullHeat, split, level) : fullHeat;
+  // A calibration of another version of the map leaves most dots off the
+  // picture: then the dots alone, as without a picture.
+  const fits = overview && fullHeat ? insideShare(overview.frame, [...fullHeat.killDots, ...fullHeat.deathDots]) >= 0.5 : false;
+  if (overview && !fits) noteMismatch(overview, m.map);
+  const picture = overview && fits ? { ...overview.frame, href: level === "lower" && overview.lowerHref ? overview.lowerHref : overview.href } : null;
   const ids = players.map((r) => r.playerId);
   const [flags, gg] = await Promise.all([getPlayerFlags(ids), getMapGgWins(game, m.id, ids)]);
   const w = wins.get(m.id);
@@ -149,7 +159,7 @@ export default async function MapPage({ params, searchParams }: Props) {
             </AutoForm>
           </div>
           {heat ? (
-            <HeatmapView heat={heat} show={show} label={`${t.heatmap} ${m.map}`} title={m.map} labels={{ kills: t.heatKills, headshots: t.headshotsLabel, deaths: t.heatDeaths }} />
+            <HeatmapView heat={heat} show={show} overview={picture} label={`${t.heatmap} ${m.map}`} title={m.map} labels={{ kills: t.heatKills, headshots: t.headshotsLabel, deaths: t.heatDeaths }} />
           ) : null}
         </div>
       </Section>

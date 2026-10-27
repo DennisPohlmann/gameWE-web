@@ -3,7 +3,7 @@
 The environment (`/etc/gamewe/web/web.env` for the tar.gz, the container's
 `--env-file`) holds only what the website needs before it can reach the
 database or what must not be changeable from the browser: database access,
-`ADMIN_SECRET`, `BASE_PATH`, `TZ`, `TEMPLATES_DIR`, `ACCESS_LOG`,
+`ADMIN_SECRET`, `BASE_PATH`, `TZ`, `TEMPLATES_DIR`, `OVERVIEWS_DIR`, `ACCESS_LOG`,
 `SOURCEBANS_ALLOW_PRIVATE`, `ADMIN_COOKIE_SECURE` and the runtime variables
 (`PORT`, `HOSTNAME`, `NODE_ENV`). Every variable is listed with a comment in
 [`.env.example`](../.env.example), and
@@ -30,7 +30,10 @@ starts (awards, daily charts); without it the Docker image uses UTC. Set the
 collector to the same zone. `TEMPLATES_DIR` adds a folder of your own design
 templates (see [templates/README.md](../templates/README.md)); a template's
 optional `chart.json` sets the colours of its charts (section "Charts"
-there). `DB_TYPE` selects the database: `mariadb` (default,
+there). `OVERVIEWS_DIR` adds a folder of your own map overviews: radar
+pictures with their calibration, which the heatmap of a map draws its dots
+on, in addition to the built-in `overviews/` folder (see
+[overviews/README.md](../overviews/README.md)). `DB_TYPE` selects the database: `mariadb` (default,
 also for MySQL) or `postgres`. `DB_PORT`
 defaults to 3306 or 5432 accordingly. Both use the same table and column
 names; on PostgreSQL they are unquoted, so they are stored in lower case.

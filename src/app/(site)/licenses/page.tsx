@@ -66,6 +66,7 @@ const ASSETS: Row[] = [
   ["flag-icons (Panayiotis Lipiridis)", "https://github.com/lipis/flag-icons", "MIT", "Länderflaggen", "Country flags"],
   ["Geist (Vercel)", "https://github.com/vercel/geist-font", "SIL OFL 1.1", "Schrift in Signatur und Banner", "Font in signature and banner"],
   ["Feather Icons (Cole Bemis)", "https://github.com/feathericons/feather", "MIT", "Symbole im Admin-Bereich (teils nachgezeichnet)", "Icons in the admin area (partly redrawn)"],
+  ["Counter-Strike 2 overview files (Valve)", "https://www.counter-strike.net", "Valve", "Kalibrierung der Kartenbilder unter der Heatmap (nur Zahlen, keine Bilder)", "Calibration of the map pictures under the heatmap (numbers only, no pictures)"],
 ];
 
 // Licenses of the software, data and graphics gameWE uses.

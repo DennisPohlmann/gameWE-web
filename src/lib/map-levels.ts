@@ -9,6 +9,7 @@ export type MapLevel = "upper" | "lower";
 
 export const LEVEL_SPLITS: Record<string, number> = {
   de_nuke: -495,
+  de_train: -50,
   de_vertigo: 11700,
 };
 

@@ -105,6 +105,7 @@ and the reverse proxy: [docs/INSTALLATION.md](docs/INSTALLATION.md).
 | [docs/INTERFACE.md](docs/INTERFACE.md) | database access and the public JSON API |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | local development, building, CI and releases |
 | [templates/README.md](templates/README.md) | own design templates |
+| [overviews/README.md](overviews/README.md) | map pictures under the heatmap |
 | [CHANGELOG.md](CHANGELOG.md) | changes per version |
 | [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md) | third-party components and their licenses |
 
@@ -133,7 +134,7 @@ Rankings of Counter-Strike 2 (Source 2) servers carry their own game tag
 (CS2, in the Source 2 colour). CS2 logs no shots, so its pages leave out
 shots, hits, accuracy, damage per hit and shots per kill; damage and the hit
 zones (with the neck, which only CS2 logs) come from its attacked lines. The
-heatmap of de_nuke and de_vertigo shows the upper or the lower level alone on
+heatmap of de_nuke, de_train and de_vertigo shows the upper or the lower level alone on
 request.
 CS2 has no plugin, so in-game commands get no answer. Setting up the server
 (HTTP log) is described in the collector's documentation.
