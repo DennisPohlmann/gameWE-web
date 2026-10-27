@@ -3,7 +3,7 @@
 import "leaflet/dist/leaflet.css";
 import { useEffect, useRef } from "react";
 import { mapStyles } from "@/lib/map-styles";
-import { VAC_SVG } from "@/lib/server-icons";
+import { vacStateHtml } from "@/lib/server-icons";
 
 export type MapMarker = {
   id: number;
@@ -23,8 +23,10 @@ export type MapMarker = {
 };
 
 // One game server: name (with the flag), page and hover details. vac: the
-// title of the VAC shield after the name, only when it is VAC-secured.
-export type ServerEntry = { id: number; name: string; href: string; online: boolean; flag?: string; vac?: string; lines: string[] };
+// VAC state after the name (secured or not, with its title); none when
+// unknown.
+export type ServerEntry = { id: number; name: string; href: string; online: boolean; flag?: string; vac?: VacInfo; lines: string[] };
+export type VacInfo = { secure: boolean; title: string };
 
 // The game servers at one GeoIP location: one hexagon, not an avatar, with
 // the number of servers when there are several. online: any of them is.
@@ -213,15 +215,15 @@ function greatCircle(a: [number, number], b: [number, number]): [number, number]
 
 // Hover box: first line bold with the flag (and a server's VAC shield),
 // then the details.
-function tip(m: { lines: string[]; flag?: string; vac?: string }) {
+function tip(m: { lines: string[]; flag?: string; vac?: VacInfo }) {
   return m.lines
     .map((l, i) => (i ? esc(l) : `<b>${m.flag ? `<span class="flag flag-svg" style="background-position:${esc(m.flag)}"></span>` : ""}${esc(l)}</b>${vacMark(m.vac)}`))
     .join("<br>");
 }
 
-// The VAC shield of the server lists, with its title.
-function vacMark(title?: string) {
-  return title ? ` <span class="vac-mark" title="${esc(title)}" role="img" aria-label="${esc(title)}">${VAC_SVG}</span>` : "";
+// The VAC state of the server lists, with its title.
+function vacMark(vac?: VacInfo) {
+  return vac ? ` <span class="vac-mark ${vac.secure ? "vac-secure" : "vac-insecure"}" title="${esc(vac.title)}" role="img" aria-label="${esc(vac.title)}">${vacStateHtml(vac.secure)}</span>` : "";
 }
 
 // Hover box of a server marker: one server as a player's (name, place,

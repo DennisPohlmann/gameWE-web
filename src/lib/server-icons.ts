@@ -21,9 +21,24 @@ export const WINDOWS_SVG =
   '<path fill="currentColor" d="M1.5 3.1l5.3-.8v5.1H1.5zM7.8 2.2l6.7-1v6.2H7.8zM1.5 8.5h5.3v5.1l-5.3-.8zM7.8 8.5h6.7v6.2l-6.7-1z"/>' +
   "</svg>";
 
-// A shield outline with "VAC" in it: the server is VAC-secured.
-export const VAC_SVG =
-  '<svg class="vac-icon" viewBox="0 0 24 26" width="1.15em" height="1.25em" aria-hidden="true">' +
-  '<path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M12 1.5l9.3 3.3v7.4c0 6-4 10.3-9.3 12.3-5.3-2-9.3-6.3-9.3-12.3V4.8z"/>' +
-  '<text x="12" y="15.6" fill="currentColor" font-family="Arial, Helvetica, sans-serif" font-size="8.2" font-weight="700" text-anchor="middle" letter-spacing="-.3">VAC</text>' +
+// The VAC state: a filled shield with a check mark (VAC-secured) or a cross
+// (not VAC-secured) cut out, so the row's background shows through on every
+// skin; the word "VAC" follows as text (vacStateHtml), in normal text size.
+const SHIELD = "M12 1l10 3.5v7.7c0 6.3-4.3 10.8-10 12.8C6.3 23 2 18.5 2 12.2V4.5z";
+const CHECK = "M6.6 12.9l2.1-2.1 2.1 2.1 4.5-4.5 2.1 2.1-6.6 6.6z";
+const CROSS = "M14.2 8.3l2.1 2.1-2.2 2.2 2.2 2.2-2.1 2.1-2.2-2.2-2.2 2.2-2.1-2.1 2.2-2.2-2.2-2.2 2.1-2.1 2.2 2.2z";
+
+export const VAC_SECURE_SVG =
+  '<svg class="vac-icon" viewBox="0 0 24 26" width="1em" height="1.1em" aria-hidden="true">' +
+  `<path fill="currentColor" fill-rule="evenodd" d="${SHIELD}${CHECK}"/>` +
   "</svg>";
+
+export const VAC_INSECURE_SVG =
+  '<svg class="vac-icon" viewBox="0 0 24 26" width="1em" height="1.1em" aria-hidden="true">' +
+  `<path fill="currentColor" fill-rule="evenodd" d="${SHIELD}${CROSS}"/>` +
+  "</svg>";
+
+// The inner markup of a VAC state mark: the shield and the word.
+export function vacStateHtml(secure: boolean): string {
+  return `${secure ? VAC_SECURE_SVG : VAC_INSECURE_SVG}VAC`;
+}

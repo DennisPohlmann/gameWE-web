@@ -5,7 +5,7 @@ import { countryName, fmtDuration, fmtNum, fmtPct, nowUnix, ratio } from "@/lib/
 import { baseGameOf, gameKind } from "@/lib/games";
 import type { Dict, Lang } from "@/lib/i18n";
 import { playerCount } from "@/lib/player-count";
-import { LINUX_SVG, VAC_SVG, WINDOWS_SVG } from "@/lib/server-icons";
+import { LINUX_SVG, vacStateHtml, WINDOWS_SVG } from "@/lib/server-icons";
 import { PlayerCount } from "./player-count";
 import { Flag, GameTag, SortTh } from "./ui";
 
@@ -137,18 +137,14 @@ function ServerVersion({ version, os }: { version: string; os: string }) {
   );
 }
 
-// The VAC shield when the server is VAC-secured; a muted "-" when it is not,
-// "-" when unknown.
+// "VAC" with a green shield and a check mark when the server is
+// VAC-secured, with a red shield and a cross when it is not; "-" when
+// unknown. The markup is constant (server-icons.ts).
 export function VacState({ vac, t }: { vac: string; t: Dict }) {
-  if (vac === "secure")
-    return <span className="vac-mark" title={t.vacSecure} role="img" aria-label={t.vacSecure} dangerouslySetInnerHTML={{ __html: VAC_SVG }} />;
-  if (vac === "insecure")
-    return (
-      <span className="muted" title={t.vacInsecure}>
-        -
-      </span>
-    );
-  return <>-</>;
+  if (vac !== "secure" && vac !== "insecure") return <>-</>;
+  const secure = vac === "secure";
+  const title = secure ? t.vacSecure : t.vacInsecure;
+  return <span className={`vac-mark ${secure ? "vac-secure" : "vac-insecure"}`} title={title} role="img" aria-label={title} dangerouslySetInnerHTML={{ __html: vacStateHtml(secure) }} />;
 }
 
 // Flag of a server's country (hlstats_Servers.country_code) with the country

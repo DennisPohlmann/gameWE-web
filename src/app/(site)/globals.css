@@ -152,8 +152,21 @@ img { border: 0; vertical-align: middle; }
    colour of the row or hover box (currentColor), so they fit every skin. */
 .os-mark, .vac-mark { display: inline-block; line-height: 0; vertical-align: -0.15em; }
 .os-mark.muted { color: var(--muted); line-height: inherit; vertical-align: baseline; font-size: 0.9em; }
-.vac-mark { vertical-align: -0.25em; }
-.os-mark svg, .vac-mark svg { display: block; }
+.os-mark svg { display: block; }
+/* VAC state: shield with a check mark (green) or a cross (red) and the word
+   "VAC" in bold, in the skin's good / bad colour. */
+.vac-mark { display: inline-flex; align-items: center; gap: 3px; line-height: 1; vertical-align: middle; font-weight: bold; white-space: nowrap; }
+.vac-mark svg { display: block; flex: none; }
+.vac-mark.vac-secure { color: var(--good); }
+.vac-mark.vac-insecure { color: var(--bad); }
+/* Server rows have their own background (--line-bg, white in the classic
+   skins, dark in the modern ones): green and red mixed with the row's text
+   colour stay readable on both. */
+tr.server-line .vac-mark.vac-secure { color: color-mix(in srgb, #2e9e4f 70%, var(--line-text)); }
+tr.server-line .vac-mark.vac-insecure { color: color-mix(in srgb, #d32f2f 70%, var(--line-text)); }
+/* The map's hover boxes are white (Leaflet) in every skin: fixed dark colours. */
+.leaflet-tooltip .vac-mark.vac-secure { color: #13703f; }
+.leaflet-tooltip .vac-mark.vac-insecure { color: #b71c1c; }
 
 /* ---------------------------------------------------------------- frame */
 
@@ -1052,13 +1065,15 @@ table.spaced { margin-top: 10px; }
 .game-tag.source { background: #3d6f99; }
 .game-tag.source2 { background: #2e7d6b; }
 .map-title { margin: 0 0 6px; font-size: 12px; }
-.ban-type { display: inline-block; min-width: 4.5em; padding: 0 6px; border-radius: 3px; font: bold 10px/16px Verdana, sans-serif; text-align: center; white-space: nowrap; color: #fff; background: #6b6b6b; }
-.ban-vac { background: linear-gradient(#ffe680, #d9b300); color: #3a3000; }
-.ban-sourcebans { background: linear-gradient(#f07a7a, #c0392b); }
-.ban-sourcebans, .ban-sourcemod, .ban-amx, .ban-engine { background: linear-gradient(#e0605a, #b0281e); }
-.ban-type.ban-lifted { background: #6b6b6b; color: #ddd; }
-/* The source checked but the ban does not apply: grey. */
-.ban-type.ban-off { background: #8a8a8a; color: #f2f2f2; opacity: 0.45; font-weight: normal; }
+/* Ban badges: solid yellow VAC, solid red SourceBans and server bans, with
+   a darker edge so they stand out on every skin; a source that does not
+   apply is an outline in the skin's muted colour (readable, clearly off). */
+.ban-type { display: inline-block; padding: 0 8px; border: 1px solid transparent; border-radius: 3px; font: bold 11px/18px Verdana, sans-serif; text-align: center; white-space: nowrap; color: #fff; background: #6b6b6b; }
+.ban-vac { background: #f5c518; color: #1a1400; border-color: #a88600; }
+.ban-sourcebans, .ban-sourcemod, .ban-amx, .ban-engine { background: #c0392b; border-color: #7f1d14; }
+.ban-type.ban-lifted { background: #6b6b6b; color: #ddd; border-color: transparent; }
+/* The source checked but the ban does not apply: an outline. */
+.ban-type.ban-off { background: transparent; color: var(--muted); border-color: var(--muted); }
 tr.ban-old td { opacity: 0.7; }
 th.ban-type-col, td.ban-type-col { text-align: center; }
 /* The profile's "Bans" row: a long reason wraps instead of widening the table. */
