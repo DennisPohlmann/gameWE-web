@@ -26,7 +26,7 @@ export const rankingValues = {
   new: (r: RankingRow) => Number(r.first_connect),
 };
 
-type SortProps = { current: string; asc: boolean; base: string; params: Record<string, string | number | undefined> };
+type SortProps = { current: string; asc: boolean; base: string; params: Record<string, string | number | undefined>; sortParam?: string; dirParam?: string };
 
 // Player table used by the ranking and the clan page. Without `sort` the
 // headers are plain text.

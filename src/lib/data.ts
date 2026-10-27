@@ -1219,6 +1219,35 @@ export async function countClans(game: string) {
   return Number(r?.n ?? 0);
 }
 
+// Inactive clans: clans with at least two visible members of whom fewer
+// than two are still active, because the collector moved the others to
+// hlstats_PlayersInactive. So every clan with two or more members is in
+// exactly one of the two lists. Their numbers are over all their members.
+function clanMembersOf(cols: string) {
+  return `(SELECT ${cols}, 1 AS active FROM hlstats_Players WHERE game = ? AND hideranking = 0 AND clan > 0
+     UNION ALL SELECT ${cols}, 0 AS active FROM hlstats_PlayersInactive WHERE game = ? AND hideranking = 0 AND clan > 0)`;
+}
+
+const inactiveClansFrom = `FROM hlstats_Clans c
+  JOIN ${clanMembersOf("playerId, clan, skill, kills, deaths, headshots, connection_time, last_event")} p ON p.clan = c.clanId
+  WHERE c.game = ? GROUP BY c.clanId, c.tag, c.name, c.homepage, c.flag
+  HAVING COUNT(p.playerId) >= 2 AND SUM(p.active) < 2`;
+
+export function getInactiveClans(game: string, limit: number, offset: number, sort: ClanSort = "activity", asc = false) {
+  return query<ClanRow>(
+    `SELECT * FROM (SELECT c.clanId, c.tag, c.name, c.homepage, c.flag, ${clanAgg} ${inactiveClansFrom}) x
+     ORDER BY ${clanSorts[sort]} ${asc ? "ASC" : "DESC"}, clanId LIMIT ? OFFSET ?`,
+    [game, game, game, limit, offset],
+  );
+}
+
+// Reads all inactive players of the game, so kept for a minute like the
+// count of the inactive players.
+export async function countInactiveClans(game: string) {
+  const r = await inactiveCount(`SELECT COUNT(*) AS n FROM (SELECT c.clanId ${inactiveClansFrom}) x`, [game, game, game]);
+  return Number(r?.n ?? 0);
+}
+
 export function getClan(id: number) {
   return queryOne<ClanRow & { game: string }>(
     `SELECT c.clanId, c.tag, c.name, c.homepage, c.flag, TRIM(c.game) AS game, ${clanAgg}
@@ -1236,6 +1265,19 @@ export function getClanMembers(id: number) {
      LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
      LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
      WHERE p.clan = ? AND p.hideranking = 0 ORDER BY p.skill DESC`,
+    [id],
+  );
+}
+
+// The members the collector moved to hlstats_PlayersInactive, last seen first.
+export function getInactiveClanMembers(id: number) {
+  return query<RankingRow>(
+    `SELECT p.playerId, d.lastName AS name, p.skill, p.last_event, d.first_connect, p.connection_time,
+            p.kills, p.deaths, p.headshots, p.shots, p.hits, l.flag, l.country
+     FROM hlstats_PlayersInactive p
+     LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+     LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
+     WHERE p.clan = ? AND p.hideranking = 0 ORDER BY p.last_event DESC`,
     [id],
   );
 }
@@ -1904,18 +1946,27 @@ export async function unlinkedBots(ids: number[]) {
 
 // Country of each clan: the most common country among its members (ties by
 // country code), from their latest connect's GeoIP location.
-export async function getClanFlags(ids: number[]) {
+// With inactive, the inactive members count too (inactive clans).
+export async function getClanFlags(ids: number[], inactive = false) {
   const uniq = [...new Set(ids.filter((x) => x > 0))];
   const out = new Map<number, { flag: string; country: string }>();
   if (!uniq.length) return out;
+  const members = (table: string) => `SELECT playerId, clan FROM ${table} WHERE clan IN (?) AND hideranking = 0`;
   const rows = await query<{ clan: number; flag: string; country: string | null; n: number }>(
-    `SELECT p.clan, l.flag, MAX(l.country) AS country, COUNT(*) AS n
-     FROM hlstats_Players p
-     JOIN hlstats_Players_Data d ON d.playerId = p.playerId
-     JOIN hlstats_Players_Locations l ON l.id = d.location_id
-     WHERE p.clan IN (?) AND p.hideranking = 0 AND l.flag IS NOT NULL AND l.flag <> ''
-     GROUP BY p.clan, l.flag`,
-    [uniq],
+    inactive
+      ? `SELECT p.clan, l.flag, MAX(l.country) AS country, COUNT(*) AS n
+         FROM (${members("hlstats_Players")} UNION ALL ${members("hlstats_PlayersInactive")}) p
+         JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+         JOIN hlstats_Players_Locations l ON l.id = d.location_id
+         WHERE l.flag IS NOT NULL AND l.flag <> ''
+         GROUP BY p.clan, l.flag`
+      : `SELECT p.clan, l.flag, MAX(l.country) AS country, COUNT(*) AS n
+         FROM hlstats_Players p
+         JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+         JOIN hlstats_Players_Locations l ON l.id = d.location_id
+         WHERE p.clan IN (?) AND p.hideranking = 0 AND l.flag IS NOT NULL AND l.flag <> ''
+         GROUP BY p.clan, l.flag`,
+    inactive ? [uniq, uniq] : [uniq],
   );
   const best = new Map<number, { flag: string; country: string; n: number }>();
   for (const r of rows) {
