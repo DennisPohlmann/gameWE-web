@@ -7,7 +7,9 @@ import { flagEmoji, fmtDate, fmtDuration, fmtNum, kpd } from "./format";
 import type { Dict, Lang } from "./i18n";
 
 // Markers for the player map: avatar, link and the hover lines per player.
-export function mapMarkers(players: (MapPlayer & { server?: string | null; serverId?: number })[], game: string, t: Dict, lang: Lang): MapMarker[] {
+// inactive: a member the collector moved out of the ranking (clan map), drawn
+// faded and named so on hover.
+export function mapMarkers(players: (MapPlayer & { server?: string | null; serverId?: number; inactive?: boolean })[], game: string, t: Dict, lang: Lang): MapMarker[] {
   return players.map((p) => {
     const name = p.name ?? `#${p.playerId}`;
     const code = (p.flag ?? "").trim().toLowerCase();
@@ -21,12 +23,14 @@ export function mapMarkers(players: (MapPlayer & { server?: string | null; serve
       lat: p.lat,
       lng: p.lng,
       serverId: p.serverId,
+      faded: p.inactive || undefined,
       flag: svg ? flagPos(code) : undefined,
       lines: [
         svg ? name : `${flagEmoji(p.flag)} ${name}`.trim(),
         [p.city, p.country].filter(Boolean).join(", "),
         `${p.rank ? `${t.rank}: ${fmtNum(p.rank, lang)} · ` : ""}${t.points}: ${fmtNum(p.skill, lang)} · ${t.kills}: ${fmtNum(p.kills, lang)} · ${t.kpd}: ${kpd(p.kills, p.deaths).toFixed(2)}`,
         p.server ? `${t.server}: ${p.server}` : `${t.lastConnect}: ${fmtDate(p.last_event, lang)}`,
+        p.inactive ? t.inactiveMember : "",
       ].filter(Boolean),
     };
   });

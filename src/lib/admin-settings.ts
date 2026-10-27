@@ -223,7 +223,7 @@ const definitions: Omit<SettingGroup, "area">[] = [
     },
     items: [
       { key: "gamewe_map_live", label: { de: "Karte „Gerade online“ (Spielübersicht)", en: "\"Online now\" map (game overview)" }, type: "bool", def: "1" },
-      { key: "gamewe_map_players", label: { de: "Karte über der Rangliste", en: "Map above the ranking" }, type: "bool", def: "1" },
+      { key: "gamewe_map_players", label: { de: "Karte über der Rangliste und auf den Clan-Seiten", en: "Map above the ranking and on clan pages" }, type: "bool", def: "1" },
       {
         key: "gamewe_map_style",
         label: { de: "Kartenstil", en: "Map style" },

@@ -1395,3 +1395,61 @@ html[data-os] .consent-buttons .button, html[data-os] .map-consent .button { fon
   .consent-buttons .button { flex: 1 1 100%; }
   .consent-banner { max-height: 70vh; overflow-y: auto; }
 }
+
+/* ---------------------------------------------------------------- clan page */
+
+/* Head of a clan page: the flag of the members' most common country lies
+   large and tilted in the top left corner, fading out to the right, and the
+   tag and the name stand on it in white; two key numbers on the right.
+   With a flag the head is dark in every skin, so the white text stays
+   readable; without one it is a plain box in the skin's colours. On a
+   phone the numbers go under the name. */
+.clan-hero { position: relative; display: flex; align-items: center; gap: 14px; min-height: 64px; margin: 0 0 10px; padding: 16px 18px; background: var(--surface); border: 1px solid var(--border); overflow: hidden; isolation: isolate; }
+.clan-hero.has-flag { border-color: #2c2f33; }
+/* The dark ground as its own layer: the modern skins set the background of
+   every box in a section. */
+.clan-hero.has-flag::before { content: ""; position: absolute; inset: 0; z-index: -2; background: #16181b; }
+.clan-hero-bg { position: absolute; left: -28px; top: -22px; z-index: -1; transform: rotate(-8deg); opacity: 0.75; pointer-events: none; -webkit-mask-image: linear-gradient(90deg, #000 45%, transparent 98%); mask-image: linear-gradient(90deg, #000 45%, transparent 98%); }
+.clan-hero-bg .flag-svg { display: block; width: 240px; height: 140px; margin: 0; border-radius: 0; box-shadow: none; }
+.clan-hero-text { flex: 1 1 auto; min-width: 0; }
+.section .clan-hero h1 { margin: 0; font-size: 26px; line-height: 1.15; font-weight: bold; color: var(--text); overflow-wrap: anywhere; }
+.clan-hero p { margin: 3px 0 0; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+.section .clan-hero.has-flag h1, .clan-hero.has-flag p { color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.7); }
+.clan-hero-facts { flex: none; display: flex; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.clan-hero-facts li { padding: 5px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface-2); font-size: 11px; color: var(--muted); white-space: nowrap; }
+.clan-hero-facts b { color: var(--text); font-size: 13px; }
+.clan-hero.has-flag .clan-hero-facts li { border-color: rgba(255, 255, 255, 0.25); background: rgba(0, 0, 0, 0.5); color: #ccc; }
+.clan-hero.has-flag .clan-hero-facts b { color: #fff; }
+@media (max-width: 640px) {
+  .clan-hero { flex-wrap: wrap; gap: 10px 12px; padding: 14px 12px; }
+  .section .clan-hero h1 { font-size: 21px; }
+  /* The flag runs over the whole height of the taller head. */
+  .clan-hero-bg { top: -20px; bottom: -8px; }
+  .clan-hero-bg .flag-svg { width: 240px; height: 100%; }
+  .clan-hero-facts { flex-basis: 100%; flex-wrap: wrap; }
+}
+
+/* Details and the members' map side by side, the map as tall as the table. */
+.clan-top { align-items: stretch; }
+.clan-top > table.stats { align-self: start; }
+.clan-map { display: flex; flex-direction: column; }
+.clan-map .player-map { flex: 1 1 auto; min-height: 260px; height: auto; }
+.clan-map > p { margin: 6px 0 0; }
+.map-avatar.faded img, .map-avatar.faded span { opacity: 0.45; filter: grayscale(0.7); }
+.map-avatar.faded img:not(.ok) { opacity: 0; }
+.map-avatar.faded:hover img.ok, .map-avatar.faded:hover span { opacity: 1; filter: none; }
+.clan-country .flag-svg, .clan-origin .flag-svg { margin-right: 3px; }
+.clan-origins { display: inline-flex; flex-wrap: wrap; gap: 4px 12px; }
+.clan-origin { white-space: nowrap; }
+
+/* Members table: the name gets a fixed share and the numbers share the rest,
+   centred, so the columns line up without wide gaps; the browser still
+   widens a column whose content needs it (dates in the larger modern
+   fonts). On a phone it sizes the columns on its own. */
+@media (min-width: 900px) {
+  table.clan-members thead th:nth-child(2) { width: 25%; }
+  table.clan-members thead th.num:not(:first-child), table.clan-members td.num { text-align: center; }
+  table.clan-members th.barcell { width: 92px; }
+  /* Narrower cells, so all 13 columns fit the modern skins' width. */
+  html[data-skin] table.clan-members th, html[data-skin] table.clan-members td { padding-left: 5px; padding-right: 5px; }
+}

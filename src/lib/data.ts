@@ -2041,6 +2041,27 @@ async function loadMapPlayers(
   return withRanks(game, rows.map(mapRow).filter(onMap));
 }
 
+// All members of a clan with a known location, the active ones and those the
+// collector moved to hlstats_PlayersInactive (inactive: true), for the map on
+// the clan page. Only the GeoIP city point is used, never an address; hidden
+// players stay out like everywhere. Only the active members have a place in
+// the ranking.
+export async function getClanMapPlayers(game: string, clanId: number): Promise<(MapPlayer & { inactive: boolean })[]> {
+  const cols = "p.playerId, d.lastName AS name, p.skill, p.kills, p.deaths, p.last_event, l.flag, l.country, l.city, l.lat, l.lng";
+  const from = `JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+     JOIN hlstats_Players_Locations l ON l.id = d.location_id
+     WHERE p.clan = ? AND p.hideranking = 0 AND l.lat <> '' AND l.lng <> ''`;
+  const rows = await query<Omit<MapPlayer, "lat" | "lng"> & { lat: string; lng: string; active: number | string }>(
+    `SELECT ${cols}, 1 AS active FROM hlstats_Players p ${from}
+     UNION ALL SELECT ${cols}, 0 AS active FROM hlstats_PlayersInactive p ${from}
+     ORDER BY skill DESC, playerId`,
+    [clanId, clanId],
+  );
+  const all = rows.map((r) => ({ ...mapRow(r), inactive: Number(r.active) === 0 })).filter(onMap);
+  const ranked = await withRanks(game, all.filter((r) => !r.inactive));
+  return [...ranked, ...all.filter((r) => r.inactive)];
+}
+
 // Players online right now on the servers of a ranking, at the GeoIP city of
 // their current connection (or their last known one), for the map on the
 // servers page.

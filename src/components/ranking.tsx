@@ -41,6 +41,7 @@ export async function RankingTable({
   inactive,
   sort,
   activityDays,
+  className,
   t,
   lang,
 }: {
@@ -59,6 +60,8 @@ export async function RankingTable({
   inactive?: { title: string; rows: RankingRow[] };
   sort?: SortProps;
   activityDays: number;
+  // Class of the table, for column widths of one page.
+  className?: string;
   t: Dict;
   lang: Lang;
 }) {
@@ -114,7 +117,7 @@ export async function RankingTable({
   };
   return (
     <TableWrap>
-      <table>
+      <table className={className}>
         <thead>
           <tr>
             {showRank ? <th className="num">#</th> : null}

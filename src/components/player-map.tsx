@@ -20,6 +20,8 @@ export type MapMarker = {
   lines: string[];
   // The server the player is on right now: a line joins them.
   serverId?: number;
+  // Drawn faded (an inactive clan member).
+  faded?: boolean;
 };
 
 // One game server: name (with the flag), page and hover details. vac: the
@@ -117,7 +119,7 @@ export function PlayerMap({ markers, servers = NO_SERVERS, style }: { markers: M
         const srv = m.serverId === undefined ? undefined : serverAt.get(m.serverId);
         if (srv) links.push({ from: pos, dx, dy, to: srv.pos, online: srv.online });
         const icon = L.divIcon({
-          className: "map-avatar",
+          className: m.faded ? "map-avatar faded" : "map-avatar",
           // The initial shows until the avatar has loaded, then the avatar fades
           // in over it; if it does not load, the initial stays.
           html: `<a href="${esc(m.href)}" aria-label="${esc(m.name)}"><span>${esc(m.initial)}</span><img src="${esc(m.avatar)}" alt="" loading="lazy" onload="this.classList.add('ok')" onerror="this.remove()"></a>`,
