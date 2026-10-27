@@ -228,6 +228,11 @@ file as root.
 
 ## 3. A: Container (Docker / Docker Compose)
 
+The shortest way, with a MariaDB container and the collector on the same
+host (`docker run` commands and `docker-compose.quickstart.yml`):
+[Quick start with Docker](../README.md#quick-start-with-docker). The rest of
+this section uses a settings file and fits an existing database.
+
 The image tags are `latest` (the newest release), `<version>` (e.g.
 `0.1.0`), `<major>.<minor>` (e.g. `0.1`) and `edge`. Every commit on `main`
 is built and checked and published as `edge`; only a release (made by
