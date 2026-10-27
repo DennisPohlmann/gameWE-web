@@ -15,7 +15,7 @@ import { countMapKillers, gameHasShots, getGame, getMap, getMapAccuracy, getMapG
 import { fmtDuration, fmtNum, fmtPct, kpd, localeOf, ratio } from "@/lib/format";
 import { DOTS, getHeatmap, heatLevel } from "@/lib/heatmap";
 import { levelParam, levelSplit } from "@/lib/map-levels";
-import { insideShare } from "@/lib/overview-format";
+import { insideShare, shiftFrame } from "@/lib/overview-format";
 import { getOverview, noteMismatch } from "@/lib/overviews";
 import { fill, getDict } from "@/lib/i18n";
 import { kpm, mapPlayTime, mapSort } from "@/lib/map-table";
@@ -82,7 +82,9 @@ export default async function MapPage({ params, searchParams }: Props) {
   // picture: then the dots alone, as without a picture.
   const fits = overview && fullHeat ? insideShare(overview.frame, [...fullHeat.killDots, ...fullHeat.deathDots]) >= 0.5 : false;
   if (overview && !fits) noteMismatch(overview, m.map);
-  const picture = overview && fits ? { ...overview.frame, href: level === "lower" && overview.lowerHref ? overview.lowerHref : overview.href } : null;
+  // The lower level: its own picture, else where the main picture draws it.
+  const lower = level === "lower" && overview ? (overview.lowerHref ? { frame: overview.frame, href: overview.lowerHref } : { frame: overview.lowerShift ? shiftFrame(overview.frame, overview.lowerShift) : overview.frame, href: overview.href }) : null;
+  const picture = overview && fits ? (lower ? { ...lower.frame, href: lower.href } : { ...overview.frame, href: overview.href }) : null;
   const ids = players.map((r) => r.playerId);
   const [flags, gg] = await Promise.all([getPlayerFlags(ids), getMapGgWins(game, m.id, ids)]);
   const w = wins.get(m.id);

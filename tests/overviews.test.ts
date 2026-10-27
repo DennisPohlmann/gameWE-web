@@ -6,7 +6,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
 import { LEVEL_SPLITS } from "../src/lib/map-levels.ts";
-import { imageInfo, insideShare, overviewFile, overviewFrame, parseCalibration, parseKeyValues } from "../src/lib/overview-format.ts";
+import { imageInfo, insideShare, overviewFile, overviewFrame, parseCalibration, parseKeyValues, shiftFrame } from "../src/lib/overview-format.ts";
 
 const NUKE = `// HLTV overview description file for de_nuke.bsp
 
@@ -34,13 +34,14 @@ const NUKE = `// HLTV overview description file for de_nuke.bsp
 `;
 
 test("Valve overview files give position, scale and the lower level", () => {
-  assert.deepEqual(parseCalibration(NUKE, "txt"), { posX: -3453, posY: 2887, scale: 7, ref: 1024, lowerSplit: -495 });
+  assert.deepEqual(parseCalibration(NUKE, "txt"), { posX: -3453, posY: 2887, scale: 7, ref: 1024, lowerSplit: -495, lowerShift: null });
   assert.deepEqual(parseCalibration('"de_dust2" { "pos_x" "-2476" "pos_y" "3239" "scale" "4.4" "rotate" "1" }', "txt"), {
     posX: -2476,
     posY: 3239,
     scale: 4.4,
     ref: 1024,
     lowerSplit: null,
+    lowerShift: null,
   });
 });
 
@@ -51,7 +52,18 @@ test("JSON calibrations, with ref and lower_split", () => {
     scale: 2,
     ref: 2048,
     lowerSplit: -50,
+    lowerShift: null,
   });
+});
+
+test("a lower level drawn elsewhere on the picture moves the picture", () => {
+  const c = parseCalibration('{"pos_x": -3290, "pos_y": 1157.52, "scale": 6.98, "lower_offset": {"x": 0, "y": -46}}', "json")!;
+  assert.deepEqual(c.lowerShift, { x: 0, y: -46 });
+  const f = overviewFrame(c, { width: 2048, height: 2048 });
+  const s = shiftFrame(f, c.lowerShift!);
+  assert.equal(s.x, f.x);
+  assert.ok(Math.abs(s.y - (f.y + 0.46 * f.height)) < 1e-9);
+  assert.equal(parseCalibration('{"pos_x": 1, "pos_y": 1, "scale": 1, "lower_offset": {"x": 0, "y": 500}}', "json")?.lowerShift, null);
 });
 
 test("broken or incomplete calibrations are refused", () => {
@@ -115,16 +127,25 @@ test("file names: pictures, Valve names, lower levels, calibrations", () => {
   for (const n of ["De_Dust2.png", "de_dust2.svg", "de_dust2.dds", ".png", "../x.png", "de dust2.png", "README.md", "_x.png"]) assert.equal(overviewFile(n), null, n);
 });
 
-test("built-in calibrations: one valid JSON per CS2 map, levels as in map-levels.ts", () => {
-  const dir = path.join(process.cwd(), "overviews", "cs2");
-  const files = readdirSync(dir).filter((f) => f.endsWith(".json"));
-  assert.ok(files.length >= 10);
-  for (const f of files) {
-    const c = parseCalibration(readFileSync(path.join(dir, f), "utf8"), "json");
-    assert.ok(c, f);
-    const map = f.slice(0, -5);
-    assert.equal(c.lowerSplit, LEVEL_SPLITS[map] ?? null, map);
+test("built-in calibrations: valid JSON per map, CS2 levels as in map-levels.ts, every picture has one", () => {
+  const root = path.join(process.cwd(), "overviews");
+  const games = readdirSync(root, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
+  assert.ok(games.includes("cs2") && games.includes("css"));
+  for (const g of games) {
+    const dir = path.join(root, g);
+    const names = readdirSync(dir);
+    for (const f of names.filter((n) => n.endsWith(".json"))) {
+      const c = parseCalibration(readFileSync(path.join(dir, f), "utf8"), "json");
+      assert.ok(c, `${g}/${f}`);
+      if (g === "cs2") assert.equal(c.lowerSplit, LEVEL_SPLITS[f.slice(0, -5)] ?? null, f);
+    }
+    for (const f of names.filter((n) => n.endsWith(".png"))) {
+      const file = overviewFile(f);
+      assert.ok(file, `${g}/${f}`);
+      assert.ok(names.includes(`${file.map}.json`), `${g}/${f} without calibration`);
+      assert.equal(imageInfo(readFileSync(path.join(dir, f)))?.type, "image/png", f);
+    }
   }
-  const dust2 = parseCalibration(readFileSync(path.join(dir, "de_dust2.json"), "utf8"), "json");
-  assert.deepEqual(dust2, { posX: -2476, posY: 3239, scale: 4.4, ref: 1024, lowerSplit: null });
+  const dust2 = parseCalibration(readFileSync(path.join(root, "cs2", "de_dust2.json"), "utf8"), "json");
+  assert.deepEqual(dust2, { posX: -2470, posY: 3250.6, scale: 4.4, ref: 1024, lowerSplit: null, lowerShift: null });
 });

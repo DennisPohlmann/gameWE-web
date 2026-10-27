@@ -17,6 +17,9 @@ export type Calibration = {
   ref: number;
   // Height (pos_z) at which the lower level ends, from verticalsections.
   lowerSplit: number | null;
+  // Where a picture with both levels drew the lower one, in percent of the
+  // picture (lower_offset, as Boltobserv's map splits: y -46 = 46% lower).
+  lowerShift: { x: number; y: number } | null;
 };
 
 export const REF = 1024;
@@ -116,7 +119,14 @@ function fromObject(o: Record<string, unknown>): Calibration | null {
     }
   }
   if (lowerSplit === null) lowerSplit = num(low.lower_split);
-  return { posX, posY, scale, ref, lowerSplit };
+  let lowerShift: { x: number; y: number } | null = null;
+  const lo = low.lower_offset;
+  if (lo && typeof lo === "object" && !Array.isArray(lo)) {
+    const x = num((lo as Record<string, unknown>).x) ?? 0;
+    const y = num((lo as Record<string, unknown>).y) ?? 0;
+    if (Math.abs(x) <= 100 && Math.abs(y) <= 100 && (x || y)) lowerShift = { x, y };
+  }
+  return { posX, posY, scale, ref, lowerSplit, lowerShift };
 }
 
 export function parseCalibration(text: string, kind: "json" | "txt"): Calibration | null {
@@ -184,6 +194,12 @@ function u16le(b: Uint8Array, o: number) {
 export function overviewFrame(c: Calibration, img: { width: number; height: number }): Frame {
   const width = c.ref * c.scale;
   return { x: c.posX, y: c.posY, width, height: (width * img.height) / img.width };
+}
+
+// The picture moved so the lower level drawn elsewhere on it lies under the
+// dots: drawn 46% lower (y -46) means the picture moves up by 46%.
+export function shiftFrame(f: Frame, shift: { x: number; y: number }): Frame {
+  return { ...f, x: f.x - (shift.x / 100) * f.width, y: f.y - (shift.y / 100) * f.height };
 }
 
 // Share of the dots that lie on the picture; a calibration of another map

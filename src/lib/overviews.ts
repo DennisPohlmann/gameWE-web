@@ -130,6 +130,8 @@ export type Overview = {
   lowerHref: string | null;
   // Height where the lower level ends, from the calibration.
   lowerSplit: number | null;
+  // The lower level drawn on the main picture (overview-format.ts).
+  lowerShift: { x: number; y: number } | null;
 };
 
 // The overview of a map: game folders first (the game code, then the base
@@ -161,6 +163,7 @@ export async function getOverview(code: string, realgame: string | null | undefi
     href: url(img.dir, "image", img.e),
     lowerHref: low && lowInfo ? url(low.dir, "lower", low.e) : null,
     lowerSplit: c.lowerSplit,
+    lowerShift: c.lowerShift,
   };
 }
 
