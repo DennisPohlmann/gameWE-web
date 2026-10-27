@@ -279,8 +279,8 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 input[readonly] { background: var(--panel-2); color: var(--muted); }
 input[type="checkbox"], input[type="radio"] { accent-color: var(--accent-btn); width: 16px; height: 16px; }
 select { padding-right: 28px; }
-.form { display: grid; gap: 14px; max-width: 640px; }
-.form label { display: grid; gap: 4px; font-weight: 600; }
+.form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; max-width: 640px; }
+.form label { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; font-weight: 600; }
 .form label > small, .form small { font-weight: 400; color: var(--muted); }
 .form label.check, label.check { display: flex; gap: 8px; align-items: center; font-weight: 500; }
 .form .button { justify-self: start; }
@@ -334,7 +334,7 @@ select { padding-right: 28px; }
 .hl-actions { margin-left: auto; display: flex; gap: 4px; }
 .hl-actions .button { padding: 3px 9px; }
 .hl-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 8px; }
-.hl-fields label { display: grid; gap: 4px; font-weight: 600; }
+.hl-fields label { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; font-weight: 600; }
 .hl-hint, .hl-error { grid-column: 1 / -1; }
 .hl-error { color: var(--bad); }
 
@@ -444,8 +444,10 @@ select { padding-right: 28px; }
 }
 
 /* Ranking page: scheduled reset, "every N unit" in one row. */
-.hof-every { display: flex; gap: 8px; align-items: center; font-weight: 400; }
+.hof-every { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-weight: 400; }
 .hof-every input { width: 80px; }
+.hof-every > span { flex: none; }
+.hof-every select { min-width: 0; flex: 1 1 12em; max-width: max-content; }
 .hof-form .hof-num { width: 80px; }
 .hof-form fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
 .hof-form legend { font-weight: 600; margin-bottom: 4px; }
@@ -467,3 +469,11 @@ details.hof-confirm > summary { list-style: none; cursor: pointer; }
 details.hof-confirm > summary::-webkit-details-marker { display: none; }
 details.hof-confirm[open] > summary { display: none; }
 #hall-of-fame { margin-top: 18px; }
+
+/* Phones and tablets: form controls at 16px. iOS Safari zooms the page in
+   when a field under 16px gets the focus (the TOTP field has it right after
+   the password step) and keeps that zoom when the admin area navigates on
+   without a full page load, so the whole admin looked cut off left and right. */
+@media (max-width: 900px), (pointer: coarse) {
+  body.adm input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), body.adm select, body.adm textarea { font-size: 16px; }
+}
