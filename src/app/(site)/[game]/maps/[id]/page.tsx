@@ -128,7 +128,7 @@ export default async function MapPage({ params, searchParams }: Props) {
                 : t.heatNone}
               {heat && ((show !== "victim" && heat.kills > DOTS) || (show !== "killer" && heat.deaths > DOTS)) ? ` ${fill(t.heatLatest, { n: fmtNum(DOTS, lang) })}` : null}
             </p>
-            <AutoForm action={base} className="search">
+            <AutoForm action={base} className="search" keepScroll>
               <select {...noAutofill} name="pos" defaultValue={show === "all" ? "" : show} aria-label={t.heatmap}>
                 <option value="">{t.heatAll}</option>
                 <option value="killer">{t.heatKills}</option>
