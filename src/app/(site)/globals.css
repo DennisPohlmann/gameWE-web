@@ -820,6 +820,12 @@ a.button { display: inline-block; text-decoration: none; }
   /* Filter forms with several fields (events) shrink their selects to fit. */
   .search { max-width: 100%; }
   .search select { min-width: 0; flex: 0 1 auto; }
+  /* The filters next to a section title (players page: ranking type,
+     country, state or city and the search) may get narrower than their
+     fields, so the page does not scroll sideways; the selects shrink. */
+  .section-aside { min-width: 0; max-width: 100%; }
+  /* The banner picker under the forum signature wraps instead. */
+  .sig-codes-bar { flex-wrap: wrap; }
   .hide-sm { display: none; }
   .icon-link { display: block; margin: 2px 0; }
   /* Player page: everything fits the phone's width. */
