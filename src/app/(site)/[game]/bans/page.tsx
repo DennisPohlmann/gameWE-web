@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { sortHeads } from "@/components/sort-head";
 import { BanBadges, banKindLabel, NameBanMark } from "@/components/ban-badges";
 import { Empty, Pager, PctBar, PlayerLink, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam } from "@/components/ui";
-import { banKind, mainReason, mergeBans, type BanEntry, type BanKind } from "@/lib/ban-merge";
+import { banKind, mainReason, mergeBans, steamBanEntry, type BanEntry, type BanKind } from "@/lib/ban-merge";
 import { gameHasShots, getBanPlayers, getBanRecords, getPlayersBySteam, getRecentPlayers, type BanPlayer } from "@/lib/data";
 import { fmtBanMinutes, fmtNum, kpd, localeOf, nowUnix, ratio, steamIds } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
@@ -184,8 +184,7 @@ async function vacRows(game: string): Promise<Found[]> {
   const now = nowUnix();
   return [...bans].flatMap(([id, b]): Found[] => {
     const player = bySteam.get(id);
-    if (!player || (b.vac <= 0 && b.game <= 0)) return [];
-    // Steam gives the days since the last ban, so the date is to the day.
-    return [{ player, ban: { kind: "vac", at: now - b.days * 86400, dateText: "", reason: b.vac ? `${b.vac}× VAC` : `${b.game}× Game Ban`, length: "", until: null } }];
+    const ban = steamBanEntry(b, now);
+    return player && ban ? [{ player, ban }] : [];
   });
 }

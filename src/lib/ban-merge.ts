@@ -17,6 +17,15 @@ export function banKind(v: string | null | undefined): BanKind {
   return ORDER.find((k) => k === v) ?? "engine";
 }
 
+// The "VAC" ban of a player from Steam's ban list (GetPlayerBans): VAC and
+// game bans both count, as Steam marks both on the profile; the date is to
+// the day (Steam gives the days since the last ban). Null without a ban.
+// The bans page and the profile both use it, so they always agree.
+export function steamBanEntry(b: { vac: number; game: number; days: number }, now: number): BanEntry | null {
+  if (b.vac <= 0 && b.game <= 0) return null;
+  return { kind: "vac", at: now - b.days * 86400, dateText: "", reason: b.vac ? `${b.vac}× VAC` : `${b.game}× Game Ban`, length: "", until: null };
+}
+
 // The colour of the "!" behind the name: yellow for VAC alone, red for the
 // other bans (SourceBans, server bans), "both" (split red/yellow) when a
 // VAC ban and another one run.

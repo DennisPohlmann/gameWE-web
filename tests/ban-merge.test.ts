@@ -3,7 +3,7 @@
 // the others and split when both run. Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { banKind, banSlots, mainReason, markKind, mergeBans, type BanEntry } from "../src/lib/ban-merge.ts";
+import { banKind, banSlots, mainReason, markKind, mergeBans, steamBanEntry, type BanEntry } from "../src/lib/ban-merge.ts";
 
 const ban = (kind: BanEntry["kind"], at: number | null, reason = ""): BanEntry => ({ kind, at, dateText: "", reason, length: "", until: null });
 
@@ -61,4 +61,14 @@ test("VAC and SourceBans badges always side by side, the missing one empty (grey
     [["vac", false], ["engine", true]],
   );
   assert.equal(markKind([ban("sourcebans", 1)]), "red");
+});
+
+test("Steam's ban list: VAC and game bans both make the VAC badge (bans page and profile alike)", () => {
+  assert.equal(steamBanEntry({ vac: 0, game: 0, days: 0 }, 1000000), null);
+  assert.deepEqual(steamBanEntry({ vac: 0, game: 1, days: 2 }, 1000000), { kind: "vac", at: 1000000 - 2 * 86400, dateText: "", reason: "1× Game Ban", length: "", until: null });
+  assert.equal(steamBanEntry({ vac: 2, game: 1, days: 0 }, 5)?.reason, "2× VAC");
+  // A game ban and a SourceBans ban: split "!" and both badges, as on the bans page.
+  const both = [steamBanEntry({ vac: 0, game: 1, days: 0 }, 5)!, ban("sourcebans", 1)];
+  assert.equal(markKind(both), "both");
+  assert.deepEqual(banSlots(mergeBans(both.map((b) => ({ player: 0, ban: b })), () => 0)[0].bans, ["vac", "sourcebans"]).map((x) => [x.kind, !!x.ban]), [["vac", true], ["sourcebans", true]]);
 });

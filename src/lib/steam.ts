@@ -122,9 +122,12 @@ async function loadBatch(ids: string[]) {
   try {
     const [sum, bans] = await Promise.all([
       steamJson<{ response?: { players?: Summary[] } }>(`https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${key}&steamids=${q}`),
-      steamJson<{ players?: { SteamId: string; VACBanned?: boolean }[] }>(`https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key=${key}&steamids=${q}`),
+      steamJson<{ players?: BanReply[] }>(`https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key=${key}&steamids=${q}`),
     ]);
     const vac = new Map((bans?.players ?? []).map((b) => [b.SteamId, !!b.VACBanned]));
+    // The same answer fills the ban list's cache, so the profile's
+    // getSteamBans needs no second request.
+    rememberBans(bans?.players ?? []);
     const found = new Map((sum?.response?.players ?? []).map((s) => [s.steamid, s]));
     for (const id of ids) {
       const s = found.get(id);
@@ -284,16 +287,20 @@ export async function getSteamBans(ids: string[]): Promise<Map<string, SteamBans
   }
   for (let i = 0; i < missing.length; i += 100) {
     const part = missing.slice(i, i + 100);
-    const res = await steamJson<{
-      players?: { SteamId: string; NumberOfVACBans?: number; NumberOfGameBans?: number; DaysSinceLastBan?: number; CommunityBanned?: boolean }[];
-    }>(`https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key=${key}&steamids=${part.join(",")}`).catch(() => null);
+    const res = await steamJson<{ players?: BanReply[] }>(`https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key=${key}&steamids=${part.join(",")}`).catch(() => null);
     if (!res) break;
-    if (banCache.size > 50000) banCache.clear();
-    for (const p of res.players ?? []) {
-      const value = { vac: p.NumberOfVACBans ?? 0, game: p.NumberOfGameBans ?? 0, days: p.DaysSinceLastBan ?? 0, community: !!p.CommunityBanned };
-      banCache.set(p.SteamId, { at: Date.now(), value });
-      out.set(p.SteamId, value);
-    }
+    for (const [id, value] of rememberBans(res.players ?? [])) out.set(id, value);
   }
   return out;
+}
+
+type BanReply = { SteamId: string; VACBanned?: boolean; NumberOfVACBans?: number; NumberOfGameBans?: number; DaysSinceLastBan?: number; CommunityBanned?: boolean };
+
+function rememberBans(players: BanReply[]): [string, SteamBans][] {
+  if (banCache.size > 50000) banCache.clear();
+  return players.map((p) => {
+    const value = { vac: p.NumberOfVACBans ?? 0, game: p.NumberOfGameBans ?? 0, days: p.DaysSinceLastBan ?? 0, community: !!p.CommunityBanned };
+    banCache.set(p.SteamId, { at: Date.now(), value });
+    return [p.SteamId, value];
+  });
 }
