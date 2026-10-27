@@ -461,7 +461,14 @@ select { padding-right: 28px; }
 .hof-form:has(select[name="unit"] option[value="quarter"]:checked) .hof-mday,
 .hof-form:has(select[name="unit"] option[value="week"]:checked) .hof-wday,
 .hof-form:has(select[name="unit"] option[value="year"]:checked) .hof-ydate { display: grid; }
-.hof-form:has(select[name="unit"] option[value="off"]:checked) .hof-mode { display: none; }
+.hof-switch { display: grid; gap: 4px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); }
+.form .hof-switch label.switch { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.hof-switch .switch b { font-weight: 600; }
+.hof-switch small { padding-left: 50px; }
+.hof-form .hof-state { margin: 0; }
+.hof-sched { display: grid; gap: 14px; }
+.hof-form:has(input[name="enabled"]:not(:checked)) .hof-sched { opacity: 0.6; }
+.hof-form:has(input[name="enabled"]:not(:checked)) .hof-understood { display: none; }
 .hof-links { display: flex; gap: 14px; flex-wrap: wrap; }
 .hof-op { display: inline; }
 details.hof-confirm { display: inline-block; }

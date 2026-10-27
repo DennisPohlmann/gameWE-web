@@ -109,7 +109,7 @@ export async function HallOfFameCard({ game, lang, status }: { game: string; lan
           ))}
         </fieldset>
         <div className="hof-own">
-          <HallScheduleFields lang={lang} schedule={s.schedule} mode={s.mode} withOff={false} />
+          <HallScheduleFields lang={lang} schedule={s.schedule} mode={s.mode} />
         </div>
         <label>
           {t.page}

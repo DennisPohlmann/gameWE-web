@@ -481,10 +481,15 @@ What the admin area edits:
 - **Scheduled reset for all rankings** (level 100, at the end of
   `/admin/rankings`): one schedule (with start day and kind of reset) for
   every ranking set to "As for all rankings", e.g. every quarter; the card
-  lists those rankings. Changing it starts every following ranking with the
-  period now running, none is reset at once. Stored as
-  `gamewe_reset_schedule` and `gamewe_reset_mode`; from the console `gamewe
-  halloffame schedule -all [EVERY|off] -mode MODE`.
+  lists those rankings. A switch at the top turns it on or off; the badge
+  next to the title ("On" / "Off") and a line below the switch show the state
+  (on: schedule, kind and next reset; off: the schedule kept for later).
+  Switching it off keeps the schedule (`gamewe_reset_paused`), switching it
+  on again restores it. Changing it or switching it on starts every
+  following ranking with the period now running, none is reset at once, not
+  even for the time it was off. Stored as `gamewe_reset_schedule` and
+  `gamewe_reset_mode`; from the console `gamewe halloffame schedule -all
+  [EVERY|off] -mode MODE`.
 - **Edit the hall of fame** (level 100, `/admin/rankings/<code>/hall-of-fame`,
   "Edit entries" on the card; needs collector migration 16): every stored
   entry per period (place stored, place on the podium, name then and now,

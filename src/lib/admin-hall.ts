@@ -6,7 +6,9 @@ import { resetMode, type ResetMode } from "./reset-modes";
 
 // Admin settings of the scheduled ranking resets and the hall of fame, in
 // hlstats_Options (read by the collector every minute):
-// gamewe_reset_schedule / gamewe_reset_mode: the schedule for all rankings;
+// gamewe_reset_schedule / gamewe_reset_mode: the schedule for all rankings
+// (gamewe_reset_paused: the schedule while it is switched off; the collector
+// does not read it);
 // gamewe_reset_schedule_<game> ("month", "2 week", "month@15", "off"; unset =
 // as for all rankings), gamewe_reset_mode_<game>, gamewe_hof_<game> ("1",
 // "0", unset = automatic) and, written by the collector,
@@ -14,7 +16,10 @@ import { resetMode, type ResetMode } from "./reset-modes";
 
 export type HallSource = "global" | "own" | "off";
 
-export type GlobalHall = { schedule: Schedule | null; mode: ResetMode };
+// enabled: the schedule is on (gamewe_reset_schedule is set). schedule: the
+// one stored, also while it is off. last: start of the running period of a
+// ranking that follows it (0: not started yet).
+export type GlobalHall = { enabled: boolean; schedule: Schedule | null; mode: ResetMode; last: number };
 
 export type HallSettings = {
   table: boolean;
@@ -22,7 +27,7 @@ export type HallSettings = {
   source: HallSource;
   schedule: Schedule | null; // own schedule (source "own")
   mode: ResetMode; // own mode
-  global: GlobalHall;
+  global: { schedule: Schedule | null; mode: ResetMode }; // schedule null while off
   effective: Schedule | null; // the one the collector uses
   effectiveMode: ResetMode;
   page: "auto" | "on" | "off";
@@ -30,7 +35,7 @@ export type HallSettings = {
   entries: number;
 };
 
-const GLOBAL = { schedule: "gamewe_reset_schedule", mode: "gamewe_reset_mode" };
+const GLOBAL = { schedule: "gamewe_reset_schedule", mode: "gamewe_reset_mode", paused: "gamewe_reset_paused" };
 
 const keys = (game: string) => ({
   schedule: `gamewe_reset_schedule_${game}`,
@@ -49,9 +54,17 @@ function source(v: string | undefined): HallSource {
   return ["off", "0"].includes(v.toLowerCase()) ? "off" : "own";
 }
 
-export async function globalHall(): Promise<GlobalHall> {
-  const o = await options(Object.values(GLOBAL));
-  return { schedule: parseSchedule(o[GLOBAL.schedule] ?? ""), mode: resetMode(o[GLOBAL.mode]) ?? "player-stats" };
+// The schedule for all rankings; games: the rankings (for last).
+export async function globalHall(games: string[] = []): Promise<GlobalHall> {
+  const o = await options([...Object.values(GLOBAL), ...games.flatMap((g) => [keys(g).schedule, keys(g).last])]);
+  const active = parseSchedule(o[GLOBAL.schedule] ?? "");
+  const following = games.filter((g) => !o[keys(g).schedule]);
+  return {
+    enabled: active !== null,
+    schedule: active ?? parseSchedule(o[GLOBAL.paused] ?? ""),
+    mode: resetMode(o[GLOBAL.mode]) ?? "player-stats",
+    last: active ? Math.max(0, ...following.map((g) => lastStart(o[keys(g).last]))) : 0,
+  };
 }
 
 export async function hallSettings(game: string): Promise<HallSettings> {
@@ -119,15 +132,26 @@ export async function saveHallSettings(game: string, src: HallSource, schedule: 
   else await set(k.page, page === "on" ? "1" : "0");
 }
 
-// Stores the schedule for all rankings ("" = none).
-export async function saveGlobalHall(schedule: string, mode: ResetMode): Promise<void> {
-  if (schedule) {
+// Stores the schedule for all rankings, switched on or off. Off keeps it in
+// gamewe_reset_paused for switching it on again. When the schedule in force
+// changes, the rankings that follow it lose the start of their running
+// period, so the collector starts the new one with the period now running
+// instead of resetting at once for the time it was off (collector 0.26.1
+// forgets it by itself while there is no schedule).
+export async function saveGlobalHall(enabled: boolean, schedule: string, mode: ResetMode): Promise<void> {
+  const before = await options([GLOBAL.schedule]);
+  if (enabled) {
     await set(GLOBAL.schedule, schedule);
-    await set(GLOBAL.mode, mode);
+    await del(GLOBAL.paused);
   } else {
     await del(GLOBAL.schedule);
-    await del(GLOBAL.mode);
+    await set(GLOBAL.paused, schedule);
   }
+  await set(GLOBAL.mode, mode);
+  const now = enabled ? schedule : "";
+  if (scheduleValue(parseSchedule(before[GLOBAL.schedule] ?? "")) === now) return;
+  const games = (await adminQuery<{ code: string }>(`SELECT code FROM hlstats_Games`)).map((r) => r.code.trim());
+  for (const g of await inheritingRankings(games)) await del(keys(g).last);
 }
 
 // The rankings that follow the schedule for all rankings (no own key).

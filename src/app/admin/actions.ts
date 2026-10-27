@@ -513,15 +513,16 @@ export async function globalHallAction(form: FormData) {
   const user = await requireAdmin(LEVEL_ADMIN);
   const back = "/admin/rankings";
   const mode = resetMode(form.get("mode"));
-  const schedule = form.get("unit") === "off" ? "" : scheduleFromForm(form);
+  const enabled = form.get("enabled") === "yes";
+  const schedule = scheduleFromForm(form);
   if (schedule === null || !mode) redirect(`${back}?hof=input#hall-of-fame`);
   const now = await globalHall();
-  const changed = schedule !== scheduleValue(now.schedule) || (schedule && mode !== now.mode);
-  if (schedule && changed && form.get("understood") !== "yes") redirect(`${back}?hof=confirm#hall-of-fame`);
-  await saveGlobalHall(schedule, mode);
+  const changed = !now.enabled || schedule !== scheduleValue(now.schedule) || mode !== now.mode;
+  if (enabled && changed && form.get("understood") !== "yes") redirect(`${back}?hof=confirm#hall-of-fame`);
+  await saveGlobalHall(enabled, schedule, mode);
   invalidateHallOfFame();
-  console.info(`gameWE: reset schedule for all rankings set to ${schedule ? `${schedule} (${mode})` : "off"}, by ${user.username}`);
-  redirect(`${back}?hof=saved#hall-of-fame`);
+  console.info(`gameWE: reset schedule for all rankings ${schedule} (${mode}) switched ${enabled ? "on" : "off"}, by ${user.username}`);
+  redirect(`${back}?hof=${enabled ? "on" : "off"}#hall-of-fame`);
 }
 
 // Removes or brings back hall of fame entries: one place, or a whole period

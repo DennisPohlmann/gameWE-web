@@ -46,14 +46,14 @@ export function hallT(lang: Lang) {
   return HALL_T[lang === "de" ? "de" : "en"];
 }
 
-// Unit, every N, start day and mode. withOff: the unit list starts with "off".
-export function HallScheduleFields({ lang, schedule, mode, withOff }: { lang: Lang; schedule: Schedule | null; mode: ResetMode; withOff: boolean }) {
+// Unit, every N, start day and mode.
+export function HallScheduleFields({ lang, schedule, mode }: { lang: Lang; schedule: Schedule | null; mode: ResetMode }) {
   const t = hallT(lang);
   // A schedule of every 3 (6, ...) months is offered as quarters.
-  const unit = !schedule ? (withOff ? "off" : "month") : schedule.unit === "month" && schedule.every % 3 === 0 ? "quarter" : schedule.unit;
+  const unit = !schedule ? "month" : schedule.unit === "month" && schedule.every % 3 === 0 ? "quarter" : schedule.unit;
   const every = !schedule ? 1 : unit === "quarter" ? schedule.every / 3 : schedule.every;
   const day = schedule?.day ?? 1;
-  const units = withOff ? (["off", "day", "week", "month", "quarter", "year"] as const) : (["day", "week", "month", "quarter", "year"] as const);
+  const units = ["day", "week", "month", "quarter", "year"] as const;
   return (
     <>
       <label>
