@@ -11,7 +11,7 @@ names one gets its replacement: `blue`, `green`, `pink`, `red` and the game
 designs `game-csgo`, `game-css`, `game-cstrike`, `game-dods`, `game-hl2mp`
 become `dark`, `game-tf` becomes `light`, `modern-blue`, `modern-gold`,
 `modern-green`, `modern-pink` and `modern-red` become `modern-dark`
-(`src/lib/skin-fallback.ts`). An own template in `TEMPLATES_DIR` with one of
+(`src/lib/skin-fallback.ts`). An own template in `/var/lib/gamewe/web/templates` with one of
 these names is used as it is. Saving Admin > Settings > Design & logo writes
 the replacement to the database.
 
@@ -43,15 +43,19 @@ templates/
    ```
 
 4. Put the folder where the site finds it:
-   - **`TEMPLATES_DIR`** (recommended, survives updates): e.g.
-     `TEMPLATES_DIR=/etc/gamewe/web/templates` in `web.env`, or in Docker a
-     volume such as `-v ./my-templates:/app/custom-templates:ro` with
-     `TEMPLATES_DIR=/app/custom-templates`.
+   - **`/var/lib/gamewe/web/templates/`** (recommended, survives updates), a
+     fixed path without a setting; in Docker mount your folder there, e.g.
+     `-v /var/lib/gamewe/web/templates:/var/lib/gamewe/web/templates:ro`
+     ([INSTALLATION.md](../docs/INSTALLATION.md#5-own-templates-and-map-pictures)).
+     The template archives of
+     [gameWE-web-content](https://github.com/DennisPohlmann/gameWE-web-content)
+     unpack straight into it.
    - or directly in this folder (`/opt/gamewe/web/templates`); an update
      replaces it.
 
-   A folder in `TEMPLATES_DIR` with the same name as a built-in one replaces
-   it. New folders show up within a minute.
+   A folder in `/var/lib/gamewe/web/templates` with the same name as a built-in
+   one replaces it. (`TEMPLATES_DIR` of v0.35 and older is no longer read.)
+   New folders show up within a minute.
 
 Only plain folders and a plain `theme.css` (no symbolic links, at most 256 KB)
 are used.
@@ -184,7 +188,7 @@ calm, the text lies on top of it.
 ## Game designs
 
 Folders named `game-<game>` (e.g. `game-css`, `game-cstrike`, `game-tf`) are
-game designs. None is built in; put your own in `TEMPLATES_DIR`. With the
+game designs. None is built in; put your own in `/var/lib/gamewe/web/templates`. With the
 setting "Game designs" on (off by default), the pages of a ranking use the design of
 its game (`hlstats_Games.realgame`, else the ranking code), the rest of the
 site keeps the main template. A game design can also be chosen as the main

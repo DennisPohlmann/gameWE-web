@@ -25,8 +25,14 @@ map they are. The site reads two folders, like the design templates:
     (Zombie Panic! Source, 27): the stock maps of the games' dedicated
     servers, drawn the same way (test, training and background maps left
     out).
-- `OVERVIEWS_DIR` (environment, e.g. `/etc/gamewe/web/overviews`): your own
-  folder, read in addition. A file with the same name as a built-in one wins.
+- `/var/lib/gamewe/web/overviews/`: your own folder, read in addition, at a
+  fixed path without a setting (in Docker mount your folder there, e.g.
+  `-v /var/lib/gamewe/web/overviews:/var/lib/gamewe/web/overviews:ro`, see
+  [INSTALLATION.md](../docs/INSTALLATION.md#5-own-templates-and-map-pictures)).
+  A file with the same name as a built-in one wins. The map archives of
+  [gameWE-web-content](https://github.com/DennisPohlmann/gameWE-web-content)
+  (e.g. `gamewe-web-maps-css-<version>.tar.gz`, folder `css/`) unpack
+  straight into it. `OVERVIEWS_DIR` of v0.35 and older is no longer read.
 
 New or changed files show up within a minute, without a restart.
 
@@ -46,7 +52,7 @@ overviews/
 For a map the site looks in the folder of the game code (e.g. `cs2comp`), then
 in the folder of the base game (`cs2`), then directly in the folder. Picture
 and calibration are looked up separately: a `de_dust2.png` of your own in
-`OVERVIEWS_DIR/cs2/` uses the built-in `cs2/de_dust2.json`. A picture from
+`/var/lib/gamewe/web/overviews/cs2/` uses the built-in `cs2/de_dust2.json`. A picture from
 the game itself is framed differently from the built-in `cs2` and `css`
 pictures: copy the game's `<map>.txt` next to it, then its calibration is
 used too.

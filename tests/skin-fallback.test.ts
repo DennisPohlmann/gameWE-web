@@ -31,7 +31,7 @@ test("removed templates fall back by family", () => {
 
 test("kept, own and unknown templates stay as they are", () => {
   for (const id of builtIn) assert.equal(replacedTemplate(id, builtIn), id);
-  // An own template in TEMPLATES_DIR with a removed name wins.
+  // An own template in /var/lib/gamewe/web/templates with a removed name wins.
   assert.equal(replacedTemplate("blue", [...builtIn, "blue"]), "blue");
   assert.equal(replacedTemplate("clan-blue", builtIn), "clan-blue");
   for (const id of ["", "constructor", "__proto__", "toString"]) assert.equal(replacedTemplate(id, builtIn), id, id);

@@ -3,7 +3,7 @@
 The environment (`/etc/gamewe/web/web.env` for the tar.gz, the container's
 `--env-file`) holds only what the website needs before it can reach the
 database or what must not be changeable from the browser: database access,
-`ADMIN_SECRET`, `BASE_PATH`, `TZ`, `TEMPLATES_DIR`, `OVERVIEWS_DIR`, `ACCESS_LOG`,
+`ADMIN_SECRET`, `BASE_PATH`, `TZ`, `ACCESS_LOG`,
 `SOURCEBANS_ALLOW_PRIVATE`, `ADMIN_COOKIE_SECURE` and the runtime variables
 (`PORT`, `HOSTNAME`, `NODE_ENV`). Every variable is listed with a comment in
 [`.env.example`](../.env.example), and
@@ -27,13 +27,24 @@ Everything else is set in the admin area (Admin → Settings) and stored in
 The environment variables are listed in `.env.example`. `TZ` (e.g.
 `Europe/Berlin`) sets the time zone of all times on the site and when a day
 starts (awards, daily charts); without it the Docker image uses UTC. Set the
-collector to the same zone. `TEMPLATES_DIR` adds a folder of your own design
-templates (see [templates/README.md](../templates/README.md)); a template's
-optional `chart.json` sets the colours of its charts (section "Charts"
-there). `OVERVIEWS_DIR` adds a folder of your own map overviews: radar
-pictures with their calibration, which the heatmap of a map draws its dots
-on, in addition to the built-in `overviews/` folder (see
-[overviews/README.md](../overviews/README.md)). `DB_TYPE` selects the database: `mariadb` (default,
+collector to the same zone. Your own design templates and map overviews
+come from two fixed folders, in addition to the built-in `templates/` and
+`overviews/` (a name in both: yours wins); in the container they are mount
+points:
+
+| Folder | Content |
+|---|---|
+| `/var/lib/gamewe/web/templates` | own design templates, one subfolder each ([templates/README.md](../templates/README.md)); a template's optional `chart.json` sets the colours of its charts (section "Charts" there) |
+| `/var/lib/gamewe/web/overviews` | own map overviews: radar pictures with their calibration, which the heatmap of a map draws its dots on ([overviews/README.md](../overviews/README.md)) |
+
+The release archives of
+[gameWE-web-content](https://github.com/DennisPohlmann/gameWE-web-content)
+unpack straight into them ([INSTALLATION.md](INSTALLATION.md#5-own-templates-and-map-pictures)).
+The environment variables `TEMPLATES_DIR` and `OVERVIEWS_DIR` (up to v0.35)
+are no longer read; still set, the site logs a warning once after the start
+that names the folder to move or mount.
+
+`DB_TYPE` selects the database: `mariadb` (default,
 also for MySQL) or `postgres`. `DB_PORT`
 defaults to 3306 or 5432 accordingly. Both use the same table and column
 names; on PostgreSQL they are unquoted, so they are stored in lower case.

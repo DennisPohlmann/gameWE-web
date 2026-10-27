@@ -19,7 +19,7 @@ machine, and the tar.gz if you prefer a plain service next to the collector.
 | The gameWE collector | Installed, with its database set up (section 1.2). Its full guide: [collector INSTALLATION.md](https://github.com/DennisPohlmann/gameWE-collector/blob/main/docs/INSTALLATION.md). |
 | Database | **MariaDB 11.4 or 12.3**, or **PostgreSQL 17 or 18** (tested on every release). MySQL 8 is not supported by the collector's schema scripts. |
 | Node.js 22 or newer | Only for the tar.gz (Node.js 24 LTS recommended). The container brings its own Node.js 24. |
-| Reverse proxy with TLS | nginx, Caddy, Apache or similar in front of port 3000 (see [section 5](#5-reverse-proxy)). |
+| Reverse proxy with TLS | nginx, Caddy, Apache or similar in front of port 3000 (see [section 6](#6-reverse-proxy)). |
 | A secret | At least 32 characters for the admin session: `openssl rand -hex 32`. |
 
 ### 1.1 Linux user and folders
@@ -41,8 +41,8 @@ Layout of a complete installation (collector and website on one machine):
 | `/var/lib/gamewe/collector/` | gamewe:gamewe 0755 | collector data (GeoIP database) |
 | `/etc/gamewe/web/` | root:gamewe 0750 | website settings |
 | `/etc/gamewe/web/web.env` | root:gamewe 0640 | website settings file (section 2) |
-| `/etc/gamewe/web/templates/` | root:gamewe 0750 | optional own designs (`TEMPLATES_DIR`) |
-| `/etc/gamewe/web/overviews/` | root:gamewe 0750 | optional map overviews for the heatmap (`OVERVIEWS_DIR`) |
+| `/var/lib/gamewe/web/templates/` | root:gamewe 0750 | optional own designs ([section 5](#5-own-templates-and-map-pictures)) |
+| `/var/lib/gamewe/web/overviews/` | root:gamewe 0750 | optional map pictures for the heatmap ([section 5](#5-own-templates-and-map-pictures)) |
 | `/opt/gamewe/web/` | root | website program (tar.gz) |
 | `/etc/systemd/system/gamewe-collector.service`, `gamewe-web.service` | root 0644 | systemd units |
 
@@ -158,10 +158,7 @@ BASE_PATH=
 TZ=Europe/Berlin
 
 # ---- Optional ----
-# Own design templates, one subfolder each (see templates/README.md)
-#TEMPLATES_DIR=/etc/gamewe/web/templates
-# Own map overviews for the heatmap (see overviews/README.md)
-#OVERVIEWS_DIR=/etc/gamewe/web/overviews
+# Own templates and map pictures: no setting, see section 5.
 # 1 when SourceBans runs on the same machine or LAN
 #SOURCEBANS_ALLOW_PRIVATE=0
 # Access log on stdout: on, off or all
@@ -202,11 +199,7 @@ BASE_PATH=
 TZ=Europe/Berlin
 
 # ---- Optional ----
-# Own templates: mount a folder and point here, e.g.
-# -v /etc/gamewe/web/templates:/app/custom-templates:ro
-#TEMPLATES_DIR=/app/custom-templates
-# Own map overviews: -v /etc/gamewe/web/overviews:/app/custom-overviews:ro
-#OVERVIEWS_DIR=/app/custom-overviews
+# Own templates and map pictures: no setting, mount the folders (section 5).
 #SOURCEBANS_ALLOW_PRIVATE=0
 #ACCESS_LOG=on
 ```
@@ -254,6 +247,19 @@ docker run -d --name gamewe-web --restart unless-stopped \
   ghcr.io/dennispohlmann/gamewe-web:latest
 ```
 
+With your own templates and map pictures
+([section 5](#5-own-templates-and-map-pictures)), mount their folders at the
+same paths in the container, read-only:
+
+```bash
+docker run -d --name gamewe-web --restart unless-stopped \
+  -p 127.0.0.1:3000:3000 \
+  --env-file /etc/gamewe/web/web.env \
+  -v /var/lib/gamewe/web/templates:/var/lib/gamewe/web/templates:ro \
+  -v /var/lib/gamewe/web/overviews:/var/lib/gamewe/web/overviews:ro \
+  ghcr.io/dennispohlmann/gamewe-web:latest
+```
+
 If the database runs on the same host and only listens on 127.0.0.1, use the
 host network instead of `-p` (set `PORT` in `web.env` if 3000 is taken):
 
@@ -280,11 +286,11 @@ services:
     # Database on this host, listening on 127.0.0.1 only: use the host
     # network instead of ports.
     # network_mode: host
-    # Own design templates (TEMPLATES_DIR=/app/custom-templates) and map
-    # overviews (OVERVIEWS_DIR=/app/custom-overviews):
+    # Own design templates and map pictures (section 5), at these fixed
+    # paths in the container:
     # volumes:
-    #   - /etc/gamewe/web/templates:/app/custom-templates:ro
-    #   - /etc/gamewe/web/overviews:/app/custom-overviews:ro
+    #   - /var/lib/gamewe/web/templates:/var/lib/gamewe/web/templates:ro
+    #   - /var/lib/gamewe/web/overviews:/var/lib/gamewe/web/overviews:ro
 ```
 
 ```bash
@@ -377,7 +383,57 @@ The admin overview shows when a newer release is out
 journalctl -u gamewe-web -f
 ```
 
-## 5. Reverse proxy
+## 5. Own templates and map pictures
+
+Next to the built-in design templates and map pictures the site reads two
+folders of your own. They have fixed paths, the same for the tar.gz and in
+the container; there is no setting for them:
+
+| Folder | What | Container |
+|---|---|---|
+| `/var/lib/gamewe/web/templates/` | own design templates, one subfolder each ([templates/README.md](../templates/README.md)) | mount point, e.g. `-v /var/lib/gamewe/web/templates:/var/lib/gamewe/web/templates:ro` |
+| `/var/lib/gamewe/web/overviews/` | own map pictures for the heatmap, one subfolder per game ([overviews/README.md](../overviews/README.md)) | mount point, e.g. `-v /var/lib/gamewe/web/overviews:/var/lib/gamewe/web/overviews:ro` |
+
+Both add to the built-in `templates/` and `overviews/`, which stay as they
+are. A name in both (a template folder, a map picture or calibration file)
+uses yours. New or changed files show up within a minute, without a
+restart; updates of the website never touch these folders. A folder that is
+missing or not mounted is simply left out.
+
+The release archives of
+[gameWE-web-content](https://github.com/DennisPohlmann/gameWE-web-content)
+unpack straight into them: `gamewe-web-template-<name>-<version>.tar.gz`
+holds the single folder `<name>/`, `gamewe-web-maps-<game>-<version>.tar.gz`
+the single folder `<game>/` (e.g. `css/`).
+
+```bash
+VERSION=1.2.0
+BASE=https://github.com/DennisPohlmann/gameWE-web-content/releases/download/v$VERSION
+curl -fLO "$BASE/gamewe-web-template-blue-$VERSION.tar.gz"
+curl -fLO "$BASE/gamewe-web-maps-css-$VERSION.tar.gz"
+curl -fLO "$BASE/SHA256SUMS"
+sha256sum --check --ignore-missing SHA256SUMS   # must print ": OK"
+
+install -d -o root -g gamewe -m 0750 /var/lib/gamewe/web/templates /var/lib/gamewe/web/overviews
+tar -xzf "gamewe-web-template-blue-$VERSION.tar.gz" -C /var/lib/gamewe/web/templates
+tar -xzf "gamewe-web-maps-css-$VERSION.tar.gz" -C /var/lib/gamewe/web/overviews
+```
+
+The tar.gz service (user `gamewe`) reads them through the group; the
+container runs as uid 1000 (`node`), so there make them world-readable
+(`chmod -R o+rX /var/lib/gamewe/web/templates /var/lib/gamewe/web/overviews`,
+the folders hold nothing secret) or give uid 1000 read access.
+
+**Coming from v0.35 or older:** the environment variables `TEMPLATES_DIR` and
+`OVERVIEWS_DIR` are no longer read. Move the folders to the paths above (the
+earlier examples used `/etc/gamewe/web/templates` and
+`/etc/gamewe/web/overviews`; in the container, mount them there instead of at
+`/app/custom-templates` and `/app/custom-overviews`) and remove both
+variables from `web.env`. While
+one is still set, the site logs a warning once after the start that names
+the folder to move or mount.
+
+## 6. Reverse proxy
 
 Put nginx (or another proxy with TLS) in front of port 3000 and pass
 `X-Forwarded-Proto`, so the admin cookie is marked `Secure`. The website takes
@@ -439,7 +495,7 @@ location /stats {
 All links, the admin cookie and the health endpoints then live under
 `/stats`.
 
-## 6. Check it
+## 7. Check it
 
 ```bash
 curl -s http://127.0.0.1:3000/healthz          # {"status":"ok"}, 503 without database
@@ -455,7 +511,7 @@ address and design. Under **Admin → Rankings** each ranking gets its game
 For monitoring, `/-/metrics` gives Prometheus metrics once a token is set
 (see [USAGE.md](USAGE.md#health-and-monitoring)).
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
 | Symptom | Cause |
 |---------|-------|
@@ -465,10 +521,11 @@ For monitoring, `/-/metrics` gives Prometheus metrics once a token is set
 | Redirect loop under a sub path | `location /stats/` with a trailing slash; use `location /stats`. |
 | Times are off by hours, or the date (awards, "yesterday") changes only at 01:00/02:00 | `TZ` is not set (the container is UTC otherwise). Web and collector need the same `TZ`. |
 | A ranking shows no game, or the game cannot be chosen | The database was not created with the current collector init script (column `hlstats_Games.realgame` missing). Create it again with the init script, then set the game under Admin → Rankings. Servers take the game of their ranking. |
+| An own template or map picture does not show up | It is not under `/var/lib/gamewe/web/templates` or `/var/lib/gamewe/web/overviews` (in the container: not mounted at exactly these paths), the service user cannot read it (container: uid 1000), or it breaks a rule of [templates/README.md](../templates/README.md) / [overviews/README.md](../overviews/README.md) (symbolic link, upper-case name, too large). A log line `TEMPLATES_DIR=... is ignored` means the folder still sits at the old place. |
 | "Reset ranking" shows a hint | It needs collector 0.1.0 or newer and a database created with its init script (table `hlstats_gamewe_jobs`). |
 | Ranking pages, the player list or the latest events take seconds with a large database (e.g. imported HLstatsX players and events) | The tables lack the indexes by ranking: update the collector, its migrations `event-indexes` (event tables) and `player-indexes` (`hlstats_Players` by points and by last seen) add them (`gamewe db status` shows them). On MariaDB also check `key_buffer_size` and `concurrent_insert` (collector docs/DATABASE.md, "Large databases"). |
 
-## 8. Uninstall
+## 9. Uninstall
 
 Container: `docker rm -f gamewe-web` and `docker image rm ghcr.io/dennispohlmann/gamewe-web`.
 
@@ -479,6 +536,7 @@ systemctl disable --now gamewe-web
 rm -rf /opt/gamewe/web /etc/systemd/system/gamewe-web.service
 systemctl daemon-reload
 # settings: /etc/gamewe/web (remove only if no longer needed)
+# own templates and map pictures: /var/lib/gamewe/web (the same)
 ```
 
 The database and its data stay untouched in both cases.

@@ -2,12 +2,13 @@ import "server-only";
 import { lstat, open, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { basePath } from "./base-path";
+import { OWN_OVERVIEWS, retiredDirWarning } from "./content-dirs";
 import { env } from "./env";
 import { type Calibration, type Frame, type ImageInfo, MAP_NAME, imageInfo, overviewFile, overviewFrame, parseCalibration } from "./overview-format";
 
 // Map overviews (radar pictures) under the heatmap, like the templates: the
-// built-in folder overviews/ next to the server, OVERVIEWS_DIR adds a folder
-// of your own (the same file name: yours wins). In each, one subfolder per
+// built-in folder overviews/ next to the server, /var/lib/gamewe/web/overviews
+// adds your own (the same file name: yours wins, src/lib/content-dirs.ts). In each, one subfolder per
 // game (the game code or the base game, e.g. cs2, css) and files for every
 // game directly in the folder; the game's subfolder is asked first. Picture
 // and calibration are looked up separately, so a picture of your own uses
@@ -26,9 +27,15 @@ type Entry = { file: string; kind: "image" | "lower" | "json" | "txt"; rank: num
 // Key: "<dir>/<map>/<kind>".
 let cache: { at: number; index: Map<string, Entry> } | undefined;
 
+let warned = false;
+
 function roots(): string[] {
-  const own = env("OVERVIEWS_DIR");
-  return [path.join(process.cwd(), "overviews"), ...(own ? [path.resolve(own)] : [])];
+  if (!warned) {
+    warned = true;
+    const w = retiredDirWarning("OVERVIEWS_DIR", env("OVERVIEWS_DIR"), OWN_OVERVIEWS);
+    if (w) console.warn(w);
+  }
+  return [path.join(process.cwd(), "overviews"), OWN_OVERVIEWS];
 }
 
 async function scanDir(dir: string, key: string, into: Map<string, Entry>) {

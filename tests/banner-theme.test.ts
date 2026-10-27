@@ -70,6 +70,6 @@ test("old banner URLs of removed templates use their replacement", () => {
   assert.equal(chosenTemplate("blue", builtIn), "dark");
   assert.equal(chosenTemplate("game-tf", builtIn), "light");
   assert.equal(chosenTemplate("modern-gold", builtIn), "modern-dark");
-  // A folder of that name in TEMPLATES_DIR still wins.
+  // A folder of that name in /var/lib/gamewe/web/templates still wins.
   assert.equal(chosenTemplate("blue", [...builtIn, "blue"]), "blue");
 });

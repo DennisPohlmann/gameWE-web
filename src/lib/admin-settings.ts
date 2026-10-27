@@ -124,8 +124,8 @@ const definitions: Omit<SettingGroup, "area">[] = [
         type: "template",
         def: "dark",
         help: {
-          de: "Ordner aus templates/ oder TEMPLATES_DIR; eigene Designs: siehe templates/README.md.",
-          en: "Folder from templates/ or TEMPLATES_DIR; your own designs: see templates/README.md.",
+          de: "Ordner aus templates/ oder /var/lib/gamewe/web/templates; eigene Designs: siehe templates/README.md.",
+          en: "Folder from templates/ or /var/lib/gamewe/web/templates; your own designs: see templates/README.md.",
         },
       },
       {
@@ -134,8 +134,8 @@ const definitions: Omit<SettingGroup, "area">[] = [
         type: "bool",
         def: "0",
         help: {
-          de: "Ja: die Seiten eines Spiels nutzen das Template game-<Spiel>, wenn es eins gibt (eigenes Design in TEMPLATES_DIR, z. B. game-tf; keins ist eingebaut).",
-          en: "Yes: a game's pages use the template game-<game> when there is one (your own design in TEMPLATES_DIR, e.g. game-tf; none is built in).",
+          de: "Ja: die Seiten eines Spiels nutzen das Template game-<Spiel>, wenn es eins gibt (eigenes Design in /var/lib/gamewe/web/templates, z. B. game-tf; keins ist eingebaut).",
+          en: "Yes: a game's pages use the template game-<game> when there is one (your own design in /var/lib/gamewe/web/templates, e.g. game-tf; none is built in).",
         },
       },
       {

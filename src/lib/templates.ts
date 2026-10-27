@@ -3,14 +3,15 @@ import { lstat, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { basePath } from "./base-path";
 import { chartCss } from "./chart-config";
+import { OWN_TEMPLATES, retiredDirWarning } from "./content-dirs";
 import { env } from "./env";
 import { replacedTemplate } from "./skin-fallback";
 
 // Look templates: one folder each with a theme.css (CSS variables, see
 // templates/README.md), an optional template.json with the display name and an
 // optional chart.json with the chart colours (src/lib/chart-config.ts).
-// The built-in ones sit in templates/ next to the server; TEMPLATES_DIR adds a
-// folder of your own (same name: yours wins). Only plain folders and files
+// The built-in ones sit in templates/ next to the server; /var/lib/gamewe/web/templates
+// adds your own (same name: yours wins, src/lib/content-dirs.ts). Only plain folders and files
 // whose name is a short [a-z0-9_-] id count, no symlinks, so a name can never
 // point outside these folders.
 
@@ -26,10 +27,15 @@ const MAX_CHART = 16 * 1024;
 const INLINE_CSS = 4 * 1024;
 
 let cache: { at: number; list: Template[] } | undefined;
+let warned = false;
 
 function roots(): string[] {
-  const own = env("TEMPLATES_DIR");
-  return [path.join(process.cwd(), "templates"), ...(own ? [path.resolve(own)] : [])];
+  if (!warned) {
+    warned = true;
+    const w = retiredDirWarning("TEMPLATES_DIR", env("TEMPLATES_DIR"), OWN_TEMPLATES);
+    if (w) console.warn(w);
+  }
+  return [path.join(process.cwd(), "templates"), OWN_TEMPLATES];
 }
 
 async function scan(root: string): Promise<Template[]> {

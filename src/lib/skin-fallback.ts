@@ -24,8 +24,8 @@ export const REMOVED_TEMPLATES: Readonly<Record<string, string>> = {
 };
 
 // The template to use for `id`: itself while it exists (a folder of that name
-// in TEMPLATES_DIR still wins), else the replacement of a removed built-in
-// one if that exists, else `id` unchanged (resolveTemplate then falls back to
+// in /var/lib/gamewe/web/templates still wins), else the replacement of a removed
+// built-in one if that exists, else `id` unchanged (resolveTemplate then falls back to
 // "dark").
 export function replacedTemplate(id: string, available: readonly string[]): string {
   if (available.includes(id)) return id;
