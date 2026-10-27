@@ -8,6 +8,7 @@ import { Flag, GameTag, Skeleton } from "@/components/ui";
 import { basePath } from "@/lib/base-path";
 import { LineChart } from "@/components/chart";
 import { Sparkline } from "@/components/sparkline";
+import { HoverTip } from "@/components/hover-tip";
 import { PlayerCount } from "@/components/player-count";
 import { VoiceBox } from "@/components/voice-box";
 import {
@@ -188,7 +189,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
 // what is going on now and a faint line of the last 30 days behind the text:
 // players online and servers with players (server load, else active players
 // per day), clans with an active member per day, kills and headshots per day
-// (with their share of the kills below the headshots). A database error
+// (with their share of the kills below the headshots). Hovering or tapping a
+// card shows what its number and its line count (HoverTip). A database error
 // leaves the block out; a missing line only leaves its card without one.
 async function GeneralStatsSection({ t, lang }: { t: Dict; lang: Lang }) {
   let stats;
@@ -208,35 +210,39 @@ async function GeneralStatsSection({ t, lang }: { t: Dict; lang: Lang }) {
     rows ? everyDay(rows, 30).slice(0, -1).map((d) => (d.point ? value(d.point) : null)) : [];
   const playersLine = hourly?.players.some((v) => v !== null) ? hourly.players : perDay(daily, (r) => Number(r.players));
   const cards = [
-    { label: t.players, value: stats.players, sub: fill(t.gsPlayersNow, { n: fmtNum(stats.online, lang) }), line: playersLine },
-    { label: t.clans, value: stats.clans, sub: fill(t.gsClansIn, { n: fmtNum(stats.clanRankings, lang) }), line: perDay(clanDays, (r) => Number(r.n)) },
-    { label: t.servers, value: stats.servers, sub: fill(t.gsServersActive, { n: fmtNum(stats.serversActive, lang) }), line: hourly?.servers ?? [] },
+    { label: t.players, value: stats.players, sub: fill(t.gsPlayersNow, { n: fmtNum(stats.online, lang) }), line: playersLine, tip: t.gsTipPlayers },
+    { label: t.clans, value: stats.clans, sub: fill(t.gsClansIn, { n: fmtNum(stats.clanRankings, lang) }), line: perDay(clanDays, (r) => Number(r.n)), tip: t.gsTipClans },
+    { label: t.servers, value: stats.servers, sub: fill(t.gsServersActive, { n: fmtNum(stats.serversActive, lang) }), line: hourly?.servers ?? [], tip: t.gsTipServers },
     {
       label: t.kills,
       value: stats.kills,
       sub: stats.lastKill ? fill(t.gsLastKill, { d: fmtDateTime(stats.lastKill, lang) }) : t.gsNoKill,
       line: perDay(daily, (r) => Number(r.kills)),
+      tip: t.gsTipKills,
     },
     {
       label: t.headshotsLabel,
       value: stats.headshots,
       sub: fill(t.gsHeadshotShare, { p: fmtPct(stats.kills > 0 ? stats.headshots / stats.kills : null, lang) }),
       line: perDay(daily, (r) => Number(r.headshots ?? 0)),
+      tip: t.gsTipHeadshots,
     },
   ];
   return (
     <section className="block general-stats">
       <h3>{t.generalStats}</h3>
-      <ul className="gs-cards">
-        {cards.map((c) => (
-          <li key={c.label} className="gs-card">
-            <Sparkline values={c.line} />
-            <span className="gs-label">{c.label}</span>
-            <span className="gs-value">{fmtNum(c.value, lang)}</span>
-            <span className="gs-sub">{c.sub}</span>
-          </li>
-        ))}
-      </ul>
+      <HoverTip className="gs-tips">
+        <ul className="gs-cards">
+          {cards.map((c) => (
+            <li key={c.label} className="gs-card" data-tip={`${c.label}\n${c.tip}`}>
+              <Sparkline values={c.line} />
+              <span className="gs-label">{c.label}</span>
+              <span className="gs-value">{fmtNum(c.value, lang)}</span>
+              <span className="gs-sub">{c.sub}</span>
+            </li>
+          ))}
+        </ul>
+      </HoverTip>
     </section>
   );
 }
