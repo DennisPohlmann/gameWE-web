@@ -9,7 +9,6 @@ import { getSettings } from "@/lib/settings";
 import { AutoForm } from "@/components/auto-form";
 import { MapGate } from "@/components/map-gate";
 import { mapGateProps } from "@/lib/consent-server";
-import { mapSatellite } from "@/lib/map-styles";
 import {
   getCityOptions,
   getCountryOptions,
@@ -73,8 +72,7 @@ export default async function PlayersPage({
   const asc = strParam(sp.dir) === "asc";
   const q = strParam(sp.q);
   const page = pageParam(sp.page);
-  const settings = await getSettings();
-  const { pageSize, activityDays, mapPlayers: showMap, mapStyle } = settings;
+  const { pageSize, activityDays, mapPlayers: showMap, mapStyle } = await getSettings();
   const limit = rowsParam(sp.rows, pageSize);
 
   const [{ rows, total }, places, mapPlayers, countries, states, cities] = await Promise.all([
@@ -212,7 +210,7 @@ export default async function PlayersPage({
           }
         >
           <div className="box">
-            <MapGate {...gate} markers={markers} style={mapStyle} cartoKey={settings.mapCartoKey} satellite={mapSatellite(settings, t)} />
+            <MapGate {...gate} markers={markers} style={mapStyle} />
             <p className="muted">
               {fill(mapAll ? t.playerMapHint : t.playerMapHintTop, {
                 n: fmtNum(markers.length, lang),

@@ -13,7 +13,7 @@ export const CONSENT_VERSION = 1;
 // Twelve months, then the banner asks again.
 export const CONSENT_MAX_AGE = 60 * 60 * 24 * 365;
 
-// Optional categories. "maps": map tiles (OpenStreetMap, CARTO, ...) on the
+// Optional categories. "maps": OpenStreetMap map tiles on the
 // player maps. "steam": Steam profile pictures from Steam's image servers.
 export const CONSENT_CATEGORIES = ["maps", "steam"] as const;
 export type ConsentCategory = (typeof CONSENT_CATEGORIES)[number];

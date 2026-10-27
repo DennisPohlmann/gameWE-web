@@ -21,7 +21,7 @@ type P = Dict["privacy"];
 // settings (also reached without JavaScript, from the banner's "Settings")
 // and the lists the site builds itself (lib/privacy-inventory.ts).
 export default async function PrivacyPage() {
-  const [{ t }, consent, s, { operator, satellite }, voice, host] = await Promise.all([
+  const [{ t }, consent, s, { operator }, voice, host] = await Promise.all([
     getDict(),
     getConsent(),
     getSettings(),
@@ -33,7 +33,6 @@ export default async function PrivacyPage() {
   const c = t.consent;
   const input = {
     mapStyle: s.mapStyle,
-    satellite,
     maps: s.mapLive || s.mapPlayers,
     steamProfiles: s.steamProfiles,
     voice,

@@ -246,23 +246,9 @@ website therefore computes some things itself:
 - **Player maps** (world map above the ranking, "online now" map on a
   ranking's page) can be turned off one by one under Settings → Player maps,
   which also sets the map style: matching the design (OpenStreetMap, dark
-  on dark designs), OpenStreetMap, OSM Humanitarian, OpenTopoMap or CARTO.
-  The CARTO styles need a CARTO API key (free, without an account, at
-  carto.com/basemaps/apikey, meant for non-commercial sites, up to 5 million
-  tiles a month; setting "CARTO API key", public like every tile key);
-  without one a stored CARTO style shows the "matching the design" map. The
-  visitor's browser loads the tiles directly from the provider; the credit
-  is shown in the map. A "Map / Satellite" switch top right in each map
-  shows satellite imagery with place and street names over it (Settings →
-  Maps & events → Satellite view): Sentinel-2 cloudless by EOX (default, no
-  key, servers in the EU, free for non-commercial sites under CC BY-NC-SA
-  4.0, sharp down to about a city; labels from EOX's OpenStreetMap overlay),
-  Esri World Imagery
-  (sharp down to streets, with Esri's labels and roads; free only with a
-  free ArcGIS account and its API key, no revenue and under 1 million tiles
-  a month; the key goes to the visitor's browser, so restrict it to the
-  site's address in the ArcGIS account) or off. The visitor's choice is kept
-  in the browser's local storage (`gamewe-map-view`, no cookie). On a country, state or city ranking the map shows only the
+  on dark designs), OpenStreetMap or OpenStreetMap dark. The visitor's
+  browser loads the tiles directly from OpenStreetMap; the credit is shown
+  in the map. On a country, state or city ranking the map shows only the
   players of that place. Hovering a player shows name, city and country,
   rank (the same position as on the ranking and the player page: 1 + ranked
   players with more points, hidden players not counted), points, kills, K/D

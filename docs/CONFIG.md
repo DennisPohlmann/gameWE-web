@@ -244,7 +244,7 @@ hosts; with it the optional categories are:
 
 | Category | What the browser then loads | Without consent |
 |---|---|---|
-| Maps (`maps`) | map tiles of the player maps from the tile set of Admin → Settings → Maps (OpenStreetMap, OSM France, OpenTopoMap or CARTO) and the satellite and label layers | a box of the map's size with "Load map" (this time only, needs JavaScript) and "Always allow" |
+| Maps (`maps`) | map tiles of the player maps from OpenStreetMap | a box of the map's size with "Load map" (this time only, needs JavaScript) and "Always allow" |
 | Steam pictures (`steam`) | the players' profile pictures from Steam's image servers (profile, start page, map pages, avatars on the maps via `/avatar/<id>`) | the local placeholder; `/avatar/<id>` answers 404 |
 
 The choice is kept in the cookie `gamewe_consent` (`<version>.<categories>`,
@@ -258,8 +258,8 @@ post to `/consent` and work without JavaScript; requests from other sites
 
 Not behind consent, because they are settings the visitor makes or are
 needed: the language cookie `gamewe_lang`, the live switches in
-`localStorage` (`gamewe-live-events`, `gamewe-live-player-events`), the map
-view `gamewe-map-view`, and the admin cookies. Steam profile data (names, the
+`localStorage` (`gamewe-live-events`, `gamewe-live-player-events`), and the
+admin cookies. Steam profile data (names, the
 addresses of the pictures, VAC status), the Discord widget, TeamSpeak and
 SourceBans are fetched by the server, so the visitor's IP address does not
 reach them. Pictures entered in the settings with an address on another

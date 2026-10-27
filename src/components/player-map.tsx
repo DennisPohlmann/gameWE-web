@@ -2,7 +2,7 @@
 
 import "leaflet/dist/leaflet.css";
 import { useEffect, useRef } from "react";
-import { mapStyles, tileUrl, type MapSatellite, type MapStyle } from "@/lib/map-styles";
+import { mapStyles } from "@/lib/map-styles";
 import { VAC_SVG } from "@/lib/server-icons";
 
 export type MapMarker = {
@@ -48,21 +48,7 @@ const SERVER_ICON =
 // from the same city are spread in a spiral around it so all stay visible.
 // style: a key of mapStyles, or "auto" (OpenStreetMap, dark on dark designs).
 // servers: the ranking's game servers, as squares under the players.
-// cartoKey: the site's CARTO key, for a CARTO style.
-// satellite: layers and texts of the "Map / Satellite" switch (none: no switch).
-export function PlayerMap({
-  markers,
-  servers = NO_SERVERS,
-  style,
-  cartoKey = "",
-  satellite,
-}: {
-  markers: MapMarker[];
-  servers?: ServerMarker[];
-  style: string;
-  cartoKey?: string;
-  satellite?: MapSatellite;
-}) {
+export function PlayerMap({ markers, servers = NO_SERVERS, style }: { markers: MapMarker[]; servers?: ServerMarker[]; style: string }) {
   const el = useRef<HTMLDivElement>(null);
   useEffect(() => {
     let map: import("leaflet").Map | undefined;
@@ -70,47 +56,9 @@ export function PlayerMap({
     import("leaflet").then((L) => {
       if (gone || !el.current) return;
       map = L.map(el.current, { scrollWheelZoom: false, worldCopyJump: true });
-      const box = el.current;
-      const tiles = mapStyles[style] ?? mapStyles[darkPage(box) ? "osm-dark" : "osm"];
-      const layer = (t: MapStyle) => L.tileLayer(tileUrl(t, cartoKey), { maxZoom: t.maxZoom, attribution: t.attribution, subdomains: t.subdomains ?? "abc" });
-      const mapLayers = [layer(tiles)];
-      const satLayers = satellite?.layers.map(layer) ?? [];
-      // Map or satellite view: the other one's layers leave the map (and stop
-      // loading tiles); the dark filter is only for the map tiles.
-      const show = (sat: boolean) => {
-        for (const l of sat ? mapLayers : satLayers) l.remove();
-        for (const l of sat ? satLayers : mapLayers) l.addTo(map!);
-        box.classList.toggle("map-dark", !sat && !!tiles.dark);
-        box.classList.toggle("map-sat", sat);
-      };
-      const sat = satLayers.length > 0 && savedView() === "satellite";
-      show(sat);
-      if (satellite && satLayers.length) {
-        // Two buttons top right, like the zoom buttons; the choice is kept
-        // for the next map in this browser.
-        const Switch = L.Control.extend({
-          onAdd() {
-            const bar = L.DomUtil.create("div", "leaflet-bar map-view");
-            bar.setAttribute("role", "group");
-            bar.setAttribute("aria-label", satellite.label);
-            const buttons = ([false, true] as const).map((on) => {
-              const b = L.DomUtil.create("button", "", bar);
-              b.type = "button";
-              b.textContent = on ? satellite.satellite : satellite.map;
-              b.setAttribute("aria-pressed", String(on === sat));
-              b.addEventListener("click", () => {
-                show(on);
-                saveView(on ? "satellite" : "map");
-                for (const [i, x] of buttons.entries()) x.setAttribute("aria-pressed", String(i === Number(on)));
-              });
-              return b;
-            });
-            L.DomEvent.disableClickPropagation(bar);
-            return bar;
-          },
-        });
-        new Switch({ position: "topright" }).addTo(map);
-      }
+      const tiles = mapStyles[style] ?? mapStyles[darkPage(el.current) ? "osm-dark" : "osm"];
+      el.current.classList.toggle("map-dark", !!tiles.dark);
+      L.tileLayer(tiles.url, { maxZoom: tiles.maxZoom, attribution: tiles.attribution, subdomains: tiles.subdomains ?? "abc" }).addTo(map);
       const seen = new Map<string, number>();
       // Spiral around the city in screen pixels, so it works at every zoom
       // (points within 0.01°, about 1 km, count as one place). Servers come
@@ -226,7 +174,7 @@ export function PlayerMap({
       gone = true;
       map?.remove();
     };
-  }, [markers, servers, style, cartoKey, satellite]);
+  }, [markers, servers, style]);
   return <div ref={el} className="player-map" />;
 }
 
@@ -298,26 +246,6 @@ function serverLinks(m: ServerMarker) {
 
 function esc(s: string) {
   return s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-}
-
-// The visitor's last choice of map or satellite view, kept in this browser
-// only (no cookie); without storage the map view.
-const VIEW_KEY = "gamewe-map-view";
-
-function savedView(): string | null {
-  try {
-    return localStorage.getItem(VIEW_KEY);
-  } catch {
-    return null;
-  }
-}
-
-function saveView(v: "map" | "satellite") {
-  try {
-    localStorage.setItem(VIEW_KEY, v);
-  } catch {
-    // Storage blocked: the choice holds for this map only.
-  }
 }
 
 // Whether the design behind the map is dark: the first non-transparent

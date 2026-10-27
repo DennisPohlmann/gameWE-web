@@ -32,9 +32,6 @@ export type ThirdPartyRow = {
 
 export type InventoryInput = {
   mapStyle: string;
-  // Satellite layer of the player map (gamewe_map_satellite, "eox" when
-  // unset, "off"); planned in the same release as the consent.
-  satellite: string;
   // Map boxes shown at all (Admin → Maps).
   maps: boolean;
   steamProfiles: boolean;
@@ -51,7 +48,6 @@ export const STORAGE: StorageRow[] = [
   { name: "gamewe_lang", kind: "cookie", purpose: "stLang", duration: "dur12m", category: "preference" },
   { name: "gamewe-live-events", kind: "local", purpose: "stLive", duration: "durUntilDeleted", category: "preference" },
   { name: "gamewe-live-player-events", kind: "local", purpose: "stLive", duration: "durUntilDeleted", category: "preference" },
-  { name: "gamewe-map-view", kind: "local", purpose: "stMapView", duration: "durUntilDeleted", category: "preference" },
   { name: "gamewe_session", kind: "cookie", purpose: "stSession", duration: "dur12h", category: "necessary", adminOnly: true },
   { name: "gamewe_2fa", kind: "cookie", purpose: "st2fa", duration: "dur5min", category: "necessary", adminOnly: true },
   { name: "gamewe_admin_theme", kind: "cookie", purpose: "stAdminTheme", duration: "dur12m", category: "preference", adminOnly: true },
@@ -60,16 +56,10 @@ export const STORAGE: StorageRow[] = [
 type Tiles = { provider: string; hosts: string[]; link: string };
 
 const OSM: Tiles = { provider: "OpenStreetMap Foundation", hosts: ["tile.openstreetmap.org"], link: "https://osmfoundation.org/wiki/Privacy_Policy" };
-const CARTO: Tiles = { provider: "CARTO", hosts: ["basemaps.cartocdn.com"], link: "https://carto.com/privacy" };
 const TILES: Record<string, Tiles> = {
   auto: OSM,
   osm: OSM,
   "osm-dark": OSM,
-  hot: { provider: "OpenStreetMap France (HOT)", hosts: ["tile.openstreetmap.fr"], link: "https://www.openstreetmap.fr/" },
-  topo: { provider: "OpenTopoMap", hosts: ["tile.opentopomap.org"], link: "https://opentopomap.org/about" },
-  "carto-light": CARTO,
-  "carto-voyager": CARTO,
-  "carto-dark": CARTO,
 };
 
 export function tileProvider(style: string): Tiles {
@@ -107,13 +97,6 @@ export function browserThirdParties(i: InventoryInput): ThirdPartyRow[] {
   if (i.maps) {
     const t = tileProvider(i.mapStyle);
     rows.push({ provider: t.provider, hosts: t.hosts, purpose: "tpTiles", data: BROWSER_DATA, consent: "maps", link: t.link });
-    // Satellite view: imagery and labels from the same provider.
-    const sat = (i.satellite || "eox").trim().toLowerCase();
-    if (sat === "esri") {
-      rows.push({ provider: "Esri", hosts: ["server.arcgisonline.com", "ibasemaps-api.arcgis.com"], purpose: "tpSatellite", data: BROWSER_DATA, consent: "maps", link: "https://www.esri.com/en-us/privacy/overview" });
-    } else if (sat === "eox") {
-      rows.push({ provider: "EOX IT Services GmbH (Sentinel-2 cloudless)", hosts: ["tiles.maps.eox.at"], purpose: "tpSatellite", data: BROWSER_DATA, consent: "maps", link: "https://eox.at/" });
-    }
   }
   const own = imageHosts(i.images, i.ownHost);
   if (own.length) rows.push({ provider: "", hosts: own, purpose: "tpOperatorImages", data: BROWSER_DATA, consent: null });

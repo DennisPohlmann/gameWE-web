@@ -9,7 +9,6 @@ import { allServers, assignServers, copyDefinitions, rankingBaseGames } from "@/
 import { baseGameOf, sameBaseGame } from "@/lib/games";
 import { RAW_GROUP, READONLY_OPTIONS, homeValue, linkValue, rawKeyAllowed, settingGroups } from "@/lib/admin-settings";
 import { headerOrder } from "@/lib/header-links";
-import { cartoKey, esriKey } from "@/lib/map-styles";
 import { ADMIN_THEME_COOKIE, isAdminTheme } from "@/lib/admin-theme";
 import { basePath } from "@/lib/base-path";
 import { canonicalIp } from "@/lib/ip";
@@ -304,8 +303,6 @@ export async function saveSettingsAction(form: FormData) {
       values.push([s.key, invite]);
       continue;
     } else if (s.key === "gamewe_discord_guild" && v && !discordGuild(v)) {
-      bad(s.key);
-    } else if ((s.key === "gamewe_map_esri_key" && v && !esriKey(v)) || (s.key === "gamewe_map_carto_key" && v && !cartoKey(v))) {
       bad(s.key);
     } else if ((s.key === "gamewe_header_logo" || s.key === "gamewe_favicon" || s.key === "gamewe_apple_icon") && v && !imageUrl(v)) {
       bad(s.key);

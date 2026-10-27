@@ -64,7 +64,7 @@ test("the free text becomes text and safe links, never HTML", () => {
   for (const p of linkParts('x "https://e.org/a"onmouseover=1 y')) if ("href" in p) assert.ok(!/["<>]/.test(p.href));
 });
 
-const base: InventoryInput = { mapStyle: "auto", satellite: "", maps: true, steamProfiles: true, voice: "none", sourcebans: false, images: [], ownHost: "stats.example.org" };
+const base: InventoryInput = { mapStyle: "auto", maps: true, steamProfiles: true, voice: "none", sourcebans: false, images: [], ownHost: "stats.example.org" };
 
 test("every outside host the browser loads needs a consent category, except the operator's pictures", () => {
   const rows = browserThirdParties({ ...base, images: ["https://cdn.example.net/logo.png", "/own.png"] });
@@ -73,19 +73,15 @@ test("every outside host the browser loads needs a consent category, except the 
     else assert.ok(r.consent && CONSENT_CATEGORIES.includes(r.consent), r.provider);
   }
   const hosts = rows.flatMap((r) => r.hosts);
-  for (const h of ["tile.openstreetmap.org", "avatars.steamstatic.com", "tiles.maps.eox.at", "cdn.example.net"]) assert.ok(hosts.includes(h), h);
-  // The EOX labels come from EOX itself, CARTO only as the tile set.
-  assert.ok(!hosts.includes("basemaps.cartocdn.com"));
+  for (const h of ["tile.openstreetmap.org", "avatars.steamstatic.com", "cdn.example.net"]) assert.ok(hosts.includes(h), h);
+  // OpenStreetMap is the only map provider.
+  assert.deepEqual(rows.filter((r) => r.consent === "maps").map((r) => r.hosts), [["tile.openstreetmap.org"]]);
 });
 
 test("the lists follow the settings", () => {
   const hosts = (i: InventoryInput) => browserThirdParties(i).flatMap((r) => r.hosts);
-  assert.ok(hosts({ ...base, mapStyle: "carto-dark", satellite: "off" }).includes("basemaps.cartocdn.com"));
-  assert.ok(!hosts({ ...base, satellite: "off" }).includes("tiles.maps.eox.at"));
-  assert.ok(hosts({ ...base, satellite: "esri" }).includes("server.arcgisonline.com"));
-  assert.ok(hosts({ ...base, satellite: "esri" }).includes("ibasemaps-api.arcgis.com"));
-  assert.ok(!hosts({ ...base, satellite: "esri" }).includes("tiles.maps.eox.at"));
-  assert.ok(hosts({ ...base, mapStyle: "topo", satellite: "off" }).includes("tile.opentopomap.org"));
+  // A former style (CARTO, HOT, topo) still stored loads OpenStreetMap.
+  for (const mapStyle of ["osm-dark", "carto-dark", "topo"]) assert.deepEqual(hosts({ ...base, mapStyle, steamProfiles: false }), ["tile.openstreetmap.org"]);
   assert.deepEqual(hosts({ ...base, maps: false, steamProfiles: false }), []);
   assert.ok(serverThirdParties({ ...base, voice: "discord" }).some((r) => r.provider === "Discord"));
   assert.ok(!serverThirdParties(base).some((r) => r.provider === "Discord"));
@@ -99,5 +95,5 @@ test("operator pictures: only other hosts, each once", () => {
 test("the storage list names the consent cookie and has no duplicates", () => {
   const names = STORAGE.map((s) => s.name);
   assert.equal(new Set(names).size, names.length);
-  for (const n of ["gamewe_consent", "gamewe_lang", "gamewe_session", "gamewe-map-view"]) assert.ok(names.includes(n), n);
+  for (const n of ["gamewe_consent", "gamewe_lang", "gamewe_session"]) assert.ok(names.includes(n), n);
 });
