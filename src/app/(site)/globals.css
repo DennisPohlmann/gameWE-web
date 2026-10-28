@@ -1404,29 +1404,33 @@ html[data-os] .consent-buttons .button, html[data-os] .map-consent .button { fon
    With a flag the head is dark in every skin, so the white text stays
    readable; without one it is a plain box in the skin's colours. On a
    phone the numbers go under the name. */
-.clan-hero { position: relative; display: flex; align-items: center; gap: 14px; min-height: 64px; margin: 0 0 10px; padding: 16px 18px; background: var(--surface); border: 1px solid var(--border); overflow: hidden; isolation: isolate; }
+/* Tag and name in the middle, away from the flag on the left (a white flag
+   would swallow white text), the facts on the right. */
+.clan-hero { position: relative; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 14px; min-height: 64px; margin: 0 0 10px; padding: 16px 18px; background: var(--surface); border: 1px solid var(--border); overflow: hidden; isolation: isolate; }
 .clan-hero.has-flag { border-color: #2c2f33; }
 /* The dark ground as its own layer: the modern skins set the background of
    every box in a section. */
 .clan-hero.has-flag::before { content: ""; position: absolute; inset: 0; z-index: -2; background: #16181b; }
 /* The flag tilted in the top left corner, zoomed out so its stripes or
    emblem stay recognisable, fading out to the right. */
-.clan-hero-bg { position: absolute; left: -8px; top: -12px; bottom: -12px; z-index: -1; transform: rotate(-8deg); opacity: 0.9; pointer-events: none; -webkit-mask-image: linear-gradient(90deg, #000 70%, transparent 100%); mask-image: linear-gradient(90deg, #000 70%, transparent 100%); }
-.clan-hero-bg .flag-svg { display: block; height: 100%; width: auto; aspect-ratio: 4 / 3; margin: 0; border-radius: 0; box-shadow: none; }
+.clan-hero-bg { position: absolute; left: -8px; top: -12px; bottom: -12px; z-index: -1; transform: rotate(-8deg); opacity: 0.9; pointer-events: none; -webkit-mask-image: linear-gradient(90deg, #000 78%, transparent 100%); mask-image: linear-gradient(90deg, #000 78%, transparent 100%); }
+.clan-hero-bg .flag-svg { display: block; height: 100%; width: auto; aspect-ratio: 5 / 2; margin: 0; border-radius: 0; box-shadow: none; }
 .clan-hero-bg .flag-svg::after { display: none; }
-.clan-hero-text { flex: 1 1 auto; min-width: 0; }
+.clan-hero-text { grid-column: 2; min-width: 0; text-align: center; }
 .section .clan-hero h1 { margin: 0; font-size: 26px; line-height: 1.15; font-weight: bold; color: var(--text); overflow-wrap: anywhere; }
 .clan-hero p { margin: 3px 0 0; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
-.section .clan-hero.has-flag h1, .clan-hero.has-flag p { color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.7); }
-.clan-hero-facts { flex: none; display: flex; gap: 8px; margin: 0; padding: 0; list-style: none; }
+/* A dark outline keeps the white text readable on a light stripe. */
+.section .clan-hero.has-flag h1, .clan-hero.has-flag p { color: #fff; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 3px #000, 0 0 10px rgba(0, 0, 0, 0.8); }
+.clan-hero-facts { grid-column: 3; justify-self: end; display: flex; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .clan-hero-facts li { padding: 5px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface-2); font-size: 11px; color: var(--muted); white-space: nowrap; }
 .clan-hero-facts b { color: var(--text); font-size: 13px; }
 .clan-hero.has-flag .clan-hero-facts li { border-color: rgba(255, 255, 255, 0.25); background: rgba(0, 0, 0, 0.5); color: #ccc; }
 .clan-hero.has-flag .clan-hero-facts b { color: #fff; }
 @media (max-width: 640px) {
-  .clan-hero { flex-wrap: wrap; gap: 10px 12px; padding: 14px 12px; }
+  .clan-hero { grid-template-columns: 1fr; gap: 10px 12px; padding: 14px 12px; }
+  .clan-hero-text, .clan-hero-facts { grid-column: 1; }
   .section .clan-hero h1 { font-size: 21px; }
-  .clan-hero-facts { flex-basis: 100%; flex-wrap: wrap; }
+  .clan-hero-facts { justify-self: center; flex-wrap: wrap; justify-content: center; }
 }
 
 /* The summary needs more room than the details: side by side only when both fit. */

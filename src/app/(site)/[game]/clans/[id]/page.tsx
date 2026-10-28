@@ -143,7 +143,7 @@ export default async function ClanPage({ params, searchParams }: Props) {
       </Section>
       {gate && markers.length ? (
         <Section title={t.clanMap}>
-          <div className="clan-map">
+          <div className="box clan-map">
             <MapGate {...gate} markers={markers} style={settings.mapStyle} />
             <p className="muted">{fill(t.clanMapHint, { n: String(markers.length) })}</p>
           </div>
