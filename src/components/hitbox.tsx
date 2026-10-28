@@ -49,14 +49,21 @@ export function Hitbox({
   labels,
   locale,
   initial = 0,
+  selected,
+  onSelect,
 }: {
   weapons: HitboxWeapon[];
   labels: Record<Zone, string> & { weapon: string; hits: string; show: string };
   locale: string;
   // Weapon chosen through ?hw= (the form below works without JavaScript too).
   initial?: number;
+  // Controlled from outside (the weapon table beside it, see WeaponTargets).
+  selected?: number;
+  onSelect?: (i: number) => void;
 }) {
-  const [sel, setSel] = useState(initial);
+  const [own, setOwn] = useState(initial);
+  const sel = selected ?? own;
+  const setSel = onSelect ?? setOwn;
   const [hover, setHover] = useState<Zone | null>(null);
   const w = weapons[sel] ?? weapons[0];
   if (!w) return null;

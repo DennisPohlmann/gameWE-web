@@ -6,7 +6,8 @@ import { sortRows } from "@/lib/table-sort";
 // noSort: a column whose order would only repeat another one (a share bar
 // next to its count) or has nothing to sort by.
 export type SortCol = { label: ReactNode; className?: string; noSort?: boolean };
-export type SortRow = { key: string | number; cells: ReactNode[]; values: (number | string | null)[] };
+// className: of the row (e.g. the selected one).
+export type SortRow = { key: string | number; cells: ReactNode[]; values: (number | string | null)[]; className?: string };
 
 // A table sorted in the browser by a click on a column head (again: the
 // other way round), for tables that are shown whole, like the weapons and
@@ -47,7 +48,7 @@ export function SortableTable({ cols, rows, initial, initialAsc = false, classNa
       </thead>
       <tbody>
         {sorted.map((r) => (
-          <tr key={r.key}>
+          <tr key={r.key} className={r.className}>
             {r.cells.map((c, i) => (
               <td key={i} className={cols[i].className}>
                 {c}

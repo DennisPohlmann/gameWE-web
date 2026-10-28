@@ -11,7 +11,8 @@ import { PlayerTrend } from "@/components/player-trend";
 import { RankTips } from "@/components/rank-tips";
 import { Radar, type RadarAxis } from "@/components/radar";
 import { FIXED_MAX, radarPoints, type PlayerRatios, type RadarKey } from "@/lib/radar";
-import { Hitbox } from "@/components/hitbox";
+import { MapTable, WeaponStats, WeaponUsage, targetLabels } from "@/components/usage-tables";
+import { WeaponTargets } from "@/components/weapon-targets";
 import { SigCode } from "@/components/sig-code";
 import { PlayerEvents } from "@/components/game-events";
 import { ZONES } from "@/lib/zones";
@@ -141,7 +142,6 @@ export default async function PlayerPage({ params, searchParams }: Props) {
     .flatMap((x, i) => (i ? [", ", x] : [x]));
   const age = fmtAge(p.last_event, lang);
   const totalTeamJoins = teams.reduce((s, x) => s + x.joined, 0);
-  const totalWeaponKills = weapons.reduce((s, w) => s + w.kills, 0);
   const zoneTotal = (w: (typeof weapons)[number]) => ZONES.reduce((n, z) => n + w[z], 0);
   const hitboxWeapons = [
     { name: t.allWeapons, hits: Object.fromEntries(ZONES.map((z) => [z, weapons.reduce((n, w) => n + w[z], 0)])) as Record<(typeof ZONES)[number], number> },
@@ -156,9 +156,6 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   // Counter-Strike 2 logs no shots (and the collector counts no hits for
   // it): no accuracy, no shots per kill.
   const shots = await gameHasShots(game);
-  // Weapon table columns that need shots or hits (shots, hits, accuracy,
-  // damage per hit, shots per kill).
-  const keep = <T,>(xs: T[]) => (shots ? xs : xs.filter((_, i) => ![1, 2, 9, 10, 11].includes(i)));
   const daily = (f: (h: (typeof history)[number]) => number | null) => history.map(f).filter((v): v is number => v !== null && Number.isFinite(v));
   const kpdDays = daily((h) => (h.kills || h.deaths ? h.kills / Math.max(1, h.deaths) : null));
   const hpkDays = daily((h) => (h.kills ? h.headshots / h.kills : null));
@@ -527,147 +524,112 @@ export default async function PlayerPage({ params, searchParams }: Props) {
         </div>
       </Section>
 
-      {hitboxWeapons[0] && ZONES.some((z) => hitboxWeapons[0].hits[z] > 0) ? (
-        <Section title={t.hitbox}>
-          <div className="box hb-box">
-            <Hitbox
-              weapons={hitboxWeapons}
-              locale={lang}
-              labels={{
-                head: t.head,
-                neck: t.neck,
-                chest: t.chest,
-                stomach: t.stomach,
-                leftarm: t.leftarm,
-                rightarm: t.rightarm,
-                leftleg: t.leftleg,
-                rightleg: t.rightleg,
-                weapon: t.weapon,
-                hits: t.hits,
-                show: t.show,
-              }}
-              initial={hwParam((await searchParams).hw, hitboxWeapons.length)}
-            />
+      {/* From here on gameME's order: teams and actions, maps, weapon
+          usage, weapon targets, weapons and the kill statistics; what
+          gameME lacks (victims and killers, events, names, awards, chat)
+          follows below. */}
+      {teams.length || actions.length ? (
+        <Section title={t.teamsActions}>
+          <div className="cont-2">
+            {teams.length ? (
+              <TableWrap>
+                <SortableTable
+                  initial={1}
+                  cols={[{ label: t.team }, { label: t.joined, className: "num" }, { label: t.percentage, className: "barcell", noSort: true }]}
+                  rows={teams.map((x) => ({
+                    key: x.id,
+                    values: [x.name, x.joined, null],
+                    cells: [x.name, fmtNum(x.joined, lang), <PctBar key="s" value={ratio(x.joined, totalTeamJoins)} lang={lang} tone="share" />],
+                  }))}
+                />
+              </TableWrap>
+            ) : null}
+            {actions.length ? (
+              <TableWrap>
+                <SortableTable
+                  initial={1}
+                  cols={[{ label: t.actions }, { label: t.count, className: "num" }, { label: t.reward, className: "num" }]}
+                  rows={actions.map((a) => ({
+                    key: a.id,
+                    values: [a.description, a.count, a.points],
+                    cells: [
+                      <Link key="a" href={`/${game}/actions/${a.id}`}>
+                        {a.description}
+                      </Link>,
+                      fmtNum(a.count, lang),
+                      fmtNum(a.points, lang),
+                    ],
+                  }))}
+                />
+              </TableWrap>
+            ) : null}
           </div>
+        </Section>
+      ) : null}
+
+      {maps.length ? (
+        <Section title={t.mapPerformance}>
+          <MapTable maps={maps} game={game} t={t} lang={lang} />
+        </Section>
+      ) : null}
+
+      {weapons.length ? (
+        <Section title={t.weaponUsage}>
+          <WeaponUsage weapons={weapons} game={game} t={t} lang={lang} />
+        </Section>
+      ) : null}
+
+      {hitboxWeapons[0] && ZONES.some((z) => hitboxWeapons[0].hits[z] > 0) ? (
+        <Section id="targets" title={t.weaponTargets}>
+          <WeaponTargets weapons={hitboxWeapons} locale={lang} labels={targetLabels(t)} initial={hwParam((await searchParams).hw, hitboxWeapons.length)} />
         </Section>
       ) : null}
 
       {weapons.length ? (
         <Section title={t.weapons}>
+          <WeaponStats weapons={weapons} game={game} shots={shots} t={t} lang={lang} />
+        </Section>
+      ) : null}
+
+      {killList.length ? (
+        <Section title={t.killStats}>
+          <p className="muted small">{t.killStatsHint}</p>
           <TableWrap>
             <SortableTable
-              initial={shots ? 4 : 2}
-              cols={keep([
-                { label: t.weapon },
-                { label: t.shots, className: "num hide-sm" },
-                { label: t.hits, className: "num hide-sm" },
-                { label: t.damage, className: "num hide-sm" },
+              initial={2}
+              cols={[
+                { label: t.player },
+                { label: t.position, className: "num" },
                 { label: t.kills, className: "num" },
-                { label: t.deaths, className: "num hide-sm" },
+                { label: t.deaths, className: "num" },
                 { label: t.kpd, className: "num" },
                 { label: t.hs, className: "num hide-sm" },
                 { label: t.hpk, className: "barcell" },
-                { label: t.acc, className: "barcell" },
-                { label: <abbr title={t.dphTitle}>{t.dph}</abbr>, className: "num hide-sm" },
-                { label: <abbr title={t.spkTitle}>{t.spk}</abbr>, className: "num hide-sm" },
-              ])}
-              rows={weapons.map((w) => {
-                const hpk = ratio(w.headshots, w.kills);
-                const acc = ratio(w.hits, w.shots);
-                const dph = w.hits ? w.damage / w.hits : null;
-                const spk = w.kills ? w.shots / w.kills : null;
-                return {
-                  key: w.weaponId,
-                  values: keep([w.name, w.shots, w.hits, w.damage, w.kills, w.deaths, kpd(w.kills, w.deaths), w.headshots, hpk, acc, dph, spk]),
-                  cells: keep([
-                    <Link key="n" href={`/${game}/weapons/${encodeURIComponent(w.code)}`}>
-                      {w.name}
-                    </Link>,
-                    fmtNum(w.shots, lang),
-                    fmtNum(w.hits, lang),
-                    fmtNum(w.damage, lang),
-                    fmtNum(w.kills, lang),
-                    fmtNum(w.deaths, lang),
-                    fmtNum(kpd(w.kills, w.deaths), lang, 2),
-                    fmtNum(w.headshots, lang),
-                    <PctBar key="h" value={hpk} lang={lang} />,
-                    <PctBar key="a" value={acc} lang={lang} />,
-                    dph === null ? "-" : fmtNum(dph, lang, 2),
-                    spk === null ? "-" : fmtNum(spk, lang, 2),
-                  ]),
-                };
-              })}
+              ]}
+              rows={killList.map((o) => ({
+                key: o.playerId,
+                values: [o.name ?? "", o.position, o.kills, o.deaths, kpd(o.kills, o.deaths), o.headshots, ratio(o.headshots, o.kills)],
+                cells: [
+                  <PlayerLink key="p" game={game} id={o.playerId} name={o.name} flag={flags.get(o.playerId)} />,
+                  o.position ? fmtNum(o.position, lang) : "-",
+                  fmtNum(o.kills, lang),
+                  fmtNum(o.deaths, lang),
+                  fmtNum(kpd(o.kills, o.deaths), lang, 2),
+                  fmtNum(o.headshots, lang),
+                  <PctBar key="h" value={ratio(o.headshots, o.kills)} lang={lang} />,
+                ],
+              }))}
             />
           </TableWrap>
         </Section>
       ) : null}
 
-      <div className="grid-2">
-        {teams.length ? (
-          <Section title={t.teams}>
-            <TableWrap>
-              <SortableTable
-                initial={1}
-                cols={[{ label: t.team }, { label: t.joined, className: "num" }, { label: t.share, className: "barcell", noSort: true }]}
-                rows={teams.map((x) => ({
-                  key: x.id,
-                  values: [x.name, x.joined, null],
-                  cells: [x.name, fmtNum(x.joined, lang), <Bar key="s" value={ratio(x.joined, totalTeamJoins)} label={fmtPct(ratio(x.joined, totalTeamJoins), lang)} />],
-                }))}
-              />
-            </TableWrap>
-          </Section>
-        ) : null}
-
-        {actions.length ? (
-          <Section title={t.actions}>
-            <TableWrap>
-              <SortableTable
-                initial={1}
-                cols={[{ label: t.actions }, { label: t.count, className: "num" }, { label: t.reward, className: "num" }]}
-                rows={actions.map((a) => ({
-                  key: a.id,
-                  values: [a.description, a.count, a.points],
-                  cells: [
-                    <Link key="a" href={`/${game}/actions/${a.id}`}>
-                      {a.description}
-                    </Link>,
-                    fmtNum(a.count, lang),
-                    fmtNum(a.points, lang),
-                  ],
-                }))}
-              />
-            </TableWrap>
-          </Section>
-        ) : null}
-
-        {maps.length ? (
-          <Section title={t.maps}>
-            <TableWrap>
-              <SortableTable
-                initial={1}
-                cols={[{ label: t.map }, { label: t.kills, className: "num" }, { label: t.deaths, className: "num" }, { label: t.kpd, className: "num" }, { label: t.hpk, className: "num" }]}
-                rows={maps.map((m) => ({
-                  key: m.id,
-                  values: [m.map, m.kills, m.deaths, kpd(m.kills, m.deaths), ratio(m.headshots, m.kills)],
-                  cells: [
-                    <Link key="m" href={`/${game}/maps/${m.id}`}>
-                      {m.map}
-                    </Link>,
-                    fmtNum(m.kills, lang),
-                    fmtNum(m.deaths, lang),
-                    fmtNum(kpd(m.kills, m.deaths), lang, 2),
-                    fmtPct(ratio(m.headshots, m.kills), lang),
-                  ],
-                }))}
-              />
-            </TableWrap>
-          </Section>
-        ) : null}
-
-        {victims.length ? <OpponentTable title={t.victims} rows={victims} game={game} t={t} lang={lang} flags={flags} /> : null}
-        {killers.length ? <OpponentTable title={t.killers} rows={killers} game={game} t={t} lang={lang} flags={flags} /> : null}
-      </div>
+      {victims.length || killers.length ? (
+        <div className="grid-2">
+          {victims.length ? <OpponentTable title={t.victims} rows={victims} game={game} t={t} lang={lang} flags={flags} /> : null}
+          {killers.length ? <OpponentTable title={t.killers} rows={killers} game={game} t={t} lang={lang} flags={flags} /> : null}
+        </div>
+      ) : null}
 
       {p.hideranking ? null : <PlayerEvents game={game} playerId={id} t={t} lang={lang} />}
 
@@ -730,38 +692,6 @@ export default async function PlayerPage({ params, searchParams }: Props) {
       </div>
 
       {!weapons.length && !history.length ? <Empty>{t.noData}</Empty> : null}
-      {killList.length ? (
-        <Section title={t.killStats}>
-          <p className="muted small">{t.killStatsHint}</p>
-          <TableWrap>
-            <SortableTable
-              initial={2}
-              cols={[
-                { label: t.player },
-                { label: t.position, className: "num" },
-                { label: t.kills, className: "num" },
-                { label: t.deaths, className: "num" },
-                { label: t.kpd, className: "num" },
-                { label: t.hs, className: "num hide-sm" },
-                { label: t.hpk, className: "barcell" },
-              ]}
-              rows={killList.map((o) => ({
-                key: o.playerId,
-                values: [o.name ?? "", o.position, o.kills, o.deaths, kpd(o.kills, o.deaths), o.headshots, ratio(o.headshots, o.kills)],
-                cells: [
-                  <PlayerLink key="p" game={game} id={o.playerId} name={o.name} flag={flags.get(o.playerId)} />,
-                  o.position ? fmtNum(o.position, lang) : "-",
-                  fmtNum(o.kills, lang),
-                  fmtNum(o.deaths, lang),
-                  fmtNum(kpd(o.kills, o.deaths), lang, 2),
-                  fmtNum(o.headshots, lang),
-                  <PctBar key="h" value={ratio(o.headshots, o.kills)} lang={lang} />,
-                ],
-              }))}
-            />
-          </TableWrap>
-        </Section>
-      ) : null}
     </>
   );
 }

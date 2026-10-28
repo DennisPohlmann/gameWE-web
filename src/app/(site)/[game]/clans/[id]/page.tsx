@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
 import { ClanEvents } from "@/components/game-events";
 import { Spark } from "@/components/graphics";
-import { Hitbox } from "@/components/hitbox";
+import { MapTable, WeaponStats, WeaponUsage, targetLabels } from "@/components/usage-tables";
+import { WeaponTargets } from "@/components/weapon-targets";
 import { MapGate } from "@/components/map-gate";
 import { Radar, type RadarAxis } from "@/components/radar";
-import { SortableTable } from "@/components/sortable-table";
 import { RankingTable, rankingValues } from "@/components/ranking";
-import { Bar, Flag, PctBar, Section, Stats, TableWrap } from "@/components/ui";
+import { Bar, Flag, Section, Stats } from "@/components/ui";
 import { mapGateProps } from "@/lib/consent-server";
 import { gameHasShots, getClan, getClanFlags, getClanMapPlayers, getClanMembers, getInactiveClanMembers, getMembersHistory, getMembersMaps, getMembersWeapons, getRadarAverage } from "@/lib/data";
 import { siteDay } from "@/lib/day";
@@ -164,81 +163,31 @@ export default async function ClanPage({ params, searchParams }: Props) {
         />
       </Section>
 
-      {hitboxWeapons[0] && ZONES.some((z) => hitboxWeapons[0].hits[z] > 0) ? (
-        <Section title={t.hitbox}>
-          <div className="box hb-box">
-            <Hitbox
-              weapons={hitboxWeapons}
-              locale={lang}
-              labels={{ head: t.head, neck: t.neck, chest: t.chest, stomach: t.stomach, leftarm: t.leftarm, rightarm: t.rightarm, leftleg: t.leftleg, rightleg: t.rightleg, weapon: t.weapon, hits: t.hits, show: t.show }}
-              initial={hwParam(sp.hw, hitboxWeapons.length)}
-            />
-          </div>
+      {/* The members' maps, weapons and targets in the order and look of
+          the player page (gameME's). */}
+      {maps.length ? (
+        <Section title={t.mapPerformance}>
+          <MapTable maps={maps} game={game} t={t} lang={lang} />
         </Section>
       ) : null}
 
-      <div className="grid-2">
-        {weapons.length ? (
-          <Section title={t.weapons}>
-            <TableWrap>
-              <SortableTable
-                initial={1}
-                cols={[
-                  { label: t.weapon },
-                  { label: t.kills, className: "num" },
-                  { label: t.perMember, className: "num hide-sm" },
-                  { label: t.hs, className: "num hide-sm" },
-                  { label: t.hpk, className: "barcell" },
-                  ...(shots ? [{ label: t.acc, className: "barcell hide-sm" }] : []),
-                ]}
-                rows={weapons.slice(0, 15).map((w) => {
-                  const hpk = ratio(w.headshots, w.kills);
-                  const acc = ratio(w.hits, w.shots);
-                  const per = ids.length ? Number(w.kills) / ids.length : 0;
-                  return {
-                    key: w.weaponId,
-                    values: [w.name, Number(w.kills), per, Number(w.headshots), hpk, ...(shots ? [acc] : [])],
-                    cells: [
-                      <Link key="n" href={`/${game}/weapons/${encodeURIComponent(w.code)}`}>
-                        {w.name}
-                      </Link>,
-                      fmtNum(w.kills, lang),
-                      fmtNum(per, lang, 1),
-                      fmtNum(w.headshots, lang),
-                      <PctBar key="h" value={hpk} lang={lang} />,
-                      ...(shots ? [<PctBar key="a" value={acc} lang={lang} />] : []),
-                    ],
-                  };
-                })}
-              />
-            </TableWrap>
-          </Section>
-        ) : null}
+      {weapons.length ? (
+        <Section title={t.weaponUsage}>
+          <WeaponUsage weapons={weapons} game={game} t={t} lang={lang} members={ids.length} />
+        </Section>
+      ) : null}
 
-        {maps.length ? (
-          <Section title={t.maps}>
-            <TableWrap>
-              <SortableTable
-                initial={1}
-                cols={[{ label: t.map }, { label: t.kills, className: "num" }, { label: t.deaths, className: "num" }, { label: t.kpd, className: "num" }, { label: t.hpk, className: "num hide-sm" }]}
-                rows={maps.map((m) => ({
-                  key: m.id,
-                  values: [m.map, Number(m.kills), Number(m.deaths), kpd(m.kills, m.deaths), ratio(m.headshots, m.kills)],
-                  cells: [
-                    <Link key="m" href={`/${game}/maps/${m.id}`}>
-                      {m.map}
-                    </Link>,
-                    fmtNum(m.kills, lang),
-                    fmtNum(m.deaths, lang),
-                    fmtNum(kpd(m.kills, m.deaths), lang, 2),
-                    fmtPct(ratio(m.headshots, m.kills), lang),
-                  ],
-                }))}
-              />
-            </TableWrap>
-          </Section>
-        ) : null}
-      </div>
+      {hitboxWeapons[0] && ZONES.some((z) => hitboxWeapons[0].hits[z] > 0) ? (
+        <Section id="targets" title={t.weaponTargets}>
+          <WeaponTargets weapons={hitboxWeapons} locale={lang} labels={targetLabels(t)} initial={hwParam(sp.hw, hitboxWeapons.length)} />
+        </Section>
+      ) : null}
+
+      {weapons.length ? (
+        <Section title={t.weapons}>
+          <WeaponStats weapons={weapons} game={game} shots={shots} t={t} lang={lang} />
+        </Section>
+      ) : null}
 
       <ClanEvents game={game} clanId={c.clanId} ids={members.map((m) => Number(m.playerId))} t={t} lang={lang} />
     </>

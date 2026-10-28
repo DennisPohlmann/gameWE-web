@@ -1457,3 +1457,19 @@ table.stats.clan-sum td { white-space: normal; }
   /* Narrower cells, so all 13 columns fit the modern skins' width. */
   html[data-skin] table.clan-members th, html[data-skin] table.clan-members td { padding-left: 5px; padding-right: 5px; }
 }
+
+/* Weapon targets (player and clan page), as on gameME: the figure in a
+   framed box on the left, the weapons with their left, middle and right
+   share beside it; the weapon shown in the figure is marked. */
+.wt-figure td { padding: 10px 12px; white-space: normal; }
+.wt-figure .hb-callout { max-width: 460px; }
+.wt-table { max-height: 560px; overflow-y: auto; }
+.wt-table thead th { position: sticky; top: 0; z-index: 1; }
+.wt-table .wt-all { font-weight: bold; }
+.wt-table td:first-child { white-space: normal; min-width: 110px; }
+.wt-table tr.wt-sel td { background: var(--surface-2); }
+.wt-table tr.wt-sel td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+.wt-table tr.wt-sel a { color: var(--accent-text, var(--accent)); font-weight: bold; }
+@media (max-width: 700px) {
+  .wt-table { max-height: 360px; }
+}
