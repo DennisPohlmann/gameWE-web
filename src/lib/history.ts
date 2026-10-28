@@ -286,13 +286,14 @@ export async function hasEventServer() {
 
 // One SELECT per event table, all with the same columns; `by` is the column
 // the source is filtered on (a constant from GAME_BY / PLAYER_BY, never input).
-function gameSource(kind: GameEventKind, by: string, withServer: boolean): string {
+// match: the test on `by`, "= ?" (one id) or "IN (?)" (a list of ids).
+function gameSource(kind: GameEventKind, by: string, withServer: boolean, match = "= ?"): string {
   // Only the name of the server, never other columns of hlstats_Servers.
   const m = withServer
     ? `LEFT JOIN hlstats_Maps m ON m.id = e.map LEFT JOIN (SELECT serverId, name FROM hlstats_Servers) s ON s.serverId = e.server_id`
     : `LEFT JOIN hlstats_Maps m ON m.id = e.map`;
   const srv = withServer ? `COALESCE(s.name, '') AS server` : `'' AS server`;
-  const w = `WHERE ${by} = ?`;
+  const w = `WHERE ${by} ${match}`;
   const mapOnly = `LEFT JOIN hlstats_Maps m ON m.id = e.map`;
   const all: Record<GameEventKind, string> = {
     // Only the columns the public DB user may read (never ipAddress).
@@ -493,6 +494,27 @@ export const PLAYER_EVENTS = 25;
 // player page. The caller checks that the page may be shown.
 export function getPlayerGameEvents(playerId: number, limit: number): Promise<GameEvent[]> {
   return cached(`p|${playerId}|${limit}`, async () => named(await loadEvents(PLAYER_BY, playerId, limit), limit, playerId));
+}
+
+// The latest events with a clan member on either side, for the live box on
+// the clan page: the kinds of the player page's box, each source limited to
+// `limit` rows. A kill between two members comes from both sides and is
+// kept once.
+export function getMembersGameEvents(clanId: number, ids: number[], limit: number): Promise<GameEvent[]> {
+  if (!ids.length) return Promise.resolve([]);
+  return cached(`clan|${clanId}|${ids.join(",")}|${limit}`, async () => {
+    const withServer = await hasEventServer();
+    const parts = PLAYER_BY.map(([k, col]) => `(${gameSource(k, col, withServer, "IN (?)")} ORDER BY 1 DESC LIMIT ${Number(limit)})`);
+    const rows = await query<RawEvent>(`SELECT * FROM (${parts.join(" UNION ALL ")}) x ORDER BY ts DESC, kind LIMIT ?`, [...PLAYER_BY.map(() => ids), limit * 2]);
+    const seen = new Set<string>();
+    const once = rows.filter((r) => {
+      const key = `${r.ts}|${r.kind}|${r.actor}|${r.other}|${r.num}|${r.code}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    return named(once, limit);
+  });
 }
 
 // The newest rows of the player's events page (one kind or all), for its

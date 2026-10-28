@@ -1,13 +1,22 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
+import { ClanEvents } from "@/components/game-events";
+import { Spark } from "@/components/graphics";
+import { Hitbox } from "@/components/hitbox";
 import { MapGate } from "@/components/map-gate";
+import { Radar, type RadarAxis } from "@/components/radar";
+import { SortableTable } from "@/components/sortable-table";
 import { RankingTable, rankingValues } from "@/components/ranking";
-import { Flag, Section, Stats } from "@/components/ui";
+import { Bar, Flag, PctBar, Section, Stats, TableWrap } from "@/components/ui";
 import { mapGateProps } from "@/lib/consent-server";
-import { getClan, getClanFlags, getClanMapPlayers, getClanMembers, getInactiveClanMembers } from "@/lib/data";
+import { gameHasShots, getClan, getClanFlags, getClanMapPlayers, getClanMembers, getInactiveClanMembers, getMembersHistory, getMembersMaps, getMembersWeapons, getRadarAverage } from "@/lib/data";
+import { siteDay } from "@/lib/day";
+import { FIXED_MAX, radarPoints, type PlayerRatios, type RadarKey } from "@/lib/radar";
+import { ZONES } from "@/lib/zones";
 import { countryName, fmtDate, fmtDuration, fmtNum, fmtPct, kpd, ratio } from "@/lib/format";
 import { mapMarkers } from "@/lib/map-markers";
-import { fill, getDict } from "@/lib/i18n";
+import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
 import { shareMetadata } from "@/lib/share-meta";
 import { getSettings } from "@/lib/settings";
 import { sortRows, sortState } from "@/lib/table-sort";
@@ -64,6 +73,23 @@ export default async function ClanPage({ params, searchParams }: Props) {
     if (code) m.set(code, (m.get(code) ?? 0) + 1);
     return m;
   }, new Map<string, number>())].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  // The members the numbers are over (all of them for an inactive clan, as
+  // above); the events only of the active ones, who have a ranking row.
+  const ids = all.map((m) => Number(m.playerId));
+  const [history, weapons, maps, radarAvg, shots] = await Promise.all([
+    getMembersHistory(ids, 30),
+    getMembersWeapons(ids),
+    getMembersMaps(ids, 15),
+    getRadarAverage(game),
+    gameHasShots(game),
+  ]);
+  const summary = clanSummary({ all, history, radarAvg, shots, t, lang });
+  const zoneTotal = (w: (typeof weapons)[number]) => ZONES.reduce((n, z) => n + Number(w[z]), 0);
+  const hitboxWeapons = [
+    { name: t.allWeapons, hits: Object.fromEntries(ZONES.map((z) => [z, weapons.reduce((n, w) => n + Number(w[z]), 0)])) as Record<(typeof ZONES)[number], number> },
+    ...weapons.filter((w) => zoneTotal(w) > 0).map((w) => ({ name: w.name, hits: Object.fromEntries(ZONES.map((z) => [z, Number(w[z])])) as Record<(typeof ZONES)[number], number> })),
+  ];
+  const sp = await searchParams;
   const order = sortState(await searchParams, rankingValues, "skill");
   const sorted = sortRows(members, rankingValues, order.sort, order.asc);
   // The inactive members follow in the same table, in the same order.
@@ -120,6 +146,15 @@ export default async function ClanPage({ params, searchParams }: Props) {
           details
         )}
       </Section>
+      <Section title={t.clanSummary}>
+        <div className="cont-2 clan-summary">
+          {summary.table}
+          <div className="box clan-radar">
+            <Radar axes={summary.radar} labels={{ avg: t.radarAll, player: t.radarClan }} notes={summary.notes} />
+          </div>
+        </div>
+        <p className="footnote">{t.clanSummaryNote}</p>
+      </Section>
       <Section title={t.members}>
         <RankingTable
           game={game}
@@ -133,6 +168,176 @@ export default async function ClanPage({ params, searchParams }: Props) {
           lang={lang}
         />
       </Section>
+
+      {hitboxWeapons[0] && ZONES.some((z) => hitboxWeapons[0].hits[z] > 0) ? (
+        <Section title={t.hitbox}>
+          <div className="box hb-box">
+            <Hitbox
+              weapons={hitboxWeapons}
+              locale={lang}
+              labels={{ head: t.head, neck: t.neck, chest: t.chest, stomach: t.stomach, leftarm: t.leftarm, rightarm: t.rightarm, leftleg: t.leftleg, rightleg: t.rightleg, weapon: t.weapon, hits: t.hits, show: t.show }}
+              initial={hwParam(sp.hw, hitboxWeapons.length)}
+            />
+          </div>
+        </Section>
+      ) : null}
+
+      <div className="grid-2">
+        {weapons.length ? (
+          <Section title={t.weapons}>
+            <TableWrap>
+              <SortableTable
+                initial={1}
+                cols={[
+                  { label: t.weapon },
+                  { label: t.kills, className: "num" },
+                  { label: t.perMember, className: "num hide-sm" },
+                  { label: t.hs, className: "num hide-sm" },
+                  { label: t.hpk, className: "barcell" },
+                  ...(shots ? [{ label: t.acc, className: "barcell hide-sm" }] : []),
+                ]}
+                rows={weapons.slice(0, 15).map((w) => {
+                  const hpk = ratio(w.headshots, w.kills);
+                  const acc = ratio(w.hits, w.shots);
+                  const per = ids.length ? Number(w.kills) / ids.length : 0;
+                  return {
+                    key: w.weaponId,
+                    values: [w.name, Number(w.kills), per, Number(w.headshots), hpk, ...(shots ? [acc] : [])],
+                    cells: [
+                      <Link key="n" href={`/${game}/weapons/${encodeURIComponent(w.code)}`}>
+                        {w.name}
+                      </Link>,
+                      fmtNum(w.kills, lang),
+                      fmtNum(per, lang, 1),
+                      fmtNum(w.headshots, lang),
+                      <PctBar key="h" value={hpk} lang={lang} />,
+                      ...(shots ? [<PctBar key="a" value={acc} lang={lang} />] : []),
+                    ],
+                  };
+                })}
+              />
+            </TableWrap>
+          </Section>
+        ) : null}
+
+        {maps.length ? (
+          <Section title={t.maps}>
+            <TableWrap>
+              <SortableTable
+                initial={1}
+                cols={[{ label: t.map }, { label: t.kills, className: "num" }, { label: t.deaths, className: "num" }, { label: t.kpd, className: "num" }, { label: t.hpk, className: "num hide-sm" }]}
+                rows={maps.map((m) => ({
+                  key: m.id,
+                  values: [m.map, Number(m.kills), Number(m.deaths), kpd(m.kills, m.deaths), ratio(m.headshots, m.kills)],
+                  cells: [
+                    <Link key="m" href={`/${game}/maps/${m.id}`}>
+                      {m.map}
+                    </Link>,
+                    fmtNum(m.kills, lang),
+                    fmtNum(m.deaths, lang),
+                    fmtNum(kpd(m.kills, m.deaths), lang, 2),
+                    fmtPct(ratio(m.headshots, m.kills), lang),
+                  ],
+                }))}
+              />
+            </TableWrap>
+          </Section>
+        ) : null}
+      </div>
+
+      <ClanEvents game={game} clanId={c.clanId} ids={members.map((m) => Number(m.playerId))} t={t} lang={lang} />
     </>
   );
+}
+
+// Index of the hitbox weapon from ?hw=, 0 (all weapons) if missing or out of range.
+function hwParam(v: string | string[] | undefined, n: number): number {
+  const i = Number.parseInt(Array.isArray(v) ? (v[0] ?? "") : (v ?? ""), 10);
+  return Number.isInteger(i) && i >= 0 && i < n ? i : 0;
+}
+
+// The summary of the members, like the player profile's: totals with the
+// average per member, the ratios over all members with their last 30 days
+// as a line, and the radar of the clan's last 14 days against all players.
+function clanSummary({
+  all,
+  history,
+  radarAvg,
+  shots,
+  t,
+  lang,
+}: {
+  all: Awaited<ReturnType<typeof getClanMembers>>;
+  history: Awaited<ReturnType<typeof getMembersHistory>>;
+  radarAvg: Awaited<ReturnType<typeof getRadarAverage>>;
+  shots: boolean;
+  t: Dict;
+  lang: Lang;
+}) {
+  const n = Math.max(1, all.length);
+  const total = (k: "kills" | "deaths" | "headshots" | "shots" | "hits" | "connection_time") => all.reduce((s, m) => s + Number(m[k] ?? 0), 0);
+  const [kills, deaths, hs, shotsAll, hits, time] = [total("kills"), total("deaths"), total("headshots"), total("shots"), total("hits"), total("connection_time")];
+  const last14 = history.filter((h) => h.eventTime >= siteDay(-13));
+  const sum = (rows: typeof history, k: keyof (typeof history)[number]) => rows.reduce((x, h) => x + Number(h[k]), 0);
+  const s14 = (k: keyof (typeof history)[number]) => sum(last14, k);
+  const s30 = (k: keyof (typeof history)[number]) => sum(history, k);
+  const daily = (f: (h: (typeof history)[number]) => number | null) => history.map(f).filter((v): v is number => v !== null && Number.isFinite(v));
+  const n2 = (v: number | null) => fmtNum(v, lang, 2);
+  const pc = (v: number | null) => fmtPct(v, lang);
+  const days14 = t.last14.replace(/^\*\s*/, "");
+  const titles = { total: t.total, current: `${t.current} (${days14})`, min: `${t.min} (${t.last30})`, max: `${t.max} (${t.last30})`, days: t.last30 };
+  const withAvg = (v: number) => `${fmtNum(v, lang)} (${fmtNum(v / n, lang)} ${t.perMember})`;
+  const rounds = s30("rounds");
+  const table = (
+    <Stats
+      items={[
+        [t.kills, withAvg(kills)],
+        [t.deaths, withAvg(deaths)],
+        [t.hs, withAvg(hs)],
+        [t.playTime, `${fmtDuration(time)} (${fmtDuration(time / n)} ${t.perMember})`],
+        [t.kpdLong, <Spark key="k" values={daily((h) => (h.kills || h.deaths ? h.kills / Math.max(1, h.deaths) : null))} total={kpd(kills, deaths)} current={s14("kills") / Math.max(1, s14("deaths"))} fmt={n2} titles={titles} />],
+        [t.hpkLong, <Spark key="h" values={daily((h) => (h.kills ? h.headshots / h.kills : null))} total={ratio(hs, kills)} current={ratio(s14("headshots"), s14("kills"))} fmt={pc} titles={titles} />],
+        ...(shots
+          ? ([
+              [t.acc, <Spark key="a" values={daily((h) => (h.shots ? h.hits / h.shots : null))} total={ratio(hits, shotsAll)} current={ratio(s14("hits"), s14("shots"))} fmt={pc} titles={titles} />],
+              [t.shotsPerKill, <Spark key="s" values={daily((h) => (h.kills && h.shots ? h.shots / h.kills : null))} total={kills && shotsAll ? shotsAll / kills : null} current={s14("kills") ? s14("shots") / s14("kills") : null} fmt={n2} titles={titles} lowerIsBetter />],
+            ] as [string, React.ReactNode][])
+          : []),
+        [t.killsPerMin, n2(time > 0 ? kills / (time / 60) : 0)],
+        [t.winRatio, rounds ? <Bar key="w" value={ratio(s30("wins"), rounds)} green label={pc(ratio(s30("wins"), rounds))} /> : "—"],
+        [t.survived, rounds ? pc(ratio(s30("survived_count"), rounds)) : "—"],
+      ]}
+    />
+  );
+  // Radar: the clan's last two weeks (all members together) against all
+  // players active in them, as on the player page.
+  const r14 = (num: number, den: number) => (last14.length ? { num, den } : null);
+  const ratios: PlayerRatios = {
+    kpd: r14(s14("kills"), s14("deaths")),
+    kpm: r14(s14("kills"), s14("connection_time")),
+    assists: r14(s14("kill_assists"), s14("kills")),
+    survived: r14(s14("survived_count"), s14("rounds")),
+    wins: r14(s14("wins"), s14("rounds")),
+  };
+  const pts = radarPoints(ratios, radarAvg);
+  const label: Record<RadarKey, string> = { kpd: t.kpd, kpm: t.kpm, assists: t.assists, survived: t.survived, wins: t.winRatioShort };
+  const value = (key: RadarKey, v: number | null) => (v === null ? "—" : key === "survived" || key === "wins" ? pc(v) : key === "assists" ? `${n2(v)} ${t.perKill}` : n2(v));
+  const relation = (a: (typeof pts)[number]) => {
+    if (a.noData) return t.winNoData;
+    if (a.rel === null) return "";
+    const d = Math.round((a.rel - 1) * 100) / 100;
+    return d === 0 ? t.radarEqual : fill(d > 0 ? t.radarAbove : t.radarBelow, { pct: pc(Math.abs(d)) });
+  };
+  const radar: RadarAxis[] = pts.map((a) => ({
+    label: label[a.key],
+    noData: a.noData,
+    avg: a.rAvg,
+    player: a.r,
+    avgText: value(a.key, a.avg),
+    playerText: value(a.key, a.value),
+    relation: relation(a),
+    scale: a.rAvg > 0 ? t.radarRings : fill(t.radarScale, { max: fmtNum(FIXED_MAX[a.key], lang, a.key === "assists" ? 1 : 0) }),
+  }));
+  const notes = [last14.length ? "" : t.radarInactive, radarAvg.players ? fill(t.radarCompared, { n: fmtNum(radarAvg.players, lang) }) : ""].filter(Boolean);
+  return { table, radar, notes };
 }

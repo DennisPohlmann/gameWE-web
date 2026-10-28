@@ -913,6 +913,22 @@ export async function getPlayerSkillBefore(id: number, days: number): Promise<nu
   return row ? Number(row.skill) : null;
 }
 
+// ---------------------------------------------------------------- clan page: the members together
+
+// The daily history of a group of players (a clan's members) added up per
+// day over the last `days` days, for the clan page's summary and radar.
+export function getMembersHistory(ids: number[], days: number) {
+  if (!ids.length) return Promise.resolve([] as HistoryDay[]);
+  return query<HistoryDay>(
+    `SELECT eventTime, SUM(skill) AS skill, SUM(skill_change) AS skill_change, SUM(kills) AS kills, SUM(deaths) AS deaths,
+            SUM(headshots) AS headshots, SUM(shots) AS shots, SUM(hits) AS hits, SUM(rounds) AS rounds, SUM(wins) AS wins,
+            SUM(survived_count) AS survived_count, SUM(kill_assists) AS kill_assists, SUM(connection_time) AS connection_time
+     FROM hlstats_Players_History
+     WHERE playerId IN (?) AND ${sinceDays("eventTime")} GROUP BY eventTime ORDER BY eventTime`,
+    [ids, days],
+  ).then((rows) => rows.map((r) => Object.fromEntries(Object.entries(r).map(([k, v]) => [k, k === "eventTime" ? v : Number(v ?? 0)])) as HistoryDay));
+}
+
 export type PlayerName = {
   name: string;
   connection_time: number;
@@ -986,6 +1002,28 @@ export async function getPlayerWeapons(id: number) {
   );
 }
 
+// The weapons of a group of players (a clan's members) added up, like
+// getPlayerWeapons.
+export async function getMembersWeapons(ids: number[]) {
+  if (!ids.length) return [] as PlayerWeapon[];
+  const neck = (await neckOk()) ? "neck" : "0 AS neck";
+  const src = weeksAndMonths(
+    "Players_Weapons",
+    `weapon_id, kills, deaths, headshots, shots, hits, damage, head, ${neck}, chest, stomach, leftarm, rightarm, leftleg, rightleg`,
+    "player_id IN (?)",
+    [ids],
+  );
+  return query<PlayerWeapon>(
+    `SELECT w.weaponId, w.code, w.name, SUM(x.kills) AS kills, SUM(x.deaths) AS deaths,
+            SUM(x.headshots) AS headshots, SUM(x.shots) AS shots, SUM(x.hits) AS hits, SUM(x.damage) AS damage,
+            SUM(x.head) AS head, SUM(x.neck) AS neck, SUM(x.chest) AS chest, SUM(x.stomach) AS stomach, SUM(x.leftarm) AS leftarm,
+            SUM(x.rightarm) AS rightarm, SUM(x.leftleg) AS leftleg, SUM(x.rightleg) AS rightleg
+     FROM ${src.sql} x JOIN hlstats_Weapons w ON w.weaponId = x.weapon_id
+     GROUP BY w.weaponId, w.code, w.name ORDER BY kills DESC, shots DESC, w.weaponId`,
+    src.params,
+  );
+}
+
 export type PlayerMap = { id: number; map: string; kills: number; deaths: number; headshots: number };
 
 // Per-map kills and deaths from hlstats_Events_Frags (hlstats_Players_Maps is
@@ -999,6 +1037,21 @@ export function getPlayerMaps(id: number, limit = 25) {
      JOIN hlstats_Maps m ON m.id = x.map
      GROUP BY m.id, m.map ORDER BY kills DESC, deaths DESC, m.id LIMIT ?`,
     [id, id, limit],
+  );
+}
+
+// Per-map kills and deaths of a group of players (a clan's members), like
+// getPlayerMaps. A kill between two members counts as a kill and a death.
+export function getMembersMaps(ids: number[], limit = 15) {
+  if (!ids.length) return Promise.resolve([] as PlayerMap[]);
+  return query<PlayerMap>(
+    `SELECT m.id, m.map, SUM(x.k) AS kills, SUM(x.d) AS deaths, SUM(x.hs) AS headshots
+     FROM (SELECT map, 1 AS k, 0 AS d, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS hs FROM hlstats_Events_Frags WHERE killerId IN (?)
+           UNION ALL
+           SELECT map, 0, 1, 0 FROM hlstats_Events_Frags WHERE victimId IN (?)) x
+     JOIN hlstats_Maps m ON m.id = x.map
+     GROUP BY m.id, m.map ORDER BY kills DESC, deaths DESC, m.id LIMIT ?`,
+    [ids, ids, limit],
   );
 }
 
