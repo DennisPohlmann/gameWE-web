@@ -1409,8 +1409,11 @@ html[data-os] .consent-buttons .button, html[data-os] .map-consent .button { fon
 /* The dark ground as its own layer: the modern skins set the background of
    every box in a section. */
 .clan-hero.has-flag::before { content: ""; position: absolute; inset: 0; z-index: -2; background: #16181b; }
-.clan-hero-bg { position: absolute; left: -28px; top: -22px; z-index: -1; transform: rotate(-8deg); opacity: 0.75; pointer-events: none; -webkit-mask-image: linear-gradient(90deg, #000 45%, transparent 98%); mask-image: linear-gradient(90deg, #000 45%, transparent 98%); }
-.clan-hero-bg .flag-svg { display: block; width: 240px; height: 140px; margin: 0; border-radius: 0; box-shadow: none; }
+/* The flag tilted in the top left corner, zoomed out so its stripes or
+   emblem stay recognisable, fading out to the right. */
+.clan-hero-bg { position: absolute; left: -8px; top: -12px; bottom: -12px; z-index: -1; transform: rotate(-8deg); opacity: 0.9; pointer-events: none; -webkit-mask-image: linear-gradient(90deg, #000 70%, transparent 100%); mask-image: linear-gradient(90deg, #000 70%, transparent 100%); }
+.clan-hero-bg .flag-svg { display: block; height: 100%; width: auto; aspect-ratio: 4 / 3; margin: 0; border-radius: 0; box-shadow: none; }
+.clan-hero-bg .flag-svg::after { display: none; }
 .clan-hero-text { flex: 1 1 auto; min-width: 0; }
 .section .clan-hero h1 { margin: 0; font-size: 26px; line-height: 1.15; font-weight: bold; color: var(--text); overflow-wrap: anywhere; }
 .clan-hero p { margin: 3px 0 0; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
@@ -1423,17 +1426,18 @@ html[data-os] .consent-buttons .button, html[data-os] .map-consent .button { fon
 @media (max-width: 640px) {
   .clan-hero { flex-wrap: wrap; gap: 10px 12px; padding: 14px 12px; }
   .section .clan-hero h1 { font-size: 21px; }
-  /* The flag runs over the whole height of the taller head. */
-  .clan-hero-bg { top: -20px; bottom: -8px; }
-  .clan-hero-bg .flag-svg { width: 240px; height: 100%; }
   .clan-hero-facts { flex-basis: 100%; flex-wrap: wrap; }
 }
 
-/* Details and the members' map side by side, the map as tall as the table. */
-.clan-top { align-items: stretch; }
-.clan-top > table.stats { align-self: start; }
-.clan-map { display: flex; flex-direction: column; }
-.clan-map .player-map { flex: 1 1 auto; min-height: 260px; height: auto; }
+/* The summary needs more room than the details: side by side only when both fit. */
+.clan-top { grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); }
+/* Totals and the average per member may break onto two lines on a phone. */
+table.stats.clan-sum td { white-space: normal; }
+.clan-sum .per-member { white-space: nowrap; }
+/* Its first column holds more text than the player's: smaller trend graphics on a phone. */
+@container (max-width: 400px) {
+  .summary-box .clan-sum .spark { width: 132px; min-width: 132px; }
+}
 .clan-map > p { margin: 6px 0 0; }
 .map-avatar.faded img, .map-avatar.faded span { opacity: 0.45; filter: grayscale(0.7); }
 .map-avatar.faded img:not(.ok) { opacity: 0; }

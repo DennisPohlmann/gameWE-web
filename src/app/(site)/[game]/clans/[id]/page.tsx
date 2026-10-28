@@ -133,28 +133,23 @@ export default async function ClanPage({ params, searchParams }: Props) {
     <>
       <Section title={t.clan}>
         {hero}
-        {gate && markers.length ? (
-          <div className="cont-2 clan-top">
-            {details}
-            <div className="box clan-map">
-              <h4 className="map-title">{t.clanMap}</h4>
-              <MapGate {...gate} markers={markers} style={settings.mapStyle} />
-              <p className="muted">{fill(t.clanMapHint, { n: String(markers.length) })}</p>
-            </div>
-          </div>
-        ) : (
-          details
-        )}
-      </Section>
-      <Section title={t.clanSummary}>
-        <div className="cont-2 clan-summary">
-          {summary.table}
-          <div className="box clan-radar">
-            <Radar axes={summary.radar} labels={{ avg: t.radarAll, player: t.radarClan }} notes={summary.notes} />
+        {/* Details and the members' summary side by side, as on the player page. */}
+        <div className="cont-2 clan-top">
+          {details}
+          <div className="summary-box">
+            {summary.table}
+            <p className="footnote">{t.clanSummaryNote}</p>
           </div>
         </div>
-        <p className="footnote">{t.clanSummaryNote}</p>
       </Section>
+      {gate && markers.length ? (
+        <Section title={t.clanMap}>
+          <div className="clan-map">
+            <MapGate {...gate} markers={markers} style={settings.mapStyle} />
+            <p className="muted">{fill(t.clanMapHint, { n: String(markers.length) })}</p>
+          </div>
+        </Section>
+      ) : null}
       <Section title={t.members}>
         <RankingTable
           game={game}
@@ -286,29 +281,13 @@ function clanSummary({
   const pc = (v: number | null) => fmtPct(v, lang);
   const days14 = t.last14.replace(/^\*\s*/, "");
   const titles = { total: t.total, current: `${t.current} (${days14})`, min: `${t.min} (${t.last30})`, max: `${t.max} (${t.last30})`, days: t.last30 };
-  const withAvg = (v: number) => `${fmtNum(v, lang)} (${fmtNum(v / n, lang)} ${t.perMember})`;
-  const rounds = s30("rounds");
-  const table = (
-    <Stats
-      items={[
-        [t.kills, withAvg(kills)],
-        [t.deaths, withAvg(deaths)],
-        [t.hs, withAvg(hs)],
-        [t.playTime, `${fmtDuration(time)} (${fmtDuration(time / n)} ${t.perMember})`],
-        [t.kpdLong, <Spark key="k" values={daily((h) => (h.kills || h.deaths ? h.kills / Math.max(1, h.deaths) : null))} total={kpd(kills, deaths)} current={s14("kills") / Math.max(1, s14("deaths"))} fmt={n2} titles={titles} />],
-        [t.hpkLong, <Spark key="h" values={daily((h) => (h.kills ? h.headshots / h.kills : null))} total={ratio(hs, kills)} current={ratio(s14("headshots"), s14("kills"))} fmt={pc} titles={titles} />],
-        ...(shots
-          ? ([
-              [t.acc, <Spark key="a" values={daily((h) => (h.shots ? h.hits / h.shots : null))} total={ratio(hits, shotsAll)} current={ratio(s14("hits"), s14("shots"))} fmt={pc} titles={titles} />],
-              [t.shotsPerKill, <Spark key="s" values={daily((h) => (h.kills && h.shots ? h.shots / h.kills : null))} total={kills && shotsAll ? shotsAll / kills : null} current={s14("kills") ? s14("shots") / s14("kills") : null} fmt={n2} titles={titles} lowerIsBetter />],
-            ] as [string, React.ReactNode][])
-          : []),
-        [t.killsPerMin, n2(time > 0 ? kills / (time / 60) : 0)],
-        [t.winRatio, rounds ? <Bar key="w" value={ratio(s30("wins"), rounds)} green label={pc(ratio(s30("wins"), rounds))} /> : "—"],
-        [t.survived, rounds ? pc(ratio(s30("survived_count"), rounds)) : "—"],
-      ]}
-    />
+  // The total, and after it the average per member, muted.
+  const perMember = (total: string, avg: string) => (
+    <>
+      {total} <span className="muted small per-member" title={t.perMember}>· Ø {avg}</span>
+    </>
   );
+  const withAvg = (v: number) => perMember(fmtNum(v, lang), fmtNum(v / n, lang));
   // Radar: the clan's last two weeks (all members together) against all
   // players active in them, as on the player page.
   const r14 = (num: number, den: number) => (last14.length ? { num, den } : null);
@@ -339,5 +318,70 @@ function clanSummary({
     scale: a.rAvg > 0 ? t.radarRings : fill(t.radarScale, { max: fmtNum(FIXED_MAX[a.key], lang, a.key === "assists" ? 1 : 0) }),
   }));
   const notes = [last14.length ? "" : t.radarInactive, radarAvg.players ? fill(t.radarCompared, { n: fmtNum(radarAvg.players, lang) }) : ""].filter(Boolean);
-  return { table, radar, notes };
+  const rounds = s30("rounds");
+  const row = (k: string, v: React.ReactNode) => (
+    <>
+      <td className="stats-key">{k}:</td>
+      <td>{v}</td>
+    </>
+  );
+  // The split of the player page: members and average points over the
+  // radar in the left half, the totals and ratios beside it.
+  const table = (
+    <table className="stats summary clan-sum">
+      <colgroup>
+        <col className="sum-q" />
+        <col className="sum-q" />
+        <col className="sum-q" />
+        <col className="sum-q" />
+        <col className="sum-key" />
+        <col className="sum-val" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th colSpan={6}>{t.clanSummary}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td className="stats-key pair">{t.members}:</td>
+          <td className="pair-value"><b>{fmtNum(all.length, lang)}</b></td>
+          <td className="stats-key pair">{t.avgPoints}:</td>
+          <td className="pair-value"><b>{fmtNum(Math.round(all.reduce((x, m) => x + Number(m.skill ?? 0), 0) / n), lang)}</b></td>
+          {row(t.kills, withAvg(kills))}
+        </tr>
+        <tr>
+          <td colSpan={4} rowSpan={7} className="radar-cell">
+            <Radar axes={radar} labels={{ avg: t.radarAll, player: t.radarClan }} notes={notes} />
+          </td>
+          {row(t.deaths, withAvg(deaths))}
+        </tr>
+        <tr>{row(t.hs, withAvg(hs))}</tr>
+        <tr>{row(t.playTime, perMember(fmtDuration(time), fmtDuration(time / n)))}</tr>
+        <tr>{row(t.kpdLong, <Spark values={daily((h) => (h.kills || h.deaths ? h.kills / Math.max(1, h.deaths) : null))} total={kpd(kills, deaths)} current={s14("kills") / Math.max(1, s14("deaths"))} fmt={n2} titles={titles} />)}</tr>
+        <tr>{row(t.hpkLong, <Spark values={daily((h) => (h.kills ? h.headshots / h.kills : null))} total={ratio(hs, kills)} current={ratio(s14("headshots"), s14("kills"))} fmt={pc} titles={titles} />)}</tr>
+        <tr>{row(t.killsPerMin, n2(time > 0 ? kills / (time / 60) : 0))}</tr>
+        <tr>{row(t.winRatio, rounds ? <Bar value={ratio(s30("wins"), rounds)} green label={pc(ratio(s30("wins"), rounds))} /> : "—")}</tr>
+        <Row4 k={t.survived} v={rounds ? pc(ratio(s30("survived_count"), rounds)) : "—"} />
+        {shots ? (
+          <>
+            <Row4 k={t.acc} v={<Spark values={daily((h) => (h.shots ? h.hits / h.shots : null))} total={ratio(hits, shotsAll)} current={ratio(s14("hits"), s14("shots"))} fmt={pc} titles={titles} />} />
+            <Row4 k={t.shotsPerKill} v={<Spark values={daily((h) => (h.kills && h.shots ? h.shots / h.kills : null))} total={kills && shotsAll ? shotsAll / kills : null} current={s14("kills") ? s14("shots") / s14("kills") : null} fmt={n2} titles={titles} lowerIsBetter />} />
+          </>
+        ) : null}
+      </tbody>
+    </table>
+  );
+  return { table };
+}
+
+function Row4({ k, v }: { k: string; v: React.ReactNode }) {
+  return (
+    <tr>
+      <td colSpan={4} className="stats-key">
+        {k}:
+      </td>
+      <td colSpan={2}>{v}</td>
+    </tr>
+  );
 }
