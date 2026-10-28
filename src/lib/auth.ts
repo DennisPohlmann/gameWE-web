@@ -1,5 +1,6 @@
 import "server-only";
 import { env } from "./env";
+import { adminSecretProblem } from "./admin-secret";
 import { createHmac, randomBytes, scryptSync, timingSafeEqual, createHash } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -31,9 +32,16 @@ const PENDING_TRIES = 5;
 
 export type AdminUser = { username: string; acclevel: number };
 
+let warned = false;
+
 export function adminSecret(): string | null {
   const s = env("ADMIN_SECRET") ?? "";
-  return s.length >= 32 ? s : null;
+  const problem = adminSecretProblem(s);
+  if (problem && problem !== "short" && !warned) {
+    warned = true;
+    console.warn(`ADMIN_SECRET is a ${problem === "placeholder" ? "placeholder" : "weak value"}; the admin area stays locked until it is a random value (openssl rand -hex 32)`);
+  }
+  return problem ? null : s;
 }
 
 export function hashPassword(pw: string): string {

@@ -310,7 +310,10 @@ website therefore computes some things itself:
 ## Admin area
 
 1. Set `ADMIN_SECRET` to a random string of at least 32 characters
-   (`openssl rand -hex 32`). Without it the admin area stays locked.
+   (`openssl rand -hex 32`). Without it the admin area stays locked, and
+   also with a placeholder (`change-me...`) or a repeated pattern (fewer
+   than 8 different characters), since anyone who knows the value could
+   sign a session.
 2. Create the first user; the command prints a generated password
    (container and tar.gz: see [INSTALLATION.md](INSTALLATION.md)):
 

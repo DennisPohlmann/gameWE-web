@@ -521,7 +521,7 @@ For monitoring, `/-/metrics` gives Prometheus metrics once a token is set
 | Symptom | Cause |
 |---------|-------|
 | `/healthz` answers 503 | The database is not reachable: check `DB_HOST`, `DB_PORT`, user and password; in the container, 127.0.0.1 is the container itself (use `--network host` or the host's address). |
-| Admin area says it is locked | `ADMIN_SECRET` is missing or shorter than 32 characters. |
+| Admin area says it is locked | `ADMIN_SECRET` is missing, shorter than 32 characters, a placeholder (`change-me...`) or a repeated pattern; the log says which. Set a random one: `openssl rand -hex 32`. |
 | Admin cookie is not kept, login loops | The proxy does not pass `X-Forwarded-Proto https`, or the site is opened over plain http. |
 | Redirect loop under a sub path | `location /stats/` with a trailing slash; use `location /stats`. |
 | Times are off by hours, or the date (awards, "yesterday") changes only at 01:00/02:00 | `TZ` is not set (the container is UTC otherwise). Web and collector need the same `TZ`. |

@@ -30,9 +30,16 @@ if (!name || name.length > 128 || flags.some((f) => !["--totp", "--no-totp"].inc
   process.exit(2);
 }
 const adminSecret = process.env.ADMIN_SECRET ?? "";
-if (totp === "new" && adminSecret.length < 32) {
-  console.error("--totp needs ADMIN_SECRET (at least 32 characters) in the environment or .env");
+// The same rule as src/lib/admin-secret.ts: placeholders ("change-me...") and
+// repeated patterns lock the admin area like a missing secret.
+const secretOk =
+  adminSecret.length >= 32 && !/change[\s_-]*me/i.test(adminSecret) && new Set(adminSecret).size >= 8;
+if (totp === "new" && !secretOk) {
+  console.error("--totp needs a random ADMIN_SECRET (at least 32 characters, e.g. openssl rand -hex 32) in the environment or .env");
   process.exit(2);
+}
+if (!secretOk) {
+  console.error("note: ADMIN_SECRET is missing, a placeholder or too weak; the admin area stays locked until it is a random value (openssl rand -hex 32)");
 }
 
 // RFC 6238 key: 20 random bytes in base32.
