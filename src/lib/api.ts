@@ -11,6 +11,7 @@ export { eventDetail };
 import { radarPoints, type PlayerRatios, type RadarAverage } from "./radar";
 import { siteDay } from "./day";
 import { ZONES } from "./zones";
+import type { BanEntry } from "./ban-merge";
 import { playerCount } from "./player-count";
 import { winSplit } from "./shares";
 
@@ -120,14 +121,22 @@ export async function visibleGame(code: string) {
 }
 
 // A player the API may show, exactly when the website shows the profile:
-// not hidden (hideranking, which also covers banned players), not a bot
-// while bots have no profile (noProfile), in a visible ranking. Anything
-// else is answered like an unknown player (404).
+// not hidden by an admin or by the player (a player banned in the ranking,
+// hideranking 2, keeps the profile with the ban notice, as on the site),
+// not a bot while bots have no profile (noProfile), in a visible ranking.
+// Anything else is answered like an unknown player (404).
 export async function publicPlayer(id: number | null) {
   if (!id) return undefined;
   const p = await getPlayer(id);
-  if (!p || (await noProfile(p)) || !(await getGame(p.game))) return undefined;
+  if (!p || (await noProfile(p, true)) || !(await getGame(p.game))) return undefined;
   return p;
+}
+
+// A ban as the bans page and the profile show it: source, reason, date
+// (dateText when the source gives no usable date), length as shown and the
+// end when known. Never an IP address.
+export function apiBan(b: BanEntry) {
+  return { source: b.kind, reason: b.reason || null, bannedAt: b.at, dateText: b.at ? null : b.dateText || null, length: b.length || null, endsAt: b.until };
 }
 
 export const apiCountry = (flag: string | null | undefined, name: string | null | undefined) =>

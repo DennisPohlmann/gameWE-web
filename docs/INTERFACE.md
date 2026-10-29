@@ -21,9 +21,10 @@ Some values the collector does not store are computed by the website, see
 Read-only JSON under `/api/v1`, with `Access-Control-Allow-Origin: *`. Each
 IP address may make 120 requests a minute (then `429` with `Retry-After`);
 answers may be cached for 30 seconds. It shows only what the website shows
-to everyone: players hidden from the ranking or banned, bots without a
-profile and hidden rankings (with their servers) are left out or answer
-`404`. The API never returns chat, IP addresses, Steam IDs, RCON passwords, log
+to everyone: hidden players, bots without a profile and hidden rankings
+(with their servers) are left out or answer `404`. Players banned in the
+ranking are shown where the website shows them: on the bans list and their
+profile (with `banned` and `bans`), not in the other lists. The API never returns chat, IP addresses, Steam IDs, RCON passwords, log
 secrets or other admin data; the TeamSpeak password only when the admin allows
 showing it.
 Parts of the site an admin turned off (live map, player map, events, hall of
@@ -112,7 +113,8 @@ website's # column) and `rank` (the place in the whole ranking by points);
 | `/api/v1/voice/teamspeak` | the TeamSpeak page: server info, channel tree, people online (names only while shown); `passwordProtected`, and `password` only while "Allow showing the TeamSpeak password" is on (404 unless TeamSpeak is the voice server) |
 | `/api/v1/voice/teamspeak/banner` | the TeamSpeak banner as PNG (`?style=<template>`) |
 | `/api/v1/banners/styles` | the styles (design templates) the banners take |
-| `/api/v1/players/<id>` | the values of a player's profile: place, points and last change, kills, K:D, HS/kill, kills per minute, assists, accuracy, shots per kill, rounds, win ratio, survived, connections, ping, location, career rank, favourite weapon, hall of fame stars |
+| `/api/v1/players/<id>` | the values of a player's profile: place, points and last change, kills, K:D, HS/kill, kills per minute, assists, accuracy, shots per kill, rounds, win ratio, survived, connections, ping, location, career rank, favourite weapon, hall of fame stars, `banned` and the running `bans` (source, reason, date, length, end) |
+| `/api/v1/rankings/<game>/bans` | the bans page: banned players with their running bans (server logs, SourceBans, VAC/game bans from Steam), newest first, at most 500; `?view=inactive` the "Inactive players" tab |
 | `/api/v1/players/<id>/weapons` | the player's weapons with K:D, accuracy, damage per hit, shots per kill and hits per body zone |
 | `/api/v1/players/<id>/hitboxes` | hits per body zone over all weapons (`neck` only from Counter-Strike 2, else 0) |
 | `/api/v1/players/<id>/maps` | kills and deaths per map |
@@ -129,8 +131,9 @@ website's # column) and `rank` (the place in the whole ranking by points);
 | `/api/v1/players/<id>/ribbons` | rank by kills and ribbons per award |
 
 Unknown rankings, servers, players and other ids, and unknown paths under
-`/api/v1`, give `404` with `{"error":"not found"}`; for `/api/v1/players/<id>/...` also hidden and
-banned players, players of hidden rankings and bots of rankings whose "Bots in the ranking" is off.
+`/api/v1`, give `404` with `{"error":"not found"}`; for `/api/v1/players/<id>/...` also hidden
+players, players of hidden rankings and bots of rankings whose "Bots in the ranking" is off
+(a player banned in the ranking keeps them, as the profile; the player banner stays `404`).
 
 The OpenAPI description is written in `src/lib/openapi.ts` (one entry per
 route, with schema and a made-up example answer); `/api/v1` lists the same

@@ -113,7 +113,7 @@ default order. Tables with their own params, as a page shows more than one:
 | `/<game>/clans` | `sort`, `dir` | `tag`, `members`, `skill` (default), `time`, `kills`, `deaths`, `kpd`, `hpk`; with `view=inactive` also `activity` (last seen, the default there) |
 | `/<game>/clans/<id>` members | `sort`, `dir` (active and inactive members alike) | the keys of the player ranking (`skill` default, `name`, `activity`, `time`, `kills`, `career` (career rank, by kills), `deaths`, `kpd`, `hs`, `hpk`, `acc`) |
 | `/<game>/maps/<id>`, `/<game>/weapons/<code>`, `/<game>/actions/<id>` best players | `sort`, `dir` | `name`, `kills`, `deaths`, `kpd`, `hpk` (map); `name`, `kills`, `hs`, `hpk`, `shots`, `acc` (weapon); `name`, `count`, `points` (action) |
-| `/<game>/bans` | `sort`, `dir` | `name`, `type`, `reason`, `date`, `kpd`, `hpk`, `acc` (default: running bans first, newest first) |
+| `/<game>/bans` | `sort`, `dir` | `name`, `type`, `reason`, `date`, `seen` (inactive tab), `kpd`, `hpk`, `acc` (default: running bans first, newest first) |
 | `/<game>/chat`, `/<game>/events`, `/<game>/players/<id>/chat`, `/<game>/players/<id>/events`, admin chat | `sort`, `dir` | `date` only (newest first; `dir=asc` oldest first): chat and events can hold millions of rows, the time is the column with an index |
 | `/<game>/players/<id>/sessions` | `sort`, `dir` | `date` (default), `change`, `points`, `time`, `rounds`, `wins`, `kills`, `deaths`, `kpd`, `streak`, `hs`, `hpk`, `acc`; another order than newest first reads up to 5000 days of the player |
 | `/<game>/players/<id>/awards` | `sort`, `dir` | `date` (default), `award` |
@@ -191,7 +191,9 @@ website therefore computes some things itself:
   leaves them out (opponents, events with them on the other side, award
   winners, clans, maps, weapons, actions, search, chat, the player
   maps and their lines). Exception for banned players (`hideranking = 2`):
-  they are on the bans page, and their profile page (with its charts,
+  they are on the bans page (in the API `/api/v1/rankings/<game>/bans`),
+  and their profile page (in the API `/api/v1/players/<id>` with `banned`
+  and `bans`) (with its charts,
   avatar and the history pages events, awards, sessions and chat; not
   indexed by search engines, no forum signature; position "not listed" and
   no points) shows the ban: a "!" behind the name as on the bans page, and

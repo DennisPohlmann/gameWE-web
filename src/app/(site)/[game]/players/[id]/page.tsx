@@ -28,7 +28,7 @@ import { imageStyles } from "@/lib/image-theme";
 import { getSettings } from "@/lib/settings";
 import { externalImage } from "@/lib/consent";
 import { getConsent } from "@/lib/consent-server";
-import { peekSourcebans } from "@/lib/sourcebans";
+import { profileBans } from "@/lib/bans";
 import { banKind, mergeBans, steamBanEntry, type BanEntry, type BanKind } from "@/lib/ban-merge";
 import { placeHref } from "@/components/ranking";
 import {
@@ -756,24 +756,6 @@ type ProfileProps = {
 // server ban). The VAC ban from Steam is added in ProfileTable (with an API
 // key from Steam's ban list, as on the bans page, so game bans count too). Expired and
 // lifted bans are none.
-async function profileBans(p: PlayerDetail, steam64: string | null, sourcebansUrl: string, t: Dict): Promise<BanEntry[]> {
-  const out: BanEntry[] = [];
-  for (const rec of await getPlayerBans(p.playerId)) {
-    const len = Number(rec.length_minutes);
-    out.push({ kind: banKind(rec.ban_type), reason: rec.reason ?? "", at: Number(rec.banned_at) || null, dateText: "", length: len ? fmtBanMinutes(len) : t.banStatePermanent, until: Number(rec.ends_at) || null });
-  }
-  if (sourcebansUrl && steam64 && !out.some((b) => b.kind === "sourcebans")) {
-    const sb = peekSourcebans(sourcebansUrl)?.bans.find((b) => b.steam64 === steam64 && (b.state === "permanent" || b.state === "active"));
-    if (sb) {
-      const d = /^\d{4}-\d\d-\d\dT/.test(sb.date) ? Date.parse(sb.date) : NaN;
-      out.push({ kind: "sourcebans", reason: sb.reason, at: Number.isNaN(d) ? null : Math.floor(d / 1000), dateText: sb.date, length: sb.state === "permanent" ? t.banStatePermanent : sb.length, until: null });
-    }
-  }
-  if (!out.length && Number(p.hideranking) === 2) out.push({ kind: "engine", reason: "", at: null, dateText: "", length: "", until: null });
-  return out;
-}
-
-
 // The profile table with the Steam data, asked here so the rest of the page
 // does not wait for Steam (up to five seconds when it is slow or down).
 async function SteamProfile({ steam64, ...rest }: ProfileProps & { steam64: string | null }) {

@@ -99,8 +99,11 @@ the audit summary of `security-privacy-audit`.
   pages are 404, every list leaves them out; only a server's live list shows
   their in-game name, without id or link; exception, Dennis' decision
   2026-10-26: banned players, `hideranking = 2`, are on the bans page and
-  keep their profile page with the ban notice, `noProfile(p, true)`; the
-  API, feeds and every other list still leave them out), IP addresses, RCON data, admin
+  keep their profile page with the ban notice, `noProfile(p, true)`; Dennis'
+  decision 2026-10-29: the API shows them exactly there too
+  (`/rankings/<game>/bans`, `/players/<id>` with its ban fields and
+  sub-pages, `src/lib/bans.ts` shared with the site), while feeds and every
+  other list still leave them out), IP addresses, RCON data, admin
   users, TOTP rows, chat unless the setting allows it.
 - Secrets (`ADMIN_SECRET`, DB passwords) only from the environment
   (`src/lib/env.ts`), never in `NEXT_PUBLIC_*`, client components, logs,

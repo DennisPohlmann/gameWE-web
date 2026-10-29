@@ -28,6 +28,7 @@ const TAGS = [
   "Statistics",
   "Events",
   "Hall of fame",
+  "Bans",
   "Player maps",
   "Search",
   "Voice server",
@@ -396,6 +397,8 @@ const PLAYER_PARTS = ["weapons", "hitboxes", "maps", "teams", "actions", "oppone
 const SESSION_SORTS = ["date", "change", "points", "time", "rounds", "wins", "kills", "deaths", "kpd", "streak", "hs", "hpk", "acc"];
 const loadPoint = { time: 1767225600, players: 12, min: 10, max: 14, map: "de_dust2", uptime: 86400 };
 const CLAN_SORTS = ["skill", "members", "kills", "deaths", "headshots", "kpd", "hpk", "time", "activity", "tag", "points", "avgPoints"];
+
+const ban = { source: "sourcebans", reason: "Cheating", bannedAt: 1767225600, dateText: null, length: "Permanent", endsAt: null };
 
 // Event types of a player's events page (EVENT_KINDS in history.ts) and of
 // the type filter of a ranking's events page.
@@ -968,7 +971,7 @@ export const endpoints: Endpoint[] = [
     tag: "Players",
     summary: "One player",
     description:
-      "Public summary of one player with the values of the website's profile (player profile and summary) and the hall of fame stars (null where the ranking shows no hall of fame). Hidden or banned players, bots without a profile and players of hidden rankings answer 404, also on all `/players/{id}/...` endpoints. No Steam ID, Steam profile, IP address or chat.",
+      "Public summary of one player with the values of the website's profile (player profile and summary) and the hall of fame stars (null where the ranking shows no hall of fame). A player banned in the ranking keeps the profile with the ban notice, as on the website (`banned`, `bans`, no `rank`); like there, they are not in the lists. Hidden players, bots without a profile and players of hidden rankings answer 404, also on all `/players/{id}/...` endpoints. No Steam ID, Steam profile, IP address or chat.",
     params: [idParam("player")],
     schema: obj({
       id: int("Player ID"),
@@ -1012,6 +1015,8 @@ export const endpoints: Endpoint[] = [
       careerRank: nullable(obj({ index: int("Rank index"), name: str("Rank name"), minKills: int("Kills needed"), nextAt: nullable(int("Kills for the next rank")) })),
       favoriteWeapon: nullable(obj({ code: str("Weapon code"), name: str("Weapon name"), kills: int("Kills with it") })),
       stars: nullable(obj({ gold: int("First places in the hall of fame"), silver: int("Second places"), bronze: int("Third places") })),
+      banned: bool("Banned: in the ranking (hidden as banned) or with a running ban, as the profile's ban notice and badges"),
+      bans: arr(ref("Ban")),
       links: obj(Object.fromEntries(PLAYER_PARTS.map((k) => [k, link(`the player's ${k}`)]))),
     }),
     example: {
@@ -1056,6 +1061,8 @@ export const endpoints: Endpoint[] = [
       careerRank: { index: 9, name: "General", minKills: 5000, nextAt: null },
       favoriteWeapon: { code: "ak47", name: "AK-47", kills: 2100 },
       stars: { gold: 1, silver: 0, bronze: 2 },
+      banned: false,
+      bans: [],
       links: Object.fromEntries(PLAYER_PARTS.map((k) => [k, v1(`/players/42/${k === "killStats" ? "kills" : k}`)])),
     },
     notFound: "Unknown, hidden or bot player",
@@ -1646,6 +1653,22 @@ export const endpoints: Endpoint[] = [
     notFound: "Unknown ranking, or the site has no events page",
   },
   {
+    path: "/rankings/{game}/bans",
+    operationId: "listBans",
+    tag: "Bans",
+    summary: "Banned players",
+    description:
+      "The bans page of a ranking: every banned player once (also players banned in the ranking; hidden players never), with each running ban: recorded by the collector from the server logs (`sourcemod`, `amx`, `engine`, `sourcebans`), from the SourceBans list (`sourcebans`, where the site has its address) and VAC or game bans from Steam (`vac`, with a Steam Web API key; the 1000 most recently active players are checked). Like the page in two tabs: `view=ranked` (default) the banned players still in the ranking, `view=inactive` those the collector moved out of the ranking for inactivity (the 1000 most recently seen of them are checked for Steam bans). Expired and lifted bans are not listed. Newest ban first, at most 500, as on the website; `length` in English. Sort fields: `date`, `name`, `type`, `reason`, `kpd`, `hpk`, `acc`. No IP addresses.",
+    params: [gameParam, { name: "view", in: "query", description: "ranked (default) or inactive", schema: str("", { enum: ["ranked", "inactive"], default: "ranked" }) }],
+    list: { item: "BannedPlayer", sorts: ["date", "name", "type", "reason", "kpd", "hpk", "acc"], sort: "date" },
+    example: page(
+      [{ position: 1, id: 66, name: "BannedExample", country: de, bannedAt: 1767225600, dateText: null, reason: "Cheating", bans: [{ ...ban, source: "vac", reason: "1× VAC", length: null }, ban], kills: 350, deaths: 150, kpd: 2.33, hpk: 0.41, accuracy: 0.3812, url: v1("/players/66") }],
+      12,
+      `/rankings/${G}/bans`,
+    ),
+    notFound: "Unknown ranking",
+  },
+  {
     path: "/rankings/{game}/hall-of-fame",
     operationId: "listHallOfFame",
     tag: "Hall of fame",
@@ -1744,6 +1767,30 @@ schemas.Team = obj({
   rounds: int("Rounds"),
 });
 schemas.TeamWithJoins = { allOf: [ref("Team"), obj({ joined: int("Times players joined the team") })] };
+schemas.Ban = obj({
+  source: str("vac (VAC or game ban from Steam), sourcebans, sourcemod, amx or engine (a ban from the server logs)"),
+  reason: nullable(str("Reason as the source gives it")),
+  bannedAt: nullable(unix("When the ban was given (VAC: to the day); null when the source gives no usable date")),
+  dateText: nullable(str("The source's own date text when bannedAt is null")),
+  length: nullable(str("Length as the website shows it (English), e.g. Permanent or 7 days")),
+  endsAt: nullable(unix("End of the ban when known")),
+});
+schemas.BannedPlayer = obj({
+  position: int("Number of the row"),
+  id: int("Player ID"),
+  name: nullable(str("Name")),
+  country: nullable(ref("Country")),
+  bannedAt: nullable(unix("Newest ban of the player")),
+  dateText: nullable(str("The source's date text when there is no usable date")),
+  reason: nullable(str("The reason of the newest ban other than VAC, else the VAC one")),
+  bans: arr(ref("Ban")),
+  kills: int("Kills"),
+  deaths: int("Deaths"),
+  kpd: kpdNum(),
+  hpk: fraction("Headshots per kill"),
+  accuracy: fraction("Hits per shot"),
+  url: link("the player's profile"),
+});
 schemas.LoadPoint = obj({
   time: unix("Time"),
   players: int("Players at that time"),
@@ -1976,7 +2023,7 @@ function buildDocument(version: string) {
       title: "gameWE API",
       version,
       description: [
-        "Read-only JSON API of the gameWE statistics. It returns only what the website shows to everyone: no IP addresses, no chat, no hidden or banned players, no admin data, no hidden rankings.",
+        "Read-only JSON API of the gameWE statistics. It returns only what the website shows to everyone: no IP addresses, no chat, no hidden players, no admin data, no hidden rankings. Banned players are shown where the website shows them: on the bans list and their profile.",
         "",
         "- **Authentication:** none.",
         "- **Rate limit:** 120 requests per minute and client address; above that the answer is `429` with a `Retry-After` header.",
@@ -1988,7 +2035,7 @@ function buildDocument(version: string) {
         `- **Lists** are paged: \`limit\` (1-${MAX_LIMIT}, default ${DEFAULT_LIMIT}) and \`page\` (from 1) or \`offset\`. The answer is \`{ data, pagination, links }\`: \`pagination\` has page, limit, offset, total and totalPages; \`links\` has self, first, prev, next and last (null at the ends). Lists with \`sort\` accept the listed fields and \`order=asc|desc\`.`,
         "- **Errors** are `{ \"error\": \"...\" }`: `400` for an invalid parameter (the message says which and what it accepts), `404` for anything unknown or not public, also for unknown paths under `/api/v1`. Unknown parameters are ignored.",
         "- **Points** are the values the website shows in its points columns (`points`, `avgPoints`, `totalPoints`, `pointsChange`); the older names `skill`, `avgSkill` and `skillChange` still carry the same values but are deprecated. Sort keys accept `points` as well as `skill`.",
-        "- **Values** are computed as on the website: `kpd` is kills per death (the kills when there are no deaths), `hpk`, `accuracy` and shares are fractions (0.3125 = 31.25 %), `activity` uses the site's activity setting. Hidden and banned players are left out exactly as on the website.",
+        "- **Values** are computed as on the website: `kpd` is kills per death (the kills when there are no deaths), `hpk`, `accuracy` and shares are fractions (0.3125 = 31.25 %), `activity` uses the site's activity setting. Hidden players are left out exactly as on the website; banned players appear on the bans list and their profile only, as there.",
         "- **Order** is stable: equal values keep the order of their IDs.",
       ].join("\n"),
       license: { name: "GPL-3.0-or-later", identifier: "GPL-3.0-or-later" },

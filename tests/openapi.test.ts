@@ -162,7 +162,7 @@ test("every read page of the website has an endpoint", () => {
 test("no endpoint documents chat, addresses or Steam IDs", () => {
   const text = JSON.stringify(doc.components.schemas).toLowerCase();
   for (const word of ['"ip"', '"ipaddress"', '"uniqueid"', '"steamid"', '"chat"', '"message"']) assert.ok(!text.includes(word), word);
-  for (const e of endpoints) assert.ok(!/chat|ips|bans/.test(e.path), e.path);
+  for (const e of endpoints) assert.ok(!/chat|ips/.test(e.path), e.path);
 });
 
 test("the TeamSpeak password is documented as depending on the admin setting", () => {
@@ -171,4 +171,12 @@ test("the TeamSpeak password is documented as depending on the admin setting", (
     assert.ok(text.includes("passwordProtected"), p);
     assert.ok(text.includes("only while the admin allows showing it"), p);
   }
+});
+
+test("banned players: the bans list and the profile's ban fields are documented", () => {
+  assert.ok(endpoints.some((e) => e.path === "/rankings/{game}/bans" && e.list?.item === "BannedPlayer"));
+  const ban = doc.components.schemas.Ban.properties ?? {};
+  assert.deepEqual(Object.keys(ban).sort(), ["bannedAt", "dateText", "endsAt", "length", "reason", "source"]);
+  const player = JSON.stringify(doc.paths["/players/{id}"].get.responses["200"]);
+  assert.ok(player.includes('"banned"') && player.includes('"bans"'));
 });
