@@ -52,6 +52,7 @@ test("a missing or invalid ranking code falls back to css", () => {
 
 test("every example has exactly the fields of its schema", () => {
   for (const e of endpoints) {
+    if (e.image) continue;
     const response = doc.paths[e.path].get.responses["200"].content?.["application/json"];
     assert.ok(response, e.path);
     const examples: unknown[] = [];
@@ -107,4 +108,59 @@ test("every path of the index is documented and unknown paths are no endpoint", 
   const paths = new Set(Object.keys(doc.paths));
   for (const e of endpoints) assert.ok(paths.has(e.path), e.path);
   assert.ok(![...paths].some((p) => p.includes("...")));
+});
+
+test("banners answer PNG and take a style", () => {
+  const images = endpoints.filter((e) => e.image);
+  assert.deepEqual(images.map((e) => e.path).sort(), ["/players/{id}/banner", "/rankings/{game}/servers/{id}/banner", "/voice/teamspeak/banner"]);
+  for (const e of images) {
+    const ok = doc.paths[e.path].get.responses["200"].content ?? {};
+    assert.deepEqual(Object.keys(ok), ["image/png"], e.path);
+    assert.ok((doc.paths[e.path].get.parameters ?? []).some((p) => p.name === "style" && p.in === "query"), e.path);
+    // Errors stay JSON.
+    assert.ok(doc.paths[e.path].get.responses["404"].content?.["application/json"], e.path);
+  }
+});
+
+test("every read page of the website has an endpoint", () => {
+  const paths = new Set(endpoints.map((e) => e.path));
+  for (const p of [
+    "/stats",
+    "/activity",
+    "/voice",
+    "/voice/teamspeak",
+    "/search/players",
+    "/search/clans",
+    "/points",
+    "/rankings/{game}/activity",
+    "/rankings/{game}/load",
+    "/rankings/{game}/map/live",
+    "/rankings/{game}/map/players",
+    "/rankings/{game}/events",
+    "/rankings/{game}/events/stats",
+    "/rankings/{game}/hall-of-fame",
+    "/rankings/{game}/hall-of-fame/stars",
+    "/rankings/{game}/misc",
+    "/rankings/{game}/maps/{id}/heatmap",
+    "/rankings/{game}/clans/{id}/map",
+    "/rankings/{game}/clans/{id}/history",
+    "/rankings/{game}/clans/{id}/radar",
+    "/rankings/{game}/clans/{id}/weapons",
+    "/rankings/{game}/clans/{id}/maps",
+    "/rankings/{game}/clans/{id}/events",
+    "/players/{id}/events",
+    "/players/{id}/radar",
+  ]) {
+    assert.ok(paths.has(p), p);
+  }
+  // Inactive players, clans and members are a view of their lists.
+  for (const p of ["/rankings/{game}/players", "/rankings/{game}/clans", "/rankings/{game}/clans/{id}/members"]) {
+    assert.ok((doc.paths[p].get.parameters ?? []).some((x) => x.name === "view"), p);
+  }
+});
+
+test("no endpoint documents chat, addresses or Steam IDs", () => {
+  const text = JSON.stringify(doc.components.schemas).toLowerCase();
+  for (const word of ['"ip"', '"ipaddress"', '"uniqueid"', '"steamid"', '"chat"', '"message"']) assert.ok(!text.includes(word), word);
+  for (const e of endpoints) assert.ok(!/chat|ips|bans/.test(e.path), e.path);
 });

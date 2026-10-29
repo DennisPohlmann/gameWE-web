@@ -39,6 +39,13 @@ export function enumArg<T extends string>(q: Query, name: string, allowed: reado
   return v as T;
 }
 
+// Optional parameter without a default: one of `allowed`, or "" when
+// absent or empty.
+export function optionalEnumArg<T extends string>(q: Query, name: string, allowed: readonly T[]): T | "" {
+  const v = q.get(name);
+  return v === null || v === "" ? "" : enumArg(q, name, allowed, allowed[0]);
+}
+
 // Optional free text (name search, city): trimmed, at most `max` characters,
 // no control characters; "" when absent.
 export function textArg(q: Query, name: string, max: number): string {

@@ -1,4 +1,5 @@
 import { DEFAULT_LIMIT, MAX_LIMIT, MAX_OFFSET, paged } from "./api-params.ts";
+import { EVENT_PERIODS, FILTER_KINDS } from "./events-page.ts";
 import { basePath } from "./base-path.ts";
 import { MAP_SORTS } from "./map-table.ts";
 import { PLACE_SORT_ALIASES, PLACE_SORT_DEFAULT, RANKING_SORT_ALIASES, placeSorts, rankingSorts } from "./sorts.ts";
@@ -14,7 +15,25 @@ import { ZONES } from "./zones.ts";
 
 type Schema = Record<string, unknown>;
 type Param = { name: string; in: "path" | "query"; description: string; schema: Schema; required?: boolean; example?: unknown };
-type Tag = "Rankings" | "Players" | "Countries, states and cities" | "Clans" | "Weapons" | "Maps" | "Awards and ranks" | "Actions and teams" | "Servers" | "Statistics";
+const TAGS = [
+  "Rankings",
+  "Players",
+  "Countries, states and cities",
+  "Clans",
+  "Weapons",
+  "Maps",
+  "Awards and ranks",
+  "Actions and teams",
+  "Servers",
+  "Statistics",
+  "Events",
+  "Hall of fame",
+  "Player maps",
+  "Search",
+  "Voice server",
+  "Banners",
+] as const;
+type Tag = (typeof TAGS)[number];
 type Endpoint = {
   path: string;
   operationId: string;
@@ -28,6 +47,9 @@ type Endpoint = {
   schema?: Schema;
   example: unknown;
   notFound?: string;
+  // A picture (banner) instead of JSON: image/png of this size; example is
+  // then the path of an example request.
+  image?: { width: number; height: number };
 };
 
 const ref = (name: string): Schema => ({ $ref: `#/components/schemas/${name}` });
@@ -134,7 +156,7 @@ const schemas: Record<string, Schema> = {
   }),
   RankingRow: obj({
     position: int("Number of the row in this list (the website's # column)"),
-    rank: int("Place in the whole ranking by points: 1 + players with more points (equal points share a place), also in a filtered or re-sorted list"),
+    rank: nullable(int("Place in the whole ranking by points: 1 + players with more points (equal points share a place), also in a filtered or re-sorted list; null for inactive players (view=inactive), who have no place")),
     id: int("Player ID"),
     name: nullable(str("Name")),
     country: nullable(ref("Country")),
@@ -369,7 +391,65 @@ const days = [
 // names of skill, as the website calls the column.
 const PLAYER_SORTS = [...Object.keys(rankingSorts), ...Object.keys(RANKING_SORT_ALIASES)];
 const PLACE_SORTS = [...Object.keys(placeSorts), ...Object.keys(PLACE_SORT_ALIASES)];
+const CLAN_PARTS = ["history", "radar", "weapons", "maps", "map", "events"];
+const PLAYER_PARTS = ["weapons", "hitboxes", "maps", "teams", "actions", "opponents", "killStats", "names", "history", "awards", "ribbons", "events", "radar", "banner"];
+const SESSION_SORTS = ["date", "change", "points", "time", "rounds", "wins", "kills", "deaths", "kpd", "streak", "hs", "hpk", "acc"];
+const loadPoint = { time: 1767225600, players: 12, min: 10, max: 14, map: "de_dust2", uptime: 86400 };
 const CLAN_SORTS = ["skill", "members", "kills", "deaths", "headshots", "kpd", "hpk", "time", "activity", "tag", "points", "avgPoints"];
+
+// Event types of a player's events page (EVENT_KINDS in history.ts) and of
+// the type filter of a ranking's events page.
+const PLAYER_EVENT_TYPES = ["connect", "entry", "disconnect", "team", "role", "name", "action", "playeraction", "teambonus", "kill", "death", "suicide", "teamkill"];
+const FILTER_EVENT_TYPES = FILTER_KINDS;
+const periodQuery: Param = { name: "period", in: "query", description: "The last hour, 24 hours or 7 days", schema: str("", { enum: Object.keys(EVENT_PERIODS), default: "24h" }) };
+const styleQuery: Param = { name: "style", in: "query", description: "Design template of the banner (an id of /banners/styles); without it, or with an unknown one, the active skin", schema: str("", { pattern: "^[a-z0-9][a-z0-9_-]{0,31}$" }) };
+const activityDays = (def: number): Param => ({ name: "days", in: "query", description: "Days back", schema: int("", { enum: [1, 7, 14, 30], default: def }) });
+const activityPoint = { time: 1767225600, players: 12.5, servers: 2, kills: 41, headshots: 13 };
+const marker = { id: 42, name: "ExamplePlayer", country: de, city: "Munich", lat: 48.14, lng: 11.58, rank: 1, points: 2210, kills: 5321, deaths: 2410, kpd: 2.21, lastEvent: 1767225600, server: null, inactive: false };
+const mapServer = { id: 1, name: "Example Public #1", address: "cs.example.org:27015", map: "de_dust2", city: "Frankfurt am Main", country: de, lat: 50.11, lng: 8.68, online: true, uptime: 86400, vac: true };
+const radar = {
+  days: 14,
+  activeDays: 9,
+  comparedPlayers: 118,
+  axes: [
+    { axis: "kpd", value: 1.84, average: 1.02, relative: 1.8039, noData: false },
+    { axis: "kpm", value: 0.71, average: 0.52, relative: 1.3654, noData: false },
+    { axis: "survived", value: 0.41, average: 0.38, relative: 1.0789, noData: false },
+    { axis: "wins", value: 0.53, average: 0.5, relative: 1.06, noData: false },
+  ],
+};
+const event = {
+  time: 1767225600,
+  type: "kill",
+  player: { id: 42, name: "ExamplePlayer", ...tag },
+  other: { id: 43, name: "OtherPlayer", ...tag },
+  weapon: { code: "ak47", name: "AK-47" },
+  headshot: true,
+  action: null,
+  team: null,
+  oldName: null,
+  newName: null,
+  map: "de_dust2",
+  server: "Example Public #1",
+};
+const hallEntry = {
+  place: 1,
+  id: 42,
+  name: "ExamplePlayer",
+  currentName: "ExamplePlayer",
+  country: de,
+  points: 2210,
+  kills: 812,
+  deaths: 410,
+  kpd: 1.98,
+  headshots: 270,
+  hpk: 0.3325,
+  accuracy: 0.3011,
+  killStreak: 14,
+  connectionTime: 98765,
+  favoriteWeapon: { code: "ak47", name: "AK-47" },
+  rankName: "General",
+};
 
 export const endpoints: Endpoint[] = [
   // ------------------------------------------------------------ rankings
@@ -418,6 +498,7 @@ export const endpoints: Endpoint[] = [
       { name: "city", in: "query", description: "Only this city (exact name, any case; best together with country)", schema: str("", { maxLength: 80 }), example: "Berlin" },
       { name: "clan", in: "query", description: "Only members of this clan (clan ID)", schema: int("", { minimum: 1 }) },
       { name: "q", in: "query", description: "Part of the current name", schema: str("", { maxLength: 64 }) },
+      { name: "view", in: "query", description: "ranked: the ranking; inactive: the players the collector moved out of the ranking for inactivity (the website's Inactive players), by last seen, without a place (rank null) and without country, state or city filter", schema: str("", { enum: ["ranked", "inactive"], default: "ranked" }) },
     ],
     list: { item: "RankingRow", sorts: PLAYER_SORTS, sort: "skill" },
     example: page([row], 1180, `/rankings/${G}/players`),
@@ -491,8 +572,9 @@ export const endpoints: Endpoint[] = [
     operationId: "listClans",
     tag: "Clans",
     summary: "Clan ranking",
-    description: "Clans with at least two ranked members, by average points. The country is the most common one among the members.",
-    params: [gameParam],
+    description:
+      "Clans with at least two ranked members, by average points. The country is the most common one among the members. `view=inactive`: the website's inactive clans (at least two members, fewer than two of them still active), by last seen, with the numbers of all members.",
+    params: [gameParam, { name: "view", in: "query", description: "ranked (default) or inactive", schema: str("", { enum: ["ranked", "inactive"], default: "ranked" }) }],
     list: { item: "ClanRanked", sorts: CLAN_SORTS, sort: "skill" },
     example: page([{ rank: 1, ...clan }], 12, `/rankings/${G}/clans`),
     notFound: "Unknown ranking",
@@ -502,10 +584,31 @@ export const endpoints: Endpoint[] = [
     operationId: "getClan",
     tag: "Clans",
     summary: "One clan",
-    description: "One clan with the totals of its ranked members.",
+    description:
+      "One clan with the totals of its ranked members, where its members come from (active and inactive ones, by country) and the links to the other parts of the clan page.",
     params: [gameParam, idParam("clan", 3)],
-    schema: { allOf: [obj({ game: str("Code of the ranking") }), ref("Clan"), obj({ membersUrl: link("its members") })] },
-    example: { game: G, ...clan, membersUrl: v1(`/rankings/${G}/clans/3/members`) },
+    schema: {
+      allOf: [
+        obj({ game: str("Code of the ranking") }),
+        ref("Clan"),
+        obj({
+          inactive: bool("Fewer than two active members: an inactive clan (the website then shows the numbers of all members)"),
+          inactiveMembers: int("Members the collector moved out of the ranking for inactivity"),
+          origins: arr(obj({ country: ref("Country"), members: int("Members from this country") })),
+          membersUrl: link("its members"),
+          links: obj(Object.fromEntries(CLAN_PARTS.map((k) => [k, link(`the clan's ${k}`)]))),
+        }),
+      ],
+    },
+    example: {
+      game: G,
+      ...clan,
+      inactive: false,
+      inactiveMembers: 2,
+      origins: [{ country: de, members: 7 }],
+      membersUrl: v1(`/rankings/${G}/clans/3/members`),
+      links: Object.fromEntries(CLAN_PARTS.map((k) => [k, v1(`/rankings/${G}/clans/3/${k}`)])),
+    },
     notFound: "Unknown clan, or the clan belongs to another ranking",
   },
   {
@@ -513,8 +616,9 @@ export const endpoints: Endpoint[] = [
     operationId: "listClanMembers",
     tag: "Clans",
     summary: "Members of a clan",
-    description: "The ranked members of a clan (the website's clan page); `position` numbers the rows, `rank` is the place in the whole ranking. Sort fields as in `/players`.",
-    params: [gameParam, idParam("clan", 3)],
+    description:
+      "The ranked members of a clan (the website's clan page); `position` numbers the rows, `rank` is the place in the whole ranking. Sort fields as in `/players`. `view=inactive`: the members the collector moved out of the ranking, by last seen, without a place.",
+    params: [gameParam, idParam("clan", 3), { name: "view", in: "query", description: "ranked (default) or inactive", schema: str("", { enum: ["ranked", "inactive"], default: "ranked" }) }],
     list: { item: "RankingRow", sorts: PLAYER_SORTS, sort: "skill" },
     example: page([row], 8, `/rankings/${G}/clans/3/members`),
     notFound: "Unknown clan, or the clan belongs to another ranking",
@@ -814,9 +918,9 @@ export const endpoints: Endpoint[] = [
       id: int("Server ID"),
       hours: int("Hours back"),
       maxPlayers: int("Slots now"),
-      data: arr(obj({ time: unix("Time"), players: int("Players at that time"), min: int("Fewest players in the 10 minutes"), max: int("Most players in the 10 minutes"), map: nullable(str("Map")) })),
+      data: arr(ref("LoadPoint")),
     }),
-    example: { game: G, id: 1, hours: 24, maxPlayers: 24, data: [{ time: 1767225600, players: 12, min: 10, max: 14, map: "de_dust2" }] },
+    example: { game: G, id: 1, hours: 24, maxPlayers: 24, data: [loadPoint] },
     notFound: "Unknown ranking or server, or the server belongs to another ranking",
   },
   {
@@ -833,13 +937,29 @@ export const endpoints: Endpoint[] = [
     operationId: "getStats",
     tag: "Statistics",
     summary: "Statistics of all rankings",
-    description: "Totals over all rankings and the activity per day (players active in any ranking, kills, headshots), oldest day first.",
+    description:
+      "Totals over all rankings, the start page's general statistics (its five cards: players of both player tables without bots, clans and the rankings with clans, servers and those with players, players online, kills with the latest one, headshots) and the activity per day (players active in any ranking, kills, headshots, clans with an active member), oldest day first.",
     params: [daysQuery(30, 365, "Days back, today included")],
     schema: obj({
       totals: obj({ rankings: int("Rankings with servers"), servers: int("Servers"), players: int("Players"), clans: int("Clans"), kills: int("Kills"), deaths: int("Deaths"), headshots: int("Headshots") }),
-      days: arr(ref("DayActivity")),
+      general: obj({
+        players: int("Players of all visible rankings, also hidden, banned and inactive ones (counted, not listed), without bots"),
+        playersOnline: int("Players online now, without bots"),
+        clans: int("Clans of the visible rankings"),
+        clanRankings: int("Rankings with clans"),
+        servers: int("Servers of the visible rankings"),
+        serversActive: int("Servers with players now"),
+        kills: int("Kills of both player tables"),
+        lastKill: nullable(unix("Latest kill")),
+        headshots: int("Headshots of both player tables"),
+      }),
+      days: arr({ allOf: [ref("DayActivity"), obj({ activeClans: int("Clans with an active member that day") })] }),
     }),
-    example: { totals: { rankings: 2, servers: 3, players: 2345, clans: 21, kills: 987654, deaths: 965432, headshots: 312345 }, days },
+    example: {
+      totals: { rankings: 2, servers: 3, players: 2345, clans: 21, kills: 987654, deaths: 965432, headshots: 312345 },
+      general: { players: 2790, playersOnline: 14, clans: 21, clanRankings: 2, servers: 3, serversActive: 2, kills: 1043210, lastKill: 1767225590, headshots: 330112 },
+      days: days.map((d) => ({ ...d, activeClans: 4 })),
+    },
   },
   // ------------------------------------------------------------ players
   {
@@ -848,7 +968,7 @@ export const endpoints: Endpoint[] = [
     tag: "Players",
     summary: "One player",
     description:
-      "Public summary of one player with the values of the website's profile (player profile and summary). Hidden or banned players, bots without a profile and players of hidden rankings answer 404, also on all `/players/{id}/...` endpoints. No Steam ID, Steam profile, IP address or chat.",
+      "Public summary of one player with the values of the website's profile (player profile and summary) and the hall of fame stars (null where the ranking shows no hall of fame). Hidden or banned players, bots without a profile and players of hidden rankings answer 404, also on all `/players/{id}/...` endpoints. No Steam ID, Steam profile, IP address or chat.",
     params: [idParam("player")],
     schema: obj({
       id: int("Player ID"),
@@ -891,7 +1011,8 @@ export const endpoints: Endpoint[] = [
       activity: int("Activity in percent (100 = played today)", { minimum: 0, maximum: 100 }),
       careerRank: nullable(obj({ index: int("Rank index"), name: str("Rank name"), minKills: int("Kills needed"), nextAt: nullable(int("Kills for the next rank")) })),
       favoriteWeapon: nullable(obj({ code: str("Weapon code"), name: str("Weapon name"), kills: int("Kills with it") })),
-      links: obj(Object.fromEntries(["weapons", "hitboxes", "maps", "teams", "actions", "opponents", "killStats", "names", "history", "awards", "ribbons"].map((k) => [k, link(`the player's ${k}`)]))),
+      stars: nullable(obj({ gold: int("First places in the hall of fame"), silver: int("Second places"), bronze: int("Third places") })),
+      links: obj(Object.fromEntries(PLAYER_PARTS.map((k) => [k, link(`the player's ${k}`)]))),
     }),
     example: {
       id: 42,
@@ -934,7 +1055,8 @@ export const endpoints: Endpoint[] = [
       activity: 98,
       careerRank: { index: 9, name: "General", minKills: 5000, nextAt: null },
       favoriteWeapon: { code: "ak47", name: "AK-47", kills: 2100 },
-      links: Object.fromEntries(["weapons", "hitboxes", "maps", "teams", "actions", "opponents", "killStats", "names", "history", "awards", "ribbons"].map((k) => [k, v1(`/players/42/${k === "killStats" ? "kills" : k}`)])),
+      stars: { gold: 1, silver: 0, bronze: 2 },
+      links: Object.fromEntries(PLAYER_PARTS.map((k) => [k, v1(`/players/42/${k === "killStats" ? "kills" : k}`)])),
     },
     notFound: "Unknown, hidden or bot player",
   },
@@ -980,9 +1102,10 @@ export const endpoints: Endpoint[] = [
     operationId: "listPlayerHistory",
     tag: "Players",
     summary: "History of a player",
-    description: "A player's days on the servers, newest first, with the columns of the website's sessions table: points and their change, time, rounds, kills, K/D, headshots, accuracy.",
+    description:
+      "A player's days on the servers, newest first, with the columns of the website's sessions table: points and their change, time, rounds, kills, K/D, headshots, accuracy. Sort fields as the table: `date`, `change`, `points`, `time`, `rounds`, `wins`, `kills`, `deaths`, `kpd`, `streak`, `hs`, `hpk`, `acc`; another order than newest first covers the last 5000 days.",
     params: [idParam("player")],
-    list: { item: "PlayerDay" },
+    list: { item: "PlayerDay", sorts: SESSION_SORTS, sort: "date" },
     example: page(
       [{ day: "2026-01-01", points: 2210, pointsChange: 35, skill: 2210, skillChange: 35, connectionTime: 5400, rounds: 40, wins: 22, kills: 61, deaths: 30, kpd: 2.03, headshots: 20, hpk: 0.3279, killStreak: 7, shots: 1400, hits: 450, accuracy: 0.3214 }],
       210,
@@ -1071,9 +1194,9 @@ export const endpoints: Endpoint[] = [
     operationId: "listPlayerAwards",
     tag: "Players",
     summary: "Awards of a player",
-    description: "The daily awards a player won, newest first.",
+    description: "The daily awards a player won, newest first (the website's awards page); `sort=award` orders by the award's name.",
     params: [idParam("player")],
-    list: { item: "PlayerAward" },
+    list: { item: "PlayerAward", sorts: ["date", "award"], sort: "date" },
     example: page([{ day: "2026-01-01", id: 5, code: "awp", name: "AWP Master", verb: "kills with awp", value: 37 }], 61, "/players/42/awards"),
     notFound: "Unknown, hidden or bot player",
   },
@@ -1101,6 +1224,491 @@ export const endpoints: Endpoint[] = [
     }),
     example: { id: 42, game: G, rank: { index: 9, name: "General", minKills: 5000, nextAt: null }, data: [{ id: 5, code: "awp", name: "AWP Master", verb: "kills with awp", wins: 14, ribbon: { class: 1, name: "{LANG_SILVER}", level: 6, maxLevel: 8 } }] },
     notFound: "Unknown, hidden or bot player",
+  },
+  {
+    path: "/players/{id}/events",
+    operationId: "listPlayerEvents",
+    tag: "Players",
+    summary: "Events of a player",
+    description:
+      "The player's events page: connects, entries, leaves, team, role and name changes, actions, kills, deaths, suicides and team kills, newest first (`order=asc`: oldest first), optionally one `type`. Events with a hidden player on the other side are left out; never chat or addresses. Lists end after 10000 events.",
+    params: [
+      idParam("player"),
+      { name: "type", in: "query", description: "Only this type", schema: str("", { enum: [...PLAYER_EVENT_TYPES] }) },
+      { name: "order", in: "query", description: "desc (newest first, default) or asc", schema: str("", { enum: ["desc", "asc"], default: "desc" }) },
+    ],
+    list: { item: "PlayerEvent" },
+    example: page([{ time: 1767225600, type: "kill", other: { id: 43, name: "OtherPlayer", ...tag }, weapon: { code: "ak47", name: "AK-47" }, headshot: true, action: null, team: null, oldName: null, newName: null, map: "de_dust2" }], 5210, "/players/42/events"),
+    notFound: "Unknown, hidden or bot player",
+  },
+  {
+    path: "/players/{id}/radar",
+    operationId: "getPlayerRadar",
+    tag: "Players",
+    summary: "Radar of a player",
+    description:
+      "The radar of the profile: the player's last 14 days (`kpd` kills per death, `kpm` kills per minute, `assists` per kill, rounds `survived` and `wins` per round) against all players of the ranking active in them. `relative` is the player's value divided by the average (1 = average); assists only where the game records them.",
+    params: [idParam("player")],
+    schema: { allOf: [obj({ id: int("Player ID"), game: str("Code of the ranking") }), ref("Radar")] },
+    example: { id: 42, game: G, ...radar },
+    notFound: "Unknown, hidden or bot player",
+  },
+  {
+    path: "/players/{id}/banner",
+    operationId: "getPlayerBanner",
+    tag: "Banners",
+    summary: "Player banner",
+    description:
+      "The player banner (forum signature, 400×100 PNG) of the profile: rank insignia with the progress to the next rank, Steam avatar, name, place and key numbers. The same picture as `/banner/{game}/player/{id}.png` on the website; `style` picks a design template (`/banners/styles`), without it the active skin.",
+    params: [idParam("player"), styleQuery],
+    image: { width: 400, height: 100 },
+    example: v1("/players/42/banner"),
+    notFound: "Unknown, hidden or bot player",
+  },
+  {
+    path: "/rankings/{game}/servers/{id}/banner",
+    operationId: "getServerBanner",
+    tag: "Banners",
+    summary: "Server banner",
+    description:
+      "The server banner (560×95 PNG) of the server and misc pages: name with flag, address, port, status, players with a pie, map and the players of the last 24 hours. The same picture as `/banner/{game}/server/{id}.png` on the website; `style` picks a design template.",
+    params: [gameParam, idParam("server", 1), styleQuery],
+    image: { width: 560, height: 95 },
+    example: v1(`/rankings/${G}/servers/1/banner`),
+    notFound: "Unknown ranking or server, or the server belongs to another ranking",
+  },
+  {
+    path: "/voice/teamspeak/banner",
+    operationId: "getTeamSpeakBanner",
+    tag: "Banners",
+    summary: "TeamSpeak banner",
+    description:
+      "The TeamSpeak banner (560×95 PNG) of the TeamSpeak page: name with flag, address, status, users online of the slots, channels, uptime and server type, live from the ServerQuery. The same picture as `/banner/teamspeak.png` on the website; `style` picks a design template.",
+    params: [styleQuery],
+    image: { width: 560, height: 95 },
+    example: v1("/voice/teamspeak/banner"),
+    notFound: "TeamSpeak is not the voice server of this site",
+  },
+  {
+    path: "/banners/styles",
+    operationId: "listBannerStyles",
+    tag: "Banners",
+    summary: "Banner styles",
+    description: "The styles every banner takes as `style` besides the default (the active skin): one per design template, as in the website's banner code box.",
+    schema: obj({ data: arr(obj({ id: str("Value of style"), name: obj({ en: str("Name in English"), de: str("Name in German") }) })) }),
+    example: { data: [{ id: "dark", name: { en: "Dark", de: "Dunkel" } }] },
+  },
+  {
+    path: "/voice",
+    operationId: "getVoiceBox",
+    tag: "Voice server",
+    summary: "Voice server box",
+    description:
+      "The voice server box of the start page: the TeamSpeak server (live from its ServerQuery, kept for a minute) or the Discord server (its public widget, kept for five minutes). Both null when the site has no voice server.",
+    schema: obj({
+      teamspeak: nullable(
+        obj({
+          name: str("Server name"),
+          type: str("Server type, e.g. TeamSpeak 3"),
+          country: nullable(str("ISO code of the flag the site shows; null without one")),
+          address: str("Address to connect to"),
+          link: str("ts3server:// link"),
+          passwordProtected: bool("The server needs a password (the password itself is never returned)"),
+          clients: nullable(int("Users online; null while the query fails")),
+          maxClients: nullable(int("Slots")),
+          channels: nullable(int("Channels")),
+          uptime: nullable(int("Seconds since the server started")),
+          detailsUrl: link("the TeamSpeak details"),
+          bannerUrl: link("the TeamSpeak banner"),
+        }),
+      ),
+      discord: nullable(obj({ name: str("Server name"), invite: nullable(str("Invite link")), online: nullable(int("Members online; null when unknown")) })),
+    }),
+    example: {
+      teamspeak: {
+        name: "Example TeamSpeak",
+        type: "TeamSpeak 3",
+        country: "DE",
+        address: "ts.example.org",
+        link: "ts3server://ts.example.org",
+        passwordProtected: false,
+        clients: 5,
+        maxClients: 32,
+        channels: 12,
+        uptime: 864000,
+        detailsUrl: v1("/voice/teamspeak"),
+        bannerUrl: v1("/voice/teamspeak/banner"),
+      },
+      discord: null,
+    },
+  },
+  {
+    path: "/voice/teamspeak",
+    operationId: "getTeamSpeak",
+    tag: "Voice server",
+    summary: "TeamSpeak server",
+    description:
+      "The TeamSpeak page: server data, traffic, the welcome message and the channel tree with the people online (names only while the admin shows them; `clientCount` always). Live from the ServerQuery, kept for a minute; `online` false and `info` null while the query fails.",
+    schema: obj({
+      name: str("Server name"),
+      type: str("Server type"),
+      country: nullable(str("ISO code of the flag")),
+      address: str("Address to connect to"),
+      link: str("ts3server:// link"),
+      passwordProtected: bool("The server needs a password (the password itself is never returned)"),
+      online: bool("The query answered"),
+      clients: nullable(int("Users online")),
+      maxClients: nullable(int("Slots")),
+      channelCount: nullable(int("Channels")),
+      showClients: bool("The names of the people online are shown"),
+      info: nullable(
+        obj({
+          uptime: nullable(int("Seconds since the server started")),
+          created: nullable(unix("Server created")),
+          version: nullable(str("Server version")),
+          os: nullable(str("Linux, Windows, FreeBSD or macOS")),
+          clientConnections: nullable(int("Client connections so far")),
+          queryConnections: nullable(int("Query connections so far")),
+          securityLevel: nullable(int("Identity security level needed")),
+          ping: nullable(num("Average ping in ms")),
+          packetLoss: nullable(num("Packet loss, a fraction")),
+          bandwidthIn: nullable(int("Bytes received in the last second")),
+          bandwidthOut: nullable(int("Bytes sent in the last second")),
+          bytesIn: nullable(int("Bytes received in total")),
+          bytesOut: nullable(int("Bytes sent in total")),
+          hostBannerUrl: nullable(str("The server's own host banner (http or https)")),
+          welcome: nullable(str("Welcome message as plain text")),
+        }),
+      ),
+      channels: arr(ref("VoiceChannel")),
+      bannerUrl: link("the TeamSpeak banner"),
+    }),
+    example: {
+      name: "Example TeamSpeak",
+      type: "TeamSpeak 3",
+      country: "DE",
+      address: "ts.example.org",
+      link: "ts3server://ts.example.org",
+      passwordProtected: false,
+      online: true,
+      clients: 2,
+      maxClients: 32,
+      channelCount: 2,
+      showClients: true,
+      info: {
+        uptime: 864000,
+        created: 1735689600,
+        version: "3.13.7 [Build: 1655727713]",
+        os: "Linux",
+        clientConnections: 4321,
+        queryConnections: 98765,
+        securityLevel: 8,
+        ping: 21.5,
+        packetLoss: 0,
+        bandwidthIn: 1200,
+        bandwidthOut: 3400,
+        bytesIn: 123456789,
+        bytesOut: 987654321,
+        hostBannerUrl: null,
+        welcome: "Welcome!",
+      },
+      channels: [{ id: 1, name: "Lobby", spacer: null, topic: null, password: false, clientCount: 2, clients: [{ name: "ExamplePlayer", away: false, muted: false, deaf: false, country: "DE" }], children: [] }],
+      bannerUrl: v1("/voice/teamspeak/banner"),
+    },
+    notFound: "TeamSpeak is not the voice server of this site",
+  },
+  {
+    path: "/search/players",
+    operationId: "searchPlayers",
+    tag: "Search",
+    summary: "Search players",
+    description:
+      "The website's search over all rankings (or one with `game`): every name a player used (`in=names`, at least 2 characters; `alias` is the used name that matched when it is not the current one), or a Steam ID in any of its forms (`in=steamid`, exact match only). Hidden and banned players are not found. At most 100 hits, best points first; `url` is null for bots without a profile.",
+    params: [
+      { name: "q", in: "query", required: true, description: "Text to search for", schema: str("", { minLength: 1, maxLength: 64 }), example: "Example" },
+      { name: "in", in: "query", description: "names (default) or steamid", schema: str("", { enum: ["names", "steamid"], default: "names" }) },
+      { name: "game", in: "query", description: "Only this ranking", schema: str("", { pattern: "^[A-Za-z0-9_-]{1,32}$" }), example: G },
+    ],
+    list: { item: "SearchPlayer" },
+    example: page([{ position: 1, game: G, id: 42, name: "ExamplePlayer", alias: null, country: de, bot: false, points: 2210, kills: 5321, deaths: 2410, kpd: 2.21, lastEvent: 1767225600, url: v1("/players/42") }], 1, "/search/players", { q: "Example" }),
+  },
+  {
+    path: "/search/clans",
+    operationId: "searchClans",
+    tag: "Search",
+    summary: "Search clans",
+    description: "The website's clan search over all rankings (or one with `game`): part of the tag or the name, at least 2 characters. Clans without a ranked member are not found. At most 100 hits, most members first.",
+    params: [
+      { name: "q", in: "query", required: true, description: "Part of the tag or the name", schema: str("", { minLength: 2, maxLength: 64 }), example: "EX" },
+      { name: "game", in: "query", description: "Only this ranking", schema: str("", { pattern: "^[A-Za-z0-9_-]{1,32}$" }), example: G },
+    ],
+    list: { item: "SearchClan" },
+    example: page([{ position: 1, game: G, id: 3, tag: "[EX]", name: "Example Clan", members: 8, avgPoints: 1650, url: v1(`/rankings/${G}/clans/3`) }], 1, "/search/clans", { q: "EX" }),
+  },
+  {
+    path: "/points",
+    operationId: "getPoints",
+    tag: "Statistics",
+    summary: "Point rules",
+    description:
+      "The point rules of the help page: the collector's point settings, and per ranking whether it ranks bots and whether kills of bots give points. Bonuses of actions: `/rankings/{game}/actions`; weapon modifiers: `/rankings/{game}/weapons`.",
+    schema: obj({
+      startPoints: int("Points of a new player"),
+      killPoints: int("Base points of a kill (before the weapon modifier and the points difference)"),
+      headshotBonus: int("Extra points of a headshot"),
+      suicidePenalty: int("Points lost by a suicide"),
+      teamkillPenalty: int("Points lost by a team kill"),
+      rankings: arr(obj({ game: str("Code of the ranking"), botsRanked: bool("Bots are ranked and have profiles"), botKillPoints: bool("Kills of bots give points") })),
+    }),
+    example: { startPoints: 1000, killPoints: 5, headshotBonus: 0, suicidePenalty: 5, teamkillPenalty: 10, rankings: [{ game: G, botsRanked: false, botKillPoints: true }] },
+  },
+  {
+    path: "/activity",
+    operationId: "getActivity",
+    tag: "Statistics",
+    summary: "Activity per 15 minutes",
+    description:
+      "Players online, servers with players, kills and headshots per 15 minutes over all rankings, oldest first: the lines of the start page's general statistics and its load chart. `players` and `servers` are null where the collector recorded no load (it samples every 10 minutes).",
+    params: [activityDays(30)],
+    schema: obj({ days: int("Days back"), step: int("Seconds per entry (900)"), data: arr(ref("ActivityPoint")) }),
+    example: { days: 30, step: 900, data: [activityPoint] },
+  },
+  {
+    path: "/rankings/{game}/activity",
+    operationId: "getRankingActivity",
+    tag: "Statistics",
+    summary: "Activity of a ranking per 15 minutes",
+    description: "Players online, servers with players, kills and headshots of one ranking per 15 minutes, oldest first: the trend of the ranking's start page (14 days).",
+    params: [gameParam, activityDays(14)],
+    schema: obj({ game: str("Code of the ranking"), days: int("Days back"), step: int("Seconds per entry (900)"), data: arr(ref("ActivityPoint")) }),
+    example: { game: G, days: 14, step: 900, data: [activityPoint] },
+    notFound: "Unknown ranking",
+  },
+  {
+    path: "/rankings/{game}/load",
+    operationId: "getRankingLoad",
+    tag: "Servers",
+    summary: "Load of all servers",
+    description: "The load of every server of a ranking in one answer (the graph of all servers on the ranking's start page): one point per server and 10 minutes, oldest first, servers in the site's order.",
+    params: [gameParam, { name: "hours", in: "query", description: "Hours back", schema: int("", { minimum: 1, maximum: 168, default: 24 }) }],
+    schema: obj({ game: str("Code of the ranking"), hours: int("Hours back"), data: arr(obj({ id: int("Server ID"), name: str("Server name"), maxPlayers: int("Slots now"), load: arr(ref("LoadPoint")) })) }),
+    example: { game: G, hours: 24, data: [{ id: 1, name: "Example Public #1", maxPlayers: 24, load: [loadPoint] }] },
+    notFound: "Unknown ranking",
+  },
+  {
+    path: "/rankings/{game}/map/live",
+    operationId: "getLiveMap",
+    tag: "Player maps",
+    summary: "Live map",
+    description:
+      "The live map of the ranking's start page: the players online (not hidden ones, no bots) at the GeoIP city point of their connection, with the server they are on, and the ranking's servers at the point of their address. Only city points, never an address. 404 while the site shows no live map.",
+    params: [gameParam],
+    schema: obj({ game: str("Code of the ranking"), players: arr(ref("MapMarker")), servers: arr(ref("MapServer")) }),
+    example: { game: G, players: [{ ...marker, server: { id: 1, name: "Example Public #1" } }], servers: [mapServer] },
+    notFound: "Unknown ranking, or the site shows no live map",
+  },
+  {
+    path: "/rankings/{game}/map/players",
+    operationId: "getPlayerMap",
+    tag: "Player maps",
+    summary: "Player map",
+    description:
+      "The player map of the players page: the best players with a known place (`show=top`: the top 10 with the server they are on now; `show=all`: up to 1000), optionally of one country, state or city, each at the GeoIP city point. 404 while the site shows no player map.",
+    params: [
+      gameParam,
+      { name: "show", in: "query", description: "top (default, 10 players) or all (up to 1000)", schema: str("", { enum: ["top", "all"], default: "top" }) },
+      countryQuery,
+      { name: "state", in: "query", description: "Only this state or region (exact name, any case)", schema: str("", { maxLength: 80 }) },
+      { name: "city", in: "query", description: "Only this city (exact name, any case)", schema: str("", { maxLength: 80 }) },
+    ],
+    schema: obj({ game: str("Code of the ranking"), show: str("top or all"), players: arr(ref("MapMarker")) }),
+    example: { game: G, show: "top", players: [marker] },
+    notFound: "Unknown ranking, or the site shows no player map",
+  },
+  {
+    path: "/rankings/{game}/clans/{id}/map",
+    operationId: "getClanMap",
+    tag: "Player maps",
+    summary: "Clan map",
+    description: "The map of the clan page: every member with a known place, active ones first (with their place in the ranking), then the inactive ones (`inactive` true, no rank). 404 while the site shows no player map.",
+    params: [gameParam, idParam("clan", 3)],
+    schema: obj({ game: str("Code of the ranking"), id: int("Clan ID"), players: arr(ref("MapMarker")) }),
+    example: { game: G, id: 3, players: [marker] },
+    notFound: "Unknown clan, the clan belongs to another ranking, or the site shows no player map",
+  },
+  {
+    path: "/rankings/{game}/clans/{id}/history",
+    operationId: "getClanHistory",
+    tag: "Clans",
+    summary: "History of a clan",
+    description:
+      "The members' days added up (the clan page's summary and its lines): one entry per day, oldest first, days without play 0. The members are the active ones, or all of them for an inactive clan.",
+    params: [gameParam, idParam("clan", 3), daysQuery(30, 90, "Days back, today included")],
+    schema: obj({ game: str("Code of the ranking"), id: int("Clan ID"), days: int("Days back"), data: arr(ref("ClanDay")) }),
+    example: {
+      game: G,
+      id: 3,
+      days: 30,
+      data: [{ day: "2026-01-01", connectionTime: 21600, rounds: 160, wins: 88, survived: 61, kills: 240, deaths: 190, kpd: 1.26, headshots: 80, hpk: 0.3333, assists: 31, shots: 5400, hits: 1700, accuracy: 0.3148, pointsChange: 54 }],
+    },
+    notFound: "Unknown clan, or the clan belongs to another ranking",
+  },
+  {
+    path: "/rankings/{game}/clans/{id}/radar",
+    operationId: "getClanRadar",
+    tag: "Clans",
+    summary: "Radar of a clan",
+    description: "The radar of the clan page: the members' last 14 days together against all players of the ranking active in them, as `/players/{id}/radar`.",
+    params: [gameParam, idParam("clan", 3)],
+    schema: { allOf: [obj({ game: str("Code of the ranking"), id: int("Clan ID") }), ref("Radar")] },
+    example: { game: G, id: 3, ...radar },
+    notFound: "Unknown clan, or the clan belongs to another ranking",
+  },
+  {
+    path: "/rankings/{game}/clans/{id}/weapons",
+    operationId: "listClanWeapons",
+    tag: "Clans",
+    summary: "Weapons of a clan",
+    description: "The members' weapons added up (the clan page's weapon tables and hitboxes), with the columns of `/players/{id}/weapons`.",
+    params: [gameParam, idParam("clan", 3)],
+    list: { item: "PlayerWeapon", sorts: ["kills", "deaths", "kpd", "headshots", "hpk", "accuracy", "shots", "hits", "damage", "name"], sort: "kills" },
+    example: page(
+      [{ code: "ak47", name: "AK-47", kills: 9100, deaths: 4900, headshots: 3300, shots: 181000, hits: 54000, damage: 1620000, kpd: 1.86, hpk: 0.3626, accuracy: 0.2983, damagePerHit: 30, shotsPerKill: 19.89, hitboxes: zones }],
+      18,
+      `/rankings/${G}/clans/3/weapons`,
+    ),
+    notFound: "Unknown clan, or the clan belongs to another ranking",
+  },
+  {
+    path: "/rankings/{game}/clans/{id}/maps",
+    operationId: "listClanMaps",
+    tag: "Clans",
+    summary: "Maps of a clan",
+    description: "The members' kills and deaths per map, the 15 maps with the most kills (the clan page's map table, from the kill events the database still holds; a kill between two members counts both ways).",
+    params: [gameParam, idParam("clan", 3)],
+    schema: obj({ game: str("Code of the ranking"), id: int("Clan ID"), data: arr({ allOf: [ref("PlayerMap"), obj({ url: link("the map") })] }) }),
+    example: { game: G, id: 3, data: [{ id: 7, name: "de_dust2", kills: 3120, deaths: 2410, headshots: 1010, kpd: 1.29, hpk: 0.3237, url: v1(`/rankings/${G}/maps/7`) }] },
+    notFound: "Unknown clan, or the clan belongs to another ranking",
+  },
+  {
+    path: "/rankings/{game}/clans/{id}/events",
+    operationId: "listClanEvents",
+    tag: "Events",
+    summary: "Latest events of a clan",
+    description: "The latest events of the clan page: kills, deaths and actions of the active members, newest first, at most 25. Events with a hidden player are left out. 404 while the site shows no player event boxes.",
+    params: [gameParam, idParam("clan", 3)],
+    schema: obj({ game: str("Code of the ranking"), id: int("Clan ID"), data: arr(ref("Event")) }),
+    example: { game: G, id: 3, data: [event] },
+    notFound: "Unknown clan, the clan belongs to another ranking, or the site shows no player event boxes",
+  },
+  {
+    path: "/rankings/{game}/events",
+    operationId: "listEvents",
+    tag: "Events",
+    summary: "Events of a ranking",
+    description:
+      "The events page of a ranking: connects, entries, leaves, team, role and name changes, actions, kills, suicides and team kills of the last hour, 24 hours or 7 days, newest first (`order=asc`: oldest first), with its type filter (`action` covers actions on players too). Events with a hidden or banned player are left out; never chat or addresses. A list ends after 5000 events, as on the website. 404 while the site has no events page.",
+    params: [gameParam, periodQuery, { name: "type", in: "query", description: "Only this type", schema: str("", { enum: [...FILTER_EVENT_TYPES] }) }, { name: "order", in: "query", description: "desc (newest first, default) or asc", schema: str("", { enum: ["desc", "asc"], default: "desc" }) }],
+    list: { item: "Event" },
+    example: page([event], 1234, `/rankings/${G}/events`),
+    notFound: "Unknown ranking, or the site has no events page",
+  },
+  {
+    path: "/rankings/{game}/events/stats",
+    operationId: "getEventStats",
+    tag: "Events",
+    summary: "Event counts of a ranking",
+    description:
+      "The chart and the share table of the events page: the events of each type over the period with its share of all (most first), and per group of types the events per chart step (5 minutes for 1h, else 1 hour) from `from` on.",
+    params: [gameParam, periodQuery],
+    schema: obj({
+      game: str("Code of the ranking"),
+      period: str("1h, 24h or 7d"),
+      from: unix("Start of the first chart step"),
+      step: int("Seconds per chart step"),
+      total: int("Events in the period"),
+      types: arr(obj({ type: str("Event type"), count: int("Events"), share: num("Share of all events, a fraction") })),
+      groups: arr(obj({ group: str("kills, actions, joins, changes or deaths"), types: arr(str("Types in the group")), counts: arr(int("Events in the step")) })),
+    }),
+    example: {
+      game: G,
+      period: "24h",
+      from: 1767139200,
+      step: 3600,
+      total: 1234,
+      types: [{ type: "kill", count: 900, share: 0.7293 }],
+      groups: [{ group: "kills", types: ["kill"], counts: [40, 37] }],
+    },
+    notFound: "Unknown ranking, or the site has no events page",
+  },
+  {
+    path: "/rankings/{game}/hall-of-fame",
+    operationId: "listHallOfFame",
+    tag: "Hall of fame",
+    summary: "Hall of fame",
+    description:
+      "The hall of fame of a ranking: per reset period, newest first, the first three players with their values at the end of the period (name as then; `currentName` now). Removed entries and players hidden now are left out and the ones below move up. 404 while the ranking shows no hall of fame.",
+    params: [gameParam],
+    list: { item: "HallPeriod" },
+    example: page([{ unit: "month", every: 1, start: "2026-09-01", end: "2026-09-30", resetAt: 1759276800, players: 312, places: [hallEntry, null, null] }], 6, `/rankings/${G}/hall-of-fame`),
+    notFound: "Unknown ranking, or it shows no hall of fame",
+  },
+  {
+    path: "/rankings/{game}/hall-of-fame/stars",
+    operationId: "listHallOfFameStars",
+    tag: "Hall of fame",
+    summary: "Hall of fame stars",
+    description: "The star table of the hall of fame: per player gold (first places), silver and bronze; most gold first, then silver, bronze and the latest period.",
+    params: [gameParam],
+    list: { item: "HallStars" },
+    example: page([{ position: 1, id: 42, name: "ExamplePlayer", country: de, gold: 2, silver: 1, bronze: 0, lastPeriod: "2026-09-01" }], 9, `/rankings/${G}/hall-of-fame/stars`),
+    notFound: "Unknown ranking, or it shows no hall of fame",
+  },
+  {
+    path: "/rankings/{game}/misc",
+    operationId: "getMiscStats",
+    tag: "Statistics",
+    summary: "Misc statistics",
+    description:
+      "The misc page of a ranking: countries of the ranked players (null: unknown), connects and play time per weekday over the last year, connect methods (where the collector records them; `name` in English) and connects per day of the last 30 days.",
+    params: [gameParam],
+    schema: obj({
+      game: str("Code of the ranking"),
+      countries: arr(obj({ country: nullable(ref("Country")), players: int("Ranked players") })),
+      weekdays: arr(obj({ weekday: str("monday to sunday"), connects: int("Connects"), connectionTime: int("Time played in seconds") })),
+      connectTypes: arr(obj({ type: int("Connect method"), name: nullable(str("Name of the method")), connects: int("Players") })),
+      connectsPerDay: arr(obj({ day: str("Day (YYYY-MM-DD)", { format: "date" }), connects: int("Connects") })),
+    }),
+    example: {
+      game: G,
+      countries: [{ country: de, players: 412 }],
+      weekdays: [{ weekday: "monday", connects: 812, connectionTime: 1234567 }],
+      connectTypes: [{ type: 6, name: "Steam", connects: 120 }],
+      connectsPerDay: [{ day: "2026-01-01", connects: 61 }],
+    },
+    notFound: "Unknown ranking",
+  },
+  {
+    path: "/rankings/{game}/maps/{id}/heatmap",
+    operationId: "getMapHeatmap",
+    tag: "Maps",
+    summary: "Heatmap of a map",
+    description:
+      "The heatmap of the map page: where killers stood (with the headshot flag) and where players died, the newest 3000 positions of each, in game units (x to the right, y up; `bounds` frames them). No players, only positions. Counter-Strike 2 maps with two levels (`levels` not null) take `level=upper` or `lower`.",
+    params: [gameParam, idParam("map", 7), { name: "level", in: "query", description: "upper or lower (maps with two levels only)", schema: str("", { enum: ["upper", "lower"] }) }],
+    schema: obj({
+      game: str("Code of the ranking"),
+      id: int("Map ID"),
+      map: str("Map name"),
+      levels: nullable(obj({ split: int("Height (game units) between the levels"), level: nullable(str("The level shown; null: both")) })),
+      bounds: nullable(obj({ minX: num("Left edge"), minY: num("Bottom edge"), width: num("Width"), height: num("Height") })),
+      kills: int("Kill positions stored"),
+      deaths: int("Death positions stored"),
+      killDots: arr(obj({ x: num("x"), y: num("y"), headshot: bool("Headshot") })),
+      deathDots: arr(obj({ x: num("x"), y: num("y") })),
+    }),
+    example: { game: G, id: 7, map: "de_dust2", levels: null, bounds: { minX: -2400, minY: -1200, width: 4200, height: 4500 }, kills: 18234, deaths: 18190, killDots: [{ x: -410, y: 1720, headshot: true }], deathDots: [{ x: -380, y: 1910 }] },
+    notFound: "Unknown map, or the map belongs to another ranking",
   },
 ];
 
@@ -1132,6 +1740,177 @@ schemas.Team = obj({
   rounds: int("Rounds"),
 });
 schemas.TeamWithJoins = { allOf: [ref("Team"), obj({ joined: int("Times players joined the team") })] };
+schemas.LoadPoint = obj({
+  time: unix("Time"),
+  players: int("Players at that time"),
+  min: int("Fewest players in the 10 minutes"),
+  max: int("Most players in the 10 minutes"),
+  map: nullable(str("Map")),
+  uptime: nullable(int("Uptime of the game server in seconds; null when unknown")),
+});
+schemas.ActivityPoint = obj({
+  time: unix("Start of the 15 minutes"),
+  players: nullable(num("Players online, the average of the samples, one decimal; null without load samples")),
+  servers: nullable(int("Servers with players; null without load samples")),
+  kills: int("Kills"),
+  headshots: int("Headshots"),
+});
+const eventPlayer = (what: string) => nullable(obj({ id: int(`${what}: player ID`), name: nullable(str("Name")), ...playerTag }));
+const eventDetail = {
+  weapon: nullable(obj({ code: str("Weapon code"), name: str("Weapon name") })),
+  headshot: nullable(bool("Headshot (kills and deaths only)")),
+  action: nullable(obj({ code: str("Action code"), name: str("Action description"), bonus: int("Points it brought") })),
+  team: nullable(obj({ code: str("Team or role code"), name: str("Team or role name") })),
+  oldName: nullable(str("Name before (name changes only)")),
+  newName: nullable(str("Name after (name changes only)")),
+  map: nullable(str("Map")),
+};
+schemas.Event = obj({
+  time: unix("Time"),
+  type: str("connect, entry, disconnect, team, role, name, action, playeraction (an action on another player), teambonus, kill, suicide or teamkill"),
+  player: eventPlayer("Who did it"),
+  other: eventPlayer("The other side (victim, target)"),
+  ...eventDetail,
+  server: nullable(str("Server name; null where the collector stores none")),
+});
+schemas.PlayerEvent = obj({
+  time: unix("Time"),
+  type: str("connect, entry, disconnect, team, role, name, action, playeraction, teambonus, kill, death (killed by other), suicide or teamkill"),
+  other: eventPlayer("The other side (victim, killer, target)"),
+  ...eventDetail,
+});
+schemas.Radar = obj({
+  days: int("Days compared (14)"),
+  activeDays: int("Days with play in them"),
+  comparedPlayers: int("Players of the ranking active in those days (the average)"),
+  axes: arr(
+    obj({
+      axis: str("kpd, kpm, assists, survived or wins (assists only where the game records them)"),
+      value: nullable(num("Value; null without data")),
+      average: nullable(num("Average of the active players; null without data")),
+      relative: nullable(num("value / average; null without an average")),
+      noData: bool("No value (no activity, or the game records nothing for it)"),
+    }),
+  ),
+});
+schemas.MapMarker = obj({
+  id: int("Player ID"),
+  name: nullable(str("Name")),
+  country: nullable(ref("Country")),
+  city: nullable(str("City of the point (GeoIP)")),
+  lat: num("Latitude of the GeoIP city point"),
+  lng: num("Longitude of the GeoIP city point"),
+  rank: nullable(int("Place in the ranking; null for inactive members")),
+  points: pointsInt(),
+  kills: int("Kills"),
+  deaths: int("Deaths"),
+  kpd: kpdNum(),
+  lastEvent: unix("Last seen"),
+  server: nullable(obj({ id: int("Server ID"), name: str("Server name") })),
+  inactive: bool("A clan member the collector moved out of the ranking (clan map only)"),
+});
+schemas.MapServer = obj({
+  id: int("Server ID"),
+  name: str("Server name"),
+  address: str("Public address with port"),
+  map: nullable(str("Current map")),
+  city: nullable(str("City (GeoIP)")),
+  country: nullable(ref("Country")),
+  lat: num("Latitude (GeoIP)"),
+  lng: num("Longitude (GeoIP)"),
+  online: bool("The collector wrote a load sample in the last 30 minutes"),
+  uptime: nullable(int("Uptime in seconds; null when offline")),
+  vac: nullable(bool("VAC-secured; null when unknown")),
+});
+schemas.ClanDay = obj({
+  day: str("Day (YYYY-MM-DD)", { format: "date" }),
+  connectionTime: int("Time on the servers in seconds"),
+  rounds: int("Rounds"),
+  wins: int("Rounds won"),
+  survived: int("Rounds survived"),
+  kills: int("Kills"),
+  deaths: int("Deaths"),
+  kpd: kpdNum(),
+  headshots: int("Headshots"),
+  hpk: fraction("Headshots per kill"),
+  assists: int("Kill assists"),
+  shots: int("Shots"),
+  hits: int("Hits"),
+  accuracy: fraction("Hits per shot"),
+  pointsChange: int("Points won or lost that day by all members"),
+});
+schemas.SearchPlayer = obj({
+  position: int("Number of the hit"),
+  game: str("Code of the ranking"),
+  id: int("Player ID"),
+  name: nullable(str("Current name")),
+  alias: nullable(str("The used name that matched, when it is not the current one")),
+  country: nullable(ref("Country")),
+  bot: bool("Bot"),
+  points: pointsInt(),
+  kills: int("Kills"),
+  deaths: int("Deaths"),
+  kpd: kpdNum(),
+  lastEvent: unix("Last seen"),
+  url: nullable(link("the player; null for bots without a profile")),
+});
+schemas.SearchClan = obj({
+  position: int("Number of the hit"),
+  game: str("Code of the ranking"),
+  id: int("Clan ID"),
+  tag: str("Clan tag"),
+  name: str("Clan name"),
+  members: int("Ranked members"),
+  avgPoints: nullable(int("Average points of the ranked members")),
+  url: link("the clan"),
+});
+schemas.HallEntry = obj({
+  place: int("Place on the podium (after moving up)"),
+  id: nullable(int("Player ID; null for a player deleted since")),
+  name: str("Name at the end of the period"),
+  currentName: nullable(str("Name now; null when deleted")),
+  country: nullable(ref("Country")),
+  points: int("Points at the end of the period"),
+  kills: int("Kills"),
+  deaths: int("Deaths"),
+  kpd: kpdNum(),
+  headshots: int("Headshots"),
+  hpk: fraction("Headshots per kill"),
+  accuracy: fraction("Hits per shot"),
+  killStreak: int("Longest kill streak"),
+  connectionTime: int("Time on the servers in seconds"),
+  favoriteWeapon: nullable(obj({ code: str("Weapon code"), name: str("Weapon name") })),
+  rankName: nullable(str("Rank at the end of the period")),
+});
+schemas.HallPeriod = obj({
+  unit: str("day, week, month or year"),
+  every: int("Length in units (3 months: a quarter)"),
+  start: str("First day", { format: "date" }),
+  end: str("Last day", { format: "date" }),
+  resetAt: unix("When the ranking was reset"),
+  players: int("Ranked players at the reset"),
+  places: arr(nullable(ref("HallEntry"))),
+});
+schemas.HallStars = obj({
+  position: int("Number of the row"),
+  id: int("Player ID"),
+  name: str("Name of the latest entry"),
+  country: nullable(ref("Country")),
+  gold: int("First places"),
+  silver: int("Second places"),
+  bronze: int("Third places"),
+  lastPeriod: str("Start of the latest period with a place", { format: "date" }),
+});
+schemas.VoiceChannel = obj({
+  id: int("Channel ID"),
+  name: str("Channel name"),
+  spacer: nullable(str("Spacer channel: left, center, right or repeat; null for a channel")),
+  topic: nullable(str("Topic")),
+  password: bool("Needs a password"),
+  clientCount: int("People in the channel"),
+  clients: arr(obj({ name: str("Nickname"), away: bool("Away"), muted: bool("Microphone off"), deaf: bool("Sound off"), country: nullable(str("ISO code")) })),
+  children: arr(ref("VoiceChannel")),
+});
 
 const errorResponse = (description: string) => ({ description, content: { "application/json": { schema: ref("Error") } } });
 
@@ -1167,6 +1946,9 @@ function buildDocument(version: string) {
   for (const e of endpoints) {
     const params = [...(e.params ?? []), ...(e.list ? [...(e.list.sorts ? sortParams(e.list.sorts, e.list.sort ?? e.list.sorts[0]) : []), ...pagingParams] : [])];
     const schema = e.list ? pageSchema(e.list.item) : e.schema;
+    const ok = e.image
+      ? { description: `PNG, ${e.image.width}×${e.image.height} pixels`, content: { "image/png": { schema: { type: "string", format: "binary" } } } }
+      : { description: "OK", content: { "application/json": { schema, example: e.example } } };
     paths[e.path] = {
       get: {
         operationId: e.operationId,
@@ -1175,7 +1957,7 @@ function buildDocument(version: string) {
         description: e.description,
         parameters: params.length ? params.map(({ example, ...p }) => (example === undefined ? p : { ...p, example })) : undefined,
         responses: {
-          "200": { description: "OK", content: { "application/json": { schema, example: e.example } } },
+          "200": ok,
           ...(params.some((p) => p.in === "query") ? { "400": errorResponse("Invalid query parameter (the message names it and what it accepts)") } : {}),
           ...(e.notFound ? { "404": errorResponse(e.notFound) } : {}),
           "429": errorResponse("Too many requests (more than 120 per minute from one address); see Retry-After"),
@@ -1194,7 +1976,9 @@ function buildDocument(version: string) {
         "",
         "- **Authentication:** none.",
         "- **Rate limit:** 120 requests per minute and client address; above that the answer is `429` with a `Retry-After` header.",
-        "- **Caching:** answers may be cached for 30 seconds (`Cache-Control: public, max-age=30`).",
+        "- **Caching:** answers may be cached for 30 seconds (`Cache-Control: public, max-age=30`); banners as long as on the website (1 to 15 minutes).",
+        "- **Banners** (`/players/{id}/banner`, `/rankings/{game}/servers/{id}/banner`, `/voice/teamspeak/banner`) answer `image/png`, errors as JSON; they are the same pictures as the website's `/banner/...png` addresses.",
+        "- **Settings:** endpoints of parts the site's admin turned off (live map, player map, events, hall of fame, TeamSpeak) answer 404 like the website.",
         "- **CORS:** `Access-Control-Allow-Origin: *`, so pages on other sites can call it from the browser.",
         "- **Times** are Unix timestamps in seconds; days are `YYYY-MM-DD`.",
         `- **Lists** are paged: \`limit\` (1-${MAX_LIMIT}, default ${DEFAULT_LIMIT}) and \`page\` (from 1) or \`offset\`. The answer is \`{ data, pagination, links }\`: \`pagination\` has page, limit, offset, total and totalPages; \`links\` has self, first, prev, next and last (null at the ends). Lists with \`sort\` accept the listed fields and \`order=asc|desc\`.`,
@@ -1207,7 +1991,7 @@ function buildDocument(version: string) {
     },
     // Relative, so the examples show the address of the site they are read on.
     servers: [{ url: `${basePath}/api/v1` }],
-    tags: [{ name: "Index" }, ...(["Rankings", "Players", "Countries, states and cities", "Clans", "Weapons", "Maps", "Awards and ranks", "Actions and teams", "Servers", "Statistics"] satisfies Tag[]).map((name) => ({ name }))],
+    tags: [{ name: "Index" }, ...TAGS.map((name) => ({ name }))],
     paths,
     components: { schemas },
   };

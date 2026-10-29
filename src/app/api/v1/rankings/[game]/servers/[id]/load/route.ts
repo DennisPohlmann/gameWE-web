@@ -1,4 +1,4 @@
-import { api, visibleGame } from "@/lib/api";
+import { api, apiLoadPoint, visibleGame } from "@/lib/api";
 import { intArg, pathId } from "@/lib/api-params";
 import { getServer, getServerLoad } from "@/lib/data";
 import { nowUnix } from "@/lib/format";
@@ -19,7 +19,7 @@ export function GET(req: Request, { params }: { params: Promise<{ game: string; 
       id: s.serverId,
       hours,
       maxPlayers: s.max_players,
-      data: load.map((l) => ({ time: l.timestamp, players: l.act_players, min: l.min_players, max: l.max_players, map: l.map || null })),
+      data: load.map(apiLoadPoint),
     };
   });
 }

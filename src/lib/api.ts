@@ -3,7 +3,14 @@ import { ApiError, kpd, share } from "./api-params";
 import { basePath } from "./base-path";
 import { clientIp } from "./client-ip";
 import { activity } from "./format";
-import { getGame, getGames, getPlayer, getPlayerFlags, noProfile, type ClanRow, type LivePlayer, type MapRow, type RankingRow, type Server } from "./data";
+import { getGame, getGames, getPlayer, getPlayerFlags, noProfile, type ClanRow, type HistoryDay, type LivePlayer, type MapPlayer, type MapRow, type MapServer, type PlayerWeapon, type RankingRow, type Server } from "./data";
+import type { GameEvent } from "./history";
+import { eventDetail } from "./api-events";
+
+export { eventDetail };
+import { radarPoints, type PlayerRatios, type RadarAverage } from "./radar";
+import { siteDay } from "./day";
+import { ZONES } from "./zones";
 import { playerCount } from "./player-count";
 import { winSplit } from "./shares";
 
@@ -55,6 +62,25 @@ export async function api(handler: () => Promise<unknown | null>): Promise<Respo
   try {
     const data = await handler();
     return data === null ? json({ error: "not found" }, 404) : json(data, 200);
+  } catch (err) {
+    if (err instanceof ApiError) return json({ error: err.message }, err.status);
+    console.error("api:", err instanceof Error ? err.message : err);
+    return json({ error: "internal error" }, 500);
+  }
+}
+
+// Picture endpoints (banners): rate limited, with CORS, like the JSON ones.
+// handler answers the PNG of the website's banner route, or null (404).
+export async function apiImage(handler: () => Promise<Response | null>): Promise<Response> {
+  const wait = await overLimit("api", LIMIT);
+  if (wait) return json({ error: "rate limit" }, 429, { "retry-after": String(wait) });
+  try {
+    const res = await handler();
+    if (!res || !res.ok) return json({ error: "not found" }, 404);
+    const headers = new Headers(res.headers);
+    headers.set("access-control-allow-origin", "*");
+    headers.set("x-content-type-options", "nosniff");
+    return new Response(res.body, { status: 200, headers });
   } catch (err) {
     if (err instanceof ApiError) return json({ error: err.message }, err.status);
     console.error("api:", err instanceof Error ? err.message : err);
@@ -165,10 +191,11 @@ export function apiLivePlayer(p: LivePlayer) {
 // A row of the website's player ranking (RankingTable). position: the row's
 // number in this list (the # column); rank: the place in the whole ranking
 // by points (1 + players with more points, as on the profile).
-export function apiRankingRow(r: RankingRow, position: number, activityDays: number) {
+// Inactive players (ranked = false) have no place in the ranking: rank null.
+export function apiRankingRow(r: RankingRow, position: number, activityDays: number, ranked = true) {
   return {
     position,
-    rank: r.globalRank ?? position,
+    rank: ranked ? (r.globalRank ?? position) : null,
     id: r.playerId,
     name: r.name,
     country: r.flag ? { code: r.flag.trim().toUpperCase(), name: r.country } : null,
@@ -242,4 +269,113 @@ export function apiMap(m: MapRow, wins?: { ct: number; t: number }) {
     // Whole percentages as the win bar shows them; null without a win.
     winRatio: split ? { ct: split.ct, t: split.t } : null,
   };
+}
+
+// A row of the server load (one per server and 10 minutes).
+export function apiLoadPoint(l: { timestamp: number; act_players: number; min_players: number; max_players: number; uptime: number; map: string | null }) {
+  // The collector stores the uptime in minutes; the API gives seconds.
+  return { time: l.timestamp, players: l.act_players, min: l.min_players, max: l.max_players, map: l.map || null, uptime: Number(l.uptime) ? Number(l.uptime) * 60 : null };
+}
+
+// A player on a map of the website (player map, live map, clan map): only
+// the GeoIP city point, never an address.
+export function apiMapPlayer(p: MapPlayer & { serverId?: number; server?: string | null; inactive?: boolean }) {
+  return {
+    id: p.playerId,
+    name: p.name,
+    country: apiCountry(p.flag, p.country),
+    city: p.city || null,
+    lat: p.lat,
+    lng: p.lng,
+    rank: p.rank ?? null,
+    points: Number(p.skill),
+    kills: Number(p.kills),
+    deaths: Number(p.deaths),
+    kpd: kpd(p.kills, p.deaths),
+    lastEvent: Number(p.last_event),
+    server: p.serverId ? { id: p.serverId, name: p.server ?? "" } : null,
+    inactive: !!p.inactive,
+  };
+}
+
+export function apiMapServer(s: MapServer) {
+  return {
+    id: s.serverId,
+    name: s.name,
+    address: s.publicaddress || `${s.address}:${s.port}`,
+    map: s.act_map || null,
+    city: s.city || null,
+    country: s.country_code ? { code: s.country_code.trim().toUpperCase(), name: s.country_name ?? "" } : null,
+    lat: s.lat,
+    lng: s.lng,
+    online: s.online,
+    uptime: s.uptime === null ? null : s.uptime * 60,
+    vac: s.server_vac === "secure" ? true : s.server_vac === "insecure" ? false : null,
+  };
+}
+
+// An event of the website's event lists (ranking, clan, player): who did
+// what to whom. Rows with a hidden player are already left out; bots stay.
+export function apiEvent(e: GameEvent, tags: (id: number) => { country: ReturnType<typeof apiCountry>; bot: boolean }) {
+  const person = (id: number, name: string | null) => (id > 0 ? { id, name, ...tags(id) } : null);
+  return {
+    time: e.ts,
+    type: e.kind,
+    player: person(Number(e.actor), e.actorName),
+    other: person(Number(e.other), e.otherName),
+    ...eventDetail(e.kind, e.num, e.text, e.code),
+    map: e.map || null,
+    server: e.server || null,
+  };
+}
+
+// The radar of the profile and the clan page: the last 14 days of the
+// history rows against all players active in them.
+export function apiRadar(history: HistoryDay[], average: RadarAverage) {
+  const last14 = history.filter((h) => String(h.eventTime).slice(0, 10) >= siteDay(-13));
+  const sum = (k: keyof HistoryDay) => last14.reduce((n, h) => n + Number(h[k]), 0);
+  const r = (num: number, den: number) => (last14.length ? { num, den } : null);
+  const ratios: PlayerRatios = {
+    kpd: r(sum("kills"), sum("deaths")),
+    kpm: r(sum("kills"), sum("connection_time")),
+    assists: r(sum("kill_assists"), sum("kills")),
+    survived: r(sum("survived_count"), sum("rounds")),
+    wins: r(sum("wins"), sum("rounds")),
+  };
+  const round = (v: number | null) => (v === null ? null : Math.round(v * 10000) / 10000);
+  return {
+    days: 14,
+    activeDays: last14.length,
+    comparedPlayers: average.players,
+    axes: radarPoints(ratios, average).map((a) => ({ axis: a.key, value: round(a.value), average: round(a.avg), relative: round(a.rel), noData: a.noData })),
+  };
+}
+
+// A weapon row of a player or a clan (profile and clan page tables).
+export function apiWeaponUse(w: PlayerWeapon) {
+  return {
+    code: w.code,
+    name: w.name,
+    kills: Number(w.kills),
+    deaths: Number(w.deaths),
+    headshots: Number(w.headshots),
+    shots: Number(w.shots),
+    hits: Number(w.hits),
+    damage: Number(w.damage),
+    kpd: kpd(w.kills, w.deaths),
+    hpk: share(w.headshots, w.kills),
+    accuracy: share(w.hits, w.shots),
+    damagePerHit: Number(w.hits) ? Math.round((Number(w.damage) / Number(w.hits)) * 100) / 100 : null,
+    shotsPerKill: Number(w.kills) ? Math.round((Number(w.shots) / Number(w.kills)) * 100) / 100 : null,
+    hitboxes: Object.fromEntries(ZONES.map((z) => [z, Number(w[z])])),
+  };
+}
+
+// Style of a banner (?style=, the id of a design template); null: the
+// active skin. An unknown template falls back to the skin, as on the site.
+export function styleArg(q: { get(name: string): string | null }): string | null {
+  const v = q.get("style");
+  if (v === null || v === "") return null;
+  if (!/^[a-z0-9][a-z0-9_-]{0,31}$/.test(v)) throw new ApiError(400, "invalid style: template id (a-z, 0-9, _ and -, at most 32 characters)");
+  return v;
 }

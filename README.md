@@ -15,9 +15,11 @@ on MariaDB/MySQL or PostgreSQL. It
   web or the collector), ranking management (rankings,
   servers, players, definitions, ranking resets) and settings (website,
   services, collector, users with optional TOTP),
-- offers a read-only public JSON API with paged lists of players, countries,
-  states, cities, clans, weapons, maps, awards, ranks and servers (documented on
-  `/api` with Scalar), forum signatures, server banners and a TeamSpeak banner,
+- offers a read-only public JSON API for everything the public pages show
+  (rankings, players, countries, states, cities, clans, weapons, maps with
+  heatmaps, awards, ranks, servers, events, hall of fame, player maps,
+  search, TeamSpeak and the banners as PNG; documented on `/api` with
+  Scalar), forum signatures, server banners and a TeamSpeak banner,
 - comes in 13 languages and with design templates, including your own.
 
 Built with Next.js 16 (App Router, server-rendered, almost no client

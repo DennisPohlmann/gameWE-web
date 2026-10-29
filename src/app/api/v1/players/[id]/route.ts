@@ -5,6 +5,7 @@ import { getPlayerPosition, getPlayerWeapons } from "@/lib/data";
 import { activity } from "@/lib/format";
 import { kpm } from "@/lib/map-table";
 import { getSettings } from "@/lib/settings";
+import { getPlayerStars, hallOfFameShown } from "@/lib/hall-of-fame";
 
 const round2 = (n: number | null) => (n === null ? null : Math.round(n * 100) / 100);
 
@@ -16,7 +17,15 @@ export function GET(_req: Request, { params }: { params: Promise<{ id: string }>
     const { id } = await params;
     const p = await publicPlayer(pathId(id));
     if (!p) return null;
-    const [rank, { activityDays }, weapons, ranks] = await Promise.all([getPlayerPosition(p.game, p.skill), getSettings(), getPlayerWeapons(p.playerId), getRanks(p.game)]);
+    const [rank, { activityDays }, weapons, ranks, hall] = await Promise.all([
+      getPlayerPosition(p.game, p.skill),
+      getSettings(),
+      getPlayerWeapons(p.playerId),
+      getRanks(p.game),
+      hallOfFameShown(p.game),
+    ]);
+    // Hall of fame stars, as on the profile; null where the ranking shows no hall of fame.
+    const stars = hall ? await getPlayerStars(p.game, p.playerId) : null;
     const fav = weapons[0];
     const career = rankFor(Number(p.kills), ranks);
     return {
@@ -62,6 +71,7 @@ export function GET(_req: Request, { params }: { params: Promise<{ id: string }>
       activity: activity(p.last_event, activityDays),
       careerRank: career ? { index: career.index, name: career.name, minKills: Number(career.minimum), nextAt: career.next === null ? null : Number(career.next) } : null,
       favoriteWeapon: fav ? { code: fav.code, name: fav.name?.trim() || fav.code, kills: Number(fav.kills) } : null,
+      stars,
       links: {
         weapons: apiPath(`/players/${p.playerId}/weapons`),
         hitboxes: apiPath(`/players/${p.playerId}/hitboxes`),
@@ -74,6 +84,9 @@ export function GET(_req: Request, { params }: { params: Promise<{ id: string }>
         history: apiPath(`/players/${p.playerId}/history`),
         awards: apiPath(`/players/${p.playerId}/awards`),
         ribbons: apiPath(`/players/${p.playerId}/ribbons`),
+        events: apiPath(`/players/${p.playerId}/events`),
+        radar: apiPath(`/players/${p.playerId}/radar`),
+        banner: apiPath(`/players/${p.playerId}/banner`),
       },
     };
   });
