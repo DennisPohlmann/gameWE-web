@@ -950,7 +950,8 @@ a.button { display: inline-block; text-decoration: none; }
 table.spaced { margin-top: 10px; }
 .load-chart .band { fill: var(--chart-band); }
 .load-chart .band.odd { fill: var(--chart-band-odd); }
-.load-chart .band-label { fill: var(--chart-axis); font-size: 9px; }
+.load-chart .band-label { fill: var(--chart-axis); font-size: 9px; opacity: .7; pointer-events: visiblePainted; }
+.load-chart .band-label:hover { opacity: 1; }
 .load-chart .line-players { fill: none; stroke: var(--chart-series-2); stroke-width: 2; }
 .load-chart .line-up { fill: none; stroke: var(--chart-uptime); stroke-width: 1.5; }
 .load-chart .axis.up { fill: var(--chart-uptime); }

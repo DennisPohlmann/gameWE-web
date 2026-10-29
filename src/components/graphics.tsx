@@ -249,15 +249,7 @@ export function ServerLoadChart({
             const bx = x(b.from);
             const bw = Math.max(1, x(b.to) - bx);
             return (
-              <g key={i}>
-                <rect className={i % 2 ? "band odd" : "band"} x={bx} y={pad.t} width={bw} height={H - pad.t - pad.b} />
-                {bw >= 9 && b.map ? (
-                  // Map name at the left edge of its band, reading upwards from the bottom.
-                  <text className="band-label" transform={`translate(${bx + 10},${H - pad.b - 4}) rotate(-90)`}>
-                    {b.map.length > 26 ? `${b.map.slice(0, 25)}…` : b.map}
-                  </text>
-                ) : null}
-              </g>
+              <rect key={i} className={i % 2 ? "band odd" : "band"} x={bx} y={pad.t} width={bw} height={H - pad.t - pad.b} />
             );
           })}
           {pTicks.map((v) => (
@@ -328,6 +320,28 @@ export function ServerLoadChart({
               </g>
             );
           })}
+          {/* Every band's map name, also when names overlap or the band is narrow:
+              at the left edge of its band, reading upwards from the bottom, cut at
+              the top of the plot. Drawn above the hover strips, so hovering a name
+              shows it in full with the band's time range. */}
+          <clipPath id="load-plot">
+            <rect x={pad.l} y={pad.t} width={W - pad.l - pad.r} height={H - pad.t - pad.b} />
+          </clipPath>
+          <g clipPath="url(#load-plot)">
+            {bands.map((b, i) =>
+              b.map ? (
+                <text
+                  key={`m${i}`}
+                  className="band-label"
+                  transform={`translate(${x(b.from) + 10},${H - pad.b - 4}) rotate(-90)`}
+                  data-tip={`${tipText(b.map, [])}\n${hhmm(b.from)} – ${hhmm(b.to)}`}
+                >
+                  <title>{b.map}</title>
+                  {b.map}
+                </text>
+              ) : null,
+            )}
+          </g>
         </svg>
       </HoverTip>
     </figure>
