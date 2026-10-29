@@ -10,12 +10,8 @@ import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { fmtDateTime, fmtNum, nowUnix } from "@/lib/format";
 import { scheduleValue } from "@/lib/hall-period";
 import { fill, getAdminLang } from "@/lib/i18n";
-import { jobType, shortDuration, type JobPlan, type JobType } from "@/lib/job-plan";
+import { heartbeatFresh, jobType, shortDuration, type JobPlan, type JobType } from "@/lib/job-plan";
 import { jobModeName, type ResetMode } from "@/lib/reset-modes";
-
-// The collector writes gamewe_heartbeat every minute; older than this it
-// counts as silent (as on the overview).
-const HEARTBEAT_STALE = 5 * 60;
 
 const T = {
   de: {
@@ -170,7 +166,7 @@ export default async function JobsPage() {
   const ov = await jobsOverview(rankings.filter((r) => r.servers > 0).map((r) => r.code));
   const now = nowUnix();
   const when = (unix: number) => fmtDateTime(unix, lang);
-  const beatOk = ov.heartbeat > 0 && now - ov.heartbeat < HEARTBEAT_STALE;
+  const beatOk = heartbeatFresh(ov.heartbeat, now);
   const open = (game: string) => ov.queue.find((j) => j.game === game && (j.type === "scheduled-reset" || j.type === "reset"));
   const openOf = (type: JobType) => ov.queue.find((j) => j.type === type);
   const statePill = (s: string) => (

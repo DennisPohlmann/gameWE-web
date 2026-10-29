@@ -7,6 +7,7 @@ import { Section, TableWrap } from "@/components/ui";
 import { resettableRankings } from "@/lib/admin-rankings";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { getAdminLang } from "@/lib/i18n";
+import { shortDuration } from "@/lib/job-plan";
 import { RESET_MODES, collectorRunning, getJob, jobModeName, jobsAvailable, recentJobs, type ResetJob, type ResetMode } from "@/lib/reset";
 
 const T = {
@@ -51,6 +52,8 @@ const T = {
     confirm: "Endgültig zurücksetzen",
     cancel: "Abbrechen",
     noCollector: "Der Collector läuft gerade nicht. Der Auftrag wird beim nächsten Start ausgeführt.",
+    lastBeat: "Letztes Lebenszeichen (gamewe_heartbeat) vor {a}, um {t} (Uhr des Web-Servers: {n}).",
+    noBeat: "Es gibt noch kein Lebenszeichen (gamewe_heartbeat) in der Datenbank.",
     existing: "Für diese Rangliste wartet schon ein Auftrag; es wird kein zweiter angelegt.",
     job: "Auftrag {i}: {g} ({m})",
     pending: "Wartet auf den Collector …",
@@ -111,6 +114,8 @@ const T = {
     confirm: "Reset for good",
     cancel: "Cancel",
     noCollector: "The collector is not running right now. The job runs at its next start.",
+    lastBeat: "Last sign of life (gamewe_heartbeat) {a} ago, at {t} (clock of the web server: {n}).",
+    noBeat: "There is no sign of life (gamewe_heartbeat) in the database yet.",
     existing: "A job for this ranking is already waiting; no second one was created.",
     job: "Job {i}: {g} ({m})",
     pending: "Waiting for the collector …",
@@ -158,7 +163,11 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
   }
 
   const games = await resettableRankings();
-  const running = await collectorRunning();
+  const { running, beat } = await collectorRunning();
+  const nowSec = Math.floor(Date.now() / 1000);
+  const beatText = beat
+    ? f(t.lastBeat, { a: shortDuration(nowSec - beat, lang), t: when(beat, locale), n: when(nowSec, locale) })
+    : t.noBeat;
   const jobId = Number(sp.job);
   const job: ResetJob | undefined = Number.isInteger(jobId) && jobId > 0 ? await getJob(jobId) : undefined;
   const open = job && (job.status === "pending" || job.status === "running");
@@ -178,7 +187,7 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
             {job.status === "pending" ? t.pending : job.status === "running" ? t.running : job.status === "done" ? t.done : t.failed}
           </p>
           {sp.existing ? <p>{t.existing}</p> : null}
-          {open && !running ? <p>{t.noCollector}</p> : null}
+          {open && !running ? <p>{t.noCollector} {beatText}</p> : null}
           {job.result ? <pre className="reset-result">{job.result}</pre> : null}
           {open ? <AutoRefresh seconds={3} /> : null}
         </div>
@@ -196,7 +205,7 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
           <p className="settings-help">{t.version}</p>
           <p className="settings-help">{t.templates}</p>
           {!games.length ? <p className="settings-help notice">{t.noRankings}</p> : null}
-          {!running ? <p className="settings-help notice error">{t.noCollector}</p> : null}
+          {!running ? <p className="settings-help notice error">{t.noCollector} {beatText}</p> : null}
         </ResetForm>
       </Section>
       {jobs.length ? (

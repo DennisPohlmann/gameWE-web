@@ -72,6 +72,16 @@ export function parsePlan(v: string | null | undefined): JobPlan | null {
   return { enabled: p.enabled, time: p.time, zone, next };
 }
 
+// The collector writes gamewe_heartbeat (Unix time) every minute, from
+// collector 1.2.1 also while a job runs; an older one wrote none during a
+// long job. Older than this it counts as not running, on every admin page.
+export const HEARTBEAT_STALE = 5 * 60;
+
+// Whether the heartbeat beat (Unix time, 0: none) is recent at now.
+export function heartbeatFresh(beat: number, now: number): boolean {
+  return Number.isFinite(beat) && beat > 0 && now - beat < HEARTBEAT_STALE;
+}
+
 // The Unix time of gamewe_next_reset_<game>, 0 if missing or malformed.
 export function parseNext(v: string | null | undefined): number {
   const n = Number((v ?? "").trim());

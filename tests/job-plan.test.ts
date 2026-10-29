@@ -2,7 +2,7 @@
 // hlstats_Options (written by the collector). Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { effectiveSchedule, jobType, nextResetKey, parseBansPlan, parseNext, parsePlan, shortDuration } from "../src/lib/job-plan.ts";
+import { HEARTBEAT_STALE, effectiveSchedule, heartbeatFresh, jobType, nextResetKey, parseBansPlan, parseNext, parsePlan, shortDuration } from "../src/lib/job-plan.ts";
 
 test("a plan as the collector writes it", () => {
   assert.deepEqual(parsePlan('{"enabled":true,"time":"00:05","zone":"Europe/Berlin","next":1793142300}'), {
@@ -67,4 +67,19 @@ test("the bans-sync plan as the collector writes it (collector all-bans)", () =>
   const odd = parseBansPlan('{"enabled":true,"steam":{"enabled":"yes","due":-3,"checked":1.5e3,"error":42},"sourcebans":7}');
   assert.deepEqual(odd?.steam, { enabled: false, every: 0, due: 0, checked: 1500, count: 0, last: 0, next: 0, error: "" });
   assert.equal(odd?.sourcebans.enabled, false);
+});
+
+test("the collector counts as running for five minutes after its heartbeat", () => {
+  const now = 1793142300;
+  assert.equal(HEARTBEAT_STALE, 300);
+  assert.equal(heartbeatFresh(now - 30, now), true);
+  // A collector up to 1.2.0 wrote no heartbeat while a job ran: a job of
+  // three minutes must not make it look stopped.
+  assert.equal(heartbeatFresh(now - 180, now), true);
+  assert.equal(heartbeatFresh(now - 299, now), true);
+  assert.equal(heartbeatFresh(now - 300, now), false);
+  assert.equal(heartbeatFresh(now - 3600, now), false);
+  assert.equal(heartbeatFresh(0, now), false);
+  assert.equal(heartbeatFresh(Number.NaN, now), false);
+  assert.equal(heartbeatFresh(parseNext("garbage"), now), false);
 });

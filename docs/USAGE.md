@@ -488,8 +488,10 @@ What the admin area edits:
   job in `hlstats_gamewe_jobs` (created by the collector's init script); the running
   collector pauses that ranking's servers, does the reset and writes the
   result back, which the page shows. It need not be stopped; if it is not
-  running (no `gamewe_heartbeat` in the last two minutes) the job waits for
-  its next start. One open job per ranking. The reset button opens a dialog
+  running (no `gamewe_heartbeat` in the last five minutes, the same limit as
+  on the overview and the Jobs page) the job waits for its next start; the
+  notice then shows the time of the last heartbeat and the web server's
+  clock. One open job per ranking. The reset button opens a dialog
   that shows the ranking and what is deleted and what stays; the job is only
   placed after ticking "I understand that this data will be deleted
   irreversibly" and confirming there. It cannot be undone, so back up the

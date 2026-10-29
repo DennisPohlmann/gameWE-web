@@ -8,12 +8,9 @@ import { LEVEL_ADMIN, adminSecret, requireAdmin } from "@/lib/auth";
 import { adminQuery } from "@/lib/db";
 import { localeOf } from "@/lib/format";
 import { fill, getAdminLang } from "@/lib/i18n";
+import { heartbeatFresh } from "@/lib/job-plan";
 import { readSecret } from "@/lib/totp";
 import { updateStatus } from "@/lib/updates";
-
-// The collector writes gamewe_heartbeat every minute; older than this it
-// counts as silent.
-const HEARTBEAT_STALE = 5 * 60;
 
 // Admin overview: key figures, the rankings with their state, what needs
 // attention and quick links into both areas.
@@ -45,7 +42,7 @@ export default async function AdminHome() {
   const templates = rankings.filter((r) => !active.includes(r));
   const beatAt = Number(beat[0]?.value ?? 0);
   const now = Math.floor(Date.now() / 1000);
-  const beatOk = beatAt > 0 && now - beatAt < HEARTBEAT_STALE;
+  const beatOk = heartbeatFresh(beatAt, now);
   const since = beatAt > 0 ? new Date(beatAt * 1000).toLocaleString(localeOf(lang), { dateStyle: "short", timeStyle: "short" }) : "?";
   const noGame = active.filter((r) => !r.base);
 

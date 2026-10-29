@@ -1,5 +1,6 @@
 import "server-only";
 import { adminInsert, adminQuery } from "./db";
+import { heartbeatFresh, parseNext } from "./job-plan";
 import type { ResetMode } from "./reset-modes";
 
 // Reset of one ranking through the running collector (collector 0.1.0,
@@ -23,8 +24,6 @@ export type ResetJob = {
 };
 
 const COLS = "id, game, mode, status, requested_by, requested_at, started_at, finished_at, result";
-// The collector updates gamewe_heartbeat every 60 s.
-const HEARTBEAT_MAX_AGE = 120;
 
 export async function jobsAvailable(): Promise<boolean> {
   try {
@@ -35,13 +34,15 @@ export async function jobsAvailable(): Promise<boolean> {
   }
 }
 
-export async function collectorRunning(): Promise<boolean> {
+// Whether the collector runs (its heartbeat is fresh) and its last
+// heartbeat (Unix time, 0: none or not readable).
+export async function collectorRunning(): Promise<{ running: boolean; beat: number }> {
   try {
     const rows = await adminQuery<{ value: string }>(`SELECT value FROM hlstats_Options WHERE keyname = ?`, ["gamewe_heartbeat"]);
-    const beat = Number(rows[0]?.value);
-    return Number.isFinite(beat) && beat > 0 && Date.now() / 1000 - beat <= HEARTBEAT_MAX_AGE;
+    const beat = parseNext(rows[0]?.value);
+    return { running: heartbeatFresh(beat, Date.now() / 1000), beat };
   } catch {
-    return false;
+    return { running: false, beat: 0 };
   }
 }
 
