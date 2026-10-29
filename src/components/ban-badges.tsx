@@ -17,15 +17,22 @@ export function banTip(b: BanEntry, t: Dict, lang: Lang): string {
   return [banKindLabel(b.kind, t), b.reason, date ? `${t.banDate} ${date}` : "", end].filter(Boolean).join(" · ");
 }
 
+// The player's bans on the SourceBans site (its ban list searched by the
+// player's Steam ID), for the SourceBans badge.
+export function sourcebansSearchUrl(base: string, steam2: string | null | undefined): string | undefined {
+  return base && steam2 ? `${base}index.php?p=banlist&advSearch=${encodeURIComponent(steam2)}&advType=steamid` : undefined;
+}
+
 // VAC and SourceBans side by side (the sources in `always`; grey when that
 // ban does not apply), server bans only when one runs. The details of each
-// ban show on hover.
-export function BanBadges({ bans, always, t, lang }: { bans: BanEntry[]; always: BanKind[]; t: Dict; lang: Lang }) {
+// ban show on hover; a badge with a link in `links` opens the source's page
+// of the player's bans.
+export function BanBadges({ bans, always, links, t, lang }: { bans: BanEntry[]; always: BanKind[]; links?: Partial<Record<BanKind, string>>; t: Dict; lang: Lang }) {
   return (
     <span className="ban-badges">
       {banSlots(bans, always).map(({ kind, ban }) =>
         ban ? (
-          <BanBadge key={kind} kind={kind} label={banKindLabel(kind, t)} text={banTip(ban, t, lang)} />
+          <BanBadge key={kind} kind={kind} label={banKindLabel(kind, t)} text={banTip(ban, t, lang)} href={links?.[kind]} />
         ) : (
           <BanBadge key={kind} kind={kind} label={banKindLabel(kind, t)} text={fill(t.banNone, { x: banKindLabel(kind, t) })} off />
         ),

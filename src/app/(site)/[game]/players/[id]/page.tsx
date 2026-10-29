@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { BanBadges, NameBanMark } from "@/components/ban-badges";
+import { BanBadges, NameBanMark, sourcebansSearchUrl } from "@/components/ban-badges";
 import { Bar, Empty, Flag, PctBar, PlayerLink, Section, TableWrap } from "@/components/ui";
 import { SortableTable } from "@/components/sortable-table";
 import { RankBadge, Ribbon, RibbonLevel, rankName, ribbonClassName } from "@/components/badges";
@@ -216,7 +216,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const wonAwards = new Map(ribbons.map((r) => [r.awardId, r.wins]));
   const totalRibbonWins = ribbons.reduce((n, r) => n + r.wins, 0);
 
-  const profile = { game, id, p, ids, isBot, location, age, fav, stars, bans, sourcebans: !!settings.sourcebansUrl, t, lang };
+  const profile = { game, id, p, ids, isBot, location, age, fav, stars, bans, sourcebans: !!settings.sourcebansUrl, sourcebansUrl: settings.sourcebansUrl, t, lang };
 
   return (
     <>
@@ -744,6 +744,7 @@ type ProfileProps = {
   stars: StarCount | null;
   bans: BanEntry[];
   sourcebans: boolean; // the site checks SourceBans (address set)
+  sourcebansUrl: string; // its address, for the link of the badge
   t: Dict;
   lang: Lang;
 };
@@ -796,7 +797,7 @@ function memberDate(v: string, lang: Lang): string {
 // pending: Steam has not answered yet (the fallback while it is asked).
 // steamBan: the ban from Steam's ban list (null: none there; undefined: not
 // asked, no API key), else the profile's VAC flag counts.
-function ProfileTable({ steam, steamBan, pending = false, game, id, p, ids, isBot, location, age, fav, stars, bans: found, sourcebans, t, lang }: ProfileProps & { steam: SteamProfileData | null; steamBan?: BanEntry | null; pending?: boolean }) {
+function ProfileTable({ steam, steamBan, pending = false, game, id, p, ids, isBot, location, age, fav, stars, bans: found, sourcebans, sourcebansUrl, t, lang }: ProfileProps & { steam: SteamProfileData | null; steamBan?: BanEntry | null; pending?: boolean }) {
   // With the VAC ban from Steam: one badge per kind, VAC first.
   const vac: BanEntry[] = steamBan !== undefined ? (steamBan ? [steamBan] : []) : steam?.vacBanned ? [{ kind: "vac", reason: t.vacBanned, at: null, dateText: "", length: "", until: null }] : [];
   const bans = mergeBans([...found, ...vac].map((ban) => ({ player: 0, ban })), () => 0)[0]?.bans ?? [];
@@ -866,7 +867,7 @@ function ProfileTable({ steam, steamBan, pending = false, game, id, p, ids, isBo
             v={
               <span className="ban-info">
                 {bans.length ? (
-                  <BanBadges bans={bans} always={always} t={t} lang={lang} />
+                  <BanBadges bans={bans} always={always} links={{ sourcebans: sourcebansSearchUrl(sourcebansUrl, ids?.steam2) }} t={t} lang={lang} />
                 ) : (
                   <>
                     VAC: <span className="good">{t.vacClean}</span>

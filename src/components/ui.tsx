@@ -415,9 +415,18 @@ export function BanMark({ kind, text }: { kind: "vac" | "red" | "both"; text: st
 // A ban type badge (yellow VAC, red SourceBans and server bans; grey when
 // the ban does not apply) whose details (reason, date, length) show on
 // hover and, focusable, on a tap.
-export function BanBadge({ kind, label, text, off = false }: { kind: string; label: string; text: string; off?: boolean }) {
+// With href the badge is a link (the player's bans on the SourceBans site).
+export function BanBadge({ kind, label, text, off = false, href }: { kind: string; label: string; text: string; off?: boolean; href?: string }) {
+  const className = `ban-type ban-${kind === "vac" ? "vac" : kind === "sourcebans" ? "sourcebans" : "engine"}${off ? " ban-off" : ""}`;
+  if (href) {
+    return (
+      <a className={className} href={href} target="_blank" rel="noopener noreferrer nofollow" aria-label={text} data-tip={text}>
+        {label}
+      </a>
+    );
+  }
   return (
-    <span className={`ban-type ban-${kind === "vac" ? "vac" : kind === "sourcebans" ? "sourcebans" : "engine"}${off ? " ban-off" : ""}`} tabIndex={0} aria-label={text} data-tip={text}>
+    <span className={className} tabIndex={0} aria-label={text} data-tip={text}>
       {label}
     </span>
   );

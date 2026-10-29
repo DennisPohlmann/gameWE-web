@@ -2383,11 +2383,16 @@ export type BanPlayer = {
 };
 
 // The players the bans page may show: ranked ones and those hidden as
-// banned (hideranking 2), not those hidden by an admin or by themselves.
-const bannedPlayerSql = `SELECT p.playerId, d.lastName AS name, l.flag, l.country, u.uniqueId,
+// banned (hideranking 2), not those hidden by an admin or by themselves;
+// from hlstats_Players or from hlstats_PlayersInactive (a banned player
+// stops playing, so the collector moves them out of the ranking after a
+// while; the ban still runs). Two queries instead of a UNION, so that each
+// uses the indexes of its table.
+const playerTables = ["hlstats_Players", "hlstats_PlayersInactive"] as const;
+const bannedPlayerSql = (table: (typeof playerTables)[number]) => `SELECT p.playerId, d.lastName AS name, l.flag, l.country, u.uniqueId,
     p.skill, p.kills, p.deaths, p.headshots, p.shots, p.hits, p.last_event, p.hideranking
   FROM hlstats_PlayerUniqueIds u
-  JOIN hlstats_Players p ON p.playerId = u.playerId AND p.hideranking IN (0, 2)
+  JOIN ${table} p ON p.playerId = u.playerId AND p.hideranking IN (0, 2)
   LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
   LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id`;
 
@@ -2422,22 +2427,28 @@ export async function getPlayerBans(playerId: number): Promise<BanRecord[]> {
 }
 
 // The players of the given ids, as shown on the bans page (also those
-// hidden as banned).
+// hidden as banned, also inactive ones).
 export async function getBanPlayers(ids: number[]): Promise<Map<number, BanPlayer>> {
   const uniq = [...new Set(ids.filter((x) => x > 0))];
   if (!uniq.length) return new Map();
-  const rows = await query<BanPlayer>(`${bannedPlayerSql} WHERE p.playerId IN (?)`, [uniq]);
-  return new Map(rows.map((r) => [Number(r.playerId), r]));
+  const out = new Map<number, BanPlayer>();
+  for (const table of playerTables) {
+    const rows = await query<BanPlayer>(`${bannedPlayerSql(table)} WHERE p.playerId IN (?)`, [uniq]);
+    for (const r of rows) if (!out.has(Number(r.playerId))) out.set(Number(r.playerId), r);
+  }
+  return out;
 }
 
 // The most recently active players of the bans page (ranked or banned in
-// the ranking), for the VAC check.
+// the ranking), for the VAC check; inactive players are, by definition,
+// not among the most recent ones.
 export function getRecentPlayers(game: string, limit: number) {
-  return query<BanPlayer>(`${bannedPlayerSql} WHERE p.game = ? ORDER BY p.last_event DESC LIMIT ?`, [game, limit]);
+  return query<BanPlayer>(`${bannedPlayerSql("hlstats_Players")} WHERE p.game = ? ORDER BY p.last_event DESC LIMIT ?`, [game, limit]);
 }
 
-// Ranked players of a game by SteamID64. The collector stores the ID as
-// "1:123", "STEAM_0:1:123", "[U:1:246]" or the SteamID64 itself.
+// Players of a game (ranked, banned in the ranking or inactive) by
+// SteamID64. The collector stores the ID as "1:123", "STEAM_0:1:123",
+// "[U:1:246]" or the SteamID64 itself.
 export async function getPlayersBySteam(game: string, steam64s: string[]): Promise<Map<string, BanPlayer>> {
   const base = 76561197960265728n;
   const forms = new Map<string, string>();
@@ -2450,11 +2461,13 @@ export async function getPlayersBySteam(game: string, steam64s: string[]): Promi
   }
   const out = new Map<string, BanPlayer>();
   const all = [...forms.keys()];
-  for (let i = 0; i < all.length; i += 1000) {
-    const rows = await query<BanPlayer>(`${bannedPlayerSql} WHERE u.game = ? AND u.uniqueId IN (?)`, [game, all.slice(i, i + 1000)]);
-    for (const r of rows) {
-      const s = forms.get(r.uniqueId);
-      if (s) out.set(s, r);
+  for (const table of playerTables) {
+    for (let i = 0; i < all.length; i += 1000) {
+      const rows = await query<BanPlayer>(`${bannedPlayerSql(table)} WHERE u.game = ? AND u.uniqueId IN (?)`, [game, all.slice(i, i + 1000)]);
+      for (const r of rows) {
+        const s = forms.get(r.uniqueId);
+        if (s && !out.has(s)) out.set(s, r); // hlstats_Players wins over the inactive copy
+      }
     }
   }
   return out;

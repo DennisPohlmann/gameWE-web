@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { sortHeads } from "@/components/sort-head";
-import { BanBadges, banKindLabel, NameBanMark } from "@/components/ban-badges";
+import { BanBadges, banKindLabel, NameBanMark, sourcebansSearchUrl } from "@/components/ban-badges";
 import { Empty, Pager, PctBar, PlayerLink, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam } from "@/components/ui";
 import { banKind, mainReason, mergeBans, steamBanEntry, type BanEntry, type BanKind } from "@/lib/ban-merge";
 import { gameHasShots, getBanPlayers, getBanRecords, getPlayersBySteam, getRecentPlayers, type BanPlayer } from "@/lib/data";
@@ -124,7 +124,7 @@ export default async function BansPage({ params, searchParams }: { params: Promi
                     <NameBanMark bans={r.bans} t={t} lang={lang} />
                   </td>
                   <td className="ban-type-col">
-                    <BanBadges bans={r.bans} always={always} t={t} lang={lang} />
+                    <BanBadges bans={r.bans} always={always} links={{ sourcebans: sourcebansSearchUrl(sourcebansUrl, steamIds(r.player.uniqueId)?.steam2) }} t={t} lang={lang} />
                   </td>
                   <td className="hide-sm">{r.reason}</td>
                   <td>{r.at ? new Date(r.at * 1000).toLocaleString(localeOf(lang), { dateStyle: "medium", timeStyle: "short" }) : r.dateText || "–"}</td>
