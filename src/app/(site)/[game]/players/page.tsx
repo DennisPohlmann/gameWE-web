@@ -222,16 +222,16 @@ export default async function PlayersPage({
       <Section
         title={
           <span className="subtabs">
-            <Link href={base} className={view ? undefined : "active"}>
+            <Link prefetch={false} href={base} className={view ? undefined : "active"}>
               {t.ranking}
             </Link>
-            <Link
+            <Link prefetch={false}
               href={`${base}?view=new`}
               className={view === "new" ? "active" : undefined}
             >
               {t.newPlayers}
             </Link>
-            <Link
+            <Link prefetch={false}
               href={`${base}?view=inactive`}
               className={inactive ? "active" : undefined}
             >

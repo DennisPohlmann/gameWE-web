@@ -45,7 +45,7 @@ export async function PlayerLinks({ game, id, t, active }: { game: string; id: n
   return (
     <nav className="player-links">
       {tabs.map(([k, label]) => (
-        <Link key={k} href={`${base}/${k}`} className={active === k ? "active" : undefined}>
+        <Link prefetch={false} key={k} href={`${base}/${k}`} className={active === k ? "active" : undefined}>
           {label}
         </Link>
       ))}
@@ -80,7 +80,7 @@ export async function HistoryFrame({
       </header>
       {back ? (
         <p className="history-back">
-          <Link href={`/${game}/players/${id}`}>← {t.backToPlayer}</Link>
+          <Link prefetch={false} href={`/${game}/players/${id}`}>← {t.backToPlayer}</Link>
         </p>
       ) : null}
       <PlayerLinks game={game} id={id} name={name} t={t} active={tab} />
@@ -93,7 +93,7 @@ export async function HistoryFrame({
 export function BackToPlayer({ game, id, t }: { game: string; id: number; t: Pick<Dict, "backTo" | "playerInfo"> }) {
   return (
     <p className="back-to">
-      {t.backTo} <Link href={`/${game}/players/${id}`}>{t.playerInfo}</Link>
+      {t.backTo} <Link prefetch={false} href={`/${game}/players/${id}`}>{t.playerInfo}</Link>
     </p>
   );
 }

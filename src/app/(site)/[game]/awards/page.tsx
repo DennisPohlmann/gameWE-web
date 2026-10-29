@@ -82,7 +82,7 @@ export default async function AwardsPage({ params, searchParams }: { params: Pro
         <div className="container subtab-bar">
           <span className="subtabs">
             {tabs.map(([k, label]) => (
-              <Link key={k} href={k ? `${base}?view=${k}` : base} className={current === k ? "active" : undefined}>
+              <Link prefetch={false} key={k} href={k ? `${base}?view=${k}` : base} className={current === k ? "active" : undefined}>
                 {label}
               </Link>
             ))}
@@ -223,7 +223,7 @@ async function Ranks({
       <Section title={t.ranksOverview}>
         <div className="box rank-grid">
           {ranks.map((r, i) => (
-            <Link key={i} href={`/${game}/awards?view=ranks&rank=${i}`} className={sel?.index === i ? "rank-cell active" : "rank-cell"}>
+            <Link prefetch={false} key={i} href={`/${game}/awards?view=ranks&rank=${i}`} className={sel?.index === i ? "rank-cell active" : "rank-cell"}>
               <RankBadge name={r.name} size={44} />
               <b>{rankName(r.name)}</b>
               <span className="muted">{range(r)}</span>
@@ -328,11 +328,11 @@ async function Ribbons({
           })}
         </p>
         <p className="subtabs ribbon-classes">
-          <Link href={`/${game}/awards?view=ribbons`} className={cls === null ? "active" : undefined}>
+          <Link prefetch={false} href={`/${game}/awards?view=ribbons`} className={cls === null ? "active" : undefined}>
             {t.allClasses}
           </Link>
           {classes.map((c, i) => (
-            <Link key={c.class} href={`/${game}/awards?view=ribbons&class=${i}`} className={cls === i ? "active" : undefined}>
+            <Link prefetch={false} key={c.class} href={`/${game}/awards?view=ribbons&class=${i}`} className={cls === i ? "active" : undefined}>
               {ribbonClassName(c.name, lang)}
             </Link>
           ))}
@@ -341,7 +341,7 @@ async function Ribbons({
           {awards.map((a) => {
             const top = leaders.get(a.awardId);
             return (
-              <Link
+              <Link prefetch={false}
                 key={a.awardId}
                 href={`/${game}/awards?view=ribbons&award=${a.awardId}${cls === null ? "" : `&class=${cls}`}`}
                 className={sel?.awardId === a.awardId ? "ribbon-cell active" : "ribbon-cell"}

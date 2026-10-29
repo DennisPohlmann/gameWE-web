@@ -113,12 +113,18 @@ export default async function PlayerPage({ params, searchParams }: Props) {
       statsOrigin(),
       getPlayerSkillBefore(id, 30),
     ]);
-  const imgStyles = await imageStyles(lang === "de" ? "de" : "en");
-  const flags = await getPlayerFlags([
-    ...victims.map((o) => o.playerId),
-    ...killers.map((o) => o.playerId),
-    ...killStats.map((o) => o.playerId),
+  // The rest of the reads at once, not one after the other.
+  const [imgStyles, flags, shots, radarAvg, hallShown, bans] = await Promise.all([
+    imageStyles(lang === "de" ? "de" : "en"),
+    getPlayerFlags([...victims.map((o) => o.playerId), ...killers.map((o) => o.playerId), ...killStats.map((o) => o.playerId)]),
+    // Counter-Strike 2 logs no shots (and the collector counts no hits for
+    // it): no accuracy, no shots per kill.
+    gameHasShots(game),
+    getRadarAverage(game),
+    hallOfFameShown(game),
+    profileBans(p, ids?.steam64 ?? null, settings.sourcebansUrl, t),
   ]);
+  const stars = hallShown ? await getPlayerStars(game, id) : null;
   // Hidden players stay out of the list; bots are shown with their tag.
   const killList = killStats.filter((o) => o.hideranking === 0 || flags.get(o.playerId)?.flag === "bot");
 
@@ -133,10 +139,10 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   // City, state and country link to the ranking of that place.
   const code = /^[a-z]{2}$/i.test(p.flag ?? "") ? (p.flag as string) : "";
   const location = [
-    p.city ? (code ? <Link key="c" href={placeHref(game, code, p.city)}>{p.city}</Link> : p.city) : null,
+    p.city ? (code ? <Link prefetch={false} key="c" href={placeHref(game, code, p.city)}>{p.city}</Link> : p.city) : null,
     // A legacy HLstatsX region code ("02") has no state ranking.
-    p.state ? (code && p.state.length > 3 ? <Link key="s" href={placeHref(game, code, "", p.state)}>{p.state}</Link> : p.state) : null,
-    p.country ? (code ? <Link key="l" href={placeHref(game, code)}>{p.country}</Link> : p.country) : null,
+    p.state ? (code && p.state.length > 3 ? <Link prefetch={false} key="s" href={placeHref(game, code, "", p.state)}>{p.state}</Link> : p.state) : null,
+    p.country ? (code ? <Link prefetch={false} key="l" href={placeHref(game, code)}>{p.country}</Link> : p.country) : null,
   ]
     .filter(Boolean)
     .flatMap((x, i) => (i ? [", ", x] : [x]));
@@ -153,9 +159,6 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const kpdNow = sum14("kills") / Math.max(1, sum14("deaths"));
   const hpkNow = ratio(hs14, kills14);
   const accNow = ratio(sum14("hits"), sum14("shots"));
-  // Counter-Strike 2 logs no shots (and the collector counts no hits for
-  // it): no accuracy, no shots per kill.
-  const shots = await gameHasShots(game);
   const daily = (f: (h: (typeof history)[number]) => number | null) => history.map(f).filter((v): v is number => v !== null && Number.isFinite(v));
   const kpdDays = daily((h) => (h.kills || h.deaths ? h.kills / Math.max(1, h.deaths) : null));
   const hpkDays = daily((h) => (h.kills ? h.headshots / h.kills : null));
@@ -179,7 +182,6 @@ export default async function PlayerPage({ params, searchParams }: Props) {
     survived: r14(sum14("survived_count"), sum14("rounds")),
     wins: r14(sum14("wins"), sum14("rounds")),
   };
-  const radarAvg = await getRadarAverage(game);
   const radarPts = radarPoints(radarRatios, radarAvg);
   const radarLabel: Record<RadarKey, string> = { kpd: t.kpd, kpm: t.kpm, assists: t.assists, survived: t.survived, wins: t.winRatioShort };
   const radarValue = (key: RadarKey, v: number | null, count?: number) =>
@@ -214,8 +216,6 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const wonAwards = new Map(ribbons.map((r) => [r.awardId, r.wins]));
   const totalRibbonWins = ribbons.reduce((n, r) => n + r.wins, 0);
 
-  const stars = (await hallOfFameShown(game)) ? await getPlayerStars(game, id) : null;
-  const bans = await profileBans(p, ids?.steam64 ?? null, settings.sourcebansUrl, t);
   const profile = { game, id, p, ids, isBot, location, age, fav, stars, bans, sourcebans: !!settings.sourcebansUrl, t, lang };
 
   return (
@@ -354,7 +354,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                 <tr>
                   <th>
                     {t.playerTrend} (
-                    <Link className="th-link" href={`/${game}/players/${id}/sessions`}>
+                    <Link prefetch={false} className="th-link" href={`/${game}/players/${id}/sessions`}>
                       {t.overview}
                     </Link>
                     )
@@ -381,7 +381,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                 <tbody>
                   <tr>
                     <td colSpan={2} className="center">
-                      <Link href={`/${game}/awards?view=ranks&rank=${rank.index}`}>
+                      <Link prefetch={false} href={`/${game}/awards?view=ranks&rank=${rank.index}`}>
                         <RankBadge name={rank.name} size={110} />
                       </Link>
                     </td>
@@ -402,7 +402,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                 <thead>
                   <tr>
                     <th>
-                      {t.career} (<Link href={`/${game}/awards?view=ranks`}>{t.ranksOverview}</Link>)
+                      {t.career} (<Link prefetch={false} href={`/${game}/awards?view=ranks`}>{t.ranksOverview}</Link>)
                     </th>
                   </tr>
                 </thead>
@@ -487,7 +487,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                 <thead>
                   <tr>
                     <th>
-                      {t.ribbons} ({fill(t.winsCount, { n: totalRibbonWins })}, <Link href={`/${game}/awards?view=ribbons`}>{t.ribbonsOverview}</Link>)
+                      {t.ribbons} ({fill(t.winsCount, { n: totalRibbonWins })}, <Link prefetch={false} href={`/${game}/awards?view=ribbons`}>{t.ribbonsOverview}</Link>)
                     </th>
                   </tr>
                 </thead>
@@ -500,7 +500,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                           const wins = wonAwards.get(a.awardId) ?? 0;
                           const r = ribbonFor(wins, classes);
                           return (
-                            <Link key={a.awardId} href={`/${game}/awards?view=ribbons&award=${a.awardId}`}>
+                            <Link prefetch={false} key={a.awardId} href={`/${game}/awards?view=ribbons&award=${a.awardId}`}>
                               <Ribbon
                                 code={a.code}
                                 label={a.name}
@@ -553,7 +553,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                     key: a.id,
                     values: [a.description, a.count, a.points],
                     cells: [
-                      <Link key="a" href={`/${game}/actions/${a.id}`}>
+                      <Link prefetch={false} key="a" href={`/${game}/actions/${a.id}`}>
                         {a.description}
                       </Link>,
                       fmtNum(a.count, lang),
@@ -835,13 +835,13 @@ function ProfileTable({ steam, steamBan, pending = false, game, id, p, ids, isBo
               <NameBanMark bans={bans} t={t} lang={lang} />
             </b>
             {stars && stars.gold + stars.silver + stars.bronze ? (
-              <Link href={`/${game}/hall-of-fame`} className="hof-profile-stars">
+              <Link prefetch={false} href={`/${game}/hall-of-fame`} className="hof-profile-stars">
                 <HallStars gold={stars.gold} silver={stars.silver} bronze={stars.bronze} label={fill(t.hofStarsTip, { gold: stars.gold, silver: stars.silver, bronze: stars.bronze })} />
               </Link>
             ) : null}
           </td>
         </tr>
-        <Row k={t.clan} v={p.clanTag ? <Link href={`/${game}/clans/${p.clan}`}>{p.clanTag}</Link> : <i>{t.none}</i>} aside={avatar} />
+        <Row k={t.clan} v={p.clanTag ? <Link prefetch={false} href={`/${game}/clans/${p.clan}`}>{p.clanTag}</Link> : <i>{t.none}</i>} aside={avatar} />
         <Row k={t.location} v={location.length ? <>{location}</> : <i>{t.notSpecified}</i>} />
         <Row k={t.playerId} v={fmtNum(id, lang)} />
         <Row k={t.steamId} v={isBot ? t.bot : (ids?.steam2 ?? p.uniqueId ?? "-")} />
@@ -883,7 +883,7 @@ function ProfileTable({ steam, steamBan, pending = false, game, id, p, ids, isBo
         <Row k={t.avgPing} v={p.average_ping ? `${p.average_ping} ms` : "-"} span />
         <Row
           k={t.favWeapon}
-          v={fav ? <Link href={`/${game}/weapons/${encodeURIComponent(fav.code)}`}>{fav.name}</Link> : "-"}
+          v={fav ? <Link prefetch={false} href={`/${game}/weapons/${encodeURIComponent(fav.code)}`}>{fav.name}</Link> : "-"}
           span
         />
       </tbody>

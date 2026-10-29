@@ -55,7 +55,7 @@ export default async function HallOfFamePage({ params, searchParams }: { params:
             title={t.hofStarTable}
             aside={
               stars.length > STAR_ROWS ? (
-                <Link href={allStars ? `/${game}/hall-of-fame` : `/${game}/hall-of-fame?stars=all`}>{allStars ? fill(t.hofTopN, { n: STAR_ROWS }) : fill(t.hofAllN, { n: fmtNum(stars.length, lang) })}</Link>
+                <Link prefetch={false} href={allStars ? `/${game}/hall-of-fame` : `/${game}/hall-of-fame?stars=all`}>{allStars ? fill(t.hofTopN, { n: STAR_ROWS }) : fill(t.hofAllN, { n: fmtNum(stars.length, lang) })}</Link>
               ) : null
             }
           >
@@ -198,7 +198,7 @@ function Card({ game, place, e, steam, t, lang }: { game: string; place: number;
         {fmtNum(e.skill, lang)} <span>{t.points}</span>
       </div>
       {e.rankName ? (
-        <Link href={`/${game}/awards?view=ranks`} className="hof-rank" title={t.hofRankTip}>
+        <Link prefetch={false} href={`/${game}/awards?view=ranks`} className="hof-rank" title={t.hofRankTip}>
           <RankBadge name={e.rankName} size={40} untitled />
           <span>{rankName(e.rankName)}</span>
         </Link>
@@ -213,7 +213,7 @@ function Card({ game, place, e, steam, t, lang }: { game: string; place: number;
       </dl>
       {e.favWeapon ? (
         <div className="hof-weapon">
-          {t.favWeapon}: <Link href={`/${game}/weapons/${encodeURIComponent(e.favWeapon)}`}>{e.favWeaponName ?? e.favWeapon}</Link>
+          {t.favWeapon}: <Link prefetch={false} href={`/${game}/weapons/${encodeURIComponent(e.favWeapon)}`}>{e.favWeaponName ?? e.favWeapon}</Link>
         </div>
       ) : null}
     </>

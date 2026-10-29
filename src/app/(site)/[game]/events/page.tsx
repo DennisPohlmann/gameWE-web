@@ -162,7 +162,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
                     <tr key={s.type} className={s.type === type ? "active" : undefined}>
                       <td>
                         <i className={`swatch ${TYPE_CLASS[s.type]}`} aria-hidden="true" />{" "}
-                        <Link href={href({ type: s.type === type ? undefined : s.type, page: undefined })} aria-current={s.type === type ? "true" : undefined}>
+                        <Link prefetch={false} href={href({ type: s.type === type ? undefined : s.type, page: undefined })} aria-current={s.type === type ? "true" : undefined}>
                           {t.evKind[s.type]}
                         </Link>
                       </td>

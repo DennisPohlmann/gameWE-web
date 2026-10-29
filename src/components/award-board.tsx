@@ -52,7 +52,7 @@ export async function AwardBoard({ game, t, lang, sort }: { game: string; t: Dic
               {rows.map((a) => (
                 <tr key={a.awardId}>
                   <td>
-                    <Link href={`/${game}/awards?view=ribbons&award=${a.awardId}`}>{a.name}</Link>
+                    <Link prefetch={false} href={`/${game}/awards?view=ribbons&award=${a.awardId}`}>{a.name}</Link>
                   </td>
                   <td>
                     {a.winner ? (
@@ -113,7 +113,7 @@ export async function AwardDayTable({ game, day, t, lang, sort }: { game: string
                 return (
                   <tr key={a.awardId}>
                     <td>
-                      <Link href={`/${game}/awards?view=ribbons&award=${a.awardId}`}>{a.name}</Link>
+                      <Link prefetch={false} href={`/${game}/awards?view=ribbons&award=${a.awardId}`}>{a.name}</Link>
                     </td>
                     <td>
                       {a.winner ? (

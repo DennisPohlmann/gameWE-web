@@ -82,7 +82,7 @@ export function ServerTable({
               <tr key={s.serverId} className="server-line">
                 <td className="wrap-cell">
                   <ServerFlag code={s.country_code} lang={lang} />
-                  <Link className="srv" href={`/${game}/servers/${s.serverId}`} title={s.name || addr}>
+                  <Link prefetch={false} className="srv" href={`/${game}/servers/${s.serverId}`} title={s.name || addr}>
                     {s.name || addr}
                   </Link>
                 </td>
@@ -209,7 +209,7 @@ export async function LiveTable({ game, players, t, lang }: { game: string; play
                     {(p.is_bot && !botLinks) || !p.player_id ? (
                       <span className={p.is_dead ? "dead" : undefined}>{p.name || (p.player_id ? `#${p.player_id}` : "?")}</span>
                     ) : (
-                      <Link href={`/${game}/players/${p.player_id}`} className={p.is_dead ? "dead" : undefined}>
+                      <Link prefetch={false} href={`/${game}/players/${p.player_id}`} className={p.is_dead ? "dead" : undefined}>
                         {p.name || `#${p.player_id}`}
                       </Link>
                     )}

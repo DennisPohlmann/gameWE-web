@@ -98,7 +98,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             first; shown fixed at the bottom, so nothing moves. */}
         <ConsentRoot consent={consent} t={t.consent} />
         <header className="header">
-          <Link href="/" className={headerLogo ? "logo logo-img" : "logo"} title={siteName}>
+          <Link prefetch={false} href="/" className={headerLogo ? "logo logo-img" : "logo"} title={siteName}>
             {headerLogo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={headerLogo} alt={siteName} />
@@ -121,7 +121,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               { home: t.contents, search: t.searchTitle, help: t.help, licenses: t.licenses, privacy: t.privacy.title },
             ).map((tab) =>
               tab.kind === "page" ? (
-                <Link key={tab.id} href={tab.href}>
+                <Link prefetch={false} key={tab.id} href={tab.href}>
                   {tab.label}
                 </Link>
               ) : (
@@ -162,11 +162,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           {/* The full credits are on /licenses; the GeoIP licenses ask for a
               link on every page that shows their data, so it stays here, short. */}
           <p className="small">
-            {t.poweredBy} · <Link href="/privacy">{t.privacy.title}</Link> ·{" "}
+            {t.poweredBy} · <Link prefetch={false} href="/privacy">{t.privacy.title}</Link> ·{" "}
             <a href={PRIVACY_HREF} data-consent-open="">
               {t.consent.footerLink}
             </a>{" "}
-            · <Link href="/licenses">{t.licenses}</Link> · <Link href="/api">{t.api}</Link>
+            · <Link prefetch={false} href="/licenses">{t.licenses}</Link> · <Link prefetch={false} href="/api">{t.api}</Link>
             {geoipCredit === "dbip" ? (
               <>
                 {" · "}
@@ -183,7 +183,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               </>
             ) : null}
             {" · "}
-            <Link href="/admin" target="_blank" rel="noopener">
+            <Link prefetch={false} href="/admin" target="_blank" rel="noopener">
               Admin
             </Link>
           </p>

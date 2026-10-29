@@ -8,7 +8,7 @@ import { connectTypes, miscCountries, placeOptions, type PlaceCount, type PlaceO
 import { nowUnix, steamIds } from "./format";
 import { baseGameOf, GAME_HAS_DATA, gameKind } from "./games";
 import { allClansSql, allKillsSql, allPlayersSql } from "./general-stats";
-import { hiddenSql, liveEntry } from "./hidden";
+import { hiddenSql, isBotSql, liveEntry } from "./hidden";
 import { LOAD_INTERVAL_MAX, type MapSort } from "./map-table";
 import { playerCount, sumCounts, type PlayerCount } from "./player-count";
 import { RADAR_KEYS, RADAR_SQL, type RadarAverage } from "./radar";
@@ -362,38 +362,39 @@ export function everyDay<T extends { day: string }>(rows: T[], days: number): { 
   });
 }
 
-// Active players and kills per day, from hlstats_Players_History.
-export function getDailyActivity(game: string, days: number) {
-  return query<DayPoint>(
-    `SELECT eventTime AS day, COUNT(*) AS players, SUM(kills) AS kills, SUM(headshots) AS headshots
-     FROM hlstats_Players_History WHERE game = ? AND ${sinceDays("eventTime")}
-     GROUP BY eventTime ORDER BY eventTime`,
-    [game, days],
+// Active players and kills per day, from hlstats_Players_History. Kept for a
+// minute per ranking (ttl-cache.ts): the ranking's start page asks on every
+// view.
+const dailyCache = ttlCache<DayPoint[]>(60_000, 600_000);
+
+export function getDailyActivity(game: string, days: number): Promise<DayPoint[]> {
+  return dailyCache(`${game}|${days}|${siteDay()}`, () =>
+    query<DayPoint>(
+      `SELECT eventTime AS day, COUNT(*) AS players, SUM(kills) AS kills, SUM(headshots) AS headshots
+       FROM hlstats_Players_History WHERE game = ? AND ${sinceDays("eventTime")}
+       GROUP BY eventTime ORDER BY eventTime`,
+      [game, days],
+    ),
   );
 }
 
 // Players online and servers with players (hlstats_server_load, over the
 // ranking's servers), kills and headshots (hlstats_Events_Frags) per 15
 // minutes of the last days, for the graphs on the start page and a ranking's
-// page. Kept for five minutes per ranking.
+// page. A month of frags of every ranking: kept for five minutes per ranking,
+// then the old graph is shown while one reload runs in the background
+// (ttl-cache.ts), so no visitor waits for it.
 export type HourlyActivity = { start: number; step: number; players: (number | null)[]; servers: (number | null)[]; kills: number[]; headshots: number[] };
 
 // Seconds per point of these graphs. The collector stores the server load every
 // 10 minutes, so each point holds one or two samples.
 const ACTIVITY_STEP = 900;
 
-const hourlyCache = new Map<string, { at: number; value: Promise<HourlyActivity> }>();
+const hourlyCache = ttlCache<HourlyActivity>(300_000, 86_400_000, 100);
 
 // game null: all rankings together (start page).
 export function getHourlyActivity(game: string | null, days: number): Promise<HourlyActivity> {
-  const key = `${game ?? "*"}|${days}`;
-  const hit = hourlyCache.get(key);
-  if (hit && Date.now() - hit.at < 300_000) return hit.value;
-  if (hourlyCache.size > 100) hourlyCache.clear();
-  const value = loadHourlyActivity(game, days);
-  value.catch(() => hourlyCache.delete(key));
-  hourlyCache.set(key, { at: Date.now(), value });
-  return value;
+  return hourlyCache(`${game ?? "*"}|${days}`, () => loadHourlyActivity(game, days));
 }
 
 async function loadHourlyActivity(game: string | null, days: number): Promise<HourlyActivity> {
@@ -682,14 +683,17 @@ export async function getCityOptions(game: string, country: string): Promise<Pla
 // by primary key (STRAIGHT_JOIN): about half the time of the other way round.
 const placesCache = ttlCache<PlaceCount[]>(600_000, 86_400_000);
 
+// From the ranking's players (index game_skill) to their data row, not the
+// other way round: a reload read all 400,000 data rows before (458 ms,
+// now 12 ms on the same database).
 function playerPlaces(game: string): Promise<PlaceCount[]> {
   return placesCache(game, async () => {
     const straight = dialect() === "mariadb" ? "STRAIGHT_JOIN " : "";
     const rows = await query<{ lid: number | null; flag: string | null; country: string | null; state: string | null; city: string | null; type: number; hidden: number; n: number }>(
       `SELECT l.id AS lid, l.flag, l.country, l.state, l.city, x.type, x.hidden, x.n
        FROM (SELECT ${straight}d.location_id, d.connect_type AS type, CASE WHEN p.hideranking = 0 THEN 0 ELSE 1 END AS hidden, COUNT(*) AS n
-             FROM hlstats_Players_Data d
-             JOIN hlstats_Players p ON p.playerId = d.playerId
+             FROM hlstats_Players p
+             JOIN hlstats_Players_Data d ON d.playerId = p.playerId
              WHERE p.game = ?
              GROUP BY d.location_id, d.connect_type, CASE WHEN p.hideranking = 0 THEN 0 ELSE 1 END) x
        LEFT JOIN hlstats_Players_Locations l ON l.id = x.location_id`,
@@ -1004,8 +1008,16 @@ export async function getPlayerWeapons(id: number) {
 
 // The weapons of a group of players (a clan's members) added up, like
 // getPlayerWeapons.
-export async function getMembersWeapons(ids: number[]) {
-  if (!ids.length) return [] as PlayerWeapon[];
+// The weekly rows and the monthly archive of every member: kept for five
+// minutes per group (ttl-cache.ts).
+const membersWeaponsCache = ttlCache<PlayerWeapon[]>(300_000, 3_600_000, 200);
+
+export function getMembersWeapons(ids: number[]): Promise<PlayerWeapon[]> {
+  if (!ids.length) return Promise.resolve([] as PlayerWeapon[]);
+  return membersWeaponsCache(ids.join(","), () => loadMembersWeapons(ids));
+}
+
+async function loadMembersWeapons(ids: number[]) {
   const neck = (await neckOk()) ? "neck" : "0 AS neck";
   const src = weeksAndMonths(
     "Players_Weapons",
@@ -1026,32 +1038,42 @@ export async function getMembersWeapons(ids: number[]) {
 
 export type PlayerMap = { id: number; map: string; kills: number; deaths: number; headshots: number };
 
-// Per-map kills and deaths from hlstats_Events_Frags (hlstats_Players_Maps is
-// not filled by the collector).
-export function getPlayerMaps(id: number, limit = 25) {
-  return query<PlayerMap>(
-    `SELECT m.id, m.map, SUM(x.k) AS kills, SUM(x.d) AS deaths, SUM(x.hs) AS headshots
-     FROM (SELECT map, 1 AS k, 0 AS d, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS hs FROM hlstats_Events_Frags WHERE killerId = ?
-           UNION ALL
-           SELECT map, 0, 1, 0 FROM hlstats_Events_Frags WHERE victimId = ?) x
-     JOIN hlstats_Maps m ON m.id = x.map
-     GROUP BY m.id, m.map ORDER BY kills DESC, deaths DESC, m.id LIMIT ?`,
-    [id, id, limit],
+// Per-map kills and deaths from hlstats_Events_Frags (the collector writes
+// only shots and hits to hlstats_Players_Maps). A pass over all frags of the
+// player, so kept for five minutes per player (ttl-cache.ts).
+const playerMapsCache = ttlCache<PlayerMap[]>(300_000, 3_600_000, 1000);
+
+export function getPlayerMaps(id: number, limit = 25): Promise<PlayerMap[]> {
+  return playerMapsCache(`${id}|${limit}`, () =>
+    query<PlayerMap>(
+      `SELECT m.id, m.map, SUM(x.k) AS kills, SUM(x.d) AS deaths, SUM(x.hs) AS headshots
+       FROM (SELECT map, 1 AS k, 0 AS d, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS hs FROM hlstats_Events_Frags WHERE killerId = ?
+             UNION ALL
+             SELECT map, 0, 1, 0 FROM hlstats_Events_Frags WHERE victimId = ?) x
+       JOIN hlstats_Maps m ON m.id = x.map
+       GROUP BY m.id, m.map ORDER BY kills DESC, deaths DESC, m.id LIMIT ?`,
+      [id, id, limit],
+    ),
   );
 }
 
 // Per-map kills and deaths of a group of players (a clan's members), like
 // getPlayerMaps. A kill between two members counts as a kill and a death.
-export function getMembersMaps(ids: number[], limit = 15) {
+// The frags of every member: kept for five minutes per group (ttl-cache.ts).
+const membersMapsCache = ttlCache<PlayerMap[]>(300_000, 3_600_000, 200);
+
+export function getMembersMaps(ids: number[], limit = 15): Promise<PlayerMap[]> {
   if (!ids.length) return Promise.resolve([] as PlayerMap[]);
-  return query<PlayerMap>(
-    `SELECT m.id, m.map, SUM(x.k) AS kills, SUM(x.d) AS deaths, SUM(x.hs) AS headshots
-     FROM (SELECT map, 1 AS k, 0 AS d, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS hs FROM hlstats_Events_Frags WHERE killerId IN (?)
-           UNION ALL
-           SELECT map, 0, 1, 0 FROM hlstats_Events_Frags WHERE victimId IN (?)) x
-     JOIN hlstats_Maps m ON m.id = x.map
-     GROUP BY m.id, m.map ORDER BY kills DESC, deaths DESC, m.id LIMIT ?`,
-    [ids, ids, limit],
+  return membersMapsCache(`${limit}|${ids.join(",")}`, () =>
+    query<PlayerMap>(
+      `SELECT m.id, m.map, SUM(x.k) AS kills, SUM(x.d) AS deaths, SUM(x.hs) AS headshots
+       FROM (SELECT map, 1 AS k, 0 AS d, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS hs FROM hlstats_Events_Frags WHERE killerId IN (?)
+             UNION ALL
+             SELECT map, 0, 1, 0 FROM hlstats_Events_Frags WHERE victimId IN (?)) x
+       JOIN hlstats_Maps m ON m.id = x.map
+       GROUP BY m.id, m.map ORDER BY kills DESC, deaths DESC, m.id LIMIT ?`,
+      [ids, ids, limit],
+    ),
   );
 }
 
@@ -1081,54 +1103,96 @@ export function getPlayerActions(id: number) {
 
 export type Opponent = { playerId: number; name: string | null; kills: number; headshots: number };
 
-export function getOpponents(id: number, as: "victims" | "killers") {
-  const [me, other] = as === "victims" ? ["killerId", "victimId"] : ["victimId", "killerId"];
-  // Counted first, then the names of the ten joined (not of every frag).
-  // Hidden opponents are left out before the ten are picked.
-  return query<Opponent>(
-    `SELECT x.playerId, d.lastName AS name, x.kills, x.headshots
-     FROM (SELECT f.${other} AS playerId, COUNT(*) AS kills, SUM(CASE WHEN f.headshot > 0 THEN 1 ELSE 0 END) AS headshots
-           FROM hlstats_Events_Frags f
-           WHERE f.${me} = ? AND f.${other} <> f.${me} AND NOT ${hiddenSql(`f.${other}`)}
-           GROUP BY f.${other} ORDER BY kills DESC, f.${other} LIMIT 10) x
-     LEFT JOIN hlstats_Players_Data d ON d.playerId = x.playerId
-     ORDER BY x.kills DESC, x.playerId`,
-    [id],
+// The victims, the killers and the kill statistics of a player all come from
+// one pass over the player's frags (the killer_time and victim_time indexes),
+// summed per opponent: kills and headshots against the opponent, deaths by
+// the opponent and the headshots among them. A player with a long history
+// has hundreds of thousands of frags, so the three lists are kept together
+// for five minutes per player (ttl-cache.ts); the positions in the ranking
+// are looked up live.
+type OpponentSums = { victims: Opponent[]; killers: Opponent[]; kills: (Omit<KillStat, "position"> & { skill: number; game: string })[] };
+const opponentsCache = ttlCache<OpponentSums>(300_000, 3_600_000, 1000);
+
+// Rows shown: the ten most frequent on each side, the kill statistics with
+// at least `min` kills, at most `limit` of them.
+const OPPONENTS = 10;
+const KILL_STATS_MIN = 5;
+const KILL_STATS = 50;
+
+function opponentSums(id: number): Promise<OpponentSums> {
+  return opponentsCache(String(id), () => loadOpponentSums(id));
+}
+
+async function loadOpponentSums(id: number): Promise<OpponentSums> {
+  // Summed per opponent first, then joined: the names and the ranking rows
+  // once per opponent, not per frag. hidden is hiddenSql on the joined row:
+  // a hidden player who is not a bot; a player without a ranking row
+  // (deleted, inactive) is not hidden.
+  const rows = await query<{ playerId: number; name: string | null; kills: number; deaths: number; kHs: number; dHs: number; hidden: number; hideranking: number | null; skill: number | null; game: string | null }>(
+    `SELECT o.playerId, d.lastName AS name, o.kills, o.deaths, o.kHs, o.dHs, p.hideranking, p.skill, TRIM(p.game) AS game,
+            CASE WHEN p.hideranking <> 0 AND NOT ${isBotSql("o.playerId")} THEN 1 ELSE 0 END AS hidden
+     FROM (SELECT u.playerId, SUM(u.k) AS kills, SUM(u.d) AS deaths, SUM(u.khs) AS kHs, SUM(u.dhs) AS dHs
+           FROM (SELECT victimId AS playerId, 1 AS k, 0 AS d, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS khs, 0 AS dhs
+                 FROM hlstats_Events_Frags WHERE killerId = ? AND victimId <> killerId
+                 UNION ALL
+                 SELECT killerId AS playerId, 0 AS k, 1 AS d, 0 AS khs, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS dhs
+                 FROM hlstats_Events_Frags WHERE victimId = ? AND victimId <> killerId) u
+           GROUP BY u.playerId) o
+     LEFT JOIN hlstats_Players p ON p.playerId = o.playerId
+     LEFT JOIN hlstats_Players_Data d ON d.playerId = o.playerId`,
+    [id, id],
   );
+  const all = rows.map((r) => ({
+    playerId: Number(r.playerId),
+    name: r.name,
+    kills: Number(r.kills),
+    deaths: Number(r.deaths),
+    kHs: Number(r.kHs),
+    dHs: Number(r.dHs),
+    hidden: Number(r.hidden) === 1,
+    ranked: r.hideranking !== null,
+    hideranking: Number(r.hideranking ?? 0),
+    skill: Number(r.skill ?? 0),
+    game: r.game ?? "",
+  }));
+  // Most frequent first, ties by lowest id, like the single queries before.
+  const top = (count: (o: (typeof all)[number]) => number) =>
+    all
+      .filter((o) => !o.hidden && count(o) > 0)
+      .sort((a, b) => count(b) - count(a) || a.playerId - b.playerId)
+      .slice(0, OPPONENTS);
+  return {
+    victims: top((o) => o.kills).map((o) => ({ playerId: o.playerId, name: o.name, kills: o.kills, headshots: o.kHs })),
+    killers: top((o) => o.deaths).map((o) => ({ playerId: o.playerId, name: o.name, kills: o.deaths, headshots: o.dHs })),
+    // Only opponents with a ranking row (as before: the page shows their place
+    // in the ranking and whether they are hidden).
+    kills: all
+      .filter((o) => o.ranked && o.kills >= KILL_STATS_MIN)
+      .sort((a, b) => b.kills - a.kills || a.playerId - b.playerId)
+      .slice(0, KILL_STATS)
+      .map((o) => ({ playerId: o.playerId, name: o.name, kills: o.kills, deaths: o.deaths, headshots: o.kHs, hideranking: o.hideranking, skill: o.skill, game: o.game })),
+  };
+}
+
+// The ten players this player killed most often (victims: kills and
+// headshots against them) or who killed this player most often (killers:
+// their kills and headshots). Hidden opponents are left out.
+export async function getOpponents(id: number, as: "victims" | "killers"): Promise<Opponent[]> {
+  return (await opponentSums(id))[as];
 }
 
 export type KillStat = { playerId: number; name: string | null; kills: number; deaths: number; headshots: number; hideranking: number; position: number | null };
 
 // Player kill statistics as on gameME: everyone this player killed at least
-// `min` times, with the kills against and deaths by each, and the other
+// five times, with the kills against and deaths by each, and the other
 // player's position in the ranking (none when hidden).
-export async function getPlayerKillStats(id: number, min = 5, limit = 50) {
-  // Summed per opponent first, then joined: the joins and the positions
-  // (rankPositions) only for the rows shown.
-  const rows = await query<Omit<KillStat, "position"> & { skill: number; game: string }>(
-    `SELECT o.playerId, d.lastName AS name, o.kills, o.deaths, o.headshots, p.hideranking, p.skill, p.game
-     FROM (SELECT u.playerId, SUM(u.k) AS kills, SUM(u.d) AS deaths, SUM(u.hs) AS headshots
-           FROM (SELECT victimId AS playerId, 1 AS k, 0 AS d, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS hs
-                 FROM hlstats_Events_Frags WHERE killerId = ? AND victimId <> killerId
-                 UNION ALL
-                 SELECT killerId AS playerId, 0 AS k, 1 AS d, 0 AS hs
-                 FROM hlstats_Events_Frags WHERE victimId = ? AND victimId <> killerId) u
-           GROUP BY u.playerId
-           HAVING SUM(u.k) >= ?) o
-     JOIN hlstats_Players p ON p.playerId = o.playerId
-     LEFT JOIN hlstats_Players_Data d ON d.playerId = o.playerId
-     ORDER BY o.kills DESC, o.playerId LIMIT ?`,
-    [id, id, min, limit],
-  );
-  const pos = await rankPositions(rows.filter((r) => Number(r.hideranking) === 0));
+export async function getPlayerKillStats(id: number): Promise<KillStat[]> {
+  const rows = (await opponentSums(id)).kills;
+  // The positions (rankPositions) only for the rows shown, and live.
+  const pos = await rankPositions(rows.filter((r) => r.hideranking === 0));
   return rows.map(({ skill, game, ...r }) => ({
     ...r,
-    playerId: Number(r.playerId),
-    kills: Number(r.kills),
-    deaths: Number(r.deaths),
-    headshots: Number(r.headshots),
-    hideranking: Number(r.hideranking),
-    position: Number(r.hideranking) === 0 ? (pos.get(`${game}|${Number(skill)}`) ?? null) : null,
+    position: r.hideranking === 0 ? (pos.get(`${game}|${skill}`) ?? null) : null,
   }));
 }
 
@@ -1206,7 +1270,17 @@ export async function getChat(opts: { game?: string; playerId?: number; serverId
 }
 
 // Number of chat lines for the same filter (pager).
-export async function countChat(opts: { game?: string; playerId?: number; serverId?: number; search?: string; shown?: boolean }) {
+// The count of a ranking's chat reads every line of the ranking
+// (hlstats_Events_Chat has no index on the ranking): kept for a minute per
+// filter; a search is counted every time.
+const chatCountCache = ttlCache<number>(60_000, 600_000, 500);
+
+export function countChat(opts: { game?: string; playerId?: number; serverId?: number; search?: string; shown?: boolean }): Promise<number> {
+  if (opts.search) return loadChatCount(opts);
+  return chatCountCache(JSON.stringify([opts.game, opts.playerId, opts.serverId, !!opts.shown]), () => loadChatCount(opts));
+}
+
+async function loadChatCount(opts: { game?: string; playerId?: number; serverId?: number; search?: string; shown?: boolean }) {
   const { where, params } = chatWhere(opts);
   const [r] = await adminQuery<{ n: number | string }>(
     `SELECT COUNT(*) AS n FROM hlstats_Events_Chat c
@@ -1252,18 +1326,29 @@ export const clanSorts = {
 } as const;
 export type ClanSort = keyof typeof clanSorts;
 
-export function getClans(game: string, limit: number, offset: number, sort: ClanSort = "skill", asc = false) {
-  return query<ClanRow>(
-    `SELECT * FROM (SELECT c.clanId, c.tag, c.name, c.homepage, c.flag, ${clanAgg}
-       FROM hlstats_Clans c JOIN hlstats_Players p ON p.clan = c.clanId AND p.hideranking = 0
-       WHERE c.game = ? GROUP BY c.clanId, c.tag, c.name, c.homepage, c.flag
-       HAVING COUNT(p.playerId) >= 2) x
-     ORDER BY ${clanSorts[sort]} ${asc ? "ASC" : "DESC"}, clanId LIMIT ? OFFSET ?`,
-    [game, limit, offset],
+// A page of the clan list sums every member of every clan of the ranking:
+// kept for a minute per page and order, the count too (ttl-cache.ts).
+const clansCache = ttlCache<ClanRow[]>(60_000, 600_000, 500);
+const clanCountCache = ttlCache<number>(60_000, 600_000, 100);
+
+export function getClans(game: string, limit: number, offset: number, sort: ClanSort = "skill", asc = false): Promise<ClanRow[]> {
+  return clansCache(`${game}|${limit}|${offset}|${sort}|${asc}`, () =>
+    query<ClanRow>(
+      `SELECT * FROM (SELECT c.clanId, c.tag, c.name, c.homepage, c.flag, ${clanAgg}
+         FROM hlstats_Clans c JOIN hlstats_Players p ON p.clan = c.clanId AND p.hideranking = 0
+         WHERE c.game = ? GROUP BY c.clanId, c.tag, c.name, c.homepage, c.flag
+         HAVING COUNT(p.playerId) >= 2) x
+       ORDER BY ${clanSorts[sort]} ${asc ? "ASC" : "DESC"}, clanId LIMIT ? OFFSET ?`,
+      [game, limit, offset],
+    ),
   );
 }
 
-export async function countClans(game: string) {
+export function countClans(game: string): Promise<number> {
+  return clanCountCache(game, () => loadClanCount(game));
+}
+
+async function loadClanCount(game: string) {
   const r = await queryOne<{ n: number | string }>(
     `SELECT COUNT(*) AS n FROM (SELECT c.clanId FROM hlstats_Clans c JOIN hlstats_Players p ON p.clan = c.clanId AND p.hideranking = 0
      WHERE c.game = ? GROUP BY c.clanId HAVING COUNT(p.playerId) >= 2) x`,
@@ -1449,28 +1534,25 @@ export function getMaps(game: string) {
 // rows with the same map and time are one round. hlstats_Maps.teama_wins /
 // teamb_wins are not written by the collector. Games whose round actions
 // have no side (TF2, DoD:S) and rounds without a team reward give no wins.
-// One pass over the events of the ranking's maps, kept for 10 minutes.
-const mapWinsCache = new Map<string, { at: number; value: Promise<Map<number, { ct: number; t: number }>> }>();
+// One pass over the events of the ranking's maps, kept for 10 minutes, then
+// the old wins are shown while one reload runs in the background
+// (ttl-cache.ts).
+const mapWinsCache = ttlCache<Map<number, { ct: number; t: number }>>(600_000, 86_400_000, 100);
 
 export function getMapWins(game: string): Promise<Map<number, { ct: number; t: number }>> {
-  const hit = mapWinsCache.get(game);
-  if (hit && Date.now() - hit.at < 600_000) return hit.value;
-  if (mapWinsCache.size > 100) mapWinsCache.clear();
-  const value = query<{ map: number; team: string; wins: number }>(
-    `SELECT r.map, r.team, COUNT(*) AS wins
-     FROM (SELECT e.map, UPPER(a.team) AS team, e.timestamp_id
-           FROM hlstats_Events_TeamBonuses e
-           JOIN hlstats_Maps m ON m.id = e.map AND m.game = ?
-           JOIN hlstats_Actions a ON a.id = e.actionId
-           WHERE UPPER(a.team) IN ('CT', 'TERRORIST')
-           GROUP BY e.map, UPPER(a.team), e.timestamp_id) r
-     GROUP BY r.map, r.team`,
-    [game],
-  ).then(winsByMap);
-  mapWinsCache.set(game, { at: Date.now(), value });
-  // An error is asked again on the next request.
-  value.catch(() => mapWinsCache.delete(game));
-  return value;
+  return mapWinsCache(game, () =>
+    query<{ map: number; team: string; wins: number }>(
+      `SELECT r.map, r.team, COUNT(*) AS wins
+       FROM (SELECT e.map, UPPER(a.team) AS team, e.timestamp_id
+             FROM hlstats_Events_TeamBonuses e
+             JOIN hlstats_Maps m ON m.id = e.map AND m.game = ?
+             JOIN hlstats_Actions a ON a.id = e.actionId
+             WHERE UPPER(a.team) IN ('CT', 'TERRORIST')
+             GROUP BY e.map, UPPER(a.team), e.timestamp_id) r
+       GROUP BY r.map, r.team`,
+      [game],
+    ).then(winsByMap),
+  );
 }
 
 export function getMap(id: number) {
@@ -1530,27 +1612,39 @@ const mapPlayerFrom = `FROM (SELECT killerId AS playerId, 1 AS k, 0 AS dd, CASE 
            SELECT victimId, 0, 1, 0 FROM hlstats_Events_Frags WHERE map = ?) x
      JOIN hlstats_Players p ON p.playerId = x.playerId AND p.hideranking = 0`;
 
+// A page of the map's players sums every frag on the map: kept for two
+// minutes per map, order and page (ttl-cache.ts); the places in the ranking
+// (rankPositions) are looked up live.
+const mapTableCache = ttlCache<MapPlayerRow[]>(120_000, 600_000, 500);
+const mapKillersCache = ttlCache<{ players: number; hiddenKills: number }>(120_000, 600_000, 500);
+
 // rank: the player's place in the whole ranking (rankPositions).
 export async function getMapPlayerTable(game: string, mapId: number, sort: MapSort, desc: boolean, limit: number, offset: number) {
   const expr = MAP_PLAYER_SORTS[Object.hasOwn(MAP_PLAYER_SORTS, sort) ? sort : "kills"];
   const dir = desc ? "DESC" : "ASC";
-  const rows = (
-    await query<MapPlayerRow>(
-      `SELECT x.playerId, d.lastName AS name, p.skill, SUM(x.k) AS kills, SUM(x.dd) AS deaths, SUM(x.hs) AS headshots
-       ${mapPlayerFrom}
-       LEFT JOIN hlstats_Players_Data d ON d.playerId = x.playerId
-       GROUP BY x.playerId, d.lastName, p.skill HAVING SUM(x.k) > 0
-       ORDER BY ${expr} ${dir}, x.playerId LIMIT ? OFFSET ?`,
-      [mapId, mapId, limit, offset],
-    )
-  ).map((r) => ({ ...r, playerId: Number(r.playerId), skill: Number(r.skill), kills: Number(r.kills), deaths: Number(r.deaths), headshots: Number(r.headshots) }));
+  const rows = await mapTableCache(`${mapId}|${expr}|${dir}|${limit}|${offset}`, async () =>
+    (
+      await query<MapPlayerRow>(
+        `SELECT x.playerId, d.lastName AS name, p.skill, SUM(x.k) AS kills, SUM(x.dd) AS deaths, SUM(x.hs) AS headshots
+         ${mapPlayerFrom}
+         LEFT JOIN hlstats_Players_Data d ON d.playerId = x.playerId
+         GROUP BY x.playerId, d.lastName, p.skill HAVING SUM(x.k) > 0
+         ORDER BY ${expr} ${dir}, x.playerId LIMIT ? OFFSET ?`,
+        [mapId, mapId, limit, offset],
+      )
+    ).map((r) => ({ ...r, playerId: Number(r.playerId), skill: Number(r.skill), kills: Number(r.kills), deaths: Number(r.deaths), headshots: Number(r.headshots) })),
+  );
   const pos = await rankPositions(rows.map((r) => ({ game, skill: r.skill })));
   return rows.map((r) => ({ ...r, rank: pos.get(`${game}|${r.skill}`) }));
 }
 
 // Kills on one map by visible players (rows of getMapPlayerTable, for
 // paging) and by hidden ones (hideranking <> 0, counted, not listed).
-export async function countMapKillers(mapId: number) {
+export function countMapKillers(mapId: number): Promise<{ players: number; hiddenKills: number }> {
+  return mapKillersCache(String(mapId), () => loadMapKillers(mapId));
+}
+
+async function loadMapKillers(mapId: number) {
   const r = await queryOne<{ shown: number; hidden: number }>(
     `SELECT COUNT(DISTINCT CASE WHEN p.hideranking = 0 THEN f.killerId END) AS shown,
             SUM(CASE WHEN p.hideranking <> 0 THEN 1 ELSE 0 END) AS hidden
@@ -1564,8 +1658,16 @@ export async function countMapKillers(mapId: number) {
 // Seconds one map ran with players, from hlstats_server_load (one row per
 // server and interval with the map of that moment): each row with a player
 // counts the time since the server's previous row, at most
-// LOAD_INTERVAL_MAX; a server's first row counts nothing.
-export async function getMapLoadTime(mapId: number): Promise<number> {
+// LOAD_INTERVAL_MAX; a server's first row counts nothing. The window runs
+// over every load row of the map's servers: kept for ten minutes per map
+// (ttl-cache.ts).
+const mapLoadCache = ttlCache<number>(600_000, 86_400_000, 500);
+
+export function getMapLoadTime(mapId: number): Promise<number> {
+  return mapLoadCache(String(mapId), () => loadMapLoadTime(mapId));
+}
+
+async function loadMapLoadTime(mapId: number): Promise<number> {
   const r = await queryOne<{ t: number | null }>(
     `SELECT SUM(LEAST(x.gap, ${LOAD_INTERVAL_MAX})) AS t
      FROM (SELECT l.map, l.max_players, l.timestamp - LAG(l.timestamp) OVER (PARTITION BY l.server_id ORDER BY l.timestamp) AS gap
@@ -1621,17 +1723,23 @@ export type TeamRow = {
 
 // Time, kills and deaths are the collector's counters per team (kills and
 // deaths without teamkills). joined counts the team changes of the game's
-// players that are not hidden, grouped once instead of per team row.
-export function getTeams(game: string) {
-  return query<TeamRow>(
-    `SELECT t.teamId AS id, t.code, t.name, t.time_played, t.kills, t.deaths, t.headshots, t.wins, t.losses,
-            t.rounds, COALESCE(j.joined, 0) AS joined
-     FROM hlstats_Teams t
-     LEFT JOIN (SELECT e.team, COUNT(*) AS joined FROM hlstats_Events_ChangeTeam e
-                JOIN hlstats_Players p ON p.playerId = e.playerId AND p.game = ? AND p.hideranking = 0
-                GROUP BY e.team) j ON j.team = t.teamId
-     WHERE t.game = ? AND t.hidden = '0' ORDER BY t.time_played DESC, t.teamId`,
-    [game, game],
+// players that are not hidden, grouped once instead of per team row; that
+// count reads every team change of the ranking, so the rows are kept for ten
+// minutes (ttl-cache.ts).
+const teamsCache = ttlCache<TeamRow[]>(600_000, 86_400_000, 100);
+
+export function getTeams(game: string): Promise<TeamRow[]> {
+  return teamsCache(game, () =>
+    query<TeamRow>(
+      `SELECT t.teamId AS id, t.code, t.name, t.time_played, t.kills, t.deaths, t.headshots, t.wins, t.losses,
+              t.rounds, COALESCE(j.joined, 0) AS joined
+       FROM hlstats_Teams t
+       LEFT JOIN (SELECT e.team, COUNT(*) AS joined FROM hlstats_Events_ChangeTeam e
+                  JOIN hlstats_Players p ON p.playerId = e.playerId AND p.game = ? AND p.hideranking = 0
+                  GROUP BY e.team) j ON j.team = t.teamId
+       WHERE t.game = ? AND t.hidden = '0' ORDER BY t.time_played DESC, t.teamId`,
+      [game, game],
+    ),
   );
 }
 
@@ -1664,8 +1772,18 @@ export type RankingOverview = {
   topClanTag: string | null;
 };
 
+// The best player and clan of every ranking read all players (the clans'
+// average over every member of every ranking): kept for five minutes, then
+// the old ones are shown while one reload runs in the background
+// (ttl-cache.ts). The players online come live from the servers.
+type OverviewTops = {
+  tops: { game: string; playerId: number; name: string | null; flag: string | null; country: string | null }[];
+  clans: { game: string; clanId: number; tag: string; skill: number }[];
+};
+const overviewCache = ttlCache<OverviewTops>(300_000, 86_400_000);
+
 export async function getRankingOverview(): Promise<RankingOverview[]> {
-  const [games, servers, tops, clans] = await Promise.all([
+  const [games, servers, { tops, clans }] = await Promise.all([
     getGames(),
     query<{ game: string; act: number; bots: number; max: number }>(
       `SELECT TRIM(s.game) AS game, ${capped("s.")} AS act, ${await botsOnline("s.")} AS bots, s.max_players AS max FROM hlstats_Servers s`,
@@ -1681,23 +1799,7 @@ export async function getRankingOverview(): Promise<RankingOverview[]> {
       }
       return [...games].map(([game, g]) => ({ game, act: g.act, max: g.max, n: g.n, online: sumCounts(g.counts) }));
     }),
-    // Best player per ranking: highest skill, ties by lowest id.
-    query<{ game: string; playerId: number; name: string | null; flag: string | null; country: string | null }>(
-      `SELECT TRIM(p.game) AS game, p.playerId, d.lastName AS name, l.flag, l.country
-       FROM hlstats_Players p
-       JOIN (SELECT game, MAX(skill) AS m FROM hlstats_Players WHERE hideranking = 0 GROUP BY game) x
-         ON x.game = p.game AND x.m = p.skill
-       LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
-       LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
-       WHERE p.hideranking = 0 ORDER BY p.playerId`,
-    ),
-    // Best clan per ranking: highest average skill with at least two members.
-    query<{ game: string; clanId: number; tag: string; skill: number }>(
-      `SELECT TRIM(c.game) AS game, c.clanId, c.tag, AVG(p.skill) AS skill
-       FROM hlstats_Clans c JOIN hlstats_Players p ON p.clan = c.clanId AND p.hideranking = 0
-       GROUP BY c.game, c.clanId, c.tag HAVING COUNT(p.playerId) >= 2
-       ORDER BY skill DESC, c.clanId`,
-    ),
+    overviewCache("tops", loadOverviewTops),
   ]);
   // A ranking without servers is only a template (e.g. the seeded css, tf).
   return games.filter((g) => servers.some((x) => x.game === g.code)).map((g) => {
@@ -1722,6 +1824,29 @@ export async function getRankingOverview(): Promise<RankingOverview[]> {
   });
 }
 
+async function loadOverviewTops(): Promise<OverviewTops> {
+  const [tops, clans] = await Promise.all([
+    // Best player per ranking: highest skill, ties by lowest id.
+    query<OverviewTops["tops"][number]>(
+      `SELECT TRIM(p.game) AS game, p.playerId, d.lastName AS name, l.flag, l.country
+       FROM hlstats_Players p
+       JOIN (SELECT game, MAX(skill) AS m FROM hlstats_Players WHERE hideranking = 0 GROUP BY game) x
+         ON x.game = p.game AND x.m = p.skill
+       LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
+       LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
+       WHERE p.hideranking = 0 ORDER BY p.playerId`,
+    ),
+    // Best clan per ranking: highest average skill with at least two members.
+    query<OverviewTops["clans"][number]>(
+      `SELECT TRIM(c.game) AS game, c.clanId, c.tag, AVG(p.skill) AS skill
+       FROM hlstats_Clans c JOIN hlstats_Players p ON p.clan = c.clanId AND p.hideranking = 0
+       GROUP BY c.game, c.clanId, c.tag HAVING COUNT(p.playerId) >= 2
+       ORDER BY skill DESC, c.clanId`,
+    ),
+  ]);
+  return { tops, clans };
+}
+
 export type SiteTotals = { players: number; clans: number; games: number; servers: number; kills: number; deaths: number; headshots: number };
 
 export async function getSiteTotals(): Promise<SiteTotals> {
@@ -1740,16 +1865,23 @@ export async function getSiteTotals(): Promise<SiteTotals> {
   return { ...base, kills: Number(k?.kills ?? 0), deaths: Number(k?.deaths ?? 0), headshots: Number(k?.headshots ?? 0) };
 }
 
-// Active players per day over all rankings. Once per request (React cache):
-// the start page's load graph and its general statistics both ask.
-export const getDailyActivityAll = cache((days: number) => {
-  return query<DayPoint>(
-    `SELECT eventTime AS day, COUNT(DISTINCT playerId) AS players, SUM(kills) AS kills, SUM(headshots) AS headshots
-     FROM hlstats_Players_History WHERE ${sinceDays("eventTime")}
-     GROUP BY eventTime ORDER BY eventTime`,
-    [days],
+// Active players per day over all rankings, for the start page's load graph
+// and its general statistics. Distinct players over a month of history: kept
+// for five minutes, then the old days are shown while one reload runs in the
+// background (ttl-cache.ts); the key holds the day so a new day is not served
+// from the old one.
+const dailyAllCache = ttlCache<DayPoint[]>(300_000, 86_400_000);
+
+export function getDailyActivityAll(days: number): Promise<DayPoint[]> {
+  return dailyAllCache(`${days}|${siteDay()}`, () =>
+    query<DayPoint>(
+      `SELECT eventTime AS day, COUNT(DISTINCT playerId) AS players, SUM(kills) AS kills, SUM(headshots) AS headshots
+       FROM hlstats_Players_History WHERE ${sinceDays("eventTime")}
+       GROUP BY eventTime ORDER BY eventTime`,
+      [days],
+    ),
   );
-});
+}
 
 // The start page's "General statistics" over the visible rankings: all
 // players (also inactive and hidden ones, bots left out) and all clans (and
@@ -1769,15 +1901,35 @@ export type GeneralStats = {
   lastKill: number | null;
 };
 
-export async function getGeneralStats(): Promise<GeneralStats> {
-  const [p, c, s, sums, k] = await Promise.all([
+// The counts over all players, clans and kills read both player tables in
+// full: kept for ten minutes, then the old numbers are shown while one reload
+// runs in the background (ttl-cache.ts). Players online and the latest kill
+// come live.
+type GeneralCounts = { players: number; clans: number; clanRankings: number; kills: number; headshots: number };
+const generalCache = ttlCache<GeneralCounts>(600_000, 86_400_000);
+
+async function loadGeneralCounts(): Promise<GeneralCounts> {
+  const [p, c, sums] = await Promise.all([
     queryOne<{ n: number | string }>(allPlayersSql),
     queryOne<{ clans: number | string; rankings: number | string }>(allClansSql),
+    queryOne<{ kills: number | string | null; headshots: number | string | null }>(allKillsSql),
+  ]);
+  return {
+    players: Number(p?.n ?? 0),
+    clans: Number(c?.clans ?? 0),
+    clanRankings: Number(c?.rankings ?? 0),
+    kills: Number(sums?.kills ?? 0),
+    headshots: Number(sums?.headshots ?? 0),
+  };
+}
+
+export async function getGeneralStats(): Promise<GeneralStats> {
+  const [counts, s, k] = await Promise.all([
+    generalCache("all", loadGeneralCounts),
     query<{ act: number; bots: number; max: number }>(
       `SELECT ${capped("s.")} AS act, ${await botsOnline("s.")} AS bots, s.max_players AS max
        FROM hlstats_Servers s JOIN hlstats_Games g ON g.code = s.game AND g.hidden = '0'`,
     ),
-    queryOne<{ kills: number | string | null; headshots: number | string | null }>(allKillsSql),
     // Newest first along the timestamp index; stops at the first shown kill
     // (NOT EXISTS keeps the index, an IN on the rankings sorts every frag).
     queryOne<{ t: number | string }>(
@@ -1787,23 +1939,26 @@ export async function getGeneralStats(): Promise<GeneralStats> {
        ORDER BY f.timestamp_id DESC LIMIT 1`,
     ),
   ]);
-  const counts = s.map((r) => playerCount(r.act, r.bots, r.max));
+  const online = s.map((r) => playerCount(r.act, r.bots, r.max));
   return {
-    players: Number(p?.n ?? 0),
-    clans: Number(c?.clans ?? 0),
-    clanRankings: Number(c?.rankings ?? 0),
+    ...counts,
     servers: s.length,
-    serversActive: counts.filter((x) => x.real > 0).length,
-    online: sumCounts(counts).real,
-    kills: Number(sums?.kills ?? 0),
-    headshots: Number(sums?.headshots ?? 0),
+    serversActive: online.filter((x) => x.real > 0).length,
+    online: sumCounts(online).real,
     lastKill: k ? Number(k.t) : null,
   };
 }
 
 // Clans with a visible member active that day (hlstats_Players_History; the
-// member's current clan) over the visible rankings, per day.
+// member's current clan) over the visible rankings, per day. A month of
+// history joined with the players: kept like getDailyActivityAll.
+const clanDaysCache = ttlCache<{ day: string; n: number | string }[]>(300_000, 86_400_000);
+
 export function getActiveClansPerDay(days: number) {
+  return clanDaysCache(`${days}|${siteDay()}`, () => loadActiveClansPerDay(days));
+}
+
+function loadActiveClansPerDay(days: number) {
   return query<{ day: string; n: number | string }>(
     `SELECT h.eventTime AS day, COUNT(DISTINCT p.clan) AS n
      FROM hlstats_Players_History h

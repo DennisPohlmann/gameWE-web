@@ -34,7 +34,7 @@ export function MapTable({ maps, game, t, lang }: { maps: MapRow[]; game: string
           key: m.id,
           values: [m.map, Number(m.kills), null, Number(m.deaths), kpd(Number(m.kills), Number(m.deaths)), Number(m.headshots), null, ratio(Number(m.headshots), Number(m.kills))],
           cells: [
-            <Link key="m" href={`/${game}/maps/${m.id}`}>
+            <Link prefetch={false} key="m" href={`/${game}/maps/${m.id}`}>
               {m.map}
             </Link>,
             fmtNum(Number(m.kills), lang),
@@ -76,7 +76,7 @@ export function WeaponUsage({ weapons, game, t, lang, members }: { weapons: Weap
             key: w.weaponId,
             values: [w.name, k, ...(per ? [members ? k / members : 0] : []), null, Number(w.deaths), null, Number(w.headshots), null, ratio(Number(w.headshots), k)],
             cells: [
-              <Link key="n" href={`/${game}/weapons/${encodeURIComponent(w.code)}`}>
+              <Link prefetch={false} key="n" href={`/${game}/weapons/${encodeURIComponent(w.code)}`}>
                 {w.name}
               </Link>,
               fmtNum(k, lang),
@@ -154,7 +154,7 @@ export function WeaponStats({ weapons, game, shots, t, lang }: { weapons: Weapon
             key: w.weaponId,
             values: keep([w.name, sh, hi, dmg, k, d, kpd(k, d), hs, hpk, acc, dph, spk]),
             cells: keep([
-              <Link key="n" href={`/${game}/weapons/${encodeURIComponent(w.code)}`}>
+              <Link prefetch={false} key="n" href={`/${game}/weapons/${encodeURIComponent(w.code)}`}>
                 {w.name}
               </Link>,
               fmtNum(sh, lang),

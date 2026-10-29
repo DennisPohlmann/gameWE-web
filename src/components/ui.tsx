@@ -29,7 +29,7 @@ export function PlayerLink({
       {plain || flag?.nolink ? (
         <span className="player">{name || `#${id}`}</span>
       ) : (
-        <Link className="player" href={`/${game}/players/${id}`}>
+        <Link prefetch={false} className="player" href={`/${game}/players/${id}`}>
           {name || `#${id}`}
         </Link>
       )}
@@ -240,7 +240,7 @@ export function SortTh({
   const href = withParams(base, params, { [sortParam]: sortKey, [dirParam]: active && !asc ? "asc" : undefined, page: undefined });
   return (
     <th className={className} aria-sort={active ? (asc ? "ascending" : "descending") : undefined}>
-      <Link href={href} className={active ? "sort active" : "sort"}>
+      <Link prefetch={false} href={href} className={active ? "sort active" : "sort"}>
         {label}
         {active ? (asc ? " ▲" : " ▼") : ""}
       </Link>
@@ -313,7 +313,7 @@ export function Pager({
         <span className="pager-count">{labels.entriesOnPages.replace("{n}", total.toLocaleString(locale)).replace("{p}", pages.toLocaleString(locale))}</span>
         <span className="pager-arrows">
           {page > 1 ? (
-            <Link href={withParams(base, params, { page: undefined })} aria-label={labels.firstPage} title={labels.firstPage}>
+            <Link prefetch={false} href={withParams(base, params, { page: undefined })} aria-label={labels.firstPage} title={labels.firstPage}>
               <PagerEdge last={false} />
             </Link>
           ) : (
@@ -322,21 +322,21 @@ export function Pager({
             </span>
           )}
           {page > 1 ? (
-            <Link href={withParams(base, params, { page: page - 1 > 1 ? page - 1 : undefined })} aria-label={labels.prev} title={labels.prev}>
+            <Link prefetch={false} href={withParams(base, params, { page: page - 1 > 1 ? page - 1 : undefined })} aria-label={labels.prev} title={labels.prev}>
               ◀
             </Link>
           ) : (
             <span className="disabled" aria-hidden="true">◀</span>
           )}
           {next ? (
-            <Link href={withParams(base, params, { page: page + 1 })} aria-label={labels.next} title={labels.next}>
+            <Link prefetch={false} href={withParams(base, params, { page: page + 1 })} aria-label={labels.next} title={labels.next}>
               ▶
             </Link>
           ) : (
             <span className="disabled" aria-hidden="true">▶</span>
           )}
           {next ? (
-            <Link href={withParams(base, params, { page: pages })} aria-label={labels.lastPage} title={labels.lastPage}>
+            <Link prefetch={false} href={withParams(base, params, { page: pages })} aria-label={labels.lastPage} title={labels.lastPage}>
               <PagerEdge last />
             </Link>
           ) : (
@@ -352,12 +352,12 @@ export function Pager({
   return (
     <nav className="pager" aria-label={labels.page}>
       {page > 1 ? (
-        <Link href={withParams(base, params, { page: undefined })}>« {labels.firstPage}</Link>
+        <Link prefetch={false} href={withParams(base, params, { page: undefined })}>« {labels.firstPage}</Link>
       ) : (
         <span className="disabled">« {labels.firstPage}</span>
       )}
       {page > 1 ? (
-        <Link href={withParams(base, params, { page: page - 1 > 1 ? page - 1 : undefined })}>← {labels.prev}</Link>
+        <Link prefetch={false} href={withParams(base, params, { page: page - 1 > 1 ? page - 1 : undefined })}>← {labels.prev}</Link>
       ) : (
         <span className="disabled">← {labels.prev}</span>
       )}
@@ -366,13 +366,13 @@ export function Pager({
         {pages !== undefined ? ` / ${pages}` : ""}
       </span>
       {next ? (
-        <Link href={withParams(base, params, { page: page + 1 })}>{labels.next} →</Link>
+        <Link prefetch={false} href={withParams(base, params, { page: page + 1 })}>{labels.next} →</Link>
       ) : (
         <span className="disabled">{labels.next} →</span>
       )}
       {pages !== undefined ? (
         next ? (
-          <Link href={withParams(base, params, { page: pages })}>{labels.lastPage} »</Link>
+          <Link prefetch={false} href={withParams(base, params, { page: pages })}>{labels.lastPage} »</Link>
         ) : (
           <span className="disabled">{labels.lastPage} »</span>
         )

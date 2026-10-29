@@ -99,7 +99,7 @@ export default async function MapsPage({ params, searchParams }: { params: Promi
                     <tr key={m.id}>
                       <td className="rank">{i + 1}</td>
                       <td>
-                        <Link className="player" href={`/${game}/maps/${m.id}`}>
+                        <Link prefetch={false} className="player" href={`/${game}/maps/${m.id}`}>
                           {m.map}
                         </Link>
                       </td>

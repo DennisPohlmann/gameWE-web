@@ -43,12 +43,12 @@ export function AwardCalendar({
   return (
     <table className="award-cal" aria-label={t.awardsCalendar}>
       <caption>
-        <Link href={`${base}${sep}month=${shift(-1)}`} aria-label={t.prevMonth} rel="nofollow">
+        <Link prefetch={false} href={`${base}${sep}month=${shift(-1)}`} aria-label={t.prevMonth} rel="nofollow">
           ‹
         </Link>{" "}
         <b>{title}</b>{" "}
         {next <= last.slice(0, 7) ? (
-          <Link href={`${base}${sep}month=${next}`} aria-label={t.nextMonth} rel="nofollow">
+          <Link prefetch={false} href={`${base}${sep}month=${next}`} aria-label={t.nextMonth} rel="nofollow">
             ›
           </Link>
         ) : (
@@ -76,7 +76,7 @@ export function AwardCalendar({
                 return (
                   <td key={j} className={cls || undefined}>
                     {day <= last ? (
-                      <Link href={`${base}${sep}date=${day}`} rel="nofollow">
+                      <Link prefetch={false} href={`${base}${sep}date=${day}`} rel="nofollow">
                         {d}
                       </Link>
                     ) : (

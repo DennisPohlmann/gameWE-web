@@ -104,7 +104,7 @@ export default async function WeaponsPage({ params, searchParams }: { params: Pr
                     <tr key={w.weaponId}>
                       <td className="rank">{i + 1}</td>
                       <td>
-                        <Link className="player" href={`/${game}/weapons/${encodeURIComponent(w.code)}`}>
+                        <Link prefetch={false} className="player" href={`/${game}/weapons/${encodeURIComponent(w.code)}`}>
                           {w.code}
                         </Link>
                       </td>

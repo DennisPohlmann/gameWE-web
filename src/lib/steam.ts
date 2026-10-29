@@ -285,10 +285,15 @@ export async function getSteamBans(ids: string[]): Promise<Map<string, SteamBans
     if (hit && Date.now() - hit.at < BAN_TTL) out.set(id, hit.value);
     else missing.push(id);
   }
-  for (let i = 0; i < missing.length; i += 100) {
-    const part = missing.slice(i, i + 100);
-    const res = await steamJson<{ players?: BanReply[] }>(`https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key=${key}&steamids=${part.join(",")}`).catch(() => null);
-    if (!res) break;
+  // The blocks of 100 at once (the bans page asks for up to 1000 players):
+  // one failed block leaves its players out, the others still count.
+  const parts: string[][] = [];
+  for (let i = 0; i < missing.length; i += 100) parts.push(missing.slice(i, i + 100));
+  const answers = await Promise.all(
+    parts.map((part) => steamJson<{ players?: BanReply[] }>(`https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key=${key}&steamids=${part.join(",")}`).catch(() => null)),
+  );
+  for (const res of answers) {
+    if (!res) continue;
     for (const [id, value] of rememberBans(res.players ?? [])) out.set(id, value);
   }
   return out;

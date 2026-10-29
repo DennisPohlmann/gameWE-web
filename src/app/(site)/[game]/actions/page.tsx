@@ -57,7 +57,7 @@ export default async function ActionsPage({ params, searchParams }: { params: Pr
                   <tr key={a.id}>
                     <td className="rank">{offset + i + 1}</td>
                     <td>
-                      <Link className="player" href={`/${game}/actions/${a.id}`}>
+                      <Link prefetch={false} className="player" href={`/${game}/actions/${a.id}`}>
                         {actionName(a)}
                       </Link>
                     </td>

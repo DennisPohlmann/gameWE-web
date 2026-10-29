@@ -43,10 +43,10 @@ export default async function ClansPage({
     <Section
       title={
         <span className="subtabs">
-          <Link href={base} className={inactive ? undefined : "active"}>
+          <Link prefetch={false} href={base} className={inactive ? undefined : "active"}>
             {t.ranking}
           </Link>
-          <Link href={`${base}?view=inactive`} className={inactive ? "active" : undefined}>
+          <Link prefetch={false} href={`${base}?view=inactive`} className={inactive ? "active" : undefined}>
             {t.inactiveClans}
           </Link>
         </span>
@@ -77,7 +77,7 @@ export default async function ClansPage({
                     {inactive ? null : <td className="rank">{(page - 1) * limit + i + 1}</td>}
                     <td>
                       <Flag code={flags.get(c.clanId)?.flag} title={flags.get(c.clanId)?.country} />{" "}
-                      <Link className="player" href={`/${game}/clans/${c.clanId}`}>
+                      <Link prefetch={false} className="player" href={`/${game}/clans/${c.clanId}`}>
                         {c.tag}
                       </Link>{" "}
                       <span className="muted">{c.name !== c.tag ? c.name : ""}</span>

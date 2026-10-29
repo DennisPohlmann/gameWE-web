@@ -33,7 +33,7 @@ export async function GameEvents({ game, t, lang }: { game: string; t: Dict; lan
       more={
         <>
           (
-          <Link className="th-link" href={`/${game}/events`}>
+          <Link prefetch={false} className="th-link" href={`/${game}/events`}>
             {t.overview}
           </Link>
           )
@@ -70,7 +70,7 @@ export async function PlayerEvents({ game, playerId, t, lang }: { game: string; 
       more={
         <>
           (
-          <Link className="th-link" href={`/${game}/players/${playerId}/events`}>
+          <Link prefetch={false} className="th-link" href={`/${game}/players/${playerId}/events`}>
             {t.overview}
           </Link>
           )

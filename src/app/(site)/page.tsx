@@ -98,16 +98,16 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                 {rankings.map((r) => (
                   <tr key={r.code} className="ranking-line">
                     <td className="no-rb">
-                      <Link className="rnk" href={`/${r.code}`} title={r.name}>
+                      <Link prefetch={false} className="rnk" href={`/${r.code}`} title={r.name}>
                         {r.name}
                       </Link>
                     </td>
                     <td className="no-lb right">
-                      <Link className="icon-link" href={`/${r.code}/players`}>
+                      <Link prefetch={false} className="icon-link" href={`/${r.code}/players`}>
                         <span className="icon icon-players" aria-hidden="true" />
                         {t.players}
                       </Link>
-                      <Link className="icon-link" href={`/${r.code}/clans`}>
+                      <Link prefetch={false} className="icon-link" href={`/${r.code}/clans`}>
                         <span className="icon icon-clans" aria-hidden="true" />
                         {t.clans}
                       </Link>
@@ -135,7 +135,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                           {bots.has(r.topPlayerId) ? (
                             r.topPlayerName || `#${r.topPlayerId}`
                           ) : (
-                            <Link href={`/${r.code}/players/${r.topPlayerId}`}>{r.topPlayerName || `#${r.topPlayerId}`}</Link>
+                            <Link prefetch={false} href={`/${r.code}/players/${r.topPlayerId}`}>{r.topPlayerName || `#${r.topPlayerId}`}</Link>
                           )}
                         </>
                       ) : (
@@ -146,7 +146,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                       {r.topClanId ? (
                         <>
                           <Flag code={clanFlags.get(r.topClanId)?.flag} title={clanFlags.get(r.topClanId)?.country} />{" "}
-                          <Link href={`/${r.code}/clans/${r.topClanId}`}>{r.topClanTag}</Link>
+                          <Link prefetch={false} href={`/${r.code}/clans/${r.topClanId}`}>{r.topClanTag}</Link>
                         </>
                       ) : (
                         "-"

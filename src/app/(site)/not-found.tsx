@@ -7,7 +7,7 @@ export default async function NotFound() {
     <div className="notice">
       <p>{t.notFound}</p>
       <p>
-        <Link href="/">{t.backHome}</Link>
+        <Link prefetch={false} href="/">{t.backHome}</Link>
       </p>
     </div>
   );

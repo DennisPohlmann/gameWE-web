@@ -30,7 +30,7 @@ export async function VoiceBox() {
               <tr>
                 <td>
                   {box.ts.country !== null ? <ServerFlag code={box.ts.country} lang={lang} /> : null}
-                  <Link href="/voice" className="voice-name" title={box.ts.name}>
+                  <Link prefetch={false} href="/voice" className="voice-name" title={box.ts.name}>
                     {box.ts.name}
                   </Link>
                 </td>

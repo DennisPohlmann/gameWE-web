@@ -13,7 +13,7 @@ export function GameNav({ game, items }: { game: string; items: { href: string; 
         const active = it.href === "" ? path === href || path.startsWith(`${href}/servers/`) : path === href || path.startsWith(`${href}/`);
         return (
           <li key={it.href}>
-            <Link href={href} className={active ? "active" : undefined} aria-current={active ? "page" : undefined}>
+            <Link href={href} prefetch={false} className={active ? "active" : undefined} aria-current={active ? "page" : undefined}>
               <span className="sec-icon" aria-hidden="true">
                 {it.icon}
               </span>

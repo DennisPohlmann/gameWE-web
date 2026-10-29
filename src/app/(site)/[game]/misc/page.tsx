@@ -116,7 +116,7 @@ export default async function MiscPage({ params }: { params: Promise<{ game: str
           <div key={s.serverId} className="box banner-box">
             <h3>
               <ServerFlag code={s.country_code} lang={lang} />
-              <Link href={`/${game}/servers/${s.serverId}`}>{s.name || `${s.address}:${s.port}`}</Link>
+              <Link prefetch={false} href={`/${game}/servers/${s.serverId}`}>{s.name || `${s.address}:${s.port}`}</Link>
             </h3>
             <SigCode
               base={`${origin}/banner/${game}/server/${s.serverId}`}

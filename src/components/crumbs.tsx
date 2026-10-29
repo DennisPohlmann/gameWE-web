@@ -26,12 +26,12 @@ export function Crumbs({
         {site.name}
       </a>
     ) : (
-      <Link key="site" href="/">
+      <Link prefetch={false} key="site" href="/">
         {site.name}
       </Link>
     ),
   ];
-  if (game) items.push(<Link key="game" href={`/${code}`}>{game}</Link>);
+  if (game) items.push(<Link prefetch={false} key="game" href={`/${code}`}>{game}</Link>);
   const last = game ? sections[section ?? ""] : code && Object.hasOwn(pages, code) ? pages[code] : undefined;
   return (
     <nav className="crumbs" aria-label={statistics}>

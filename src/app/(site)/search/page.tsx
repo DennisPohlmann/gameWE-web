@@ -143,12 +143,12 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
                   {clans.map((c) => (
                     <tr key={c.clanId}>
                       <td>
-                        <Link href={`/${c.game}/clans/${c.clanId}`}>
+                        <Link prefetch={false} href={`/${c.game}/clans/${c.clanId}`}>
                           {c.tag ? <b>{c.tag}</b> : null} {c.name}
                         </Link>
                       </td>
                       <td>
-                        <Link href={`/${c.game}`}>{gameName.get(c.game) ?? c.game}</Link>
+                        <Link prefetch={false} href={`/${c.game}`}>{gameName.get(c.game) ?? c.game}</Link>
                       </td>
                       <td className="num">{fmtNum(Number(c.members), lang)}</td>
                       <td className="num">{c.skill === null ? "–" : fmtNum(Number(c.skill), lang)}</td>
@@ -182,7 +182,7 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
                         ) : null}
                       </td>
                       <td>
-                        <Link href={`/${p.game}/players`}>{gameName.get(p.game) ?? p.game}</Link>
+                        <Link prefetch={false} href={`/${p.game}/players`}>{gameName.get(p.game) ?? p.game}</Link>
                       </td>
                       <td className="num">{fmtNum(Number(p.skill), lang)}</td>
                       <td className="num hide-sm">{fmtNum(Number(p.kills), lang)}</td>

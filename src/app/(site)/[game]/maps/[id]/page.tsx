@@ -93,7 +93,7 @@ export default async function MapPage({ params, searchParams }: Props) {
   const base = `/${game}/maps/${m.id}`;
   const maps = `/${game}/maps`;
   const back = (
-    <Link href={maps}>
+    <Link prefetch={false} href={maps}>
       {t.backTo} {t.maps}
     </Link>
   );
