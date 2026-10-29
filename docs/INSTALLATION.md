@@ -161,6 +161,8 @@ TZ=Europe/Berlin
 # Own templates and map pictures: no setting, see section 5.
 # Access log on stdout: on, off or all
 #ACCESS_LOG=on
+# API (public, admin API and its tokens, /api): on or off
+#API_ENABLED=on
 ```
 
 ### Example: container, database on the Docker host
@@ -199,6 +201,7 @@ TZ=Europe/Berlin
 # ---- Optional ----
 # Own templates and map pictures: no setting, mount the folders (section 5).
 #ACCESS_LOG=on
+#API_ENABLED=on
 ```
 
 The site settings (title, default language, activity days, rows per page,

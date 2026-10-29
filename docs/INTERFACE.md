@@ -19,6 +19,10 @@ Some values the collector does not store are computed by the website, see
 
 ## Public API
 
+With `API_ENABLED=off` the whole API (public and admin, and the
+documentation) answers `404` `{"error":"api_disabled"}`, see
+[CONFIG.md](CONFIG.md#turning-the-api-off).
+
 Read-only JSON under `/api/v1`, with `Access-Control-Allow-Origin: *`. Each
 IP address may make 120 requests a minute (then `429` with `Retry-After`);
 answers may be cached for 30 seconds. It shows only what the website shows

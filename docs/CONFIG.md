@@ -3,7 +3,7 @@
 The environment (`/etc/gamewe/web/web.env` for the tar.gz, the container's
 `--env-file`) holds only what the website needs before it can reach the
 database or what must not be changeable from the browser: database access,
-`ADMIN_SECRET`, `BASE_PATH`, `TZ`, `ACCESS_LOG`,
+`ADMIN_SECRET`, `BASE_PATH`, `TZ`, `ACCESS_LOG`, `API_ENABLED`,
 `ADMIN_COOKIE_SECURE`, `SKIN_PREVIEW` (only for
 screenshot runs, see [DEVELOPMENT.md](DEVELOPMENT.md#screenshots-of-the-skins))
 and the runtime variables (`PORT`, `HOSTNAME`, `NODE_ENV`). Every variable is listed with a comment in
@@ -21,7 +21,8 @@ Everything else is set in the admin area (Admin → Settings) and stored in
 5. [Search engines and sharing](#search-engines-and-sharing)
 6. [Voice server](#voice-server)
 7. [Access log](#access-log)
-8. [Privacy and cookie consent](#privacy-and-cookie-consent)
+8. [Turning the API off](#turning-the-api-off)
+9. [Privacy and cookie consent](#privacy-and-cookie-consent)
 
 ## Database, time zone and designs
 
@@ -254,6 +255,29 @@ plus the response time, with the client address from the last
 `docker logs gamewe-web`, systemd: `journalctl -u gamewe-web`).
 `ACCESS_LOG=off` turns it off, `ACCESS_LOG=all` also logs the health checks
 (`/healthz`), which are left out by default.
+
+## Turning the API off
+
+`API_ENABLED` (default `on`) switches the whole API. With `API_ENABLED=off`
+(also `false`, `0`, `no`):
+
+- every path under `/api/v1` (the public API, the banner pictures there and
+  the admin API `/api/v1/admin/...`) and `/api/openapi.json` answer `404`
+  with `{"error":"api_disabled","message":"..."}`; the admin API does not
+  look at the `Authorization` header at all, so no token works;
+- the documentation page `/api` is the site's normal 404 page and the
+  footer has no API link;
+- Admin → My account shows a notice instead of the API tokens, and creating
+  or revoking a token is refused. Existing tokens stay stored and work again
+  once the API is on.
+
+The website itself, `/sig/...`, `/banner/...`, the event feeds and `/-/metrics`
+are not part of the API and keep working. The value is read on every request,
+not at build time: the same Docker image or tar.gz switches with a restart
+after changing `web.env` or the container's environment (Compose:
+`API_ENABLED: "off"`, quoted, under `environment:`). An empty or missing value
+is `on`; an unknown value counts as `off` and is logged as a warning, so
+a typo never leaves open an API that was meant to be closed.
 
 ## Privacy and cookie consent
 

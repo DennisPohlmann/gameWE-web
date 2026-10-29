@@ -94,6 +94,8 @@ services:
       # Signs the admin login, at least 32 random characters: openssl rand -hex 32
       ADMIN_SECRET: ${ADMIN_SECRET:?set ADMIN_SECRET in .env (openssl rand -hex 32)}
       TZ: Europe/Berlin
+      # Public API, admin API and API tokens: on (default) or off.
+      # API_ENABLED: "off"
     # Own design templates and map pictures (docs/INSTALLATION.md of the web):
     # volumes:
     #   - /var/lib/gamewe/web/templates:/var/lib/gamewe/web/templates:ro

@@ -10,6 +10,7 @@ import { ADMIN_THEME_COOKIE, isAdminTheme } from "@/lib/admin-theme";
 import { basePath } from "@/lib/base-path";
 import { expiryDays, tokenName } from "@/lib/api-token-core";
 import { createToken, revokeToken } from "@/lib/api-tokens";
+import { apiEnabled } from "@/lib/api-switch";
 import { LEVEL_ADMIN, adminSecret, confirmIdentity, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, requireAdmin } from "@/lib/auth";
 import { resetMode } from "@/lib/reset";
 import { addParams, safeReturnTo, withReturnTo } from "@/lib/return-to";
@@ -240,12 +241,14 @@ export async function changePasswordAction(form: FormData) {
 
 // API tokens of the signed-in user's own account (lib/api-tokens.ts): a new
 // one needs the password and, with TOTP, the current code. The plain token
-// goes back to the form once (never into a URL, cookie or log).
-export type TokenFormState = { token?: string; name?: string; error?: "name" | "expiry" | "wrong" | "code" | "blocked" | "nosecret" | "limit" | "long"; at?: number };
+// goes back to the form once (never into a URL, cookie or log). With
+// API_ENABLED=off both actions refuse, like the hidden section.
+export type TokenFormState = { token?: string; name?: string; error?: "name" | "expiry" | "wrong" | "code" | "blocked" | "nosecret" | "limit" | "long" | "disabled"; at?: number };
 
 export async function createApiTokenAction(_prev: TokenFormState, form: FormData): Promise<TokenFormState> {
   const user = await requireAdmin();
   const at = Date.now();
+  if (!apiEnabled()) return { error: "disabled", at };
   const name = tokenName(form.get("name"));
   if (!name) return { error: "name", at };
   const days = expiryDays(form.get("expiry"));
@@ -261,6 +264,7 @@ export async function createApiTokenAction(_prev: TokenFormState, form: FormData
 
 export async function revokeApiTokenAction(form: FormData) {
   const user = await requireAdmin();
+  if (!apiEnabled()) redirect("/admin/account?token=disabled#api-tokens");
   const r = await revokeToken(user.username, String(form.get("id") ?? ""));
   if (r) console.info(`gameWE: API token "${r.name}" revoked by ${user.username}`);
   redirect(`/admin/account?token=${r ? "revoked" : "unknown"}#api-tokens`);

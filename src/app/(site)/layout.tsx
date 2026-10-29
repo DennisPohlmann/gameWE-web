@@ -20,6 +20,7 @@ import { getGames } from "@/lib/data";
 import { resolveTemplate, themeStyle } from "@/lib/templates";
 import { previewSkinOf, SKIN_PREVIEW_COOKIE } from "@/lib/skin-preview";
 import { env } from "@/lib/env";
+import { apiEnabled } from "@/lib/api-switch";
 import "./globals.css";
 
 // Every page reads live data from the collector's database.
@@ -176,7 +177,15 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             <a href={PRIVACY_HREF} data-consent-open="">
               {t.consent.footerLink}
             </a>{" "}
-            · <Link prefetch={false} href="/licenses">{t.licenses}</Link> · <Link prefetch={false} href="/api">{t.api}</Link>
+            · <Link prefetch={false} href="/licenses">{t.licenses}</Link>
+            {apiEnabled() ? (
+              <>
+                {" · "}
+                <Link prefetch={false} href="/api">
+                  {t.api}
+                </Link>
+              </>
+            ) : null}
             {geoipCredit === "dbip" ? (
               <>
                 {" · "}
