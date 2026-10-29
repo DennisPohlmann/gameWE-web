@@ -277,12 +277,28 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, t
 }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus); }
 input[readonly] { background: var(--panel-2); color: var(--muted); }
+.form .field-value { display: block; padding: 4px 0; font-weight: 500; font-variant-numeric: tabular-nums; }
 input[type="checkbox"], input[type="radio"] { accent-color: var(--accent-btn); width: 16px; height: 16px; }
 select { padding-right: 28px; }
 .form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; max-width: 640px; }
 .form label { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; font-weight: 600; }
 .form label > small, .form small { font-weight: 400; color: var(--muted); }
 .form label.check, label.check { display: flex; gap: 8px; align-items: center; font-weight: 500; }
+.form .form-field { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; font-weight: 600; }
+/* A secret: the input, whether one is stored, and the Remove switch (a
+   checkbox shown as a button; checked, the row says it goes on save). */
+.secret-control { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; min-width: 0; }
+.secret-state { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-weight: 500; }
+.secret-state .secret-drop { display: none; }
+.secret-clear { position: relative; display: inline-flex; }
+.secret-clear input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.secret-clear label { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--soft); font-size: 12px; font-weight: 600; cursor: pointer; }
+.secret-clear:hover label { border-color: var(--bad); color: var(--bad); }
+.secret-clear input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 2px; }
+.secret-clear input:checked + label { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.secret-control:has(.secret-clear input:checked) .secret-now { display: none; }
+.secret-control:has(.secret-clear input:checked) .secret-drop { display: inline-flex; }
+.secret-control:has(.secret-clear input:checked) > input { opacity: 0.5; }
 .form .button { justify-self: start; }
 .form.box { margin: 16px 18px; padding: 14px; border: 1px dashed var(--line-2); border-radius: var(--radius); max-width: none; overflow-wrap: anywhere; }
 .inline-form { display: inline-flex; gap: 6px; align-items: center; margin: 0; flex-wrap: wrap; }

@@ -125,6 +125,9 @@ test("entity bodies: unknown, read-only and create-only fields are refused", () 
   bodyError(() => entityInput(users, { username: "other" }, false), "read_only_field", "username");
   bodyError(() => entityInput(games, { code: "new" }, false), "read_only_field", "code");
   bodyError(() => entityInput(games, { template: "css" }, false), "read_only_field", "template");
+  // The collector reads the slots from the game server.
+  bodyError(() => entityInput(servers, { max_players: 24 }, false), "read_only_field", "max_players");
+  bodyError(() => entityInput(servers, { name: "x", address: "203.0.113.10", port: 27015, game: "css", max_players: 24 }, true), "read_only_field", "max_players");
   bodyError(() => entityInput(servers, {}, false), "invalid_body");
   bodyError(() => entityInput(servers, [], true), "invalid_body");
   bodyError(() => entityInput(servers, null, true), "invalid_body");
@@ -155,6 +158,7 @@ test("entity rows: secrets and passwords never come back", () => {
   assert.equal(out.game, "css");
   assert.equal(out.rcon_passwordSet, true);
   assert.equal(out.log_secretSet, false);
+  assert.equal(out.max_players, 0, "the slots are still returned");
   assert.ok(!("rcon_password" in out) && !("log_secret" in out));
   const u = entityRow(users, { __pk: "admin", username: "admin", acclevel: "100", password: "scrypt$..." });
   assert.ok(!("password" in u));

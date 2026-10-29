@@ -113,7 +113,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
           <input type="hidden" name="__id" value={id} />
           <input type="hidden" name="__returnTo" value={returnTo} />
           {preset ? <input type="hidden" name="__ranking" value={preset} /> : null}
-          {e.fields.filter((f) => isNew || !f.virtual).map((f) => {
+          {e.fields.filter((f) => (isNew ? !f.readonly : !f.virtual)).map((f) => {
             const value = (preset && f.name === "game" ? preset : kept(f.name)) ?? (row as Record<string, string | number | null>)[f.name];
             const locked = f.readonly || (f.createOnly && !isNew);
             // The preset ranking is the only choice (the save sets it anyway).
@@ -124,9 +124,11 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
                 : f.options
                   ? optionSets[f.options]
                   : null;
+            // A secret has a switch of its own inside, so its block is no <label>.
+            const Wrap = f.type === "secret" ? "div" : "label";
             return (
-              <label key={f.name}>
-                {f.label[lang]}
+              <Wrap key={f.name} className={f.type === "secret" ? "form-field" : undefined}>
+                {f.type === "secret" ? <label htmlFor={`f-${f.name}`}>{f.label[lang]}</label> : f.label[lang]}
                 <FieldControl
                   f={f}
                   value={value}
@@ -134,6 +136,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
                   locked={Boolean(locked)}
                   isNew={isNew}
                   secretSet={Boolean((row as Record<string, unknown>)[`${f.name}__set`])}
+                  lang={lang}
                 />
                 {preset && f.name === "game" ? (
                   <small className="muted">{fill(a.serverForRanking, { r: presetLabel ?? preset })}</small>
@@ -142,7 +145,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
                 ) : f.help ? (
                   <small className="muted">{f.help[lang]}</small>
                 ) : null}
-              </label>
+              </Wrap>
             );
           })}
           <button type="submit" className="button">

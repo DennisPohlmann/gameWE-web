@@ -4,6 +4,7 @@ import { HIDDEN_OPTION_PREFIXES, allSettings } from "./admin-settings";
 import { hashPassword } from "./auth";
 import { GAME_HAS_DATA } from "./games";
 import { adminExec, adminInsert, adminQuery, likeOp, type Param } from "./db";
+import { secretFormValue } from "./secret-field";
 
 export type Row = Record<string, string | number | null>;
 
@@ -147,7 +148,6 @@ async function parseValue(f: Field, raw: FormDataEntryValue | null): Promise<Par
       return hashPassword(s);
     case "secret":
       if (!s) return undefined;
-      if (s === "-") return "";
       if (f.max && s.length > f.max) throw new InputError(f.name);
       if (f.valid && !f.valid(s)) throw new InputError(f.name);
       return s;
@@ -197,7 +197,12 @@ export async function saveRow(e: Entity, id: string | null, form: Pick<FormData,
   for (const f of e.fields) {
     if (f.readonly || f.virtual || (f.createOnly && id !== null) || (only && !only.has(f.name))) continue;
     if (f.type === "password" && id === null && !String(form.get(f.name) ?? "").trim()) throw new InputError(f.name);
-    const v = await parseValue(f, form.get(f.name));
+    let v: Param | undefined;
+    if (f.type === "secret") {
+      // Empty keeps it, "" (the Remove switch) clears it.
+      const s = secretFormValue(form.get(f.name), form.get(`${f.name}__clear`));
+      v = s === undefined || s === "" ? s : await parseValue(f, s);
+    } else v = await parseValue(f, form.get(f.name));
     if (v !== undefined) {
       values[f.name] = v;
       if (f.changedAt) values[f.changedAt] = Math.floor(Date.now() / 1000);

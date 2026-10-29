@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { saveSettingsAction } from "../../../actions";
 import { Icon } from "@/components/admin/icons";
 import { PageHead } from "@/components/admin/page-head";
+import { SecretControl } from "@/components/admin/secret-control";
 import { HeaderLinksEditor, type EditorRow, type HeaderLinksText } from "@/components/header-links-editor";
 import { headerOrder } from "@/lib/header-links";
 import { dicts } from "@/translations";
@@ -193,17 +194,7 @@ function SettingField({
     );
   } else if (s.type === "secret") {
     // Only "set" or "not set", never the value (also not one from the environment).
-    const placeholder = readOnly ? (stored || fromEnv ? a.secretSetLocked : a.secretEmpty) : stored ? a.secretSet : fromEnv ? a.secretSetEnv : a.secretEmpty;
-    control = (
-      <>
-        <input {...noAutofill} id={id} name={s.key} type="password" placeholder={placeholder} maxLength={255} disabled={readOnly} aria-invalid={bad || undefined} />
-        {stored && !readOnly ? (
-          <label className="check">
-            <input type="checkbox" name={`${s.key}__clear`} value="1" /> {a.secretClear}
-          </label>
-        ) : null}
-      </>
-    );
+    control = <SecretControl id={id} name={s.key} maxLength={255} set={Boolean(stored)} fromEnv={Boolean(fromEnv)} disabled={readOnly} invalid={bad} lang={lang} />;
   } else {
     control = (
       <input

@@ -440,17 +440,24 @@ What the admin area edits:
   collector matches log packets by (IPv4 without leading zeros, IPv6
   compressed in lower case, IPv4-mapped IPv6 as IPv4), so `192.000.002.010` and
   `192.0.2.10` are the same server. The RCON password is write-only in
-  the form and never shown again; public pages never read it, and the
+  the form and never shown again: below the field a badge says whether one
+  is set ("Set" / "Not set"), an empty field keeps it, and the "Remove"
+  switch deletes it on save (the API: `rcon_passwordSet`, `null` clears it).
+  Public pages never read it, and the
   read-only web user has no right to that column. The optional **log
   secret** (`sv_logsecret`, a number from 1 to 2147483647, empty by default)
-  is handled the same way: write-only, `-` clears it, and saving it also
+  is handled the same way: write-only, "Remove" clears it, and saving it also
   sets `log_secret_changed` to the current time. When a secret is set, the
   collector accepts only log packets with exactly this secret, so put the
   same value as `sv_logsecret` into the game server's `server.cfg`; without a
   secret it accepts all log packets of the server. The collector never sets
   or changes the secret itself (see the collector's CONFIG.md, "Log
   secret"). The field appears once the collector's database has schema
-  version 4 (`gamewe db migrate`).
+  version 4 (`gamewe db migrate`). **Max players** is shown, not edited:
+  the collector reads the slots from the game server (RCON `status`, else
+  `A2S_INFO` from collector v1.3.0 on, with `features.server_info`) and keeps
+  them current; 0 means not known yet. The API refuses `max_players` in a
+  change (`read_only_field`).
 - Games, players (points, hide from ranking, clan), clans, weapons (name,
   points modifier), actions (rewards), teams, roles, award definitions, ranks
   and users. The lists keep their filters (ranking, search, state, page,

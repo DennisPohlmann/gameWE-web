@@ -120,7 +120,7 @@ export const entities: Entity[] = [
       { name: "address", label: { de: "IP-Adresse", en: "IP address" }, type: "text", inList: true, required: true, max: 32, normalize: canonicalIp, help: { de: "Eine IP-Adresse, kein Hostname. Jede Kombination aus IP und Port gibt es nur einmal.", en: "An IP address, not a host name. Each IP and port combination exists only once." } },
       { name: "port", label: { de: "Port", en: "Port" }, type: "number", inList: true, required: true, min: 1, maxValue: 65535, help: { de: "Spiel- und RCON-Port des Servers.", en: "Game and RCON port of the server." } },
       { ...gameField, help: { de: "Die Rangliste bestimmt das Spiel: erst unter Ranglisten das Spiel der Rangliste wählen, dann den Server ihr zuordnen. Nur Ranglisten desselben Spiels sind erlaubt.", en: "The ranking decides the game: first choose the ranking's game under Rankings, then assign the server to it. Only rankings of the same game are allowed." } },
-      { name: "rcon_password", label: { de: "RCON-Passwort", en: "RCON password" }, type: "secret", max: 128, help: { de: "Für die Antworten auf !rank, !top10 usw. Leer lassen, um es nicht zu ändern. Ein einzelnes Minus (-) löscht es.", en: "For replies to !rank, !top10 etc. Leave empty to keep it. A single minus (-) clears it." } },
+      { name: "rcon_password", label: { de: "RCON-Passwort", en: "RCON password" }, type: "secret", max: 128, help: { de: "Für die Antworten auf !rank, !top10 usw. Leer lassen, um es nicht zu ändern; „Entfernen“ löscht es.", en: "For replies to !rank, !top10 etc. Leave empty to keep it; “Remove” clears it." } },
       {
         name: "log_secret",
         label: { de: "Log-Secret", en: "Log secret" },
@@ -130,12 +130,21 @@ export const entities: Entity[] = [
         valid: isLogSecret,
         changedAt: "log_secret_changed",
         help: {
-          de: "Optional: sv_logsecret des Gameservers, eine Zahl von 1 bis 2147483647. Ist es gesetzt, nimmt der Collector nur Logpakete mit genau diesem Secret an; trage denselben Wert als sv_logsecret in die server.cfg des Gameservers ein. Ohne Secret werden alle Logpakete des Servers angenommen. Der Collector setzt oder ändert es nie selbst. Leer lassen, um es nicht zu ändern. Ein einzelnes Minus (-) löscht es.",
-          en: "Optional: the game server's sv_logsecret, a number from 1 to 2147483647. When it is set, the collector accepts only log packets with exactly this secret; put the same value as sv_logsecret into the game server's server.cfg. Without a secret all log packets of the server are accepted. The collector never sets or changes it itself. Leave empty to keep it. A single minus (-) clears it.",
+          de: "Optional: sv_logsecret des Gameservers, eine Zahl von 1 bis 2147483647. Ist es gesetzt, nimmt der Collector nur Logpakete mit genau diesem Secret an; trage denselben Wert als sv_logsecret in die server.cfg des Gameservers ein. Ohne Secret werden alle Logpakete des Servers angenommen. Der Collector setzt oder ändert es nie selbst. Leer lassen, um es nicht zu ändern; „Entfernen“ löscht es.",
+          en: "Optional: the game server's sv_logsecret, a number from 1 to 2147483647. When it is set, the collector accepts only log packets with exactly this secret; put the same value as sv_logsecret into the game server's server.cfg. Without a secret all log packets of the server are accepted. The collector never sets or changes it itself. Leave empty to keep it; “Remove” clears it.",
         },
       },
       { name: "publicaddress", label: { de: "Öffentliche Adresse", en: "Public address" }, type: "text", max: 255, help: { de: "Wird statt IP:Port angezeigt, z. B. ein Hostname.", en: "Shown instead of IP:port, e.g. a host name." } },
-      { name: "max_players", label: { de: "Max. Spieler", en: "Max players" }, type: "number" },
+      {
+        name: "max_players",
+        label: { de: "Max. Spieler", en: "Max players" },
+        type: "number",
+        readonly: true,
+        help: {
+          de: "Holt der Collector vom Gameserver (RCON status, sonst A2S_INFO) und hält es aktuell. 0: noch unbekannt.",
+          en: "The collector reads it from the game server (RCON status, else A2S_INFO) and keeps it current. 0: not known yet.",
+        },
+      },
       { name: "display_id", label: { de: "Reihenfolge", en: "Order" }, type: "number", inList: true },
     ],
     order: "display_id, serverId",

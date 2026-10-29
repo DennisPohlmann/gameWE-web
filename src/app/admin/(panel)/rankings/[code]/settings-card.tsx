@@ -59,6 +59,7 @@ export async function SettingsCard({ id, lang, sp }: { id: number; lang: "de" | 
                   opts={opts}
                   locked={Boolean(f.readonly || f.createOnly)}
                   isNew={false}
+                  lang={lang}
                 />
               </div>
             </div>

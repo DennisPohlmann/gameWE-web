@@ -197,7 +197,7 @@ are listed once in `src/lib/openapi-admin.ts`, and the router
 ```bash
 curl -H "Authorization: Bearer $GAMEWE_TOKEN" https://stats.example.org/api/v1/admin/me
 curl -X PATCH -H "Authorization: Bearer $GAMEWE_TOKEN" -H 'Content-Type: application/json' \
-  -d '{"name":"Example Server #1","max_players":24}' https://stats.example.org/api/v1/admin/servers/1
+  -d '{"name":"Example Server #1","display_id":2}' https://stats.example.org/api/v1/admin/servers/1
 ```
 
 ## Banner pictures

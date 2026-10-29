@@ -1,11 +1,13 @@
 import type { Field } from "@/lib/admin-entities";
 import { noAutofill } from "@/lib/autofill";
+import type { Lang } from "@/lib/i18n";
+import { SecretControl } from "./secret-control";
 
 // The input of one entity field (select, password, secret, text or number),
 // shared by the edit page of an entity and the settings card of a ranking.
 // opts: the choices of a select (null for a plain input); locked: shown
 // read-only (readonly or createOnly on an existing row); secretSet: a secret
-// is stored, shown as dots.
+// is stored (see SecretControl).
 export function FieldControl({
   f,
   value,
@@ -14,6 +16,7 @@ export function FieldControl({
   isNew,
   secretSet,
   id,
+  lang,
 }: {
   f: Field;
   value: string | number | null | undefined;
@@ -22,6 +25,7 @@ export function FieldControl({
   isNew: boolean;
   secretSet?: boolean;
   id?: string;
+  lang: Lang;
 }) {
   if (opts && !locked)
     return (
@@ -35,7 +39,9 @@ export function FieldControl({
       </select>
     );
   if (f.type === "password") return <input {...noAutofill} id={id} name={f.name} type="password" minLength={10} required={isNew} />;
-  if (f.type === "secret") return <input {...noAutofill} id={id} name={f.name} type="password" maxLength={f.max} placeholder={secretSet ? "••••••••" : ""} />;
+  // A number only the collector writes (max_players): plain text, no input.
+  if (f.readonly && f.type === "number") return <span className="field-value">{value === null || value === undefined ? "–" : String(value)}</span>;
+  if (f.type === "secret") return <SecretControl id={id ?? `f-${f.name}`} name={f.name} maxLength={f.max} set={Boolean(secretSet)} isNew={isNew} lang={lang} />;
   return (
     <input
       {...noAutofill}
