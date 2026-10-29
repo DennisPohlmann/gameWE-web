@@ -1,6 +1,6 @@
 import { BanBadge, BanMark } from "./ui";
 import { banSlots, markKind, type BanEntry, type BanKind } from "@/lib/ban-merge";
-import { fmtDateTime } from "@/lib/format";
+import { fmtDate, fmtDateTime } from "@/lib/format";
 import { fill, type Dict, type Lang } from "@/lib/i18n";
 
 // Ban badges and the "!" behind the name, shared by the bans page and the
@@ -10,9 +10,16 @@ export function banKindLabel(kind: BanKind, t: Dict): string {
   return { vac: "VAC", sourcebans: "SourceBans", sourcemod: "SourceMod", amx: "AMX", engine: t.banTypeServer }[kind];
 }
 
+// When a ban started: Steam gives VAC and game bans only to the day, so
+// those show no time; a date the source gave as text that could not be read
+// stays that text.
+export function banWhen(b: BanEntry, lang: Lang): string {
+  return b.at ? (b.kind === "vac" ? fmtDate(b.at, lang) : fmtDateTime(b.at, lang)) : b.dateText;
+}
+
 // The tooltip of a badge: source, reason, date and length or end.
 export function banTip(b: BanEntry, t: Dict, lang: Lang): string {
-  const date = b.at ? fmtDateTime(b.at, lang) : b.dateText;
+  const date = banWhen(b, lang);
   const end = b.until ? fill(t.banUntil, { x: fmtDateTime(b.until, lang) }) : b.length;
   return [banKindLabel(b.kind, t), b.reason, date ? `${t.banDate} ${date}` : "", end].filter(Boolean).join(" · ");
 }

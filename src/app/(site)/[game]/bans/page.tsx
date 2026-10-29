@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { sortHeads } from "@/components/sort-head";
-import { BanBadges, banKindLabel, NameBanMark, sourcebansSearchUrl } from "@/components/ban-badges";
+import { BanBadges, banKindLabel, banWhen, NameBanMark, sourcebansSearchUrl } from "@/components/ban-badges";
 import { Empty, Pager, PctBar, PlayerLink, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
 import { getRankingBans, type BanRow } from "@/lib/bans";
 import { gameHasShots } from "@/lib/data";
 import { fmtDate, fmtNum, kpd, localeOf, ratio, steamIds } from "@/lib/format";
-import { getDict } from "@/lib/i18n";
+import { getDict, type Lang } from "@/lib/i18n";
 import { sortRows, sortState } from "@/lib/table-sort";
 
 // Rows per page unless the visitor picks another number.
@@ -25,8 +25,9 @@ const banValues = {
   date: (r: BanRow) => r.at,
   seen: (r: BanRow) => Number(r.player.last_event),
   kpd: (r: BanRow) => kpd(Number(r.player.kills), Number(r.player.deaths)),
-  hpk: (r: BanRow) => ratio(Number(r.player.headshots), Number(r.player.kills)),
-  acc: (r: BanRow) => ratio(Number(r.player.hits), Number(r.player.shots)),
+  // Without kills or shots the bar shows 0 %, so it sorts as 0 %.
+  hpk: (r: BanRow) => ratio(Number(r.player.headshots), Number(r.player.kills)) ?? 0,
+  acc: (r: BanRow) => ratio(Number(r.player.hits), Number(r.player.shots)) ?? 0,
 };
 
 // Banned players of a ranking, as one list like gameME's, all from the
@@ -116,7 +117,7 @@ export default async function BansPage({ params, searchParams }: { params: Promi
                     <BanBadges bans={r.bans} always={always} links={{ sourcebans: sourcebansSearchUrl(sourcebansUrl, steamIds(r.player.uniqueId)?.steam2) }} t={t} lang={lang} />
                   </td>
                   <td className="hide-sm">{r.reason}</td>
-                  <td>{r.at ? new Date(r.at * 1000).toLocaleString(localeOf(lang), { dateStyle: "medium", timeStyle: "short" }) : r.dateText || "–"}</td>
+                  <td>{rowWhen(r, lang)}</td>
                   {inactive ? <td className="num hide-sm">{fmtDate(Number(r.player.last_event), lang)}</td> : null}
                   <td className="num hide-sm">{fmtNum(kpd(Number(r.player.kills), Number(r.player.deaths)), lang, 2)}</td>
                   <td className="barcell">
@@ -141,4 +142,11 @@ export default async function BansPage({ params, searchParams }: { params: Promi
       <p className="muted">{t.bansHint}</p>
     </Section>
   );
+}
+
+// The row's date: that of its newest ban (to the day for a VAC ban), else
+// the text a source gave.
+function rowWhen(r: BanRow, lang: Lang): string {
+  const newest = r.at ? r.bans.find((b) => b.at === r.at) : undefined;
+  return (newest ? banWhen(newest, lang) : r.dateText) || "–";
 }
