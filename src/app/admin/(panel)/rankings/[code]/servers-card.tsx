@@ -1,0 +1,156 @@
+import Link from "next/link";
+import { assignServersAction, moveServerAction } from "../../../actions";
+import { Icon } from "@/components/admin/icons";
+import { optionList } from "@/lib/admin-data";
+import { entities } from "@/lib/admin-entities";
+import { adminDict } from "@/lib/admin-i18n";
+import { allServers, rankingBaseGames } from "@/lib/admin-rankings";
+import { noAutofill } from "@/lib/autofill";
+import { adminQuery } from "@/lib/db";
+import { localeOf } from "@/lib/format";
+import { gameKind, sameBaseGame } from "@/lib/games";
+import { fill } from "@/lib/i18n";
+import { newServerHref } from "@/lib/ranking-preset";
+
+// The servers of one ranking (level 100, as the server list): live state,
+// edit, move into another ranking of the same game, and the servers of other
+// rankings to move in.
+export async function ServersCard({ id, code, lang, sp }: { id: number; code: string; lang: "de" | "en"; sp: Record<string, string | undefined> }) {
+  const a = adminDict(lang);
+  const u = a.ui;
+  const nf = (n: number) => n.toLocaleString(localeOf(lang));
+  const [mine, servers, games, bases] = await Promise.all([
+    adminQuery<{
+      serverId: number;
+      name: string;
+      address: string;
+      port: number;
+      publicaddress: string | null;
+      act_map: string | null;
+      act_players: number;
+      max_players: number;
+    }>(
+      `SELECT serverId, name, address, port, publicaddress, act_map, act_players, max_players FROM hlstats_Servers WHERE TRIM(game) = ? ORDER BY display_id, serverId`,
+      [code],
+    ),
+    allServers(),
+    optionList("games"),
+    rankingBaseGames(),
+  ]);
+  // Servers only move between rankings of the same base game.
+  const base = bases.get(code) ?? null;
+  const fits = (c: string) => sameBaseGame(bases.get(c) ?? null, base);
+  const gameName = (c: string) => gameKind(bases.get(c))?.short ?? "?";
+  const targets = games.filter(([c]) => c !== code && fits(c));
+  const others = servers.filter((s) => s.game !== code);
+  const label = entities.find((e) => e.key === "servers")?.label[lang] ?? "Server";
+  const returnTo = encodeURIComponent(`/admin/servers?game=${encodeURIComponent(code)}`);
+  const error = sp.serr === "mismatch" ? a.gameMismatch : sp.serr === "db" ? fill(a.dbWriteError, { msg: sp.msg ?? "" }) : null;
+  return (
+    <section className="card" id="servers">
+      <header>
+        <h2>
+          {u.serversHere} <span className="pill">{nf(mine.length)}</span>
+        </h2>
+        <Link className="more" href={`/admin/servers?game=${encodeURIComponent(code)}`}>
+          {u.serverList}
+        </Link>
+        <Link className="button small primary" href={newServerHref(code)}>
+          <Icon name="plus" />
+          {u.addServer}
+        </Link>
+      </header>
+      {sp.saved === "server" ? <p className="notice">{u.serverAdded}</p> : null}
+      {sp.saved === "servers" ? <p className="notice">{u.serversSaved}</p> : null}
+      {error ? <p className="notice error">{error}</p> : null}
+      {mine.length ? (
+        <>
+          <table className="cards stack">
+            <thead>
+              <tr>
+                <th>{label}</th>
+                <th>{u.colAddress}</th>
+                <th>{u.colMap}</th>
+                <th className="num">{u.colNow}</th>
+                <th />
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {mine.map((s) => (
+                <tr key={s.serverId}>
+                  <td className="main wrap-cell">
+                    <Link className="name" href={`/admin/servers/${s.serverId}?returnTo=${returnTo}`}>
+                      {s.name || `${s.address}:${s.port}`}
+                    </Link>
+                  </td>
+                  <td className="mono">{s.publicaddress || `${s.address}:${s.port}`}</td>
+                  <td>{s.act_map || "–"}</td>
+                  <td className="num">
+                    <span className={s.act_players > 0 ? "pill ok" : "pill"}>
+                      {nf(s.act_players)} / {nf(s.max_players)}
+                    </span>
+                  </td>
+                  <td className="act">
+                    {targets.length ? (
+                      <form action={moveServerAction} className="inline-form">
+                        <input type="hidden" name="__id" value={String(id)} />
+                        <input type="hidden" name="server" value={s.serverId} />
+                        <select {...noAutofill} name="target" aria-label={a.rankingRemoveTo} defaultValue="">
+                          <option value="" disabled>
+                            {a.rankingRemoveTo} …
+                          </option>
+                          {targets.map(([v, l]) => (
+                            <option key={v} value={v}>
+                              {l}
+                            </option>
+                          ))}
+                        </select>{" "}
+                        <button type="submit" className="button small">
+                          {a.rankingRemove}
+                        </button>
+                      </form>
+                    ) : null}
+                  </td>
+                  <td className="end num">
+                    <Link className="button small" href={`/admin/servers/${s.serverId}?returnTo=${returnTo}`}>
+                      {a.edit}
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {targets.length ? (
+            <p>
+              <small className="muted">{a.rankingRemoveHint}</small>
+            </p>
+          ) : null}
+        </>
+      ) : (
+        <p className="empty">{a.rankingNoServers}</p>
+      )}
+      {others.length ? (
+        <details className="assign-servers" open={!mine.length}>
+          <summary>{a.rankingAddServers.replace(/:$/, "")}</summary>
+          <form action={assignServersAction} className="form">
+            <input type="hidden" name="__id" value={String(id)} />
+            {others.map((s) => (
+              <label key={s.serverId} className="check">
+                <input type="checkbox" name="server" value={s.serverId} disabled={!fits(s.game)} /> {s.name || `${s.address}:${s.port}`}{" "}
+                <span className="muted">
+                  ({a.rankingNow}: {s.game}, {gameName(s.game)}
+                  {fits(s.game) ? "" : ` · ${a.gameOther}`})
+                </span>
+              </label>
+            ))}
+            <small className="muted">{a.rankingMoveHint}</small>
+            <button type="submit" className="button">
+              {a.rankingAssign}
+            </button>
+          </form>
+        </details>
+      ) : null}
+    </section>
+  );
+}

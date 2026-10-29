@@ -13,7 +13,7 @@ import { createToken, revokeToken } from "@/lib/api-tokens";
 import { LEVEL_ADMIN, adminSecret, confirmIdentity, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, requireAdmin } from "@/lib/auth";
 import { resetMode } from "@/lib/reset";
 import { addParams, safeReturnTo, withReturnTo } from "@/lib/return-to";
-import { resettableRankings } from "@/lib/admin-rankings";
+import { rankingPageHref, resettableRankings } from "@/lib/admin-rankings";
 import { presetRanking, rankingServersHref } from "@/lib/ranking-preset";
 import { checkCode, consumeStep, newSecret, readSecret, removeSecret, storeSecret } from "@/lib/totp";
 
@@ -90,6 +90,10 @@ export async function saveAction(form: FormData) {
   const ranking = e.key === "servers" && id === null ? presetRanking(form.get("__ranking"), (await optionList("games")).map(([c]) => c)) : null;
   // The input of a new server is kept after an error.
   const kept = e.key === "servers" && id === null ? { ...keptValues(e, form), game: ranking ?? undefined } : {};
+  // A ranking is edited on its own page; its errors and the saved notice go
+  // to the settings card there.
+  const ownPage = e.key === "games" && id !== null;
+  const back = async (params: Record<string, string | undefined>) => (ownPage ? rankingPageHref(rawId, params, "settings") : editHref(e.key, rawId, form, params));
   let saved: string;
   try {
     saved = await saveEntity({ user }, e, id, form, { ranking });
@@ -97,32 +101,34 @@ export async function saveAction(form: FormData) {
     if (!(err instanceof OpError)) throw err;
     const c = err.code;
     if (c === "cannot" || c === "notfound") redirect(list);
-    if (c === "self" || c === "mismatch") redirect(editHref(e.key, rawId, form, { error: c }));
+    if (c === "self" || c === "mismatch") redirect(await back({ error: c }));
     if (c === "duplicate") redirect(editHref(e.key, rawId, form, { error: "duplicate", dup: err.detail.dup, ...kept }));
-    if (c === "field") redirect(editHref(e.key, rawId, form, { error: "field", field: err.detail.field, ...kept }));
+    if (c === "field") redirect(await back({ error: "field", field: err.detail.field, ...kept }));
     // A new ranking is saved, but its template's definitions failed.
     if (err.detail.saved) redirect(editHref(e.key, err.detail.saved, form, { error: "db", msg: err.detail.msg }));
-    redirect(editHref(e.key, rawId, form, { error: "db", msg: err.detail.msg ?? "?", game: ranking ?? undefined }));
+    redirect(await back({ error: "db", msg: err.detail.msg ?? "?", game: ranking ?? undefined }));
   }
   if (ranking) redirect(rankingServersHref(ranking, { saved: "server" }));
+  // A new ranking opens on its page too.
+  if (e.key === "games") redirect(await rankingPageHref(saved, { saved: "settings" }, "settings"));
   redirect(editHref(e.key, saved, form, { saved: "1" }));
 }
 
-// Moves servers into a ranking (edit page of the ranking).
+// Moves servers into a ranking (servers card of the ranking's page).
 export async function assignServersAction(form: FormData) {
   const user = await requireAdmin(100);
   const gameId = String(form.get("__id") ?? "");
   const e = await withColumns(getEntity("games")!);
   const row = await getRow(e, gameId);
-  if (!row) redirect(safeReturnTo(form.get("__returnTo"), "games"));
+  if (!row) redirect("/admin/rankings");
   const ids = form.getAll("server").map((v) => Number(v));
   try {
     await assignServersTo({ user }, String(row.code).trim(), ids);
   } catch (err) {
     if (!(err instanceof OpError)) throw err;
-    redirect(editHref("games", gameId, form, err.code === "mismatch" ? { error: "mismatch" } : { error: "db", msg: err.detail.msg ?? "?" }));
+    redirect(await rankingPageHref(gameId, err.code === "mismatch" ? { serr: "mismatch" } : { serr: "db", msg: err.detail.msg ?? "?" }, "servers"));
   }
-  redirect(editHref("games", gameId, form, { saved: "1" }));
+  redirect(await rankingPageHref(gameId, { saved: "servers" }, "servers"));
 }
 
 // Takes one server out of a ranking by moving it into another one.
@@ -133,10 +139,10 @@ export async function moveServerAction(form: FormData) {
     await moveServer({ user }, Number(form.get("server")), String(form.get("target") ?? "").trim());
   } catch (err) {
     if (!(err instanceof OpError)) throw err;
-    if (err.code === "notfound" || err.code === "input") redirect(editHref("games", gameId, form));
-    redirect(editHref("games", gameId, form, err.code === "mismatch" ? { error: "mismatch" } : { error: "db", msg: err.detail.msg ?? "?" }));
+    if (err.code === "notfound" || err.code === "input") redirect(await rankingPageHref(gameId, {}, "servers"));
+    redirect(await rankingPageHref(gameId, err.code === "mismatch" ? { serr: "mismatch" } : { serr: "db", msg: err.detail.msg ?? "?" }, "servers"));
   }
-  redirect(editHref("games", gameId, form, { saved: "1" }));
+  redirect(await rankingPageHref(gameId, { saved: "servers" }, "servers"));
 }
 
 export async function deleteAction(form: FormData) {

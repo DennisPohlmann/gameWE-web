@@ -1,6 +1,7 @@
 import "server-only";
 import { adminExec, adminQuery } from "./db";
 import { baseGameOf } from "./games";
+import { addParams } from "./return-to";
 
 // Rankings (hlstats_Games rows) as the admin manages them: a new ranking takes
 // its definitions from a template, and servers are moved between rankings by
@@ -107,4 +108,23 @@ export async function countByRanking(table: string, column: string, where = ""):
     `SELECT TRIM(${column}) AS game, COUNT(*) AS n FROM ${table}${where ? ` WHERE ${where}` : ""} GROUP BY TRIM(${column})`,
   );
   return new Map(rows.map((r) => [r.game, Number(r.n)]));
+}
+
+// The notices a ranking's page shows after a save (saved=settings|servers,
+// error=field|db with field and msg, serr=mismatch|db for the servers card).
+const PAGE_PARAMS = ["saved", "error", "field", "msg", "serr"] as const;
+
+// The admin page of ranking `gameId` (hlstats_Games.id), where it is edited,
+// with the notices of a save and the card to jump to; the list of rankings
+// when it does not exist. The code comes from the database, the parameters
+// only from PAGE_PARAMS (no open redirect).
+export async function rankingPageHref(gameId: string, params: Record<string, string | undefined> = {}, anchor?: "settings" | "servers"): Promise<string> {
+  const rows = /^\d{1,10}$/.test(gameId) ? await adminQuery<{ code: string }>(`SELECT TRIM(code) AS code FROM hlstats_Games WHERE id = ?`, [Number(gameId)]) : [];
+  if (!rows[0]) return "/admin/rankings";
+  const keep: Record<string, string> = {};
+  for (const k of PAGE_PARAMS) {
+    const v = params[k];
+    if (typeof v === "string" && v) keep[k] = v.slice(0, 300);
+  }
+  return `${addParams(`/admin/rankings/${encodeURIComponent(rows[0].code)}`, keep)}${anchor ? `#${anchor}` : ""}`;
 }

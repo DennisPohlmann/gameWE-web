@@ -68,7 +68,7 @@ export default async function AdminHome() {
       icon: "warn",
       title: fill(u.attNoGame, { list: r.name }),
       text: u.attNoGameText,
-      href: isAdmin ? `/admin/games/${r.id}` : `/admin/rankings/${encodeURIComponent(r.code)}`,
+      href: `/admin/rankings/${encodeURIComponent(r.code)}${isAdmin ? "#settings" : ""}`,
       link: u.attNoGameLink,
     });
   }

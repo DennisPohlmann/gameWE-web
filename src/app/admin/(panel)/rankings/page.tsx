@@ -9,8 +9,8 @@ import { localeOf } from "@/lib/format";
 import { getAdminLang } from "@/lib/i18n";
 import { GlobalHallCard } from "./global-hall-card";
 
-// All rankings with their game, servers, players and state; the way into
-// each ranking's own pages.
+// All rankings with their game, servers, players and state; one button per
+// ranking leads to its page, where it is also edited.
 export default async function RankingsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const user = await requireAdmin();
   const hof = (await searchParams).hof;
@@ -77,14 +77,9 @@ export default async function RankingsPage({ searchParams }: { searchParams: Pro
                   {nf(players.get(r.code) ?? 0)}
                 </td>
                 <td>{state(r)}</td>
-                <td className="end num nowrap">
-                  {isAdmin ? (
-                    <Link className="button small hide-sm" href={`/admin/games/${r.id}`}>
-                      {a.edit}
-                    </Link>
-                  ) : null}{" "}
+                <td className="end num">
                   <Link className="button small" href={`/admin/rankings/${encodeURIComponent(r.code)}`}>
-                    {u.open}
+                    {u.manage}
                   </Link>
                 </td>
               </tr>

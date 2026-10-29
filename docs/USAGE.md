@@ -391,12 +391,20 @@ menu button), and lists turn into cards on narrow screens:
   for updates" (`gamewe_update_check`, default on) turns it off; then no
   request goes to GitHub.
 - **Rankings** (`/admin/rankings`): all rankings, the ones with servers
-  first. The ranking chosen at the top of the side menu applies to everything
-  below it: its overview (`/admin/rankings/<code>`: servers with address, map
-  and players now, number of players, clans and definitions; "Add server"
-  in its servers card opens the new-server form, `/admin/servers/new?game=<code>`,
-  with the ranking preset and locked, and saving returns to the ranking's
-  page; a `game` that is not an existing ranking is ignored), servers,
+  first, each with one "Manage" button to its page. The ranking's page
+  (`/admin/rankings/<code>`) is the one place to manage it: at the top its
+  state (active, template or hidden), servers (how many have players now),
+  players and scheduled reset, with links to the cards below; then the
+  cards Settings (code, game, name, hidden, order; level 100), Servers
+  (address, map and players now, edit, move a server into another ranking of
+  the same game, move servers of other rankings in, and "Add server", which
+  opens the new-server form `/admin/servers/new?game=<code>` with the
+  ranking preset and locked and returns to the ranking's page; a `game` that
+  is not an existing ranking is ignored), Values (players, clans and the
+  definitions), and under "Rules" Bots, VAC block, Hall of fame & scheduled
+  reset (not for templates) and Maintenance (the reset). The old edit address
+  `/admin/games/<id>` leads to the ranking's page. The ranking chosen at the
+  top of the side menu applies to everything below it: its page, servers,
   players, clans, weapons, actions, teams, roles, awards, ranks and the reset.
   "All rankings" in the same menu shows the lists without a filter.
 - **Settings** (`/admin/settings/<page>`): one page per topic, each with its
