@@ -435,7 +435,7 @@
   "helpStreak": "Séries : quand une série d'au moins 2 frags dans une vie se termine, le bonus de l'action correspondante (p. ex. « Triple Kill ») est donné une fois.",
   "helpWin": "Manche gagnée : chaque joueur de l'équipe gagnante reçoit le bonus d'équipe de l'action.",
   "helpFloor": "Les points ne descendent jamais sous 0.",
-  "helpBots": "Les frags de bots ou par des bots ne changent pas les points, mais ils sont comptés.",
+  "helpBots": "Les frags de bots ou par des bots ne changent pas les points : pas de bonus headshot, pas de série.",
   "helpActionsIntro": "S'y ajoutent ces bonus pour des actions :",
   "helpColPlayer": "Action joueur",
   "helpColPvp": "Joueur contre joueur",

@@ -12,10 +12,10 @@ const T = {
       "An: Bots werden wie Spieler gerankt, können Platz 1 sein und Awards gewinnen. Aus: Sie fehlen in Ranglisten und Awards, ihre Namen sind nicht verlinkt. Das Umschalten gilt sofort auch für die vorhandenen Bots dieses Rankings.",
     points: "Punkte für Bot-Kills",
     pointsHelp:
-      "An: Wer einen Bot abschießt, bekommt Punkte wie für einen Spieler, und wer von einem Bot getötet wird, verliert Punkte. Aus: Kills mit Bots zählen als Kills, ändern aber keine Punkte (kein Headshot-Bonus, keine Killserie).",
+      "An: Ein Bot zählt bei den Punkten wie ein Spieler. Wer einen Bot abschießt, bekommt die normalen Kill-Punkte samt Headshot-Bonus und Killserie, und wer von einem Bot getötet wird, verliert Punkte. Aus: Kills an und durch Bots bringen und kosten keine Punkte, also auch keinen Headshot-Bonus und keine Killserie. Ob sie bei den Kills mitzählen, regelt der Schalter darunter.",
     kills: "Bot-Kills zählen als Kills",
     killsHelp:
-      "An: Ein abgeschossener Bot zählt bei den Kills des Spielers mit, also für Kill-Rangliste, K/D und den Karriere-Rang. Aus: Der Kill wird gespeichert (Ereignisse, Waffen, Maps), zählt aber nicht zu den Kills und Headshots des Spielers. Ob es Punkte gibt, regelt der Schalter darüber.",
+      "An: Ein abgeschossener Bot zählt bei den Kills des Spielers mit, also für Kill-Rangliste, K/D und den Karriere-Rang. Aus: Der Kill wird gespeichert (Ereignisse, Waffen, Maps), zählt aber nicht zu den Kills und Headshots des Spielers. Wer von einem Bot getötet wird, bekommt den Tod in beiden Fällen angerechnet. Ob es Punkte gibt, regelt der Schalter darüber.",
     save: "Speichern",
     saved: "Gespeichert.",
     savedBots: "Gespeichert. {n} vorhandene Bots wurden angepasst.",
@@ -29,10 +29,10 @@ const T = {
       "On: bots are ranked like players, can be number 1 and win awards. Off: they stay out of rankings and awards, their names are not linked. Switching also applies at once to the existing bots of this ranking.",
     points: "Points for bot kills",
     pointsHelp:
-      "On: killing a bot gives points as for a player, and being killed by a bot costs points. Off: kills with bots count as kills but change no points (no headshot bonus, no kill streak).",
+      "On: a bot counts like a player for points. Killing a bot gives the normal kill points including the headshot bonus and kill streaks, and being killed by a bot costs points. Off: kills of and by bots give and cost no points, so no headshot bonus and no kill streak either. Whether they count as kills is the switch below.",
     kills: "Bot kills count as kills",
     killsHelp:
-      "On: a bot shot down counts in the player's kills, so for the kill ranking, K/D and the career rank. Off: the kill is stored (events, weapons, maps) but not added to the player's kills and headshots. Whether it gives points is the switch above.",
+      "On: a bot shot down counts in the player's kills, so for the kill ranking, K/D and the career rank. Off: the kill is stored (events, weapons, maps) but not added to the player's kills and headshots. Being killed by a bot always counts as a death. Whether it gives points is the switch above.",
     save: "Save",
     saved: "Saved.",
     savedBots: "Saved. {n} existing bots were updated.",

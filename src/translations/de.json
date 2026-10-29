@@ -439,7 +439,7 @@
   "helpStreak": "Killserien: Endet eine Serie von mindestens 2 Kills in einem Leben, gibt es einmal den Bonus der passenden Aktion (z. B. „Triple Kill“).",
   "helpWin": "Rundensieg: Jeder Spieler des Siegerteams bekommt den Team-Bonus der Aktion.",
   "helpFloor": "Die Punkte fallen nie unter 0.",
-  "helpBots": "Kills an oder durch Bots ändern keine Punkte, werden aber gezählt.",
+  "helpBots": "Kills an oder durch Bots ändern keine Punkte: kein Headshot-Bonus, keine Killserie.",
   "helpActionsIntro": "Dazu kommen diese Boni für Aktionen:",
   "helpColPlayer": "Spieler-Aktion",
   "helpColPvp": "Spieler gg. Spieler",

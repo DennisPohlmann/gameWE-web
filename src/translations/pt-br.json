@@ -435,7 +435,7 @@
   "helpStreak": "Sequências: quando termina uma sequência de pelo menos 2 abates numa vida, o bônus da ação correspondente (p. ex. \"Triple Kill\") é dado uma vez.",
   "helpWin": "Rodada ganha: cada jogador do time vencedor recebe o bônus de time da ação.",
   "helpFloor": "Os pontos nunca descem abaixo de 0.",
-  "helpBots": "Abates de bots ou por bots não alteram os pontos, mas são contados.",
+  "helpBots": "Abates de bots ou por bots não alteram os pontos: sem bônus de headshot, sem sequência de abates.",
   "helpActionsIntro": "A isso se somam estes bônus por ações:",
   "helpColPlayer": "Ação de jogador",
   "helpColPvp": "Jogador contra jogador",

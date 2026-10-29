@@ -435,7 +435,7 @@
   "helpStreak": "Serie: gdy kończy się seria co najmniej 2 zabójstw w jednym życiu, bonus z odpowiedniej akcji (np. „Triple Kill”) jest przyznawany raz.",
   "helpWin": "Wygrana runda: każdy gracz zwycięskiej drużyny dostaje bonus drużynowy akcji.",
   "helpFloor": "Punkty nigdy nie spadają poniżej 0.",
-  "helpBots": "Zabójstwa botów lub przez boty nie zmieniają punktów, ale są liczone.",
+  "helpBots": "Zabójstwa botów lub przez boty nie zmieniają punktów: bez bonusu za headshot i bez serii zabójstw.",
   "helpActionsIntro": "Do tego dochodzą bonusy za akcje:",
   "helpColPlayer": "Akcja gracza",
   "helpColPvp": "Gracz kontra gracz",

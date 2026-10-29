@@ -435,7 +435,7 @@
   "helpStreak": "Rachas: cuando termina una racha de al menos 2 bajas en una vida, se da una vez el bonus de la acción correspondiente (p. ej. «Triple Kill»).",
   "helpWin": "Victoria de ronda: cada jugador del equipo ganador recibe el bonus de equipo de la acción.",
   "helpFloor": "Los puntos nunca bajan de 0.",
-  "helpBots": "Las bajas de bots o causadas por bots no cambian los puntos, pero se cuentan.",
+  "helpBots": "Las bajas de bots o causadas por bots no cambian los puntos: sin bonus por headshot ni racha de bajas.",
   "helpActionsIntro": "Además, estos bonus por acciones:",
   "helpColPlayer": "Acción de jugador",
   "helpColPvp": "Jugador contra jugador",

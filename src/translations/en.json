@@ -439,7 +439,7 @@
   "helpStreak": "Kill streaks: when a streak of at least 2 kills in one life ends, the bonus of the matching action (e.g. \"Triple Kill\") is given once.",
   "helpWin": "Round win: every player of the winning team gets the action's team bonus.",
   "helpFloor": "Points never go below 0.",
-  "helpBots": "Kills of or by bots don't change points, but they are counted.",
+  "helpBots": "Kills of or by bots don't change points: no headshot bonus, no kill streak.",
   "helpActionsIntro": "Plus, these bonuses for actions:",
   "helpColPlayer": "Player action",
   "helpColPvp": "Player vs. player",

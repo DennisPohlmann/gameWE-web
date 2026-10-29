@@ -435,7 +435,7 @@
   "helpStreak": "Reeksen: als een reeks van minstens 2 kills in één leven eindigt, wordt de bonus van de passende actie (bv. \"Triple Kill\") één keer gegeven.",
   "helpWin": "Gewonnen ronde: elke speler van het winnende team krijgt de teambonus van de actie.",
   "helpFloor": "Punten zakken nooit onder 0.",
-  "helpBots": "Kills van of door bots veranderen de punten niet, maar worden wel geteld.",
+  "helpBots": "Kills van of door bots veranderen de punten niet: geen headshot-bonus, geen killreeks.",
   "helpActionsIntro": "Daarbij komen deze bonussen voor acties:",
   "helpColPlayer": "Spelersactie",
   "helpColPvp": "Speler tegen speler",

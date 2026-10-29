@@ -435,7 +435,7 @@
   "helpStreak": "Stimer: når en stime på mindst 2 drab i ét liv slutter, gives bonussen fra den passende handling (fx \"Triple Kill\") én gang.",
   "helpWin": "Vundet runde: hver spiller på det vindende hold får handlingens holdbonus.",
   "helpFloor": "Pointene falder aldrig under 0.",
-  "helpBots": "Drab af eller på bots ændrer ikke pointene, men de tælles med.",
+  "helpBots": "Drab af eller på bots ændrer ikke pointene: ingen headshot-bonus, ingen drabsserie.",
   "helpActionsIntro": "Dertil kommer disse bonusser for handlinger:",
   "helpColPlayer": "Spillerhandling",
   "helpColPvp": "Spiller mod spiller",
