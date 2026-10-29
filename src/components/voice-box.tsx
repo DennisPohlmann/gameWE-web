@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ServerFlag } from "./live";
+import { TsPassword } from "./ts-password";
 import { fmtNum } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
 import { getVoiceBox } from "@/lib/voice";
@@ -37,8 +38,17 @@ export async function VoiceBox() {
                 <td className="hide-sm">{box.ts.type}</td>
                 <td>
                   <a href={box.ts.link}>{box.ts.address}</a>
+                  {/* Phones hide the password column: the lock follows the address. */}
+                  {box.ts.passwordProtected ? (
+                    <span className="voice-pw-sm">
+                      {" "}
+                      <TsPassword password={box.ts.password} passwordProtected t={t} />
+                    </span>
+                  ) : null}
                 </td>
-                <td className="hide-sm">{box.ts.password || "-"}</td>
+                <td className="hide-sm">
+                  <TsPassword password={box.ts.password} passwordProtected={box.ts.passwordProtected} t={t} />
+                </td>
                 <td className="num hide-sm">{n(box.ts.channels)}</td>
                 <td className="num">
                   {n(box.ts.clients)}

@@ -462,6 +462,8 @@
   "voiceUnavailable": "O servidor de voz não está acessível de momento.",
   "voiceNobody": "Ninguém está online de momento.",
   "voiceNamesHidden": "Os nomes das pessoas online não são mostrados.",
+  "voicePasswordProtected": "Protegido por palavra-passe",
+  "voicePasswordShow": "Mostrar a palavra-passe",
   "voiceServerInfo": "Informações do servidor",
   "voiceOs": "Sistema operativo",
   "voiceClientConnections": "Ligações de clientes",

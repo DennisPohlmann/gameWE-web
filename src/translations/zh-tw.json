@@ -462,6 +462,8 @@
   "voiceUnavailable": "語音伺服器暫時無法連線。",
   "voiceNobody": "目前沒有人在線上。",
   "voiceNamesHidden": "不顯示線上使用者的名稱。",
+  "voicePasswordProtected": "有密碼保護",
+  "voicePasswordShow": "顯示密碼",
   "voiceServerInfo": "伺服器資訊",
   "voiceOs": "作業系統",
   "voiceClientConnections": "用戶端連線數",

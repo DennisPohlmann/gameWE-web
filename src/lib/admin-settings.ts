@@ -332,7 +332,18 @@ const definitions: Omit<SettingGroup, "area">[] = [
       { key: "gamewe_ts_query_port", label: { de: "ServerQuery-Port", en: "ServerQuery port" }, type: "number", def: "10011", min: 1, max: 65535, help: { de: "Raw-Query (nicht SSH). Muss vom Webserver aus erreichbar sein.", en: "Raw query (not SSH). Must be reachable from the web server." }, show: TS },
       { key: "gamewe_ts_query_user", label: { de: "ServerQuery-Benutzer", en: "ServerQuery user" }, type: "text", def: "", help: { de: "Leer: als Gast abfragen (geht nur, wenn die Gast-Gruppe serverinfo darf).", en: "Empty: query as guest (works only if the guest group may use serverinfo)." }, show: TS },
       { key: "gamewe_ts_query_password", label: { de: "ServerQuery-Passwort", en: "ServerQuery password" }, type: "secret", def: "", help: { de: "Wird nie angezeigt. Leer lassen, um es zu behalten.", en: "Never shown. Leave empty to keep it." }, show: TS },
-      { key: "gamewe_ts_password", label: { de: "TeamSpeak-Serverpasswort (öffentlich)", en: "TeamSpeak server password (public)" }, type: "text", def: "", help: { de: "Wird im Kasten für Besucher angezeigt. Leer: „-“.", en: "Shown to visitors in the box. Empty: \"-\"." }, show: TS },
+      { key: "gamewe_ts_password", label: { de: "TeamSpeak-Serverpasswort", en: "TeamSpeak server password" }, type: "text", def: "", help: { de: "Besucher sehen ein Schloss, wenn eins gesetzt ist; das Passwort selbst nur mit der Einstellung darunter. Leer: „-“.", en: "Visitors see a lock when one is set; the password itself only with the setting below. Empty: \"-\"." }, show: TS },
+      {
+        key: "gamewe_ts_password_reveal",
+        label: { de: "TeamSpeak-Passwort anzeigen erlauben", en: "Allow showing the TeamSpeak password" },
+        type: "bool",
+        def: "0",
+        help: {
+          de: "Ja: Ein Klick auf das Schloss im Kasten und auf der TeamSpeak-Seite zeigt das Passwort, die API gibt es aus. Nein (Standard): nur das Schloss, das Passwort kommt nie beim Browser oder in der API an. Die Banner zeigen es nie.",
+          en: "Yes: clicking the lock in the box and on the TeamSpeak page shows the password, and the API returns it. No (default): only the lock; the password never reaches the browser or the API. The banners never show it.",
+        },
+        show: TS,
+      },
       { key: "gamewe_ts_name", label: { de: "TeamSpeak-Anzeigename", en: "TeamSpeak display name" }, type: "text", def: "", help: { de: "Leer: Name aus der ServerQuery.", en: "Empty: the name from the ServerQuery." }, show: TS },
       {
         key: "gamewe_ts_display",

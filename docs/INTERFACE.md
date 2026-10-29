@@ -24,7 +24,8 @@ answers may be cached for 30 seconds. It shows only what the website shows
 to everyone: players hidden from the ranking or banned, bots without a
 profile and hidden rankings (with their servers) are left out or answer
 `404`. The API never returns chat, IP addresses, Steam IDs, RCON passwords, log
-secrets, the TeamSpeak password or other admin data, nor the bans page.
+secrets or other admin data; the TeamSpeak password only when the admin allows
+showing it.
 Parts of the site an admin turned off (live map, player map, events, hall of
 fame, TeamSpeak) answer `404` there too. The three banners
 (`/players/<id>/banner`, `/rankings/<game>/servers/<id>/banner`,
@@ -108,7 +109,7 @@ website's # column) and `rank` (the place in the whole ranking by points);
 | `/api/v1/search/clans?q=<text>` | clan search by tag or name |
 | `/api/v1/points` | the help page's point rules and the bot settings per ranking |
 | `/api/v1/voice` | the voice server box (TeamSpeak or Discord) |
-| `/api/v1/voice/teamspeak` | the TeamSpeak page: server info, channel tree, people online (names only while shown); whether a password is needed, never the password (404 unless TeamSpeak is the voice server) |
+| `/api/v1/voice/teamspeak` | the TeamSpeak page: server info, channel tree, people online (names only while shown); `passwordProtected`, and `password` only while "Allow showing the TeamSpeak password" is on (404 unless TeamSpeak is the voice server) |
 | `/api/v1/voice/teamspeak/banner` | the TeamSpeak banner as PNG (`?style=<template>`) |
 | `/api/v1/banners/styles` | the styles (design templates) the banners take |
 | `/api/v1/players/<id>` | the values of a player's profile: place, points and last change, kills, K:D, HS/kill, kills per minute, assists, accuracy, shots per kill, rounds, win ratio, survived, connections, ping, location, career rank, favourite weapon, hall of fame stars |

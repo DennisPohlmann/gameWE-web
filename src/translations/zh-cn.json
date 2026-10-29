@@ -462,6 +462,8 @@
   "voiceUnavailable": "语音服务器暂时无法连接。",
   "voiceNobody": "当前没有人在线。",
   "voiceNamesHidden": "不显示在线用户的名称。",
+  "voicePasswordProtected": "有密码保护",
+  "voicePasswordShow": "显示密码",
   "voiceServerInfo": "服务器信息",
   "voiceOs": "操作系统",
   "voiceClientConnections": "客户端连接数",

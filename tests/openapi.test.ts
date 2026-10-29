@@ -164,3 +164,11 @@ test("no endpoint documents chat, addresses or Steam IDs", () => {
   for (const word of ['"ip"', '"ipaddress"', '"uniqueid"', '"steamid"', '"chat"', '"message"']) assert.ok(!text.includes(word), word);
   for (const e of endpoints) assert.ok(!/chat|ips|bans/.test(e.path), e.path);
 });
+
+test("the TeamSpeak password is documented as depending on the admin setting", () => {
+  for (const p of ["/voice", "/voice/teamspeak"]) {
+    const text = JSON.stringify(doc.paths[p].get.responses["200"]);
+    assert.ok(text.includes("passwordProtected"), p);
+    assert.ok(text.includes("only while the admin allows showing it"), p);
+  }
+});

@@ -462,6 +462,8 @@
   "voiceUnavailable": "Голосовой сервер сейчас недоступен.",
   "voiceNobody": "Сейчас никого нет в сети.",
   "voiceNamesHidden": "Имена пользователей онлайн не показываются.",
+  "voicePasswordProtected": "Защищён паролем",
+  "voicePasswordShow": "Показать пароль",
   "voiceServerInfo": "Информация о сервере",
   "voiceOs": "Операционная система",
   "voiceClientConnections": "Подключения клиентов",

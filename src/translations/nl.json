@@ -462,6 +462,8 @@
   "voiceUnavailable": "De voiceserver is nu niet bereikbaar.",
   "voiceNobody": "Er is nu niemand online.",
   "voiceNamesHidden": "De namen van wie online is worden niet getoond.",
+  "voicePasswordProtected": "Met wachtwoord beveiligd",
+  "voicePasswordShow": "Wachtwoord tonen",
   "voiceServerInfo": "Serverinfo",
   "voiceOs": "Besturingssysteem",
   "voiceClientConnections": "Clientverbindingen",

@@ -1149,6 +1149,18 @@ td.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9e
 .voice-icon { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 3px; }
 .voice-icon.discord { background: #5865f2; border-radius: 50%; }
 .voice-box a.voice-name { color: var(--text); }
+/* TeamSpeak password: a lock; where allowed it opens to show the password. */
+.ts-lock { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; color: var(--muted); }
+.ts-lock-icon { display: block; }
+details.ts-lock > summary { list-style: none; cursor: pointer; display: inline-flex; padding: 4px; margin: -4px; border-radius: 4px; color: var(--accent-text); }
+details.ts-lock > summary::-webkit-details-marker { display: none; }
+details.ts-lock > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+details.ts-lock[open] { flex-wrap: wrap; }
+.ts-password { color: var(--text); user-select: all; word-break: break-all; }
+.voice-pw-sm { display: none; }
+@media (max-width: 600px) {
+  .voice-pw-sm { display: inline; }
+}
 
 /* voice server detail page (/voice): channel tree */
 .voice-side > table + table { margin-top: 12px; }

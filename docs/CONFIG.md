@@ -218,14 +218,18 @@ TeamSpeak server": "No flag" (default: neither a flag nor a placeholder),
 the same IP, else a neutral flag), or a country from the list. Discord:
 invite and server ID. A box at the top of the start page and of every
 ranking page (`/<game>` and its subpages) then shows the TeamSpeak address
-with a connect link, the type (e.g. `TeamSpeak 3`, from the server version), the password,
+with a connect link, the type (e.g. `TeamSpeak 3`, from the server version), a lock when the server has a password,
 the channel count and the players online, or the Discord
 link with its online count. Without a choice, a configured TeamSpeak is
 used, else Discord. The players are read via
 ServerQuery (`serverinfo`, every 60 seconds); without a query login the guest
 group needs the permission to see server info. The Discord count comes from
 the server widget, which must be enabled in the Discord server settings
-(every 5 minutes). The ServerQuery password is never shown.
+(every 5 minutes). The ServerQuery password is never shown. The server
+password is shown only with "Allow showing the TeamSpeak password" (default
+no): then a click or tap on the lock in the box and on `/voice` shows it and
+`/api/v1/voice` returns it; otherwise visitors see only the lock and the
+password is not in the page, its data or the API. The banners never show it.
 
 Clicking the TeamSpeak name in the box opens `/voice` with the channel
 tree, the people online, server data, traffic and the welcome message. It

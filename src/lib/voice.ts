@@ -23,7 +23,11 @@ export type VoiceBox = {
     // name; the query always uses the real host and ports.
     address: string;
     link: string;
+    // The server password only when the admin allows showing it
+    // (gamewe_ts_password_reveal), else ""; passwordProtected says whether
+    // one is set. Without the setting the password never leaves this file.
     password: string;
+    passwordProtected: boolean;
     // null when the query could not be read.
     clients: number | null;
     max: number | null;
@@ -42,6 +46,7 @@ const KEYS = [
   "gamewe_ts_query_user",
   "gamewe_ts_query_password",
   "gamewe_ts_password",
+  "gamewe_ts_password_reveal",
   "gamewe_ts_name",
   "gamewe_ts_display",
   "gamewe_ts_link",
@@ -182,7 +187,7 @@ async function loadTs(host: string, voicePort: number, queryPort: number, o: Rec
     country: await serverCountry(o, host),
     address: tsDisplay(o.gamewe_ts_display ?? "") || real,
     link: tsLink(o.gamewe_ts_link ?? "") || tsDefaultLink(real),
-    password: (o.gamewe_ts_password ?? "").trim(),
+    ...tsPassword(o),
     clients: null,
     max: null,
     channels: null,
@@ -206,6 +211,13 @@ async function loadTs(host: string, voicePort: number, queryPort: number, o: Rec
     console.warn(`TeamSpeak query: ${e instanceof Error ? e.message : e}`);
     return { ...base, name: base.name || base.address };
   }
+}
+
+// The server password as the public pages and the API may have it: only
+// with "Allow showing the TeamSpeak password" on.
+export function tsPassword(o: Record<string, string | undefined>): { password: string; passwordProtected: boolean } {
+  const password = (o.gamewe_ts_password ?? "").trim();
+  return { password: (o.gamewe_ts_password_reveal ?? "").trim() === "1" ? password : "", passwordProtected: password !== "" };
 }
 
 // Detail page of the TeamSpeak server (/voice): server data, channel tree
@@ -292,7 +304,7 @@ async function loadDetail(o: Record<string, string>): Promise<VoiceDetail | null
     country: await serverCountry(o, host),
     address,
     link: tsLink(o.gamewe_ts_link ?? "") || tsDefaultLink(real),
-    password: (o.gamewe_ts_password ?? "").trim(),
+    ...tsPassword(o),
     clients: null,
     max: null,
     channels: null,

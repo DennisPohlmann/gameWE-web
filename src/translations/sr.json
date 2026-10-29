@@ -462,6 +462,8 @@
   "voiceUnavailable": "Гласовни сервер тренутно није доступан.",
   "voiceNobody": "Тренутно нико није на мрежи.",
   "voiceNamesHidden": "Имена особа на мрежи се не приказују.",
+  "voicePasswordProtected": "Заштићено лозинком",
+  "voicePasswordShow": "Прикажи лозинку",
   "voiceServerInfo": "Информације о серверу",
   "voiceOs": "Оперативни систем",
   "voiceClientConnections": "Везе клијената",

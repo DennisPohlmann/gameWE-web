@@ -462,6 +462,8 @@
   "voiceUnavailable": "Voiceserveren kan ikke nås lige nu.",
   "voiceNobody": "Ingen er online lige nu.",
   "voiceNamesHidden": "Navnene på dem, der er online, vises ikke.",
+  "voicePasswordProtected": "Beskyttet med adgangskode",
+  "voicePasswordShow": "Vis adgangskoden",
   "voiceServerInfo": "Serverinfo",
   "voiceOs": "Styresystem",
   "voiceClientConnections": "Klientforbindelser",

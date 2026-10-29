@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ServerFlag } from "@/components/live";
 import { SigCode } from "@/components/sig-code";
+import { TsPassword } from "@/components/ts-password";
 import { Empty, Flag, Section, Stats } from "@/components/ui";
 import { fmtDateTime, fmtDuration, fmtNum } from "@/lib/format";
 import { getDict, type Dict, type Lang } from "@/lib/i18n";
@@ -43,7 +44,7 @@ export default async function VoicePage() {
           items={[
             [t.voiceType, box.type],
             [t.address, <a key="a" href={box.link}>{box.address}</a>],
-            [t.password, box.password || "-"],
+            [t.password, <TsPassword key="p" password={box.password} passwordProtected={box.passwordProtected} t={t} />],
           ]}
         />
       </Section>

@@ -466,6 +466,8 @@
   "voiceUnavailable": "The voice server cannot be reached right now.",
   "voiceNobody": "Nobody is online right now.",
   "voiceNamesHidden": "The names of the people online are not shown.",
+  "voicePasswordProtected": "Password protected",
+  "voicePasswordShow": "Show the password",
   "voiceServerInfo": "Server info",
   "voiceOs": "Operating system",
   "voiceClientConnections": "Client connections",

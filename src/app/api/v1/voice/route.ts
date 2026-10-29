@@ -14,8 +14,9 @@ export function GET() {
             country: ts.country ? ts.country.toUpperCase() : null,
             address: ts.address,
             link: ts.link,
-            // Like the TeamSpeak banner: whether a password is needed, never the password itself.
-            passwordProtected: !!ts.password,
+            // The password only while the admin allows showing it (tsPassword).
+            passwordProtected: ts.passwordProtected,
+            password: ts.password || null,
             clients: ts.clients,
             maxClients: ts.max,
             channels: ts.channels,
