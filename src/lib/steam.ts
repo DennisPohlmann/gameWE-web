@@ -120,14 +120,9 @@ async function loadBatch(ids: string[]) {
   if (!key || !ids.length) return;
   const q = ids.join(",");
   try {
-    const [sum, bans] = await Promise.all([
-      steamJson<{ response?: { players?: Summary[] } }>(`https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${key}&steamids=${q}`),
-      steamJson<{ players?: BanReply[] }>(`https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key=${key}&steamids=${q}`),
-    ]);
-    const vac = new Map((bans?.players ?? []).map((b) => [b.SteamId, !!b.VACBanned]));
-    // The same answer fills the ban list's cache, so the profile's
-    // getSteamBans needs no second request.
-    rememberBans(bans?.players ?? []);
+    // Only the profile: the bans come from the collector (hlstats_Bans,
+    // lib/bans.ts), so vacBanned stays false here.
+    const sum = await steamJson<{ response?: { players?: Summary[] } }>(`https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${key}&steamids=${q}`);
     const found = new Map((sum?.response?.players ?? []).map((s) => [s.steamid, s]));
     for (const id of ids) {
       const s = found.get(id);
@@ -141,7 +136,7 @@ async function loadBatch(ids: string[]) {
               realName: s.realname || null,
               location: s.loccountrycode || null,
               memberSince: s.timecreated ? new Date(s.timecreated * 1000).toISOString().slice(0, 10) : null,
-              vacBanned: vac.get(id) ?? false,
+              vacBanned: false,
               onlineState: s.personastate ? "online" : "offline",
               privacy: s.communityvisibilitystate === 3 ? "public" : "private",
             }
@@ -264,48 +259,9 @@ function decode(s: string): string {
 
 // ---------------------------------------------------------------- bans
 
-// VAC and game bans of many players at once (Web API only, 100 per call),
-// for the bans page. Kept for 12 hours.
-export type SteamBans = { vac: number; game: number; days: number; community: boolean };
-
-const BAN_TTL = 12 * 3600 * 1000;
-const banCache = new Map<string, { at: number; value: SteamBans }>();
-
+// Whether the site shows VAC badges: Steam data on and an API key set. The
+// bans themselves are read by the collector (features.bans_sync) and come
+// from hlstats_Bans; the site asks Steam for no bans.
 export async function steamBansAvailable(): Promise<boolean> {
   return (await getSettings()).steamProfiles && (await apiKey()) !== null;
-}
-
-export async function getSteamBans(ids: string[]): Promise<Map<string, SteamBans>> {
-  const out = new Map<string, SteamBans>();
-  const key = (await getSettings()).steamProfiles ? await apiKey() : null;
-  if (!key) return out;
-  const missing: string[] = [];
-  for (const id of new Set(ids.filter((x) => /^\d{17}$/.test(x)))) {
-    const hit = banCache.get(id);
-    if (hit && Date.now() - hit.at < BAN_TTL) out.set(id, hit.value);
-    else missing.push(id);
-  }
-  // The blocks of 100 at once (the bans page asks for up to 1000 players):
-  // one failed block leaves its players out, the others still count.
-  const parts: string[][] = [];
-  for (let i = 0; i < missing.length; i += 100) parts.push(missing.slice(i, i + 100));
-  const answers = await Promise.all(
-    parts.map((part) => steamJson<{ players?: BanReply[] }>(`https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key=${key}&steamids=${part.join(",")}`).catch(() => null)),
-  );
-  for (const res of answers) {
-    if (!res) continue;
-    for (const [id, value] of rememberBans(res.players ?? [])) out.set(id, value);
-  }
-  return out;
-}
-
-type BanReply = { SteamId: string; VACBanned?: boolean; NumberOfVACBans?: number; NumberOfGameBans?: number; DaysSinceLastBan?: number; CommunityBanned?: boolean };
-
-function rememberBans(players: BanReply[]): [string, SteamBans][] {
-  if (banCache.size > 50000) banCache.clear();
-  return players.map((p) => {
-    const value = { vac: p.NumberOfVACBans ?? 0, game: p.NumberOfGameBans ?? 0, days: p.DaysSinceLastBan ?? 0, community: !!p.CommunityBanned };
-    banCache.set(p.SteamId, { at: Date.now(), value });
-    return [p.SteamId, value];
-  });
 }

@@ -2450,12 +2450,12 @@ const bannedPlayerSql = (table: (typeof playerTables)[number]) => `SELECT p.play
 // not exist yet; ended bans are not shown.
 export type BanRecord = { playerId: number; ban_type: string; length_minutes: number; reason: string | null; banned_at: number; ends_at: number };
 
-export async function getBanRecords(game: string, limit: number): Promise<BanRecord[]> {
+export async function getBanRecords(game: string): Promise<BanRecord[]> {
   try {
     return await query<BanRecord>(
       `SELECT b.player_id AS playerId, b.ban_type, b.length_minutes, b.reason, b.banned_at, b.ends_at
-       FROM hlstats_Players_Bans b WHERE b.game = ? AND b.active = 1 ORDER BY b.banned_at DESC LIMIT ?`,
-      [game, limit],
+       FROM hlstats_Players_Bans b WHERE b.game = ? AND b.active = 1 ORDER BY b.banned_at DESC`,
+      [game],
     );
   } catch {
     return [];
@@ -2475,48 +2475,70 @@ export async function getPlayerBans(playerId: number): Promise<BanRecord[]> {
   }
 }
 
+// A ban of a Steam account as the collector's bans-sync job stores it
+// (hlstats_Bans, collector migration "all-bans"): source steam (VAC and
+// game bans from the Steam Web API, every known account) or sourcebans (a
+// running ban of the SourceBans list). Per player through
+// hlstats_Bans_Players, which the collector fills for every spelling of the
+// Steam ID, active and inactive players of every ranking.
+export type StoredBan = {
+  playerId: number;
+  source: string;
+  banned: number;
+  vac_banned: number;
+  vac_bans: number;
+  game_bans: number;
+  days_since_last_ban: number;
+  last_checked: number;
+  sb_reason: string | null;
+  sb_length: number;
+  sb_created: number | null;
+  sb_ends: number | null;
+};
+
+const storedBanCols = `bp.playerId, b.source, b.banned, b.vac_banned, b.vac_bans, b.game_bans, b.days_since_last_ban, b.last_checked,
+    b.sb_reason, b.sb_length, b.sb_created, b.sb_ends`;
+// Only running bans: a SourceBans ban whose end has passed counts as gone
+// even before the collector deletes it (every minute).
+const storedBanWhere = `b.banned = 1 AND (b.source <> 'sourcebans' OR b.sb_ends IS NULL OR b.sb_ends > ?)`;
+
+// The running stored bans of the players of a ranking; null when the
+// tables do not exist yet (a collector before "all-bans").
+export async function getStoredBans(game: string, now: number): Promise<StoredBan[] | null> {
+  try {
+    return await query<StoredBan>(
+      `SELECT ${storedBanCols} FROM hlstats_Bans_Players bp JOIN hlstats_Bans b ON b.steamid64 = bp.steamid64
+       WHERE bp.game = ? AND ${storedBanWhere}`,
+      [game, now],
+    );
+  } catch {
+    return null;
+  }
+}
+
+// The stored bans of one player (also the Steam row without a ban, so the
+// profile knows Steam was asked); null when the tables do not exist yet.
+export async function getPlayerStoredBans(playerId: number, steam64: string | null, now: number): Promise<{ bans: StoredBan[]; steamChecked: boolean } | null> {
+  try {
+    const [bans, checked] = await Promise.all([
+      query<StoredBan>(`SELECT ${storedBanCols} FROM hlstats_Bans_Players bp JOIN hlstats_Bans b ON b.steamid64 = bp.steamid64 WHERE bp.playerId = ? AND ${storedBanWhere}`, [playerId, now]),
+      steam64 ? query<{ n: number }>(`SELECT COUNT(*) AS n FROM hlstats_Bans WHERE steamid64 = ? AND source = 'steam'`, [steam64]) : Promise.resolve([]),
+    ]);
+    return { bans, steamChecked: Number(checked[0]?.n ?? 0) > 0 };
+  } catch {
+    return null;
+  }
+}
+
 // The players of the given ids, as shown on the bans page (also those
 // hidden as banned, also inactive ones).
 export async function getBanPlayers(ids: number[]): Promise<Map<number, BanPlayer>> {
   const uniq = [...new Set(ids.filter((x) => x > 0))];
-  if (!uniq.length) return new Map();
   const out = new Map<number, BanPlayer>();
   for (const table of playerTables) {
-    const rows = await query<BanPlayer>(`${bannedPlayerSql(table)} WHERE p.playerId IN (?)`, [uniq]);
-    for (const r of rows) if (!out.has(Number(r.playerId))) out.set(Number(r.playerId), r);
-  }
-  return out;
-}
-
-// The most recently active players of the bans page (ranked or banned in
-// the ranking), for the VAC check; with inactive, the most recently seen
-// players the collector moved to hlstats_PlayersInactive.
-export function getRecentPlayers(game: string, limit: number, inactive = false) {
-  return query<BanPlayer>(`${bannedPlayerSql(playerTables[inactive ? 1 : 0])} WHERE p.game = ? ORDER BY p.last_event DESC LIMIT ?`, [game, limit]);
-}
-
-// Players of a game (ranked, banned in the ranking or inactive) by
-// SteamID64. The collector stores the ID as "1:123", "STEAM_0:1:123",
-// "[U:1:246]" or the SteamID64 itself.
-export async function getPlayersBySteam(game: string, steam64s: string[]): Promise<Map<string, BanPlayer>> {
-  const base = 76561197960265728n;
-  const forms = new Map<string, string>();
-  for (const s of new Set(steam64s)) {
-    if (!/^7656119\d{10}$/.test(s)) continue;
-    const acc = BigInt(s) - base;
-    const y = acc % 2n;
-    const z = acc / 2n;
-    for (const f of [`${y}:${z}`, `STEAM_0:${y}:${z}`, `STEAM_1:${y}:${z}`, `[U:1:${acc}]`, `U:1:${acc}`, s]) forms.set(f, s);
-  }
-  const out = new Map<string, BanPlayer>();
-  const all = [...forms.keys()];
-  for (const table of playerTables) {
-    for (let i = 0; i < all.length; i += 1000) {
-      const rows = await query<BanPlayer>(`${bannedPlayerSql(table)} WHERE u.game = ? AND u.uniqueId IN (?)`, [game, all.slice(i, i + 1000)]);
-      for (const r of rows) {
-        const s = forms.get(r.uniqueId);
-        if (s && !out.has(s)) out.set(s, r); // hlstats_Players wins over the inactive copy
-      }
+    for (let i = 0; i < uniq.length; i += 1000) {
+      const rows = await query<BanPlayer>(`${bannedPlayerSql(table)} WHERE p.playerId IN (?)`, [uniq.slice(i, i + 1000)]);
+      for (const r of rows) if (!out.has(Number(r.playerId))) out.set(Number(r.playerId), r);
     }
   }
   return out;

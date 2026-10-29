@@ -1,6 +1,6 @@
 import "server-only";
 import { adminQuery } from "./db";
-import { PLAN_KEYS, nextResetKey, effectiveSchedule, parseNext, parsePlan, type JobPlan } from "./job-plan";
+import { PLAN_KEYS, nextResetKey, effectiveSchedule, parseBansPlan, parseNext, parsePlan, type BansPlan, type JobPlan } from "./job-plan";
 import type { Schedule } from "./hall-period";
 import { resetMode, type ResetMode } from "./reset-modes";
 
@@ -28,6 +28,7 @@ export type JobsOverview = {
   awards: JobPlan | null;
   inactive: JobPlan | null;
   resets: JobPlan | null;
+  bans: BansPlan | null; // the bans-sync job (collector "all-bans")
   rankings: ScheduledRanking[];
   queue: Job[];
   history: Job[];
@@ -94,6 +95,7 @@ export async function jobsOverview(games: string[], historyLimit = 30): Promise<
     awards: parsePlan(o.get(PLAN_KEYS.awards)),
     inactive: parsePlan(o.get(PLAN_KEYS.inactive)),
     resets: parsePlan(o.get(PLAN_KEYS.resets)),
+    bans: parseBansPlan(o.get(PLAN_KEYS.bans)),
     rankings,
     queue,
     history,

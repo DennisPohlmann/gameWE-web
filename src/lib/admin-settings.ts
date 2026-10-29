@@ -255,8 +255,8 @@ const definitions: Omit<SettingGroup, "area">[] = [
         type: "text",
         def: "",
         help: {
-          de: "z. B. https://bans.example.org/ – die öffentliche Ban-Liste wird alle 30 Minuten gelesen (bis 100 Seiten). Nur öffentliche Adressen, keine Weiterleitung.",
-          en: "e.g. https://bans.example.org/ – the public ban list is read every 30 minutes (up to 100 pages). Public addresses only, no redirects.",
+          de: "z. B. https://bans.example.org/ – der Collector liest die ganze öffentliche Ban-Liste alle features.sourcebans.interval (Standard 30 Minuten) und speichert die laufenden Bans für die Bans-Seite. Nur öffentliche Adressen (außer mit features.sourcebans.allow_private), keine Weiterleitung.",
+          en: "e.g. https://bans.example.org/ – the collector reads the whole public ban list every features.sourcebans.interval (default 30 minutes) and stores the running bans for the bans page. Public addresses only (unless features.sourcebans.allow_private), no redirects.",
         },
       },
     ],

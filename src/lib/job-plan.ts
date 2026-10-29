@@ -7,8 +7,46 @@
 
 import { parseSchedule, type Schedule } from "./hall-period";
 
-export const PLAN_KEYS = { awards: "gamewe_next_awards", inactive: "gamewe_next_inactive", resets: "gamewe_next_resets" } as const;
+export const PLAN_KEYS = { awards: "gamewe_next_awards", inactive: "gamewe_next_inactive", resets: "gamewe_next_resets", bans: "gamewe_next_bans" } as const;
 export const NEXT_RESET_PREFIX = "gamewe_next_reset_";
+
+// The state of the collector's bans-sync job (collector "all-bans",
+// features.bans_sync): Steam (key set, recheck in seconds, accounts due,
+// checked, banned, last and next request) and the SourceBans list
+// (features.sourcebans and an address set, interval in seconds, running
+// bans, last and next read, last error).
+export const BANS_PLAN_KEY = "gamewe_next_bans";
+
+export type BansPlanPart = { enabled: boolean; every: number; due: number; checked: number; count: number; last: number; next: number; error: string };
+export type BansPlan = { enabled: boolean; steam: BansPlanPart; sourcebans: BansPlanPart };
+
+// The stored bans plan, or null for a missing or malformed value.
+export function parseBansPlan(v: string | null | undefined): BansPlan | null {
+  if (!v) return null;
+  let o: unknown;
+  try {
+    o = JSON.parse(v);
+  } catch {
+    return null;
+  }
+  if (!o || typeof o !== "object" || typeof (o as Record<string, unknown>).enabled !== "boolean") return null;
+  const p = o as Record<string, unknown>;
+  const num = (x: unknown) => (typeof x === "number" && Number.isFinite(x) && x > 0 ? Math.floor(x) : 0);
+  const part = (x: unknown, every: string, count: string): BansPlanPart => {
+    const q = x && typeof x === "object" ? (x as Record<string, unknown>) : {};
+    return {
+      enabled: q.enabled === true,
+      every: num(q[every]),
+      due: num(q.due),
+      checked: num(q.checked),
+      count: num(q[count]),
+      last: num(q.last),
+      next: num(q.next),
+      error: typeof q.error === "string" ? q.error.slice(0, 300) : "",
+    };
+  };
+  return { enabled: p.enabled === true, steam: part(p.steam, "recheck", "banned"), sourcebans: part(p.sourcebans, "interval", "bans") };
+}
 
 export function nextResetKey(game: string): string {
   return NEXT_RESET_PREFIX + game;

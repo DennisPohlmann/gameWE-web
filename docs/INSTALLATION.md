@@ -159,8 +159,6 @@ TZ=Europe/Berlin
 
 # ---- Optional ----
 # Own templates and map pictures: no setting, see section 5.
-# 1 when SourceBans runs on the same machine or LAN
-#SOURCEBANS_ALLOW_PRIVATE=0
 # Access log on stdout: on, off or all
 #ACCESS_LOG=on
 ```
@@ -200,7 +198,6 @@ TZ=Europe/Berlin
 
 # ---- Optional ----
 # Own templates and map pictures: no setting, mount the folders (section 5).
-#SOURCEBANS_ALLOW_PRIVATE=0
 #ACCESS_LOG=on
 ```
 

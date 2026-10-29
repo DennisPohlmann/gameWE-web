@@ -3,7 +3,7 @@ import Link from "next/link";
 import { sortHeads } from "@/components/sort-head";
 import { BanBadges, banKindLabel, NameBanMark, sourcebansSearchUrl } from "@/components/ban-badges";
 import { Empty, Pager, PctBar, PlayerLink, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
-import { getRankingBans, MAX_ROWS, type BanRow } from "@/lib/bans";
+import { getRankingBans, type BanRow } from "@/lib/bans";
 import { gameHasShots } from "@/lib/data";
 import { fmtDate, fmtNum, kpd, localeOf, ratio, steamIds } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
@@ -29,12 +29,13 @@ const banValues = {
   acc: (r: BanRow) => ratio(Number(r.player.hits), Number(r.player.shots)),
 };
 
-// Banned players of a ranking, as one list like gameME's: bans the
-// collector recorded from the server logs, bans from SourceBans (address
-// under Settings → Bans) and VAC/game bans from Steam (Steam Web API key, Settings → Steam).
-// Like the players page in two tabs: players still in the ranking
-// (hlstats_Players) and, with ?view=inactive, players the collector moved
-// to hlstats_PlayersInactive.
+// Banned players of a ranking, as one list like gameME's, all from the
+// database (lib/bans.ts): bans the collector recorded from the server logs
+// and the bans its bans-sync job stores for every known Steam account (VAC
+// and game bans from Steam, running SourceBans bans). Like the players page
+// in two tabs: players still in the ranking (hlstats_Players) and, with
+// ?view=inactive, players the collector moved to hlstats_PlayersInactive.
+// Every banned player is listed, one page of them at a time.
 export default async function BansPage({ params, searchParams }: { params: Promise<{ game: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { game } = await params;
   const sp = await searchParams;
@@ -45,9 +46,9 @@ export default async function BansPage({ params, searchParams }: { params: Promi
   const values = { ...banValues, type: (r: BanRow) => r.bans.map((b) => banKindLabel(b.kind, t)).join(", ") };
   const order = sortState(sp, values, "order");
   // Counter-Strike 2 logs no shots: no accuracy column.
-  const [shots, { rows, sourcebans, sourcebansUrl, always }] = await Promise.all([gameHasShots(game), getRankingBans(game, t, inactive)]);
+  const [shots, { rows, sourcebans, sourcebansUrl, stored, always }] = await Promise.all([gameHasShots(game), getRankingBans(game, t, inactive)]);
   const sb = sourcebans ? { state: sourcebans } : null;
-  const sorted = sortRows(rows, values, order.sort, order.asc).slice(0, MAX_ROWS);
+  const sorted = sortRows(rows, values, order.sort, order.asc);
   // Only one page of rows is drawn; sorting covers all of them.
   const limit = rowsParam(sp.rows, PER_PAGE);
   const pages = Math.max(1, Math.ceil(sorted.length / limit));
@@ -77,7 +78,9 @@ export default async function BansPage({ params, searchParams }: { params: Promi
         ) : null
       }
     >
-      {sb?.state === "loading" ? (
+      {!stored ? (
+        <p className="muted">{t.bansNoTable}</p>
+      ) : sb?.state === "loading" ? (
         <p className="muted">{t.sbLoading}</p>
       ) : sb?.state === "error" ? (
         <p className="muted">{t.sbError}</p>

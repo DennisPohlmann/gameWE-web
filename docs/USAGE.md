@@ -46,7 +46,7 @@ again every 5 minutes. The heading on `/` counts the real players.
 | `/<game>/chat` | chat log with search; the count of all lines (without a search) is kept for a minute |
 | `/<game>/events` | all events of the ranking (the kinds of the "Latest events" box on the start page: connects, entries, leaves, team, role and name changes, actions, team bonuses, kills, suicides, teamkills; never chat or addresses) over the last hour, 24 hours (default) or 7 days (`?period=1h\|24h\|7d`): a chart of the events over time in five groups (kills, actions, joins and leaves, team/role/name changes, suicides and teamkills; per 5 minutes or per hour), the share of each type (count and percent; a click filters the list by it), and the list newest first with time, type, event, server and map, a type filter (`?type=`, "Action" includes actions on another player) and a pager (at most the newest 5,000 rows; a note says so when the period holds more). Rows with a hidden or banned player on either side are left out of the list and the counts alike. Follows the admin setting "Latest events (ranking start page)": "Sync" adds a "Live updates" switch (on by default, kept per browser) that lets new events run in on the first page, "Async" shows a plain list, "Off" removes the tab and the page (404). The "Events" tab sits between "Teams" and "Chat"; the "Overview" link in the heading of the start page's box opens the page |
 | `/<game>/misc` | player countries, weekdays, connects per day, connect methods, server banners; the numbers are kept for ten minutes, then reloaded in the background |
-| `/<game>/bans` | ban list like gameME's: the running bans of the ranking's players from the collector's ban records (`hlstats_Players_Bans`: type, date, reason; `features.sourcebans` of the collector, which takes SourceBans-banned players out of the ranking while the ban runs), from SourceBans (reason, length, date) and, with a Steam Web API key (Admin → Settings → Steam), VAC and game bans from Steam (both shown as the VAC badge; the player profile asks Steam's ban list the same way, so list and profile agree); K/D, HS/kill and accuracy per player (no points: a banned player has none). 50 players per page (pager below, `?page=`, `?rows=`); sorting covers the whole list. Behind each name, at the height of the flag, a "!" in the colour of the ban (yellow VAC, red SourceBans and server bans, split diagonally red/yellow when both run) shows every running ban with reason, date and length on hover or tap. The ban type column (centred) always shows VAC and SourceBans side by side (each only when the site checks it: Steam Web API key, SourceBans address), the one that does not apply as an outline (yellow VAC and red SourceBans badges otherwise); a server ban gets its own badge only when one runs; the details of each ban show on hover or tap. Players banned in the ranking (`hideranking = 2`) are listed, players hidden by an admin or by themselves are not. Expired and lifted bans are not shown; a SourceBans ban the collector recorded is listed once. Like `/<game>/players` the list has two tabs in its heading: "Ban list" with the banned players still in the ranking (`hlstats_Players`) and "Inactive players" (`?view=inactive`) with those the collector moved to `hlstats_PlayersInactive` (a banned player stops playing, the ban still runs), with the players page's hint and a "Last seen" column; the Steam check covers the 1,000 most recently active players on the first tab and the 1,000 most recently seen inactive players on the second. The SourceBans badge (here and on the profile) links to the player's bans on the SourceBans site (its ban list searched by the Steam ID). |
+| `/<game>/bans` | ban list like gameME's: the running bans of the ranking's players from the collector's ban records (`hlstats_Players_Bans`: type, date, reason; `features.sourcebans` of the collector, which takes SourceBans-banned players out of the ranking while the ban runs), and the bans the collector's job bans-sync stores for every known player in `hlstats_Bans` (collector `features.bans_sync`): running SourceBans bans (reason, length, date, end) and, with a Steam Web API key (Admin → Settings → Steam), VAC and game bans from Steam (both shown as the VAC badge; the player profile reads the same rows, so list and profile agree). The website asks neither Steam nor SourceBans for bans itself; without the tables (an older collector) the page shows only the bans from the server logs and says so; K/D, HS/kill and accuracy per player (no points: a banned player has none). 50 players per page (pager below, `?page=`, `?rows=`); sorting covers the whole list. Behind each name, at the height of the flag, a "!" in the colour of the ban (yellow VAC, red SourceBans and server bans, split diagonally red/yellow when both run) shows every running ban with reason, date and length on hover or tap. The ban type column (centred) always shows VAC and SourceBans side by side (each only when the site checks it: Steam Web API key, SourceBans address), the one that does not apply as an outline (yellow VAC and red SourceBans badges otherwise); a server ban gets its own badge only when one runs; the details of each ban show on hover or tap. Players banned in the ranking (`hideranking = 2`) are listed, players hidden by an admin or by themselves are not. Expired and lifted bans are not shown; a SourceBans ban the collector recorded is listed once. Like `/<game>/players` the list has two tabs in its heading: "Ban list" with the banned players still in the ranking (`hlstats_Players`) and "Inactive players" (`?view=inactive`) with those the collector moved to `hlstats_PlayersInactive` (a banned player stops playing, the ban still runs), with the players page's hint and a "Last seen" column. Both tabs list every banned player (the collector checks all accounts, active and inactive). The SourceBans badge (here and on the profile) links to the player's bans on the SourceBans site (its ban list searched by the Steam ID). |
 | `/search` | search players by name or Steam ID and clans by tag or name (`?q=...&st=names\|steam\|clans&game=<code>`) |
 | `/help` | help: how points are calculated (with the current settings), actions, weapon modifiers, chat commands |
 | `/voice` | detail page of the TeamSpeak server from the voice server box (click its name): a lock when the server has a password (opens to show it only with "Allow showing the TeamSpeak password"), channel tree with the people online (country flag before the name; names can be hidden in the admin settings), server info (operating system with a small symbol, uptime, users, connections, security level, ping, version, host banner URL), traffic and the welcome message, and at the bottom the code of the TeamSpeak banner; live from the ServerQuery, kept for a minute; 404 unless TeamSpeak is the voice server |
@@ -198,8 +198,8 @@ website therefore computes some things itself:
   indexed by search engines, no forum signature; position "not listed" and
   no points) shows the ban: a "!" behind the name as on the bans page, and
   the "Bans" row with the VAC and SourceBans badges side by side (grey when
-  that ban does not apply; VAC once Steam answered) for the running bans
-  (the collector's record, else the SourceBans list, else "Server" for a
+  that ban does not apply; VAC once the collector asked Steam) for the running bans
+  (the collector's record, else its stored SourceBans ban, else "Server" for a
   player hidden as banned without details), their reason, date and length
   or end on hover or tap. Without a ban the row shows the VAC status from
   Steam when Steam answered; it is left out when there is neither. Only the live list of a server still shows them,
@@ -283,20 +283,18 @@ website therefore computes some things itself:
   online, orange when only some are and red when none is; with reduced motion set in the system they stay lit
   without glowing on and off. Servers without a location
   (LAN address, no GeoIP database, rows imported without one) are left out.
-- **SourceBans** (bans page): the public ban list
-  (`index.php?p=banlist&page=N`) of the address under Settings → Bans is
-  read every 30 minutes, at most 100 pages, one after another. The classic
-  SourceBans/SB++ 1.x list, the SB++ 1.8 default theme (rows with a
-  "Steam ID / Invoked on / Ban length / Reason" detail list) and the SB++
-  2026 one are understood. When the list shows Steam IDs but no ban can be
-  read from it (another template), the bans page says so and the server
-  log gets a warning, instead of an empty list.
-  Only public http(s) addresses without redirects are accepted, so the
-  setting cannot reach localhost or the LAN; `SOURCEBANS_ALLOW_PRIVATE=1`
-  allows that when SourceBans runs on the same network.
-- **VAC and game bans** (bans page) need the Steam Web API key; the 1000 most
-  recently active players of the ranking are checked, 100 per call, every
-  12 hours.
+- **SourceBans** (bans page): the collector reads the whole public ban
+  list (`index.php?p=banlist&page=N`) of the address under Settings → Bans
+  every `features.sourcebans.interval` (default 30 minutes; the classic
+  SourceBans/SB++ 1.x list, the SB++ 1.8 default theme and the SB++ 2026
+  one) and stores its running bans in `hlstats_Bans`; expired and lifted
+  bans are deleted there. When it cannot read a list that shows Steam IDs
+  (another template), the bans page says so. The website itself does not
+  contact SourceBans; it only links to it. Whether SourceBans may be on the
+  LAN is the collector's `features.sourcebans.allow_private`.
+- **VAC and game bans** (bans page, profile) need the Steam Web API key;
+  the collector asks Steam for every known player (100 per request, each
+  player again after `features.bans_sync.steam_recheck`, default a day).
 - **Block VAC-banned players** (Admin → Rankings → a ranking, card "VAC
   block", off by default; `hlstats_Options` `gamewe_block_vac_<game>`, also
   `gamewe game set CODE -block-vac=true` of the collector): the
@@ -369,7 +367,9 @@ menu button), and lists turn into cards on narrow screens:
 - **Jobs** (`/admin/jobs`, in the menu under Overview and Settings →
   Collector): what the collector does next, with the time and how long
   until then: the daily awards and the move of inactive players (time and
-  time zone from its config.yaml, or "off"), and the scheduled reset of
+  time zone from its config.yaml, or "off"), the job bans-sync (Steam: how
+  many accounts are checked, banned and due; the SourceBans list: its
+  running bans; each with its interval and last error), and the scheduled reset of
   each ranking with a schedule (rankings with the same reset share one
   line). Below the queue (waiting and running jobs of
   `hlstats_gamewe_jobs`, with the progress of a running move) and the last

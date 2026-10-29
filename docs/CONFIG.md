@@ -4,7 +4,7 @@ The environment (`/etc/gamewe/web/web.env` for the tar.gz, the container's
 `--env-file`) holds only what the website needs before it can reach the
 database or what must not be changeable from the browser: database access,
 `ADMIN_SECRET`, `BASE_PATH`, `TZ`, `ACCESS_LOG`,
-`SOURCEBANS_ALLOW_PRIVATE`, `ADMIN_COOKIE_SECURE` and the runtime variables
+`ADMIN_COOKIE_SECURE` and the runtime variables
 (`PORT`, `HOSTNAME`, `NODE_ENV`). Every variable is listed with a comment in
 [`.env.example`](../.env.example), and
 [INSTALLATION.md](INSTALLATION.md#2-the-settings-file) has complete examples.
@@ -105,10 +105,11 @@ are never sent to the browser or listed under the raw options. The public
 pages read these rows with the read-only database user, like every other
 setting.
 
-`SOURCEBANS_ALLOW_PRIVATE` and `ADMIN_COOKIE_SECURE` stay in the
-environment on purpose: the first is the guard against requests to the
-local network, and a wrong cookie setting set from the browser could lock
-every admin out.
+`ADMIN_COOKIE_SECURE` stays in the environment on purpose: a wrong cookie
+setting set from the browser could lock every admin out.
+`SOURCEBANS_ALLOW_PRIVATE` is gone: the website no longer reads the
+SourceBans list (the collector does, see its `features.sourcebans.allow_private`);
+the variable is ignored.
 
 ## Header links
 
@@ -278,9 +279,9 @@ Not behind consent, because they are settings the visitor makes or are
 needed: the language cookie `gamewe_lang`, the live switches in
 `localStorage` (`gamewe-live-events`, `gamewe-live-player-events`), and the
 admin cookies. Steam profile data (names, the
-addresses of the pictures, VAC status), the Discord widget, TeamSpeak and
-SourceBans are fetched by the server, so the visitor's IP address does not
-reach them. Pictures entered in the settings with an address on another
+addresses of the pictures, VAC status), the Discord widget and TeamSpeak
+are fetched by the server (bans are read by the collector, not the site),
+so the visitor's IP address does not reach them. Pictures entered in the settings with an address on another
 server (logo, header logo, icons) load without consent; `/privacy` names
 their hosts and Admin → Settings → Website → Privacy warns about them, so
 better put them on this server.

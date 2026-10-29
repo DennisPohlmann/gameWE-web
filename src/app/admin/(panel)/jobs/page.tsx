@@ -7,7 +7,7 @@ import { adminDict } from "@/lib/admin-i18n";
 import { jobsOverview, type Job, type ScheduledRanking } from "@/lib/admin-jobs";
 import { rankingSummaries } from "@/lib/admin-rankings";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
-import { fmtDateTime, nowUnix } from "@/lib/format";
+import { fmtDateTime, fmtNum, nowUnix } from "@/lib/format";
 import { scheduleValue } from "@/lib/hall-period";
 import { fill, getAdminLang } from "@/lib/i18n";
 import { jobType, shortDuration, type JobPlan, type JobType } from "@/lib/job-plan";
@@ -37,6 +37,18 @@ const T = {
     inactive: "Inaktive Spieler verschieben",
     inactiveSub: "Spieler ohne Spiel seit „Inaktiv nach“ Tagen",
     scheduled: "Geplanter Reset",
+    bansSteam: "Bans von Steam",
+    bansSteamSub: "VAC- und Spiel-Bans aller bekannten Spieler, 100 je Anfrage",
+    bansSb: "SourceBans-Liste",
+    bansSbSub: "die ganze öffentliche Ban-Liste; abgelaufene und aufgehobene Bans fallen weg",
+    bansStats: "{c} Konten geprüft, {b} gebannt, {d} fällig",
+    bansSbStats: "{n} laufende Bans",
+    everyN: "alle {d}",
+    perAccount: "je Spieler alle {d}",
+    noKey: "kein Steam-Web-API-Key (Einstellungen → Steam)",
+    noSb: "keine SourceBans-Adresse oder features.sourcebans aus",
+    lastError: "Letzter Fehler: {e}",
+    failing: "Fehler",
     daily: "täglich {t}",
     off: "Aus",
     offHint: "aus in der config.yaml ({k})",
@@ -90,6 +102,18 @@ const T = {
     inactive: "Move inactive players",
     inactiveSub: "players who have not played for the “inactive after” days",
     scheduled: "Scheduled reset",
+    bansSteam: "Bans from Steam",
+    bansSteamSub: "VAC and game bans of all known players, 100 per request",
+    bansSb: "SourceBans list",
+    bansSbSub: "the whole public ban list; expired and lifted bans drop out",
+    bansStats: "{c} accounts checked, {b} banned, {d} due",
+    bansSbStats: "{n} running bans",
+    everyN: "every {d}",
+    perAccount: "each player every {d}",
+    noKey: "no Steam Web API key (Settings → Steam)",
+    noSb: "no SourceBans address, or features.sourcebans off",
+    lastError: "Last error: {e}",
+    failing: "Error",
     daily: "daily {t}",
     off: "Off",
     offHint: "off in config.yaml ({k})",
@@ -131,7 +155,7 @@ const TONE: Record<string, string> = { pending: "warn", running: "acc", done: "o
 type Upcoming = { key: string; job: ReactNode; sub: ReactNode; next: number; plan: string; state: ReactNode; link?: string };
 
 // Admin page Jobs: the collector's next runs (daily awards, move of inactive
-// players, scheduled resets), the queue and the history of
+// players, the bans-sync job, scheduled resets), the queue and the history of
 // hlstats_gamewe_jobs.
 export default async function JobsPage() {
   const user = await requireAdmin();
@@ -175,6 +199,25 @@ export default async function JobsPage() {
   };
   daily("awards", "awards", ov.awards, "features.daily_awards");
   daily("inactive", "inactive", ov.inactive, "features.inactive_players");
+  // The bans-sync job (features.bans_sync): Steam and the SourceBans list,
+  // each with its counts; the last error below the name.
+  if (ov.bans) {
+    const b = ov.bans;
+    const part = (key: "bansSteam" | "bansSb", x: typeof b.steam, every: string, stats: string, missing: string) => {
+      const on = b.enabled && x.enabled;
+      upcoming.push({
+        key,
+        job: t[key],
+        sub: x.error ? fill(t.lastError, { e: x.error }) : t[`${key}Sub`],
+        next: on ? x.next : 0,
+        plan: !b.enabled ? fill(t.offHint, { k: "features.bans_sync" }) : !x.enabled ? missing : `${every} · ${stats}`,
+        state: !on ? <span className="pill">{t.off}</span> : x.error ? <span className="pill bad">{t.failing}</span> : plannedPill(x.next),
+      });
+    };
+    part("bansSteam", b.steam, fill(t.perAccount, { d: shortDuration(b.steam.every, lang) }),
+      fill(t.bansStats, { c: fmtNum(b.steam.checked, lang), b: fmtNum(b.steam.count, lang), d: fmtNum(b.steam.due, lang) }), t.noKey);
+    part("bansSb", b.sourcebans, fill(t.everyN, { d: shortDuration(b.sourcebans.every, lang) }), fill(t.bansSbStats, { n: fmtNum(b.sourcebans.count, lang) }), t.noSb);
+  }
   // Rankings with the same reset (time, schedule, mode; usually all that
   // follow the schedule for all rankings) share one line, unless one of
   // them has a job waiting or running.

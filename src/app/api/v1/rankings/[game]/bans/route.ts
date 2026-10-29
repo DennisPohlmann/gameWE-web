@@ -15,8 +15,9 @@ const key: Record<(typeof SORTS)[number], (r: BanRow) => number | string> = {
 };
 
 // The bans page of a ranking: every banned player once, with each running
-// ban (recorded by the collector, SourceBans, VAC/game bans from Steam),
-// newest first, at most 500 as on the website. Texts (length) in English.
+// ban (recorded by the collector from the logs, SourceBans and VAC/game
+// bans from Steam as the collector stores them), newest first, paged as on
+// the website. Texts (length) in English.
 // view=inactive: the page's "Inactive players" tab (banned players the
 // collector moved to hlstats_PlayersInactive).
 export function GET(req: Request, { params }: { params: Promise<{ game: string }> }) {

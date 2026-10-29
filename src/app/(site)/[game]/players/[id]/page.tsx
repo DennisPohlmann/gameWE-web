@@ -20,7 +20,7 @@ import { awardValue, getAwards, getPlayerRibbons, getRanks, getRibbonClasses, ra
 import { siteDay } from "@/lib/day";
 import { HallStars } from "@/components/hall-stars";
 import { getPlayerStars, hallOfFameShown, type StarCount } from "@/lib/hall-of-fame";
-import { getSteamBans, getSteamProfile, type SteamProfile as SteamProfileData } from "@/lib/steam";
+import { getSteamProfile, type SteamProfile as SteamProfileData } from "@/lib/steam";
 import { PlayerLinks, historyAccess } from "@/components/player-history";
 import { bannerUrl, statsOrigin } from "@/lib/site-url";
 import { shareMetadata } from "@/lib/share-meta";
@@ -29,7 +29,7 @@ import { getSettings } from "@/lib/settings";
 import { externalImage } from "@/lib/consent";
 import { getConsent } from "@/lib/consent-server";
 import { profileBans } from "@/lib/bans";
-import { banKind, mergeBans, steamBanEntry, type BanEntry, type BanKind } from "@/lib/ban-merge";
+import { banKind, mergeBans, type BanEntry, type BanKind } from "@/lib/ban-merge";
 import { placeHref } from "@/components/ranking";
 import {
   getChat,
@@ -122,7 +122,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
     gameHasShots(game),
     getRadarAverage(game),
     hallOfFameShown(game),
-    profileBans(p, ids?.steam64 ?? null, settings.sourcebansUrl, t),
+    profileBans(p, t),
   ]);
   const stars = hallShown ? await getPlayerStars(game, id) : null;
   // Hidden players stay out of the list; bots are shown with their tag.
@@ -218,7 +218,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const wonAwards = new Map(ribbons.map((r) => [r.awardId, r.wins]));
   const totalRibbonWins = ribbons.reduce((n, r) => n + r.wins, 0);
 
-  const profile = { game, id, p, ids, isBot, location, age, fav, stars, bans, sourcebans: !!settings.sourcebansUrl, sourcebansUrl: settings.sourcebansUrl, t, lang };
+  const profile = { game, id, p, ids, isBot, location, age, fav, stars, bans: bans.bans, steamBan: bans.steam, sourcebans: !!settings.sourcebansUrl, sourcebansUrl: settings.sourcebansUrl, t, lang };
 
   return (
     <>
@@ -745,29 +745,28 @@ type ProfileProps = {
   fav: { code: string; name: string } | undefined;
   stars: StarCount | null;
   bans: BanEntry[];
+  // The stored Steam ban (null: Steam shows none; undefined: the collector
+  // has not asked Steam yet, then the profile's VAC flag counts).
+  steamBan?: BanEntry | null;
   sourcebans: boolean; // the site checks SourceBans (address set)
   sourcebansUrl: string; // its address, for the link of the badge
   t: Dict;
   lang: Lang;
 };
 
-// The running bans of the player shown in the profile: the collector's
-// records (hlstats_Players_Bans), the SourceBans list (as on the bans page,
-// read every 30 minutes; not waited for), and for a player hidden as banned
-// without either a server ban without details (a VAC kick or a permanent
-// server ban). The VAC ban from Steam is added in ProfileTable (with an API
-// key from Steam's ban list, as on the bans page, so game bans count too). Expired and
-// lifted bans are none.
+// The running bans of the player shown in the profile, all from the
+// database (lib/bans.ts): the collector's records (hlstats_Players_Bans),
+// the SourceBans and Steam bans its bans-sync job stores (hlstats_Bans), and
+// for a player hidden as banned without either a server ban without details.
+// Expired and lifted bans are none.
 // The profile table with the Steam data, asked here so the rest of the page
 // does not wait for Steam (up to five seconds when it is slow or down).
 async function SteamProfile({ steam64, ...rest }: ProfileProps & { steam64: string | null }) {
   const [found, consent] = await Promise.all([steam64 ? getSteamProfile(steam64) : null, getConsent()]);
-  // After the profile: its Steam request also fills the ban cache.
-  const ban = steam64 ? (await getSteamBans([steam64])).get(steam64) : undefined;
   // The picture comes from Steam's image servers: only with consent, else
   // the placeholder with the initial.
   const steam = found && { ...found, avatar: externalImage(consent, found.avatar), avatarSmall: externalImage(consent, found.avatarSmall) };
-  return <ProfileTable steam={steam} steamBan={ban ? steamBanEntry(ban, nowUnix()) : undefined} {...rest} />;
+  return <ProfileTable steam={steam} {...rest} />;
 }
 
 // "Member since" in the site's date format, without a time: Steam's API
@@ -779,9 +778,9 @@ function memberDate(v: string, lang: Lang): string {
 }
 
 // pending: Steam has not answered yet (the fallback while it is asked).
-// steamBan: the ban from Steam's ban list (null: none there; undefined: not
+// steamBan: the stored ban from Steam's ban list (null: none there; undefined: not
 // asked, no API key), else the profile's VAC flag counts.
-function ProfileTable({ steam, steamBan, pending = false, game, id, p, ids, isBot, location, age, fav, stars, bans: found, sourcebans, sourcebansUrl, t, lang }: ProfileProps & { steam: SteamProfileData | null; steamBan?: BanEntry | null; pending?: boolean }) {
+function ProfileTable({ steam, steamBan, pending = false, game, id, p, ids, isBot, location, age, fav, stars, bans: found, sourcebans, sourcebansUrl, t, lang }: ProfileProps & { steam: SteamProfileData | null; pending?: boolean }) {
   // With the VAC ban from Steam: one badge per kind, VAC first.
   const vac: BanEntry[] = steamBan !== undefined ? (steamBan ? [steamBan] : []) : steam?.vacBanned ? [{ kind: "vac", reason: t.vacBanned, at: null, dateText: "", length: "", until: null }] : [];
   const bans = mergeBans([...found, ...vac].map((ban) => ({ player: 0, ban })), () => 0)[0]?.bans ?? [];

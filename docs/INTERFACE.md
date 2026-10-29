@@ -115,7 +115,7 @@ website's # column) and `rank` (the place in the whole ranking by points);
 | `/api/v1/voice/teamspeak/banner` | the TeamSpeak banner as PNG (`?style=<template>`) |
 | `/api/v1/banners/styles` | the styles (design templates) the banners take |
 | `/api/v1/players/<id>` | the values of a player's profile: place, points and last change, kills, K:D, HS/kill, kills per minute, assists, accuracy, shots per kill, rounds, win ratio, survived, connections, ping, location, career rank, favourite weapon, hall of fame stars, `banned` and the running `bans` (source, reason, date, length, end) |
-| `/api/v1/rankings/<game>/bans` | the bans page: banned players with their running bans (server logs, SourceBans, VAC/game bans from Steam), newest first, at most 500; `?view=inactive` the "Inactive players" tab |
+| `/api/v1/rankings/<game>/bans` | the bans page: every banned player with the running bans (server logs; SourceBans and VAC/game bans from Steam as the collector stores them in `hlstats_Bans`), newest first, paged; `?view=inactive` the "Inactive players" tab |
 | `/api/v1/players/<id>/weapons` | the player's weapons with K:D, accuracy, damage per hit, shots per kill and hits per body zone |
 | `/api/v1/players/<id>/hitboxes` | hits per body zone over all weapons (`neck` only from Counter-Strike 2, else 0) |
 | `/api/v1/players/<id>/maps` | kills and deaths per map |
