@@ -11,10 +11,11 @@ import { localeOf } from "@/lib/format";
 import { gameKind, sameBaseGame } from "@/lib/games";
 import { fill } from "@/lib/i18n";
 import { newServerHref } from "@/lib/ranking-preset";
+import { serverRankingOptions } from "@/lib/server-rankings";
 
 // The servers of one ranking (level 100, as the server list): live state,
-// edit, move into another ranking of the same game, and the servers of other
-// rankings to move in.
+// edit, move into another ranking of the same game (not a template), and the
+// servers of other rankings to move in.
 export async function ServersCard({ id, code, lang, sp }: { id: number; code: string; lang: "de" | "en"; sp: Record<string, string | undefined> }) {
   const a = adminDict(lang);
   const u = a.ui;
@@ -41,7 +42,8 @@ export async function ServersCard({ id, code, lang, sp }: { id: number; code: st
   const base = bases.get(code) ?? null;
   const fits = (c: string) => sameBaseGame(bases.get(c) ?? null, base);
   const gameName = (c: string) => gameKind(bases.get(c))?.short ?? "?";
-  const targets = games.filter(([c]) => c !== code && fits(c));
+  // No templates (rankings without servers) to move a server into.
+  const targets = serverRankingOptions(games, new Set(servers.map((s) => s.game))).filter(([c]) => c !== code && fits(c));
   const others = servers.filter((s) => s.game !== code);
   const label = entities.find((e) => e.key === "servers")?.label[lang] ?? "Server";
   const returnTo = encodeURIComponent(`/admin/servers?game=${encodeURIComponent(code)}`);

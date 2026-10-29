@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { deleteAction, saveAction } from "../../../actions";
-import { rankingBaseGames, rankingPageHref } from "@/lib/admin-rankings";
+import { allServers, rankingBaseGames, rankingPageHref } from "@/lib/admin-rankings";
 import { FieldControl } from "@/components/admin/field-control";
 import { PageHead } from "@/components/admin/page-head";
 import { Section } from "@/components/ui";
@@ -13,6 +13,7 @@ import { requireAdmin } from "@/lib/auth";
 import { fill, getAdminLang } from "@/lib/i18n";
 import { presetRanking, rankingServersHref } from "@/lib/ranking-preset";
 import { safeReturnTo } from "@/lib/return-to";
+import { serverRankingOptions } from "@/lib/server-rankings";
 
 type SP = Promise<Record<string, string | undefined>>;
 
@@ -54,6 +55,12 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
   // Counter-Strike 2 servers log over HTTP and have no log secret.
   const serverGame = preset ?? (isNew ? "" : String(r0.game ?? "").trim());
   const cs2 = e.key === "servers" && serverGame !== "" && (await rankingBaseGames()).get(serverGame) === "cs2";
+  // A server's ranking: no templates (rankings without servers), but always
+  // the server's own one.
+  const serverGames =
+    e.key === "servers" && !preset
+      ? serverRankingOptions(optionSets.games ?? [], new Set((await allServers()).map((s) => s.game)), [serverGame, isNew && sp.error ? sp.v_game : undefined])
+      : null;
   const badField = e.fields.find((f) => f.name === sp.field);
   const error =
     sp.error === "field"
@@ -121,7 +128,9 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
               ? f.options.map(([v, l]): [string, string] => [v, typeof l === "string" ? l : l[lang]])
               : preset && f.name === "game"
                 ? optionSets.games.filter(([c]) => c === preset)
-                : f.options
+                : serverGames && f.name === "game"
+                  ? serverGames
+                  : f.options
                   ? optionSets[f.options]
                   : null;
             // A secret has a switch of its own inside, so its block is no <label>.
