@@ -102,6 +102,7 @@ export function PlayerMap({ markers, servers = NO_SERVERS, style }: { markers: M
         const marker = L.marker([m.lat, m.lng], { icon, zIndexOffset: -1000 })
           .bindTooltip(serverTip(m), { direction: "top", offset: [dx, dy - 16] })
           .addTo(map);
+        keepTipInside(marker, map, [dx, dy - 16], [dx, dy + 16]);
         // Several servers: a click opens a box with a link to each of them.
         if (!one) {
           marker.bindPopup(serverLinks(m), { offset: [dx, dy - 16] });
@@ -127,11 +128,14 @@ export function PlayerMap({ markers, servers = NO_SERVERS, style }: { markers: M
           iconAnchor: [15 - dx, 15 - dy],
         });
         // No title: the browser's own tooltip would repeat the name under ours.
-        L.marker(pos, { icon })
+        const marker = L.marker(pos, { icon })
           .bindTooltip(tip(m), { direction: "top", offset: [dx, dy - 14] })
           .addTo(map);
+        keepTipInside(marker, map, [dx, dy - 14], [dx, dy + 14]);
       }
-      if (points.length > 1) map.fitBounds(L.latLngBounds(points), { padding: [60, 60], maxZoom: 6 });
+      // More room above the top markers than at the other edges: their
+      // hover box opens upwards.
+      if (points.length > 1) map.fitBounds(L.latLngBounds(points), { paddingTopLeft: [60, 100], paddingBottomRight: [60, 60], maxZoom: 6 });
       else map.setView(points[0] ?? [51, 10], points.length ? 6 : 4);
       // A thin line from each player to their server, along the great circle,
       // under the markers and not clickable. It starts at the player's picture
@@ -187,6 +191,42 @@ export function PlayerMap({ markers, servers = NO_SERVERS, style }: { markers: M
     };
   }, [markers, servers, style]);
   return <div ref={el} className="player-map" />;
+}
+
+// Space kept between a hover box and the map's edge, in pixels.
+const TIP_EDGE = 4;
+
+// The map cuts off whatever sticks out of it, so a hover box always opens
+// inside: above its marker (up), or below it (down) when there is no room
+// above, and pushed sideways at the left and right edges (the little arrow
+// stays on the marker, see --tip-shift).
+function keepTipInside(marker: import("leaflet").Marker, map: import("leaflet").Map, up: [number, number], down: [number, number]) {
+  marker.on("tooltipopen", (e) => {
+    const t = (e as import("leaflet").TooltipEvent).tooltip;
+    const el = t.getElement();
+    if (!el) return;
+    const place = (dir: "top" | "bottom", offset: [number, number]) => {
+      t.options.direction = dir;
+      t.options.offset = offset;
+      t.update();
+      return el.getBoundingClientRect();
+    };
+    const box = map.getContainer().getBoundingClientRect();
+    el.style.removeProperty("--tip-shift");
+    let r = place("top", up);
+    if (r.top < box.top + TIP_EDGE) {
+      const below = place("bottom", down);
+      // Too tall for either side: the side where more of it shows.
+      if (below.bottom > box.bottom - TIP_EDGE && box.bottom - below.top < r.bottom - box.top) r = place("top", up);
+      else r = below;
+    }
+    const shift = Math.max(0, box.left + TIP_EDGE - r.left) - Math.max(0, r.right - box.right + TIP_EDGE);
+    if (shift) {
+      const o = t.options.offset as [number, number];
+      place(t.options.direction as "top" | "bottom", [o[0] + shift, o[1]]);
+      el.style.setProperty("--tip-shift", `${shift}px`);
+    }
+  });
 }
 
 // Points along the great circle from a to b (as a straight line when they

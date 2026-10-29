@@ -1059,6 +1059,9 @@ table.spaced { margin-top: 10px; }
 .srv-list { margin: 4px 0 0; padding: 0; list-style: none; }
 .srv-list li { margin: 3px 0; white-space: nowrap; }
 .leaflet-tooltip { font: 11px/1.4 Verdana, Arial, sans-serif; }
+/* A hover box pushed in from the map's side keeps its arrow on the marker. */
+.player-map .leaflet-tooltip-top::before,
+.player-map .leaflet-tooltip-bottom::before { margin-left: calc(-6px - var(--tip-shift, 0px)); }
 
 /* Base game of a ranking (CS:GO, TF2, CS 1.6 …), coloured by engine. */
 .game-tag { display: inline-block; margin-left: 6px; padding: 0 4px; border-radius: 2px; font-size: 9px; font-weight: bold; line-height: 14px; vertical-align: middle; color: #fff; background: #5a6b7c; white-space: nowrap; }
