@@ -1,17 +1,19 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { sortHeads } from "@/components/sort-head";
 import { BanBadges, banKindLabel, NameBanMark, sourcebansSearchUrl } from "@/components/ban-badges";
-import { Empty, Pager, PctBar, PlayerLink, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam } from "@/components/ui";
+import { Empty, Pager, PctBar, PlayerLink, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
 import { banKind, mainReason, mergeBans, steamBanEntry, type BanEntry, type BanKind } from "@/lib/ban-merge";
 import { gameHasShots, getBanPlayers, getBanRecords, getPlayersBySteam, getRecentPlayers, type BanPlayer } from "@/lib/data";
-import { fmtBanMinutes, fmtNum, kpd, localeOf, nowUnix, ratio, steamIds } from "@/lib/format";
+import { fmtBanMinutes, fmtDate, fmtNum, kpd, localeOf, nowUnix, ratio, steamIds } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import { getSourcebans, type SbState } from "@/lib/sourcebans";
 import { getSteamBans, steamBansAvailable } from "@/lib/steam";
 import { sortRows, sortState } from "@/lib/table-sort";
 
-// How many of the most recently active players are checked for Steam bans.
+// How many of the most recently active players (on the inactive tab: of the
+// most recently seen inactive ones) are checked for Steam bans.
 const VAC_PLAYERS = 1000;
 const MAX_ROWS = 500;
 // Rows per page unless the visitor picks another number.
@@ -35,6 +37,7 @@ const banValues = {
   type: (r: BanRow): string => r.bans.map((b) => b.kind).join(","),
   reason: (r: BanRow) => r.reason,
   date: (r: BanRow) => r.at,
+  seen: (r: BanRow) => Number(r.player.last_event),
   kpd: (r: BanRow) => kpd(Number(r.player.kills), Number(r.player.deaths)),
   hpk: (r: BanRow) => ratio(Number(r.player.headshots), Number(r.player.kills)),
   acc: (r: BanRow) => ratio(Number(r.player.hits), Number(r.player.shots)),
@@ -43,10 +46,15 @@ const banValues = {
 // Banned players of a ranking, as one list like gameME's: bans the
 // collector recorded from the server logs, bans from SourceBans (address
 // under Settings → Bans) and VAC/game bans from Steam (Steam Web API key, Settings → Steam).
+// Like the players page in two tabs: players still in the ranking
+// (hlstats_Players) and, with ?view=inactive, players the collector moved
+// to hlstats_PlayersInactive.
 export default async function BansPage({ params, searchParams }: { params: Promise<{ game: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { game } = await params;
   const sp = await searchParams;
   const { lang, t } = await getDict();
+  const inactive = strParam(sp.view) === "inactive";
+  const base = `/${game}/bans`;
   // The type sorts by its shown names.
   const values = { ...banValues, type: (r: BanRow) => r.bans.map((b) => banKindLabel(b.kind, t)).join(", ") };
   const order = sortState(sp, values, "order");
@@ -56,7 +64,7 @@ export default async function BansPage({ params, searchParams }: { params: Promi
   const [records, sb, vac] = await Promise.all([
     getBanRecords(game, MAX_ROWS),
     sourcebansUrl ? sbRows(game, sourcebansUrl) : null,
-    steamBans ? vacRows(game) : [],
+    steamBans ? vacRows(game, inactive) : [],
   ]);
   const recordPlayers = await getBanPlayers(records.map((r) => Number(r.playerId)));
 
@@ -68,7 +76,9 @@ export default async function BansPage({ params, searchParams }: { params: Promi
   });
   // A player is listed once, with one badge per kind of ban (a SourceBans
   // ban the collector recorded and the same ban on the list are one).
-  const rows: BanRow[] = mergeBans([...recordRows, ...(sb?.rows ?? []), ...vac], (p) => Number(p.playerId)).map((m) => ({ ...m, reason: mainReason(m.bans) }));
+  const rows: BanRow[] = mergeBans([...recordRows, ...(sb?.rows ?? []), ...vac], (p) => Number(p.playerId))
+    .filter((m) => !!Number(m.player.inactive) === inactive)
+    .map((m) => ({ ...m, reason: mainReason(m.bans) }));
   // Newest first; without a date at the end.
   rows.sort((a, b) => (b.at ?? 0) - (a.at ?? 0));
   const sorted = sortRows(rows, values, order.sort, order.asc).slice(0, MAX_ROWS);
@@ -77,14 +87,23 @@ export default async function BansPage({ params, searchParams }: { params: Promi
   const pages = Math.max(1, Math.ceil(sorted.length / limit));
   const page = Math.min(pageParam(sp.page), pages);
   const offset = (page - 1) * limit;
-  const keep = { ...order.keep, rows: limit !== PER_PAGE ? limit : undefined };
-  const th = sortHeads(order, `/${game}/bans`, { rows: keep.rows });
+  const keep = { view: inactive ? "inactive" : undefined, ...order.keep, rows: limit !== PER_PAGE ? limit : undefined };
+  const th = sortHeads(order, base, { view: keep.view, rows: keep.rows });
   // VAC and SourceBans side by side whenever the site checks them.
   const always: BanKind[] = [...(steamBans ? (["vac"] as const) : []), ...(sourcebansUrl ? (["sourcebans"] as const) : [])];
 
   return (
     <Section
-      title={t.banList}
+      title={
+        <span className="subtabs">
+          <Link prefetch={false} href={base} className={inactive ? undefined : "active"}>
+            {t.banList}
+          </Link>
+          <Link prefetch={false} href={`${base}?view=inactive`} className={inactive ? "active" : undefined}>
+            {t.inactivePlayers}
+          </Link>
+        </span>
+      }
       aside={
         sourcebansUrl ? (
           <a href={`${sourcebansUrl}index.php?p=banlist`} target="_blank" rel="noopener noreferrer nofollow">
@@ -100,6 +119,7 @@ export default async function BansPage({ params, searchParams }: { params: Promi
       ) : sb?.state === "unknown" ? (
         <p className="muted">{t.sbUnknown}</p>
       ) : null}
+      {inactive ? <p className="lead">{t.inactiveHint}</p> : null}
       {rows.length ? (
         <TableWrap>
           <table>
@@ -110,6 +130,7 @@ export default async function BansPage({ params, searchParams }: { params: Promi
                 {th(t.banType, "type", "ban-type-col")}
                 {th(t.banReason, "reason", "hide-sm")}
                 {th(t.banDate, "date", "")}
+                {inactive ? th(t.lastSeen, "seen", "num hide-sm") : null}
                 {th(t.kpd, "kpd", "num hide-sm")}
                 {th(t.hpk, "hpk", "barcell")}
                 {shots ? th(t.acc, "acc", "barcell hide-sm") : null}
@@ -128,6 +149,7 @@ export default async function BansPage({ params, searchParams }: { params: Promi
                   </td>
                   <td className="hide-sm">{r.reason}</td>
                   <td>{r.at ? new Date(r.at * 1000).toLocaleString(localeOf(lang), { dateStyle: "medium", timeStyle: "short" }) : r.dateText || "–"}</td>
+                  {inactive ? <td className="num hide-sm">{fmtDate(Number(r.player.last_event), lang)}</td> : null}
                   <td className="num hide-sm">{fmtNum(kpd(Number(r.player.kills), Number(r.player.deaths)), lang, 2)}</td>
                   <td className="barcell">
                     <PctBar value={ratio(Number(r.player.headshots), Number(r.player.kills))} lang={lang} />
@@ -144,7 +166,7 @@ export default async function BansPage({ params, searchParams }: { params: Promi
         </TableWrap>
       ) : null}
       {rows.length ? (
-        <Pager base={`/${game}/bans`} params={keep} page={page} pages={pages} total={sorted.length} rows={{ value: limit, options: ROW_OPTIONS }} locale={localeOf(lang)} labels={t} />
+        <Pager base={base} params={keep} page={page} pages={pages} total={sorted.length} rows={{ value: limit, options: ROW_OPTIONS }} locale={localeOf(lang)} labels={t} />
       ) : (
         <Empty>{t.bansNone}</Empty>
       )}
@@ -172,8 +194,8 @@ async function sbRows(game: string, base: string) {
   return { state: !list.ok ? ("error" as const) : list.unknown ? ("unknown" as const) : ("ok" as const), rows };
 }
 
-async function vacRows(game: string): Promise<Found[]> {
-  const players = await getRecentPlayers(game, VAC_PLAYERS);
+async function vacRows(game: string, inactive: boolean): Promise<Found[]> {
+  const players = await getRecentPlayers(game, VAC_PLAYERS, inactive);
   const bySteam = new Map(
     players.flatMap((p) => {
       const ids = steamIds(p.uniqueId);

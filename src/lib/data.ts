@@ -2380,6 +2380,8 @@ export type BanPlayer = {
   hits: number;
   last_event: number;
   hideranking: number;
+  // 1 when the player is in hlstats_PlayersInactive.
+  inactive: number;
 };
 
 // The players the bans page may show: ranked ones and those hidden as
@@ -2390,7 +2392,8 @@ export type BanPlayer = {
 // uses the indexes of its table.
 const playerTables = ["hlstats_Players", "hlstats_PlayersInactive"] as const;
 const bannedPlayerSql = (table: (typeof playerTables)[number]) => `SELECT p.playerId, d.lastName AS name, l.flag, l.country, u.uniqueId,
-    p.skill, p.kills, p.deaths, p.headshots, p.shots, p.hits, p.last_event, p.hideranking
+    p.skill, p.kills, p.deaths, p.headshots, p.shots, p.hits, p.last_event, p.hideranking,
+    ${table === "hlstats_PlayersInactive" ? 1 : 0} AS inactive
   FROM hlstats_PlayerUniqueIds u
   JOIN ${table} p ON p.playerId = u.playerId AND p.hideranking IN (0, 2)
   LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
@@ -2440,10 +2443,10 @@ export async function getBanPlayers(ids: number[]): Promise<Map<number, BanPlaye
 }
 
 // The most recently active players of the bans page (ranked or banned in
-// the ranking), for the VAC check; inactive players are, by definition,
-// not among the most recent ones.
-export function getRecentPlayers(game: string, limit: number) {
-  return query<BanPlayer>(`${bannedPlayerSql("hlstats_Players")} WHERE p.game = ? ORDER BY p.last_event DESC LIMIT ?`, [game, limit]);
+// the ranking), for the VAC check; with inactive, the most recently seen
+// players the collector moved to hlstats_PlayersInactive.
+export function getRecentPlayers(game: string, limit: number, inactive = false) {
+  return query<BanPlayer>(`${bannedPlayerSql(playerTables[inactive ? 1 : 0])} WHERE p.game = ? ORDER BY p.last_event DESC LIMIT ?`, [game, limit]);
 }
 
 // Players of a game (ranked, banned in the ranking or inactive) by
