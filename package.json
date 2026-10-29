@@ -11,6 +11,7 @@
     "test": "tsc -p tsconfig.test.json && node --test \"out/tests/tests/*.test.js\"",
     "create-admin": "node scripts/create-admin.mjs",
     "templates": "node scripts/modern-templates.mjs",
+    "shots": "node scripts/skin-shots.mjs",
     "flags": "node scripts/flags-sprite.mjs"
   },
   "dependencies": {

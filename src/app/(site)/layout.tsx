@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { getSettings, titleTemplate } from "@/lib/settings";
@@ -18,6 +18,8 @@ import { ConsentRoot, PRIVACY_HREF } from "@/components/consent";
 import { getConsent } from "@/lib/consent-server";
 import { getGames } from "@/lib/data";
 import { resolveTemplate, themeStyle } from "@/lib/templates";
+import { previewSkinOf, SKIN_PREVIEW_COOKIE } from "@/lib/skin-preview";
+import { env } from "@/lib/env";
 import "./globals.css";
 
 // Every page reads live data from the collector's database.
@@ -67,12 +69,19 @@ async function clientOs(): Promise<"win" | "mac" | undefined> {
   return undefined;
 }
 
+// SKIN_PREVIEW=on (screenshot runs): the template named by the preview cookie
+// (src/lib/skin-preview.ts), else none.
+async function previewSkin(): Promise<string | null> {
+  const on = env("SKIN_PREVIEW");
+  return on ? previewSkinOf((await cookies()).get(SKIN_PREVIEW_COOKIE)?.value, on) : null;
+}
+
 // Page frame in the style of gameME: header with tabs, breadcrumb bar with
 // the languages, optional logo, content, footer.
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const { lang, t } = await getDict();
   const { siteName, siteUrl, logoUrl, headerLogo, links, headerHome, headerOrder, geoipCredit, skin, sourcebansUrl } = await getSettings();
-  const [games, template, os, consent] = await Promise.all([getGames().catch(() => []), resolveTemplate(skin), clientOs(), getConsent()]);
+  const [games, template, os, consent] = await Promise.all([getGames().catch(() => []), previewSkin().then((p) => resolveTemplate(p ?? skin)), clientOs(), getConsent()]);
   const theme = template ? await themeStyle(template) : null;
   const sections = {
     "": t.servers,

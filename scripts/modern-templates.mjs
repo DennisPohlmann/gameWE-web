@@ -7,6 +7,12 @@
 //   node scripts/modern-templates.mjs          write the files
 //   node scripts/modern-templates.mjs --check  exit 1 if a file is out of date
 //
+// Other variants with the same layout (gameWE-web-content keeps its own
+// modern-* templates this way, `make modern` there):
+//   node scripts/modern-templates.mjs --variants FILE.json --out DIR [--check]
+// FILE.json is a list of variants like VARIANTS below, with "base": "dark"
+// or "light"; the files go to DIR/<id>/.
+//
 // Edit this script or layout.css, never the generated files.
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import path from "node:path";
@@ -387,10 +393,26 @@ function chartJson(v) {
   return JSON.stringify(json, null, 2) + "\n";
 }
 
-const check = process.argv.includes("--check");
+const argv = process.argv.slice(2);
+const opt = (name) => {
+  const i = argv.indexOf(name);
+  if (i >= 0 && !argv[i + 1]) throw new Error(`${name} needs a value`);
+  return i >= 0 ? argv[i + 1] : undefined;
+};
+const check = argv.includes("--check");
+const variantsFile = opt("--variants");
+const outDir = path.resolve(opt("--out") ?? path.join(root, "templates"));
+const BASES = { dark: DARK, light: LIGHT };
+const variants = variantsFile
+  ? JSON.parse(readFileSync(variantsFile, "utf8")).map((v) => {
+      if (!/^[a-z0-9][a-z0-9_-]{0,31}$/.test(v.id ?? "") || !BASES[v.base]) throw new Error(`${variantsFile}: variant ${JSON.stringify(v.id)} needs an id and "base": "dark" or "light"`);
+      return { ...v, base: BASES[v.base] };
+    })
+  : VARIANTS;
+const shown = path.relative(process.cwd(), outDir) || ".";
 let stale = 0;
-for (const v of VARIANTS) {
-  const dir = path.join(root, "templates", v.id);
+for (const v of variants) {
+  const dir = path.join(outDir, v.id);
   const files = {
     "theme.css": themeCss(v),
     "chart.json": chartJson(v),
@@ -402,15 +424,15 @@ for (const v of VARIANTS) {
     const old = existsSync(file) ? readFileSync(file, "utf8") : null;
     if (old === text) continue;
     if (check) {
-      console.error(`out of date: templates/${v.id}/${name}`);
+      console.error(`out of date: ${shown}/${v.id}/${name}`);
       stale++;
     } else {
       writeFileSync(file, text);
-      console.log(`wrote templates/${v.id}/${name}`);
+      console.log(`wrote ${shown}/${v.id}/${name}`);
     }
   }
 }
 if (stale) {
-  console.error("run `npm run templates` and commit the result");
+  console.error(variantsFile ? "run it without --check and commit the result" : "run `npm run templates` and commit the result");
   process.exit(1);
 }

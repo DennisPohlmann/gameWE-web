@@ -15,10 +15,54 @@ Translations: [src/translations/README.md](../src/translations/README.md);
 design templates: [templates/README.md](../templates/README.md).
 The `modern-*` templates are generated: change
 `scripts/modern-templates/layout.css` or `scripts/modern-templates.mjs`,
-then run `npm run templates` (see "Modern templates" there).
+then run `npm run templates` (see "Modern templates" there); with
+`--variants FILE.json --out DIR` it builds other colour variants with the same
+layout (gameWE-web-content uses this, `make modern` there).
 The flags are shown out of one picture, `public/flags/sprite.png`, with
 their order in `src/lib/flag-sprite.ts`: after a change in `public/flags/`
 run `npm run flags` (devDependency `sharp`) and commit both.
+
+## Screenshots of the skins
+
+Visual checks use the six built-in skins (`dark`, `light`, `orange`,
+`modern-dark`, `modern-light`, `modern-orange`), desktop (1440) and phone
+(390), on the same demo data every time.
+
+Demo data, once per test database (collector `gamewe`, config of the test
+database; everything is invented, see the head of `scripts/demo-data.mjs`):
+
+```bash
+node scripts/demo-data.mjs log > demo.log
+node scripts/demo-data.mjs sql > demo.sql
+gamewe db init -f
+gamewe simulate -file demo.log -f
+gamewe simulate -file demo.log -server 127.0.0.1:27016 -f   # a second server
+psql ... < demo.sql            # or mariadb ... < demo.sql: places of the players
+```
+
+Keep a dump of that database (`pg_dump` / `mariadb-dump`) and load it for the
+next check instead of seeding again.
+
+Screenshots: start the site with `SKIN_PREVIEW=on` (`SKIN_PREVIEW=on npm start`
+after a build, or `npm run dev`) and run `scripts/skin-shots.mjs` (needs
+Playwright with Chromium, not a dependency: `npm i --no-save playwright`).
+Every skin and device is its own browser context with the preview cookie,
+so all twelve run side by side on one server; nothing in the database
+changes. Only the pages change skin: banner pictures and the admin area keep
+their own design.
+
+```bash
+npm run shots -- -out shots/before                  # the fixed page list, 12 pages x 12
+npm run shots -- -pages player,server -out shots/after -baseline shots/before -sheet
+```
+
+`-pages` takes names of the list (`home`, `ranking`, `players`, `player`,
+`server`, `clans`, `clan`, `maps`, `map`, `weapons`, `awards`, `misc`) or own
+paths. `report.txt` lists HTTP errors, pages wider than the screen and browser
+errors; with `-baseline` only the shots that changed (and `diff/` shows
+where), so a second run needs a look at those only. `-sheet` adds one picture
+per page and device with all six skins side by side (`sheet/`). All options
+are at the head of the script.
 
 ## Build and check
 

@@ -4,8 +4,9 @@ The environment (`/etc/gamewe/web/web.env` for the tar.gz, the container's
 `--env-file`) holds only what the website needs before it can reach the
 database or what must not be changeable from the browser: database access,
 `ADMIN_SECRET`, `BASE_PATH`, `TZ`, `ACCESS_LOG`,
-`ADMIN_COOKIE_SECURE` and the runtime variables
-(`PORT`, `HOSTNAME`, `NODE_ENV`). Every variable is listed with a comment in
+`ADMIN_COOKIE_SECURE`, `SKIN_PREVIEW` (only for
+screenshot runs, see [DEVELOPMENT.md](DEVELOPMENT.md#screenshots-of-the-skins))
+and the runtime variables (`PORT`, `HOSTNAME`, `NODE_ENV`). Every variable is listed with a comment in
 [`.env.example`](../.env.example), and
 [INSTALLATION.md](INSTALLATION.md#2-the-settings-file) has complete examples.
 Everything else is set in the admin area (Admin → Settings) and stored in
