@@ -9,7 +9,7 @@ export function GET(_req: Request, { params }: { params: Promise<{ id: string }>
   return api(async () => {
     const p = await publicPlayer(pathId((await params).id));
     if (!p) return null;
-    const [victims, killers] = await Promise.all([getOpponents(p.playerId, "victims"), getOpponents(p.playerId, "killers")]);
+    const [victims, killers] = await Promise.all([getOpponents(p.game, p.playerId, "victims"), getOpponents(p.game, p.playerId, "killers")]);
     const tag = await playerTags([...victims, ...killers].map((o) => o.playerId));
     const row = (o: Opponent) => ({ id: Number(o.playerId), name: o.name, ...tag(o.playerId), kills: Number(o.kills), headshots: Number(o.headshots), hpk: share(o.headshots, o.kills) });
     return { id: p.playerId, game: p.game, victims: victims.map(row), killers: killers.map(row) };

@@ -19,7 +19,7 @@ export function GET(req: Request, { params }: { params: Promise<{ id: string }> 
     const q = new URL(req.url).searchParams;
     const pg = pagingArg(q);
     const { sort, asc } = sortArg(q, SORTS, "kills", ["name"]);
-    const all = sortRows(await getPlayerMaps(p.playerId, 1000), key[sort], asc, (m) => Number(m.id));
+    const all = sortRows(await getPlayerMaps(p.game, p.playerId, 1000), key[sort], asc, (m) => Number(m.id));
     return paged(
       pageOf(all, pg).map((m) => ({
         id: Number(m.id),

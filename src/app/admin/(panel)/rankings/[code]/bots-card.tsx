@@ -12,14 +12,17 @@ const T = {
       "An: Bots werden wie Spieler gerankt, können Platz 1 sein und Awards gewinnen. Aus: Sie fehlen in Ranglisten und Awards, ihre Namen sind nicht verlinkt. Das Umschalten gilt sofort auch für die vorhandenen Bots dieses Rankings.",
     points: "Punkte für Bot-Kills",
     pointsHelp:
-      "An: Ein Bot zählt bei den Punkten wie ein Spieler. Wer einen Bot abschießt, bekommt die normalen Kill-Punkte samt Headshot-Bonus und Killserie, und wer von einem Bot getötet wird, verliert Punkte. Aus: Kills an und durch Bots bringen und kosten keine Punkte, also auch keinen Headshot-Bonus und keine Killserie. Ob sie bei den Kills mitzählen, regelt der Schalter darunter.",
-    kills: "Bot-Kills zählen als Kills",
+      "An: Ein Bot zählt bei den Punkten wie ein Spieler. Wer einen Bot abschießt, bekommt die normalen Kill-Punkte samt Headshot-Bonus und Killserie, und wer von einem Bot getötet wird, verliert Punkte. Aus: Kills an und durch Bots bringen und kosten keine Punkte, also auch keinen Headshot-Bonus und keine Killserie. Ob sie in der Statistik mitzählen, regeln die Schalter darunter.",
+    kills: "Bot-Kills für den Karriere-Rang",
     killsHelp:
-      "An: Ein abgeschossener Bot zählt bei den Kills des Spielers mit, also für Kill-Rangliste, K/D und den Karriere-Rang. Aus: Der Kill wird gespeichert (Ereignisse, Waffen, Maps), zählt aber nicht zu den Kills und Headshots des Spielers. Wer von einem Bot getötet wird, bekommt den Tod in beiden Fällen angerechnet. Ob es Punkte gibt, regelt der Schalter darüber.",
+      "An: Ein abgeschossener Bot zählt für den Karriere-Rang (Private, General …) mit. Aus: Für den Rang zählen nur Kills an Spielern.",
+    stats: "Bots in der Statistik",
+    statsHelp:
+      "An: Alles gegen Bots zählt in der Statistik wie gegen Spieler: Kills, Tode, Headshots, K/D, Serien, Tagesverlauf sowie die Karten- und Gegner-Tabellen. Aus: Die Kills werden gespeichert und erscheinen in den Ereignissen, ändern aber die Statistik der Spieler nicht. Left 4 Dead zählt Kills an der KI immer. Das gilt für neue Kills; bisherige Zahlen bleiben, wie sie sind.",
     save: "Speichern",
     saved: "Gespeichert.",
     savedBots: "Gespeichert. {n} vorhandene Bots wurden angepasst.",
-    cli: "Auf der Konsole: gamewe game set {g} -rank-bots=true|false -bot-points=true|false -bot-kills=true|false",
+    cli: "Auf der Konsole: gamewe game set {g} -rank-bots=true|false -bot-points=true|false -bot-kills=true|false -bot-stats=true|false",
   },
   en: {
     title: "Bots",
@@ -29,14 +32,17 @@ const T = {
       "On: bots are ranked like players, can be number 1 and win awards. Off: they stay out of rankings and awards, their names are not linked. Switching also applies at once to the existing bots of this ranking.",
     points: "Points for bot kills",
     pointsHelp:
-      "On: a bot counts like a player for points. Killing a bot gives the normal kill points including the headshot bonus and kill streaks, and being killed by a bot costs points. Off: kills of and by bots give and cost no points, so no headshot bonus and no kill streak either. Whether they count as kills is the switch below.",
-    kills: "Bot kills count as kills",
+      "On: a bot counts like a player for points. Killing a bot gives the normal kill points including the headshot bonus and kill streaks, and being killed by a bot costs points. Off: kills of and by bots give and cost no points, so no headshot bonus and no kill streak either. Whether they count in the stats is up to the switches below.",
+    kills: "Bot kills for the career rank",
     killsHelp:
-      "On: a bot shot down counts in the player's kills, so for the kill ranking, K/D and the career rank. Off: the kill is stored (events, weapons, maps) but not added to the player's kills and headshots. Being killed by a bot always counts as a death. Whether it gives points is the switch above.",
+      "On: a bot shot down counts for the career rank (Private, General …). Off: only kills of players count for the rank.",
+    stats: "Bots in the stats",
+    statsHelp:
+      "On: everything against bots counts in the stats as against players: kills, deaths, headshots, K/D, streaks, the daily history and the map and opponent tables. Off: the kills are stored and shown in the events but do not change the players' stats. Left 4 Dead always counts kills of the AI. This applies to new kills; the numbers so far stay as they are.",
     save: "Save",
     saved: "Saved.",
     savedBots: "Saved. {n} existing bots were updated.",
-    cli: "From the console: gamewe game set {g} -rank-bots=true|false -bot-points=true|false -bot-kills=true|false",
+    cli: "From the console: gamewe game set {g} -rank-bots=true|false -bot-points=true|false -bot-kills=true|false -bot-stats=true|false",
   },
 };
 
@@ -77,6 +83,7 @@ export async function BotsCard({ game, lang, status, changed }: { game: string; 
         {sw("ranked", s.ranked, t.ranked, t.rankedHelp)}
         {sw("points", s.points, t.points, t.pointsHelp)}
         {sw("kills", s.kills, t.kills, t.killsHelp)}
+        {sw("stats", s.stats, t.stats, t.statsHelp)}
         <button type="submit" className="button primary">
           {t.save}
         </button>

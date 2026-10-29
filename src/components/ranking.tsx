@@ -84,7 +84,7 @@ export async function RankingTable({
         </td>
         {ranks.length ? (
           <td className="rankcell">
-            <RankCell kills={Number(r.kills)} ranks={ranks} t={t} lang={lang} />
+            <RankCell kills={Number(r.careerKills)} ranks={ranks} t={t} lang={lang} />
           </td>
         ) : null}
         {showGlobalRank ? <td className="num hide-sm">{fmtNum(Number(r.globalRank ?? 0), lang)}</td> : null}

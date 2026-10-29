@@ -97,12 +97,12 @@ export default async function PlayerPage({ params, searchParams }: Props) {
       getPlayerHistory(id, 30),
       getPlayerNames(id),
       getPlayerWeapons(id),
-      getPlayerMaps(id),
+      getPlayerMaps(game, id),
       getPlayerTeams(id),
       getPlayerActions(id),
-      getOpponents(id, "victims"),
-      getOpponents(id, "killers"),
-      getPlayerKillStats(id),
+      getOpponents(game, id, "victims"),
+      getOpponents(game, id, "killers"),
+      getPlayerKillStats(game, id),
       getPlayerAwards(id),
       getRanks(game),
       access.chat ? getChat({ playerId: id, limit: 15, offset: 0 }) : Promise.resolve([]),
@@ -134,8 +134,10 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const hs14 = last14.reduce((s, h) => s + h.headshots, 0);
   const isBot = (p.uniqueId ?? "").startsWith("BOT");
   const fav = weapons[0];
-  const rank = rankFor(p.kills, ranks);
-  const rankProgress = rank && rank.next !== null ? (p.kills - rank.minimum) / (rank.next - rank.minimum) : 1;
+  // The career rank counts its own kills (career_kills: bots by the ranking's setting).
+  const careerKills = Number(p.careerKills);
+  const rank = rankFor(careerKills, ranks);
+  const rankProgress = rank && rank.next !== null ? (careerKills - rank.minimum) / (rank.next - rank.minimum) : 1;
   // City, state and country link to the ranking of that place.
   const code = /^[a-z]{2}$/i.test(p.flag ?? "") ? (p.flag as string) : "";
   const location = [
@@ -391,7 +393,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                       <Bar value={rankProgress} wide label={pc(rankProgress)} />
                     </td>
                     <td className="center">
-                      {rank.next !== null ? fill(t.killsNeeded, { n: fmtNum(rank.next - p.kills, lang), pct: pc(rankProgress) }) : t.topRank}
+                      {rank.next !== null ? fill(t.killsNeeded, { n: fmtNum(rank.next - careerKills, lang), pct: pc(rankProgress) }) : t.topRank}
                     </td>
                   </tr>
                 </tbody>
@@ -417,27 +419,27 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                               : fill(t.killsFrom, { min: fmtNum(r.minimum, lang) });
                           const current = r.index === rank?.index;
                           // Progress towards the next rank (current) or towards this one (locked).
-                          const goal = current ? r.next : p.kills < r.minimum ? r.minimum : null;
+                          const goal = current ? r.next : careerKills < r.minimum ? r.minimum : null;
                           const from = current ? r.minimum : 0;
-                          const share = goal !== null ? Math.max(0, Math.min(1, (p.kills - from) / Math.max(1, goal - from))) : null;
+                          const share = goal !== null ? Math.max(0, Math.min(1, (careerKills - from) / Math.max(1, goal - from))) : null;
                           return {
                             key: r.index,
-                            badge: <RankBadge name={r.name} size={40} dim={p.kills < r.minimum} untitled />,
+                            badge: <RankBadge name={r.name} size={40} dim={careerKills < r.minimum} untitled />,
                             tip: (
                               <>
                                 <b>{rankName(r.name)}</b>
                                 <span className="tip-line">{range}</span>
-                                <span className={`tip-line rank-tip-state ${current ? "current" : p.kills < r.minimum ? "locked" : "reached"}`}>
-                                  {current ? t.currentRank : p.kills < r.minimum ? t.rankLocked : t.rankReached}
+                                <span className={`tip-line rank-tip-state ${current ? "current" : careerKills < r.minimum ? "locked" : "reached"}`}>
+                                  {current ? t.currentRank : careerKills < r.minimum ? t.rankLocked : t.rankReached}
                                 </span>
                                 {current || goal !== null ? (
                                   <span className="tip-line">
-                                    {t.kills}: <b>{fmtNum(p.kills, lang)}</b>
+                                    {t.kills}: <b>{fmtNum(careerKills, lang)}</b>
                                   </span>
                                 ) : null}
                                 {goal !== null && share !== null ? (
                                   <>
-                                    <span className="tip-line">{fill(t.killsNeeded, { n: fmtNum(goal - p.kills, lang), pct: pc(share) })}</span>
+                                    <span className="tip-line">{fill(t.killsNeeded, { n: fmtNum(goal - careerKills, lang), pct: pc(share) })}</span>
                                     <span className="tip-line">
                                       <Bar value={share} wide />
                                     </span>

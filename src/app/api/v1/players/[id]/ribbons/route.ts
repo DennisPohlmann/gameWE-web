@@ -8,7 +8,7 @@ export function GET(_req: Request, { params }: { params: Promise<{ id: string }>
     const p = await publicPlayer(pathId((await params).id));
     if (!p) return null;
     const [ribbons, classes, ranks] = await Promise.all([getPlayerRibbons(p.playerId), getRibbonClasses(p.game), getRanks(p.game)]);
-    const rank = rankFor(p.kills, ranks);
+    const rank = rankFor(Number(p.careerKills), ranks);
     return {
       id: p.playerId,
       game: p.game,

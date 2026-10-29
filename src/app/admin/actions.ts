@@ -446,9 +446,9 @@ export async function rankingBotsAction(form: FormData) {
   if (!games.some(([code]) => code === game)) redirect("/admin/rankings");
   // The switches send a hidden 0 and, when on, a 1 as well.
   const on = (name: string) => form.getAll(name).map(String).includes("1");
-  const next = { ranked: on("ranked"), points: on("points"), kills: on("kills") };
+  const next = { ranked: on("ranked"), points: on("points"), kills: on("kills"), stats: on("stats") };
   const n = await saveRankingBots(game, next);
-  console.info(`gameWE: bots of ranking ${game} ${next.ranked ? "ranked" : "hidden"}, ${next.points ? "with" : "without"} points, kills of bots ${next.kills ? "counted" : "not counted"}${n ? ` (${n} bots changed)` : ""}, by ${user.username}`);
+  console.info(`gameWE: bots of ranking ${game} ${next.ranked ? "ranked" : "hidden"}, ${next.points ? "with" : "without"} points, kills of bots ${next.kills ? "counted" : "not counted"} for the career rank, bots ${next.stats ? "in" : "not in"} the stats${n ? ` (${n} bots changed)` : ""}, by ${user.username}`);
   redirect(`/admin/rankings/${encodeURIComponent(game)}?bots=saved${n ? `&n=${n}` : ""}#bots`);
 }
 

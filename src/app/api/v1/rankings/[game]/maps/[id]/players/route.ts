@@ -47,7 +47,7 @@ export function GET(req: Request, { params }: { params: Promise<{ game: string; 
     const { sort, asc } = sortArg(q, MAP_SORTS, "kills", ["name", "position"], { headshots: "hs", rank: "position" });
     // position ascending is the best place first, i.e. the most points (as mapSort).
     const desc = sort === "position" ? asc : !asc;
-    const [rows, counts] = await Promise.all([getMapPlayerTable(game.code, m.id, sort, desc, p.limit, p.offset), countMapKillers(m.id)]);
+    const [rows, counts] = await Promise.all([getMapPlayerTable(game.code, m.id, sort, desc, p.limit, p.offset), countMapKillers(game.code, m.id)]);
     const ids = rows.map((r) => r.playerId);
     const [tag, gg] = await Promise.all([playerTags(ids), getMapGgWins(game.code, m.id, ids)]);
     return paged(

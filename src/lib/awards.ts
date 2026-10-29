@@ -1,6 +1,6 @@
 import "server-only";
 import { hiddenSql } from "./hidden";
-import { getPlayerFlags } from "./data";
+import { careerKills, getPlayerFlags } from "./data";
 import { dayRange, siteDay } from "./day";
 import { query } from "./db";
 import type { Rank } from "./career";
@@ -209,15 +209,16 @@ export function getMostDecorated(game: string, limit: number) {
   return cached(`decorated:${game}:${limit}`, TTL, () => mostDecorated(game, limit));
 }
 
-function mostDecorated(game: string, limit: number) {
+async function mostDecorated(game: string, limit: number) {
+  const c = await careerKills();
   return query<{ playerId: number; name: string | null; kills: number; wins: number }>(
-    `SELECT h.winner_id AS playerId, d.lastName AS name, p.kills, COUNT(*) AS wins
+    `SELECT h.winner_id AS playerId, d.lastName AS name, ${c} AS kills, COUNT(*) AS wins
      FROM hlstats_Awards_History h
      JOIN hlstats_Awards a ON a.awardId = h.award_id
      JOIN hlstats_Players p ON p.playerId = h.winner_id AND p.hideranking = 0
      LEFT JOIN hlstats_Players_Data d ON d.playerId = h.winner_id
      WHERE a.game = ?
-     GROUP BY h.winner_id, d.lastName, p.kills
+     GROUP BY h.winner_id, d.lastName, ${c}
      ORDER BY COUNT(*) DESC, h.winner_id LIMIT ?`,
     [game, limit],
   );
@@ -370,8 +371,9 @@ export function getRankCounts(game: string, ranks: Rank[]): Promise<number[]> {
 }
 
 async function rankCounts(game: string, ranks: Rank[]): Promise<number[]> {
+  const c = await careerKills("");
   const cols = ranks.map(
-    (r, i) => `COALESCE(SUM(CASE WHEN kills >= ${Number(r.minimum)}${r.next !== null ? ` AND kills < ${Number(r.next)}` : ""} THEN 1 ELSE 0 END), 0) AS r${i}`,
+    (r, i) => `COALESCE(SUM(CASE WHEN ${c} >= ${Number(r.minimum)}${r.next !== null ? ` AND ${c} < ${Number(r.next)}` : ""} THEN 1 ELSE 0 END), 0) AS r${i}`,
   );
   const row = (await query<Record<string, number>>(
     `SELECT ${cols.join(", ")} FROM hlstats_Players WHERE game = ? AND hideranking = 0`,
@@ -382,14 +384,16 @@ async function rankCounts(game: string, ranks: Rank[]): Promise<number[]> {
 
 export type RankPlayer = { playerId: number; name: string | null; skill: number; kills: number; connection_time: number; last_event: number };
 
-export function getRankPlayers(game: string, rank: Rank, limit: number, offset: number, sort: RankPlayerSort = "kills", asc = false) {
-  const upper = rank.next !== null ? `AND p.kills < ?` : "";
+// kills are the kills of the career rank (careerKills).
+export async function getRankPlayers(game: string, rank: Rank, limit: number, offset: number, sort: RankPlayerSort = "kills", asc = false) {
+  const c = await careerKills();
+  const upper = rank.next !== null ? `AND ${c} < ?` : "";
   // The column comes from the allowlist, never from the URL itself.
-  const order = `${rankPlayerSorts[sort]} ${asc ? "ASC" : "DESC"}, p.playerId`;
+  const order = `${sort === "kills" ? c : rankPlayerSorts[sort]} ${asc ? "ASC" : "DESC"}, p.playerId`;
   return query<RankPlayer>(
-    `SELECT p.playerId, d.lastName AS name, p.skill, p.kills, p.connection_time, p.last_event
+    `SELECT p.playerId, d.lastName AS name, p.skill, ${c} AS kills, p.connection_time, p.last_event
      FROM hlstats_Players p LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
-     WHERE p.game = ? AND p.hideranking = 0 AND p.kills >= ? ${upper}
+     WHERE p.game = ? AND p.hideranking = 0 AND ${c} >= ? ${upper}
      ORDER BY ${order} LIMIT ? OFFSET ?`,
     [game, rank.minimum, ...(rank.next !== null ? [rank.next] : []), limit, offset],
   );

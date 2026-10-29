@@ -2,10 +2,15 @@
 // collector reads it). Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { blockVacKey, blockVacOn, botSettingKeys, botSettingOn } from "../src/lib/bot-settings.ts";
+import { blockVacKey, blockVacOn, botSettingKeys, botSettingOn, botStatsOn } from "../src/lib/bot-settings.ts";
 
 test("keys of a ranking", () => {
-  assert.deepEqual(botSettingKeys("css"), { ranked: "gamewe_rank_bots_css", points: "gamewe_bot_points_css", kills: "gamewe_bot_kills_css" });
+  assert.deepEqual(botSettingKeys("css"), {
+    ranked: "gamewe_rank_bots_css",
+    points: "gamewe_bot_points_css",
+    kills: "gamewe_bot_kills_css",
+    stats: "gamewe_bot_stats_css",
+  });
 });
 
 test("missing means on, 0/false/no/off/empty mean off", () => {
@@ -13,6 +18,13 @@ test("missing means on, 0/false/no/off/empty mean off", () => {
   assert.equal(botSettingOn(null), true);
   for (const v of ["1", "true", " yes ", "on", "ON"]) assert.equal(botSettingOn(v), true, v);
   for (const v of ["0", "false", "no", "off", "", " Off "]) assert.equal(botSettingOn(v), false, v);
+});
+
+test("bots in the stats: missing means off", () => {
+  assert.equal(botStatsOn(undefined), false);
+  assert.equal(botStatsOn(null), false);
+  for (const v of ["1", "true", " yes ", "on"]) assert.equal(botStatsOn(v), true, v);
+  for (const v of ["0", "false", "no", "off", ""]) assert.equal(botStatsOn(v), false, v);
 });
 
 test("VAC block: key, missing means off", () => {

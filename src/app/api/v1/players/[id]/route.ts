@@ -33,7 +33,7 @@ export function GET(_req: Request, { params }: { params: Promise<{ id: string }>
     // Hall of fame stars, as on the profile; null where the ranking shows no hall of fame.
     const stars = hall ? await getPlayerStars(p.game, p.playerId) : null;
     const fav = weapons[0];
-    const career = rankFor(Number(p.kills), ranks);
+    const career = rankFor(Number(p.careerKills), ranks);
     return {
       id: p.playerId,
       game: p.game,

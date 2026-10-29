@@ -10,7 +10,7 @@ export function GET(_req: Request, { params }: { params: Promise<{ id: string }>
   return api(async () => {
     const p = await publicPlayer(pathId((await params).id));
     if (!p) return null;
-    const stats = await getPlayerKillStats(p.playerId);
+    const stats = await getPlayerKillStats(p.game, p.playerId);
     const tag = await playerTags(stats.map((o) => o.playerId));
     const shown = stats.filter((o) => o.hideranking === 0 || tag(o.playerId).bot);
     return {

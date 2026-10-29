@@ -662,8 +662,15 @@ export const RAW_PREFIX_HELP: [string, L][] = [
   [
     "gamewe_bot_kills_",
     {
-      de: "Kills an Bots zählen in diesem Ranking als Kills (1) oder nicht (0), z. B. für den Karriere-Rang. Einstellbar auf der Ranking-Seite unter „Bots“.",
-      en: "Kills of bots count as kills in this ranking (1) or not (0), e.g. for the career rank. Set on the ranking's page under \"Bots\".",
+      de: "Kills an Bots zählen in diesem Ranking für den Karriere-Rang (1) oder nicht (0). Einstellbar auf der Ranking-Seite unter „Bots“.",
+      en: "Kills of bots count for the career rank in this ranking (1) or not (0). Set on the ranking's page under \"Bots\".",
+    },
+  ],
+  [
+    "gamewe_bot_stats_",
+    {
+      de: "Kills mit Bots zählen in diesem Ranking in der Statistik (1) oder nicht (0, Standard): Kills, Tode, Headshots, K/D. Einstellbar auf der Ranking-Seite unter „Bots“.",
+      en: "Kills with bots count in the stats of this ranking (1) or not (0, default): kills, deaths, headshots, K/D. Set on the ranking's page under \"Bots\".",
     },
   ],
 ];

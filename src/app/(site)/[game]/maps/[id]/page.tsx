@@ -61,7 +61,7 @@ export default async function MapPage({ params, searchParams }: Props) {
   const limit = rowsParam(sp.rows, pageSize);
   const [players, counts, fullHeat, wins, accuracy, loadTime, shots, g] = await Promise.all([
     getMapPlayerTable(game, m.id, sort, desc, limit, (page - 1) * limit),
-    countMapKillers(m.id),
+    countMapKillers(game, m.id),
     getHeatmap(m.id),
     getMapWins(game).catch(() => new Map<number, { ct: number; t: number }>()),
     getMapAccuracy(m.id).catch(() => null),

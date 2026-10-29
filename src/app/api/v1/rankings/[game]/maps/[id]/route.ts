@@ -19,7 +19,7 @@ export function GET(_req: Request, { params }: { params: Promise<{ game: string;
       getMapWins(game.code).catch(() => new Map<number, { ct: number; t: number }>()),
       getMapAccuracy(m.id).catch(() => null),
       getMapLoadTime(m.id).catch(() => 0),
-      countMapKillers(m.id),
+      countMapKillers(game.code, m.id),
     ]);
     const time = mapPlayTime(m.play_time, loadTime);
     const sided = wins.size > 0 || SIDE_GAMES.has(game.realgame ?? "");

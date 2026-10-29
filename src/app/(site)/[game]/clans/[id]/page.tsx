@@ -78,7 +78,7 @@ export default async function ClanPage({ params, searchParams }: Props) {
   const [history, weapons, maps, radarAvg, shots] = await Promise.all([
     getMembersHistory(ids, 30),
     getMembersWeapons(ids),
-    getMembersMaps(ids, 15),
+    getMembersMaps(game, ids, 15),
     getRadarAverage(game),
     gameHasShots(game),
   ]);

@@ -1,18 +1,19 @@
 import "server-only";
 import { adminExec, adminQuery, upsert } from "./db";
-import { blockVacKey, blockVacOn, botSettingKeys, botSettingOn } from "./bot-settings";
+import { blockVacKey, blockVacOn, botSettingKeys, botSettingOn, botStatsOn } from "./bot-settings";
 
 // Admin side of the bot settings of one ranking (lib/bot-settings.ts):
 // whether its bots are ranked, whether kills with bots give points and
-// whether kills of bots count as kills.
+// whether kills of bots count for the career rank and whether kills with bots
+// count in the players' stats.
 
-export type RankingBots = { ranked: boolean; points: boolean; kills: boolean };
+export type RankingBots = { ranked: boolean; points: boolean; kills: boolean; stats: boolean };
 
 export async function rankingBots(game: string): Promise<RankingBots> {
   const k = botSettingKeys(game);
-  const rows = await adminQuery<{ keyname: string; value: string | null }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [[k.ranked, k.points, k.kills]]);
+  const rows = await adminQuery<{ keyname: string; value: string | null }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [[k.ranked, k.points, k.kills, k.stats]]);
   const v = (key: string) => rows.find((r) => r.keyname === key)?.value;
-  return { ranked: botSettingOn(v(k.ranked)), points: botSettingOn(v(k.points)), kills: botSettingOn(v(k.kills)) };
+  return { ranked: botSettingOn(v(k.ranked)), points: botSettingOn(v(k.points)), kills: botSettingOn(v(k.kills)), stats: botStatsOn(v(k.stats)) };
 }
 
 // Stores the settings. Turning the ranking of bots on or off also shows or
@@ -27,6 +28,7 @@ export async function saveRankingBots(game: string, next: RankingBots): Promise<
   await set(k.ranked, next.ranked);
   await set(k.points, next.points);
   await set(k.kills, next.kills);
+  await set(k.stats, next.stats);
   if (now.ranked === next.ranked) return 0;
   const [from, to] = next.ranked ? [1, 0] : [0, 1];
   const r = await adminExec(

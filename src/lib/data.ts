@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { adminQuery, dialect, likeOp, query, queryOne, sinceDays, type Param } from "./db";
-import { BOT_POINTS_PREFIX, botSettingKeys, botSettingOn, RANK_BOTS_PREFIX } from "./bot-settings";
+import { BOT_POINTS_PREFIX, BOT_STATS_PREFIX, botSettingKeys, botSettingOn, botStatsOn, RANK_BOTS_PREFIX } from "./bot-settings";
 import { addDays, dayOf, siteDay } from "./day";
 import { ttlCache } from "./ttl-cache";
 import { connectTypes, miscCountries, placeOptions, type PlaceCount, type PlaceOption } from "./place-counts";
@@ -167,6 +167,18 @@ export type Server = {
 // Players online, at most the slots: older collectors kept kicked bots counted
 // (66/48), and hlstats_server_load still holds those spikes.
 const capped = (p: string) => `CASE WHEN ${p}max_players > 0 AND ${p}act_players > ${p}max_players THEN ${p}max_players ELSE ${p}act_players END`;
+
+// hlstats_Players.career_kills (collector schema 20) are the kills of the
+// career rank: kills of bots count there by gamewe_bot_kills_<game>, while
+// kills follows gamewe_bot_stats_<game>. Older databases have only kills.
+// The pages look again for the column every 5 minutes.
+let careerCol: { ok: Promise<boolean>; at: number } | undefined;
+export async function careerKills(p = "p.") {
+  if (!careerCol || (Date.now() - careerCol.at > 300_000 && !(await careerCol.ok))) {
+    careerCol = { ok: query(`SELECT career_kills FROM hlstats_Players WHERE 1 = 0`).then(() => true, () => false), at: Date.now() };
+  }
+  return (await careerCol.ok) ? `${p}career_kills` : `${p}kills`;
+}
 
 // Bots online, counted in act_players too (player-count.ts caps them at
 // act_players): hlstats_Servers.act_bots of the collector (migration 6),
@@ -532,6 +544,7 @@ export type RankingRow = {
   first_connect: number | null;
   connection_time: number;
   kills: number;
+  careerKills: number; // the kills of the career rank (careerKills)
   deaths: number;
   headshots: number;
   shots: number;
@@ -615,7 +628,7 @@ async function loadRanking(opts: {
   const order = `${rankingSorts[opts.sort]} ${dir}, p.playerId ${dir}`;
   const narrow = opts.inactive && !opts.search && !local && rankingSorts[opts.sort].startsWith("p.");
   const cols = `SELECT p.playerId, d.lastName AS name, p.skill, p.last_event, d.first_connect, p.connection_time,
-              p.kills, p.deaths, p.headshots, p.shots, p.hits, l.flag, l.country`;
+              p.kills, ${await careerKills()} AS careerKills, p.deaths, p.headshots, p.shots, p.hits, l.flag, l.country`;
   // Both joins match at most one row, so without a filter on them the count
   // needs the players table only.
   const countFrom = opts.search || local ? from : `FROM ${table} p WHERE ${where.join(" AND ")}`;
@@ -784,6 +797,7 @@ export type PlayerDetail = {
   last_event: number;
   connection_time: number;
   kills: number;
+  careerKills: number; // the kills of the career rank (careerKills)
   deaths: number;
   suicides: number;
   headshots: number;
@@ -818,7 +832,7 @@ export async function getPlayer(id: number): Promise<PlayerDetail | undefined> {
   for (const table of ["hlstats_Players", "hlstats_PlayersInactive"]) {
     const row = await queryOne<PlayerDetail>(
       `SELECT p.playerId, TRIM(p.game) AS game, p.game_id, d.lastName AS name, p.skill, p.last_skill_change,
-              p.last_event, p.connection_time, p.kills, p.deaths, p.suicides, p.headshots, p.shots, p.hits,
+              p.last_event, p.connection_time, p.kills, ${await careerKills()} AS careerKills, p.deaths, p.suicides, p.headshots, p.shots, p.hits,
               p.rounds, p.wins, p.losses, p.team_kills, p.kill_streak, p.kill_assists, p.kills_assisted,
               p.survived_count, p.hideranking, p.clan,
               c.tag AS clanTag, c.name AS clanName,
@@ -1043,36 +1057,57 @@ export type PlayerMap = { id: number; map: string; kills: number; deaths: number
 // player, so kept for five minutes per player (ttl-cache.ts).
 const playerMapsCache = ttlCache<PlayerMap[]>(300_000, 3_600_000, 1000);
 
-export function getPlayerMaps(id: number, limit = 25): Promise<PlayerMap[]> {
-  return playerMapsCache(`${id}|${limit}`, () =>
+// Without bots in the stats of the ranking, frags with its bots are left out.
+export async function getPlayerMaps(game: string, id: number, limit = 25): Promise<PlayerMap[]> {
+  const bots = await botFragIds(game);
+  return playerMapsCache(`${id}|${limit}|${bots.join(",")}`, () =>
     query<PlayerMap>(
       `SELECT m.id, m.map, SUM(x.k) AS kills, SUM(x.d) AS deaths, SUM(x.hs) AS headshots
-       FROM (SELECT map, 1 AS k, 0 AS d, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS hs FROM hlstats_Events_Frags WHERE killerId = ?
+       FROM (SELECT map, 1 AS k, 0 AS d, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS hs FROM hlstats_Events_Frags WHERE killerId = ?${notIn("victimId", bots)}
              UNION ALL
-             SELECT map, 0, 1, 0 FROM hlstats_Events_Frags WHERE victimId = ?) x
+             SELECT map, 0, 1, 0 FROM hlstats_Events_Frags WHERE victimId = ?${notIn("killerId", bots)}) x
        JOIN hlstats_Maps m ON m.id = x.map
        GROUP BY m.id, m.map ORDER BY kills DESC, deaths DESC, m.id LIMIT ?`,
-      [id, id, limit],
+      [id, ...ids(bots), id, ...ids(bots), limit],
     ),
   );
 }
+
+// The bots of a ranking while kills with bots do not count in its stats
+// (gamewe_bot_stats_<game> off, the default): the tables summed from the
+// frags (maps and opponents of a player or clan, the players of a map) leave
+// their frags out, as the collector leaves them out of the players' counts.
+// Empty when they count. A ranking has few bots, so the ids go into the
+// query as a list.
+const botFragCache = ttlCache<number[]>(60_000, 600_000, 100);
+export async function botFragIds(game: string): Promise<number[]> {
+  if ((await botRankings()).stats(game)) return [];
+  return botFragCache(game, async () =>
+    (await query<{ playerId: number }>(`SELECT DISTINCT playerId FROM hlstats_PlayerUniqueIds WHERE game = ? AND uniqueId LIKE 'BOT:%' ORDER BY playerId`, [game])).map((r) =>
+      Number(r.playerId),
+    ),
+  );
+}
+const notIn = (col: string, bots: number[]) => (bots.length ? ` AND ${col} NOT IN (?)` : "");
+const ids = (bots: number[]): Param[] => (bots.length ? [bots] : []);
 
 // Per-map kills and deaths of a group of players (a clan's members), like
 // getPlayerMaps. A kill between two members counts as a kill and a death.
 // The frags of every member: kept for five minutes per group (ttl-cache.ts).
 const membersMapsCache = ttlCache<PlayerMap[]>(300_000, 3_600_000, 200);
 
-export function getMembersMaps(ids: number[], limit = 15): Promise<PlayerMap[]> {
-  if (!ids.length) return Promise.resolve([] as PlayerMap[]);
-  return membersMapsCache(`${limit}|${ids.join(",")}`, () =>
+export async function getMembersMaps(game: string, members: number[], limit = 15): Promise<PlayerMap[]> {
+  if (!members.length) return [];
+  const bots = await botFragIds(game);
+  return membersMapsCache(`${limit}|${members.join(",")}|${bots.join(",")}`, () =>
     query<PlayerMap>(
       `SELECT m.id, m.map, SUM(x.k) AS kills, SUM(x.d) AS deaths, SUM(x.hs) AS headshots
-       FROM (SELECT map, 1 AS k, 0 AS d, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS hs FROM hlstats_Events_Frags WHERE killerId IN (?)
+       FROM (SELECT map, 1 AS k, 0 AS d, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS hs FROM hlstats_Events_Frags WHERE killerId IN (?)${notIn("victimId", bots)}
              UNION ALL
-             SELECT map, 0, 1, 0 FROM hlstats_Events_Frags WHERE victimId IN (?)) x
+             SELECT map, 0, 1, 0 FROM hlstats_Events_Frags WHERE victimId IN (?)${notIn("killerId", bots)}) x
        JOIN hlstats_Maps m ON m.id = x.map
        GROUP BY m.id, m.map ORDER BY kills DESC, deaths DESC, m.id LIMIT ?`,
-      [ids, ids, limit],
+      [members, ...ids(bots), members, ...ids(bots), limit],
     ),
   );
 }
@@ -1119,11 +1154,14 @@ const OPPONENTS = 10;
 const KILL_STATS_MIN = 5;
 const KILL_STATS = 50;
 
-function opponentSums(id: number): Promise<OpponentSums> {
-  return opponentsCache(String(id), () => loadOpponentSums(id));
+// Without bots in the stats of the ranking (botFragIds), its bots are no
+// opponents.
+async function opponentSums(game: string, id: number): Promise<OpponentSums> {
+  const bots = await botFragIds(game);
+  return opponentsCache(`${id}|${bots.join(",")}`, () => loadOpponentSums(id, bots));
 }
 
-async function loadOpponentSums(id: number): Promise<OpponentSums> {
+async function loadOpponentSums(id: number, bots: number[]): Promise<OpponentSums> {
   // Summed per opponent first, then joined: the names and the ranking rows
   // once per opponent, not per frag. hidden is hiddenSql on the joined row:
   // a hidden player who is not a bot; a player without a ranking row
@@ -1133,14 +1171,14 @@ async function loadOpponentSums(id: number): Promise<OpponentSums> {
             CASE WHEN p.hideranking <> 0 AND NOT ${isBotSql("o.playerId")} THEN 1 ELSE 0 END AS hidden
      FROM (SELECT u.playerId, SUM(u.k) AS kills, SUM(u.d) AS deaths, SUM(u.khs) AS kHs, SUM(u.dhs) AS dHs
            FROM (SELECT victimId AS playerId, 1 AS k, 0 AS d, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS khs, 0 AS dhs
-                 FROM hlstats_Events_Frags WHERE killerId = ? AND victimId <> killerId
+                 FROM hlstats_Events_Frags WHERE killerId = ? AND victimId <> killerId${notIn("victimId", bots)}
                  UNION ALL
                  SELECT killerId AS playerId, 0 AS k, 1 AS d, 0 AS khs, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS dhs
-                 FROM hlstats_Events_Frags WHERE victimId = ? AND victimId <> killerId) u
+                 FROM hlstats_Events_Frags WHERE victimId = ? AND victimId <> killerId${notIn("killerId", bots)}) u
            GROUP BY u.playerId) o
      LEFT JOIN hlstats_Players p ON p.playerId = o.playerId
      LEFT JOIN hlstats_Players_Data d ON d.playerId = o.playerId`,
-    [id, id],
+    [id, ...ids(bots), id, ...ids(bots)],
   );
   const all = rows.map((r) => ({
     playerId: Number(r.playerId),
@@ -1177,8 +1215,8 @@ async function loadOpponentSums(id: number): Promise<OpponentSums> {
 // The ten players this player killed most often (victims: kills and
 // headshots against them) or who killed this player most often (killers:
 // their kills and headshots). Hidden opponents are left out.
-export async function getOpponents(id: number, as: "victims" | "killers"): Promise<Opponent[]> {
-  return (await opponentSums(id))[as];
+export async function getOpponents(game: string, id: number, as: "victims" | "killers"): Promise<Opponent[]> {
+  return (await opponentSums(game, id))[as];
 }
 
 export type KillStat = { playerId: number; name: string | null; kills: number; deaths: number; headshots: number; hideranking: number; position: number | null };
@@ -1186,8 +1224,8 @@ export type KillStat = { playerId: number; name: string | null; kills: number; d
 // Player kill statistics as on gameME: everyone this player killed at least
 // five times, with the kills against and deaths by each, and the other
 // player's position in the ranking (none when hidden).
-export async function getPlayerKillStats(id: number): Promise<KillStat[]> {
-  const rows = (await opponentSums(id)).kills;
+export async function getPlayerKillStats(game: string, id: number): Promise<KillStat[]> {
+  const rows = (await opponentSums(game, id)).kills;
   // The positions (rankPositions) only for the rows shown, and live.
   const pos = await rankPositions(rows.filter((r) => r.hideranking === 0));
   return rows.map(({ skill, game, ...r }) => ({
@@ -1607,9 +1645,11 @@ const MAP_PLAYER_SORTS: Record<MapSort, string> = {
   position: "p.skill",
 };
 
-const mapPlayerFrom = `FROM (SELECT killerId AS playerId, 1 AS k, 0 AS dd, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS hs FROM hlstats_Events_Frags WHERE map = ?
+// Without bots in the stats of the ranking (botFragIds), frags with its bots
+// are left out.
+const mapPlayerFrom = (bots: number[]) => `FROM (SELECT killerId AS playerId, 1 AS k, 0 AS dd, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS hs FROM hlstats_Events_Frags WHERE map = ?${notIn("victimId", bots)}
            UNION ALL
-           SELECT victimId, 0, 1, 0 FROM hlstats_Events_Frags WHERE map = ?) x
+           SELECT victimId, 0, 1, 0 FROM hlstats_Events_Frags WHERE map = ?${notIn("killerId", bots)}) x
      JOIN hlstats_Players p ON p.playerId = x.playerId AND p.hideranking = 0`;
 
 // A page of the map's players sums every frag on the map: kept for two
@@ -1622,15 +1662,16 @@ const mapKillersCache = ttlCache<{ players: number; hiddenKills: number }>(120_0
 export async function getMapPlayerTable(game: string, mapId: number, sort: MapSort, desc: boolean, limit: number, offset: number) {
   const expr = MAP_PLAYER_SORTS[Object.hasOwn(MAP_PLAYER_SORTS, sort) ? sort : "kills"];
   const dir = desc ? "DESC" : "ASC";
-  const rows = await mapTableCache(`${mapId}|${expr}|${dir}|${limit}|${offset}`, async () =>
+  const bots = await botFragIds(game);
+  const rows = await mapTableCache(`${mapId}|${expr}|${dir}|${limit}|${offset}|${bots.join(",")}`, async () =>
     (
       await query<MapPlayerRow>(
         `SELECT x.playerId, d.lastName AS name, p.skill, SUM(x.k) AS kills, SUM(x.dd) AS deaths, SUM(x.hs) AS headshots
-         ${mapPlayerFrom}
+         ${mapPlayerFrom(bots)}
          LEFT JOIN hlstats_Players_Data d ON d.playerId = x.playerId
          GROUP BY x.playerId, d.lastName, p.skill HAVING SUM(x.k) > 0
          ORDER BY ${expr} ${dir}, x.playerId LIMIT ? OFFSET ?`,
-        [mapId, mapId, limit, offset],
+        [mapId, ...ids(bots), mapId, ...ids(bots), limit, offset],
       )
     ).map((r) => ({ ...r, playerId: Number(r.playerId), skill: Number(r.skill), kills: Number(r.kills), deaths: Number(r.deaths), headshots: Number(r.headshots) })),
   );
@@ -1640,17 +1681,18 @@ export async function getMapPlayerTable(game: string, mapId: number, sort: MapSo
 
 // Kills on one map by visible players (rows of getMapPlayerTable, for
 // paging) and by hidden ones (hideranking <> 0, counted, not listed).
-export function countMapKillers(mapId: number): Promise<{ players: number; hiddenKills: number }> {
-  return mapKillersCache(String(mapId), () => loadMapKillers(mapId));
+export async function countMapKillers(game: string, mapId: number): Promise<{ players: number; hiddenKills: number }> {
+  const bots = await botFragIds(game);
+  return mapKillersCache(`${mapId}|${bots.join(",")}`, () => loadMapKillers(mapId, bots));
 }
 
-async function loadMapKillers(mapId: number) {
+async function loadMapKillers(mapId: number, bots: number[]) {
   const r = await queryOne<{ shown: number; hidden: number }>(
     `SELECT COUNT(DISTINCT CASE WHEN p.hideranking = 0 THEN f.killerId END) AS shown,
             SUM(CASE WHEN p.hideranking <> 0 THEN 1 ELSE 0 END) AS hidden
      FROM hlstats_Events_Frags f JOIN hlstats_Players p ON p.playerId = f.killerId
-     WHERE f.map = ?`,
-    [mapId],
+     WHERE f.map = ?${notIn("f.victimId", bots)}`,
+    [mapId, ...ids(bots)],
   );
   return { players: Number(r?.shown ?? 0), hiddenKills: Number(r?.hidden ?? 0) };
 }
@@ -2108,15 +2150,19 @@ export async function getPlayerFlags(ids: number[]) {
 export type PlayerFlag = { flag: string; country: string; nolink?: boolean };
 
 // The bot settings of every ranking (lib/bot-settings.ts): ranked(game)
-// and points(game), true for a ranking without a stored value.
+// and points(game), true for a ranking without a stored value, and
+// stats(game), false without one.
 export const botRankings = cache(async () => {
   const rows = await query<{ keyname: string; value: string | null }>(
-    `SELECT keyname, value FROM hlstats_Options WHERE keyname LIKE ? OR keyname LIKE ?`,
-    [`${RANK_BOTS_PREFIX}%`, `${BOT_POINTS_PREFIX}%`],
+    `SELECT keyname, value FROM hlstats_Options WHERE keyname LIKE ? OR keyname LIKE ? OR keyname LIKE ?`,
+    [`${RANK_BOTS_PREFIX}%`, `${BOT_POINTS_PREFIX}%`, `${BOT_STATS_PREFIX}%`],
   );
   const m = new Map(rows.map((r) => [r.keyname, r.value]));
   const ranked = (game: string) => botSettingOn(m.get(botSettingKeys(game).ranked));
-  return Object.assign(ranked, { points: (game: string) => botSettingOn(m.get(botSettingKeys(game).points)) });
+  return Object.assign(ranked, {
+    points: (game: string) => botSettingOn(m.get(botSettingKeys(game).points)),
+    stats: (game: string) => botStatsOn(m.get(botSettingKeys(game).stats)),
+  });
 });
 
 // Bots have a profile only in a ranking that ranks them

@@ -34,7 +34,7 @@ export async function playerBanner(file: string, game: string | null) {
     ids ? getSteamProfile(ids.steam64) : Promise.resolve(null),
   ]);
   const th = await imageTheme(f?.style ?? null, g);
-  const rank = rankFor(p.kills, ranks);
+  const rank = rankFor(Number(p.careerKills), ranks);
   const progress = rank ? (rank.next !== null ? (p.kills - rank.minimum) / (rank.next - rank.minimum) : 1) : 0;
   const act = activity(p.last_event, settings.activityDays);
   const num = (n: number) => Math.round(n).toLocaleString("en-US");
