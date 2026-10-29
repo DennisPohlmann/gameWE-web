@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Form from "next/form";
-import { HistoryFrame, loadHistoryPlayer } from "@/components/player-history";
+import { HistoryFrame, historyRobots, loadHistoryPlayer } from "@/components/player-history";
 import { PlayerEventsLive } from "@/components/player-events-live";
 import { Empty, Pager, ROW_OPTIONS, pageParam, rowsParam, strParam } from "@/components/ui";
 import { noAutofill } from "@/lib/autofill";
@@ -15,9 +15,9 @@ import { getSettings } from "@/lib/settings";
 
 type Props = { params: Promise<{ game: string; id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getDict();
-  return { title: `${t.playerHistory}: ${t.histEvents}` };
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const [{ t }, robots] = await Promise.all([getDict(), historyRobots((await params).id)]);
+  return { title: `${t.playerHistory}: ${t.histEvents}`, ...robots };
 }
 
 export default async function EventsPage({ params, searchParams }: Props) {

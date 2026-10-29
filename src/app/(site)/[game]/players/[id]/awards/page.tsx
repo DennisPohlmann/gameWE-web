@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Ribbon, RibbonLevel, ribbonClassName } from "@/components/badges";
-import { HistoryFrame, loadHistoryPlayer } from "@/components/player-history";
+import { HistoryFrame, historyRobots, loadHistoryPlayer } from "@/components/player-history";
 import { Empty, Pager, ROW_OPTIONS, TableWrap, pageParam, rowsParam } from "@/components/ui";
 import { awardValue, getPlayerRibbons, getRibbonClasses, ribbonFor, ribbonProgress } from "@/lib/awards";
 import { fmtDuration, fmtNum, localeOf } from "@/lib/format";
@@ -12,9 +12,9 @@ import { getSettings } from "@/lib/settings";
 
 type Props = { params: Promise<{ game: string; id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getDict();
-  return { title: `${t.playerHistory}: ${t.histAwards}` };
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const [{ t }, robots] = await Promise.all([getDict(), historyRobots((await params).id)]);
+  return { title: `${t.playerHistory}: ${t.histAwards}`, ...robots };
 }
 
 // Every daily award the player won: a summary per award, then by date.

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PlayerKillsTrend, PlayerTrend } from "@/components/player-trend";
-import { BackToPlayer, HistoryFrame, loadHistoryPlayer } from "@/components/player-history";
+import { BackToPlayer, HistoryFrame, historyRobots, loadHistoryPlayer } from "@/components/player-history";
 import { Empty, Pager, PctBar, ROW_OPTIONS, SortTh, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
 import { gameHasShots, getPlayerHistory, getPlayerSkillBefore } from "@/lib/data";
 import { fmtNum, kpd, ratio, localeOf } from "@/lib/format";
@@ -11,9 +11,9 @@ import { getSettings } from "@/lib/settings";
 
 type Props = { params: Promise<{ game: string; id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getDict();
-  return { title: `${t.playerHistory}: ${t.histSessions}` };
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const [{ t }, robots] = await Promise.all([getDict(), historyRobots((await params).id)]);
+  return { title: `${t.playerHistory}: ${t.histSessions}`, ...robots };
 }
 
 // gameME's icon after the points change: a small square in the gain or

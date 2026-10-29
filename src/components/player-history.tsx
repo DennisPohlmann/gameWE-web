@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { ReactNode } from "react";
@@ -13,6 +14,15 @@ export type HistoryTab = "events" | "awards" | "sessions" | "chat" | "ips";
 export async function historyAccess() {
   const [{ chatPublic }, admin] = await Promise.all([getSettings(), currentAdmin()]);
   return { chat: chatPublic || !!admin, ips: !!admin };
+}
+
+// The history pages follow the profile: a player banned in the ranking
+// (profile with the ban notice) stays out of search engines there too.
+// Otherwise no robots key, so the site's setting (layout) still applies.
+export async function historyRobots(raw: string): Promise<Pick<Metadata, "robots">> {
+  const id = Number.parseInt(raw, 10);
+  const p = Number.isSafeInteger(id) && id > 0 ? await getPlayer(id) : undefined;
+  return p?.hideranking ? { robots: { index: false, follow: false } } : {};
 }
 
 // Loads the player of a history page; wrong ranking -> the right URL. A

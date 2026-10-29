@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { HistoryFrame, loadHistoryPlayer } from "@/components/player-history";
+import { HistoryFrame, historyRobots, loadHistoryPlayer } from "@/components/player-history";
 import { Empty, Pager, ROW_OPTIONS, TableWrap, pageParam, rowsParam } from "@/components/ui";
 import { countChat, getChat } from "@/lib/data";
 import { fmtDateTime, localeOf } from "@/lib/format";
@@ -10,9 +10,9 @@ import { sortState, timeSorts } from "@/lib/table-sort";
 
 type Props = { params: Promise<{ game: string; id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getDict();
-  return { title: `${t.playerHistory}: ${t.histChat}` };
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const [{ t }, robots] = await Promise.all([getDict(), historyRobots((await params).id)]);
+  return { title: `${t.playerHistory}: ${t.histChat}`, ...robots };
 }
 
 export default async function PlayerChatPage({ params, searchParams }: Props) {
