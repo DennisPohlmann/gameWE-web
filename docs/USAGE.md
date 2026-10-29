@@ -343,7 +343,11 @@ account cannot be changed, and tokens cannot be managed; deleting a user or
 lowering them below level 80 stops their tokens at once.
 
 Users are the rows of `hlstats_Users`. Level 100 may change everything, level 80
-everything except games, servers and users. Passwords are stored as scrypt
+everything except games, servers and users. A new user gets a first password
+when they are created; after that each user changes only their own password
+(My account, with the current one), in the admin area and in the API, and
+only the user sets up or removes their TOTP. On the server,
+`create-admin <name>` still sets a new password (e.g. a forgotten one). Passwords are stored as scrypt
 hashes; old HLstatsX MD5 hashes still work and are upgraded on the next sign-in.
 After 10 failed sign-ins an IP address is blocked for 15 minutes. The session
 cookie is `HttpOnly`, `SameSite=Strict` and `Secure` behind HTTPS (set

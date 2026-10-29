@@ -34,6 +34,7 @@ export type OpCode =
   | "notfound" // no such row, ranking or group
   | "cannot" // the entity has no create/delete
   | "self" // would lock the user out of the admin area
+  | "password" // the password of an existing user (only its owner, on My account)
   | "mismatch" // server and ranking of different base games
   | "duplicate" // another server has this IP and port
   | "field" // a field is invalid (detail.field)
@@ -85,6 +86,9 @@ export async function saveEntity(a: Actor, e: Entity, id: string | null, form: F
   const row = id === null ? undefined : await getRow(e, id);
   if (id !== null && !row) throw new OpError("notfound");
   const writes = (f: string) => !opts.only || opts.only.has(f);
+  // Each admin changes only their own password, on My account with the
+  // current one; nobody sets the password of an existing user here.
+  if (e.key === "users" && id !== null && String(form.get("password") ?? "").trim()) throw new OpError("password");
   if (e.key === "users" && id === a.user.username && writes("acclevel") && Number(form.get("acclevel")) < LEVEL_ADMIN && a.user.acclevel >= LEVEL_ADMIN) {
     throw new OpError("self");
   }

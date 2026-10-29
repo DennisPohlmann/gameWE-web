@@ -143,6 +143,7 @@ function entityOps(): AdminOp[] {
     const update = e.fields.filter((f) => !f.readonly && !f.createOnly && !f.virtual);
     const bodyEx = (fields: Field[]) => Object.fromEntries(fields.filter((f) => f.type !== "secret" && f.type !== "password" && ex[f.name] !== undefined).map((f) => [f.name, ex[f.name]]));
     const selfNote = m.key === "users" ? " Your own account cannot be changed or deleted with a token (`403 self_security_forbidden`): change your password and TOTP on your account page." : "";
+    const pwNote = m.key === "users" ? " The password of an existing admin cannot be set (`403 password_own_only`): it is given only when the admin is created; afterwards each admin changes only their own, on their account page." : "";
     if (m.key !== "games") {
       const sorts = e.fields.filter((f) => f.inList && !f.virtual && f.type !== "password" && f.type !== "secret").map((f) => f.name);
       ops.push({
@@ -219,7 +220,8 @@ function entityOps(): AdminOp[] {
         `Changes only the fields sent, with the checks of the admin page.` +
         (m.key === "servers" ? " A new `game` must be a ranking of the same game (`409 mismatch`); IP and port stay unique (`409 duplicate`). A secret set to null is cleared." : "") +
         (m.key === "players" ? " `hideranking`: 0 visible, 1 hidden (admin or bot), 2 banned, 3 hidden by the player." : "") +
-        selfNote,
+        selfNote +
+        pwNote,
       level,
       handler: "entityUpdate",
       entity: m.key,
@@ -333,7 +335,7 @@ export const adminSchemas: Record<string, Schema> = {
   AdminError: {
     type: "object",
     properties: {
-      error: str("Error code", { examples: ["unauthorized", "forbidden", "self_security_forbidden", "not_found", "invalid_field", "unknown_field", "read_only_field", "missing_field", "confirmation_required", "mismatch", "duplicate", "template_ranking", "rate_limited"] }),
+      error: str("Error code", { examples: ["unauthorized", "forbidden", "self_security_forbidden", "password_own_only", "not_found", "invalid_field", "unknown_field", "read_only_field", "missing_field", "confirmation_required", "mismatch", "duplicate", "template_ranking", "rate_limited"] }),
       message: str("What went wrong, in English"),
       field: str("The field it is about, if any"),
       id: int("For duplicate: the ID of the other server"),
@@ -896,7 +898,7 @@ export const ADMIN_API_INFO = [
   "- **Rights:** the token acts as its admin, with their level: level 80 cannot reach rankings, servers or users, as in the admin area (`403 forbidden`). Every change is logged with the admin and the token name.",
   "- **Never with a token** (`403 self_security_forbidden`):",
   ...FORBIDDEN_WITH_TOKEN.map((f) => `  - ${f}`),
-  "  Other admins can be created, changed (also their password and level) and deleted as in the admin area.",
+  "  Other admins can be created (with a first password), changed (level) and deleted as in the admin area. The password of an existing admin is never set (`403 password_own_only`): each admin changes only their own, on the account page.",
   "- **Bodies** are JSON (`Content-Type: application/json`, at most 64 KB). Unknown, read-only or wrongly typed fields are refused (`400`); `PATCH` changes only the fields sent. The checks are those of the admin pages.",
   "- **Errors:** `{ \"error\": code, \"message\": text, \"field\"?: name }` with `400`, `401`, `403`, `404`, `405`, `409` (`mismatch`, `duplicate`), `413`, `415`, `429`, `503`.",
   "- **Rate limit:** 300 requests per minute and address; 20 failed authentications per 15 minutes block the address for 15 minutes.",
@@ -935,7 +937,7 @@ export function adminPathItems(): Record<string, Record<string, unknown>> {
         [String(op.status)]: success,
         ...Object.fromEntries(op.errors.map((s) => [String(s), err(texts[s] ?? "Error")])),
         "401": err("No, a wrong, expired or revoked token, or its admin no longer exists"),
-        "403": err(op.path.startsWith("/admin/users") ? "Admin level too low, or self_security_forbidden (your own account)" : "Admin level too low"),
+        "403": err(op.path.startsWith("/admin/users") ? "Admin level too low, self_security_forbidden (your own account) or password_own_only (another admin's password)" : "Admin level too low"),
         "429": err("Too many requests or failed authentications; see Retry-After"),
         "500": err("Internal or database error"),
       },

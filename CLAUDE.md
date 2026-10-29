@@ -94,6 +94,10 @@ the audit summary of `security-privacy-audit`.
   through `src/lib/admin-ops.ts`, the same functions as the server actions.
   A token never reaches its own account's password, TOTP, level or deletion,
   nor token management (`self_security_forbidden`, `tests/admin-api.test.ts`).
+- A password is set only when a user is created; afterwards only its owner
+  changes it (My account, with the current one). Neither the Users form nor
+  the API sets an existing user's password (`OpError("password")`,
+  `403 password_own_only`); TOTP is only ever managed by its owner.
 - SQL only through `src/lib/db.ts` with `?` placeholders. Identifiers in
   template strings only from constants or allowlists (`rankingSorts`,
   entity definitions), never from `searchParams`, `params` or form data.

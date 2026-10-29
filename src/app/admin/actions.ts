@@ -102,7 +102,7 @@ export async function saveAction(form: FormData) {
     if (!(err instanceof OpError)) throw err;
     const c = err.code;
     if (c === "cannot" || c === "notfound") redirect(list);
-    if (c === "self" || c === "mismatch") redirect(await back({ error: c }));
+    if (c === "self" || c === "mismatch" || c === "password") redirect(await back({ error: c }));
     if (c === "duplicate") redirect(editHref(e.key, rawId, form, { error: "duplicate", dup: err.detail.dup, ...kept }));
     if (c === "field") redirect(await back({ error: "field", field: err.detail.field, ...kept }));
     // A new ranking is saved, but its template's definitions failed.

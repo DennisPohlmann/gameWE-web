@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { entities, getEntity } from "../src/lib/admin-entities.ts";
-import { BodyError, entityInput, entityRow, rawInput, scheduleInput, scheduleOut, settingsInput } from "../src/lib/admin-api-input.ts";
+import { BodyError, entityInput, entityRow, writableFields, rawInput, scheduleInput, scheduleOut, settingsInput } from "../src/lib/admin-api-input.ts";
 import { hiddenOption, rawKeyAllowed, settingGroups } from "../src/lib/admin-settings.ts";
 import {
   EXPIRY_DAYS,
@@ -142,7 +142,7 @@ test("entity bodies: types must match and become the form's values", () => {
   bodyError(() => entityInput(games, { hidden: "1" }, false), "invalid_field", "hidden");
   bodyError(() => entityInput(servers, { name: 5 }, false), "invalid_field", "name");
   bodyError(() => entityInput(servers, { rcon_password: "" }, false), "invalid_field", "rcon_password");
-  bodyError(() => entityInput(users, { password: "" }, false), "invalid_field", "password");
+  bodyError(() => entityInput(users, { password: "a-new-password-123" }, false), "read_only_field", "password");
   const r = entityInput(servers, { port: 27016, rcon_password: null, game: "css" }, false);
   assert.deepEqual(r.entries, [["port", "27016"], ["rcon_password", "-"], ["game", "css"]]);
   assert.deepEqual([...(r.only ?? [])].sort(), ["game", "port", "rcon_password"]);
@@ -273,4 +273,21 @@ test("every server action of the admin area has an API operation or is account-o
     assert.ok(viaApi[a], `${a} has no admin API operation`);
     for (const h of viaApi[a]) assert.ok(adminOps.some((o) => o.handler === h), `${a}: ${h}`);
   }
+});
+
+test("a password is set only when an admin is created; afterwards only its owner changes it", () => {
+  assert.ok(writableFields(users, true).some((f) => f.name === "password"), "a new admin gets a first password");
+  assert.ok(!writableFields(users, false).some((f) => f.name === "password"), "no PATCH of another admin's password");
+  assert.deepEqual(entityInput(users, { username: "new", password: "first-password-1", acclevel: "80" }, true).entries.map(([k]) => k), ["username", "password", "acclevel"]);
+  // The API answers 403 password_own_only before the body is read, and the
+  // shared save (also the admin pages' form) refuses a sent password.
+  const api = src("src/lib/admin-api.ts");
+  const update = api.slice(api.indexOf("async entityUpdate("), api.indexOf("async entityDelete("));
+  assert.match(update, /"password" in c\.body[\s\S]*password_own_only/);
+  assert.match(src("src/lib/admin-ops.ts"), /e\.key === "users" && id !== null && String\(form\.get\("password"\)[^\n]*OpError\("password"\)/);
+  const doc = JSON.stringify(openApiDocument("1"));
+  assert.ok(doc.includes("password_own_only"));
+  const schema = (openApiDocument("1") as { components: { schemas: Record<string, { properties: Record<string, unknown> }> } }).components.schemas;
+  assert.ok(!("password" in schema.AdminUserUpdate.properties));
+  assert.ok("password" in schema.AdminUserCreate.properties);
 });

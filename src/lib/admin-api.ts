@@ -8,6 +8,7 @@ import {
   entityRow,
   enumField,
   intField,
+  isObject,
   onlyKeys,
   rawInput,
   scheduleInput,
@@ -176,6 +177,8 @@ function failure(err: unknown): Response {
         return error(405, "method_not_allowed", "not possible for this kind of row");
       case "self":
         return error(403, "self_security_forbidden", "not for your own account");
+      case "password":
+        return error(403, "password_own_only", "an admin's password is set only when the admin is created", { field: "password" });
       case "mismatch":
         return error(409, "mismatch", "server and ranking are of different games");
       case "duplicate":
@@ -358,7 +361,13 @@ const handlers: Record<string, Handler> = {
   async entityUpdate(c) {
     const { e, m } = await entityOf(c);
     const id = await rowKey(c, m);
-    if (e.key === "users") await guardSelf(c, id);
+    if (e.key === "users") {
+      await guardSelf(c, id);
+      // Each admin changes only their own password (My account), never another's.
+      if (isObject(c.body) && "password" in c.body) {
+        throw new ApiFail(403, "password_own_only", "an admin's password is set only when the admin is created; afterwards only its owner changes it, on their account page", { field: "password" });
+      }
+    }
     const input = entityInput(e, c.body, false);
     await saveEntity(c.actor, e, id, form(input.entries), { only: input.only });
     return { body: await rowOut(e, id) };

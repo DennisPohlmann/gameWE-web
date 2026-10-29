@@ -358,12 +358,14 @@ export const entities: Entity[] = [
     pkIsText: true,
     label: { de: "Benutzer", en: "Users" },
     help: {
-      de: "Stufe 100 = Admin (alles), 80 = eingeschränkt (keine Spiele, Server und Benutzer).",
-      en: "Level 100 = admin (everything), 80 = restricted (no games, servers or users).",
+      de: "Stufe 100 = Admin (alles), 80 = eingeschränkt (keine Spiele, Server und Benutzer). Passwort und TOTP ändert jeder Benutzer nur selbst, unter Mein Konto.",
+      en: "Level 100 = admin (everything), 80 = restricted (no games, servers or users). Each user changes their password and TOTP only themselves, under My account.",
     },
     fields: [
       { name: "username", label: { de: "Benutzername", en: "User name" }, type: "text", inList: true, required: true, createOnly: true, max: 128 },
-      { name: "password", label: { de: "Passwort", en: "Password" }, type: "password", help: { de: "Leer lassen, um es nicht zu ändern. Mindestens 10 Zeichen.", en: "Leave empty to keep it. At least 10 characters." } },
+      // Only when the user is created: afterwards each admin changes only
+      // their own password, on My account with the current one.
+      { name: "password", label: { de: "Passwort", en: "Password" }, type: "password", createOnly: true, help: { de: "Erstes Passwort, mindestens 10 Zeichen. Danach ändert es nur der Benutzer selbst unter Mein Konto.", en: "First password, at least 10 characters. Afterwards only the user changes it, under My account." } },
       { name: "acclevel", label: { de: "Stufe", en: "Level" }, type: "select", options: [["100", "100 Admin"], ["80", "80"]], inList: true, required: true },
     ],
     order: "username",

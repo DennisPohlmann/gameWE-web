@@ -69,6 +69,8 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
         ? fill(a.dbWriteError, { msg: sp.msg ?? "" })
         : sp.error === "self"
           ? a.notSelf
+          : sp.error === "password"
+            ? a.pwOwnOnly
           : sp.error === "mismatch"
             ? a.gameMismatch
             : sp.error === "duplicate"
@@ -120,7 +122,8 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
           <input type="hidden" name="__id" value={id} />
           <input type="hidden" name="__returnTo" value={returnTo} />
           {preset ? <input type="hidden" name="__ranking" value={preset} /> : null}
-          {e.fields.filter((f) => (isNew ? !f.readonly : !f.virtual)).map((f) => {
+          {/* An existing user's password is changed only by that user (My account). */}
+          {e.fields.filter((f) => (isNew ? !f.readonly : !f.virtual && f.type !== "password")).map((f) => {
             const value = (preset && f.name === "game" ? preset : kept(f.name)) ?? (row as Record<string, string | number | null>)[f.name];
             const locked = f.readonly || (f.createOnly && !isNew);
             // The preset ranking is the only choice (the save sets it anyway).
@@ -157,6 +160,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
               </Wrap>
             );
           })}
+          {e.key === "users" && !isNew ? <small className="muted">{a.pwOwnOnly}</small> : null}
           <button type="submit" className="button">
             {a.save}
           </button>

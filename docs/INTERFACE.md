@@ -183,8 +183,10 @@ are listed once in `src/lib/openapi-admin.ts`, and the router
   level, TOTP and deletion of the token's own account (also under another
   spelling of the user name the database takes for the same, e.g. other
   case or trailing spaces), and creating, listing or revoking tokens (there
-  is no API for that). Other admins can be created, changed (also their
-  password and level) and deleted as in the admin area.
+  is no API for that). Other admins can be created (with a first
+  password), changed (level) and deleted as in the admin area; the password
+  of an existing admin is never set (`403 password_own_only`): each admin
+  changes only their own, on My account.
 - **Bodies** are JSON (`Content-Type: application/json`, at most 64 KB);
   unknown, read-only or wrongly typed fields and unknown query parameters
   give `400` naming the field. `PATCH` changes only the fields sent. The
