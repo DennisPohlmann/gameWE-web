@@ -1087,13 +1087,15 @@ th.ban-type-col, td.ban-type-col { text-align: center; }
 .ban-mark > span { position: absolute; inset: 0; }
 .ban-mark.ban-mark-vac { color: #2b2200; background: #f5c518; }
 .ban-mark.ban-mark-both { color: #000; background: linear-gradient(to bottom right, #b0281e 50%, #f5c518 50%); }
-.ban-mark:focus { outline: 2px solid #f5c518; outline-offset: 1px; }
+.ban-mark:focus-visible { outline: 2px solid #f5c518; outline-offset: 1px; }
 .ban-badges { display: inline-flex; gap: 3px; justify-content: center; white-space: nowrap; }
 .ban-type[data-tip] { position: relative; cursor: help; }
 /* The SourceBans badge links to the player's bans on the SourceBans site: a link in the badge's own colours. */
 a.ban-type, a.ban-type:hover, a.ban-type:focus { text-decoration: none; cursor: pointer; }
 a.ban-type.ban-sourcebans:hover, a.ban-type.ban-sourcebans:focus { background: #a93226; }
-.ban-type[data-tip]:focus { outline: 2px solid #f5c518; outline-offset: 1px; }
+/* The yellow frame only for keyboard focus: a click or tap on a badge (it shows
+   the details) focuses it too, and then the frame looked like a hover effect. */
+.ban-type[data-tip]:focus-visible { outline: 2px solid #f5c518; outline-offset: 1px; }
 .ban-mark[data-tip]:hover::after, .ban-mark[data-tip]:focus::after, .ban-type[data-tip]:hover::after, .ban-type[data-tip]:focus::after { content: attr(data-tip); position: absolute; z-index: 30; left: 0; top: calc(100% + 4px); width: max-content; max-width: min(320px, 80vw); padding: 4px 7px; border-radius: 3px; font: normal 11px/1.4 Verdana, sans-serif; text-align: left; white-space: normal; color: #fff; background: #1e1e1e; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); }
 /* The mark lists every ban, one per line. */
 .ban-mark[data-tip]:hover::after, .ban-mark[data-tip]:focus::after { white-space: pre-line; }
