@@ -1089,6 +1089,15 @@ th.ban-type-col, td.ban-type-col { text-align: center; }
 .ban-mark.ban-mark-both { color: #000; background: linear-gradient(to bottom right, #b0281e 50%, #f5c518 50%); }
 .ban-mark:focus-visible { outline: 2px solid #f5c518; outline-offset: 1px; }
 .ban-badges { display: inline-flex; gap: 3px; justify-content: center; white-space: nowrap; }
+/* Bans page on a phone: the table fits its frame instead of running past
+   it. Name and ban date wrap (a long name anywhere), two badges stack and
+   the cells keep 4px at the sides (also in the skins with wider cells). */
+@media (max-width: 600px) {
+  html table.bans-table th, html table.bans-table td { padding-left: 4px; padding-right: 4px; }
+  table.bans-table td { white-space: normal; }
+  table.bans-table td:nth-child(2) { min-width: 6em; overflow-wrap: anywhere; }
+  table.bans-table .ban-badges { flex-wrap: wrap; }
+}
 .ban-type[data-tip] { position: relative; cursor: help; }
 /* The SourceBans badge links to the player's bans on the SourceBans site: a link in the badge's own colours. */
 a.ban-type, a.ban-type:hover, a.ban-type:focus { text-decoration: none; cursor: pointer; }

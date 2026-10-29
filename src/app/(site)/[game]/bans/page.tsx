@@ -91,7 +91,7 @@ export default async function BansPage({ params, searchParams }: { params: Promi
       {inactive ? <p className="lead">{t.inactiveHint}</p> : null}
       {rows.length ? (
         <TableWrap>
-          <table>
+          <table className="bans-table">
             <thead>
               <tr>
                 <th className="num">#</th>
