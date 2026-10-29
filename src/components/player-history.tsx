@@ -15,12 +15,14 @@ export async function historyAccess() {
   return { chat: chatPublic || !!admin, ips: !!admin };
 }
 
-// Loads the player of a history page; wrong ranking -> the right URL.
+// Loads the player of a history page; wrong ranking -> the right URL. A
+// player banned in the ranking has a profile (with the ban notice), so
+// their history pages exist too.
 export async function loadHistoryPlayer(game: string, raw: string, tab: HistoryTab) {
   const id = Number.parseInt(raw, 10);
   if (!Number.isSafeInteger(id) || id <= 0) notFound();
   const p = await getPlayer(id);
-  if (!p || (await noProfile(p))) notFound();
+  if (!p || (await noProfile(p, true))) notFound();
   if (tab === "chat" || tab === "ips") {
     const access = await historyAccess();
     if (!access[tab]) notFound();

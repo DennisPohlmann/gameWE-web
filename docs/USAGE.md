@@ -190,8 +190,8 @@ website therefore computes some things itself:
   leaves them out (opponents, events with them on the other side, award
   winners, clans, maps, weapons, actions, search, chat, the player
   maps and their lines). Exception for banned players (`hideranking = 2`):
-  they are on the bans page, and their profile page (with its charts and
-  avatar, without the links to the history pages, which stay 404; not
+  they are on the bans page, and their profile page (with its charts,
+  avatar and the history pages events, awards, sessions and chat; not
   indexed by search engines, no forum signature; position "not listed" and
   no points) shows the ban: a "!" behind the name as on the bans page, and
   the "Bans" row with the VAC and SourceBans badges side by side (grey when

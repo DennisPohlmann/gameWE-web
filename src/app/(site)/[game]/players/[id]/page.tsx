@@ -339,7 +339,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
           {/* The history links and the note on the starred values share one line. */}
           <div className="summary-foot">
             {/* A banned player's history pages stay closed (only the profile shows the ban). */}
-            {p.hideranking ? null : <PlayerLinks game={game} id={id} name={p.name} t={t} />}
+            <PlayerLinks game={game} id={id} name={p.name} t={t} />
             <p className="footnote">{t.last14}</p>
           </div>
           </div>

@@ -27,7 +27,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ game: st
   if (!known) return notFound();
   const id = Number(raw);
   const p = await getPlayer(id);
-  if (!p || p.game !== game || (await noProfile(p))) return notFound();
+  if (!p || p.game !== game || (await noProfile(p, true))) return notFound(); // the profile of a banned player shows the feed too
   const url = new URL(req.url);
   const list = url.searchParams.get("list");
   const since = sinceParam(req.url);
