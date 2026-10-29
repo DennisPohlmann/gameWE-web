@@ -207,8 +207,8 @@ const definitions: Omit<SettingGroup, "area">[] = [
         type: "bool",
         def: "1",
         help: {
-          de: "Fragt alle 6 Stunden bei GitHub (ohne Konto) nach dem neuesten Release von Web und Collector und zeigt ein Update in der Übersicht des Admin-Bereichs. Installiert nichts. Nein: keine Anfrage an GitHub.",
-          en: "Asks GitHub (without an account) every 6 hours for the latest release of the web and the collector and shows an update on the admin overview. Installs nothing. No: no request to GitHub.",
+          de: "Fragt jede Stunde bei GitHub (ohne Konto) nach dem neuesten Release von Web und Collector und zeigt ein Update in der Übersicht des Admin-Bereichs. Installiert nichts. Nein: keine Anfrage an GitHub.",
+          en: "Asks GitHub (without an account) every hour for the latest release of the web and the collector and shows an update on the admin overview. Installs nothing. No: no request to GitHub.",
         },
       },
       { key: "gamewe_chat_public", label: { de: "Chat öffentlich zeigen", en: "Show chat publicly" }, type: "bool", def: "0", help: { de: "Nein: den Chat sehen nur Admins unter Administration → Chat.", en: "No: only admins see the chat, under Administration → Chat." } },

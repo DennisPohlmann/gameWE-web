@@ -13,6 +13,7 @@ import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { basePath } from "@/lib/base-path";
 import { gameKind } from "@/lib/games";
 import { fill, getAdminLang, getDict } from "@/lib/i18n";
+import { releasePage } from "@/lib/update-version";
 import { updateStatus } from "@/lib/updates";
 
 // Frame of every admin page after the login: top bar with the three areas
@@ -42,11 +43,15 @@ export default async function PanelLayout({ children }: { children: ReactNode })
     ips: a.ips,
   } as NavText;
   const isAdmin = user.acclevel >= LEVEL_ADMIN;
-  // Versions, and a link to the release of each available update (cached
-  // answers only; the overview page asks GitHub, lib/updates.ts).
-  const footer: Parameters<typeof AdminSidebar>[0]["footer"] = [`gameWE web ${process.env.APP_VERSION ? `v${process.env.APP_VERSION}` : "?"}`, inDocker() ? "Docker" : u.noDocker];
-  if (status.collector) footer.push(`Collector v${status.collector.slice(0, 32)}`);
+  // Versions, each a link to the page of its release, and a link to the
+  // release of each available update (cached answers only; the overview
+  // page asks GitHub, lib/updates.ts).
+  const version = (text: string, href: string | null) => (href ? { text, href, version: true } : text);
+  const web = process.env.APP_VERSION;
+  const footer: Parameters<typeof AdminSidebar>[0]["footer"] = [version(`gameWE web ${web ? `v${web}` : "?"}`, releasePage("web", web)), inDocker() ? "Docker" : u.noDocker];
+  if (status.collector) footer.push(version(`Collector v${status.collector.slice(0, 32)}`, releasePage("collector", status.collector)));
   for (const up of status.updates) footer.push({ text: `${up.component === "web" ? "Web" : "Collector"}: ${fill(u.footUpdate, { v: `v${up.latest}` })}`, href: up.url });
+  if (status.failed) footer.push(u.footCheckFailed);
   const themeIcon = { auto: "auto", light: "sun", dark: "moon" } as const;
   const themeLabel = { auto: u.themeAuto, light: u.themeLight, dark: u.themeDark };
 

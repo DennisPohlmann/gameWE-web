@@ -2,7 +2,7 @@
 // Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { REPOS, isNewer, parseRelease, parseVersion } from "../src/lib/update-version.ts";
+import { REPOS, isNewer, parseRelease, parseVersion, releasePage } from "../src/lib/update-version.ts";
 
 test("versions are x.y.z with an optional v and suffix", () => {
   assert.deepEqual(parseVersion("v0.19.0"), [0, 19, 0]);
@@ -31,4 +31,10 @@ test("the release answer gives the version and a github.com release link only", 
     assert.equal(parseRelease(repo, { tag_name: "v0.20.0", html_url })?.url, `https://github.com/${repo}/releases/tag/v0.20.0`);
   }
   for (const body of [null, "x", {}, { tag_name: "nightly" }, { tag_name: 3 }]) assert.equal(parseRelease(repo, body), null);
+});
+
+test("a running version links to the page of its release tag", () => {
+  assert.equal(releasePage("web", "1.2.0"), `https://github.com/${REPOS.web}/releases/tag/v1.2.0`);
+  assert.equal(releasePage("collector", "v1.2.0-rc.1"), `https://github.com/${REPOS.collector}/releases/tag/v1.2.0`);
+  for (const v of ["dev", "?", "", null, undefined, '1.2.0"><script>']) assert.equal(releasePage("web", v), null);
 });

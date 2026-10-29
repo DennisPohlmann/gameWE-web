@@ -29,6 +29,13 @@ export function isNewer(latest: string | null | undefined, current: string | nul
   return false;
 }
 
+// The release page of a running version on github.com (the tag vX.Y.Z of
+// its x.y.z), or null when it is no version (a development build).
+export function releasePage(c: Component, version: string | null | undefined): string | null {
+  const p = parseVersion(version);
+  return p ? `https://github.com/${REPOS[c]}/releases/tag/v${p.join(".")}` : null;
+}
+
 // The release from GitHub's GET /repos/{repo}/releases/latest answer. Only
 // the version and a link to the release page on github.com are taken; a
 // link elsewhere is replaced by the page of the tag.

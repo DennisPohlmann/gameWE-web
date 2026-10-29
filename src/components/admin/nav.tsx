@@ -143,8 +143,8 @@ export function AdminSidebar({
   groups: NavGroup[];
   isAdmin: boolean;
   // Lines below the menu; one with href is a link to an external page
-  // (the release of an available update).
-  footer: (string | { text: string; href: string })[];
+  // (the release of a running version, or of an available update).
+  footer: (string | { text: string; href: string; version?: boolean })[];
 }) {
   const { pathname, parts, seg, area, game } = useWhere();
   // Close the phone menu after a click on one of its links.
@@ -317,7 +317,7 @@ export function AdminSidebar({
           typeof l === "string" ? (
             <span key={l}>{l}</span>
           ) : (
-            <a key={l.href} className="adm-update" href={l.href} target="_blank" rel="noopener noreferrer">
+            <a key={l.href} className={l.version ? "adm-version" : "adm-update"} href={l.href} target="_blank" rel="noopener noreferrer">
               {l.text}
             </a>
           ),

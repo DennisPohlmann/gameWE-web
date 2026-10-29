@@ -383,9 +383,12 @@ menu button), and lists turn into cards on narrow screens:
   gameWE-collector and compares it with the running web (`APP_VERSION`) and
   the version the collector writes at its start (`gamewe_collector_version`,
   collector 0.17 and later; an older collector is just not compared). The
-  answer is kept for 6 hours, after a failure the next request waits an
-  hour; offline or after 4 seconds nothing is shown. Only the overview page
-  asks GitHub, the other pages use the kept answer. Nothing is downloaded or
+  answer is kept for an hour, after a failure the next request waits 10
+  minutes; offline or after 4 seconds no update is shown, the menu says
+  "Update check: GitHub not reachable" and the server log has a line
+  `update check: ...`. Only the overview page asks GitHub, the other pages
+  use the kept answer. An available update shows on the overview and below
+  the menu; the versions below the menu link to their release on GitHub. Nothing is downloaded or
   installed: the notice links to the release, the steps are under "Update" in
   [INSTALLATION.md](INSTALLATION.md). Admin → Settings → Monitoring, "Check
   for updates" (`gamewe_update_check`, default on) turns it off; then no
