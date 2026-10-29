@@ -333,7 +333,7 @@ export const adminSchemas: Record<string, Schema> = {
   AdminError: {
     type: "object",
     properties: {
-      error: str("Error code", { examples: ["unauthorized", "forbidden", "self_security_forbidden", "not_found", "invalid_field", "unknown_field", "read_only_field", "missing_field", "confirmation_required", "mismatch", "duplicate", "rate_limited"] }),
+      error: str("Error code", { examples: ["unauthorized", "forbidden", "self_security_forbidden", "not_found", "invalid_field", "unknown_field", "read_only_field", "missing_field", "confirmation_required", "mismatch", "duplicate", "template_ranking", "rate_limited"] }),
       message: str("What went wrong, in English"),
       field: str("The field it is about, if any"),
       id: int("For duplicate: the ID of the other server"),
@@ -560,7 +560,7 @@ export const adminOps: AdminOp[] = [
     operationId: "adminSetRankingHall",
     tag: "Admin: rankings",
     summary: "Change the reset schedule of a ranking",
-    description: "`schedule` is needed for `source: own`. Switching a schedule on or changing it needs `confirm: true` (`400 confirmation_required`): the ranking is then reset at the end of every period.",
+    description: "`schedule` is needed for `source: own`. Switching a schedule on or changing it needs `confirm: true` (`400 confirmation_required`): the ranking is then reset at the end of every period. A template (a ranking without servers) has no schedule (`409 template_ranking`).",
     level: 100,
     handler: "hallSet",
     params: [codeParam],
@@ -569,7 +569,7 @@ export const adminOps: AdminOp[] = [
     status: 200,
     response: hallOut,
     example: hallEx,
-    errors: [400, 404, 503],
+    errors: [400, 404, 409, 503],
   },
   {
     method: "GET",
@@ -635,7 +635,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: jobs and resets",
     summary: "Reset a ranking",
     description:
-      "Queues a reset job; the collector runs it (it pauses the ranking's servers). `confirm: true` is required because the data is **deleted for good**. A reset already queued for the ranking is returned instead (`existing: true`). Poll `/admin/jobs/{id}` for the result.",
+      "Queues a reset job; the collector runs it (it pauses the ranking's servers). `confirm: true` is required because the data is **deleted for good**. A reset already queued for the ranking is returned instead (`existing: true`). Poll `/admin/jobs/{id}` for the result. A template (a ranking without servers) is never reset (`409 template_ranking`).",
     level: 100,
     handler: "reset",
     params: [codeParam],
@@ -644,7 +644,7 @@ export const adminOps: AdminOp[] = [
     status: 202,
     response: obj({ job: int("Job ID"), existing: bool("A reset was already queued") }),
     example: { job: 17, existing: false },
-    errors: [400, 404, 503],
+    errors: [400, 404, 409, 503],
   },
   {
     method: "GET",

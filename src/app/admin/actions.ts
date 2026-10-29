@@ -13,6 +13,7 @@ import { createToken, revokeToken } from "@/lib/api-tokens";
 import { LEVEL_ADMIN, adminSecret, confirmIdentity, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, requireAdmin } from "@/lib/auth";
 import { resetMode } from "@/lib/reset";
 import { addParams, safeReturnTo, withReturnTo } from "@/lib/return-to";
+import { resettableRankings } from "@/lib/admin-rankings";
 import { presetRanking, rankingServersHref } from "@/lib/ranking-preset";
 import { checkCode, consumeStep, newSecret, readSecret, removeSecret, storeSecret } from "@/lib/totp";
 
@@ -265,7 +266,8 @@ export async function resetRankingAction(form: FormData) {
   const user = await requireAdmin(LEVEL_ADMIN);
   const game = String(form.get("game") ?? "");
   const mode = resetMode(form.get("mode"));
-  const games = await optionList("games");
+  // Only rankings with servers: templates are never reset.
+  const games = await resettableRankings();
   if (!games.some(([code]) => code === game) || !mode) redirect("/admin/reset?error=input");
   if (form.get("confirmed") !== "yes" || form.get("understood") !== "yes") {
     redirect(`/admin/reset?error=confirm&game=${encodeURIComponent(game)}`);
@@ -276,7 +278,7 @@ export async function resetRankingAction(form: FormData) {
   } catch (err) {
     if (!(err instanceof OpError)) throw err;
     if (err.code === "db") redirect(`/admin/reset?error=db&game=${encodeURIComponent(game)}`);
-    if (err.code === "notfound") redirect("/admin/reset?error=input");
+    if (err.code === "notfound" || err.code === "template") redirect("/admin/reset?error=input");
     redirect("/admin/reset");
   }
   redirect(`/admin/reset?job=${job.id}${job.existing ? "&existing=1" : ""}`);
@@ -326,7 +328,7 @@ export async function hallOfFameSettingsAction(form: FormData) {
     await setRankingHall({ user }, game, String(form.get("source") ?? ""), resetMode(form.get("mode")), String(form.get("page") ?? ""), form);
   } catch (err) {
     if (!(err instanceof OpError)) throw err;
-    if (err.code === "notfound") redirect("/admin/rankings");
+    if (err.code === "notfound" || err.code === "template") redirect("/admin/rankings");
     redirect(`${back}?hof=${err.code === "table" ? "table" : err.code === "confirm" ? "confirm" : "input"}#hall-of-fame`);
   }
   redirect(`${back}?hof=saved#hall-of-fame`);

@@ -92,7 +92,7 @@ export default async function RankingsPage({ searchParams }: { searchParams: Pro
           </tbody>
         </table>
       </section>
-      {isAdmin ? <GlobalHallCard lang={lang} status={hof} rankings={rankings} /> : null}
+      {isAdmin ? <GlobalHallCard lang={lang} status={hof} rankings={rankings.filter((r) => r.servers > 0)} /> : null}
     </>
   );
 }

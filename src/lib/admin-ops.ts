@@ -3,7 +3,7 @@ import type { Entity } from "./admin-entities";
 import { deleteRow, getRow, InputError, isDuplicateKey, optionList, otherServerAt, rawOptions, saveRow } from "./admin-data";
 import { globalHall, hallSettings, saveGlobalHall, saveHallSettings, setHallRemoved } from "./admin-hall";
 import { saveRankingBlockVac, saveRankingBots, type RankingBots } from "./admin-ranking-bots";
-import { allServers, assignServers, copyDefinitions, rankingBaseGames } from "./admin-rankings";
+import { allServers, assignServers, copyDefinitions, rankingBaseGames, resettableRankings } from "./admin-rankings";
 import { RAW_GROUP, READONLY_OPTIONS, homeValue, linkValue, rawKeyAllowed, settingGroups } from "./admin-settings";
 import { purgeTokens } from "./api-tokens";
 import { LEVEL_ADMIN, type AdminUser } from "./auth";
@@ -41,7 +41,8 @@ export type OpCode =
   | "input" // invalid input outside the fields
   | "confirm" // a destructive change was not confirmed
   | "table" // the database lacks the table (old collector)
-  | "nojobs"; // no job table: the collector cannot run a reset
+  | "nojobs" // no job table: the collector cannot run a reset
+  | "template"; // the ranking is a template (no servers): never reset
 
 export class OpError extends Error {
   constructor(
@@ -64,6 +65,13 @@ type Form = Pick<FormData, "get" | "getAll" | "has" | "entries">;
 
 async function rankingExists(game: string) {
   return (await optionList("games")).some(([code]) => code === game);
+}
+
+// A ranking without servers is a template: it only holds the definitions for
+// new rankings and is never reset, by hand or by schedule.
+async function checkResettable(game: string) {
+  if (!(await rankingExists(game))) throw new OpError("notfound");
+  if (!(await resettableRankings()).some(([code]) => code === game)) throw new OpError("template");
 }
 
 // ---------------------------------------------------------------- rows
@@ -332,7 +340,7 @@ export async function savePrivacy(a: Actor, form: Form): Promise<void> {
 
 // Queues a reset of ranking `game` (the caller has checked the confirmation).
 export async function resetRanking(a: Actor, game: string, mode: ResetMode): Promise<{ id: number; existing: boolean }> {
-  if (!(await rankingExists(game))) throw new OpError("notfound");
+  await checkResettable(game);
   if (!(await jobsAvailable())) throw new OpError("nojobs");
   let job: { id: number; existing: boolean };
   try {
@@ -376,7 +384,7 @@ export function scheduleFromForm(form: Form): string | null {
 // on or changing it must be confirmed (understood=yes): the ranking is then
 // reset at the end of every period.
 export async function setRankingHall(a: Actor, game: string, src: string, mode: ResetMode | null, page: string, form: Form): Promise<void> {
-  if (!(await rankingExists(game))) throw new OpError("notfound");
+  await checkResettable(game);
   if ((src !== "global" && src !== "own" && src !== "off") || !mode || (page !== "auto" && page !== "on" && page !== "off")) throw new OpError("input");
   const schedule = src === "own" ? scheduleFromForm(form) : "";
   if (schedule === null) throw new OpError("input");

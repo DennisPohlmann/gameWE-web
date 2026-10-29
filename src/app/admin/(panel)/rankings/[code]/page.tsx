@@ -190,7 +190,7 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
                 </Link>
               </li>
             ))}
-            {isAdmin ? (
+            {isAdmin && r.servers > 0 ? (
               <li>
                 <Link className="todo-link" href={`/admin/reset${q}`}>
                   <span className="ic bad">
@@ -207,7 +207,8 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
       </div>
       {isAdmin ? <BotsCard game={r.code} lang={lang} status={sp.bots} changed={sp.n} /> : null}
       {isAdmin ? <VacCard game={r.code} lang={lang} on={vacBlock} keyStored={vacKey} status={sp.vac} /> : null}
-      {isAdmin ? <HallOfFameCard game={r.code} lang={lang} status={hof} /> : null}
+      {/* A template (no servers) is never reset: no schedule to set. */}
+      {isAdmin && r.servers > 0 ? <HallOfFameCard game={r.code} lang={lang} status={hof} /> : null}
     </>
   );
 }

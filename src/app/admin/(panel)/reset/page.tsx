@@ -4,7 +4,7 @@ import { AutoRefresh } from "@/components/auto-refresh";
 import { ResetForm } from "@/components/reset-form";
 import { SortableTable } from "@/components/sortable-table";
 import { Section, TableWrap } from "@/components/ui";
-import { optionList } from "@/lib/admin-data";
+import { resettableRankings } from "@/lib/admin-rankings";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { getAdminLang } from "@/lib/i18n";
 import { RESET_MODES, collectorRunning, getJob, jobModeName, jobsAvailable, recentJobs, type ResetJob, type ResetMode } from "@/lib/reset";
@@ -18,6 +18,8 @@ const T = {
     missing:
       "Diese Funktion braucht Collector 0.1.0 oder neuer und eine Datenbank aus dessen Init-Skript (Tabelle hlstats_gamewe_jobs). Bis dahin: auf der Konsole mit dem Collector zurücksetzen.",
     version: "Die drei Arten brauchen Collector 0.2.0 oder neuer; ein älterer lehnt den Auftrag ab, ohne etwas zu ändern.",
+    templates: "Vorlagen (Rankings ohne Server) stehen nicht zur Wahl: Sie enthalten nur die Definitionen für neue Rankings und werden nie zurückgesetzt.",
+    noRankings: "Es gibt noch kein Ranking mit Servern, also nichts zurückzusetzen.",
     ranking: "Rangliste",
     mode: "Was zurücksetzen?",
     modes: {
@@ -76,6 +78,8 @@ const T = {
     missing:
       "This needs collector 0.1.0 or newer and a database created with its init script (table hlstats_gamewe_jobs). Until then, reset from the console with the collector.",
     version: "The three kinds need collector 0.2.0 or newer; an older one refuses the job without changing anything.",
+    templates: "Templates (rankings without servers) are not offered: they only hold the definitions for new rankings and are never reset.",
+    noRankings: "There is no ranking with servers yet, so there is nothing to reset.",
     ranking: "Ranking",
     mode: "What to reset?",
     modes: {
@@ -153,7 +157,7 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
     );
   }
 
-  const games = await optionList("games");
+  const games = await resettableRankings();
   const running = await collectorRunning();
   const jobId = Number(sp.job);
   const job: ResetJob | undefined = Number.isInteger(jobId) && jobId > 0 ? await getJob(jobId) : undefined;
@@ -190,6 +194,8 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
           <p className="settings-help">{t.intro}</p>
           <p className="settings-help">{t.how}</p>
           <p className="settings-help">{t.version}</p>
+          <p className="settings-help">{t.templates}</p>
+          {!games.length ? <p className="settings-help notice">{t.noRankings}</p> : null}
           {!running ? <p className="settings-help notice error">{t.noCollector}</p> : null}
         </ResetForm>
       </Section>

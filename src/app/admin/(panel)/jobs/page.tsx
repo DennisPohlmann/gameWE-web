@@ -142,7 +142,8 @@ export default async function JobsPage() {
   const u = adminDict(lang).ui;
   const rankings = await rankingSummaries();
   const names = new Map(rankings.map((r) => [r.code, r.name]));
-  const ov = await jobsOverview(rankings.map((r) => r.code));
+  // Templates (no servers) are never reset, also with an old plan key left.
+  const ov = await jobsOverview(rankings.filter((r) => r.servers > 0).map((r) => r.code));
   const now = nowUnix();
   const when = (unix: number) => fmtDateTime(unix, lang);
   const beatOk = ov.heartbeat > 0 && now - ov.heartbeat < HEARTBEAT_STALE;

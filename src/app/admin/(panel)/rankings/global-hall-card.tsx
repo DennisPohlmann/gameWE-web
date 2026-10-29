@@ -9,7 +9,7 @@ const T = {
   de: {
     title: "Geplanter Reset für alle Rankings",
     intro:
-      "Ein Zeitplan für alle Rankings, z. B. jedes Quartal. Jedes Ranking folgt ihm, solange es auf „Wie für alle Rankings“ steht; in seinen Einstellungen lässt es sich mit einem eigenen Zeitplan oder „Aus“ überschreiben. Vor jedem Reset kommen die Besten der Periode in die Ruhmeshalle des Rankings.",
+      "Ein Zeitplan für alle Rankings, z. B. jedes Quartal. Jedes Ranking mit Servern folgt ihm, solange es auf „Wie für alle Rankings“ steht, Vorlagen (Rankings ohne Server) nie; in seinen Einstellungen lässt es sich mit einem eigenen Zeitplan oder „Aus“ überschreiben. Vor jedem Reset kommen die Besten der Periode in die Ruhmeshalle des Rankings.",
     on: "An",
     off: "Aus",
     enabled: "Reset für alle Rankings",
@@ -20,7 +20,7 @@ const T = {
     next: "Nächster Reset am {n}.",
     waiting: "Der Collector beginnt die Periode beim nächsten Durchlauf (innerhalb einer Minute, sobald er läuft).",
     follow: "Folgen diesem Zeitplan: {r}.",
-    none: "Kein Ranking folgt diesem Zeitplan, alle haben einen eigenen oder stehen auf „Aus“.",
+    none: "Kein Ranking folgt diesem Zeitplan, alle haben einen eigenen oder stehen auf „Aus“ (Vorlagen ohne Server zählen nicht).",
     understood: "Mir ist klar, dass die Statistiken aller Rankings, die diesem Zeitplan folgen, am Ende jeder Periode unwiderruflich zurückgesetzt werden.",
     save: "Speichern",
     savedOn: "Gespeichert: Der Reset für alle Rankings ist eingeschaltet. Der Collector übernimmt ihn innerhalb einer Minute und beginnt mit der laufenden Periode, es wird also nicht sofort zurückgesetzt.",
@@ -32,7 +32,7 @@ const T = {
   en: {
     title: "Scheduled reset for all rankings",
     intro:
-      "One schedule for all rankings, e.g. every quarter. A ranking follows it while it is set to “As for all rankings”; its own settings can override it with an own schedule or “Off”. Before every reset the best of the period go into the ranking's hall of fame.",
+      "One schedule for all rankings, e.g. every quarter. A ranking with servers follows it while it is set to “As for all rankings”, templates (rankings without servers) never do; its own settings can override it with an own schedule or “Off”. Before every reset the best of the period go into the ranking's hall of fame.",
     on: "On",
     off: "Off",
     enabled: "Reset for all rankings",
@@ -43,7 +43,7 @@ const T = {
     next: "Next reset on {n}.",
     waiting: "The collector starts the period with its next run (within a minute while it runs).",
     follow: "Following this schedule: {r}.",
-    none: "No ranking follows this schedule; all have their own or are off.",
+    none: "No ranking follows this schedule; all have their own or are off (templates without servers do not count).",
     understood: "I understand that the statistics of all rankings following this schedule will be reset irreversibly at the end of every period.",
     save: "Save",
     savedOn: "Saved: the reset for all rankings is switched on. The collector takes it within a minute and starts with the period now running, so nothing is reset at once.",
@@ -54,7 +54,8 @@ const T = {
   },
 };
 
-// The reset schedule for all rankings (admins only).
+// The reset schedule for all rankings (admins only); rankings: those with
+// servers, templates are never reset.
 export async function GlobalHallCard({ lang, status, rankings }: { lang: Lang; status?: string; rankings: { code: string; name: string }[] }) {
   const t = T[lang === "de" ? "de" : "en"];
   const ht = hallT(lang);

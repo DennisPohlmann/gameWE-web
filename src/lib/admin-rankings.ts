@@ -89,6 +89,17 @@ export async function rankingSummaries(): Promise<RankingSummary[]> {
   }));
 }
 
+// The rankings a reset applies to, as optionList("games"): those with at
+// least one server. A ranking without servers is a template, which only holds
+// the definitions for new rankings and is never reset (the collector refuses
+// it too).
+export async function resettableRankings(): Promise<[string, string][]> {
+  const rows = await adminQuery<{ code: string; name: string }>(
+    `SELECT TRIM(code) AS code, name FROM hlstats_Games WHERE TRIM(code) IN (SELECT TRIM(game) FROM hlstats_Servers) ORDER BY display_id, name`,
+  );
+  return rows.map((x) => [x.code, `${x.name} (${x.code})`]);
+}
+
 // Number of rows per ranking in one of the per-ranking tables. Table and
 // column are constants of the callers, never input.
 export async function countByRanking(table: string, column: string, where = ""): Promise<Map<string, number>> {

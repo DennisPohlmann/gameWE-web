@@ -187,6 +187,8 @@ function failure(err: unknown): Response {
         return error(503, "not_available", "the database lacks the table for this (update the collector)");
       case "nojobs":
         return error(503, "jobs_unavailable", "the database has no job table (collector 0.1.0 or newer)");
+      case "template":
+        return error(409, "template_ranking", "the ranking is a template (no servers) and is never reset");
       case "db":
         // A row with the same unique key (e.g. an award code twice in a ranking).
         if (d.dupkey) return error(409, "duplicate", "a row with the same key exists already");
@@ -484,7 +486,8 @@ const handlers: Record<string, Handler> = {
 
   // Jobs.
   async jobs(c) {
-    const codes = (await rankingSummaries()).map((r) => r.code);
+    // Templates (no servers) are never reset, also with an old plan key left.
+    const codes = (await rankingSummaries()).filter((r) => r.servers > 0).map((r) => r.code);
     const ov = await jobsOverview(codes);
     return {
       body: {
