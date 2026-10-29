@@ -13,6 +13,7 @@ import { ShareMenu } from "@/components/share-menu";
 import { basePath } from "@/lib/base-path";
 import { FLAG_SPRITE_URL } from "@/lib/flag-codes";
 import { Crumbs } from "@/components/crumbs";
+import { BanTips } from "@/components/ban-tips";
 import { ConsentRoot, PRIVACY_HREF } from "@/components/consent";
 import { getConsent } from "@/lib/consent-server";
 import { getGames } from "@/lib/data";
@@ -188,6 +189,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             </Link>
           </p>
         </footer>
+        <BanTips />
       </body>
     </html>
   );

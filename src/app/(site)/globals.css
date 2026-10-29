@@ -1096,11 +1096,13 @@ a.ban-type.ban-sourcebans:hover, a.ban-type.ban-sourcebans:focus { background: #
 /* The yellow frame only for keyboard focus: a click or tap on a badge (it shows
    the details) focuses it too, and then the frame looked like a hover effect. */
 .ban-type[data-tip]:focus-visible { outline: 2px solid #f5c518; outline-offset: 1px; }
-.ban-mark[data-tip]:hover::after, .ban-mark[data-tip]:focus::after, .ban-type[data-tip]:hover::after, .ban-type[data-tip]:focus::after { content: attr(data-tip); position: absolute; z-index: 30; left: 0; top: calc(100% + 4px); width: max-content; max-width: min(320px, 80vw); padding: 4px 7px; border-radius: 3px; font: normal 11px/1.4 Verdana, sans-serif; text-align: left; white-space: normal; color: #fff; background: #1e1e1e; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); }
-/* The mark lists every ban, one per line. */
-.ban-mark[data-tip]:hover::after, .ban-mark[data-tip]:focus::after { white-space: pre-line; }
-/* Badges sit in the middle of the row: their box opens to the left so it stays inside the table on a phone. */
-.ban-type[data-tip]:hover::after, .ban-type[data-tip]:focus::after { left: auto; right: 0; max-width: min(260px, 62vw); }
+/* The details box (ban-tips.tsx): fixed to the viewport and kept inside it,
+   so no table cuts it off; the mark lists every ban, one per line. */
+.ban-tip { position: fixed; z-index: 60; width: max-content; max-width: min(320px, calc(100vw - 16px)); padding: 4px 7px; border-radius: 3px; font: normal 11px/1.4 Verdana, sans-serif; text-align: left; white-space: pre-line; overflow-wrap: anywhere; color: #fff; background: #1e1e1e; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); pointer-events: none; }
+/* Without JavaScript: the same box in CSS below the badge. */
+html:not(.ban-tips-js) .ban-mark[data-tip]:hover::after, html:not(.ban-tips-js) .ban-mark[data-tip]:focus::after, html:not(.ban-tips-js) .ban-type[data-tip]:hover::after, html:not(.ban-tips-js) .ban-type[data-tip]:focus::after { content: attr(data-tip); position: absolute; z-index: 30; left: 0; top: calc(100% + 4px); width: max-content; max-width: min(320px, 80vw); padding: 4px 7px; border-radius: 3px; font: normal 11px/1.4 Verdana, sans-serif; text-align: left; white-space: normal; color: #fff; background: #1e1e1e; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); }
+html:not(.ban-tips-js) .ban-mark[data-tip]:hover::after, html:not(.ban-tips-js) .ban-mark[data-tip]:focus::after { white-space: pre-line; }
+html:not(.ban-tips-js) .ban-type[data-tip]:hover::after, html:not(.ban-tips-js) .ban-type[data-tip]:focus::after { left: auto; right: 0; max-width: min(260px, 62vw); }
 td.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9em; }
 
 /* ---------------------------------------------------------------- hover values */
@@ -1290,7 +1292,7 @@ td.ribbon-wall a { display: inline-flex; flex-direction: column; align-items: ce
 html[data-os] body,
 html[data-os] input, html[data-os] select, html[data-os] textarea, html[data-os] button,
 html[data-os] .leaflet-tooltip,
-html[data-os] .hs, html[data-os] .pbar-text, html[data-os] .winbar, html[data-os] .map-avatar span, html[data-os] .ban-type {
+html[data-os] .hs, html[data-os] .pbar-text, html[data-os] .winbar, html[data-os] .map-avatar span, html[data-os] .ban-type, html[data-os] .ban-tip {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Verdana, Arial, sans-serif;
 }
 html[data-os] body,
