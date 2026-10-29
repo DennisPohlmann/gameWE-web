@@ -20,6 +20,8 @@ on MariaDB/MySQL or PostgreSQL. It
   heatmaps, awards, ranks, servers, events, hall of fame, player maps,
   search, TeamSpeak and the banners as PNG; documented on `/api` with
   Scalar), forum signatures, server banners and a TeamSpeak banner,
+- offers an admin API (`/api/v1/admin`) with which scripts do everything the
+  admin area does, with an admin's API token (Admin → My account → API tokens),
 - comes in 13 languages and with design templates, including your own.
 
 Built with Next.js 16 (App Router, server-rendered, almost no client
@@ -166,7 +168,7 @@ docker logs gamewe-collector    # "database migrated", "listening for game serve
 
 `ADMIN_SECRET` signs the admin logins: a random value of at least 32
 characters, created once and kept, also when you recreate the container
-(a new one signs everybody out and makes stored TOTP keys unusable):
+(a new one signs everybody out and makes stored TOTP keys and API tokens unusable):
 
 ```bash
 openssl rand -hex 32 > ~/gamewe/admin-secret && chmod 600 ~/gamewe/admin-secret
@@ -298,7 +300,7 @@ and the reverse proxy: [docs/INSTALLATION.md](docs/INSTALLATION.md).
 | [docs/INSTALLATION.md](docs/INSTALLATION.md) | installation step by step: database users, settings file, container, tar.gz, reverse proxy, update, troubleshooting, removal |
 | [docs/CONFIG.md](docs/CONFIG.md) | environment variables, settings moved into the database, languages, search engines, voice server, access log |
 | [docs/USAGE.md](docs/USAGE.md) | pages, where the data comes from, admin area, health and monitoring |
-| [docs/INTERFACE.md](docs/INTERFACE.md) | database access and the public JSON API |
+| [docs/INTERFACE.md](docs/INTERFACE.md) | database access, the public JSON API and the admin API |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | local development, building, CI and releases |
 | [templates/README.md](templates/README.md) | own design templates |
 | [overviews/README.md](overviews/README.md) | map pictures under the heatmap |

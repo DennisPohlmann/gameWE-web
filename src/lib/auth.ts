@@ -140,6 +140,30 @@ export async function changePassword(username: string, current: string, next: st
   return "ok";
 }
 
+// The signed-in user confirms a sensitive step (a new API token) with their
+// password and, when the account has TOTP, the current code; the same brake
+// as the sign-in. "code": TOTP is set up and the code is missing or wrong.
+export async function confirmIdentity(username: string, password: string, code: string): Promise<"ok" | "wrong" | "code" | "blocked" | "nosecret"> {
+  const secret = adminSecret();
+  if (!secret) return "nosecret";
+  const ip = await clientIp();
+  if (await blocked(ip)) return "blocked";
+  const [user] = await adminQuery<{ password: string }>(`SELECT password FROM hlstats_Users WHERE username = ?`, [username]);
+  if (!user || !verifyPassword(password, user.password).ok) {
+    fail(ip);
+    return "wrong";
+  }
+  const totp = await readSecret(username, secret);
+  if (totp !== null) {
+    const step = totp ? checkCode(totp, code) : null;
+    if (step === null || !consumeStep(username, step)) {
+      fail(ip);
+      return "code";
+    }
+  }
+  return "ok";
+}
+
 const tries = new Map<string, number>();
 
 // The user waiting for the TOTP step, from the gamewe_2fa cookie.

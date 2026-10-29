@@ -5,6 +5,7 @@ import { MAP_SORTS } from "./map-table.ts";
 import { PLACE_SORT_ALIASES, PLACE_SORT_DEFAULT, RANKING_SORT_ALIASES, placeSorts, rankingSorts } from "./sorts.ts";
 import { rankPlayerSorts } from "./table-sort.ts";
 import { ZONES } from "./zones.ts";
+import { ADMIN_API_INFO, ADMIN_SECURITY_SCHEMES, ADMIN_TAGS, adminPathItems, adminSchemas } from "./openapi-admin.ts";
 
 // OpenAPI 3.1 description of the public API (/api/v1/...), shown on /api by
 // Scalar and served as /api/openapi.json. One entry per route under
@@ -2025,7 +2026,7 @@ function buildDocument(version: string) {
       description: [
         "Read-only JSON API of the gameWE statistics. It returns only what the website shows to everyone: no IP addresses, no chat, no hidden players, no admin data, no hidden rankings. Banned players are shown where the website shows them: on the bans list and their profile.",
         "",
-        "- **Authentication:** none.",
+        "- **Authentication:** none (the admin API below needs an API token).",
         "- **Rate limit:** 120 requests per minute and client address; above that the answer is `429` with a `Retry-After` header.",
         "- **Caching:** answers may be cached for 30 seconds (`Cache-Control: public, max-age=30`); banners as long as on the website (1 to 15 minutes).",
         "- **Banners** (`/players/{id}/banner`, `/rankings/{game}/servers/{id}/banner`, `/voice/teamspeak/banner`) answer `image/png`, errors as JSON; they are the same pictures as the website's `/banner/...png` addresses.",
@@ -2037,14 +2038,20 @@ function buildDocument(version: string) {
         "- **Points** are the values the website shows in its points columns (`points`, `avgPoints`, `totalPoints`, `pointsChange`); the older names `skill`, `avgSkill` and `skillChange` still carry the same values but are deprecated. Sort keys accept `points` as well as `skill`.",
         "- **Values** are computed as on the website: `kpd` is kills per death (the kills when there are no deaths), `hpk`, `accuracy` and shares are fractions (0.3125 = 31.25 %), `activity` uses the site's activity setting. Hidden players are left out exactly as on the website; banned players appear on the bans list and their profile only, as there.",
         "- **Order** is stable: equal values keep the order of their IDs.",
+        ADMIN_API_INFO,
       ].join("\n"),
       license: { name: "GPL-3.0-or-later", identifier: "GPL-3.0-or-later" },
     },
     // Relative, so the examples show the address of the site they are read on.
     servers: [{ url: `${basePath}/api/v1` }],
-    tags: [{ name: "Index" }, ...TAGS.map((name) => ({ name }))],
-    paths,
-    components: { schemas },
+    tags: [{ name: "Index" }, ...TAGS.map((name) => ({ name })), ...ADMIN_TAGS.map((name) => ({ name }))],
+    // Scalar shows the public and the admin operations as two groups.
+    "x-tagGroups": [
+      { name: "Public", tags: ["Index", ...TAGS] },
+      { name: "Admin", tags: ADMIN_TAGS },
+    ],
+    paths: { ...paths, ...adminPathItems() },
+    components: { schemas: { ...schemas, ...adminSchemas }, securitySchemes: ADMIN_SECURITY_SCHEMES },
   };
 }
 

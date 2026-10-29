@@ -190,10 +190,12 @@ async function parseValue(f: Field, raw: FormDataEntryValue | null): Promise<Par
 }
 
 // Writes one row. id = null creates it. Returns the row's primary key.
-export async function saveRow(e: Entity, id: string | null, form: FormData): Promise<string> {
+// only: write just these fields (the admin API's PATCH); without it every
+// writable field, as the edit form sends them all.
+export async function saveRow(e: Entity, id: string | null, form: Pick<FormData, "get">, only?: Set<string>): Promise<string> {
   const values: Record<string, Param> = {};
   for (const f of e.fields) {
-    if (f.readonly || f.virtual || (f.createOnly && id !== null)) continue;
+    if (f.readonly || f.virtual || (f.createOnly && id !== null) || (only && !only.has(f.name))) continue;
     if (f.type === "password" && id === null && !String(form.get(f.name) ?? "").trim()) throw new InputError(f.name);
     const v = await parseValue(f, form.get(f.name));
     if (v !== undefined) {
@@ -236,7 +238,7 @@ export function isDuplicateKey(err: unknown): boolean {
 
 // The form's plain fields of a new row, to fill the form again after an
 // error; passwords and secrets are never put into a URL.
-export function keptValues(e: Entity, form: FormData): Record<string, string> {
+export function keptValues(e: Entity, form: Pick<FormData, "get">): Record<string, string> {
   const kept: Record<string, string> = {};
   for (const f of e.fields) {
     if (f.readonly || f.virtual || f.type === "password" || f.type === "secret") continue;

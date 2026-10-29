@@ -100,3 +100,13 @@ export async function jobsOverview(games: string[], historyLimit = 30): Promise<
     table,
   };
 }
+
+// One job by its id (admin API), undefined if there is none or no table.
+export async function getAdminJob(id: number): Promise<Job | undefined> {
+  try {
+    const rows = await adminQuery<Row>(`SELECT ${COLS} FROM hlstats_gamewe_jobs WHERE id = ?`, [id]);
+    return rows[0] ? job(rows[0]) : undefined;
+  } catch {
+    return undefined;
+  }
+}

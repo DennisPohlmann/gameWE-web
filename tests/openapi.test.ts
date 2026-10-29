@@ -4,6 +4,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { EXAMPLE_GAME, endpoints, gameCodeOk, openApiDocument } from "../src/lib/openapi.ts";
+import { adminSchemas } from "../src/lib/openapi-admin.ts";
 
 type Schema = { $ref?: string; allOf?: Schema[]; anyOf?: Schema[]; type?: string; properties?: Record<string, Schema>; items?: Schema; deprecated?: boolean; example?: unknown };
 type Doc = {
@@ -32,7 +33,8 @@ test("the examples use the first ranking instead of css", () => {
   assert.ok(!text.includes("/rankings/css/"));
   assert.ok(text.includes("/rankings/css1/players"));
   for (const [path, item] of Object.entries(doc.paths)) {
-    for (const p of item.get.parameters ?? []) if (p.name === "game") assert.equal(p.example, "css1", path);
+    // Admin paths may have no GET.
+    for (const p of item.get?.parameters ?? []) if (p.name === "game") assert.equal(p.example, "css1", path);
   }
   const ranking = doc.paths["/rankings/{game}"].get.responses["200"].content?.["application/json"].example as { game: string; baseGame: string };
   assert.equal(ranking.game, "css1");
@@ -160,7 +162,8 @@ test("every read page of the website has an endpoint", () => {
 });
 
 test("no endpoint documents chat, addresses or Steam IDs", () => {
-  const text = JSON.stringify(doc.components.schemas).toLowerCase();
+  // The public schemas; the admin API (bearer token) handles chat and addresses.
+  const text = JSON.stringify(Object.fromEntries(Object.entries(doc.components.schemas).filter(([name]) => !(name in adminSchemas)))).toLowerCase();
   for (const word of ['"ip"', '"ipaddress"', '"uniqueid"', '"steamid"', '"chat"', '"message"']) assert.ok(!text.includes(word), word);
   for (const e of endpoints) assert.ok(!/chat|ips/.test(e.path), e.path);
 });

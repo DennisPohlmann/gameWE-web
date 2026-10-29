@@ -1,8 +1,9 @@
 # gameWE - web: interfaces
 
-The website has two interfaces: it reads the database that the
+The website has three interfaces: it reads the database that the
 [gameWE collector](https://github.com/DennisPohlmann/gameWE-collector) fills,
-and it offers a read-only public JSON API.
+it offers a read-only public JSON API, and an admin API that does what the
+admin area does.
 
 ## Database
 
@@ -142,6 +143,58 @@ first ranking (the first public ranking with servers or players in the
 order of the ranking list, else the first public one, else `css`), read
 when the description is requested. `npm run build` fails when a route under `src/app/api/v1` has no
 entry there, so new endpoints have to be documented.
+
+## Admin API
+
+JSON under `/api/v1/admin/...` for scripts and programs: everything the admin
+area does (rankings with their bots, VAC block and reset schedule, servers
+and their ranking, players, clans, weapons, actions, teams, roles, awards,
+ranks, users, settings, the privacy page, ranking resets and jobs, chat and
+IP addresses). Documented with the public API on `/api` (tags *Admin: ...*,
+with request and answer schemas) and in `/api/openapi.json`; the operations
+are listed once in `src/lib/openapi-admin.ts`, and the router
+(`src/lib/admin-api.ts`) serves exactly those.
+
+- **Token:** an admin creates it under Admin → My account → API tokens:
+  name, expiry (never, 7, 30, 90 or 365 days), confirmed with the password
+  and, with TOTP, the current code. The token (`gwe_` and 43 characters) is
+  shown once; only an HMAC-SHA-256 of it under a key from `ADMIN_SECRET` is
+  stored, in `hlstats_Options` (`gamewe_apitoken_<hash>`, never listed or
+  written as a raw option; no new table). The list shows name, the first
+  characters, created, last used (updated at most every 5 minutes) and
+  expiry. Up to 20 tokens per admin. Revoking works at once; a new
+  `ADMIN_SECRET` makes all tokens unusable.
+- **Authentication:** only `Authorization: Bearer gwe_...`. Cookies and
+  query parameters are never read, so there is no CSRF; answers have
+  `Cache-Control: no-store` and no CORS header. A missing, wrong, expired or
+  revoked token, or one whose admin was deleted or is below level 80, gets
+  `401` without details; 20 failed authentications from one address in 15
+  minutes block it for 15 minutes (`429`), and every address may make 300
+  requests a minute.
+- **Rights:** the token acts as its admin with their level, re-read on
+  every request: level 80 gets `403 forbidden` for rankings, servers and
+  users, as in the admin area. Every change is logged
+  (`gameWE: admin API PATCH /admin/servers/3 -> 200 by <admin> via token "<name>"`).
+- **Never with a token** (`403 self_security_forbidden`): the password,
+  level, TOTP and deletion of the token's own account (also under another
+  spelling of the user name the database takes for the same, e.g. other
+  case or trailing spaces), and creating, listing or revoking tokens (there
+  is no API for that). Other admins can be created, changed (also their
+  password and level) and deleted as in the admin area.
+- **Bodies** are JSON (`Content-Type: application/json`, at most 64 KB);
+  unknown, read-only or wrongly typed fields and unknown query parameters
+  give `400` naming the field. `PATCH` changes only the fields sent. The
+  checks and writes are the same functions as the admin pages
+  (`src/lib/admin-ops.ts`), with the admin database user. Destructive
+  operations need `"confirm": true` (ranking reset, switching on a reset
+  schedule, removing hall of fame entries). Errors are
+  `{"error": "<code>", "message": "...", "field"?: "..."}`.
+
+```bash
+curl -H "Authorization: Bearer $GAMEWE_TOKEN" https://stats.example.org/api/v1/admin/me
+curl -X PATCH -H "Authorization: Bearer $GAMEWE_TOKEN" -H 'Content-Type: application/json' \
+  -d '{"name":"Example Server #1","max_players":24}' https://stats.example.org/api/v1/admin/servers/1
+```
 
 ## Banner pictures
 

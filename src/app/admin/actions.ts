@@ -1,32 +1,19 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { sourcebansBase } from "@/lib/sourcebans";
 import { getEntity } from "@/lib/admin-entities";
-import { deleteRow, getRow, InputError, isDuplicateKey, keptValues, optionList, otherServerAt, rawOptions, saveRow, withColumns } from "@/lib/admin-data";
-import { allServers, assignServers, copyDefinitions, rankingBaseGames } from "@/lib/admin-rankings";
-import { baseGameOf, sameBaseGame } from "@/lib/games";
-import { RAW_GROUP, READONLY_OPTIONS, homeValue, linkValue, rawKeyAllowed, settingGroups } from "@/lib/admin-settings";
-import { headerOrder } from "@/lib/header-links";
+import { getRow, keptValues, optionList, withColumns } from "@/lib/admin-data";
+import { OpError, assignServersTo, deleteEntity, moveServer, resetRanking, saveEntity, savePrivacy, saveSettings, setGlobalHall, setHallEntry, setRankingBots, setRankingHall, setRankingVac } from "@/lib/admin-ops";
 import { ADMIN_THEME_COOKIE, isAdminTheme } from "@/lib/admin-theme";
 import { basePath } from "@/lib/base-path";
-import { canonicalIp } from "@/lib/ip";
-import { LEVEL_ADMIN, adminSecret, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, requireAdmin } from "@/lib/auth";
-import { adminExec, adminQuery, upsert } from "@/lib/db";
-import { imageUrl, invalidateSettings } from "@/lib/settings";
-import { operatorValues } from "@/lib/privacy-operator";
-import { steamKey } from "@/lib/config";
-import { invalidateSteamKey } from "@/lib/steam";
-import { listTemplates } from "@/lib/templates";
-import { jobsAvailable, queueReset, resetMode } from "@/lib/reset";
-import { globalHall, hallSettings, saveGlobalHall, saveHallSettings, setHallRemoved } from "@/lib/admin-hall";
-import { saveRankingBlockVac, saveRankingBots } from "@/lib/admin-ranking-bots";
-import { invalidateHallOfFame } from "@/lib/hall-of-fame";
-import { MAX_EVERY, parseSchedule, scheduleValue } from "@/lib/hall-period";
+import { expiryDays, tokenName } from "@/lib/api-token-core";
+import { createToken, revokeToken } from "@/lib/api-tokens";
+import { LEVEL_ADMIN, adminSecret, confirmIdentity, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, requireAdmin } from "@/lib/auth";
+import { resetMode } from "@/lib/reset";
 import { addParams, safeReturnTo, withReturnTo } from "@/lib/return-to";
 import { presetRanking, rankingServersHref } from "@/lib/ranking-preset";
-import { discordGuild, discordInvite, tsDisplay, tsHost, tsLink } from "@/lib/voice";
 import { checkCode, consumeStep, newSecret, readSecret, removeSecret, storeSecret } from "@/lib/totp";
 
 export async function loginAction(form: FormData) {
@@ -97,63 +84,24 @@ export async function saveAction(form: FormData) {
   const rawId = String(form.get("__id") ?? "");
   const id = rawId === "new" ? null : rawId;
   const list = safeReturnTo(form.get("__returnTo"), e.key);
-  if (id === null && !e.canCreate) redirect(list);
-  if (id !== null && !(await getRow(e, id))) redirect(list);
-  if (e.key === "users" && id === user.username && Number(form.get("acclevel")) < LEVEL_ADMIN && user.acclevel >= LEVEL_ADMIN) {
-    redirect(editHref(e.key, id, form, { error: "self" }));
-  }
-  // A server only moves into a ranking of the same base game.
-  if (e.key === "servers" && id !== null) {
-    const row = await getRow(e, id);
-    const from = String(row?.game ?? "").trim();
-    const to = String(form.get("game") ?? "").trim();
-    const bases = await rankingBaseGames();
-    if (from !== to && !sameBaseGame(bases.get(from) ?? null, bases.get(to) ?? null)) {
-      redirect(editHref(e.key, id, form, { error: "mismatch" }));
-    }
-  }
   // A new server from a ranking's page ("Add server") goes into that ranking
   // (only an existing one) and the save returns there.
   const ranking = e.key === "servers" && id === null ? presetRanking(form.get("__ranking"), (await optionList("games")).map(([c]) => c)) : null;
-  if (ranking) form.set("game", ranking);
-  // One server per IP and port: point to the existing one instead of the
-  // database's duplicate key error, and keep the input of a new server.
+  // The input of a new server is kept after an error.
   const kept = e.key === "servers" && id === null ? { ...keptValues(e, form), game: ranking ?? undefined } : {};
-  if (e.key === "servers") {
-    const address = canonicalIp(String(form.get("address") ?? "").trim());
-    const port = Number(String(form.get("port") ?? "").trim());
-    if (address && Number.isInteger(port)) {
-      const other = await otherServerAt(address, port, id);
-      if (other !== null) redirect(editHref(e.key, rawId, form, { error: "duplicate", dup: String(other), ...kept }));
-    }
-  }
   let saved: string;
   try {
-    saved = await saveRow(e, id, form);
+    saved = await saveEntity({ user }, e, id, form, { ranking });
   } catch (err) {
-    if (err instanceof InputError) redirect(editHref(e.key, rawId, form, { error: "field", field: err.message, ...kept }));
-    // Another admin saved the same IP and port in the meantime.
-    if (e.key === "servers" && isDuplicateKey(err)) redirect(editHref(e.key, rawId, form, { error: "duplicate", ...kept }));
-    const msg = err instanceof Error ? err.message.slice(0, 200) : "?";
-    console.error("admin save:", err);
-    redirect(editHref(e.key, rawId, form, { error: "db", msg, game: ranking ?? undefined }));
-  }
-  // A new ranking takes the definitions of its template.
-  if (e.key === "games" && id === null) {
-    const template = String(form.get("template") ?? "");
-    const code = String(form.get("code") ?? "").trim();
-    if (template && (await optionList("games")).some(([v]) => v === template)) {
-      try {
-        await copyDefinitions(code, template);
-        // Only where the database has the column.
-        const base = e.fields.some((f) => f.name === "realgame") ? (await rankingBaseGames()).get(template) : null;
-        if (base) await adminExec(`UPDATE hlstats_Games SET realgame = ? WHERE code = ? AND (realgame IS NULL OR realgame = '')`, [base, code]);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message.slice(0, 200) : "?";
-        console.error("admin copy definitions:", err);
-        redirect(editHref(e.key, saved, form, { error: "db", msg }));
-      }
-    }
+    if (!(err instanceof OpError)) throw err;
+    const c = err.code;
+    if (c === "cannot" || c === "notfound") redirect(list);
+    if (c === "self" || c === "mismatch") redirect(editHref(e.key, rawId, form, { error: c }));
+    if (c === "duplicate") redirect(editHref(e.key, rawId, form, { error: "duplicate", dup: err.detail.dup, ...kept }));
+    if (c === "field") redirect(editHref(e.key, rawId, form, { error: "field", field: err.detail.field, ...kept }));
+    // A new ranking is saved, but its template's definitions failed.
+    if (err.detail.saved) redirect(editHref(e.key, err.detail.saved, form, { error: "db", msg: err.detail.msg }));
+    redirect(editHref(e.key, rawId, form, { error: "db", msg: err.detail.msg ?? "?", game: ranking ?? undefined }));
   }
   if (ranking) redirect(rankingServersHref(ranking, { saved: "server" }));
   redirect(editHref(e.key, saved, form, { saved: "1" }));
@@ -161,44 +109,31 @@ export async function saveAction(form: FormData) {
 
 // Moves servers into a ranking (edit page of the ranking).
 export async function assignServersAction(form: FormData) {
-  await requireAdmin(100);
+  const user = await requireAdmin(100);
   const gameId = String(form.get("__id") ?? "");
   const e = await withColumns(getEntity("games")!);
   const row = await getRow(e, gameId);
   if (!row) redirect(safeReturnTo(form.get("__returnTo"), "games"));
-  const [servers, bases] = await Promise.all([allServers(), rankingBaseGames()]);
-  const code = String(row.code).trim();
-  const base = bases.get(code) ?? null;
-  const known = new Map(servers.map((s) => [s.serverId, s]));
-  const ids = form.getAll("server").map((v) => Number(v)).filter((n) => known.has(n));
-  // A server only moves into a ranking of the same base game.
-  if (ids.some((n) => !sameBaseGame(bases.get(known.get(n)!.game) ?? null, base))) {
-    redirect(editHref("games", gameId, form, { error: "mismatch" }));
-  }
+  const ids = form.getAll("server").map((v) => Number(v));
   try {
-    await assignServers(code, ids);
+    await assignServersTo({ user }, String(row.code).trim(), ids);
   } catch (err) {
-    const msg = err instanceof Error ? err.message.slice(0, 200) : "?";
-    redirect(editHref("games", gameId, form, { error: "db", msg }));
+    if (!(err instanceof OpError)) throw err;
+    redirect(editHref("games", gameId, form, err.code === "mismatch" ? { error: "mismatch" } : { error: "db", msg: err.detail.msg ?? "?" }));
   }
   redirect(editHref("games", gameId, form, { saved: "1" }));
 }
 
 // Takes one server out of a ranking by moving it into another one.
 export async function moveServerAction(form: FormData) {
-  await requireAdmin(100);
+  const user = await requireAdmin(100);
   const gameId = String(form.get("__id") ?? "");
-  const serverId = Number(form.get("server"));
-  const target = String(form.get("target") ?? "").trim();
-  const [servers, games, bases] = await Promise.all([allServers(), optionList("games"), rankingBaseGames()]);
-  const server = servers.find((s) => s.serverId === serverId);
-  if (!server || !games.some(([code]) => code === target)) redirect(editHref("games", gameId, form));
-  if (!sameBaseGame(bases.get(server.game) ?? null, bases.get(target) ?? null)) redirect(editHref("games", gameId, form, { error: "mismatch" }));
   try {
-    await assignServers(target, [serverId]);
+    await moveServer({ user }, Number(form.get("server")), String(form.get("target") ?? "").trim());
   } catch (err) {
-    const msg = err instanceof Error ? err.message.slice(0, 200) : "?";
-    redirect(editHref("games", gameId, form, { error: "db", msg }));
+    if (!(err instanceof OpError)) throw err;
+    if (err.code === "notfound" || err.code === "input") redirect(editHref("games", gameId, form));
+    redirect(editHref("games", gameId, form, err.code === "mismatch" ? { error: "mismatch" } : { error: "db", msg: err.detail.msg ?? "?" }));
   }
   redirect(editHref("games", gameId, form, { saved: "1" }));
 }
@@ -207,159 +142,42 @@ export async function deleteAction(form: FormData) {
   const e = await entityFrom(form);
   const user = await requireAdmin(e.minLevel);
   const id = String(form.get("__id") ?? "");
-  if (!e.canDelete || form.get("confirm") !== "1" || !(await getRow(e, id))) redirect(editHref(e.key, id, form));
-  if (e.key === "users" && id === user.username) redirect(editHref(e.key, id, form, { error: "self" }));
+  if (form.get("confirm") !== "1") redirect(editHref(e.key, id, form));
   try {
-    await deleteRow(e, id);
-    if (e.key === "users") await Promise.all([removeSecret(id, false), removeSecret(id, true)]);
+    await deleteEntity({ user }, e, id);
   } catch (err) {
-    const msg = err instanceof Error ? err.message.slice(0, 200) : "?";
-    redirect(editHref(e.key, id, form, { error: "db", msg }));
+    if (!(err instanceof OpError)) throw err;
+    if (err.code === "self") redirect(editHref(e.key, id, form, { error: "self" }));
+    if (err.code === "db") redirect(editHref(e.key, id, form, { error: "db", msg: err.detail.msg ?? "?" }));
+    redirect(editHref(e.key, id, form));
   }
   redirect(addParams(safeReturnTo(form.get("__returnTo"), e.key), { deleted: "1" }));
-}
-
-function badField(group: string, field: string): never {
-  redirect(`/admin/settings/${group}?field=${encodeURIComponent(field)}`);
 }
 
 // One settings page (/admin/settings/<group>) is one form: only the settings
 // of that group, or on the raw page the raw rows, are read and written.
 export async function saveSettingsAction(form: FormData) {
   const user = await requireAdmin();
-  const groupSent = String(form.get("group") ?? "");
-  const group = settingGroups.find((g) => g.id === groupSent);
-  const isRaw = groupSent === RAW_GROUP;
-  if (!group && !isRaw) redirect("/admin/settings");
-  const page = group?.id ?? RAW_GROUP;
-  const bad: (field: string) => never = (field) => badField(page, field);
-  const items = group?.items ?? [];
-  const values: [string, string][] = [];
-  for (const s of items) {
-    if (s.minLevel !== undefined && user.acclevel < s.minLevel) {
-      // Read-only for this admin: a sent value is refused, nothing is written.
-      if (form.get(s.key) || form.get(`${s.key}__clear`)) bad(s.key);
-      continue;
-    }
-    if (s.type === "order") {
-      // Sent by the header links list; without it the stored order stays.
-      const v = form.get(s.key);
-      if (v !== null) values.push([s.key, headerOrder(String(v)).join(",")]);
-      continue;
-    }
-    if (s.type === "home") {
-      const v = homeValue(String(form.get(`${s.key}__label`) ?? ""), String(form.get(`${s.key}__url`) ?? ""));
-      if (v === null) bad(s.key);
-      values.push([s.key, v]);
-      continue;
-    }
-    if (s.type === "link") {
-      const v = linkValue(String(form.get(`${s.key}__label`) ?? ""), String(form.get(`${s.key}__url`) ?? ""));
-      if (v === null) bad(s.key);
-      values.push([s.key, v]);
-      continue;
-    }
-    if (s.type === "secret") {
-      // Empty keeps the stored value; the checkbox clears it.
-      const v = String(form.get(s.key) ?? "");
-      if (form.get(`${s.key}__clear`) === "1") values.push([s.key, ""]);
-      else if (v) {
-        if (v.length > 255 || /[\r\n]/.test(v)) bad(s.key);
-        if (s.key === "gamewe_steam_api_key" && !steamKey(v)) bad(s.key);
-        values.push([s.key, s.key === "gamewe_steam_api_key" ? v.trim() : v]);
-      }
-      continue;
-    }
-    if (s.type === "bool") {
-      // A switch: the hidden "0" always, "1" as well when it is on.
-      const sent = form.getAll(s.key).map(String);
-      if (!sent.length || sent.some((x) => x !== "0" && x !== "1")) bad(s.key);
-      values.push([s.key, sent.includes("1") ? "1" : "0"]);
-      continue;
-    }
-    const v = String(form.get(s.key) ?? "").trim();
-    if (s.type === "number") {
-      const n = Number(v);
-      if (!v || !Number.isInteger(n) || (s.min !== undefined && n < s.min) || (s.max !== undefined && n > s.max)) {
-        bad(s.key);
-      }
-    } else if (
-      (s.type === "choice" && !s.choices?.some(([c]) => c === v)) ||
-      (s.type === "template" && !(await listTemplates()).some((t) => t.id === v))
-    ) {
-      bad(s.key);
-    } else if (v.length > 255) {
-      bad(s.key);
-    } else if (s.key === "gamewe_ts_host" && v) {
-      const host = tsHost(v);
-      if (!host) bad(s.key);
-      values.push([s.key, host]);
-      continue;
-    } else if ((s.key === "gamewe_ts_display" && v && !tsDisplay(v)) || (s.key === "gamewe_ts_link" && v && !tsLink(v))) {
-      bad(s.key);
-    } else if (s.key === "gamewe_discord_invite" && v) {
-      const invite = discordInvite(v);
-      if (!invite) bad(s.key);
-      values.push([s.key, invite]);
-      continue;
-    } else if (s.key === "gamewe_discord_guild" && v && !discordGuild(v)) {
-      bad(s.key);
-    } else if ((s.key === "gamewe_header_logo" || s.key === "gamewe_favicon" || s.key === "gamewe_apple_icon") && v && !imageUrl(v)) {
-      bad(s.key);
-    } else if ((s.key === "gamewe_title_format" || s.key === "gamewe_title_ranking") && !v.includes("{page}")) {
-      bad(s.key);
-    } else if (s.key === "gamewe_sourcebans_url" && v) {
-      const base = sourcebansBase(v);
-      if (!base) bad(s.key);
-      values.push([s.key, base]);
-      continue;
-    }
-    values.push([s.key, v]);
+  const page = String(form.get("group") ?? "");
+  try {
+    await saveSettings({ user }, page, form);
+  } catch (err) {
+    if (!(err instanceof OpError)) throw err;
+    if (err.code === "field") redirect(`/admin/settings/${page}?field=${encodeURIComponent(err.detail.field)}`);
+    redirect("/admin/settings");
   }
-  const removed: string[] = [];
-  if (isRaw) {
-    // Other keys (raw values): the form sends each key with its index; only
-    // keys that exist as raw rows are written or deleted.
-    const rawKeys = new Set((await rawOptions()).map((r) => r.keyname));
-    for (const [name, entry] of form.entries()) {
-      const m = /^raw_key_(\d{1,4})$/.exec(name);
-      if (!m) continue;
-      const key = String(entry);
-      if (!rawKeys.has(key) || READONLY_OPTIONS.includes(key)) continue;
-      if (form.get(`raw_del_${m[1]}`) === "1") {
-        removed.push(key);
-        continue;
-      }
-      const v = String(form.get(`raw_val_${m[1]}`) ?? "");
-      if (v.length > 255 || /[\r\n]/.test(v)) bad(`raw:${key}`);
-      values.push([key, v]);
-    }
-    const newKey = String(form.get("raw_new_key") ?? "").trim();
-    if (newKey) {
-      const v = String(form.get("raw_new_val") ?? "");
-      if (!rawKeyAllowed(newKey) || rawKeys.has(newKey) || v.length > 255 || /[\r\n]/.test(v)) bad("raw_new");
-      const exists = await adminQuery(`SELECT keyname FROM hlstats_Options WHERE keyname = ?`, [newKey]);
-      if (exists.length) bad("raw_new");
-      values.push([newKey, v]);
-    }
-  }
-  for (const [k, v] of values) {
-    await adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [k, v]);
-  }
-  for (const k of removed) await adminExec(`DELETE FROM hlstats_Options WHERE keyname = ?`, [k]);
-  invalidateSettings();
-  invalidateSteamKey();
   redirect(`/admin/settings/${page}?saved=1`);
 }
 
 // The operator's part of the privacy page (Admin → Website → Privacy):
 // checked and split by lib/privacy-operator.ts, written with the admin user.
 export async function savePrivacyAction(form: FormData) {
-  await requireAdmin();
-  const res = operatorValues(form);
-  if ("field" in res) redirect(`/admin/privacy?field=${res.field}`);
-  for (const [k, v] of res.values) {
-    await adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [k, v]);
+  const user = await requireAdmin();
+  try {
+    await savePrivacy({ user }, form);
+  } catch (err) {
+    if (err instanceof OpError && err.code === "field") redirect(`/admin/privacy?field=${err.detail.field}`);
+    throw err;
   }
   redirect("/admin/privacy?saved=1");
 }
@@ -413,6 +231,34 @@ export async function changePasswordAction(form: FormData) {
   redirect(`/admin/account?pw=${r === "ok" ? "saved" : r}`);
 }
 
+// API tokens of the signed-in user's own account (lib/api-tokens.ts): a new
+// one needs the password and, with TOTP, the current code. The plain token
+// goes back to the form once (never into a URL, cookie or log).
+export type TokenFormState = { token?: string; name?: string; error?: "name" | "expiry" | "wrong" | "code" | "blocked" | "nosecret" | "limit" | "long"; at?: number };
+
+export async function createApiTokenAction(_prev: TokenFormState, form: FormData): Promise<TokenFormState> {
+  const user = await requireAdmin();
+  const at = Date.now();
+  const name = tokenName(form.get("name"));
+  if (!name) return { error: "name", at };
+  const days = expiryDays(form.get("expiry"));
+  if (days === null) return { error: "expiry", at };
+  const ok = await confirmIdentity(user.username, String(form.get("password") ?? ""), String(form.get("code") ?? ""));
+  if (ok !== "ok") return { error: ok, at };
+  const res = await createToken(user.username, name, days);
+  if ("error" in res) return { error: res.error, at };
+  console.info(`gameWE: API token "${name}" created by ${user.username}${days ? `, expires in ${days} days` : ""}`);
+  revalidatePath("/admin/account");
+  return { token: res.token, name, at };
+}
+
+export async function revokeApiTokenAction(form: FormData) {
+  const user = await requireAdmin();
+  const r = await revokeToken(user.username, String(form.get("id") ?? ""));
+  if (r) console.info(`gameWE: API token "${r.name}" revoked by ${user.username}`);
+  redirect(`/admin/account?token=${r ? "revoked" : "unknown"}#api-tokens`);
+}
+
 // Ranking reset (lib/reset.ts): admins only, confirmed in the dialog of the
 // reset page (the checkbox "deleted for good" and its confirm button).
 export async function resetRankingAction(form: FormData) {
@@ -424,15 +270,15 @@ export async function resetRankingAction(form: FormData) {
   if (form.get("confirmed") !== "yes" || form.get("understood") !== "yes") {
     redirect(`/admin/reset?error=confirm&game=${encodeURIComponent(game)}`);
   }
-  if (!(await jobsAvailable())) redirect("/admin/reset");
   let job: { id: number; existing: boolean };
   try {
-    job = await queueReset(game, mode, user.username);
-  } catch (e) {
-    console.error(`gameWE: reset job for ${game} not queued: ${e instanceof Error ? e.message : e}`);
-    redirect(`/admin/reset?error=db&game=${encodeURIComponent(game)}`);
+    job = await resetRanking({ user }, game, mode);
+  } catch (err) {
+    if (!(err instanceof OpError)) throw err;
+    if (err.code === "db") redirect(`/admin/reset?error=db&game=${encodeURIComponent(game)}`);
+    if (err.code === "notfound") redirect("/admin/reset?error=input");
+    redirect("/admin/reset");
   }
-  console.info(`gameWE: reset of ranking ${game} (${mode}) queued as job ${job.id} by ${user.username}${job.existing ? " (already queued)" : ""}`);
   redirect(`/admin/reset?job=${job.id}${job.existing ? "&existing=1" : ""}`);
 }
 
@@ -442,13 +288,15 @@ export async function resetRankingAction(form: FormData) {
 export async function rankingBotsAction(form: FormData) {
   const user = await requireAdmin(LEVEL_ADMIN);
   const game = String(form.get("game") ?? "");
-  const games = await optionList("games");
-  if (!games.some(([code]) => code === game)) redirect("/admin/rankings");
   // The switches send a hidden 0 and, when on, a 1 as well.
   const on = (name: string) => form.getAll(name).map(String).includes("1");
-  const next = { ranked: on("ranked"), points: on("points"), kills: on("kills"), stats: on("stats") };
-  const n = await saveRankingBots(game, next);
-  console.info(`gameWE: bots of ranking ${game} ${next.ranked ? "ranked" : "hidden"}, ${next.points ? "with" : "without"} points, kills of bots ${next.kills ? "counted" : "not counted"} for the career rank, bots ${next.stats ? "in" : "not in"} the stats${n ? ` (${n} bots changed)` : ""}, by ${user.username}`);
+  let n: number;
+  try {
+    n = await setRankingBots({ user }, game, { ranked: on("ranked"), points: on("points"), kills: on("kills"), stats: on("stats") });
+  } catch (err) {
+    if (err instanceof OpError) redirect("/admin/rankings");
+    throw err;
+  }
   redirect(`/admin/rankings/${encodeURIComponent(game)}?bots=saved${n ? `&n=${n}` : ""}#bots`);
 }
 
@@ -457,54 +305,30 @@ export async function rankingBotsAction(form: FormData) {
 export async function rankingVacAction(form: FormData) {
   const user = await requireAdmin(LEVEL_ADMIN);
   const game = String(form.get("game") ?? "");
-  const games = await optionList("games");
-  if (!games.some(([code]) => code === game)) redirect("/admin/rankings");
   // The switch sends a hidden 0 and, when on, a 1 as well.
-  const on = form.getAll("block").map(String).includes("1");
-  await saveRankingBlockVac(game, on);
-  console.info(`gameWE: VAC block of ranking ${game} ${on ? "on" : "off"}, by ${user.username}`);
+  try {
+    await setRankingVac({ user }, game, form.getAll("block").map(String).includes("1"));
+  } catch (err) {
+    if (err instanceof OpError) redirect("/admin/rankings");
+    throw err;
+  }
   redirect(`/admin/rankings/${encodeURIComponent(game)}?vac=saved#vac`);
 }
 
 // Scheduled ranking reset and hall of fame of one ranking (lib/admin-hall.ts),
 // on the ranking's admin page: admins only. Turning a schedule on or changing
 // it must be confirmed (the ranking is then reset at the end of every period).
-// The schedule of the hall of fame forms: every N units with the start day
-// of the period (day of the month, weekday or date). null: invalid input.
-function scheduleFromForm(form: FormData): string | null {
-  const unit = String(form.get("unit") ?? "");
-  const every = Number(form.get("every") ?? 1);
-  if (!Number.isInteger(every) || every < 1 || every > MAX_EVERY || !["day", "week", "month", "quarter", "year"].includes(unit)) return null;
-  let anchor = "";
-  if (unit === "month" || unit === "quarter") anchor = String(form.get("mday") ?? "1");
-  else if (unit === "week") anchor = String(form.get("wday") ?? "1");
-  else if (unit === "year") anchor = `${String(form.get("ymonth") ?? "1").padStart(2, "0")}-${String(form.get("yday") ?? "1").padStart(2, "0")}`;
-  const s = parseSchedule(anchor ? `${every} ${unit}@${anchor}` : `${every} ${unit}`);
-  return s ? scheduleValue(s) : null;
-}
-
 export async function hallOfFameSettingsAction(form: FormData) {
   const user = await requireAdmin(LEVEL_ADMIN);
   const game = String(form.get("game") ?? "");
-  const games = await optionList("games");
-  if (!games.some(([code]) => code === game)) redirect("/admin/rankings");
   const back = `/admin/rankings/${encodeURIComponent(game)}`;
-  const src = String(form.get("source") ?? "");
-  const mode = resetMode(form.get("mode"));
-  const page = String(form.get("page") ?? "");
-  if ((src !== "global" && src !== "own" && src !== "off") || !mode || (page !== "auto" && page !== "on" && page !== "off")) redirect(`${back}?hof=input#hall-of-fame`);
-  const schedule = src === "own" ? scheduleFromForm(form) : "";
-  if (schedule === null) redirect(`${back}?hof=input#hall-of-fame`);
-  const now = await hallSettings(game);
-  if (!now.table) redirect(`${back}?hof=table#hall-of-fame`);
-  const after = src === "global" ? scheduleValue(now.global.schedule) : schedule;
-  const afterMode = src === "global" ? now.global.mode : mode;
-  const changed = after !== scheduleValue(now.effective) || (after && afterMode !== now.effectiveMode);
-  if (after && changed && form.get("understood") !== "yes") redirect(`${back}?hof=confirm#hall-of-fame`);
-  await saveHallSettings(game, src, schedule, mode, page);
-  invalidateHallOfFame();
-  const what = src === "global" ? "as for all rankings" : schedule ? `${schedule} (${mode})` : "off";
-  console.info(`gameWE: reset schedule of ranking ${game} set to ${what}, hall of fame page ${page}, by ${user.username}`);
+  try {
+    await setRankingHall({ user }, game, String(form.get("source") ?? ""), resetMode(form.get("mode")), String(form.get("page") ?? ""), form);
+  } catch (err) {
+    if (!(err instanceof OpError)) throw err;
+    if (err.code === "notfound") redirect("/admin/rankings");
+    redirect(`${back}?hof=${err.code === "table" ? "table" : err.code === "confirm" ? "confirm" : "input"}#hall-of-fame`);
+  }
   redirect(`${back}?hof=saved#hall-of-fame`);
 }
 
@@ -512,16 +336,13 @@ export async function hallOfFameSettingsAction(form: FormData) {
 export async function globalHallAction(form: FormData) {
   const user = await requireAdmin(LEVEL_ADMIN);
   const back = "/admin/rankings";
-  const mode = resetMode(form.get("mode"));
   const enabled = form.get("enabled") === "yes";
-  const schedule = scheduleFromForm(form);
-  if (schedule === null || !mode) redirect(`${back}?hof=input#hall-of-fame`);
-  const now = await globalHall();
-  const changed = !now.enabled || schedule !== scheduleValue(now.schedule) || mode !== now.mode;
-  if (enabled && changed && form.get("understood") !== "yes") redirect(`${back}?hof=confirm#hall-of-fame`);
-  await saveGlobalHall(enabled, schedule, mode);
-  invalidateHallOfFame();
-  console.info(`gameWE: reset schedule for all rankings ${schedule} (${mode}) switched ${enabled ? "on" : "off"}, by ${user.username}`);
+  try {
+    await setGlobalHall({ user }, enabled, resetMode(form.get("mode")), form);
+  } catch (err) {
+    if (!(err instanceof OpError)) throw err;
+    redirect(`${back}?hof=${err.code === "confirm" ? "confirm" : "input"}#hall-of-fame`);
+  }
   redirect(`${back}?hof=${enabled ? "on" : "off"}#hall-of-fame`);
 }
 
@@ -530,18 +351,16 @@ export async function globalHallAction(form: FormData) {
 export async function hallEntryAction(form: FormData) {
   const user = await requireAdmin(LEVEL_ADMIN);
   const game = String(form.get("game") ?? "");
-  const games = await optionList("games");
-  if (!games.some(([code]) => code === game)) redirect("/admin/rankings");
   const back = `/admin/rankings/${encodeURIComponent(game)}/hall-of-fame`;
   const start = String(form.get("start") ?? "");
   const placeRaw = String(form.get("place") ?? "");
-  const place = placeRaw === "" ? null : Number(placeRaw);
   const op = String(form.get("op") ?? "");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || (place !== null && (!Number.isInteger(place) || place < 1 || place > 99)) || (op !== "remove" && op !== "restore"))
-    redirect(`${back}?hof=input`);
-  if (op === "remove" && form.get("confirm") !== "yes") redirect(`${back}?hof=confirm#p-${start}`);
-  const n = await setHallRemoved(game, start, place, op === "remove");
-  invalidateHallOfFame();
-  console.info(`gameWE: hall of fame of ranking ${game}, period ${start}${place === null ? "" : ` place ${place}`}: ${op === "remove" ? "removed" : "restored"} ${n} entries, by ${user.username}`);
+  try {
+    await setHallEntry({ user }, game, start, placeRaw === "" ? null : Number(placeRaw), op, form.get("confirm") === "yes");
+  } catch (err) {
+    if (!(err instanceof OpError)) throw err;
+    if (err.code === "notfound") redirect("/admin/rankings");
+    redirect(err.code === "confirm" ? `${back}?hof=confirm#p-${start}` : `${back}?hof=input`);
+  }
   redirect(`${back}?hof=${op === "remove" ? "removed" : "restored"}#p-${start}`);
 }

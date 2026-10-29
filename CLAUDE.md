@@ -88,6 +88,12 @@ the audit summary of `security-privacy-audit`.
 - Every admin page, layout and **every server action** calls
   `requireAdmin(level)` itself; the panel layout alone does not protect a
   server action. Level 100-only entities keep `minLevel: 100`.
+- The admin API (`/api/v1/admin`, `src/lib/admin-api.ts`) authenticates only
+  with `Authorization: Bearer` API tokens (never cookies), checks each
+  operation's `level` from `src/lib/openapi-admin.ts`, and changes data only
+  through `src/lib/admin-ops.ts`, the same functions as the server actions.
+  A token never reaches its own account's password, TOTP, level or deletion,
+  nor token management (`self_security_forbidden`, `tests/admin-api.test.ts`).
 - SQL only through `src/lib/db.ts` with `?` placeholders. Identifiers in
   template strings only from constants or allowlists (`rankingSorts`,
   entity definitions), never from `searchParams`, `params` or form data.

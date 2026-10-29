@@ -336,6 +336,14 @@ example when the phone is lost. The key is stored encrypted with
 `ADMIN_SECRET` in `hlstats_Options`, so changing `ADMIN_SECRET` locks out users
 with TOTP until they are reset this way.
 
+API tokens let scripts use the admin API (`/api/v1/admin`, documented on
+`/api`, see [INTERFACE.md](INTERFACE.md#admin-api)) with the rights of their
+admin. Each user creates and revokes their own under My account → API
+tokens (name, expiry; confirmed with the password and the TOTP code). The
+token is shown only once. With a token, the own password, TOTP, level and
+account cannot be changed, and tokens cannot be managed; deleting a user or
+lowering them below level 80 stops their tokens at once.
+
 Users are the rows of `hlstats_Users`. Level 100 may change everything, level 80
 everything except games, servers and users. Passwords are stored as scrypt
 hashes; old HLstatsX MD5 hashes still work and are upgraded on the next sign-in.
