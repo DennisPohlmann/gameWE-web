@@ -347,7 +347,7 @@ export async function hallOfFameSettingsAction(form: FormData) {
 // The reset schedule for all rankings (Admin > Rankings).
 export async function globalHallAction(form: FormData) {
   const user = await requireAdmin(LEVEL_ADMIN);
-  const back = "/admin/rankings";
+  const back = "/admin/reset";
   const enabled = form.get("enabled") === "yes";
   try {
     await setGlobalHall({ user }, enabled, resetMode(form.get("mode")), form);

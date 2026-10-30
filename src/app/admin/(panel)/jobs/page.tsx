@@ -233,7 +233,7 @@ export default async function JobsPage() {
       next: r.next,
       plan: scheduleText(lang, r.schedule) + (ov.resets ? `, ${ov.resets.time}${zone(ov.resets)}` : ""),
       state: queued ? statePill(queued.status) : r.next ? plannedPill(r.next) : <span className="pill">{t.unknown}</span>,
-      link: one ? `/admin/rankings/${encodeURIComponent(r.game)}` : "/admin/rankings",
+      link: one ? `/admin/rankings/${encodeURIComponent(r.game)}` : "/admin/reset#hall-of-fame",
     });
   }
   // By the next run; off and unknown ones last.

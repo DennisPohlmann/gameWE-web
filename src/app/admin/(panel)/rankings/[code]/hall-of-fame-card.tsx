@@ -102,7 +102,7 @@ export async function HallOfFameCard({ game, lang, status }: { game: string; lan
               {v === "global" ? (
                 <small>
                   {f(t.globalNow, { s: s.global.schedule ? scheduleText(lang, s.global.schedule) : ht.units.off })}{" "}
-                  <Link href="/admin/rankings#hall-of-fame">{t.globalEdit}</Link>
+                  <Link href="/admin/reset#hall-of-fame">{t.globalEdit}</Link>
                 </small>
               ) : null}
             </label>

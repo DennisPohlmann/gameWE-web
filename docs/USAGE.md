@@ -540,10 +540,11 @@ What the admin area edits:
   `gamewe_hof_<code>`; the collector writes `gamewe_reset_last_<code>`). From
   the console: `gamewe halloffame schedule CODE [EVERY|off|inherit] -mode
   MODE`.
-- **Scheduled reset for all rankings** (level 100, at the end of
-  `/admin/rankings`): one schedule (with start day and kind of reset) for
-  every ranking set to "As for all rankings", e.g. every quarter; the card
-  lists those rankings. A switch at the top turns it on or off; the badge
+- **Scheduled reset for all rankings** (level 100, on the reset page
+  `/admin/reset`, below the manual reset; old links to
+  `/admin/rankings#hall-of-fame` lead there): one schedule (with start day
+  and kind of reset) for every ranking set to "As for all rankings", e.g.
+  every quarter; the card lists those rankings. A switch at the top turns it on or off; the badge
   next to the title ("On" / "Off") and a line below the switch show the state
   (on: schedule, kind and next reset; off: the schedule kept for later).
   Switching it off keeps the schedule (`gamewe_reset_paused`), switching it

@@ -6,11 +6,12 @@ import { JobOriginLine } from "@/components/admin/job-origin";
 import { ResetForm } from "@/components/reset-form";
 import { SortableTable } from "@/components/sortable-table";
 import { Section, TableWrap } from "@/components/ui";
-import { resettableRankings } from "@/lib/admin-rankings";
+import { rankingSummaries, resettableRankings } from "@/lib/admin-rankings";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { getAdminLang } from "@/lib/i18n";
 import { originText } from "@/lib/job-origin";
 import { shortDuration } from "@/lib/job-plan";
+import { GlobalHallCard } from "./global-hall-card";
 import { RESET_MODES, collectorRunning, getJob, jobModeName, jobsAvailable, recentJobs, resetOrigin, type ResetJob, type ResetMode } from "@/lib/reset";
 
 const T = {
@@ -156,11 +157,17 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
     return k ? t.modes[k].title : m;
   };
 
+  // The scheduled reset for all rankings is set here too, next to the manual
+  // one (it was at the end of Rankings before); only rankings with servers
+  // follow it.
+  const scheduled = <GlobalHallCard lang={lang} status={sp.hof} rankings={(await rankingSummaries()).filter((r) => r.servers > 0)} />;
+
   if (!(await jobsAvailable())) {
     return (
       <>
         <h1>{t.title}</h1>
         <p className="notice">{t.missing}</p>
+        {scheduled}
       </>
     );
   }
@@ -217,6 +224,7 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
           {!running ? <p className="settings-help notice error">{t.noCollector} {beatText}</p> : null}
         </ResetForm>
       </Section>
+      {scheduled}
       {jobs.length ? (
         <Section title={t.recent}>
           <TableWrap>

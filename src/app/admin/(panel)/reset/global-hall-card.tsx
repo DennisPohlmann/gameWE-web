@@ -54,8 +54,9 @@ const T = {
   },
 };
 
-// The reset schedule for all rankings (admins only); rankings: those with
-// servers, templates are never reset.
+// The reset schedule for all rankings (admins only), on the reset page next
+// to the manual reset; rankings: those with servers, templates are never
+// reset.
 export async function GlobalHallCard({ lang, status, rankings }: { lang: Lang; status?: string; rankings: { code: string; name: string }[] }) {
   const t = T[lang === "de" ? "de" : "en"];
   const ht = hallT(lang);

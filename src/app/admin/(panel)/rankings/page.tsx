@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { HashRedirect } from "@/components/admin/hash-redirect";
 import { Icon } from "@/components/admin/icons";
 import { PageHead } from "@/components/admin/page-head";
 import { GameTag } from "@/components/ui";
@@ -7,7 +9,6 @@ import { countByRanking, rankingSummaries } from "@/lib/admin-rankings";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { localeOf } from "@/lib/format";
 import { getAdminLang } from "@/lib/i18n";
-import { GlobalHallCard } from "./global-hall-card";
 
 // All rankings with their game, servers, players and state; one button per
 // ranking leads to its page, where it is also edited.
@@ -18,6 +19,9 @@ export default async function RankingsPage({ searchParams }: { searchParams: Pro
   const a = adminDict(lang);
   const u = a.ui;
   const isAdmin = user.acclevel >= LEVEL_ADMIN;
+  // The scheduled reset for all rankings moved to the reset page (level 100
+  // as before): an old link with its status (?hof=) goes there.
+  if (isAdmin && hof && ["on", "off", "input", "confirm"].includes(hof)) redirect(`/admin/reset?hof=${hof}#hall-of-fame`);
   const nf = (n: number) => n.toLocaleString(localeOf(lang));
   const [all, players] = await Promise.all([rankingSummaries(), countByRanking("hlstats_Players", "game")]);
   // Rankings with servers first, then the templates, each in display order.
@@ -87,7 +91,7 @@ export default async function RankingsPage({ searchParams }: { searchParams: Pro
           </tbody>
         </table>
       </section>
-      {isAdmin ? <GlobalHallCard lang={lang} status={hof} rankings={rankings.filter((r) => r.servers > 0)} /> : null}
+      {isAdmin ? <HashRedirect hash="hall-of-fame" to="/admin/reset#hall-of-fame" /> : null}
     </>
   );
 }
