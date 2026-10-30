@@ -613,6 +613,7 @@
   "hofPlayersInPeriod": "{n} Spieler",
   "hofPlace": "Platz {n}",
   "hofThen": "damals: {name}",
+  "hofNextReset": "Die laufende Periode endet mit dem nächsten Reset am {d}; ihre drei Besten kommen dann in die Ruhmeshalle.",
   "hofWeek": "KW {n}",
   "hofRankTip": "Rang am Ende der Periode",
   "hofStreak": "Beste Serie",

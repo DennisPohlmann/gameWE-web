@@ -613,6 +613,7 @@
   "hofPlayersInPeriod": "{n} players",
   "hofPlace": "Place {n}",
   "hofThen": "then: {name}",
+  "hofNextReset": "The current period ends with the next reset on {d}; its best three then come into the hall of fame.",
   "hofWeek": "Week {n}",
   "hofRankTip": "Rank reached at the end of the period",
   "hofStreak": "Best streak",

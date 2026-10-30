@@ -3,7 +3,8 @@ import { steamIds } from "./format";
 import { getSteamProfile } from "./steam";
 import { hiddenSql } from "./hidden";
 import { query } from "./db";
-import { podium, type HallPeriod, type HallUnit } from "./hall-period";
+import { lastStart, nextStart, podium, type HallPeriod, type HallUnit } from "./hall-period";
+import { effectiveSchedule, nextResetKey, parseNext } from "./job-plan";
 
 export { periodLabel, type HallPeriod } from "./hall-period";
 
@@ -245,6 +246,35 @@ export async function hallOfFameShown(game: string): Promise<boolean> {
   }
   shownCache.set(game, { at: Date.now(), value });
   return value;
+}
+
+// When the running period of the ranking's scheduled reset ends (the next
+// entries of the hall of fame), for the note at the end of its page: the
+// time the collector wrote (gamewe_next_reset_<game>, collector 0.27.0),
+// else the day from the start of the period (gamewe_reset_last_<game>) and
+// the schedule. null without a schedule (own "off", or none for all
+// rankings), for a template (no servers, never reset) and before the
+// collector started the period.
+export type NextHallReset = { at: number } | { day: string } | null;
+
+export async function nextHallReset(game: string): Promise<NextHallReset> {
+  try {
+    const keys = [`gamewe_reset_schedule_${game}`, "gamewe_reset_schedule", nextResetKey(game), `gamewe_reset_last_${game}`];
+    const [rows, servers] = await Promise.all([
+      query<{ keyname: string; value: string | null }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [keys]),
+      query<{ n: number | string }>(`SELECT COUNT(*) AS n FROM hlstats_Servers WHERE game = ?`, [game]),
+    ]);
+    if (!Number(servers[0]?.n ?? 0)) return null;
+    const o = new Map(rows.map((r) => [r.keyname, (r.value ?? "").trim()]));
+    const schedule = effectiveSchedule(o.get(keys[0]), o.get(keys[1]));
+    if (!schedule) return null;
+    const at = parseNext(o.get(keys[2]));
+    if (at) return { at };
+    const last = lastStart(o.get(keys[3]));
+    return last ? { day: nextStart(last, schedule) } : null;
+  } catch {
+    return null;
+  }
 }
 
 export function invalidateHallOfFame() {

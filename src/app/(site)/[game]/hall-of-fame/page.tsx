@@ -5,8 +5,8 @@ import { LineChart } from "@/components/chart";
 import { Empty, Flag, Pager, PlayerLink, Section, TableWrap, pageParam } from "@/components/ui";
 import { RankBadge, rankName } from "@/components/badges";
 import { HallStars } from "@/components/hall-stars";
-import { fmtDuration, fmtNum, fmtPct, localeOf } from "@/lib/format";
-import { getHallOfFame, hallOfFameShown, hallSteam, periodLabel, starTable, type HallEntry, type HallRow, type HallSteam } from "@/lib/hall-of-fame";
+import { fmtDate, fmtDateTime, fmtDuration, fmtNum, fmtPct, localeOf } from "@/lib/format";
+import { getHallOfFame, hallOfFameShown, hallSteam, nextHallReset, periodLabel, starTable, type HallEntry, type HallRow, type HallSteam } from "@/lib/hall-of-fame";
 import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
 import { externalImage } from "@/lib/consent";
 import { getConsent } from "@/lib/consent-server";
@@ -29,7 +29,7 @@ export default async function HallOfFamePage({ params, searchParams }: { params:
   const page = pageParam(sp.page);
   if (!(await hallOfFameShown(game))) notFound();
   const { lang, t } = await getDict();
-  const rows = await getHallOfFame(game);
+  const [rows, next] = await Promise.all([getHallOfFame(game), nextHallReset(game)]);
   const stars = starTable(rows);
   const locale = localeOf(lang);
   const shownStars = allStars ? stars : stars.slice(0, STAR_ROWS);
@@ -115,6 +115,14 @@ export default async function HallOfFamePage({ params, searchParams }: { params:
           <Empty>{t.hofEmpty}</Empty>
         </Section>
       )}
+      {/* When the next places come in: only while a reset is scheduled. */}
+      {next ? (
+        <p className="muted hof-next">
+          {fill(t.hofNextReset, {
+            d: "at" in next ? fmtDateTime(next.at, lang) : fmtDate(Date.parse(`${next.day}T12:00:00Z`) / 1000, lang),
+          })}
+        </p>
+      ) : null}
     </>
   );
 }
