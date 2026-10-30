@@ -29,6 +29,24 @@ spec:
       {{- end }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      # The root file system is read-only: BASE_PATH is written into a copy
+      # of server.js and .next (scripts/set-base-path.sh), which the web
+      # container mounts over the ones of the image.
+      initContainers:
+        - name: base-path
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          command: ["sh", "-c", 'cp -a /app/server.js /app/.next /work/ && exec /app/scripts/set-base-path.sh "${BASE_PATH:-}" /work']
+          env:
+            {{- range $k, $v := .Values.env }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+          volumeMounts:
+            - name: app
+              mountPath: /work
       containers:
         - name: web
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -63,17 +81,29 @@ spec:
             timeoutSeconds: 5
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- if .Values.persistence.enabled }}
           volumeMounts:
+            - name: app
+              mountPath: /app/server.js
+              subPath: server.js
+            - name: app
+              mountPath: /app/.next
+              subPath: .next
+            - name: tmp
+              mountPath: /tmp
+            {{- if .Values.persistence.enabled }}
             - name: content
               mountPath: /var/lib/gamewe/web
-          {{- end }}
-      {{- if .Values.persistence.enabled }}
+            {{- end }}
       volumes:
+        - name: app
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        {{- if .Values.persistence.enabled }}
         - name: content
           persistentVolumeClaim:
             claimName: {{ .Values.persistence.existingClaim | default (include "gamewe-web.fullname" .) }}
-      {{- end }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

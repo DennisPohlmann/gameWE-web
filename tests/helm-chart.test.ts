@@ -39,3 +39,13 @@ test("the chart runs the image as its user, without secrets in the values", () =
   assert.match(dep, /\.Values\.image\.tag \| default \.Chart\.AppVersion/);
   assert.match(dep, /secretRef:/);
 });
+
+test("the chart runs with a read-only root file system, BASE_PATH set by the init container", () => {
+  const values = readFileSync("charts/gamewe-web/values.yaml", "utf8");
+  assert.match(values, /readOnlyRootFilesystem: true/);
+  const dep = readFileSync("charts/gamewe-web/templates/deployment.yaml", "utf8");
+  assert.match(dep, /set-base-path\.sh "\$\{BASE_PATH:-\}" \/work/);
+  assert.match(dep, /mountPath: \/app\/server\.js\n\s+subPath: server\.js/);
+  assert.match(dep, /mountPath: \/app\/\.next\n\s+subPath: \.next/);
+  assert.match(dep, /mountPath: \/tmp/);
+});

@@ -354,7 +354,10 @@ secrets) or into the Secret (`DB_PASSWORD`, `DB_ADMIN_PASSWORD`,
 `ADMIN_SECRET`); `secretEnv` in the values creates the Secret instead, for
 tests. `persistence.enabled` mounts a volume at `/var/lib/gamewe/web` for
 own templates and map pictures ([section 5](#5-own-templates-and-map-pictures)).
-Readiness and liveness use `/healthz` below `BASE_PATH`. One replica: rate
+Readiness and liveness use `/healthz` below `BASE_PATH`. The root file
+system is read-only: the init container `base-path` copies `server.js` and
+`.next` into an `emptyDir` and writes `BASE_PATH` into them, which the web
+container mounts over the image's; `/tmp` is an `emptyDir` too. One replica: rate
 limits and caches live in the process. Update: `helm upgrade web
 oci://ghcr.io/dennispohlmann/charts/gamewe-web --version <new version> -n
 gamewe --reuse-values`. If the package on GHCR is private, `helm registry
