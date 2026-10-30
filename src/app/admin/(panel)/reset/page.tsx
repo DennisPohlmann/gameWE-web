@@ -37,7 +37,7 @@ const T = {
       "all-stats": {
         title: "Alle Statistiken",
         deletes:
-          "Löscht alle Spielerstatistiken und dazu die Serverstatistiken: Zähler der Server (Kills, Spieler, Runden, Headshots, Bomben, Siege, Karten-Werte), den Lastverlauf und den Trend.",
+          "Löscht alle Spielerstatistiken und dazu die Serverstatistiken: Zähler der Server (Kills, Spieler, Runden, Headshots, Bomben, Siege, Karten-Werte) und den Lastverlauf.",
         keeps: "Spieler, Namen, Steam-IDs und Clans bleiben.",
       },
       all: {
@@ -99,7 +99,7 @@ const T = {
       "all-stats": {
         title: "All statistics",
         deletes:
-          "Deletes all player statistics and the server statistics too: the server counters (kills, players, rounds, headshots, bombs, wins, map values), the load history and the trend.",
+          "Deletes all player statistics and the server statistics too: the server counters (kills, players, rounds, headshots, bombs, wins, map values) and the load history.",
         keeps: "Players, names, Steam IDs and clans stay.",
       },
       all: {

@@ -157,7 +157,7 @@ website therefore computes some things itself:
   throttled; with a Steam Web API key (Admin → Settings → Steam) the Steam
   Web API is used instead (100 players per call), which is recommended for
   the player maps. "Fetch Steam profiles" on the same page turns it off.
-- **Activity chart** comes from `hlstats_Players_History`, not `hlstats_Trend`.
+- **Activity chart** comes from `hlstats_Players_History`.
 - **Counter-Strike 2** logs no shots (there is no weaponstats plugin), so
   the ranking, profile, sessions, weapon, map, live and ban pages of a CS2
   ranking leave out shots, accuracy and shots per kill, the profile's
@@ -507,8 +507,7 @@ What the admin area edits:
     (Settings → Points). The server statistics stay.
   - "All statistics" also resets the server statistics: the counters of the
     servers (kills, players, rounds, headshots, bombs, wins, map values), the
-    load history (`hlstats_server_load`) and the trend (`hlstats_Trend`). The
-    players stay.
+    load history (`hlstats_server_load`). The players stay.
   - "Everything" also deletes the players, their names, Steam IDs and the
     clans of that ranking.
 
