@@ -549,6 +549,7 @@ a.kpi-link:hover { text-decoration: none; border-color: var(--accent-text); }
 .group-head { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 26px 0 10px; }
 .todo.values { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 .todo.values li { border-bottom: 1px solid var(--line); }
+.todo.values small { display: block; color: var(--muted); font-size: 12px; }
 details.assign-servers { border-top: 1px solid var(--line); }
 details.assign-servers > summary { cursor: pointer; padding: 13px 18px; font-weight: 600; color: var(--accent-text); }
 details.assign-servers > .form { padding: 0 18px 16px; max-width: none; }

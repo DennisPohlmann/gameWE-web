@@ -32,6 +32,16 @@ export const rankingPlayersSql = playersSql(oneGame);
 export const allClansSql = `SELECT COUNT(*) AS clans, COUNT(DISTINCT c.game) AS rankings
   FROM hlstats_Clans c ${visibleGame("c")}`;
 
+// The clans of one ranking as its public lists show them: every clan with at
+// least two visible members in hlstats_Players and hlstats_PlayersInactive
+// together, so the active and the inactive clans (data.ts). The collector
+// makes a clan for every tag in a name and never deletes one, most of them
+// have one member or none left. Two `?`, the ranking's code.
+export const rankingClansSql = `SELECT COUNT(*) AS n FROM (SELECT m.clan FROM (
+  SELECT clan FROM hlstats_Players WHERE game = ? AND hideranking = 0 AND clan > 0
+  UNION ALL SELECT clan FROM hlstats_PlayersInactive WHERE game = ? AND hideranking = 0 AND clan > 0) m
+  JOIN hlstats_Clans c ON c.clanId = m.clan GROUP BY m.clan HAVING COUNT(*) >= 2) x`;
+
 // Kills and headshots of both tables, so they do not drop when the collector
 // moves inactive players to hlstats_PlayersInactive. From the players, not
 // the servers' counters: a reset of the player statistics sets them back to

@@ -1,7 +1,7 @@
 import "server-only";
 import { adminExec, adminQuery } from "./db";
 import { baseGameOf } from "./games";
-import { playersPerRanking, playersPerRankingSql, rankingPlayersSql } from "./general-stats";
+import { playersPerRanking, playersPerRankingSql, rankingClansSql, rankingPlayersSql } from "./general-stats";
 import { addParams } from "./return-to";
 
 // Rankings (hlstats_Games rows) as the admin manages them: a new ranking takes
@@ -117,6 +117,12 @@ export async function playersByRanking(): Promise<Map<string, number>> {
 export async function rankingPlayers(code: string): Promise<number> {
   const rows = await adminQuery<{ n: number | string }>(rankingPlayersSql, [code, code, code, code]);
   return Math.max(0, Number(rows[0]?.n ?? 0));
+}
+
+// The clans of one ranking that its public lists show (two members or more).
+export async function rankingClans(code: string): Promise<number> {
+  const rows = await adminQuery<{ n: number | string }>(rankingClansSql, [code, code]);
+  return Number(rows[0]?.n ?? 0);
 }
 
 // Number of rows per ranking in one of the per-ranking tables. Table and

@@ -442,8 +442,10 @@ menu button), and lists turn into cards on narrow screens:
   the same game, move servers of other rankings in, and "Add server", which
   opens the new-server form `/admin/servers/new?game=<code>` with the
   ranking preset and locked and returns to the ranking's page; a `game` that
-  is not an existing ranking is ignored), Values (players, clans and the
-  definitions), and under "Rules" Bots, VAC block, Hall of fame & scheduled
+  is not an existing ranking is ignored), Values (players counted as on the
+  start page, active and inactive, without bots, with the rows of the players
+  list below; clans with two members or more as in the public lists, with the
+  clans the collector created below; the definitions as they are), and under "Rules" Bots, VAC block, Hall of fame & scheduled
   reset (not for templates) and Maintenance (the reset). The old edit address
   `/admin/games/<id>` leads to the ranking's page. The ranking chosen at the
   top of the side menu applies to everything below it: its page, servers,

@@ -7,7 +7,7 @@ import { PageNav } from "@/components/admin/page-nav";
 import { GameTag } from "@/components/ui";
 import { entities } from "@/lib/admin-entities";
 import { adminDict } from "@/lib/admin-i18n";
-import { countByRanking, rankingPlayers, rankingSummaries } from "@/lib/admin-rankings";
+import { countByRanking, rankingClans, rankingPlayers, rankingSummaries } from "@/lib/admin-rankings";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { basePath } from "@/lib/base-path";
 import { localeOf } from "@/lib/format";
@@ -57,8 +57,9 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
   const template = r.servers === 0;
   // The VAC block and whether the collector has a Steam key for it; the bots
   // and the scheduled reset for the summary at the top.
-  const [allPlayers, vacBlock, vacKey, bots, hall, ...counts] = await Promise.all([
+  const [allPlayers, clans, vacBlock, vacKey, bots, hall, ...counts] = await Promise.all([
     rankingPlayers(r.code),
+    rankingClans(r.code),
     rankingBlockVac(r.code),
     steamKeyStored(),
     rankingBots(r.code),
@@ -73,6 +74,14 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
   const busy = isAdmin
     ? Number((await countByRanking("hlstats_Servers", "game", "act_players > 0")).get(r.code) ?? 0)
     : null;
+  // Players and clans counted as on the start page and the public lists, the
+  // rows of their admin list below (players with bots, without the inactive
+  // ones; every clan the collector ever made from a tag). The other values
+  // are the ranking's definitions, counted as they are.
+  const shown: Record<string, [number, string, string]> = {
+    players: [allPlayers, fill(u.valuesPlayersRows, { n: nf(counts[0]) }), u.valuesPlayersTip],
+    clans: [clans, fill(u.valuesClansRows, { n: nf(counts[1]) }), u.valuesClansTip],
+  };
   const label = (key: string) => entities.find((e) => e.key === key)?.label[lang] ?? key;
   const kind = gameKind(r.base);
   const locale = lang === "de" ? "de-DE" : "en-GB";
@@ -157,13 +166,14 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
         <ul className="todo values">
           {LISTS.map(([key, icon], i) => (
             <li key={key}>
-              <Link className="todo-link" href={`/admin/${key}${q}`}>
+              <Link className="todo-link" href={`/admin/${key}${q}`} title={shown[key]?.[2]}>
                 <span className="ic">
                   <Icon name={icon} />
                 </span>
                 <span>
                   <b>{label(key)}</b>
-                  {nf(counts[i])}
+                  {nf(shown[key]?.[0] ?? counts[i])}
+                  {shown[key] ? <small>{shown[key][1]}</small> : null}
                 </span>
               </Link>
             </li>

@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFileSync } from "node:fs";
-import { allClansSql, allKillsSql, adminPlayerTotalsSql, allPlayersSql, playersPerRanking, playersPerRankingSql, rankingKillsSql, rankingPlayersSql } from "../src/lib/general-stats.ts";
+import { allClansSql, allKillsSql, adminPlayerTotalsSql, allPlayersSql, playersPerRanking, playersPerRankingSql, rankingClansSql, rankingKillsSql, rankingPlayersSql } from "../src/lib/general-stats.ts";
 
 test("players count active and inactive players, without a hideranking filter", () => {
   assert.match(allPlayersSql, /FROM hlstats_Players p JOIN hlstats_Games/);
@@ -20,6 +20,13 @@ test("players count active and inactive players, without a hideranking filter", 
 test("clans count every clan of the visible games, members or not", () => {
   assert.match(allClansSql, /FROM hlstats_Clans c JOIN hlstats_Games g ON g\.code = c\.game AND g\.hidden = '0'/);
   assert.doesNotMatch(allClansSql, /hlstats_Players|HAVING|GROUP BY|c\.hidden/);
+});
+
+test("a ranking's clans are those of its public lists: two visible members or more", () => {
+  assert.match(rankingClansSql, /FROM hlstats_Players WHERE game = \? AND hideranking = 0 AND clan > 0/);
+  assert.match(rankingClansSql, /UNION ALL SELECT clan FROM hlstats_PlayersInactive WHERE game = \? AND hideranking = 0 AND clan > 0/);
+  assert.match(rankingClansSql, /JOIN hlstats_Clans c ON c\.clanId = m\.clan GROUP BY m\.clan HAVING COUNT\(\*\) >= 2/);
+  assert.equal(rankingClansSql.match(/\?/g)?.length, 2);
 });
 
 test("kills and headshots count active and inactive players, each player once", () => {
