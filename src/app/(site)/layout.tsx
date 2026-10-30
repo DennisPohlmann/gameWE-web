@@ -10,6 +10,7 @@ import { statsOrigin } from "@/lib/site-url";
 import { LANGUAGES } from "@/translations/languages";
 import { LangFlag } from "@/components/lang-flag";
 import { ShareMenu } from "@/components/share-menu";
+import { HeaderMenu } from "@/components/header-menu";
 import { basePath } from "@/lib/base-path";
 import { FLAG_SPRITE_URL } from "@/lib/flag-codes";
 import { Crumbs } from "@/components/crumbs";
@@ -96,6 +97,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     teams: t.teams,
     chat: t.chat,
   };
+  const tabs = headerTabs(
+    { order: headerOrder, home: headerHome, links, sourcebansUrl },
+    { home: t.contents, search: t.searchTitle, help: t.help, licenses: t.licenses, privacy: t.privacy.title },
+  );
   return (
     <html lang={lang} data-skin={template?.id ?? "default"} data-os={os}>
       <head>
@@ -127,10 +132,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             )}
           </Link>
           <nav className="tabs-top" aria-label={siteName}>
-            {headerTabs(
-              { order: headerOrder, home: headerHome, links, sourcebansUrl },
-              { home: t.contents, search: t.searchTitle, help: t.help, licenses: t.licenses, privacy: t.privacy.title },
-            ).map((tab) =>
+            {tabs.map((tab) =>
               tab.kind === "page" ? (
                 <Link prefetch={false} key={tab.id} href={tab.href}>
                   {tab.label}
@@ -142,6 +144,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               ),
             )}
           </nav>
+          <HeaderMenu tabs={tabs} label={t.menu} navLabel={siteName} />
         </header>
         <div className="nav-bar">
           <Crumbs

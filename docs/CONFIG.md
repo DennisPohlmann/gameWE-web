@@ -117,7 +117,10 @@ the variable is ignored.
 
 Admin → Settings → Header & links shows all tabs at the top of the site as one
 numbered list in the order the header uses. Move an entry with its arrows or
-drag it by its handle; the order is saved with the settings.
+drag it by its handle; the order is saved with the settings. On phones
+(700 px wide and less) the tabs sit behind a "Menu" button on the right of the
+header and open as a list in the same order; the page being shown is marked,
+and a tap outside, Esc or a link closes the list.
 
 - **Home**: name and address can be changed; both are optional (empty name:
   the translated "Home", empty address: the start page of the statistics).

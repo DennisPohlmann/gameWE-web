@@ -213,6 +213,58 @@ tr.server-line .vac-mark.vac-insecure { color: color-mix(in srgb, #d32f2f 70%, v
 }
 .tabs-top a:hover { background: var(--tab-hover); text-decoration: none; }
 
+/* Phones: the tabs move into a menu button (src/components/header-menu.tsx)
+   that opens them as a list under the header, so the header keeps one row. */
+.header-menu { display: none; }
+@media (max-width: 700px) {
+  .header { position: relative; z-index: 20; align-items: center; min-height: 46px; overflow: visible; }
+  .tabs-top { display: none; }
+  .header-menu { display: block; }
+  .header-menu > summary {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 11px;
+    border: 1px solid var(--tab-border);
+    border-radius: 3px;
+    background: var(--tab-bg);
+    color: var(--tab-text);
+    font-size: 13px;
+    font-weight: bold;
+    text-shadow: var(--tab-shadow);
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+  }
+  .header-menu > summary::-webkit-details-marker { display: none; }
+  .header-menu[open] > summary { background: var(--tab-hover); }
+  .header-menu-icon { display: inline-flex; flex-direction: column; gap: 3px; width: 18px; }
+  .header-menu-icon i { display: block; height: 2px; border-radius: 1px; background: currentColor; transition: transform 0.2s, opacity 0.2s; }
+  .header-menu[open] .header-menu-icon i:nth-child(1) { transform: translateY(5px) rotate(45deg); }
+  .header-menu[open] .header-menu-icon i:nth-child(2) { opacity: 0; }
+  .header-menu[open] .header-menu-icon i:nth-child(3) { transform: translateY(-5px) rotate(-45deg); }
+  .header-menu-list {
+    position: absolute;
+    top: calc(100% + 1px);
+    right: 6px;
+    width: min(250px, calc(100vw - 20px));
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+    border: 1px solid var(--header-border);
+    border-top: 0;
+    border-radius: 0 0 6px 6px;
+    background: var(--header-bg);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  }
+  .header-menu-list a { display: block; padding: 12px 16px; border-top: 1px solid var(--tab-border); color: var(--tab-text); font-size: 14px; font-weight: bold; text-decoration: none; text-shadow: var(--tab-shadow); }
+  .header-menu-list a:first-child { border-top: 0; }
+  .header-menu-list a:hover { background: var(--tab-hover); text-decoration: none; }
+  .header-menu-list a[aria-current] { box-shadow: inset 4px 0 0 var(--accent); }
+  /* Links to other sites open in a new tab: a small arrow, not read out. */
+  .header-menu-list a[target]::after { content: " \2197"; content: " \2197" / ""; font-weight: normal; opacity: 0.6; }
+}
+@media (max-width: 700px) and (prefers-reduced-motion: reduce) { .header-menu-icon i { transition: none; } }
+
 .nav-bar {
   display: flex;
   flex-wrap: wrap;

@@ -2,7 +2,7 @@
 // Run with `npm test` (node --test, Node's built-in type stripping).
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { DEFAULT_ORDER, headerOrder, headerTabs, homeValue, linkProblem, linkValue, parseHome, parseLink } from "../src/lib/header-links.ts";
+import { DEFAULT_ORDER, headerOrder, headerTabs, homeValue, isCurrentTab, linkProblem, linkValue, parseHome, parseLink } from "../src/lib/header-links.ts";
 
 const t = { home: "Home", search: "Search", help: "Help", licenses: "Licenses", privacy: "Privacy" };
 const ids = (tabs: { id: string }[]) => tabs.map((x) => x.id);
@@ -86,4 +86,15 @@ test("Home validation", () => {
   assert.equal(homeValue("Start", "example.org"), "Start|https://example.org");
   assert.equal(homeValue("Start", "javascript:alert(1)"), null);
   assert.equal(homeValue("a|b", ""), null);
+});
+
+test("the phone menu marks only the site's own page being shown", () => {
+  const page = (href: string) => ({ href, kind: "page" as const });
+  assert.equal(isCurrentTab(page("/"), "/"), true);
+  assert.equal(isCurrentTab(page("/"), "/css"), false);
+  assert.equal(isCurrentTab(page("/help"), "/help"), true);
+  assert.equal(isCurrentTab(page("/help"), "/help/points"), true);
+  assert.equal(isCurrentTab(page("/help"), "/helpful"), false);
+  assert.equal(isCurrentTab({ href: "/help", kind: "path" }, "/help"), false);
+  assert.equal(isCurrentTab({ href: "https://example.org/", kind: "external" }, "/"), false);
 });

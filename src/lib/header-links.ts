@@ -141,3 +141,11 @@ export function headerTabs(
   }
   return tabs;
 }
+
+// Whether a tab is the page being shown (marked in the phone menu). Only the
+// site's own pages can be: "/" just on the start page, the others also on
+// their sub-pages.
+export function isCurrentTab(tab: Pick<HeaderTab, "href" | "kind">, path: string): boolean {
+  if (tab.kind !== "page") return false;
+  return tab.href === "/" ? path === "/" : path === tab.href || path.startsWith(`${tab.href}/`);
+}
