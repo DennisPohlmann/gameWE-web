@@ -450,7 +450,7 @@ holds the single folder `<name>/`, `gamewe-web-maps-<game>-<version>.tar.gz`
 the single folder `<game>/` (e.g. `css/`).
 
 ```bash
-VERSION=1.2.0
+VERSION=1.2.2
 BASE=https://github.com/DennisPohlmann/gameWE-web-content/releases/download/v$VERSION
 for f in "gamewe-web-template-blue-$VERSION.tar.gz" "gamewe-web-maps-css-$VERSION.tar.gz"; do
   curl -fLO "$BASE/$f"
