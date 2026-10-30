@@ -125,9 +125,6 @@ test("entity bodies: unknown, read-only and create-only fields are refused", () 
   bodyError(() => entityInput(users, { username: "other" }, false), "read_only_field", "username");
   bodyError(() => entityInput(games, { code: "new" }, false), "read_only_field", "code");
   bodyError(() => entityInput(games, { template: "css" }, false), "read_only_field", "template");
-  // The collector reads the slots from the game server.
-  bodyError(() => entityInput(servers, { max_players: 24 }, false), "read_only_field", "max_players");
-  bodyError(() => entityInput(servers, { name: "x", address: "203.0.113.10", port: 27015, game: "css", max_players: 24 }, true), "read_only_field", "max_players");
   bodyError(() => entityInput(servers, {}, false), "invalid_body");
   bodyError(() => entityInput(servers, [], true), "invalid_body");
   bodyError(() => entityInput(servers, null, true), "invalid_body");
@@ -147,6 +144,9 @@ test("entity bodies: types must match and become the form's values", () => {
   assert.deepEqual(r.entries, [["port", "27016"], ["rcon_password", "-"], ["game", "css"]]);
   assert.deepEqual([...(r.only ?? [])].sort(), ["game", "port", "rcon_password"]);
   assert.deepEqual(entityInput(games, { hidden: true }, false).entries, [["hidden", "1"]]);
+  // The slots can be set by hand (the collector overwrites them later).
+  assert.deepEqual(entityInput(servers, { max_players: 24 }, false).entries, [["max_players", "24"]]);
+  assert.deepEqual(entityInput(servers, { name: "x", address: "203.0.113.10", port: 27015, game: "css", max_players: 32 }, true).entries.at(-1), ["max_players", "32"]);
   assert.deepEqual(entityInput(users, { acclevel: 80 }, false).entries, [["acclevel", "80"]]);
   const c = entityInput(games, { code: "x", template: "css", name: "X" }, true);
   assert.equal(c.only, undefined, "a new row gets every field");

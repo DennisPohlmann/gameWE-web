@@ -39,7 +39,7 @@ export function FieldControl({
       </select>
     );
   if (f.type === "password") return <input {...noAutofill} id={id} name={f.name} type="password" minLength={10} required={isNew} />;
-  // A number only the collector writes (max_players): plain text, no input.
+  // A read-only number: plain text, no input.
   if (f.readonly && f.type === "number") return <span className="field-value">{value === null || value === undefined ? "–" : String(value)}</span>;
   if (f.type === "secret") return <SecretControl id={id ?? `f-${f.name}`} name={f.name} maxLength={f.max} set={Boolean(secretSet)} isNew={isNew} lang={lang} />;
   return (
@@ -50,6 +50,8 @@ export function FieldControl({
       defaultValue={value === null || value === undefined ? "" : String(value)}
       type={f.type === "number" ? "number" : "text"}
       inputMode={f.type === "decimal" ? "decimal" : undefined}
+      min={f.type === "number" ? f.min : undefined}
+      max={f.type === "number" ? f.maxValue : undefined}
       required={f.required && !locked}
       readOnly={locked}
       maxLength={f.max}

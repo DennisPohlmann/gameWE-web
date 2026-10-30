@@ -509,11 +509,17 @@ What the admin area edits:
   secret it accepts all log packets of the server. The collector never sets
   or changes the secret itself (see the collector's CONFIG.md, "Log
   secret"). The field appears once the collector's database has schema
-  version 4 (`gamewe db migrate`). **Max players** is shown, not edited:
-  the collector reads the slots from the game server (RCON `status`, else
-  `A2S_INFO` from collector v1.3.0 on, with `features.server_info`) and keeps
-  them current; 0 means not known yet. The API refuses `max_players` in a
-  change (`read_only_field`).
+  version 4 (`gamewe db migrate`). **Slots (max players)** can be entered
+  when creating or editing a server (0 to 255, 0 or empty: unknown), so a
+  server that has never been online shows its slots on the public pages.
+  Once the server answers, the collector overwrites the value with the real
+  slots (RCON `status`, else `A2S_INFO` with `features.server_info`) and
+  keeps it current; it does the same with the **name** (the hostname).
+  Overwriting a value set by hand needs collector v1.6.0 or newer (older
+  versions set the name only while it is empty and write the slots only
+  when they change). IP address and port are never changed by the
+  collector. The API takes `max_players` in a create and a change like the
+  other fields.
 - Games, players (points, hide from ranking, clan), clans, weapons (name,
   points modifier), actions (rewards), teams, roles, award definitions, ranks
   and users. The lists keep their filters (ranking, search, state, page,

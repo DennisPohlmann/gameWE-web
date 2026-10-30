@@ -116,7 +116,18 @@ export const entities: Entity[] = [
       en: "The collector only accepts logs from servers listed here and re-reads the list every minute. On the game server: logaddress_add <collector IP>:41337; Counter-Strike 2: logaddress_add_http \"http://<collector IP>:41338/<game port>\".",
     },
     fields: [
-      { name: "name", label: { de: "Name", en: "Name" }, type: "text", inList: true, required: true, max: 255 },
+      {
+        name: "name",
+        label: { de: "Name", en: "Name" },
+        type: "text",
+        inList: true,
+        required: true,
+        max: 255,
+        help: {
+          de: "Sobald der Server antwortet, übernimmt der Collector seinen Hostnamen (RCON status, sonst A2S_INFO) und überschreibt diesen Wert.",
+          en: "Once the server answers, the collector takes its hostname (RCON status, else A2S_INFO) and overwrites this value.",
+        },
+      },
       { name: "address", label: { de: "IP-Adresse", en: "IP address" }, type: "text", inList: true, required: true, max: 32, normalize: canonicalIp, help: { de: "Eine IP-Adresse, kein Hostname. Jede Kombination aus IP und Port gibt es nur einmal.", en: "An IP address, not a host name. Each IP and port combination exists only once." } },
       { name: "port", label: { de: "Port", en: "Port" }, type: "number", inList: true, required: true, min: 1, maxValue: 65535, help: { de: "Spiel- und RCON-Port des Servers.", en: "Game and RCON port of the server." } },
       { ...gameField, help: { de: "Die Rangliste bestimmt das Spiel: erst unter Ranglisten das Spiel der Rangliste wählen, dann den Server ihr zuordnen. Nur Ranglisten desselben Spiels sind erlaubt. Vorlagen (Ranglisten ohne Server) stehen nicht zur Wahl; den ersten Server bekommt eine neue Rangliste auf ihrer Seite unter Ranglisten („Server hinzufügen“).", en: "The ranking decides the game: first choose the ranking's game under Rankings, then assign the server to it. Only rankings of the same game are allowed. Templates (rankings without servers) are not offered; a new ranking gets its first server on its page under Rankings (“Add server”)." } },
@@ -137,12 +148,13 @@ export const entities: Entity[] = [
       { name: "publicaddress", label: { de: "Öffentliche Adresse", en: "Public address" }, type: "text", max: 255, help: { de: "Wird statt IP:Port angezeigt, z. B. ein Hostname.", en: "Shown instead of IP:port, e.g. a host name." } },
       {
         name: "max_players",
-        label: { de: "Max. Spieler", en: "Max players" },
+        label: { de: "Slots (max. Spieler)", en: "Slots (max players)" },
         type: "number",
-        readonly: true,
+        min: 0,
+        maxValue: 255,
         help: {
-          de: "Holt der Collector vom Gameserver (RCON status, sonst A2S_INFO) und hält es aktuell. 0: noch unbekannt.",
-          en: "The collector reads it from the game server (RCON status, else A2S_INFO) and keeps it current. 0: not known yet.",
+          de: "Wird angezeigt, solange der Server noch nie online war. Sobald er antwortet, überschreibt der Collector den Wert mit den echten Slots (RCON status, sonst A2S_INFO) und hält ihn aktuell. 0 oder leer: unbekannt.",
+          en: "Shown as long as the server has never been online. Once it answers, the collector overwrites the value with the real slots (RCON status, else A2S_INFO) and keeps it current. 0 or empty: unknown.",
         },
       },
       { name: "display_id", label: { de: "Reihenfolge", en: "Order" }, type: "number", inList: true },
