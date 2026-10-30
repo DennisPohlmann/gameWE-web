@@ -10,7 +10,7 @@ import { adminQuery } from "@/lib/db";
 import { localeOf } from "@/lib/format";
 import { fill, getAdminLang } from "@/lib/i18n";
 import { heartbeatFresh } from "@/lib/job-plan";
-import { readSecret } from "@/lib/totp";
+import { countBackupCodes, readSecret } from "@/lib/totp";
 import { updateStatus } from "@/lib/updates";
 
 // Admin overview: key figures, the rankings with their state, what needs
@@ -48,6 +48,9 @@ export default async function AdminHome() {
   const todo: { tone: "bad" | "warn" | "acc"; icon: Parameters<typeof Icon>[0]["name"]; title: string; text: string; href: string; link: string; external?: boolean }[] = [];
   if (totp === null)
     todo.push({ tone: "bad", icon: "lock", title: fill(u.att2fa, { u: user.username }), text: u.att2faText, href: "/admin/account", link: u.att2faLink });
+  const backupLeft = totp != null ? await countBackupCodes(user.username).catch(() => null) : null;
+  if (backupLeft !== null && backupLeft <= 2)
+    todo.push({ tone: "warn", icon: "lock", title: fill(u.attBackup, { n: backupLeft, u: user.username }), text: u.attBackupText, href: "/admin/account", link: u.attBackupLink });
   if (!beatOk)
     todo.push({
       tone: "warn",

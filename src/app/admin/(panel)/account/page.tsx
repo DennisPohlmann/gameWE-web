@@ -1,4 +1,5 @@
-import { changePasswordAction, createApiTokenAction, revokeApiTokenAction, totpCancelAction, totpConfirmAction, totpDisableAction, totpStartAction } from "../../actions";
+import { changePasswordAction, createApiTokenAction, revokeApiTokenAction, totpBackupCodesAction, totpCancelAction, totpConfirmAction, totpDisableAction, totpStartAction } from "../../actions";
+import { BackupCodesForm, type BackupCodesText } from "@/components/admin/backup-codes-form";
 import { ApiTokenForm } from "@/components/admin/api-token-form";
 import { QrCode } from "@/components/qr-code";
 import { Section } from "@/components/ui";
@@ -10,12 +11,12 @@ import { adminSecret, requireAdmin } from "@/lib/auth";
 import { noAutofill } from "@/lib/autofill";
 import { basePath } from "@/lib/base-path";
 import { fmtDateTime, nowUnix } from "@/lib/format";
-import { getAdminLang } from "@/lib/i18n";
+import { fill, getAdminLang } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
-import { otpauthUri, readSecret } from "@/lib/totp";
+import { BACKUP_CODES, countBackupCodes, otpauthUri, readSecret } from "@/lib/totp";
 
-// The signed-in user's own account: password, optional TOTP and API tokens
-// (only a notice while API_ENABLED is off).
+// The signed-in user's own account: password, optional TOTP with its backup
+// codes and API tokens (only a notice while API_ENABLED is off).
 export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; done?: string; pw?: string; token?: string }> }) {
   const user = await requireAdmin();
   const lang = await getAdminLang();
@@ -27,8 +28,20 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const secret = adminSecret();
   const active = secret ? await readSecret(user.username, secret) : null;
   const pending = secret && active === null ? await readSecret(user.username, secret, true) : null;
+  const backupLeft = active !== null ? await countBackupCodes(user.username) : 0;
   const issuer = (await getSettings()).siteName || "gameWE";
-  const codeInput = <input name="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9 ]{6,7}" maxLength={7} required aria-label={a.totpCode} />;
+  const backupText = (hint: string, submit: string): BackupCodesText => ({
+    code: a.totpCode,
+    hint,
+    submit,
+    title: a.totpBackupShownTitle,
+    once: a.totpBackupShownOnce,
+    copy: a.totpBackupCopy,
+    copied: a.totpBackupCopied,
+    save: a.totpBackupSave,
+    done: a.totpBackupDone,
+    invalid: a.codeInvalid,
+  });
   return (
     <>
       <h1>{a.account}</h1>
@@ -69,10 +82,14 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
               <p>
                 <strong>{a.totpOn}</strong>
               </p>
+              <h3>{a.totpBackupTitle}</h3>
+              <p className={backupLeft > 2 ? undefined : "notice"}>{backupLeft ? fill(a.totpBackupLeft, { n: String(backupLeft), all: String(BACKUP_CODES) }) : a.totpBackupNone}</p>
+              <BackupCodesForm action={totpBackupCodesAction} text={backupText(a.totpBackupNewHint, a.totpBackupNew)} user={user.username} site={issuer} />
+              <h3>{a.totpDisable}</h3>
               <form action={totpDisableAction} className="form">
                 <label>
-                  {a.totpCode}
-                  {codeInput}
+                  {a.totpCodeOrBackup}
+                  <input {...noAutofill} name="code" autoComplete="one-time-code" maxLength={12} required aria-label={a.totpCodeOrBackup} />
                   <small>{a.totpDisableHint}</small>
                 </label>
                 <button type="submit" className="button">
@@ -92,16 +109,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 {a.totpUri}
                 <input {...noAutofill} readOnly value={otpauthUri(pending, user.username, issuer)} className="mono" />
               </label>
-              <form action={totpConfirmAction} className="form">
-                <label>
-                  {a.totpCode}
-                  {codeInput}
-                  <small>{a.totpConfirmHint}</small>
-                </label>
-                <button type="submit" className="button">
-                  {a.totpConfirm}
-                </button>
-              </form>
+              <BackupCodesForm action={totpConfirmAction} text={backupText(a.totpConfirmHint, a.totpConfirm)} user={user.username} site={issuer} />
               <form action={totpCancelAction}>
                 <button type="submit" className="linkish">
                   {a.totpCancel}

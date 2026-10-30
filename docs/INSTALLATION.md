@@ -311,8 +311,9 @@ docker exec gamewe-web node scripts/create-admin.mjs admin --totp
 ```
 
 It creates the user with full rights and prints a generated password once
-(with `--totp` also the TOTP key). The same command sets a new password for an
-existing user; `--no-totp` also removes the TOTP key.
+(with `--totp` also the TOTP key and ten backup codes, each usable once
+instead of the code from the app). The same command sets a new password for
+an existing user; `--no-totp` also removes the TOTP key and the backup codes.
 
 ### Update
 

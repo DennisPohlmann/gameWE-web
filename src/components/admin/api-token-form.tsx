@@ -89,7 +89,7 @@ export function ApiTokenForm({
         {totp ? (
           <label>
             {text.code}
-            <input name="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9 ]{6,7}" maxLength={7} required />
+            <input name="code" autoComplete="one-time-code" autoCapitalize="none" spellCheck={false} maxLength={12} required />
           </label>
         ) : null}
         <button type="submit" className="button" disabled={pending}>

@@ -330,10 +330,18 @@ Settings → My account & 2FA (also in the user menu top right), where the passw
 can be changed too, or `create-admin <name> --totp` prints a key
 as text for the authenticator app (in the container:
 `docker exec gamewe-web node scripts/create-admin.mjs admin --totp`). After
-that the sign-in also needs the six-digit code. `--no-totp` removes it, for
-example when the phone is lost. The key is stored encrypted with
-`ADMIN_SECRET` in `hlstats_Options`, so changing `ADMIN_SECRET` locks out users
-with TOTP until they are reset this way.
+that the sign-in also needs the six-digit code. Turning TOTP on makes ten
+backup codes (`abcde-fghjk`), shown once in a dialog to copy or save as a
+text file (`create-admin --totp` prints them): each works once instead of the
+code from the app, at the sign-in ("No app at hand? Sign in with a backup
+code"), to remove TOTP and to confirm a new API token. My account shows how
+many are left and makes ten new ones with the current code from the app
+(the old ones stop working); with two or fewer left the overview says so.
+`--no-totp` removes TOTP and the backup codes, for example when the phone
+and the codes are lost. The key is stored encrypted with `ADMIN_SECRET` in
+`hlstats_Options`, the backup codes only as an HMAC keyed with it (one row
+each, `gamewe_totpb_...`, deleted when used), so changing `ADMIN_SECRET` locks
+out users with TOTP until they are reset this way.
 
 API tokens let scripts use the admin API (`/api/v1/admin`, documented on
 `/api`, see [INTERFACE.md](INTERFACE.md#admin-api)) with the rights of their

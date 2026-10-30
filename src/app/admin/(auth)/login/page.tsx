@@ -75,6 +75,19 @@ export default async function LoginPage({
               {a.login}
             </button>
           </form>
+          <details className="backup-login">
+            <summary>{a.totpUseBackup}</summary>
+            <form action={loginCodeAction} className="form">
+              <label>
+                {a.totpBackupCode}
+                <input name="code" autoComplete="off" autoCapitalize="none" spellCheck={false} maxLength={12} required />
+                <small>{a.totpBackupCodeHint}</small>
+              </label>
+              <button type="submit" className="button">
+                {a.login}
+              </button>
+            </form>
+          </details>
           <form action={loginCancelAction}>
             <button type="submit" className="linkish">
               {a.totpCancel}

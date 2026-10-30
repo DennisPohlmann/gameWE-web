@@ -1,12 +1,15 @@
 import "server-only";
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { adminExec, adminQuery, upsert } from "./db";
+import { BACKUP_CODES, backupCodeInput, backupHash } from "./totp-backup";
+
+export { BACKUP_CODES, newBackupCodes } from "./totp-backup";
 
 // Optional TOTP (RFC 6238: SHA-1, 30 s, 6 digits) for admin users. The secret
 // sits encrypted with ADMIN_SECRET in hlstats_Options, under a key derived
 // from the user name: gamewe_totp_<hash> once active, gamewe_totpp_<hash>
 // while it waits for the first code. scripts/create-admin.mjs writes the
-// same format.
+// same format, and the backup codes (below).
 
 const B32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
@@ -101,4 +104,51 @@ export function consumeStep(user: string, step: number): boolean {
   if ((used.get(user) ?? -1) >= step) return false;
   used.set(user, step);
   return true;
+}
+
+// Backup codes (totp-backup.ts): one hlstats_Options row each,
+// gamewe_totpb_<user hash>_<n>; using a code deletes its row.
+function backupKeys(user: string): string[] {
+  const h = createHash("sha256").update(user).digest("hex").slice(0, 32);
+  return Array.from({ length: BACKUP_CODES }, (_, i) => `gamewe_totpb_${h}_${i}`);
+}
+
+const inList = (n: number) => Array.from({ length: n }, () => "?").join(", ");
+
+// Replaces the user's backup codes with these (newBackupCodes).
+export async function storeBackupCodes(user: string, codes: string[], adminSecret: string) {
+  await removeBackupCodes(user);
+  const keys = backupKeys(user);
+  for (const [i, c] of codes.slice(0, BACKUP_CODES).entries()) {
+    await adminExec(`INSERT INTO hlstats_Options (keyname, value) VALUES (?, ?)`, [keys[i], backupHash(backupCodeInput(c) ?? "", adminSecret)]);
+  }
+}
+
+export async function removeBackupCodes(user: string) {
+  const keys = backupKeys(user);
+  await adminExec(`DELETE FROM hlstats_Options WHERE keyname IN (${inList(keys.length)})`, keys);
+}
+
+export async function countBackupCodes(user: string): Promise<number> {
+  const keys = backupKeys(user);
+  const [row] = await adminQuery<{ n: number | string }>(`SELECT COUNT(*) AS n FROM hlstats_Options WHERE keyname IN (${inList(keys.length)})`, keys);
+  return Number(row?.n ?? 0);
+}
+
+// Uses up the backup code: true when it was one of the user's unused codes.
+// Deleting its row is the check, so two requests cannot use one code twice.
+export async function spendBackupCode(user: string, input: string, adminSecret: string): Promise<boolean> {
+  const c = backupCodeInput(input);
+  if (!c || !adminSecret) return false;
+  const keys = backupKeys(user);
+  const r = await adminExec(`DELETE FROM hlstats_Options WHERE keyname IN (${inList(keys.length)}) AND value = ?`, [...keys, backupHash(c, adminSecret)]);
+  return r.affectedRows > 0;
+}
+
+// The second factor of a sign-in or a sensitive step: the current code from
+// the app (each once), or else a backup code. `totp` is the user's secret.
+export async function secondFactor(user: string, totp: string, input: string, adminSecret: string): Promise<"code" | "backup" | null> {
+  const step = totp ? checkCode(totp, input) : null;
+  if (step !== null) return consumeStep(user, step) ? "code" : null;
+  return (await spendBackupCode(user, input, adminSecret)) ? "backup" : null;
 }

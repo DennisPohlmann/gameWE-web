@@ -169,7 +169,7 @@ docker logs gamewe-collector    # "database migrated", "listening for game serve
 
 `ADMIN_SECRET` signs the admin logins: a random value of at least 32
 characters, created once and kept, also when you recreate the container
-(a new one signs everybody out and makes stored TOTP keys and API tokens unusable):
+(a new one signs everybody out and makes stored TOTP keys, their backup codes and API tokens unusable):
 
 ```bash
 openssl rand -hex 32 > ~/gamewe/admin-secret && chmod 600 ~/gamewe/admin-secret

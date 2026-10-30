@@ -8,7 +8,7 @@ import { cache } from "react";
 import { basePath } from "./base-path";
 import { clientIp } from "./client-ip";
 import { adminExec, adminQuery } from "./db";
-import { checkCode, consumeStep, readSecret } from "./totp";
+import { readSecret, secondFactor } from "./totp";
 
 // Admin accounts are the rows of hlstats_Users (username, password, acclevel).
 // New passwords are stored as scrypt hashes; old HLstatsX MD5 hashes still
@@ -141,7 +141,8 @@ export async function changePassword(username: string, current: string, next: st
 }
 
 // The signed-in user confirms a sensitive step (a new API token) with their
-// password and, when the account has TOTP, the current code; the same brake
+// password and, when the account has TOTP, the current code (or a backup
+// code); the same brake
 // as the sign-in. "code": TOTP is set up and the code is missing or wrong.
 export async function confirmIdentity(username: string, password: string, code: string): Promise<"ok" | "wrong" | "code" | "blocked" | "nosecret"> {
   const secret = adminSecret();
@@ -155,8 +156,7 @@ export async function confirmIdentity(username: string, password: string, code: 
   }
   const totp = await readSecret(username, secret);
   if (totp !== null) {
-    const step = totp ? checkCode(totp, code) : null;
-    if (step === null || !consumeStep(username, step)) {
+    if (!(await secondFactor(username, totp, code, secret))) {
       fail(ip);
       return "code";
     }
@@ -189,7 +189,8 @@ export async function cancelPendingLogin() {
   (await cookies()).delete({ name: PENDING, path: `${basePath}/admin` });
 }
 
-// Step 2: the TOTP code. "expired": no (valid) pending login, start over.
+// Step 2: the TOTP code or one of the backup codes. "expired": no (valid)
+// pending login, start over.
 export async function loginCode(code: string): Promise<"ok" | "code" | "expired" | "blocked" | "nosecret"> {
   const secret = adminSecret();
   if (!secret) return "nosecret";
@@ -202,8 +203,7 @@ export async function loginCode(code: string): Promise<"ok" | "code" | "expired"
   }
   const [user] = await adminQuery<{ username: string; acclevel: number }>(`SELECT username, acclevel FROM hlstats_Users WHERE username = ?`, [p.user]);
   const totp = user && user.acclevel >= LEVEL_MIN ? await readSecret(user.username, secret) : null;
-  const step = totp ? checkCode(totp, code) : null;
-  if (!user || step === null || !consumeStep(user.username, step)) {
+  if (!user || totp === null || !(await secondFactor(user.username, totp, code, secret))) {
     fail(ip);
     tries.set(p.nonce, (tries.get(p.nonce) ?? 0) + 1);
     if (tries.size > 10_000) tries.clear();

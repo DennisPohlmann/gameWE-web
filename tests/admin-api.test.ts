@@ -267,7 +267,7 @@ test("every server action of the admin area has an API operation or is account-o
   };
   // Sign-in, own password, own TOTP, own tokens, look of the admin area:
   // only signed in, never with a token.
-  const accountOnly = ["loginAction", "loginCodeAction", "loginCancelAction", "logoutAction", "adminThemeAction", "totpStartAction", "totpCancelAction", "totpConfirmAction", "totpDisableAction", "changePasswordAction", "createApiTokenAction", "revokeApiTokenAction"];
+  const accountOnly = ["loginAction", "loginCodeAction", "loginCancelAction", "logoutAction", "adminThemeAction", "totpStartAction", "totpCancelAction", "totpConfirmAction", "totpBackupCodesAction", "totpDisableAction", "changePasswordAction", "createApiTokenAction", "revokeApiTokenAction"];
   for (const a of actions) {
     if (accountOnly.includes(a)) continue;
     assert.ok(viaApi[a], `${a} has no admin API operation`);

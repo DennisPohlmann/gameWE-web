@@ -2,16 +2,16 @@
 // password. Prints the generated password once.
 //
 //   npm run create-admin -- <name>            password only
-//   npm run create-admin -- <name> --totp     also a new TOTP key (printed as text)
-//   npm run create-admin -- <name> --no-totp  also removes the TOTP key
+//   npm run create-admin -- <name> --totp     also a new TOTP key and backup codes (printed as text)
+//   npm run create-admin -- <name> --no-totp  also removes the TOTP key and the backup codes
 //
-// The TOTP key is stored encrypted with ADMIN_SECRET, in the same format as
-// src/lib/totp.ts.
+// The TOTP key is stored encrypted with ADMIN_SECRET and the backup codes as
+// HMACs keyed with it, in the same format as src/lib/totp.ts.
 //
 // Reads the database settings (MariaDB or PostgreSQL, DB_TYPE) from the
 // environment, .env.local or .env.
 
-import { createCipheriv, createHash, randomBytes, scryptSync } from "node:crypto";
+import { createCipheriv, createHash, createHmac, randomBytes, randomInt, scryptSync } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 
 for (const f of [".env.local", ".env"]) if (existsSync(f)) process.loadEnvFile(f);
@@ -58,10 +58,25 @@ function seal(secret) {
   return `v1.${Buffer.concat([iv, c.getAuthTag(), ct]).toString("base64url")}`;
 }
 
+// Ten backup codes "abcde-fghjk" (no 0/o, 1/l/i), one row each.
+const BACKUP_CHARS = "abcdefghjkmnpqrstuvwxyz23456789";
+function newBackupCodes() {
+  return Array.from({ length: 10 }, () => {
+    const c = Array.from({ length: 10 }, () => BACKUP_CHARS[randomInt(BACKUP_CHARS.length)]).join("");
+    return `${c.slice(0, 5)}-${c.slice(5)}`;
+  });
+}
+function backupHash(code) {
+  const key = createHash("sha256").update(`gamewe-totp-backup:${adminSecret}`).digest();
+  return createHmac("sha256", key).update(code.replace("-", "")).digest("hex");
+}
+
 const hashName = createHash("sha256").update(name).digest("hex").slice(0, 32);
 const totpKey = `gamewe_totp_${hashName}`;
 const pendingKey = `gamewe_totpp_${hashName}`;
+const backupKeys = Array.from({ length: 10 }, (_, i) => `gamewe_totpb_${hashName}_${i}`);
 const totpSecret = totp === "new" ? newSecret() : null;
+const backupCodes = totpSecret ? newBackupCodes() : [];
 
 const password = randomBytes(12).toString("base64url");
 const salt = randomBytes(16);
@@ -104,8 +119,10 @@ if (pg) {
      ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password, acclevel = 100`,
     [name, hash],
   );
-  if (totp) await db.query(`DELETE FROM ${options} WHERE keyname IN ($1, $2)`, [totpKey, pendingKey]);
+  const keys = [totpKey, pendingKey, ...backupKeys];
+  if (totp) await db.query(`DELETE FROM ${options} WHERE keyname IN (${keys.map((_, i) => `$${i + 1}`).join(", ")})`, keys);
   if (totpSecret) await db.query(`INSERT INTO ${options} (keyname, value) VALUES ($1, $2)`, [totpKey, seal(totpSecret)]);
+  for (const [i, c] of backupCodes.entries()) await db.query(`INSERT INTO ${options} (keyname, value) VALUES ($1, $2)`, [backupKeys[i], backupHash(c)]);
   issuer = (await db.query(`SELECT value FROM ${options} WHERE keyname = 'sitename'`)).rows[0]?.value;
   await db.end();
 } else {
@@ -116,8 +133,10 @@ if (pg) {
      ON DUPLICATE KEY UPDATE password = VALUES(password), acclevel = 100`,
     [name, hash],
   );
-  if (totp) await db.query(`DELETE FROM ${options} WHERE keyname IN (?, ?)`, [totpKey, pendingKey]);
+  const keys = [totpKey, pendingKey, ...backupKeys];
+  if (totp) await db.query(`DELETE FROM ${options} WHERE keyname IN (${keys.map(() => "?").join(", ")})`, keys);
   if (totpSecret) await db.query(`INSERT INTO ${options} (keyname, value) VALUES (?, ?)`, [totpKey, seal(totpSecret)]);
+  for (const [i, c] of backupCodes.entries()) await db.query(`INSERT INTO ${options} (keyname, value) VALUES (?, ?)`, [backupKeys[i], backupHash(c)]);
   issuer = (await db.query(`SELECT value FROM ${options} WHERE keyname = 'sitename'`))[0][0]?.value;
   await db.end();
 }
@@ -130,6 +149,9 @@ if (totpSecret) {
   console.log(`TOTP key (enter it in your authenticator app): ${totpSecret.replace(/(.{4})/g, "$1 ").trim()}`);
   console.log(`otpauth://totp/${label}?secret=${totpSecret}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`);
   console.log("Signing in now also needs the six-digit code from the app.");
+  console.log("");
+  console.log("Backup codes (each works once instead of the code from the app; keep them somewhere safe, they are not shown again):");
+  for (const c of backupCodes) console.log(`  ${c}`);
 } else if (totp === "remove") {
-  console.log("TOTP is removed for this user.");
+  console.log("TOTP and its backup codes are removed for this user.");
 }

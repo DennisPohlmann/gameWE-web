@@ -16,7 +16,7 @@ import { resetMode } from "@/lib/reset";
 import { addParams, safeReturnTo, withReturnTo } from "@/lib/return-to";
 import { rankingPageHref, resettableRankings } from "@/lib/admin-rankings";
 import { presetRanking, rankingServersHref } from "@/lib/ranking-preset";
-import { checkCode, consumeStep, newSecret, readSecret, removeSecret, storeSecret } from "@/lib/totp";
+import { checkCode, consumeStep, newBackupCodes, newSecret, readSecret, removeBackupCodes, removeSecret, secondFactor, storeBackupCodes, storeSecret } from "@/lib/totp";
 
 export async function loginAction(form: FormData) {
   const res = await login(String(form.get("username") ?? ""), String(form.get("password") ?? ""));
@@ -211,22 +211,43 @@ export async function totpCancelAction() {
   redirect("/admin/account");
 }
 
-export async function totpConfirmAction(form: FormData) {
+// Turning TOTP on and making new backup codes answer the form (BackupCodesForm)
+// with the codes, shown once: never in a URL, cookie or log.
+export type BackupCodesState = { codes?: string[]; error?: "code"; at?: number };
+
+export async function totpConfirmAction(_prev: BackupCodesState, form: FormData): Promise<BackupCodesState> {
   const { user, secret } = await totpUser();
+  const at = Date.now();
   const pending = await readSecret(user, secret, true);
   const step = pending ? checkCode(pending, String(form.get("code") ?? "")) : null;
-  if (!pending || step === null || !consumeStep(user, step)) redirect("/admin/account?error=code");
+  if (!pending || step === null || !consumeStep(user, step)) return { error: "code", at };
   await storeSecret(user, pending, secret, false);
   await removeSecret(user, true);
-  redirect("/admin/account?done=on");
+  const codes = newBackupCodes();
+  await storeBackupCodes(user, codes, secret);
+  return { codes, at };
 }
 
+// New backup codes (the old ones stop working): needs the current code
+// from the app, not a backup code.
+export async function totpBackupCodesAction(_prev: BackupCodesState, form: FormData): Promise<BackupCodesState> {
+  const { user, secret } = await totpUser();
+  const at = Date.now();
+  const active = await readSecret(user, secret);
+  const step = active ? checkCode(active, String(form.get("code") ?? "")) : null;
+  if (step === null || !consumeStep(user, step)) return { error: "code", at };
+  const codes = newBackupCodes();
+  await storeBackupCodes(user, codes, secret);
+  return { codes, at };
+}
+
+// With the current code or a backup code (the app may be lost).
 export async function totpDisableAction(form: FormData) {
   const { user, secret } = await totpUser();
   const active = await readSecret(user, secret);
-  const step = active ? checkCode(active, String(form.get("code") ?? "")) : null;
-  if (step === null || !consumeStep(user, step)) redirect("/admin/account?error=code");
+  if (active === null || !(await secondFactor(user, active, String(form.get("code") ?? ""), secret))) redirect("/admin/account?error=code");
   await removeSecret(user, false);
+  await removeBackupCodes(user);
   redirect("/admin/account?done=off");
 }
 

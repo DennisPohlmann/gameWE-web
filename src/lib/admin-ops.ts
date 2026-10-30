@@ -20,7 +20,7 @@ import { imageUrl, invalidateSettings } from "./settings";
 import { sourcebansBase } from "./sourcebans";
 import { invalidateSteamKey } from "./steam";
 import { listTemplates } from "./templates";
-import { removeSecret } from "./totp";
+import { removeBackupCodes, removeSecret } from "./totp";
 import { discordGuild, discordInvite, tsDisplay, tsHost, tsLink } from "./voice";
 
 // What the admin area changes, shared by its server actions (app/admin/
@@ -155,7 +155,7 @@ export async function deleteEntity(a: Actor, e: Entity, id: string): Promise<voi
   if (e.key === "users" && id === a.user.username) throw new OpError("self");
   try {
     await deleteRow(e, id);
-    if (e.key === "users") await Promise.all([removeSecret(id, false), removeSecret(id, true), purgeTokens(id)]);
+    if (e.key === "users") await Promise.all([removeSecret(id, false), removeSecret(id, true), removeBackupCodes(id), purgeTokens(id)]);
   } catch (err) {
     throw new OpError("db", { msg: dbMsg(err) });
   }
