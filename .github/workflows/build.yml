@@ -7,7 +7,9 @@ name: build
 # CHANGELOG.md, commits that as "chore(release): vX.Y.Z [skip ci]", tags
 # vX.Y.Z and creates the GitHub release; package and image then build that
 # tag, add the archive to the release and push the image tags <version>,
-# <major>.<minor> and latest. A manual run builds without publishing.
+# <major>.<minor> and latest, and the Helm chart charts/gamewe-web (its
+# version set by semantic-release) goes to oci://ghcr.io/<owner>/charts and
+# into the release. A manual run builds without publishing.
 # A pull request (e.g. from Dependabot) runs the same checks and builds
 # without publishing. The image is built and scanned with Trivy first
 # (image-scan); a fixable HIGH or CRITICAL vulnerability stops the release.
@@ -46,6 +48,11 @@ jobs:
         run: npm test
       - name: build
         run: npm run build
+      - uses: ./.github/actions/setup-helm
+      - name: helm chart
+        run: |
+          helm lint charts/gamewe-web --strict
+          helm template gamewe charts/gamewe-web --set secretEnv.ADMIN_SECRET=x --set ingress.enabled=true --set persistence.enabled=true > /dev/null
 
   # Builds the image without pushing it and scans it: HIGH or CRITICAL
   # vulnerabilities that have a fix fail, and so do HIGH or CRITICAL
@@ -139,6 +146,35 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "v$RELEASE" dist/*.tar.gz dist/*.tar.gz.sha256 --repo "$GITHUB_REPOSITORY"
+
+  # A release also publishes the Helm chart (charts/gamewe-web, its version
+  # set to the release by semantic-release): as an OCI artifact
+  # oci://ghcr.io/<owner>/charts/gamewe-web and as a file in the release.
+  chart:
+    needs: [release]
+    if: needs.release.outputs.version != ''
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: write
+      packages: write
+    env:
+      RELEASE: ${{ needs.release.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: v${{ needs.release.outputs.version }}
+      - uses: ./.github/actions/setup-helm
+      - name: package and publish the chart
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          grep -qx "version: $RELEASE" charts/gamewe-web/Chart.yaml
+          mkdir -p dist
+          helm package charts/gamewe-web --destination dist
+          echo "$REGISTRY_PASSWORD" | helm registry login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          helm push "dist/gamewe-web-$RELEASE.tgz" "oci://ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/charts"
+          gh release upload "v$RELEASE" "dist/gamewe-web-$RELEASE.tgz" --repo "$GITHUB_REPOSITORY"
 
   # Publishes on a push to main and on the weekly schedule (edge only), with
   # an SBOM and full provenance as attestations; a release also gets the

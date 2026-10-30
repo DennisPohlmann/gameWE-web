@@ -1,0 +1,85 @@
+# gameWE web on Kubernetes. All settings of the site are environment
+# variables (docs/CONFIG.md); the database is the one the gameWE collector
+# writes (chart gamewe-collector, or your own).
+
+image:
+  repository: ghcr.io/dennispohlmann/gamewe-web
+  # Empty: the chart's appVersion, i.e. the release this chart belongs to.
+  tag: ""
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+
+# Settings without secrets (docs/CONFIG.md), as environment variables.
+env:
+  DB_TYPE: mariadb # or postgres
+  DB_HOST: gamewe-db
+  DB_PORT: "3306"
+  DB_NAME: gamewe
+  DB_USER: gamewe_web
+  # DB_ADMIN_USER: gamewe_web_admin
+  TZ: Europe/Berlin # the same zone as the collector
+  # BASE_PATH: /new   # sub path behind the ingress
+  # DB_TABLE_PREFIX: hlstats
+  # DB_TLS: off
+
+# Secrets: DB_PASSWORD, DB_ADMIN_PASSWORD, ADMIN_SECRET (at least 32 random
+# characters: openssl rand -hex 32; keep it, it signs the admin logins and
+# the TOTP keys). Either the name of a Secret you created yourself with
+# these keys (recommended, e.g. from a secret manager) ...
+existingSecret: ""
+# ... or the values here; the chart then creates the Secret.
+secretEnv: {}
+#  DB_PASSWORD: change-me
+#  DB_ADMIN_PASSWORD: change-me
+#  ADMIN_SECRET: change-me
+
+# One replica: the admin's rate limits and caches live in the process.
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 3000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: stats.example.org
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: stats-example-org-tls
+  #    hosts: [stats.example.org]
+
+# Own design templates and map overviews: /var/lib/gamewe/web/templates and
+# /var/lib/gamewe/web/overviews (docs/INSTALLATION.md). Off: only the
+# built-in ones.
+persistence:
+  enabled: false
+  # existingClaim: ""
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 1Gi
+
+resources: {}
+#  requests: { cpu: 100m, memory: 256Mi }
+#  limits: { memory: 768Mi }
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000 # node, as in the image
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+
+podAnnotations: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

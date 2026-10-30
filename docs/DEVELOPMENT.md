@@ -111,13 +111,17 @@ the next version:
 | `feat!: ...`, `fix!: ...` or a `BREAKING CHANGE:` footer | major (0.1.0 → 1.0.0) |
 | `docs`, `chore`, `ci`, `build`, `test`, `refactor`, `style` | no release |
 
-For a release it writes `VERSION`, `package.json`, `package-lock.json` and
-`CHANGELOG.md`, commits them as `chore(release): vX.Y.Z [skip ci]`, tags
+For a release it writes `VERSION`, `package.json`, `package-lock.json`, the
+`version` and `appVersion` of the Helm chart (`charts/gamewe-web/Chart.yaml`)
+and `CHANGELOG.md`, commits them as `chore(release): vX.Y.Z [skip ci]`, tags
 `vX.Y.Z` and creates the GitHub release. The workflow then builds that tag,
 uploads the tar.gz and its `.sha256` checksum to the release and publishes
 the image as `<version>`, `<major>.<minor>` and `latest` (for `v0.1.0`:
-`0.1.0`, `0.1` and `latest`). Never edit the version files or
-`CHANGELOG.md` by hand.
+`0.1.0`, `0.1` and `latest`); the job `chart` publishes the Helm chart as
+`oci://ghcr.io/<owner>/charts/gamewe-web` and as a `.tgz` in the release
+(every build lints it, `npm test` checks that its version is the web's).
+Never edit the version files, `Chart.yaml`'s versions or `CHANGELOG.md` by
+hand.
 
 The image goes to the GitHub Container Registry of the repository owner with the
 built-in `GITHUB_TOKEN`; no secrets need to be set. New packages on GHCR are

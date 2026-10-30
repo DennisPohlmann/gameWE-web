@@ -327,6 +327,40 @@ The container keeps no data, so it can be replaced at any time. It runs as
 user `node` (uid 1000) and has a health check on `/healthz`
 (`docker ps` shows `healthy`).
 
+### On Kubernetes (Helm)
+
+The chart `charts/gamewe-web` runs the same image; every release publishes
+it in the same version as the web (semantic-release sets `version` and
+`appVersion` of `Chart.yaml`), as `oci://ghcr.io/dennispohlmann/charts/gamewe-web`
+and as a `.tgz` in the GitHub release. The collector has its own chart in
+gameWE-collector; the database is yours (or any chart for MariaDB or
+PostgreSQL), with the users of [section 1.3](#13-database-users).
+
+```bash
+kubectl create namespace gamewe
+kubectl -n gamewe create secret generic gamewe-web \
+  --from-literal=DB_PASSWORD='...' \
+  --from-literal=ADMIN_SECRET="$(openssl rand -hex 32)"
+helm install web oci://ghcr.io/dennispohlmann/charts/gamewe-web --version <version> -n gamewe \
+  --set existingSecret=gamewe-web \
+  --set env.DB_HOST=<database host> --set env.DB_TYPE=mariadb \
+  --set ingress.enabled=true --set 'ingress.hosts[0].host=stats.example.org' \
+  --set 'ingress.hosts[0].paths[0].path=/' --set 'ingress.hosts[0].paths[0].pathType=Prefix'
+kubectl -n gamewe exec deploy/web-gamewe-web -- node scripts/create-admin.mjs admin
+```
+
+All settings of [section 2](#2-the-settings-file) go under `env` (without
+secrets) or into the Secret (`DB_PASSWORD`, `DB_ADMIN_PASSWORD`,
+`ADMIN_SECRET`); `secretEnv` in the values creates the Secret instead, for
+tests. `persistence.enabled` mounts a volume at `/var/lib/gamewe/web` for
+own templates and map pictures ([section 5](#5-own-templates-and-map-pictures)).
+Readiness and liveness use `/healthz` below `BASE_PATH`. One replica: rate
+limits and caches live in the process. Update: `helm upgrade web
+oci://ghcr.io/dennispohlmann/charts/gamewe-web --version <new version> -n
+gamewe --reuse-values`. If the package on GHCR is private, `helm registry
+login ghcr.io` first (a token with `read:packages`). All values:
+[charts/gamewe-web/values.yaml](../charts/gamewe-web/values.yaml).
+
 ## 4. B: tar.gz with systemd
 
 ### Install

@@ -1,0 +1,17 @@
+gameWE web {{ .Chart.AppVersion }} is installed as {{ include "gamewe-web.fullname" . }}.
+
+{{- if not (or .Values.existingSecret .Values.secretEnv) }}
+
+WARNING: no Secret with DB_PASSWORD and ADMIN_SECRET is set (existingSecret or
+secretEnv): the site cannot reach the database and the admin area stays locked.
+{{- end }}
+
+First admin user (prints its password once):
+  kubectl -n {{ .Release.Namespace }} exec deploy/{{ include "gamewe-web.fullname" . }} -- node scripts/create-admin.mjs admin
+
+{{- if .Values.ingress.enabled }}
+Site: http{{ if .Values.ingress.tls }}s{{ end }}://{{ (index .Values.ingress.hosts 0).host }}{{ .Values.env.BASE_PATH | default "" }}
+{{- else }}
+Site: kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "gamewe-web.fullname" . }} 3000:{{ .Values.service.port }}
+      then http://127.0.0.1:3000{{ .Values.env.BASE_PATH | default "" }}
+{{- end }}

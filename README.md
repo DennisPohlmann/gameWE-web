@@ -26,7 +26,8 @@ on MariaDB/MySQL or PostgreSQL. It
 
 Built with Next.js 16 (App Router, server-rendered, almost no client
 JavaScript), React 19 and TypeScript 7, with `mysql2` and `pg`. Runs as a
-Docker container or as a systemd service from a tar.gz.
+Docker container, on Kubernetes with its Helm chart (`charts/gamewe-web`) or
+as a systemd service from a tar.gz.
 
 Current version: see `VERSION` and [CHANGELOG.md](CHANGELOG.md).
 
