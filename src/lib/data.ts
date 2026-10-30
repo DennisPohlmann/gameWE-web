@@ -7,7 +7,7 @@ import { ttlCache } from "./ttl-cache";
 import { connectTypes, miscCountries, placeOptions, type PlaceCount, type PlaceOption } from "./place-counts";
 import { nowUnix, steamIds } from "./format";
 import { baseGameOf, GAME_HAS_DATA, gameKind } from "./games";
-import { allClansSql, allKillsSql, allPlayersSql } from "./general-stats";
+import { allClansSql, allKillsSql, allPlayersSql, rankingKillsSql, rankingPlayersSql } from "./general-stats";
 import { hiddenSql, isBotSql, liveEntry } from "./hidden";
 import { LOAD_INTERVAL_MAX, type MapSort } from "./map-table";
 import { playerCount, sumCounts, type PlayerCount } from "./player-count";
@@ -238,7 +238,10 @@ export async function getServer(id: number) {
 
 export type Totals = { players: number; newPlayers: number; kills: number; headshots: number; servers: number };
 
-// Counted over all players of the ranking: kept for a minute (ttl-cache.ts).
+// Counted over all players of the ranking (both player tables, hidden and
+// banned ones too, bots left out; kills and headshots from the players, so
+// a reset of the player statistics sets them back to 0; general-stats.ts):
+// kept for a minute (ttl-cache.ts).
 const totalsCache = ttlCache<Totals>(60_000, 600_000);
 
 export function getTotals(game: string): Promise<Totals> {
@@ -246,8 +249,9 @@ export function getTotals(game: string): Promise<Totals> {
 }
 
 async function loadTotals(game: string): Promise<Totals> {
-  const [p, fresh, s] = await Promise.all([
-    queryOne<{ players: number }>(`SELECT COUNT(*) AS players FROM hlstats_Players WHERE game = ?`, [game]),
+  const [p, k, fresh, s] = await Promise.all([
+    queryOne<{ n: number | string }>(rankingPlayersSql, [game, game, game, game]),
+    queryOne<{ kills: number | string | null; headshots: number | string | null }>(rankingKillsSql, [game, game]),
     // From the few players of the last day (index first_connect), not by
     // joining every player of the ranking.
     queryOne<{ n: number }>(
@@ -255,18 +259,14 @@ async function loadTotals(game: string): Promise<Totals> {
        WHERE d.first_connect >= ? AND p.game = ?`,
       [nowUnix() - 86400, game],
     ),
-    queryOne<{ kills: number; headshots: number; servers: number }>(
-      `SELECT COALESCE(SUM(kills), 0) AS kills, COALESCE(SUM(headshots), 0) AS headshots, COUNT(*) AS servers
-       FROM hlstats_Servers WHERE game = ?`,
-      [game],
-    ),
+    queryOne<{ servers: number }>(`SELECT COUNT(*) AS servers FROM hlstats_Servers WHERE game = ?`, [game]),
   ]);
   return {
-    players: Number(p?.players ?? 0),
+    players: Math.max(0, Number(p?.n ?? 0)),
     newPlayers: Number(fresh?.n ?? 0),
-    kills: s?.kills ?? 0,
-    headshots: s?.headshots ?? 0,
-    servers: s?.servers ?? 0,
+    kills: Number(k?.kills ?? 0),
+    headshots: Number(k?.headshots ?? 0),
+    servers: Number(s?.servers ?? 0),
   };
 }
 

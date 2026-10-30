@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFileSync } from "node:fs";
-import { allClansSql, allKillsSql, allPlayersSql, playersPerRanking, playersPerRankingSql } from "../src/lib/general-stats.ts";
+import { allClansSql, allKillsSql, allPlayersSql, playersPerRanking, playersPerRankingSql, rankingKillsSql, rankingPlayersSql } from "../src/lib/general-stats.ts";
 
 test("players count active and inactive players, without a hideranking filter", () => {
   assert.match(allPlayersSql, /FROM hlstats_Players p JOIN hlstats_Games/);
@@ -55,4 +55,19 @@ test("the admin lists of rankings and a ranking's page show all its players", ()
     assert.doesNotMatch(page, /countByRanking\("hlstats_Players"/, f);
   }
   assert.match(readFileSync("src/app/admin/(panel)/rankings/[code]/page.tsx", "utf8"), /v=\{nf\(allPlayers\)\}/);
+});
+
+test("the line at the top of a ranking's page counts from the players, all of them", () => {
+  // The same counts for one ranking: one placeholder per table.
+  assert.equal(rankingPlayersSql.match(/g\.code = \?/g)?.length, 4);
+  assert.equal(rankingPlayersSql.replace(/g\.code = \?/g, "g.hidden = '0'"), allPlayersSql);
+  assert.equal(rankingKillsSql.match(/g\.code = \?/g)?.length, 2);
+  assert.equal(rankingKillsSql.replace(/g\.code = \?/g, "g.hidden = '0'"), allKillsSql);
+  // Not from the servers' counters, which a player stats reset keeps.
+  const data = readFileSync("src/lib/data.ts", "utf8");
+  const load = data.slice(data.indexOf("async function loadTotals"), data.indexOf("export type LivePlayer"));
+  assert.match(load, /queryOne<\{ n: number \| string \}>\(rankingPlayersSql, \[game, game, game, game\]\)/);
+  assert.match(load, /rankingKillsSql, \[game, game\]/);
+  assert.doesNotMatch(load, /SUM\(kills\)|SUM\(headshots\)/);
+  assert.doesNotMatch(load, /FROM hlstats_Players WHERE game = \?/);
 });
