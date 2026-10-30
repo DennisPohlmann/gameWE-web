@@ -23,7 +23,8 @@ real players (never below 0). Older databases without the column take the
 bots from the live view (`hlstats_Livestats`, uniqueId `BOT:...`), which
 misses bots during a map change and when servers of one ranking use the same
 bot names (they share one live row per bot); the web looks for the column
-again every 5 minutes. The heading on `/` counts the real players.
+again every 5 minutes. The heading on `/` ("Rankings (N players online)")
+counts everyone on the servers, real players and bots.
 
 | URL | Content |
 |-----|---------|

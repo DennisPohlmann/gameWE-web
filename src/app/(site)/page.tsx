@@ -69,6 +69,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
     getClanFlags(rankings.map((r) => r.topClanId ?? 0)).catch(() => new Map<number, { flag: string; country: string }>()),
     unlinkedBots(rankings.map((r) => r.topPlayerId ?? 0)).catch(() => new Set<number>()),
   ]);
+  // Everyone on the servers, bots included (the rows show both apart).
   const online = sumCounts(rankings.map((r) => r.online));
   return (
     <>
@@ -77,7 +78,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
         <VoiceBox />
       </Suspense>
       <section className="block">
-        <h3>{fill(t.rankingsCount, { n: fmtNum(online.real, lang) })}</h3>
+        <h3>{fill(t.rankingsCount, { n: fmtNum(online.real + online.bots, lang) })}</h3>
         <div className="container">
           {rankings.length === 0 ? (
             <p className="notice">{t.noRankings}</p>
