@@ -1947,7 +1947,8 @@ export function getDailyActivityAll(days: number): Promise<DayPoint[]> {
 // The start page's "General statistics" over the visible rankings: all
 // players (also inactive and hidden ones, bots left out) and all clans (and
 // the rankings they are in; general-stats.ts), servers and those with
-// real players (bots left out, playerCount), players online, all kills and
+// real players (bots left out, playerCount) or with anyone, bots included,
+// players online, all kills and
 // headshots (also those of inactive players, general-stats.ts) and the time of the latest kill without
 // a hidden player on either side.
 export type GeneralStats = {
@@ -1955,7 +1956,8 @@ export type GeneralStats = {
   clans: number;
   clanRankings: number;
   servers: number;
-  serversActive: number;
+  serversActive: number; // servers with real players now (API serversActive)
+  serversBusy: number; // servers with anyone on them now, bots included
   online: number; // real players on the servers now (API playersOnline)
   onlineWithBots: number; // everyone on the servers now, bots included
   kills: number;
@@ -2006,6 +2008,7 @@ export async function getGeneralStats(): Promise<GeneralStats> {
     ...counts,
     servers: s.length,
     serversActive: online.filter((x) => x.real > 0).length,
+    serversBusy: online.filter((x) => x.real + x.bots > 0).length,
     online: sumCounts(online).real,
     onlineWithBots: sumCounts(online).real + sumCounts(online).bots,
     lastKill: k ? Number(k.t) : null,

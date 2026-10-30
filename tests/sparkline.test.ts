@@ -46,3 +46,12 @@ test("a gap is bridged: one line, one area", () => {
   // Negative values (none expected) stay at the bottom.
   assert.ok(sparkPaths([-5, 5])?.line.startsWith(`M0 ${SPARK_H}`));
 });
+
+test("a series that never drops to 0 runs from its lowest to its highest value", () => {
+  // Players online with 64 bots on the servers all the time.
+  const p = sparkPaths([64, 70, 64]);
+  assert.ok(p);
+  assert.equal(p.line, `M0 ${SPARK_H - 3}L50 2L100 ${SPARK_H - 3}`);
+  const flat = sparkPaths([64, 64]);
+  assert.equal(flat?.line, `M0 ${SPARK_H / 2}L100 ${SPARK_H / 2}`);
+});

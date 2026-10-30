@@ -25,15 +25,28 @@ export function sparkSeries(values: (number | null)[], max = 90): (number | null
 }
 
 // The line (`line`) and the closed area below it (`area`) of a series, from
-// 0 at the bottom to its highest value near the top; a gap (null) inside the
-// series is bridged by a straight line to the next value, so the line never
-// stops in the middle. null when fewer than two points have values.
+// its lowest value near the bottom (0 at the bottom when it reaches 0) to its
+// highest value near the top: a series that never drops to 0 (players online
+// with bots that stay on the servers) would otherwise be a flat line at the
+// top; one that does not change at all lies in the middle. A gap (null)
+// inside the series is bridged by a straight line to the next value, so the
+// line never stops in the middle. null when fewer than two points have values.
 export function sparkPaths(series: (number | null)[]): { line: string; area: string } | null {
   if (series.filter((v) => v !== null).length < 2) return null;
-  const top = Math.max(...series.map((v) => v ?? 0));
+  const nums = series.filter((v): v is number => v !== null).map((v) => Math.max(0, v));
+  const top = Math.max(...nums);
+  const low = Math.min(...nums);
   const step = SPARK_W / (series.length - 1);
   const pad = 2;
-  const y = (v: number) => (top > 0 ? SPARK_H - (v / top) * (SPARK_H - pad) : SPARK_H - 0.5);
+  const floor = 3;
+  const y = (v: number) =>
+    low > 0
+      ? top > low
+        ? SPARK_H - floor - ((v - low) / (top - low)) * (SPARK_H - pad - floor)
+        : SPARK_H / 2
+      : top > 0
+        ? SPARK_H - (v / top) * (SPARK_H - pad)
+        : SPARK_H - 0.5;
   const r = (n: number) => String(Math.round(n * 100) / 100);
   const pts = series.flatMap((v, i): [number, number][] => (v === null ? [] : [[i * step, y(Math.max(0, v))]]));
   const line = pts.map(([x, py], i) => `${i ? "L" : "M"}${r(x)} ${r(py)}`).join("");

@@ -188,8 +188,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
 
 // Five cards (players, clans, servers, kills, headshots), each with its count,
 // what is going on now and a faint line of the last 30 days behind the text:
-// players online and servers with players (server load, else active players
-// per day), clans with an active member per day, kills and headshots per day
+// players online and servers with players, bots included like "playing now"
+// and "with players now" (server load, else active players per day), clans with an active member per day, kills and headshots per day
 // (with their share of the kills below the headshots). Hovering or tapping a
 // card shows what its number and its line count (HoverTip). A database error
 // leaves the block out; a missing line only leaves its card without one.
@@ -213,7 +213,7 @@ async function GeneralStatsSection({ t, lang }: { t: Dict; lang: Lang }) {
   const cards = [
     { label: t.players, value: stats.players, sub: fill(t.gsPlayersNow, { n: fmtNum(stats.onlineWithBots, lang) }), line: playersLine, tip: t.gsTipPlayers },
     { label: t.clans, value: stats.clans, sub: fill(t.gsClansIn, { n: fmtNum(stats.clanRankings, lang) }), line: perDay(clanDays, (r) => Number(r.n)), tip: t.gsTipClans },
-    { label: t.servers, value: stats.servers, sub: fill(t.gsServersActive, { n: fmtNum(stats.serversActive, lang) }), line: hourly?.servers ?? [], tip: t.gsTipServers },
+    { label: t.servers, value: stats.servers, sub: fill(t.gsServersActive, { n: fmtNum(stats.serversBusy, lang) }), line: hourly?.servers ?? [], tip: t.gsTipServers },
     {
       label: t.kills,
       value: stats.kills,
