@@ -362,8 +362,10 @@ at the bottom; each area has its own side menu (on phones a drawer behind the
 menu button), and lists turn into cards on narrow screens:
 
 - **Overview** (`/admin`): active rankings, servers (and how many have
-  players right now), players (and how many are hidden or banned), players
-  active today, whether the collector reports in (`gamewe_heartbeat`), the
+  players right now), players (every player of every ranking as in the
+  Players column of Rankings, below: bots left out, and how many of
+  `hlstats_Players` are hidden or banned), players active today (bots left
+  out), whether the collector reports in (`gamewe_heartbeat`), the
   rankings with their state, what needs attention (own TOTP off, collector
   silent, active ranking without a game, no server yet, an update of the web
   or the collector) and quick links. The side menu ends with the running

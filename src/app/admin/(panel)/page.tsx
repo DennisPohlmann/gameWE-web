@@ -4,6 +4,7 @@ import { PageHead } from "@/components/admin/page-head";
 import { GameTag } from "@/components/ui";
 import { adminDict } from "@/lib/admin-i18n";
 import { playersByRanking, rankingSummaries } from "@/lib/admin-rankings";
+import { adminPlayerTotalsSql } from "@/lib/general-stats";
 import { LEVEL_ADMIN, adminSecret, requireAdmin } from "@/lib/auth";
 import { adminQuery } from "@/lib/db";
 import { localeOf } from "@/lib/format";
@@ -27,10 +28,7 @@ export default async function AdminHome() {
   const [rankings, players, [totals], [servers], beat, totp, status] = await Promise.all([
     rankingSummaries(),
     playersByRanking(),
-    adminQuery<{ n: number | string; hidden: number | string; today: number | string }>(
-      `SELECT COUNT(*) AS n, SUM(CASE WHEN hideranking <> 0 THEN 1 ELSE 0 END) AS hidden, SUM(CASE WHEN last_event >= ? THEN 1 ELSE 0 END) AS today FROM hlstats_Players`,
-      [Math.floor(midnight.getTime() / 1000)],
-    ),
+    adminQuery<{ hidden: number | string; today: number | string }>(adminPlayerTotalsSql, [Math.floor(midnight.getTime() / 1000), Math.floor(midnight.getTime() / 1000)]),
     adminQuery<{ n: number | string; busy: number | string }>(
       `SELECT COUNT(*) AS n, SUM(CASE WHEN act_players > 0 THEN 1 ELSE 0 END) AS busy FROM hlstats_Servers`,
     ),
@@ -104,7 +102,7 @@ export default async function AdminHome() {
         </div>
         <div className="card kpi">
           <div className="k">{u.kpiPlayers}</div>
-          <div className="v">{nf(Number(totals?.n ?? 0))}</div>
+          <div className="v">{nf([...players.values()].reduce((a, b) => a + b, 0))}</div>
           <div className="s">{fill(u.kpiPlayersSub, { n: nf(Number(totals?.hidden ?? 0)) })}</div>
         </div>
         <div className="card kpi">

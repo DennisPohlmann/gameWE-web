@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFileSync } from "node:fs";
-import { allClansSql, allKillsSql, allPlayersSql, playersPerRanking, playersPerRankingSql, rankingKillsSql, rankingPlayersSql } from "../src/lib/general-stats.ts";
+import { allClansSql, allKillsSql, adminPlayerTotalsSql, allPlayersSql, playersPerRanking, playersPerRankingSql, rankingKillsSql, rankingPlayersSql } from "../src/lib/general-stats.ts";
 
 test("players count active and inactive players, without a hideranking filter", () => {
   assert.match(allPlayersSql, /FROM hlstats_Players p JOIN hlstats_Games/);
@@ -70,4 +70,10 @@ test("the line at the top of a ranking's page counts from the players, all of th
   assert.match(load, /rankingKillsSql, \[game, game\]/);
   assert.doesNotMatch(load, /SUM\(kills\)|SUM\(headshots\)/);
   assert.doesNotMatch(load, /FROM hlstats_Players WHERE game = \?/);
+});
+
+test("the admin overview counts the hidden and today's players without bots", () => {
+  assert.equal(adminPlayerTotalsSql.match(/\?/g)?.length, 2);
+  assert.equal(adminPlayerTotalsSql.match(/u\.uniqueId LIKE 'BOT%'/g)?.length, 2);
+  assert.match(adminPlayerTotalsSql, /p\.hideranking <> 0\) -/);
 });
