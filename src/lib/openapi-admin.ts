@@ -329,6 +329,25 @@ const job = obj({
   startedAt: unix("Started, 0 before"),
   finishedAt: unix("Finished, 0 before"),
   result: str("Result text of the collector"),
+  origin: obj(
+    {
+      feature: str(
+        "The feature that queued the job: scheduled_resets, daily_awards, inactive_players (the collector itself), cli (a gamewe command), admin (the web admin), api (this API); empty for jobs queued before collector schema version 22",
+      ),
+      startup: bool("Queued by the collector's first look at its schedule after its start (a period or day that ended while it was stopped)"),
+      from: unix("Start of the period of a scheduled reset that ended, 0 if none"),
+      to: unix("End of that period (excluded), 0 if none"),
+      schedule: str("Reset schedule of that period (as gamewe_reset_schedule), else empty"),
+      inherited: bool("The ranking follows the schedule for all rankings"),
+      zone: str("Time zone of the period, else empty"),
+      day: str("Day of the daily awards (YYYY-MM-DD), else empty"),
+      command: str("The gamewe command that queued it, else empty"),
+      token: str("Name of the API token it came through (only for level 100 or your own jobs), else empty"),
+      version: str("Collector version that queued it, else empty"),
+    },
+    [],
+    "Which feature queued the job and why",
+  ),
 });
 
 export const adminSchemas: Record<string, Schema> = {
@@ -698,7 +717,12 @@ export const adminOps: AdminOp[] = [
     example: {
       collectorSeen: 1767225600,
       queue: [],
-      history: [{ id: 17, type: "reset", game: G, mode: "player-stats", status: "done", requestedBy: "admin", requestedAt: 1767225000, startedAt: 1767225030, finishedAt: 1767225041, result: "ok" }],
+      history: [
+        {
+          id: 17, type: "scheduled-reset", game: G, mode: "player-stats", status: "done", requestedBy: "schedule", requestedAt: 1767225000, startedAt: 1767225030, finishedAt: 1767225041, result: "ok",
+          origin: { feature: "scheduled_resets", startup: true, from: 1759269600, to: 1767222000, schedule: "3 month", inherited: true, zone: "Europe/Berlin", day: "", command: "", token: "", version: "1.4.0" },
+        },
+      ],
       scheduled: [{ game: G, schedule: { unit: "month", every: 1, monthDay: 1 }, mode: "player-stats", next: 1769904000 }],
       available: true,
     },
@@ -716,7 +740,10 @@ export const adminOps: AdminOp[] = [
     params: [idParam("job", 17)],
     status: 200,
     response: ref("AdminJob"),
-    example: { id: 17, type: "reset", game: G, mode: "player-stats", status: "running", requestedBy: "admin", requestedAt: 1767225000, startedAt: 1767225030, finishedAt: 0, result: "" },
+    example: {
+      id: 17, type: "reset", game: G, mode: "player-stats", status: "running", requestedBy: "admin", requestedAt: 1767225000, startedAt: 1767225030, finishedAt: 0, result: "",
+      origin: { feature: "api", startup: false, from: 0, to: 0, schedule: "", inherited: false, zone: "", day: "", command: "", token: "deploy", version: "" },
+    },
     errors: [404],
   },
   {

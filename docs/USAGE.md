@@ -378,7 +378,18 @@ menu button), and lists turn into cards on narrow screens:
   line). Below the queue (waiting and running jobs of
   `hlstats_gamewe_jobs`, with the progress of a running move) and the last
   30 finished jobs with state, duration and result; the page reloads
-  every 5 seconds while a job waits or runs. The times come from the
+  every 5 seconds while a job waits or runs. Under each job "Started by"
+  names the feature that queued it and why: the reset schedule
+  (`features.scheduled_resets`) with the period that ended, the schedule
+  (the ranking's own or the one for all rankings) and whether the collector
+  queued it at its start (the period ended while it was stopped) or when
+  the period ended; the daily awards (with the day) or the daily move of
+  inactive players; the web admin (the admin), the admin API (token name
+  and admin) or the console (the `gamewe` command). Other admins' names and
+  token names only for level 100. The details need collector 1.4.0 or
+  newer (schema version 22, columns `origin` and `origin_detail`); older
+  jobs show only where they came from. The reset page's last jobs show the
+  same. The times come from the
   collector (`gamewe_next_*` in `hlstats_Options`, written with its
   heartbeat; collector 0.27.0 or newer, an older one shows only the
   resets without a time). Read only; from the console `gamewe jobs`.

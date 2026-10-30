@@ -373,6 +373,10 @@ select { padding-right: 28px; }
 .reset-result-cell { white-space: pre-wrap; min-width: 240px; font-size: 0.9em; }
 .job-result { white-space: pre-wrap; overflow-wrap: anywhere; min-width: 220px; font-size: 13px; color: var(--soft); }
 @media (max-width: 900px) { table.cards td.job-result { width: 100%; min-width: 0; margin-top: 4px; } }
+/* Jobs: which feature queued a job and why, its own line under the name. */
+.job-origin { margin-top: 2px; overflow-wrap: anywhere; }
+.job-origin b { font-weight: 600; color: var(--soft); }
+@media (max-width: 900px) { table.cards td.main .subt.job-origin { display: block; margin-left: 0; } }
 
 /* login */
 .adm-login { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }

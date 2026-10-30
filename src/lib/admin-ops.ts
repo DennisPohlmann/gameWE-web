@@ -348,7 +348,7 @@ export async function resetRanking(a: Actor, game: string, mode: ResetMode): Pro
   if (!(await jobsAvailable())) throw new OpError("nojobs");
   let job: { id: number; existing: boolean };
   try {
-    job = await queueReset(game, mode, a.user.username);
+    job = await queueReset(game, mode, a.user.username, a.via);
   } catch (e) {
     console.error(`gameWE: reset job for ${game} not queued: ${e instanceof Error ? e.message : e}`);
     throw new OpError("db", { msg: dbMsg(e) });

@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { scheduleText } from "@/components/admin/hall-schedule";
+import { JobOriginLine } from "@/components/admin/job-origin";
 import { PageHead } from "@/components/admin/page-head";
 import { adminDict } from "@/lib/admin-i18n";
 import { jobsOverview, type Job, type ScheduledRanking } from "@/lib/admin-jobs";
@@ -62,14 +63,11 @@ const T = {
     noTable: "Die Tabelle hlstats_gamewe_jobs fehlt; die Datenbank braucht Collector 0.1.0 oder neuer.",
     colNo: "Nr.",
     colRanking: "Ranking",
-    colBy: "Von",
     colAt: "Angelegt",
     colStarted: "Gestartet",
     colTook: "Dauer",
     colResult: "Ergebnis",
-    by: "von",
-    bySchedule: "Zeitplan",
-    anAdmin: "einem Admin",
+    anAdmin: "ein anderer Admin",
     status: { pending: "Wartet", running: "Läuft", done: "Erledigt", failed: "Fehlgeschlagen" } as Record<string, string>,
     types: { reset: "Ranking zurücksetzen", "scheduled-reset": "Geplanter Reset", inactive: "Inaktive Spieler verschieben", awards: "Tägliche Awards" } as Record<JobType, string>,
     modes: { "player-stats": "Nur Spielerstatistiken", "all-stats": "Alle Statistiken", all: "Alles, auch die Spieler" } as Record<ResetMode, string>,
@@ -127,14 +125,11 @@ const T = {
     noTable: "The table hlstats_gamewe_jobs is missing; the database needs collector 0.1.0 or newer.",
     colNo: "No.",
     colRanking: "Ranking",
-    colBy: "By",
     colAt: "Created",
     colStarted: "Started",
     colTook: "Took",
     colResult: "Result",
-    by: "by",
-    bySchedule: "schedule",
-    anAdmin: "an admin",
+    anAdmin: "another admin",
     status: { pending: "Waiting", running: "Running", done: "Done", failed: "Failed" } as Record<string, string>,
     types: { reset: "Reset ranking", "scheduled-reset": "Scheduled reset", inactive: "Move inactive players", awards: "Daily awards" } as Record<JobType, string>,
     modes: { "player-stats": "Player statistics only", "all-stats": "All statistics", all: "Everything, players too" } as Record<ResetMode, string>,
@@ -257,7 +252,7 @@ export default async function JobsPage() {
     return "";
   };
   const ranking = (j: Job) => (j.game ? (names.get(j.game) ?? j.game) : t.allRankings);
-  const by = (j: Job) => (j.requestedBy === "schedule" ? t.bySchedule : isAdmin || j.requestedBy === user.username ? j.requestedBy : t.anAdmin);
+  const by = (j: Job) => (isAdmin || j.requestedBy === user.username ? j.requestedBy : t.anAdmin);
   const took = (j: Job) => (j.startedAt && j.finishedAt >= j.startedAt ? shortDuration(j.finishedAt - j.startedAt, lang) : "");
 
   const jobRows = (jobs: Job[], queue: boolean) =>
@@ -265,9 +260,8 @@ export default async function JobsPage() {
       <tr key={j.id}>
         <td className="main">
           <span className="name">{jobName(j)}</span> <span className="subt">#{j.id}</span>
-          <div className="subt">
-            {[ranking(j), jobDetail(j)].filter(Boolean).join(" · ")} · {t.by} {by(j)}
-          </div>
+          <div className="subt">{[ranking(j), jobDetail(j)].filter(Boolean).join(" · ")}</div>
+          <JobOriginLine origin={j.origin} requestedBy={j.requestedBy} by={by(j)} lang={lang} />
         </td>
         <td>{statePill(j.status)}</td>
         <td data-l={`${queue ? t.colAt : t.colStarted}:`}>{when(queue ? j.requestedAt : j.startedAt || j.requestedAt)}</td>

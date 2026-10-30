@@ -47,6 +47,7 @@ import { LEVEL_ADMIN } from "./auth";
 import { clientIp } from "./client-ip";
 import { countChat, getChat } from "./data";
 import { adminQuery } from "./db";
+import { scheduleValue } from "./hall-period";
 import { countIps, searchIps } from "./history";
 import { ADMIN_ENTITIES, ADMIN_PAGE_MAX, adminOps, matchOp, type AdminOp } from "./openapi-admin";
 import { ALL_OPERATOR_KEYS, readOperator } from "./privacy-operator";
@@ -289,9 +290,15 @@ const scheduleEntries = (b: Record<string, unknown>, required: boolean): Entries
 };
 
 function apiJob(j: Job, c: Ctx) {
-  // Who queued a job: other admins' names only for level 100 (as the Jobs page).
-  const own = j.requestedBy === c.actor.user.username;
-  return { ...j, requestedBy: c.actor.user.acclevel >= LEVEL_ADMIN || own ? j.requestedBy : "" };
+  // Who queued a job: other admins' names (and their token names) only for
+  // level 100 (as the Jobs page).
+  const show = c.actor.user.acclevel >= LEVEL_ADMIN || j.requestedBy === c.actor.user.username;
+  const o = j.origin;
+  return {
+    ...j,
+    requestedBy: show ? j.requestedBy : "",
+    origin: { ...o, schedule: scheduleValue(o.schedule), token: show ? o.token : "" },
+  };
 }
 
 async function hallOut(code: string) {

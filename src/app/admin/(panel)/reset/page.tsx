@@ -1,14 +1,17 @@
 import Link from "next/link";
 import { resetRankingAction } from "../../actions";
 import { AutoRefresh } from "@/components/auto-refresh";
+import { scheduleText } from "@/components/admin/hall-schedule";
+import { JobOriginLine } from "@/components/admin/job-origin";
 import { ResetForm } from "@/components/reset-form";
 import { SortableTable } from "@/components/sortable-table";
 import { Section, TableWrap } from "@/components/ui";
 import { resettableRankings } from "@/lib/admin-rankings";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { getAdminLang } from "@/lib/i18n";
+import { originText } from "@/lib/job-origin";
 import { shortDuration } from "@/lib/job-plan";
-import { RESET_MODES, collectorRunning, getJob, jobModeName, jobsAvailable, recentJobs, type ResetJob, type ResetMode } from "@/lib/reset";
+import { RESET_MODES, collectorRunning, getJob, jobModeName, jobsAvailable, recentJobs, resetOrigin, type ResetJob, type ResetMode } from "@/lib/reset";
 
 const T = {
   de: {
@@ -69,7 +72,7 @@ const T = {
     colGame: "Rangliste",
     colMode: "Art",
     colStatus: "Status",
-    colBy: "Von",
+    colBy: "Ausgelöst von",
     colAt: "Angelegt",
     colResult: "Ergebnis",
   },
@@ -131,7 +134,7 @@ const T = {
     colGame: "Ranking",
     colMode: "Kind",
     colStatus: "Status",
-    colBy: "By",
+    colBy: "Started by",
     colAt: "Created",
     colResult: "Result",
   },
@@ -172,6 +175,11 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
   const job: ResetJob | undefined = Number.isInteger(jobId) && jobId > 0 ? await getJob(jobId) : undefined;
   const open = job && (job.status === "pending" || job.status === "running");
   const jobs = await recentJobs(10);
+  // Only level 100 sees this page, so the names of all admins.
+  const startedBy = (j: ResetJob) => {
+    const o = originText(resetOrigin(j), j.requested_by, j.requested_by, lang, (s) => scheduleText(lang, s));
+    return [o.source, ...o.parts].join(" · ");
+  };
 
   return (
     <>
@@ -186,6 +194,7 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
             <b>{f(t.job, { i: String(job.id), g: job.game, m: modeName(job.mode) })}</b>{" "}
             {job.status === "pending" ? t.pending : job.status === "running" ? t.running : job.status === "done" ? t.done : t.failed}
           </p>
+          <JobOriginLine origin={resetOrigin(job)} requestedBy={job.requested_by} by={job.requested_by} lang={lang} />
           {sp.existing ? <p>{t.existing}</p> : null}
           {open && !running ? <p>{t.noCollector} {beatText}</p> : null}
           {job.result ? <pre className="reset-result">{job.result}</pre> : null}
@@ -224,7 +233,7 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
             ]}
             rows={jobs.map((j) => ({
               key: j.id,
-              values: [Number(j.id), j.game, modeName(j.mode), j.status, j.requested_by, Number(j.requested_at), null],
+              values: [Number(j.id), j.game, modeName(j.mode), j.status, startedBy(j), Number(j.requested_at), null],
               cells: [
                 <Link key="id" href={`/admin/reset?job=${j.id}`}>
                   {j.id}
@@ -232,7 +241,7 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
                 j.game,
                 modeName(j.mode),
                 j.status,
-                j.requested_by,
+                startedBy(j),
                 when(Number(j.requested_at), locale),
                 j.result ?? "",
               ],
