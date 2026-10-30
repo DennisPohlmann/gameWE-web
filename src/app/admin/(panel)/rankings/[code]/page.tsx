@@ -7,7 +7,7 @@ import { PageNav } from "@/components/admin/page-nav";
 import { GameTag } from "@/components/ui";
 import { entities } from "@/lib/admin-entities";
 import { adminDict } from "@/lib/admin-i18n";
-import { countByRanking, rankingSummaries } from "@/lib/admin-rankings";
+import { countByRanking, rankingPlayers, rankingSummaries } from "@/lib/admin-rankings";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { basePath } from "@/lib/base-path";
 import { localeOf } from "@/lib/format";
@@ -57,7 +57,8 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
   const template = r.servers === 0;
   // The VAC block and whether the collector has a Steam key for it; the bots
   // and the scheduled reset for the summary at the top.
-  const [vacBlock, vacKey, bots, hall, ...counts] = await Promise.all([
+  const [allPlayers, vacBlock, vacKey, bots, hall, ...counts] = await Promise.all([
+    rankingPlayers(r.code),
     rankingBlockVac(r.code),
     steamKeyStored(),
     rankingBots(r.code),
@@ -131,7 +132,7 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
       <div className="grid kpis">
         <Kpi k={u.colStatus} v={state.pill} s={state.sub} text />
         <Kpi href={isAdmin ? "#servers" : undefined} k={u.kpiServers} v={nf(r.servers)} s={busy !== null ? fill(u.kpiServersSub, { n: nf(busy) }) : null} />
-        <Kpi k={u.kpiPlayers} v={nf(counts[0])} s={u.kpiPlayersHere} />
+        <Kpi k={u.kpiPlayers} v={nf(allPlayers)} s={u.kpiPlayersHere} />
         <Kpi
           href={isAdmin && !template ? "#hall-of-fame" : undefined}
           k={u.kpiReset}

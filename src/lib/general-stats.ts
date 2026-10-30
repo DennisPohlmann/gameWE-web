@@ -9,26 +9,69 @@
 // imports, so the tests can load it directly.
 
 const visibleGame = (t: string) => `JOIN hlstats_Games g ON g.code = ${t}.game AND g.hidden = '0'`;
+// One ranking (its page, also while hidden from the start page): one `?` per
+// use, the ranking's code.
+const oneGame = (t: string) => `JOIN hlstats_Games g ON g.code = ${t}.game AND g.code = ?`;
 
 // Both tables, minus the players in both, minus the bots among them. Counted
 // apart instead of a check per row: hlstats_PlayersInactive grows large, the
 // overlap is found from hlstats_Players and the bots along the uniqueId index.
-export const allPlayersSql = `SELECT
-  (SELECT COUNT(*) FROM hlstats_Players p ${visibleGame("p")}) +
-  (SELECT COUNT(*) FROM hlstats_PlayersInactive i ${visibleGame("i")}) -
-  (SELECT COUNT(*) FROM hlstats_Players p JOIN hlstats_PlayersInactive i ON i.playerId = p.playerId ${visibleGame("p")}) -
-  (SELECT COUNT(DISTINCT u.playerId) FROM hlstats_PlayerUniqueIds u ${visibleGame("u")}
+const playersSql = (scope: (t: string) => string) => `SELECT
+  (SELECT COUNT(*) FROM hlstats_Players p ${scope("p")}) +
+  (SELECT COUNT(*) FROM hlstats_PlayersInactive i ${scope("i")}) -
+  (SELECT COUNT(*) FROM hlstats_Players p JOIN hlstats_PlayersInactive i ON i.playerId = p.playerId ${scope("p")}) -
+  (SELECT COUNT(DISTINCT u.playerId) FROM hlstats_PlayerUniqueIds u ${scope("u")}
    WHERE u.uniqueId LIKE 'BOT%'
      AND (EXISTS (SELECT 1 FROM hlstats_Players p WHERE p.playerId = u.playerId)
        OR EXISTS (SELECT 1 FROM hlstats_PlayersInactive i WHERE i.playerId = u.playerId))) AS n`;
+
+export const allPlayersSql = playersSql(visibleGame);
+// The same for one ranking (the line at the top of its page): four `?`.
+export const rankingPlayersSql = playersSql(oneGame);
 
 export const allClansSql = `SELECT COUNT(*) AS clans, COUNT(DISTINCT c.game) AS rankings
   FROM hlstats_Clans c ${visibleGame("c")}`;
 
 // Kills and headshots of both tables, so they do not drop when the collector
-// moves inactive players to hlstats_PlayersInactive.
-export const allKillsSql = `SELECT SUM(t.kills) AS kills, SUM(t.headshots) AS headshots FROM (
-  SELECT SUM(p.kills) AS kills, SUM(p.headshots) AS headshots FROM hlstats_Players p ${visibleGame("p")}
+// moves inactive players to hlstats_PlayersInactive. From the players, not
+// the servers' counters: a reset of the player statistics sets them back to
+// 0 (the servers' counters only go back with "All statistics").
+const killsSql = (scope: (t: string) => string) => `SELECT SUM(t.kills) AS kills, SUM(t.headshots) AS headshots FROM (
+  SELECT SUM(p.kills) AS kills, SUM(p.headshots) AS headshots FROM hlstats_Players p ${scope("p")}
   UNION ALL
-  SELECT SUM(i.kills) AS kills, SUM(i.headshots) AS headshots FROM hlstats_PlayersInactive i ${visibleGame("i")}
+  SELECT SUM(i.kills) AS kills, SUM(i.headshots) AS headshots FROM hlstats_PlayersInactive i ${scope("i")}
    WHERE NOT EXISTS (SELECT 1 FROM hlstats_Players p WHERE p.playerId = i.playerId)) t`;
+
+export const allKillsSql = killsSql(visibleGame);
+// The same for one ranking: two `?`.
+export const rankingKillsSql = killsSql(oneGame);
+
+// Players per ranking (Admin > Rankings), counted like the start page: both
+// tables, minus the players in both, minus the bots, every hideranking.
+// Grouped counts, added up by the caller (playersPerRanking).
+export const playersPerRankingSql = {
+  active: `SELECT TRIM(p.game) AS game, COUNT(*) AS n FROM hlstats_Players p GROUP BY TRIM(p.game)`,
+  inactive: `SELECT TRIM(i.game) AS game, COUNT(*) AS n FROM hlstats_PlayersInactive i GROUP BY TRIM(i.game)`,
+  both: `SELECT TRIM(p.game) AS game, COUNT(*) AS n FROM hlstats_Players p JOIN hlstats_PlayersInactive i ON i.playerId = p.playerId GROUP BY TRIM(p.game)`,
+  bots: `SELECT TRIM(u.game) AS game, COUNT(DISTINCT u.playerId) AS n FROM hlstats_PlayerUniqueIds u
+    WHERE u.uniqueId LIKE 'BOT%'
+      AND (EXISTS (SELECT 1 FROM hlstats_Players p WHERE p.playerId = u.playerId)
+        OR EXISTS (SELECT 1 FROM hlstats_PlayersInactive i WHERE i.playerId = u.playerId))
+    GROUP BY TRIM(u.game)`,
+};
+
+type Counts = { game: string; n: number | string }[];
+
+// active + inactive - both - bots per ranking.
+export function playersPerRanking(r: { active: Counts; inactive: Counts; both: Counts; bots: Counts }): Map<string, number> {
+  const m = new Map<string, number>();
+  const add = (rows: Counts, sign: number) => {
+    for (const x of rows) m.set(x.game, (m.get(x.game) ?? 0) + sign * Number(x.n));
+  };
+  add(r.active, 1);
+  add(r.inactive, 1);
+  add(r.both, -1);
+  add(r.bots, -1);
+  for (const [k, v] of m) m.set(k, Math.max(0, v));
+  return m;
+}

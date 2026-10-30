@@ -5,7 +5,7 @@ import { Icon } from "@/components/admin/icons";
 import { PageHead } from "@/components/admin/page-head";
 import { GameTag } from "@/components/ui";
 import { adminDict } from "@/lib/admin-i18n";
-import { countByRanking, rankingSummaries } from "@/lib/admin-rankings";
+import { playersByRanking, rankingSummaries } from "@/lib/admin-rankings";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { localeOf } from "@/lib/format";
 import { getAdminLang } from "@/lib/i18n";
@@ -26,7 +26,7 @@ export default async function RankingsPage({ searchParams }: { searchParams: Pro
   // as before): an old link with its status (?hof=) goes there.
   if (isAdmin && hof && ["on", "off", "input", "confirm"].includes(hof)) redirect(`/admin/reset?hof=${hof}#hall-of-fame`);
   const nf = (n: number) => n.toLocaleString(localeOf(lang));
-  const [all, players] = await Promise.all([rankingSummaries(), countByRanking("hlstats_Players", "game")]);
+  const [all, players] = await Promise.all([rankingSummaries(), playersByRanking()]);
   // Rankings with servers or the templates, in display order.
   const active = all.filter((r) => r.servers > 0);
   const spare = all.filter((r) => r.servers === 0);

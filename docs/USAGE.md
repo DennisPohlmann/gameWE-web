@@ -411,7 +411,11 @@ menu button), and lists turn into cards on narrow screens:
 - **Rankings** (`/admin/rankings`): the rankings with servers or, chosen
   with the switch at the top ("Rankings with servers" / "Templates", each
   with its count; `?view=templates`), the templates (rankings without
-  servers), each with one "Manage" button to its page. The ranking's page
+  servers), each with one "Manage" button to its page. The Players column
+  (also on the overview and at the top of a ranking's page) counts every
+  player of the ranking: the inactive ones the collector moved to
+  `hlstats_PlayersInactive` too, hidden and banned ones, only bots left
+  out. The ranking's page
   (`/admin/rankings/<code>`) is the one place to manage it: at the top its
   state (active, template or hidden), servers (how many have players now),
   players and scheduled reset, with links to the cards below; a jump bar

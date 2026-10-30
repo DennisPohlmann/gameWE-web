@@ -1,6 +1,7 @@
 import "server-only";
 import { adminExec, adminQuery } from "./db";
 import { baseGameOf } from "./games";
+import { playersPerRanking, playersPerRankingSql, rankingPlayersSql } from "./general-stats";
 import { addParams } from "./return-to";
 
 // Rankings (hlstats_Games rows) as the admin manages them: a new ranking takes
@@ -99,6 +100,23 @@ export async function resettableRankings(): Promise<[string, string][]> {
     `SELECT TRIM(code) AS code, name FROM hlstats_Games WHERE TRIM(code) IN (SELECT TRIM(game) FROM hlstats_Servers) ORDER BY display_id, name`,
   );
   return rows.map((x) => [x.code, `${x.name} (${x.code})`]);
+}
+
+// All players of each ranking: also the inactive ones the collector moved
+// to hlstats_PlayersInactive, hidden and banned ones, only bots left out
+// (general-stats.ts, as on the start page).
+export async function playersByRanking(): Promise<Map<string, number>> {
+  type Rows = { game: string; n: number | string }[];
+  const [active, inactive, both, bots] = await Promise.all(
+    [playersPerRankingSql.active, playersPerRankingSql.inactive, playersPerRankingSql.both, playersPerRankingSql.bots].map((q) => adminQuery<Rows[number]>(q)),
+  );
+  return playersPerRanking({ active, inactive, both, bots } as { active: Rows; inactive: Rows; both: Rows; bots: Rows });
+}
+
+// The same for one ranking (its page).
+export async function rankingPlayers(code: string): Promise<number> {
+  const rows = await adminQuery<{ n: number | string }>(rankingPlayersSql, [code, code, code, code]);
+  return Math.max(0, Number(rows[0]?.n ?? 0));
 }
 
 // Number of rows per ranking in one of the per-ranking tables. Table and
