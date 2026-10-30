@@ -1,6 +1,6 @@
 import "server-only";
 import { timingSafeEqual } from "node:crypto";
-import { existsSync } from "node:fs";
+import { webRuntime } from "./runtime";
 import { env } from "./env";
 import { query } from "./db";
 
@@ -29,7 +29,7 @@ export async function databaseUp(): Promise<{ up: boolean; seconds: number }> {
 }
 
 export function inDocker() {
-  return process.env.GAMEWE_DOCKER === "1" || existsSync("/.dockerenv");
+  return webRuntime() === "docker";
 }
 
 // /-/metrics is off until a token is set: gamewe_metrics_token in the settings,

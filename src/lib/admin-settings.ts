@@ -601,7 +601,7 @@ export const definedSettings = definitions.flatMap((g) => g.items);
 // text hold line breaks a raw value may not have).
 export const HIDDEN_OPTION_PREFIXES = ["gamewe_totp", "gamewe_apitoken", "gamewe_ts_query_password", "gamewe_metrics_token", "gamewe_steam_api_key", "gamewe_privacy_"];
 // Written by the collector, shown read-only.
-export const READONLY_OPTIONS = ["gamewe_heartbeat", "gamewe_collector_version"];
+export const READONLY_OPTIONS = ["gamewe_heartbeat", "gamewe_collector_version", "gamewe_collector_runtime"];
 
 // Meaning of known keys that have no field above (raw list of the settings page).
 export const RAW_OPTION_HELP: Record<string, L> = {
@@ -612,6 +612,10 @@ export const RAW_OPTION_HELP: Record<string, L> = {
   gamewe_collector_version: {
     de: "Schreibt der Collector beim Start (seine Version); die Übersicht vergleicht sie mit dem neuesten Release. Keine Einstellung.",
     en: "Written by the collector at start (its version); the overview compares it with the latest release. Not a setting.",
+  },
+  gamewe_collector_runtime: {
+    de: "Schreibt der Collector beim Start: docker oder container, wenn er in einem läuft, sonst leer. Das Admin-Menü zeigt es hinter seiner Version. Keine Einstellung.",
+    en: "Written by the collector at start: docker or container when it runs in one, else empty. The admin menu shows it after its version. Not a setting.",
   },
   gamewe_ignore_bots: {
     de: "Veraltet: Die Bot-Einstellungen stehen jetzt pro Ranking (Rankings → Ranking → Bots). Ein Collector-Update (Migration 15) übernimmt den Wert und löscht den Schlüssel.",

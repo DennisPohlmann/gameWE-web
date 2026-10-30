@@ -404,7 +404,11 @@ menu button), and lists turn into cards on narrow screens:
   "Update check: GitHub not reachable" and the server log has a line
   `update check: ...`. Only the overview page asks GitHub, the other pages
   use the kept answer. An available update shows on the overview and below
-  the menu; the versions below the menu link to their release on GitHub. Nothing is downloaded or
+  the menu; the versions below the menu ("gameWE Web v1.4.0 (Docker)",
+  "gameWE Collector v1.5.0 (Container)": in brackets where the part runs,
+  Docker or another container such as Kubernetes or Podman, nothing directly
+  on the host; the collector's from collector 1.5 on) link to their release
+  on GitHub. Nothing is downloaded or
   installed: the notice links to the release, the steps are under "Update" in
   [INSTALLATION.md](INSTALLATION.md). Admin → Settings → Monitoring, "Check
   for updates" (`gamewe_update_check`, default on) turns it off; then no

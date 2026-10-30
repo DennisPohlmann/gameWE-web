@@ -1,4 +1,3 @@
-import { existsSync } from "node:fs";
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { adminThemeAction, logoutAction } from "../actions";
@@ -15,6 +14,8 @@ import { gameKind } from "@/lib/games";
 import { fill, getAdminLang, getDict } from "@/lib/i18n";
 import { releasePage } from "@/lib/update-version";
 import { updateStatus } from "@/lib/updates";
+import { webRuntime } from "@/lib/runtime";
+import { runtimeSuffix } from "@/lib/runtime-label";
 
 // Frame of every admin page after the login: top bar with the three areas
 // and the user menu, the side menu of the area (a drawer on phones, opened
@@ -48,8 +49,10 @@ export default async function PanelLayout({ children }: { children: ReactNode })
   // page asks GitHub, lib/updates.ts).
   const version = (text: string, href: string | null) => (href ? { text, href, version: true } : text);
   const web = process.env.APP_VERSION;
-  const footer: Parameters<typeof AdminSidebar>[0]["footer"] = [version(`gameWE web ${web ? `v${web}` : "?"}`, releasePage("web", web)), inDocker() ? "Docker" : u.noDocker];
-  if (status.collector) footer.push(version(`Collector v${status.collector.slice(0, 32)}`, releasePage("collector", status.collector)));
+  // In brackets where it runs: (Docker), (Container), nothing on the host.
+  const footer: Parameters<typeof AdminSidebar>[0]["footer"] = [version(`gameWE Web ${web ? `v${web}` : "?"}${runtimeSuffix(webRuntime())}`, releasePage("web", web))];
+  if (status.collector)
+    footer.push(version(`gameWE Collector v${status.collector.slice(0, 32)}${runtimeSuffix(status.collectorRuntime)}`, releasePage("collector", status.collector)));
   for (const up of status.updates) footer.push({ text: `${up.component === "web" ? "Web" : "Collector"}: ${fill(u.footUpdate, { v: `v${up.latest}` })}`, href: up.url });
   if (status.failed) footer.push(u.footCheckFailed);
   const themeIcon = { auto: "auto", light: "sun", dark: "moon" } as const;
@@ -163,7 +166,3 @@ function tagOf(base: string | null, code: string) {
   return gameKind(base)?.short.replace(/\s+/g, "").slice(0, 5) ?? code.slice(0, 4).toUpperCase();
 }
 
-// GAMEWE_DOCKER is set in the image (Dockerfile); /.dockerenv covers other images.
-function inDocker() {
-  return process.env.GAMEWE_DOCKER === "1" || existsSync("/.dockerenv");
-}

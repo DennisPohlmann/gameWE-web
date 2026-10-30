@@ -341,7 +341,6 @@ const de = {
     on: "An",
     off: "Aus",
     version: "Version",
-    noDocker: "ohne Docker (Node.js)",
   },
   pager: { firstPage: "Erste Seite", prev: "Zurück", next: "Weiter", lastPage: "Letzte Seite", page: "Seiten", goTo: "Gehe zu:", showRows: "Zeilen anzeigen:", entriesOnPages: "{n} Einträge auf {p} Seiten" },
 };
@@ -688,7 +687,6 @@ const en: AdminDict = {
     on: "On",
     off: "Off",
     version: "Version",
-    noDocker: "no Docker (Node.js)",
   },
   pager: { firstPage: "First page", prev: "Previous", next: "Next", lastPage: "Last page", page: "Pages", goTo: "Go to:", showRows: "Show rows:", entriesOnPages: "{n} entries on {p} pages" },
 };
