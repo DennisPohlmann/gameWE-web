@@ -8,6 +8,7 @@ import { Flag, GameTag, Skeleton } from "@/components/ui";
 import { basePath } from "@/lib/base-path";
 import { LineChart } from "@/components/chart";
 import { Sparkline } from "@/components/sparkline";
+import { countsSinceFirst, wholeDays } from "@/lib/sparkline";
 import { HoverTip } from "@/components/hover-tip";
 import { PlayerCount } from "@/components/player-count";
 import { VoiceBox } from "@/components/voice-box";
@@ -20,6 +21,7 @@ import {
   getHourlyActivity,
   getRankingOverview,
   unlinkedBots,
+  type DayPoint,
   type RankingOverview,
 } from "@/lib/data";
 import { dateFormat, fmtDateTime, fmtNum, fmtPct, localeOf } from "@/lib/format";
@@ -189,8 +191,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
 // Five cards (players, clans, servers, kills, headshots), each with its count,
 // what is going on now and a faint line of the last 30 days behind the text:
 // players online and servers with players, bots included like "playing now"
-// and "with players now" (server load, else active players per day), clans with an active member per day, kills and headshots per day
-// (with their share of the kills below the headshots). Hovering or tapping a
+// and "with players now" (server load, else active players per day), clans
+// with an active member per day, kills and headshots per 15 minutes (frags,
+// else per day; with their share of the kills below the headshots). Hovering or tapping a
 // card shows what its number and its line count (HoverTip). A database error
 // leaves the block out; a missing line only leaves its card without one.
 async function GeneralStatsSection({ t, lang }: { t: Dict; lang: Lang }) {
@@ -206,9 +209,16 @@ async function GeneralStatsSection({ t, lang }: { t: Dict; lang: Lang }) {
     getDailyActivityAll(30).catch(() => null),
     getActiveClansPerDay(30).catch(() => null),
   ]);
-  // Whole days only: today is not over yet and would end every line low.
+  // Whole days only, unless there are fewer than two yet (wholeDays).
   const perDay = <T extends { day: string }>(rows: T[] | null, value: (r: T) => number) =>
-    rows ? everyDay(rows, 30).slice(0, -1).map((d) => (d.point ? value(d.point) : null)) : [];
+    rows ? wholeDays(everyDay(rows, 30).map((d) => (d.point ? value(d.point) : null))) : [];
+  // Kills and headshots per 15 minutes from the frags, like players online:
+  // the history per day has only one whole day the day after a reset, so the
+  // lines would be gone for a day. The days are the fallback.
+  const fragLine = (counts: number[] | undefined, day: (r: DayPoint) => number) => {
+    const line = counts ? countsSinceFirst(counts) : [];
+    return line.length ? line : perDay(daily, day);
+  };
   const playersLine = hourly?.players.some((v) => v !== null) ? hourly.players : perDay(daily, (r) => Number(r.players));
   const cards = [
     { label: t.players, value: stats.players, sub: fill(t.gsPlayersNow, { n: fmtNum(stats.onlineWithBots, lang) }), line: playersLine, tip: t.gsTipPlayers },
@@ -218,14 +228,14 @@ async function GeneralStatsSection({ t, lang }: { t: Dict; lang: Lang }) {
       label: t.kills,
       value: stats.kills,
       sub: stats.lastKill ? fill(t.gsLastKill, { d: fmtDateTime(stats.lastKill, lang) }) : t.gsNoKill,
-      line: perDay(daily, (r) => Number(r.kills)),
+      line: fragLine(hourly?.kills, (r) => Number(r.kills)),
       tip: t.gsTipKills,
     },
     {
       label: t.headshotsLabel,
       value: stats.headshots,
       sub: fill(t.gsHeadshotShare, { p: fmtPct(stats.kills > 0 ? stats.headshots / stats.kills : null, lang) }),
-      line: perDay(daily, (r) => Number(r.headshots ?? 0)),
+      line: fragLine(hourly?.headshots, (r) => Number(r.headshots ?? 0)),
       tip: t.gsTipHeadshots,
     },
   ];

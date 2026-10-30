@@ -53,3 +53,23 @@ export function sparkPaths(series: (number | null)[]): { line: string; area: str
   const area = `M${r(pts[0][0])} ${SPARK_H}${pts.map(([x, py]) => `L${r(x)} ${r(py)}`).join("")}L${r(pts[pts.length - 1][0])} ${SPARK_H}Z`;
   return { line, area };
 }
+
+// A count per interval that starts at 0 where nothing was recorded yet (kills
+// per 15 minutes before the first frag, e.g. after a reset): the zeros before
+// the first value become gaps, so the line starts there and is not a long
+// flat stretch at the bottom. The last interval is still running and would
+// end the line low: it is left out.
+export function countsSinceFirst(values: number[]): (number | null)[] {
+  const done = values.slice(0, -1);
+  const first = done.findIndex((v) => v !== 0);
+  return first < 0 ? [] : done.map((v, i) => (i < first ? null : v));
+}
+
+// Values per day, today last: whole days only (today is not over yet and
+// would end the line low), unless that leaves fewer than two days with a
+// value, e.g. the day after a reset; then today is kept so the card still
+// gets its line.
+export function wholeDays(values: (number | null)[]): (number | null)[] {
+  const whole = values.slice(0, -1);
+  return whole.filter((v) => v !== null).length >= 2 ? whole : values;
+}

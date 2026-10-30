@@ -2,7 +2,7 @@
 // Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { SPARK_H, sparkPaths, sparkSeries } from "../src/lib/sparkline.ts";
+import { SPARK_H, countsSinceFirst, sparkPaths, sparkSeries, wholeDays } from "../src/lib/sparkline.ts";
 
 test("the series runs from its first to its last value", () => {
   assert.deepEqual(sparkSeries([null, null, 3, null, 5]), [3, null, 5]);
@@ -54,4 +54,21 @@ test("a series that never drops to 0 runs from its lowest to its highest value",
   assert.equal(p.line, `M0 ${SPARK_H - 3}L50 2L100 ${SPARK_H - 3}`);
   const flat = sparkPaths([64, 64]);
   assert.equal(flat?.line, `M0 ${SPARK_H / 2}L100 ${SPARK_H / 2}`);
+});
+
+test("counts per 15 minutes start at the first value and leave out the running one", () => {
+  // After a reset: no frags before it, then kills; the last interval runs.
+  assert.deepEqual(countsSinceFirst([0, 0, 4, 0, 7, 2]), [null, null, 4, 0, 7]);
+  assert.deepEqual(countsSinceFirst([0, 0, 0, 5]), []);
+  assert.deepEqual(countsSinceFirst([]), []);
+  // The day after a reset still draws a line.
+  assert.ok(sparkPaths(sparkSeries(countsSinceFirst([0, 0, 3, 9, 1]))));
+});
+
+test("days: whole days only, today too while fewer than two whole days have values", () => {
+  assert.deepEqual(wholeDays([1, 2, 3, 1]), [1, 2, 3]);
+  // The day after a reset: one whole day (the evening of the reset) and today.
+  assert.deepEqual(wholeDays([null, null, 307, 699]), [null, null, 307, 699]);
+  assert.ok(sparkPaths(sparkSeries(wholeDays([null, null, 307, 699]))));
+  assert.deepEqual(wholeDays([null, 5]), [null, 5]);
 });
