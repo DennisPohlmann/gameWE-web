@@ -1,0 +1,16 @@
+Game icon: Counter-Strike: Source (css)
+
+Files:   icon.png (32 x 32, as supplied, edited by gameWE:
+         round logo: outside of the circle made transparent; the grey 1-px frame of the screenshot removed)
+Source:  supplied by Dennis Pohlmann (gameWE maintainer) on 2026-10-30;
+         the Counter-Strike: Source game icon (soldier with rifle);
+         original file SHA-256 3e112553b691d51a1e28983df7b3459169b265c00e86f14c4287a04d418eb66b
+Author:  Valve Corporation (presumably)
+License: UNKNOWN. No license that allows passing the picture on is known;
+         it is most likely Valve's copyrighted artwork and trademark. It is
+         shipped on the maintainer's own decision. If the rights are not
+         cleared, replace icon.png with gameWE's own drawing (git history:
+         public/games/css/icon.svg) and run npm run game-icons.
+
+"Counter-Strike: Source" is a trademark of Valve Corporation; gameWE is
+not affiliated with or endorsed by Valve.

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { assignServersAction, moveServerAction } from "../../../actions";
 import { Icon } from "@/components/admin/icons";
+import { GameIcon } from "@/components/ui";
 import { optionList } from "@/lib/admin-data";
 import { entities } from "@/lib/admin-entities";
 import { adminDict } from "@/lib/admin-i18n";
@@ -88,6 +89,7 @@ export async function ServersCard({ id, code, lang, sp }: { id: number; code: st
                   </td>
                   <td className="main wrap-cell">
                     <Link className="name" href={`/admin/servers/${s.serverId}?returnTo=${returnTo}`}>
+                      <GameIcon realgame={base} />
                       {s.name || `${s.address}:${s.port}`}
                     </Link>
                   </td>
@@ -144,7 +146,8 @@ export async function ServersCard({ id, code, lang, sp }: { id: number; code: st
             <input type="hidden" name="__id" value={String(id)} />
             {others.map((s) => (
               <label key={s.serverId} className="check">
-                <input type="checkbox" name="server" value={s.serverId} disabled={!fits(s.game)} /> {s.name || `${s.address}:${s.port}`}{" "}
+                <input type="checkbox" name="server" value={s.serverId} disabled={!fits(s.game)} /> <GameIcon realgame={bases.get(s.game)} />
+                {s.name || `${s.address}:${s.port}`}{" "}
                 <span className="muted">
                   ({a.rankingNow}: {s.game}, {gameName(s.game)}
                   {fits(s.game) ? "" : ` · ${a.gameOther}`})

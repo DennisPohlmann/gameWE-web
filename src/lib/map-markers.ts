@@ -39,8 +39,9 @@ export function mapMarkers(players: (MapPlayer & { server?: string | null; serve
 // Markers for the game servers on the player map, one per place: servers at
 // the same point (coordinates rounded to 0.01°, about 1 km) share a marker.
 // Each server gets a link to its page and its hover details (address as in
-// the server list, map, uptime as on the server page).
-export function serverMarkers(servers: MapServer[], game: string, t: Dict): ServerMarker[] {
+// the server list, map, uptime as on the server page). icon: the game's icon
+// before each server name (gameIconSrc of the ranking's game).
+export function serverMarkers(servers: MapServer[], game: string, t: Dict, icon?: string | null): ServerMarker[] {
   const groups = new Map<string, ServerMarker>();
   for (const s of servers) {
     const name = s.name || `${s.address}:${s.port}`;
@@ -51,6 +52,7 @@ export function serverMarkers(servers: MapServer[], game: string, t: Dict): Serv
       id: s.serverId,
       href: `${basePath}/${game}/servers/${s.serverId}`,
       online: s.online,
+      icon: icon ?? undefined,
       flag: svg ? flagPos(code) : undefined,
       vac: s.server_vac === "secure" ? { secure: true, title: t.vacSecure } : s.server_vac === "insecure" ? { secure: false, title: t.vacInsecure } : undefined,
       lines: [

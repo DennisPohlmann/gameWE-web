@@ -363,3 +363,10 @@ uses (Next.js, React, Leaflet, Scalar, DB-IP/GeoLite2 and others) are listed on 
 site under `/licenses`; the full list of third-party npm packages, fonts,
 flags and other bundled files with their licenses is in
 [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md).
+
+The game icons before the server names are not gameWE's own work: they
+are the games' icons, presumably the artwork of Valve and the mod teams,
+and their license is unknown. Source, rights holder and changes of every
+icon are in [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md#game-icons),
+in each folder's `public/games/<code>/LICENSE.txt` and on the site under
+`/licenses`.

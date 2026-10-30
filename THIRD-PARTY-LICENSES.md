@@ -156,6 +156,8 @@ all compatible with GPL-3.0-or-later.
 |------|-----------|---------|
 | `public/flags/*.svg` (except `unknown.svg`, gameWE's own placeholder) and `public/flags/sprite.png` (all of them in one picture, made by `scripts/flags-sprite.mjs`) | flag-icons 7.2.3 by Panayiotis Lipiridis, https://github.com/lipis/flag-icons | MIT, text in `public/flags/LICENSE.txt` |
 | `public/icon*.png`, `public/icon.svg`, `public/apple-touch-icon.png`, `public/avatar-unknown.svg` | gameWE's own graphics | GPL-3.0-or-later |
+| `public/games/<code>/icon.png` without an `icon.svg` beside it | the games' own icons before the server names, supplied by the maintainer; presumably the artwork of the game makers (Valve and the mod teams), whose names are their trademarks | unknown, see each folder's `LICENSE.txt` |
+| `public/games/<code>/icon.svg` and the `icon.png` made from it | gameWE's own drawing of a game icon (not the game's official logo) | GPL-3.0-or-later |
 | `templates/` | gameWE's own design templates | GPL-3.0-or-later |
 | `overviews/cs2/*.png` and their `.json` (de_ancient, de_anubis, de_cache, de_dust2, de_inferno, de_mirage, de_nuke, de_overpass, de_train, de_vertigo) | redrawn by gameWE (`scripts/overviews/restyle.py`) from the radar pictures of Boltobserv (commit 0320883), https://github.com/boltgolt/boltobserv, made with simpleradar; Boltobserv's calibration | GPL-3.0, text in `overviews/cs2/LICENSE-boltobserv.txt` |
 | `overviews/cs2/cs_italy.json`, `cs_office.json`, `de_dust.json` | position and scale taken from Counter-Strike 2's overview files (`resource/overviews/<map>.txt`, Valve); numbers only | facts from Valve's game files |
@@ -167,6 +169,41 @@ all compatible with GPL-3.0-or-later.
 | `src/components/admin/icons.tsx` | admin menu icons, several paths after Feather Icons 4.29 by Cole Bemis, https://github.com/feathericons/feather | MIT, text in `src/components/admin/FEATHER-LICENSE.txt` |
 | Database schema and table names (`hlstats_*`) | HLstatsX: Community Edition, https://github.com/NomisCZ/hlstatsx-community-edition | GPL-2.0-or-later (the schema is created by the collector; gameWE web reads it) |
 | Counter-Strike 2 support (game `cs2`, hit zone neck) | reference: HLstatsX:CE with CS2 support by lovasatt, https://github.com/lovasatt/hlstatsx-community-edition (no code or files copied; its CS2 definitions are used by the collector) | GPL-2.0-or-later, usable under GPL-3.0-or-later ("or any later version") |
+
+## Game icons
+
+The icon before every server name (`public/games/<code>/icon.png`). Each
+folder holds the icon's `LICENSE.txt` with the source, the original file's
+SHA-256 and the full license note; the website lists the same on
+`/licenses` under "Spiel-Icons / game icons". The names of the games are
+trademarks of their makers; gameWE is not affiliated with or endorsed by
+them. For an icon whose license is unknown no license that allows passing
+it on is known: it is shipped on the maintainer's own decision, and
+gameWE's own drawing (git history: `public/games/<code>/icon.svg`) can take
+its place.
+
+| Game | Folder | Source | Rights holder | Changed by gameWE | License |
+|------|--------|--------|---------------|-------------------|---------|
+| Counter-Strike 2 | `public/games/cs2/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | scaled down | unknown |
+| Counter-Strike: Global Offensive | `public/games/csgo/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | grey 1-px screenshot frame removed | unknown |
+| CSPromod | `public/games/csp/` | drawn for gameWE | the gameWE authors | drawn by gameWE (not the official logo) | GPL-3.0-or-later |
+| Counter-Strike: Source | `public/games/css/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | outside of the round logo made transparent; grey 1-px screenshot frame removed | unknown |
+| Counter-Strike 1.6 | `public/games/cstrike/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | grey 1-px screenshot frame removed | unknown |
+| Counter-Strike: Condition Zero | `public/games/czero/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | grey 1-px screenshot frame removed | unknown |
+| Day of Defeat | `public/games/dod/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | grey 1-px screenshot frame removed | unknown |
+| Day of Defeat: Source | `public/games/dods/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | grey 1-px screenshot frame removed | unknown |
+| Fortress Forever | `public/games/ff/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | the Fortress Forever Team (presumably) | dark background made transparent; grey 1-px screenshot frame removed | unknown |
+| Fistful of Frags | `public/games/fof/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | the Fistful of Frags Team (presumably) | outside of the round logo made transparent; grey 1-px screenshot frame removed | unknown |
+| Half-Life 2 Deathmatch | `public/games/hl2mp/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | scaled down | unknown |
+| Insurgency | `public/games/insurgency/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | New World Interactive (presumably) | dark background made transparent; grey 1-px screenshot frame removed | unknown |
+| Left 4 Dead | `public/games/l4d/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | grey 1-px screenshot frame removed | unknown |
+| Left 4 Dead 2 | `public/games/l4d2/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | grey 1-px screenshot frame removed | unknown |
+| No More Room in Hell | `public/games/nmrih/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | the No More Room in Hell Team (presumably) | outside of the round logo made transparent; grey 1-px screenshot frame removed | unknown |
+| Natural Selection | `public/games/ns/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Unknown Worlds Entertainment (presumably) | outside of the round logo made transparent; grey 1-px screenshot frame removed | unknown |
+| Team Fortress 2 | `public/games/tf/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | grey 1-px screenshot frame removed | unknown |
+| Team Fortress Classic | `public/games/tfc/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | outside of the round logo made transparent; grey 1-px screenshot frame removed | unknown |
+| Half-Life Deathmatch | `public/games/valve/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | grey 1-px screenshot frame removed | unknown |
+| Zombie Panic! Source | `public/games/zps/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | the Zombie Panic! Team (presumably) | grey 1-px screenshot frame removed | unknown |
 
 Rank insignia and award ribbons are drawn with SVG and CSS in
 `src/components/badges.tsx` (no third-party images).

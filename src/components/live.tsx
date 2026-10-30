@@ -7,7 +7,7 @@ import type { Dict, Lang } from "@/lib/i18n";
 import { playerCount } from "@/lib/player-count";
 import { LINUX_SVG, vacStateHtml, WINDOWS_SVG } from "@/lib/server-icons";
 import { PlayerCount } from "./player-count";
-import { Flag, GameTag, SortTh } from "./ui";
+import { Flag, GameIcon, GameTag, SortTh } from "./ui";
 
 // Sort keys of the server list: name, map, map time, players online.
 export const serverValues = {
@@ -21,7 +21,7 @@ export type ServerSort = keyof typeof serverValues;
 // Server rows as on gameME: name, game, address (steam://connect), map, map
 // time, players. The game is the ranking's base game as the same badge as on
 // the start page ("Counter-Strike: Source"), else the ranking's name. `head` is an optional first header row spanning the table. The
-// flag of the server's country stands before its name. `details` adds the
+// game's icon and the flag of the server's country stand before its name. `details` adds the
 // server version with an OS icon and the VAC state as the last columns (the
 // ranking's start page only). With `sort` the heads of name, map, time and
 // players sort the list (servers come sorted). All columns are left-aligned,
@@ -81,6 +81,7 @@ export function ServerTable({
             return (
               <tr key={s.serverId} className="server-line">
                 <td className="wrap-cell">
+                  <GameIcon realgame={base} />
                   <ServerFlag code={s.country_code} lang={lang} />
                   <Link prefetch={false} className="srv" href={`/${game}/servers/${s.serverId}`} title={s.name || addr}>
                     {s.name || addr}

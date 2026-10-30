@@ -27,7 +27,7 @@ export type MapMarker = {
 // One game server: name (with the flag), page and hover details. vac: the
 // VAC state after the name (secured or not, with its title); none when
 // unknown.
-export type ServerEntry = { id: number; name: string; href: string; online: boolean; flag?: string; vac?: VacInfo; lines: string[] };
+export type ServerEntry = { id: number; name: string; href: string; online: boolean; icon?: string; flag?: string; vac?: VacInfo; lines: string[] };
 export type VacInfo = { secure: boolean; title: string };
 
 // The game servers at one GeoIP location: one hexagon, not an avatar, with
@@ -280,7 +280,7 @@ function serverTip(m: ServerMarker) {
     m.servers
       .map(
         (s) =>
-          `<div class="srv-row"><i class="srv-dot${s.online ? " on" : ""}"></i><b>${s.flag ? `<span class="flag flag-svg" style="background-position:${esc(s.flag)}"></span>` : ""}${esc(s.name)}</b>${vacMark(s.vac)}<br>${s.lines.map(esc).join(" · ")}</div>`,
+          `<div class="srv-row"><i class="srv-dot${s.online ? " on" : ""}"></i><b>${gameIcon(s.icon)}${s.flag ? `<span class="flag flag-svg" style="background-position:${esc(s.flag)}"></span>` : ""}${esc(s.name)}</b>${vacMark(s.vac)}<br>${s.lines.map(esc).join(" · ")}</div>`,
       )
       .join("")
   );
@@ -290,9 +290,14 @@ function serverTip(m: ServerMarker) {
 function serverLinks(m: ServerMarker) {
   return (
     `<b>${esc(m.title ?? m.place)}</b><ul class="srv-list">` +
-    m.servers.map((s) => `<li><i class="srv-dot${s.online ? " on" : ""}"></i><a href="${esc(s.href)}">${esc(s.name)}</a></li>`).join("") +
+    m.servers.map((s) => `<li><i class="srv-dot${s.online ? " on" : ""}"></i>${gameIcon(s.icon)}<a href="${esc(s.href)}">${esc(s.name)}</a></li>`).join("") +
     "</ul>"
   );
+}
+
+// The game's icon before a server name (public/games/<code>/icon.png).
+function gameIcon(src: string | undefined) {
+  return src ? `<img class="game-icon" src="${esc(src)}" width="16" height="16" alt="">` : "";
 }
 
 function esc(s: string) {

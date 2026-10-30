@@ -1,0 +1,16 @@
+Game icon: Half-Life 2 Deathmatch (hl2mp)
+
+Files:   icon.png (128 x 128, scaled down from a 256 x 256 PNG with
+         transparent background)
+Source:  supplied by Dennis Pohlmann (gameWE maintainer) on 2026-10-30;
+         the game's icon; original file SHA-256 a9a076256ff48b2fd6ac8e3f4c2b5048f4060a18bbd78b5de4f54149b01be3df
+Author:  Valve Corporation (presumably)
+License: UNKNOWN. No license that allows passing the picture on is known;
+         it is most likely the copyrighted artwork and trademark of
+         Valve Corporation. It is shipped on the maintainer's own decision. If the
+         rights are not cleared, replace icon.png with gameWE's own drawing
+         (git history: public/games/hl2mp/icon.svg) and run
+         npm run game-icons.
+
+"Half-Life 2 Deathmatch" is a trademark of Valve Corporation; gameWE is not affiliated with or
+endorsed by them.

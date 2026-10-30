@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { SortableTable } from "@/components/sortable-table";
-import { Section, TableWrap } from "@/components/ui";
+import { GameIcon, Section, TableWrap } from "@/components/ui";
+import { basePath } from "@/lib/base-path";
+import { GAME_ICON_CREDITS, type IconEdit, isOwnDrawing } from "@/lib/game-icon-credits";
+import { GAME_KINDS } from "@/lib/games";
 import { getDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import npm from "@/lib/npm-licenses.json";
@@ -72,6 +75,14 @@ const ASSETS: Row[] = [
   ["Insurgency, No More Room in Hell, Fistful of Frags, Zombie Panic! Source", "https://store.steampowered.com", "New World Interactive, NMRiH Team, FoF Team, Zombie Panic Team", "Kartenlayouts der aus den Kartendateien gezeichneten Kartenbilder", "Map layouts of the map pictures drawn from the map files"],
 ];
 
+const EDIT: Record<IconEdit, [string, string]> = {
+  frame: ["grauen Screenshot-Rahmen entfernt", "grey screenshot frame removed"],
+  round: ["außerhalb des runden Logos transparent", "outside of the round logo made transparent"],
+  background: ["dunklen Hintergrund transparent gemacht", "dark background made transparent"],
+  scaled: ["verkleinert", "scaled down"],
+  drawn: ["für gameWE gezeichnet, nicht das offizielle Logo", "drawn for gameWE, not the official logo"],
+};
+
 // Licenses of the software, data and graphics gameWE uses.
 export default async function LicensesPage() {
   const { lang, t } = await getDict();
@@ -134,6 +145,39 @@ export default async function LicensesPage() {
       <Section title={t.licSoftware}>{table(SOFTWARE)}</Section>
       <Section title={t.licData}>{table(data)}</Section>
       <Section title={t.licAssets}>{table(ASSETS)}</Section>
+      <Section title={t.licIcons}>
+        <p className="lead">{t.licIconsIntro}</p>
+        <TableWrap>
+          <SortableTable
+            className="lic-table"
+            initial={-1}
+            cols={[{ label: t.licGame }, { label: t.licHolder }, { label: t.licChanges }, { label: t.licLicense, className: "nowrap" }]}
+            rows={Object.entries(GAME_ICON_CREDITS)
+              .filter(([code]) => Object.hasOwn(GAME_KINDS, code))
+              .map(([code, c]) => {
+                const name = GAME_KINDS[code].name;
+                const holder = isOwnDrawing(c) ? c.holder : `${c.holder} (${de ? "vermutlich" : "presumably"})`;
+                const license = isOwnDrawing(c) ? "GPL-3.0-or-later" : t.licUnknown;
+                const changes = c.edits.map((e) => EDIT[e][de ? 0 : 1]).join(", ");
+                return {
+                  key: code,
+                  values: [name, holder, changes, license],
+                  cells: [
+                    <span key="g">
+                      <GameIcon realgame={code} />
+                      {name}
+                    </span>,
+                    holder,
+                    changes,
+                    <a key="l" href={`${basePath}/games/${code}/LICENSE.txt`} rel="noopener noreferrer" target="_blank">
+                      {license}
+                    </a>,
+                  ],
+                };
+              })}
+          />
+        </TableWrap>
+      </Section>
       <Section title={t.licNpm}>
         <p className="lead">{t.licNpmIntro}</p>
         <TableWrap>

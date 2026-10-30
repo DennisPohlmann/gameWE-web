@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Icon } from "@/components/admin/icons";
 import { PageHead } from "@/components/admin/page-head";
-import { Empty, GameTag, Pager, ROW_OPTIONS, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
+import { Empty, GameIcon, GameTag, Pager, ROW_OPTIONS, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
 import { noAutofill } from "@/lib/autofill";
 import { localeOf } from "@/lib/format";
 import { listRows, listSortColumn, optionList, withColumns } from "@/lib/admin-data";
@@ -149,6 +149,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
                             <StatusPill f={f} v={r[f.name]} filter={statusOf(r[f.name])} lang={lang} />
                           ) : f.name === mainCol ? (
                             <Link className="name" href={editHref(String(r.__pk))}>
+                              {e.key === "servers" ? <GameIcon realgame={baseOf(r.game)} /> : null}
                               {show(f, r[f.name], lang) || "–"}
                             </Link>
                           ) : (

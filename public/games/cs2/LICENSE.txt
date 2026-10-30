@@ -1,0 +1,16 @@
+Game icon: Counter-Strike 2 (cs2)
+
+Files:   icon.png (128 x 128, scaled down from a 512 x 512 PNG)
+Source:  supplied by Dennis Pohlmann (gameWE maintainer) on 2026-10-30;
+         the picture is the Counter-Strike game icon (soldier silhouette on
+         orange and blue) as Valve uses it for the game; original file
+         SHA-256 9fcceea2ec1c143cf99f098010545a6fe5e048c1560c25d3cb51770a872eecdf
+Author:  Valve Corporation (presumably)
+License: UNKNOWN. No license that allows passing the picture on is known;
+         it is most likely Valve's copyrighted artwork and trademark. It is
+         shipped on the maintainer's own decision. If the rights are not
+         cleared, replace icon.png with gameWE's own drawing (git history:
+         public/games/cs2/icon.svg) and run npm run game-icons.
+
+"Counter-Strike 2" is a trademark of Valve Corporation; gameWE is not
+affiliated with or endorsed by Valve.

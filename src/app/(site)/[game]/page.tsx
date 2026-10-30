@@ -5,13 +5,14 @@ import { LiveTable, NobodyOnline, ServerTable, serverValues } from "@/components
 import { Rich } from "@/components/rich";
 import { Section, Skeleton } from "@/components/ui";
 import { ServerLoadChart } from "@/components/graphics";
-import { everyDay, getDailyActivity, getHourlyActivity, getLivePlayers, getLiveMapPlayers, getMapServers, getServerLoads, getServers, getTotals } from "@/lib/data";
+import { everyDay, getDailyActivity, getGame, getHourlyActivity, getLivePlayers, getLiveMapPlayers, getMapServers, getServerLoads, getServers, getTotals } from "@/lib/data";
 import { dateFormat, fmtNum, fmtPct, localeOf, nowUnix, ratio } from "@/lib/format";
 import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
 import { AwardBoard, awardBoardKeep } from "@/components/award-board";
 import { GameEvents } from "@/components/game-events";
 import { MapGate } from "@/components/map-gate";
 import { mapGateProps } from "@/lib/consent-server";
+import { gameIconSrc } from "@/lib/game-icons";
 import { mapMarkers, serverMarkers } from "@/lib/map-markers";
 import { getSettings } from "@/lib/settings";
 import type { Totals } from "@/lib/data";
@@ -162,9 +163,9 @@ export default async function ServersPage({
 
 // The map of who is online right now and the ranking's servers.
 async function LiveMapBox({ game, style, t, lang }: { game: string; style: string; t: Dict; lang: Lang }) {
-  const [mapPlayers, mapServers, gate] = await Promise.all([getLiveMapPlayers(game), getMapServers(game), mapGateProps(style)]);
+  const [mapPlayers, mapServers, gate, ranking] = await Promise.all([getLiveMapPlayers(game), getMapServers(game), mapGateProps(style), getGame(game, true)]);
   const markers = mapMarkers(mapPlayers, game, t, lang);
-  const serverPins = serverMarkers(mapServers, game, t);
+  const serverPins = serverMarkers(mapServers, game, t, gameIconSrc(ranking?.realgame));
   return (
     <div className="box">
       <h4 className="map-title">{t.playerMapLive}</h4>

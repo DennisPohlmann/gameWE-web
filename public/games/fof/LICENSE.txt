@@ -1,0 +1,16 @@
+Game icon: Fistful of Frags (fof)
+
+Files:   icon.png (32 x 32, as supplied, edited by gameWE:
+         round logo: outside of the circle made transparent; the grey 1-px frame of the screenshot removed)
+Source:  supplied by Dennis Pohlmann (gameWE maintainer) on 2026-10-30;
+         the game's icon; original file SHA-256 c96b2f360af290592b6236b7a10aa5a0660170fc4fbac5a396823a91a09ccb75
+Author:  the Fistful of Frags Team (presumably)
+License: UNKNOWN. No license that allows passing the picture on is known;
+         it is most likely the copyrighted artwork and trademark of
+         the Fistful of Frags Team. It is shipped on the maintainer's own decision. If the
+         rights are not cleared, replace icon.png with gameWE's own drawing
+         (git history: public/games/fof/icon.svg) and run
+         npm run game-icons.
+
+"Fistful of Frags" is a trademark of the Fistful of Frags Team; gameWE is not affiliated with or
+endorsed by them.

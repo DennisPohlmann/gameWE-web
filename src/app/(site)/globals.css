@@ -229,6 +229,8 @@ tr.server-line .vac-mark.vac-insecure { color: color-mix(in srgb, #d32f2f 70%, v
 .langs a[aria-current] .lang-flag { box-shadow: 0 0 0 1px var(--accent), 0 1px 2px rgba(0, 0, 0, 0.3); }
 .flag-svg { position: relative; display: inline-block; width: 16px; height: 12px; vertical-align: -1px; background: no-repeat; background-size: 1600% 1700%; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18), 0 1px 1px rgba(0, 0, 0, 0.25); overflow: hidden; }
 .flag-svg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0) 51%, rgba(255, 255, 255, 0.06)); }
+/* The game's icon before a server name (public/games/<code>/icon.png). */
+.game-icon { display: inline-block; width: 16px; height: 16px; margin-right: 1px; vertical-align: -3px; }
 .lang-flag { display: block; width: 18px; height: 13px; }
 
 .cust-logo { padding-top: 20px; width: 95%; margin: 0 auto; text-align: center; }

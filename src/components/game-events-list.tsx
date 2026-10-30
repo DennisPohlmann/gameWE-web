@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { GameEventText, LiveSwitch, keyOf, useLiveRows, useLiveSwitch, type Flags } from "@/components/game-events-live";
-import { TableWrap } from "@/components/ui";
+import { GameIcon, TableWrap } from "@/components/ui";
 import { fmtDateTime } from "@/lib/format";
 import type { GameEvent } from "@/lib/history";
 import type { Lang } from "@/translations/languages";
@@ -26,6 +26,7 @@ export function GameEventsList({
   timeZone,
   live,
   withServer,
+  serverGame,
   initial,
   initialFlags,
   labels,
@@ -46,6 +47,8 @@ export function GameEventsList({
   timeZone: string;
   live: boolean;
   withServer: boolean;
+  // The ranking's base game: its icon stands before the server names.
+  serverGame?: string | null;
   initial: GameEvent[];
   initialFlags: Flags;
   labels: Labels;
@@ -73,7 +76,7 @@ export function GameEventsList({
                   <td className="wrap-cell">
                     <GameEventText e={e} game={game} flags={flags} evText={labels.evText} />
                   </td>
-                  {withServer ? <td className="hide-sm muted ev-name">{e.server || "-"}</td> : null}
+                  {withServer ? <td className="hide-sm muted ev-name">{e.server ? <><GameIcon realgame={serverGame} />{e.server}</> : "-"}</td> : null}
                   <td className="hide-sm muted ev-name">{e.map ?? "-"}</td>
                 </tr>
               ))}

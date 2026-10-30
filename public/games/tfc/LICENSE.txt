@@ -1,0 +1,16 @@
+Game icon: Team Fortress Classic (tfc)
+
+Files:   icon.png (32 x 32, as supplied, edited by gameWE:
+         round logo: outside of the circle made transparent; the grey 1-px frame of the screenshot removed)
+Source:  supplied by Dennis Pohlmann (gameWE maintainer) on 2026-10-30;
+         the game's icon; original file SHA-256 d3bebe3b9c418d51ceb9514a1b3a82233cc7ddf9928faacfaabed406e38ba3a9
+Author:  Valve Corporation (presumably)
+License: UNKNOWN. No license that allows passing the picture on is known;
+         it is most likely the copyrighted artwork and trademark of
+         Valve Corporation. It is shipped on the maintainer's own decision. If the
+         rights are not cleared, replace icon.png with gameWE's own drawing
+         (git history: public/games/tfc/icon.svg) and run
+         npm run game-icons.
+
+"Team Fortress Classic" is a trademark of Valve Corporation; gameWE is not affiliated with or
+endorsed by them.

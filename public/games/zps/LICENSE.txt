@@ -1,0 +1,16 @@
+Game icon: Zombie Panic! Source (zps)
+
+Files:   icon.png (32 x 32, as supplied, edited by gameWE:
+         grey 1-px frame of the screenshot removed)
+Source:  supplied by Dennis Pohlmann (gameWE maintainer) on 2026-10-30;
+         the game's icon; original file SHA-256 7ec78a6f8493df6842f765c21d80d1caeb01cba6f5195ec958f17a90c59716e6
+Author:  the Zombie Panic! Team (presumably)
+License: UNKNOWN. No license that allows passing the picture on is known;
+         it is most likely the copyrighted artwork and trademark of
+         the Zombie Panic! Team. It is shipped on the maintainer's own decision. If the
+         rights are not cleared, replace icon.png with gameWE's own drawing
+         (git history: public/games/zps/icon.svg) and run
+         npm run game-icons.
+
+"Zombie Panic! Source" is a trademark of the Zombie Panic! Team; gameWE is not affiliated with or
+endorsed by them.

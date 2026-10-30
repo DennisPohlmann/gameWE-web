@@ -253,6 +253,8 @@ td .name, .name { font-weight: 600; color: var(--text); }
 .game-tag.goldsrc { background: #8a6d3b; }
 .game-tag.source { background: #3d6f99; }
 .game-tag.source2 { background: #2e7d6b; }
+/* The game's icon before a server name (public/games/<code>/icon.png). */
+.game-icon { display: inline-block; width: 16px; height: 16px; margin-right: 6px; vertical-align: -3px; }
 .template-tag { background: #6b7385; }
 .bot-tag { display: inline-block; padding: 0 4px; border-radius: 4px; font-size: 9px; font-weight: 700; background: #6b7385; color: #fff; }
 .admin-rank { display: inline-flex; align-items: center; gap: 8px; }

@@ -4,6 +4,7 @@ import { AutoForm } from "@/components/auto-form";
 import { noAutofill } from "@/lib/autofill";
 import { PAGE_SIZES } from "@/lib/page-size";
 import { FLAG_CODES, flagPos } from "@/lib/flag-codes";
+import { gameIconSrc } from "@/lib/game-icons";
 import { gameKind } from "@/lib/games";
 import { shareText, winBarSplit } from "@/lib/shares";
 
@@ -66,6 +67,19 @@ export function GameTag({ realgame, long = false }: { realgame: string | null | 
       {long ? k.name : k.short}
     </span>
   ) : null;
+}
+
+// The game's icon (public/games/<code>/icon.png) before a server name, with
+// the game's name as tooltip; nothing for an unknown game.
+export function GameIcon({ realgame }: { realgame: string | null | undefined }) {
+  const src = gameIconSrc(realgame);
+  if (!src) return null;
+  return (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img className="game-icon" src={src} width={16} height={16} alt="" title={gameKind(realgame)?.name} loading="lazy" decoding="async" />{" "}
+    </>
+  );
 }
 
 // Horizontal bar for a share 0..1.

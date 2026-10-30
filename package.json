@@ -12,7 +12,8 @@
     "create-admin": "node scripts/create-admin.mjs",
     "templates": "node scripts/modern-templates.mjs",
     "shots": "node scripts/skin-shots.mjs",
-    "flags": "node scripts/flags-sprite.mjs"
+    "flags": "node scripts/flags-sprite.mjs",
+    "game-icons": "node scripts/game-icons.mjs"
   },
   "dependencies": {
     "leaflet": "^1.9.4",

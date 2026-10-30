@@ -1,0 +1,16 @@
+Game icon: Fortress Forever (ff)
+
+Files:   icon.png (32 x 32, as supplied, edited by gameWE:
+         dark background around the logo made transparent; the grey 1-px frame of the screenshot removed)
+Source:  supplied by Dennis Pohlmann (gameWE maintainer) on 2026-10-30;
+         the game's icon; original file SHA-256 f59ce3493fd4ea45d1bbc2fd1b564e920a7425da26965e75896179c55b3c68d6
+Author:  the Fortress Forever Team (presumably)
+License: UNKNOWN. No license that allows passing the picture on is known;
+         it is most likely the copyrighted artwork and trademark of
+         the Fortress Forever Team. It is shipped on the maintainer's own decision. If the
+         rights are not cleared, replace icon.png with gameWE's own drawing
+         (git history: public/games/ff/icon.svg) and run
+         npm run game-icons.
+
+"Fortress Forever" is a trademark of the Fortress Forever Team; gameWE is not affiliated with or
+endorsed by them.
