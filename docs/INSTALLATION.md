@@ -99,7 +99,7 @@ users:
 |------|---------|--------|
 | `gamewe` | collector | `SELECT, INSERT, UPDATE, DELETE` on all tables (PostgreSQL also the sequences) |
 | `gamewe_web` | website `DB_USER` | `SELECT` on all tables except `hlstats_Users`, `hlstats_Events_Rcon` and `hlstats_Events_Chat`; on `hlstats_Servers` without `rcon_password`, `log_secret` and `log_secret_changed` and on `hlstats_Events_Connects` without `ipAddress` (column rights, so `SELECT *` fails there); `SELECT` on `hlstats_gamewe_jobs` |
-| `gamewe_web_admin` | website `DB_ADMIN_USER` | `SELECT` on all tables; `INSERT, UPDATE, DELETE` on Options, Games, Servers, Clans, Weapons, Actions, Teams, Roles, Awards, Definition_Ranks_Ribbons and Users; on Players only `UPDATE` of `skill`, `hideranking` and `clan`; `INSERT` on `hlstats_gamewe_jobs` |
+| `gamewe_web_admin` | website `DB_ADMIN_USER` | `SELECT` on all tables; `INSERT, UPDATE, DELETE` on Options, Games, Servers, Clans, Weapons, Actions, Teams, Roles, Awards, Definition_Ranks_Ribbons, Definition_Ribbons_Classes (collector 1.5.2 or newer; older ones cannot copy the ribbon classes of a template into a new ranking) and Users; on Players only `UPDATE` of `skill`, `hideranking` and `clan`; `INSERT` on `hlstats_gamewe_jobs` |
 
 So the public pages can never read passwords, chat or IP addresses; chat and
 IPs in the admin area are read with `gamewe_web_admin`. The exact statements
