@@ -452,10 +452,11 @@ the single folder `<game>/` (e.g. `css/`).
 ```bash
 VERSION=1.2.0
 BASE=https://github.com/DennisPohlmann/gameWE-web-content/releases/download/v$VERSION
-curl -fLO "$BASE/gamewe-web-template-blue-$VERSION.tar.gz"
-curl -fLO "$BASE/gamewe-web-maps-css-$VERSION.tar.gz"
-curl -fLO "$BASE/SHA256SUMS"
-sha256sum --check --ignore-missing SHA256SUMS   # must print ": OK"
+for f in "gamewe-web-template-blue-$VERSION.tar.gz" "gamewe-web-maps-css-$VERSION.tar.gz"; do
+  curl -fLO "$BASE/$f"
+  curl -fLO "$BASE/$f.sha256"
+  sha256sum --check "$f.sha256"   # must print ": OK"
+done
 
 install -d -o root -g gamewe -m 0750 /var/lib/gamewe/web/templates /var/lib/gamewe/web/overviews
 tar -xzf "gamewe-web-template-blue-$VERSION.tar.gz" -C /var/lib/gamewe/web/templates
