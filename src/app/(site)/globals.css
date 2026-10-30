@@ -882,6 +882,27 @@ a.button { display: inline-block; text-decoration: none; }
 /* Live tables: "(Live data)" next to the heading, a switch on the right that
    pauses the updates (player page). */
 .live-note { font-weight: normal; opacity: 0.85; }
+/* Nobody on the server (live.tsx NobodyOnline): a bar in the skin's box
+   under the load graph, a stripe and an empty-seat icon in the skin's
+   accent, the notice and a muted line below it. */
+.live-empty { display: flex; align-items: center; gap: 12px; padding: 10px 12px; box-shadow: inset 3px 0 0 var(--accent); }
+.box + .live-empty, .section > .empty + .live-empty { border-top: 0; }
+.live-empty-icon {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  padding: 6px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  fill: none;
+  stroke: var(--accent-text);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.live-empty p { display: flex; flex-direction: column; gap: 2px; margin: 0; min-width: 0; }
+.live-empty b { color: var(--text); }
+.live-empty span { color: var(--muted); }
 .section-head h2 a.th-link { color: inherit; }
 /* Events page: the filter form, the live switch on the right. */
 .events-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; }

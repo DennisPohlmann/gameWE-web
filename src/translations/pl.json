@@ -130,6 +130,7 @@
   "online": "Online",
   "liveNow": "Teraz online",
   "nobodyOnline": "Nikt teraz nie gra.",
+  "nobodyOnlineHint": "Gracze pojawią się tutaj, gdy tylko ktoś dołączy.",
   "tracking": "Śledzimy <b>{players}</b> graczy (<b>{new}</b> nowych w 7 dni) z <b>{kills}</b> zabójstwami i <b>{hs}</b> headshotami ({hsPct}) na <b>{servers}</b> serwerach",
   "dailyAwards": "Nagrody dnia",
   "notAwarded": "Nie przyznano",

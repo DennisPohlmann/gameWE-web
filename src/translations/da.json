@@ -130,6 +130,7 @@
   "online": "Online",
   "liveNow": "Online nu",
   "nobodyOnline": "Ingen spiller lige nu.",
+  "nobodyOnlineHint": "Spillerne vises her, så snart nogen går ind.",
   "tracking": "Følger <b>{players}</b> spillere (<b>{new}</b> nye på 7 dage) med <b>{kills}</b> drab og <b>{hs}</b> headshots ({hsPct}) på <b>{servers}</b> servere",
   "dailyAwards": "Dagens priser",
   "notAwarded": "Ikke uddelt",

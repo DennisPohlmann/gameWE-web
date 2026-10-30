@@ -132,6 +132,7 @@
   "online": "Online",
   "liveNow": "Gerade online",
   "nobodyOnline": "Gerade spielt niemand.",
+  "nobodyOnlineHint": "Sobald jemand beitritt, erscheinen die Spieler hier.",
   "tracking": "Erfasst <b>{players}</b> Spieler (<b>{new}</b> neue in 7 Tagen) mit <b>{kills}</b> Kills und <b>{hs}</b> Headshots ({hsPct}) auf <b>{servers}</b> Servern",
   "dailyAwards": "Tagesawards",
   "notAwarded": "Nicht vergeben",

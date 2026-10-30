@@ -132,6 +132,7 @@
   "online": "Online",
   "liveNow": "Online now",
   "nobodyOnline": "Nobody is playing right now.",
+  "nobodyOnlineHint": "Players show up here as soon as someone joins.",
   "tracking": "Tracking <b>{players}</b> players (<b>{new}</b> new in 7 days) with <b>{kills}</b> kills and <b>{hs}</b> headshots ({hsPct}) on <b>{servers}</b> servers",
   "dailyAwards": "Daily awards",
   "notAwarded": "Not awarded",

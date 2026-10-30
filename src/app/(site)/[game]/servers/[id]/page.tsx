@@ -4,7 +4,7 @@ import { imageStyles } from "@/lib/image-theme";
 import { statsOrigin } from "@/lib/site-url";
 import { notFound, redirect } from "next/navigation";
 import { ServerLoadChart } from "@/components/graphics";
-import { LiveTable, ServerTable } from "@/components/live";
+import { LiveTable, NobodyOnline, ServerTable } from "@/components/live";
 import { PlayerCount } from "@/components/player-count";
 import { Empty, PlayerLink, Section, Stats, TableWrap } from "@/components/ui";
 import { getChat, getLivePlayers, getPlayerFlags, getServer, getServerLoad } from "@/lib/data";
@@ -66,7 +66,7 @@ export default async function ServerPage({ params }: Props) {
         ) : (
           <Empty>{t.noLoadYet}</Empty>
         )}
-        {live.length ? <LiveTable game={game} players={live} t={t} lang={lang} /> : <p>{t.nobodyOnline}</p>}
+        {live.length ? <LiveTable game={game} players={live} t={t} lang={lang} /> : <NobodyOnline t={t} />}
       </Section>
       <div>
         <Section title={t.overview}>

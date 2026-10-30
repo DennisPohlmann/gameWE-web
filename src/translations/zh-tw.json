@@ -130,6 +130,7 @@
   "online": "線上",
   "liveNow": "當前線上",
   "nobodyOnline": "當前沒有人在玩。",
+  "nobodyOnlineHint": "有人加入後，玩家會顯示在這裡。",
   "tracking": "正在統計 <b>{players}</b> 名玩家（7 天內新增 <b>{new}</b> 名），共 <b>{kills}</b> 次擊殺和 <b>{hs}</b> 次爆頭（{hsPct}），分佈在 <b>{servers}</b> 台伺服器上",
   "dailyAwards": "每日獎項",
   "notAwarded": "未頒發",

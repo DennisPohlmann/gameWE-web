@@ -130,6 +130,7 @@
   "online": "Online",
   "liveNow": "Nu online",
   "nobodyOnline": "Er speelt op dit moment niemand.",
+  "nobodyOnlineHint": "Spelers verschijnen hier zodra iemand meedoet.",
   "tracking": "<b>{players}</b> spelers gevolgd (<b>{new}</b> nieuw in 7 dagen) met <b>{kills}</b> kills en <b>{hs}</b> headshots ({hsPct}) op <b>{servers}</b> servers",
   "dailyAwards": "Dagprijzen",
   "notAwarded": "Niet uitgereikt",

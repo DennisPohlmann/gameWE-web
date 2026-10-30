@@ -159,6 +159,23 @@ export function ServerFlag({ code, lang }: { code: string | null | undefined; la
 
 // Players on one server, coloured by team like gameME's live stats: the first
 // team blue, the second red, everyone else (spectators, unassigned) grey.
+// In place of the live table while nobody is on the server: a bar in the
+// skin's box with an empty-seat icon, the notice and what will show up here.
+export function NobodyOnline({ t }: { t: Dict }) {
+  return (
+    <div className="box live-empty">
+      <svg className="live-empty-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="8" r="3.5" />
+        <path d="M5 20c0-3.9 3.1-6.5 7-6.5s7 2.6 7 6.5" />
+      </svg>
+      <p>
+        <b>{t.nobodyOnline}</b>
+        <span>{t.nobodyOnlineHint}</span>
+      </p>
+    </div>
+  );
+}
+
 export async function LiveTable({ game, players, t, lang }: { game: string; players: LivePlayer[]; t: Dict; lang: Lang }) {
   // Counter-Strike 2 logs no shots: no accuracy column.
   const [botLinks, shots] = await Promise.all([botProfiles(game), gameHasShots(game)]);
