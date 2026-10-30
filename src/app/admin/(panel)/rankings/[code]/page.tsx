@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Icon, type IconName } from "@/components/admin/icons";
 import { PageHead } from "@/components/admin/page-head";
+import { PageNav } from "@/components/admin/page-nav";
 import { GameTag } from "@/components/ui";
 import { entities } from "@/lib/admin-entities";
 import { adminDict } from "@/lib/admin-i18n";
@@ -88,17 +89,22 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
           ),
           sub: u.stActiveSub,
         };
-  // The cards of this page, for the jump links at the top.
-  const parts: [string, string][] = [
-    ...(isAdmin ? ([["settings", u.settings], ["servers", u.serversHere]] as [string, string][]) : []),
-    ["values", u.definitionsFrom],
+  // The cards of this page, for the jump bar at the top.
+  const parts: [string, string, IconName][] = [
     ...(isAdmin
       ? ([
-          ["bots", u.partBots],
-          ["vac", u.partVac],
-          ...(template ? [] : [["hall-of-fame", u.kpiReset]]),
-          ["maintenance", u.maintenance],
-        ] as [string, string][])
+          ["settings", u.settings, "gear"],
+          ["servers", u.serversHere, "server"],
+        ] as [string, string, IconName][])
+      : []),
+    ["values", u.definitionsFrom, "list"],
+    ...(isAdmin
+      ? ([
+          ["bots", u.partBots, "players"],
+          ["vac", u.partVac, "shield"],
+          ...(template ? [] : [["hall-of-fame", u.kpiReset, "clock"]]),
+          ["maintenance", u.maintenance, "reset"],
+        ] as [string, string, IconName][])
       : []),
   ];
 
@@ -140,13 +146,7 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
           text
         />
       </div>
-      <nav className="page-nav" aria-label={u.onThisPage}>
-        {parts.map(([id, l]) => (
-          <a key={id} href={`#${id}`}>
-            {l}
-          </a>
-        ))}
-      </nav>
+      <PageNav label={u.onThisPage} parts={parts} />
       {isAdmin ? <SettingsCard id={r.id} lang={lang} sp={sp} /> : null}
       {isAdmin ? <ServersCard id={r.id} code={r.code} lang={lang} sp={sp} /> : null}
       <section className="card" id="values">

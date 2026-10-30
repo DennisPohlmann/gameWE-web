@@ -417,6 +417,11 @@ select { padding-right: 28px; }
   .adm-bottom a.on { color: var(--accent-text); background: var(--accent-soft); }
   .adm-bottom a:hover { text-decoration: none; }
   .adm-main { padding: 16px 14px 96px; overflow-wrap: break-word; }
+  /* The jump bar in one row that scrolls sideways, below the 52 px top bar. */
+  .page-nav { top: 52px; flex-wrap: nowrap; overflow-x: auto; margin: 0 -14px 14px; padding: 8px 14px; border-radius: 0; border-left: 0; border-right: 0; scrollbar-width: none; }
+  .page-nav::-webkit-scrollbar { display: none; }
+  .page-nav-label { display: none; }
+  .adm-main .card[id] { scroll-margin-top: 116px; }
   h1, .page-head h1 { font-size: 21px; }
   .page-head { gap: 12px; }
   .page-head > div { flex-basis: 100%; }
@@ -525,10 +530,15 @@ a.kpi-link:hover { text-decoration: none; border-color: var(--accent-text); }
 .view-switch .adm-seg > a { padding: 9px 14px; font-size: 14px; }
 .view-switch .adm-seg .n { min-width: 22px; padding: 1px 7px; border-radius: 999px; background: var(--panel-2); color: var(--muted); font-size: 12px; text-align: center; }
 .view-switch .adm-seg > .on .n { background: var(--accent-text); color: var(--panel); }
-.page-nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 16px; }
-.page-nav a { padding: 5px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); color: var(--soft); font-size: 13px; font-weight: 600; }
+/* Jump bar of a ranking's page: below the top bar while scrolling, the card
+   in view marked (page-nav.tsx). */
+.page-nav { position: sticky; top: 56px; z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 16px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--panel) 94%, transparent); backdrop-filter: blur(8px); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06); }
+.page-nav-label { margin-right: 4px; color: var(--muted); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+.page-nav a { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--panel); color: var(--text); font-size: 14px; font-weight: 600; white-space: nowrap; }
+.page-nav a .i { width: 16px; height: 16px; color: var(--accent-text); }
 .page-nav a:hover { color: var(--accent-text); border-color: var(--accent-text); text-decoration: none; }
-.adm-main .card[id] { scroll-margin-top: 72px; }
+.page-nav a.on { background: var(--accent-soft); border-color: var(--accent-text); color: var(--accent-text); }
+.adm-main .card[id] { scroll-margin-top: 136px; }
 .group-head { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 26px 0 10px; }
 .todo.values { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 .todo.values li { border-bottom: 1px solid var(--line); }
