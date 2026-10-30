@@ -72,11 +72,9 @@ export async function HallOfFameCard({ game, lang, status }: { game: string; lan
       <header>
         <h2>{t.title}</h2>
         <span className="hof-links">
-          {s.entries ? (
-            <Link className="more" href={`/admin/rankings/${encodeURIComponent(game)}/hall-of-fame`}>
-              {t.edit}
-            </Link>
-          ) : null}
+          <Link className="more" href={`/admin/rankings/${encodeURIComponent(game)}/hall-of-fame`}>
+            {t.edit}
+          </Link>
           {s.entries || s.effective ? (
             <a className="more" href={`${basePath}/${encodeURIComponent(game)}/hall-of-fame`} target="_blank" rel="noopener">
               {t.view}

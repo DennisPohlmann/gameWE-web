@@ -564,7 +564,9 @@ What the admin area edits:
   `gamewe_reset_mode`; from the console `gamewe halloffame schedule -all
   [EVERY|off] -mode MODE`.
 - **Edit the hall of fame** (level 100, `/admin/rankings/<code>/hall-of-fame`,
-  "Edit entries" on the card; needs collector migration 16): every stored
+  "Hall of fame" in the menu of a ranking with servers and "Edit entries" on
+  the card, both also before the first reset, when the page says that the
+  first entries come with it; needs collector migration 16): every stored
   entry per period (place stored, place on the podium, name then and now,
   points, kills, removed / hidden / reserve). "Remove" (asks once more) takes
   one entry out, "Remove whole period" all of a period; both can be brought

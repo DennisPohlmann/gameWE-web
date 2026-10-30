@@ -29,6 +29,7 @@ export type NavText = Record<
   | "noRanking"
   | "noRankingSub"
   | "overview"
+  | "navHallOfFame"
   | "resetRanking"
   | "jobs"
   | "navWebsite"
@@ -246,7 +247,17 @@ export function AdminSidebar({
                 href={`/admin/rankings/${encodeURIComponent(current.code)}`}
                 icon="pulse"
                 label={t.overview}
-                on={seg === "rankings" && parts[2] === current.code}
+                on={seg === "rankings" && parts[2] === current.code && !parts[3]}
+              />
+            ) : null}
+            {/* Its hall of fame (entries and schedule), also before the first
+                reset; not for a template (no servers), which is never reset. */}
+            {current && isAdmin && current.servers > 0 ? (
+              <Item
+                href={`/admin/rankings/${encodeURIComponent(current.code)}/hall-of-fame`}
+                icon="trophy"
+                label={t.navHallOfFame}
+                on={seg === "rankings" && parts[2] === current.code && parts[3] === "hall-of-fame"}
               />
             ) : null}
             {isAdmin ? list("servers", "server", t.servers, current?.servers) : null}
