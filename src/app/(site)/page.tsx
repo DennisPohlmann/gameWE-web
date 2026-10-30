@@ -211,7 +211,7 @@ async function GeneralStatsSection({ t, lang }: { t: Dict; lang: Lang }) {
     rows ? everyDay(rows, 30).slice(0, -1).map((d) => (d.point ? value(d.point) : null)) : [];
   const playersLine = hourly?.players.some((v) => v !== null) ? hourly.players : perDay(daily, (r) => Number(r.players));
   const cards = [
-    { label: t.players, value: stats.players, sub: fill(t.gsPlayersNow, { n: fmtNum(stats.online, lang) }), line: playersLine, tip: t.gsTipPlayers },
+    { label: t.players, value: stats.players, sub: fill(t.gsPlayersNow, { n: fmtNum(stats.onlineWithBots, lang) }), line: playersLine, tip: t.gsTipPlayers },
     { label: t.clans, value: stats.clans, sub: fill(t.gsClansIn, { n: fmtNum(stats.clanRankings, lang) }), line: perDay(clanDays, (r) => Number(r.n)), tip: t.gsTipClans },
     { label: t.servers, value: stats.servers, sub: fill(t.gsServersActive, { n: fmtNum(stats.serversActive, lang) }), line: hourly?.servers ?? [], tip: t.gsTipServers },
     {

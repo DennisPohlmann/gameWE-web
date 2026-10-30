@@ -14,3 +14,11 @@ test("the heading counts real players and bots", () => {
   const all = sumCounts([playerCount(32, 30, 48), playerCount(32, 32, 48)]);
   assert.equal(all.real + all.bots, 64);
 });
+
+test("the general statistics' players card says how many play now with the bots", () => {
+  assert.match(home, /sub: fill\(t\.gsPlayersNow, \{ n: fmtNum\(stats\.onlineWithBots, lang\) \}\)/);
+  const data = readFileSync("src/lib/data.ts", "utf8");
+  assert.match(data, /onlineWithBots: sumCounts\(online\)\.real \+ sumCounts\(online\)\.bots,/);
+  // The API's playersOnline stays the real players.
+  assert.match(readFileSync("src/app/api/v1/stats/route.ts", "utf8"), /playersOnline: general\.online,/);
+});

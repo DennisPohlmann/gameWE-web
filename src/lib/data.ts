@@ -1956,7 +1956,8 @@ export type GeneralStats = {
   clanRankings: number;
   servers: number;
   serversActive: number;
-  online: number;
+  online: number; // real players on the servers now (API playersOnline)
+  onlineWithBots: number; // everyone on the servers now, bots included
   kills: number;
   headshots: number;
   lastKill: number | null;
@@ -2006,6 +2007,7 @@ export async function getGeneralStats(): Promise<GeneralStats> {
     servers: s.length,
     serversActive: online.filter((x) => x.real > 0).length,
     online: sumCounts(online).real,
+    onlineWithBots: sumCounts(online).real + sumCounts(online).bots,
     lastKill: k ? Number(k.t) : null,
   };
 }
