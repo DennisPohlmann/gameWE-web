@@ -26,6 +26,7 @@ const T = {
     entries: "Einträge in der Ruhmeshalle: {n} Perioden.",
     edit: "Einträge bearbeiten",
     view: "Ruhmeshalle ansehen",
+    viewNone: "Die Ruhmeshalle gibt es erst, wenn der erste geplante Reset dieses Rankings gelaufen ist.",
     saved: "Gespeichert.",
     errInput: "Nicht gespeichert: ungültige Eingabe.",
     errConfirm: "Nicht gespeichert: Bitte bestätigen, dass die Rangliste regelmäßig zurückgesetzt wird.",
@@ -50,6 +51,7 @@ const T = {
     entries: "Hall of fame entries: {n} periods.",
     edit: "Edit entries",
     view: "View hall of fame",
+    viewNone: "The hall of fame only exists once this ranking's first scheduled reset has run.",
     saved: "Saved.",
     errInput: "Not saved: invalid input.",
     errConfirm: "Not saved: please confirm that the ranking will be reset regularly.",
@@ -75,11 +77,16 @@ export async function HallOfFameCard({ game, lang, status }: { game: string; lan
           <Link className="more" href={`/admin/rankings/${encodeURIComponent(game)}/hall-of-fame`}>
             {t.edit}
           </Link>
-          {s.entries || s.effective ? (
+          {s.entries ? (
             <a className="more" href={`${basePath}/${encodeURIComponent(game)}/hall-of-fame`} target="_blank" rel="noopener">
               {t.view}
             </a>
-          ) : null}
+          ) : (
+            // Nothing to see before the first reset (as on the edit page).
+            <span className="more off" role="link" aria-disabled="true" tabIndex={0} title={t.viewNone} aria-label={`${t.view}: ${t.viewNone}`}>
+              {t.view}
+            </span>
+          )}
         </span>
       </header>
       {msg ? <p className={status === "saved" ? "notice" : "notice error"}>{msg}</p> : null}

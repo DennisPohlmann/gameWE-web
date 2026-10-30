@@ -15,9 +15,9 @@ const T = {
   de: {
     title: "Ruhmeshalle bearbeiten",
     intro:
-      "Hier lassen sich Einträge aus der Ruhmeshalle nehmen, z. B. einen Cheater. Die Spieler darunter rücken nach: Der Collector speichert die besten fünf (bis Version 0.19 drei), auf dem Podest stehen die ersten drei, die nicht entfernt und nicht versteckt sind. Gibt es weniger, bleibt der Platz leer. Die Sterne werden danach neu gezählt. Entfernte Einträge bleiben gespeichert und lassen sich zurückholen.",
+      "Hier lassen sich Einträge aus der Ruhmeshalle nehmen, z. B. einen Cheater. Die Spieler darunter rücken nach, auf dem Podest stehen die ersten drei. Entfernte Einträge bleiben gespeichert und lassen sich zurückholen.",
     old: "Der Collector ist noch nicht aktualisiert: Einträge lassen sich erst entfernen, wenn gamewe db migrate die Spalte removed angelegt hat (Collector-Migration 16).",
-    empty: "Noch keine Einträge: Die ersten kommen mit dem ersten geplanten Reset dieses Rankings (Zeitplan oben rechts).",
+    empty: "Noch keine Einträge: Die ersten kommen mit dem ersten geplanten Reset dieses Rankings (Knopf „Zeitplan“).",
     stored: "Gespeichert",
     shown: "Podest",
     player: "Spieler",
@@ -39,15 +39,16 @@ const T = {
     errInput: "Ungültige Eingabe.",
     errConfirm: "Bitte das Entfernen bestätigen.",
     view: "Ruhmeshalle ansehen",
+    viewNone: "Die Ruhmeshalle gibt es erst, wenn der erste geplante Reset dieses Rankings gelaufen ist.",
     settings: "Zeitplan",
     week: "KW {n}",
   },
   en: {
     title: "Edit hall of fame",
     intro:
-      "Take entries out of the hall of fame here, e.g. a cheater. The players below move up: the collector stores the best five (three up to version 0.19), the podium shows the first three that are neither removed nor hidden. With fewer the place stays empty. Stars are counted again. Removed entries stay stored and can be brought back.",
+      "Take entries out of the hall of fame here, e.g. a cheater. The players below move up, the podium shows the first three. Removed entries stay stored and can be brought back.",
     old: "The collector is not updated yet: entries can be removed once gamewe db migrate has added the column removed (collector migration 16).",
-    empty: "No entries yet: the first come with this ranking's first scheduled reset (schedule at the top right).",
+    empty: "No entries yet: the first come with this ranking's first scheduled reset (button \"Schedule\").",
     stored: "Stored",
     shown: "Podium",
     player: "Player",
@@ -69,6 +70,7 @@ const T = {
     errInput: "Invalid input.",
     errConfirm: "Please confirm the removal.",
     view: "View hall of fame",
+    viewNone: "The hall of fame only exists once this ranking's first scheduled reset has run.",
     settings: "Schedule",
     week: "Week {n}",
   },
@@ -124,9 +126,18 @@ export default async function HallOfFameEditPage({ params, searchParams }: { par
             <Link className="button" href={`${back}#hall-of-fame`}>
               {t.settings}
             </Link>
-            <a className="button" href={`${basePath}/${encodeURIComponent(code)}/hall-of-fame`} target="_blank" rel="noopener">
-              {t.view}
-            </a>
+            {periods.length ? (
+              <a className="button" href={`${basePath}/${encodeURIComponent(code)}/hall-of-fame`} target="_blank" rel="noopener">
+                {t.view}
+              </a>
+            ) : (
+              // Nothing to see before the first reset: greyed out, the
+              // reason on hover (a disabled button shows no tooltip in
+              // every browser) and for screen readers.
+              <span className="button" role="link" aria-disabled="true" tabIndex={0} title={t.viewNone} aria-label={`${t.view}: ${t.viewNone}`}>
+                {t.view}
+              </span>
+            )}
           </>
         }
       />

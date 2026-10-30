@@ -173,7 +173,8 @@ small, .small { font-size: 12.5px; }
 .button.danger, .form > button.button.danger { background: var(--panel); border-color: var(--bad); color: var(--bad); }
 .button.danger:hover { background: var(--bad-soft); }
 .button.small, .button.sm { padding: 5px 10px; font-size: 13px; }
-.button:disabled { opacity: 0.5; cursor: not-allowed; }
+.button:disabled, .button[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
+.button[aria-disabled="true"]:hover { border-color: var(--line-2); }
 .linkish { background: none; border: 0; padding: 0; color: var(--accent-text); font: inherit; cursor: pointer; text-align: left; }
 .linkish:hover { text-decoration: underline; }
 
@@ -190,6 +191,7 @@ small, .small { font-size: 12.5px; }
 .card > header, .section-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 13px 18px; border-bottom: 1px solid var(--line); }
 .card > header h2, .section-head h2 { font-size: 15px; margin: 0; }
 .card > header .more { margin-left: auto; font-size: 13px; }
+.card > header .more.off { color: var(--muted); opacity: 0.6; cursor: not-allowed; }
 .section-aside { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 /* Filter forms in a section head (chat, IPs): may shrink, a select with long
    ranking names must not push the page wider. */
