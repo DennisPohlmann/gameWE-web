@@ -130,7 +130,7 @@
   "online": "Online",
   "liveNow": "Nu online",
   "nobodyOnline": "Er speelt op dit moment niemand.",
-  "tracking": "<b>{players}</b> spelers gevolgd (<b>{new}</b> nieuw in 24 u) met <b>{kills}</b> kills en <b>{hs}</b> headshots ({hsPct}) op <b>{servers}</b> servers",
+  "tracking": "<b>{players}</b> spelers gevolgd (<b>{new}</b> nieuw in 7 dagen) met <b>{kills}</b> kills en <b>{hs}</b> headshots ({hsPct}) op <b>{servers}</b> servers",
   "dailyAwards": "Dagprijzen",
   "notAwarded": "Niet uitgereikt",
   "award": "Prijs",

@@ -17,6 +17,7 @@ import {
   getPlaceRanking,
   getRanking,
   getStateOptions,
+  NEW_PLAYER_DAYS,
   placeSorts,
   rankingSorts,
   type PlaceSort,
@@ -89,6 +90,9 @@ export default async function PlayersPage({
           state,
           city,
           inactive,
+          // New players: first connect at most NEW_PLAYER_DAYS days ago,
+          // newest first unless sorted otherwise.
+          newDays: view === "new" ? NEW_PLAYER_DAYS : undefined,
         }),
     placeList && placeKind
       ? getPlaceRanking({
@@ -281,6 +285,7 @@ export default async function PlayersPage({
         ) : rows.length ? (
           <>
             {inactive ? <p className="lead">{t.inactiveHint}</p> : null}
+            {view === "new" ? <p className="lead">{fill(t.newPlayersHint, { n: NEW_PLAYER_DAYS })}</p> : null}
             {local ? (
               <p className="lead">
                 <Flag code={country} />
@@ -303,7 +308,7 @@ export default async function PlayersPage({
             <Pager base={base} params={keep} page={page} pages={pages} total={total} rows={rowOptions} locale={localeOf(lang)} labels={t} />
           </>
         ) : (
-          <Empty>{q ? t.noResults : t.noData}</Empty>
+          <Empty>{q ? t.noResults : view === "new" ? fill(t.noNewPlayers, { n: NEW_PLAYER_DAYS }) : t.noData}</Empty>
         )}
       </Section>
     </>

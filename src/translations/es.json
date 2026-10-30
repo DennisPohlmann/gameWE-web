@@ -130,7 +130,7 @@
   "online": "En línea",
   "liveNow": "En línea ahora",
   "nobodyOnline": "Ahora mismo no juega nadie.",
-  "tracking": "Seguimos a <b>{players}</b> jugadores (<b>{new}</b> nuevos en 24 h) con <b>{kills}</b> bajas y <b>{hs}</b> headshots ({hsPct}) en <b>{servers}</b> servidores",
+  "tracking": "Seguimos a <b>{players}</b> jugadores (<b>{new}</b> nuevos en 7 días) con <b>{kills}</b> bajas y <b>{hs}</b> headshots ({hsPct}) en <b>{servers}</b> servidores",
   "dailyAwards": "Premios diarios",
   "notAwarded": "No otorgado",
   "award": "Premio",

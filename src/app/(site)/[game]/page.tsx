@@ -74,7 +74,7 @@ export default async function ServersPage({
     <Rich
       text={fill(t.tracking, {
         players: fmtNum(totals.players, lang),
-        new: fmtNum(totals.newPlayers, lang),
+        new: fmtNum(totals.newPlayersWeek, lang),
         kills: fmtNum(totals.kills, lang),
         hs: fmtNum(totals.headshots, lang),
         hsPct: fmtPct(ratio(totals.headshots, totals.kills), lang),

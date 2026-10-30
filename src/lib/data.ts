@@ -236,7 +236,13 @@ export async function getServer(id: number) {
   );
 }
 
-export type Totals = { players: number; newPlayers: number; kills: number; headshots: number; servers: number };
+// newPlayers: first connect in the last 24 hours (API), newPlayersWeek: in
+// the last NEW_PLAYER_DAYS days (the line on the ranking's page and the
+// "New players" list).
+export type Totals = { players: number; newPlayers: number; newPlayersWeek: number; kills: number; headshots: number; servers: number };
+
+// A player is new for this many days after the first connect.
+export const NEW_PLAYER_DAYS = 7;
 
 // Counted over all players of the ranking (both player tables, hidden and
 // banned ones too, bots left out; kills and headshots from the players, so
@@ -249,7 +255,7 @@ export function getTotals(game: string): Promise<Totals> {
 }
 
 async function loadTotals(game: string): Promise<Totals> {
-  const [p, k, fresh, s] = await Promise.all([
+  const [p, k, fresh, week, s] = await Promise.all([
     queryOne<{ n: number | string }>(rankingPlayersSql, [game, game, game, game]),
     queryOne<{ kills: number | string | null; headshots: number | string | null }>(rankingKillsSql, [game, game]),
     // From the few players of the last day (index first_connect), not by
@@ -259,11 +265,17 @@ async function loadTotals(game: string): Promise<Totals> {
        WHERE d.first_connect >= ? AND p.game = ?`,
       [nowUnix() - 86400, game],
     ),
+    queryOne<{ n: number }>(
+      `SELECT COUNT(*) AS n FROM hlstats_Players_Data d JOIN hlstats_Players p ON p.playerId = d.playerId
+       WHERE d.first_connect >= ? AND p.game = ? AND p.hideranking = 0`,
+      [nowUnix() - NEW_PLAYER_DAYS * 86400, game],
+    ),
     queryOne<{ servers: number }>(`SELECT COUNT(*) AS servers FROM hlstats_Servers WHERE game = ?`, [game]),
   ]);
   return {
     players: Math.max(0, Number(p?.n ?? 0)),
     newPlayers: Number(fresh?.n ?? 0),
+    newPlayersWeek: Number(week?.n ?? 0),
     kills: Number(k?.kills ?? 0),
     headshots: Number(k?.headshots ?? 0),
     servers: Number(s?.servers ?? 0),
@@ -588,6 +600,8 @@ async function loadRanking(opts: {
   // played for a while to hlstats_PlayersInactive (same columns) and back
   // when they return. They have no place in the ranking (no globalRank).
   inactive?: boolean;
+  // Only new players: first connect at most this many days ago.
+  newDays?: number;
 }) {
   const table = opts.inactive ? "hlstats_PlayersInactive" : "hlstats_Players";
   const where = [`p.game = ?`, `p.hideranking = 0`];
@@ -612,6 +626,11 @@ async function loadRanking(opts: {
     where.push(`LOWER(l.city) = ?`);
     params.push(opts.city.toLowerCase());
   }
+  if (opts.newDays) {
+    // From the start of the minute, so a cached page is the same for a minute.
+    where.push(`d.first_connect >= ?`);
+    params.push(Math.floor(nowUnix() / 60) * 60 - opts.newDays * 86400);
+  }
   const local = !!(opts.country || opts.state || opts.city);
   const joins = `LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
     LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id`;
@@ -626,12 +645,12 @@ async function loadRanking(opts: {
   // page of inactive players sorted by a column of the players table is
   // picked by playerId first and only its rows are joined.
   const order = `${rankingSorts[opts.sort]} ${dir}, p.playerId ${dir}`;
-  const narrow = opts.inactive && !opts.search && !local && rankingSorts[opts.sort].startsWith("p.");
+  const narrow = opts.inactive && !opts.search && !local && !opts.newDays && rankingSorts[opts.sort].startsWith("p.");
   const cols = `SELECT p.playerId, d.lastName AS name, p.skill, p.last_event, d.first_connect, p.connection_time,
               p.kills, ${await careerKills()} AS careerKills, p.deaths, p.headshots, p.shots, p.hits, l.flag, l.country`;
   // Both joins match at most one row, so without a filter on them the count
   // needs the players table only.
-  const countFrom = opts.search || local ? from : `FROM ${table} p WHERE ${where.join(" AND ")}`;
+  const countFrom = opts.search || local || opts.newDays ? from : `FROM ${table} p WHERE ${where.join(" AND ")}`;
   const countSql = `SELECT COUNT(*) AS n ${countFrom}`;
   const [rows, count] = await Promise.all([
     narrow
