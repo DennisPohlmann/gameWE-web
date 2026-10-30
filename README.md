@@ -268,10 +268,13 @@ against faked log packets, `sv_logsecret` (collector docs, CONFIG.md).
 
 Counter-Strike 2 sends its logs over HTTP: add to the collector's config
 (`listen:` in `~/gamewe/collector.yaml` or in the Compose file) an
-`http:` part with `enabled: true` and `port: 41338`, restart the collector,
-open TCP 41338 for the game servers and use
-`logaddress_add_http "http://<docker host>:41338/27015"` (the game port at
-the end) instead of `logaddress_add`; details in
+`http:` part with `enabled: true`, `port: 41338` and a random `token`,
+restart the collector, open TCP 41338 for the game servers, start CS2 with
+`-usercon` and put `log on`, `logaddress_delall_http` and
+`logaddress_add_http "http://<docker host>:41338/<token>/<game port>"`
+into `server.cfg` instead of `logaddress_add` (`<token>` is
+`listen.http.token`, the same for all servers; the game port as in the web
+admin); details in
 [Counter-Strike 2](https://github.com/DennisPohlmann/gameWE-collector/blob/main/docs/GAMES.md#counter-strike-2).
 
 For production put a reverse proxy with TLS in front of the web (bind it

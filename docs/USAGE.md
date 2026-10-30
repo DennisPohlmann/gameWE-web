@@ -637,8 +637,16 @@ What the admin area edits:
   Strike: Condition Zero, Day of Defeat: Source ...). A server can only be moved into a ranking of the same
   game; rankings without a known game are not checked. The game tag has
   the colour of its engine (GoldSrc, Source, Source 2). The form of a
-  Counter-Strike 2 server shows the `logaddress_add_http` line for its game
-  port and explains that CS2 has no log secret.
+  Counter-Strike 2 server shows its `server.cfg` lines (`log on`,
+  `logaddress_delall_http`,
+  `logaddress_add_http "http://<collector IP>:41338/<token>/<game port>"`)
+  with its game port filled in: `<token>` is `listen.http.token` of the
+  collector's config, one for all CS2 servers (not `sv_logsecret`), and the
+  port must be the game port exactly as entered in the form, since the
+  collector finds the server by sender IP and port (new servers within
+  about a minute). It also says that CS2 needs `-usercon` and that its log
+  secret is ignored; 404 in the collector's log means a wrong path or
+  token, 403 an IP and port that are no CS2 server of the admin.
 
 ## Health and monitoring
 

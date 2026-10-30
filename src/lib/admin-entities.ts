@@ -112,8 +112,8 @@ export const entities: Entity[] = [
     pk: "serverId",
     label: { de: "Server", en: "Servers" },
     help: {
-      de: "Der Collector nimmt nur Logs von Servern an, die hier eingetragen sind, und liest die Liste jede Minute neu. Auf dem Gameserver: logaddress_add <Collector-IP>:41337; Counter-Strike 2: logaddress_add_http \"http://<Collector-IP>:41338/<Spielport>\".",
-      en: "The collector only accepts logs from servers listed here and re-reads the list every minute. On the game server: logaddress_add <collector IP>:41337; Counter-Strike 2: logaddress_add_http \"http://<collector IP>:41338/<game port>\".",
+      de: "Der Collector nimmt nur Logs von Servern an, die hier eingetragen sind, und liest die Liste jede Minute neu. Auf dem Gameserver: logaddress_add <Collector-IP>:41337; Counter-Strike 2 (mit -usercon): logaddress_delall_http und logaddress_add_http \"http://<Collector-IP>:41338/<Token>/<Spielport>\" (Token: listen.http.token des Collectors, Spielport wie hier eingetragen).",
+      en: "The collector only accepts logs from servers listed here and re-reads the list every minute. On the game server: logaddress_add <collector IP>:41337; Counter-Strike 2 (with -usercon): logaddress_delall_http and logaddress_add_http \"http://<collector IP>:41338/<token>/<game port>\" (token: the collector's listen.http.token, the game port as entered here).",
     },
     fields: [
       {
