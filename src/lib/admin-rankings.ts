@@ -68,14 +68,14 @@ export async function assignServers(code: string, ids: number[]): Promise<number
   return res.affectedRows;
 }
 
-export type RankingSummary = { id: number; code: string; name: string; hidden: boolean; base: string | null; servers: number };
+export type RankingSummary = { id: number; code: string; name: string; hidden: boolean; base: string | null; servers: number; order: number };
 
 // Every ranking with its base game and number of servers, in display order
 // (admin menu, overview and the list of rankings).
 export async function rankingSummaries(): Promise<RankingSummary[]> {
   const [rows, servers, bases] = await Promise.all([
-    adminQuery<{ id: number; code: string; name: string; hidden: string | number }>(
-      `SELECT id, TRIM(code) AS code, name, hidden FROM hlstats_Games ORDER BY display_id, name`,
+    adminQuery<{ id: number; code: string; name: string; hidden: string | number; display_id: number | string }>(
+      `SELECT id, TRIM(code) AS code, name, hidden, display_id FROM hlstats_Games ORDER BY display_id, name`,
     ),
     adminQuery<{ game: string; n: number | string }>(`SELECT TRIM(game) AS game, COUNT(*) AS n FROM hlstats_Servers GROUP BY TRIM(game)`),
     rankingBaseGames(),
@@ -88,6 +88,7 @@ export async function rankingSummaries(): Promise<RankingSummary[]> {
     hidden: String(r.hidden) === "1",
     base: bases.get(r.code) ?? null,
     servers: count.get(r.code) ?? 0,
+    order: Number(r.display_id ?? 0),
   }));
 }
 

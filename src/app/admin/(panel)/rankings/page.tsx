@@ -74,6 +74,7 @@ export default async function RankingsPage({ searchParams }: { searchParams: Pro
           <table className="cards">
             <thead>
               <tr>
+                <th className="num ord">{u.colOrder}</th>
                 <th>{u.colRanking}</th>
                 <th>{u.colGame}</th>
                 <th className="num">{u.colServers}</th>
@@ -85,6 +86,9 @@ export default async function RankingsPage({ searchParams }: { searchParams: Pro
             <tbody>
               {rankings.map((r) => (
                 <tr key={r.code}>
+                  <td className="num ord" data-l={`${u.colOrder}:`}>
+                    {nf(r.order)}
+                  </td>
                   <td className="main">
                     <Link className="name" href={`/admin/rankings/${encodeURIComponent(r.code)}`}>
                       {r.name}

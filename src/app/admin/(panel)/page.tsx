@@ -125,6 +125,7 @@ export default async function AdminHome() {
           <table className="cards">
             <thead>
               <tr>
+                <th className="num ord">{u.colOrder}</th>
                 <th>{u.colRanking}</th>
                 <th>{u.colGame}</th>
                 <th className="num">{u.colServers}</th>
@@ -136,6 +137,9 @@ export default async function AdminHome() {
             <tbody>
               {active.map((r) => (
                 <tr key={r.code}>
+                  <td className="num ord" data-l={`${u.colOrder}:`}>
+                    {nf(r.order)}
+                  </td>
                   <td className="main">
                     <span className="name">{r.name}</span> <span className="subt">{r.code}</span>
                   </td>

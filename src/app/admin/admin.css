@@ -244,6 +244,8 @@ td { padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: m
 tbody tr:last-child td { border-bottom: 0; }
 tbody tr:hover td { background: var(--panel-2); }
 th.num, td.num, .num { text-align: right; font-variant-numeric: tabular-nums; }
+/* The order number (display_id) of rankings and servers: a narrow first column. */
+th.ord, td.ord { width: 1%; white-space: nowrap; }
 td .name, .name { font-weight: 600; color: var(--text); }
 .subt { font-size: 12px; color: var(--muted); }
 .card table, .section table { border-radius: 0 0 var(--radius) var(--radius); }
@@ -465,6 +467,9 @@ select { padding-right: 28px; }
   table.cards td.main .subt { display: inline; margin-left: 6px; }
   table.cards td.end { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); }
   table.cards td:empty { display: none; }
+  /* The order number comes first on desktop, right after the name on a card. */
+  table.cards tr:has(> td.ord) > td.main { order: -2; }
+  table.cards td.ord { order: -1; }
   /* Rows with a form instead of an end button: the form gets its own full
      line under the name (ranking servers: move-to select + button). */
   table.cards.stack tr { padding-right: 14px; }

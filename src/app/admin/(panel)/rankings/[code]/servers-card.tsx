@@ -30,8 +30,9 @@ export async function ServersCard({ id, code, lang, sp }: { id: number; code: st
       act_map: string | null;
       act_players: number;
       max_players: number;
+      display_id: number;
     }>(
-      `SELECT serverId, name, address, port, publicaddress, act_map, act_players, max_players FROM hlstats_Servers WHERE TRIM(game) = ? ORDER BY display_id, serverId`,
+      `SELECT serverId, name, address, port, publicaddress, act_map, act_players, max_players, display_id FROM hlstats_Servers WHERE TRIM(game) = ? ORDER BY display_id, serverId`,
       [code],
     ),
     allServers(),
@@ -70,6 +71,7 @@ export async function ServersCard({ id, code, lang, sp }: { id: number; code: st
           <table className="cards stack">
             <thead>
               <tr>
+                <th className="num ord">{u.colOrder}</th>
                 <th>{label}</th>
                 <th>{u.colAddress}</th>
                 <th>{u.colMap}</th>
@@ -81,6 +83,9 @@ export async function ServersCard({ id, code, lang, sp }: { id: number; code: st
             <tbody>
               {mine.map((s) => (
                 <tr key={s.serverId}>
+                  <td className="num ord" data-l={`${u.colOrder}:`}>
+                    {nf(Number(s.display_id ?? 0))}
+                  </td>
                   <td className="main wrap-cell">
                     <Link className="name" href={`/admin/servers/${s.serverId}?returnTo=${returnTo}`}>
                       {s.name || `${s.address}:${s.port}`}
