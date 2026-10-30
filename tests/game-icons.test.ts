@@ -1,18 +1,18 @@
-// Game icons before the server names: every base game of games.ts has
+// Game icons before the server names: every supported base game of games.ts has
 // public/games/<code>/icon.png (a PNG of at least 32 x 32 px) and a
 // LICENSE.txt that names source and license, and only known games get an
-// icon URL. Run with `npm test`.
+// icon URL (no retired game). Run with `npm test`.
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { test } from "node:test";
 import { GAME_ICON_CREDITS, isOwnDrawing } from "../src/lib/game-icon-credits.ts";
 import { gameIconSrc } from "../src/lib/game-icons.ts";
-import { GAME_KINDS } from "../src/lib/games.ts";
+import { GAME_KINDS, SUPPORTED_GAMES } from "../src/lib/games.ts";
 
 const dir = "public/games";
 
 test("every game has an icon of at least 32 x 32 px and a license file", () => {
-  for (const code of Object.keys(GAME_KINDS)) {
+  for (const code of SUPPORTED_GAMES) {
     const png = readFileSync(`${dir}/${code}/icon.png`);
     assert.equal(png.subarray(1, 4).toString("latin1"), "PNG", `${code}: not a PNG`);
     const w = png.readUInt32BE(16);
@@ -25,7 +25,7 @@ test("every game has an icon of at least 32 x 32 px and a license file", () => {
 });
 
 test("no icon folder without a game", () => {
-  for (const code of readdirSync(dir)) assert.ok(Object.hasOwn(GAME_KINDS, code), `public/games/${code} is no game of games.ts`);
+  for (const code of readdirSync(dir)) assert.ok(SUPPORTED_GAMES.includes(code), `public/games/${code} is no supported game of games.ts`);
 });
 
 test("the image credits (/licenses, THIRD-PARTY-LICENSES.md) match every LICENSE.txt", () => {
@@ -42,5 +42,5 @@ test("the image credits (/licenses, THIRD-PARTY-LICENSES.md) match every LICENSE
 test("only known games get an icon URL", () => {
   assert.equal(gameIconSrc("css"), "/games/css/icon.png");
   assert.equal(gameIconSrc(" CS2 "), "/games/cs2/icon.png");
-  for (const g of [null, undefined, "", "unknown", "../flags", "constructor", "__proto__"]) assert.equal(gameIconSrc(g), null);
+  for (const g of [null, undefined, "", "unknown", "../flags", "constructor", "__proto__", "tfc", "csp"]) assert.equal(gameIconSrc(g), null);
 });

@@ -72,7 +72,7 @@ const ASSETS: Row[] = [
   ["Boltobserv (boltgolt, simpleradar)", "https://github.com/boltgolt/boltobserv", "GPL-3.0", "Vorlage der CS2-Kartenbilder unter der Heatmap (neu gezeichnet)", "Source of the CS2 map pictures under the heatmap (redrawn)"],
   ["Counter-Strike, CS:GO, CS:S (Valve)", "https://www.valvesoftware.com", "Valve", "Kartenlayouts, Radarbilder (CS:GO) und Kalibrierwerte als Vorlage der neu gezeichneten Kartenbilder", "Map layouts, radar pictures (CS:GO) and calibration values the redrawn map pictures are based on"],
   ["Team Fortress 2, Day of Defeat: Source, Half-Life 2 Deathmatch (Valve)", "https://www.valvesoftware.com", "Valve", "Kartenlayouts der aus den Kartendateien gezeichneten Kartenbilder", "Map layouts of the map pictures drawn from the map files"],
-  ["Insurgency, No More Room in Hell, Fistful of Frags, Zombie Panic! Source", "https://store.steampowered.com", "New World Interactive, NMRiH Team, FoF Team, Zombie Panic Team", "Kartenlayouts der aus den Kartendateien gezeichneten Kartenbilder", "Map layouts of the map pictures drawn from the map files"],
+  ["No More Room in Hell, Fistful of Frags, Zombie Panic! Source", "https://store.steampowered.com", "NMRiH Team, FoF Team, Zombie Panic Team", "Kartenlayouts der aus den Kartendateien gezeichneten Kartenbilder", "Map layouts of the map pictures drawn from the map files"],
 ];
 
 const EDIT: Record<IconEdit, [string, string]> = {

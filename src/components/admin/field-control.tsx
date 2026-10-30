@@ -31,7 +31,7 @@ export function FieldControl({
     return (
       <select {...noAutofill} id={id} name={f.name} defaultValue={value === null || value === undefined ? "" : String(value)} required={f.required}>
         {!f.required || value === undefined ? <option value="" /> : null}
-        {opts.map(([v, l]) => (
+        {opts.filter(([v]) => !f.keepOnly?.includes(v) || v === String(value ?? "")).map(([v, l]) => (
           <option key={v} value={v}>
             {l}
           </option>

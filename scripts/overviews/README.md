@@ -4,7 +4,7 @@
 19-21: CS:S, DoD:S, HL2DM, TF2, ...) and writes its calibration for
 `overviews/` (see [overviews/README.md](../../overviews/README.md)). The
 built-in pictures of `overviews/css/`, `dods/`, `fof/`, `hl2mp/`,
-`insurgency/`, `nmrih/`, `tf/` and `zps/` are made with it from the stock
+`nmrih/`, `tf/` and `zps/` are made with it from the stock
 maps of the games' dedicated servers.
 
 How it works: the floors are the upward faces of the map (displacements
@@ -26,7 +26,7 @@ python3 -I scripts/overviews/radar.py <map>.bsp <map>.nav <map>.png <map>.json [
   and solid wall entities (`func_brush`, `func_wall`). Rarely walked spots
   behind ladders or lifts may be missing, and a few maps get an area too
   many; the calibration stays exact. A `.nav` that cannot be read (e.g.
-  Insurgency's and NMRiH's newer format) is handled the same way.
+  NMRiH's newer format) is handled the same way.
 - `run_all.py <bsp folder> <out folder> [workers]` draws every `<game>/<map>.bsp`
   below the first folder (with `<map>.nav` next to it, if there is one) into
   `<out folder>/<game>/`, several at a time; pictures that exist are kept.

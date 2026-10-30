@@ -203,6 +203,8 @@ export async function saveRow(e: Entity, id: string | null, form: Pick<FormData,
       const s = secretFormValue(form.get(f.name), form.get(`${f.name}__clear`));
       v = s === undefined || s === "" ? s : await parseValue(f, s);
     } else v = await parseValue(f, form.get(f.name));
+    // A keepOnly choice (a retired game) may stay, but not be newly chosen.
+    if (v !== undefined && f.keepOnly?.includes(String(v)) && (id === null || String((await getRow(e, id))?.[f.name] ?? "") !== String(v))) throw new InputError(f.name);
     if (v !== undefined) {
       values[f.name] = v;
       if (f.changedAt) values[f.changedAt] = Math.floor(Date.now() / 1000);

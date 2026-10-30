@@ -20,7 +20,7 @@ map they are. The site reads two folders, like the design templates:
     lower level), drawn from the map files themselves by
     `scripts/overviews/radar.py`;
   - `tf/` (Team Fortress 2, 228 maps), `dods/` (Day of Defeat: Source, 9),
-    `hl2mp/` (Half-Life 2 Deathmatch, 7), `insurgency/` (48), `nmrih/`
+    `hl2mp/` (Half-Life 2 Deathmatch, 7), `nmrih/`
     (No More Room in Hell, 34), `fof/` (Fistful of Frags, 34) and `zps/`
     (Zombie Panic! Source, 27): the stock maps of the games' dedicated
     servers, drawn the same way (test, training and background maps left

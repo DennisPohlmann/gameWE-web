@@ -349,6 +349,18 @@ tag (CS:CZ, in the GoldSrc colour) and show the same pages as Counter-Strike
 1.6, including the CT/T win ratio. The collector gives czero a copy of the
 cstrike definitions; the AMX Mod X plugin `gamewe_cstrike` runs on both.
 
+## Retired games
+
+Team Fortress Classic (`tfc`), Natural Selection (`ns`), Insurgency
+(`insurgency`), Fortress Forever (`ff`) and CSPromod (`csp`) are no longer
+supported. The admin area no longer offers them as the game of a ranking or
+as a template, and their servers get no game icon. A ranking that already
+has one of them keeps it, with its name, tag, players and history; the
+admin form keeps the value (marked "no longer supported") and its servers
+still cannot be moved to a ranking of another game. The built-in Insurgency
+map pictures are gone; put your own into `/var/lib/gamewe/web/overviews/`
+(see [overviews/README.md](overviews/README.md)) if you still need them.
+
 ## Credits
 
 The Counter-Strike 2 support follows HLstatsX:CE by lovasatt

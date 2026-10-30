@@ -1,4 +1,4 @@
-import { GAME_KINDS } from "./games";
+import { GAME_KINDS, RETIRED_GAMES } from "./games";
 import { canonicalIp } from "./ip";
 import { isLogSecret } from "./log-secret";
 
@@ -18,6 +18,9 @@ export type Field = {
   // flag = enum('0','1') column, bool = tinyint 0/1 column.
   // password = stored as a hash; secret = stored as is but never read back into a page.
   options?: [string, L | string][] | "games" | "clans";
+  // select only: choices that stay only while they are the row's value (a
+  // retired game): not offered otherwise, and refused when newly chosen.
+  keepOnly?: string[];
   inList?: boolean;
   required?: boolean;
   readonly?: boolean; // shown, never written
@@ -90,7 +93,14 @@ export const entities: Entity[] = [
         label: { de: "Spiel", en: "Game" },
         type: "select",
         optional: true,
-        options: [["", { de: "– wie die Vorlage –", en: "– as the template –" }], ...Object.entries(GAME_KINDS).map(([k, g]): [string, string] => [k, `${g.name} (${k})${g.limited ? " – eingeschränkt / limited" : ""}`])],
+        options: [
+          ["", { de: "– wie die Vorlage –", en: "– as the template –" }],
+          ...Object.entries(GAME_KINDS).map(([k, g]): [string, string] => [
+            k,
+            `${g.name} (${k})${g.retired ? " – nicht mehr unterstützt / no longer supported" : g.limited ? " – eingeschränkt / limited" : ""}`,
+          ]),
+        ],
+        keepOnly: RETIRED_GAMES,
         inList: true,
         help: {
           de: "Das Spiel hinter der Rangliste. Der Collector liest daraus das Logformat, die Webseite zeigt es als Kennzeichen an. Leer lassen übernimmt es aus der Vorlage.",

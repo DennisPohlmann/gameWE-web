@@ -9,7 +9,7 @@ import { purgeTokens } from "./api-tokens";
 import { LEVEL_ADMIN, type AdminUser } from "./auth";
 import { steamKey } from "./config";
 import { adminExec, adminQuery, upsert } from "./db";
-import { sameBaseGame } from "./games";
+import { RETIRED_GAMES, sameBaseGame } from "./games";
 import { MAX_EVERY, parseSchedule, scheduleValue } from "./hall-period";
 import { invalidateHallOfFame } from "./hall-of-fame";
 import { headerOrder } from "./header-links";
@@ -109,6 +109,11 @@ export async function saveEntity(a: Actor, e: Entity, id: string | null, form: F
       const other = await otherServerAt(address, port, id);
       if (other !== null) throw new OpError("duplicate", { dup: String(other) });
     }
+  }
+  // A new ranking does not copy a retired game (its realgame would follow).
+  if (e.key === "games" && id === null) {
+    const template = String(form.get("template") ?? "");
+    if (template && RETIRED_GAMES.includes((await rankingBaseGames()).get(template) ?? "")) throw new OpError("field", { field: "template" });
   }
   let saved: string;
   try {
