@@ -43,7 +43,9 @@ export default async function LoginPage({
           ? a.blocked
           : error === "expired" || (step === "code" && !pending)
             ? a.totpExpired
-            : null;
+            : error === "idle"
+              ? a.idleLogout
+              : null;
   return (
     <div className="adm-login">
     <div className="login">

@@ -2,6 +2,7 @@ import type { L } from "./admin-entities";
 import { FLAG_CODES } from "./flag-codes";
 import { LINK_SLOTS } from "./header-links";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZES } from "./page-size";
+import { IDLE_DEFAULT_MINUTES, IDLE_MAX_MINUTES, IDLE_MIN_MINUTES } from "./admin-idle";
 import { LANGUAGES } from "../translations/languages";
 
 // Header links: validation and order live in lib/header-links.ts.
@@ -35,7 +36,7 @@ export type Setting = {
 };
 
 // One page of the settings (/admin/settings/<id>) in one area of the menu.
-export type SettingArea = "website" | "services" | "collector";
+export type SettingArea = "website" | "services" | "collector" | "admin";
 export type SettingGroup = { id: string; area: SettingArea; title: L; help?: L; items: Setting[] };
 
 const TS = { key: "gamewe_voice_type", value: "teamspeak" };
@@ -496,6 +497,36 @@ const definitions: Omit<SettingGroup, "area">[] = [
       },
     ],
   },
+  {
+    id: "admin",
+    title: { de: "Admin-Bereich", en: "Admin area" },
+    items: [
+      {
+        key: "gamewe_admin_auto_logout",
+        label: { de: "Automatisch abmelden", en: "Sign out automatically" },
+        type: "bool",
+        def: "1",
+        minLevel: 100,
+        help: {
+          de: "Meldet im Admin-Bereich nach der eingestellten Zeit ohne Aktivität (Maus, Tastatur, Scrollen) ab. Gilt für alle Admins und auch für ein vergessenes offenes Fenster. Standard: an.",
+          en: "Signs out of the admin area after the time set below without activity (mouse, keyboard, scrolling). Applies to every admin, also to a window left open. Default: on.",
+        },
+      },
+      {
+        key: "gamewe_admin_logout_minutes",
+        label: { de: "Abmelden nach (Minuten)", en: "Sign out after (minutes)" },
+        type: "number",
+        def: String(IDLE_DEFAULT_MINUTES),
+        min: IDLE_MIN_MINUTES,
+        max: IDLE_MAX_MINUTES,
+        minLevel: 100,
+        help: {
+          de: `Minuten ohne Aktivität bis zur Abmeldung, ${IDLE_MIN_MINUTES} bis ${IDLE_MAX_MINUTES}; gilt nur, wenn „Automatisch abmelden“ an ist. Standard: ${IDLE_DEFAULT_MINUTES}.`,
+          en: `Minutes without activity until the sign-out, ${IDLE_MIN_MINUTES} to ${IDLE_MAX_MINUTES}; only while "Sign out automatically" is on. Default: ${IDLE_DEFAULT_MINUTES}.`,
+        },
+      },
+    ],
+  },
 ];
 
 const byKey = new Map(definitions.flatMap((g) => g.items).map((s) => [s.key, s]));
@@ -585,6 +616,16 @@ export const settingGroups: SettingGroup[] = [
       "gamewe_player_reset",
       "gamewe_player_reset_cooldown",
     ),
+  },
+  {
+    id: "admin",
+    area: "admin",
+    title: { de: "Admin-Bereich", en: "Admin area" },
+    help: {
+      de: "Einstellungen für den Admin-Bereich selbst. Nur Admins mit Level 100 ändern sie.",
+      en: "Settings of the admin area itself. Only admins with level 100 change them.",
+    },
+    items: pick("gamewe_admin_auto_logout", "gamewe_admin_logout_minutes"),
   },
 ];
 

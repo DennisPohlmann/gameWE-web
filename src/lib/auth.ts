@@ -9,6 +9,8 @@ import { basePath } from "./base-path";
 import { clientIp } from "./client-ip";
 import { adminExec, adminQuery } from "./db";
 import { readSecret, secondFactor } from "./totp";
+import { idleLeft } from "./admin-idle";
+import { getSettings } from "./settings";
 
 // Admin accounts are the rows of hlstats_Users (username, password, acclevel).
 // New passwords are stored as scrypt hashes; old HLstatsX MD5 hashes still
@@ -216,15 +218,71 @@ export async function loginCode(code: string): Promise<"ok" | "code" | "expired"
   return "ok";
 }
 
-async function startSession(username: string, secret: string) {
-  const payload = Buffer.from(JSON.stringify({ u: username, exp: Date.now() + SESSION_HOURS * 3600_000 })).toString("base64url");
+// The session cookie: user, end of the session (12 hours after the sign-in)
+// and the time of the last activity for the automatic sign-out (a).
+type SessionData = { u: string; exp: number; a: number };
+
+async function writeSession(data: SessionData, secret: string) {
+  const payload = Buffer.from(JSON.stringify(data)).toString("base64url");
   (await cookies()).set(COOKIE, `${payload}.${sign(payload, secret)}`, {
     httpOnly: true,
     sameSite: "strict",
     secure: await cookieSecure(),
     path: basePath || "/",
-    maxAge: SESSION_HOURS * 3600,
+    maxAge: Math.max(1, Math.floor((data.exp - Date.now()) / 1000)),
   });
+}
+
+async function startSession(username: string, secret: string) {
+  const now = Date.now();
+  await writeSession({ u: username, exp: now + SESSION_HOURS * 3600_000, a: now }, secret);
+}
+
+// The checked cookie of the session, or null. A cookie from before the
+// automatic sign-out has no time of the last activity: it counts from the
+// sign-in.
+async function readSession(secret: string): Promise<SessionData | null> {
+  const raw = (await cookies()).get(COOKIE)?.value;
+  if (!raw) return null;
+  const [payload, mac] = raw.split(".");
+  if (!payload || !mac) return null;
+  const want = Buffer.from(sign(payload, secret));
+  const got = Buffer.from(mac);
+  if (want.length !== got.length || !timingSafeEqual(want, got)) return null;
+  let data: { u?: unknown; exp?: unknown; a?: unknown };
+  try {
+    data = JSON.parse(Buffer.from(payload, "base64url").toString());
+  } catch {
+    return null;
+  }
+  if (typeof data.u !== "string" || !data.u || typeof data.exp !== "number" || data.exp < Date.now()) return null;
+  const a = typeof data.a === "number" ? data.a : data.exp - SESSION_HOURS * 3600_000;
+  return { u: data.u, exp: data.exp, a };
+}
+
+// Milliseconds until the automatic sign-out of this session (Infinity when
+// it is off), or null without a valid session.
+export async function sessionIdleLeft(): Promise<number | null> {
+  const secret = adminSecret();
+  if (!secret) return null;
+  const s = await readSession(secret);
+  if (!s) return null;
+  return idleLeft(s.a, (await getSettings()).adminIdleMinutes, Date.now());
+}
+
+// Activity on an admin page: the time of the last activity becomes now.
+// Only a session that is still valid and not idle too long; the end of the
+// session stays as it was. Returns the milliseconds left as sessionIdleLeft.
+export async function touchSession(): Promise<number | null> {
+  const secret = adminSecret();
+  if (!secret) return null;
+  const s = await readSession(secret);
+  if (!s || !(await currentAdmin())) return null;
+  const minutes = (await getSettings()).adminIdleMinutes;
+  const now = Date.now();
+  if (idleLeft(s.a, minutes, now) <= 0) return 0;
+  await writeSession({ ...s, a: now }, secret);
+  return idleLeft(now, minutes, now);
 }
 
 export async function logout() {
@@ -236,20 +294,11 @@ export async function logout() {
 // Once per request (React cache): layouts, metadata and page all ask.
 export const currentAdmin = cache(async (): Promise<AdminUser | null> => {
   const secret = adminSecret();
-  const raw = (await cookies()).get(COOKIE)?.value;
-  if (!secret || !raw) return null;
-  const [payload, mac] = raw.split(".");
-  if (!payload || !mac) return null;
-  const want = Buffer.from(sign(payload, secret));
-  const got = Buffer.from(mac);
-  if (want.length !== got.length || !timingSafeEqual(want, got)) return null;
-  let data: { u?: string; exp?: number };
-  try {
-    data = JSON.parse(Buffer.from(payload, "base64url").toString());
-  } catch {
-    return null;
-  }
-  if (!data.u || !data.exp || data.exp < Date.now()) return null;
+  if (!secret) return null;
+  const data = await readSession(secret);
+  if (!data) return null;
+  // Signed out after too long without activity (Settings → Admin area).
+  if (idleLeft(data.a, (await getSettings()).adminIdleMinutes, Date.now()) <= 0) return null;
   // Re-read the account so a deleted or demoted user loses access at once.
   const [user] = await adminQuery<AdminUser>(`SELECT username, acclevel FROM hlstats_Users WHERE username = ?`, [data.u]);
   return user && user.acclevel >= LEVEL_MIN ? user : null;

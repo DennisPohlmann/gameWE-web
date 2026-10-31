@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { adminThemeAction, logoutAction } from "../actions";
 import { Icon } from "@/components/admin/icons";
+import { IdleLogout } from "@/components/admin/idle-logout";
 import { AdminSidebar, AreaTabs, Logo, type NavText } from "@/components/admin/nav";
 import { entities } from "@/lib/admin-entities";
 import { adminDict } from "@/lib/admin-i18n";
@@ -12,6 +13,7 @@ import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { basePath } from "@/lib/base-path";
 import { gameKind } from "@/lib/games";
 import { fill, getAdminLang, getDict } from "@/lib/i18n";
+import { getSettings } from "@/lib/settings";
 import { releasePage } from "@/lib/update-version";
 import { updateStatus } from "@/lib/updates";
 import { webRuntime } from "@/lib/runtime";
@@ -22,7 +24,7 @@ import { runtimeSuffix } from "@/lib/runtime-label";
 // by the checkbox #adm-nav without script) and a bottom bar on phones.
 export default async function PanelLayout({ children }: { children: ReactNode }) {
   const user = await requireAdmin();
-  const [{ t: site }, lang, theme, rankings, status] = await Promise.all([getDict(), getAdminLang(), getAdminTheme(), rankingSummaries(), updateStatus()]);
+  const [{ t: site }, lang, theme, rankings, status, settings] = await Promise.all([getDict(), getAdminLang(), getAdminTheme(), rankingSummaries(), updateStatus(), getSettings()]);
   const a = adminDict(lang);
   const u = a.ui;
   const label = (key: string) => entities.find((e) => e.key === key)?.label[lang] ?? key;
@@ -158,6 +160,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
       <Suspense>
         <AreaTabs t={text} className="adm-bottom" />
       </Suspense>
+      <IdleLogout minutes={settings.adminIdleMinutes} base={basePath} />
     </>
   );
 }

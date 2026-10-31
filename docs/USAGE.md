@@ -379,6 +379,19 @@ After 10 failed sign-ins an IP address is blocked for 15 minutes. The session
 cookie is `HttpOnly`, `SameSite=Strict` and `Secure` behind HTTPS (set
 `ADMIN_COOKIE_SECURE=true` if the proxy does not send `X-Forwarded-Proto`).
 
+The admin area signs out automatically after 10 minutes without activity
+(mouse, keyboard, touch, scrolling); the sign-in page then says why.
+Settings → Admin area (level 100) turns it off or sets the time (1 to 1440
+minutes, `gamewe_admin_auto_logout`, `gamewe_admin_logout_minutes` in
+`hlstats_Options`). The session cookie carries the time of the last
+activity; an open admin page renews it at most once a minute (every
+quarter of the time for shorter settings, and once more shortly before the
+time runs out if there was activity since; `/admin/session`), and the server refuses a session idle longer than the
+setting, so the limit holds also without the page's script. Activity in
+another tab of the same browser keeps the session alive. Public pages do not
+count as activity in the admin area. The session still ends 12 hours after
+the sign-in.
+
 The admin area has its own design, independent of the templates of the
 public pages: light or dark (it follows the device; the user menu top right
 switches it and the language). "To the website" in the top bar and in the

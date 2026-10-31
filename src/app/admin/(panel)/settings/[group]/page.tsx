@@ -67,7 +67,7 @@ export default async function SettingsPage({
   const bad = allSettings.find((s) => s.key === sp.field);
   const badRaw = sp.field?.startsWith("raw:") ? sp.field.slice(4) : sp.field === "raw_new" ? a.rawNewKey : null;
   const t = dicts[lang];
-  const areaTitle = { website: u.navWebsite, services: u.navServices, collector: u.navCollector, advanced: u.navAdvanced };
+  const areaTitle = { website: u.navWebsite, services: u.navServices, collector: u.navCollector, admin: u.navAdmin, advanced: u.navAdvanced };
   const title = group ? group.title[lang] : u.rawOptions;
 
   return (

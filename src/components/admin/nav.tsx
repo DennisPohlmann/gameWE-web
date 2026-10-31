@@ -38,6 +38,7 @@ export type NavText = Record<
   | "navModeration"
   | "navAccess"
   | "navAdvanced"
+  | "navAdmin"
   | "navAccount"
   | "rawOptions"
   | "privacy"
@@ -326,6 +327,8 @@ export function AdminSidebar({
             {isAdmin ? <Item href="/admin/users" icon="user" label={t.users} on={seg === "users"} /> : null}
             <Item href="/admin/account" icon="lock" label={t.myAccount} on={seg === "account" || seg === "totp"} />
           </nav>
+          <h4>{t.navAdmin}</h4>
+          <nav>{groupLinks("admin", { admin: "lock" })}</nav>
           <h4>{t.navAdvanced}</h4>
           <nav>
             <Item href="/admin/settings/raw" icon="code" label={t.rawOptions} on={seg === "settings" && parts[2] === "raw"} />
