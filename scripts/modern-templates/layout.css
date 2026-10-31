@@ -243,6 +243,11 @@ html[data-skin] .voice-box td:first-child {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+/* Inside, the name and the phone's second line (flag and address) are cut
+   the same way. */
+html[data-skin] tr.server-line a.srv { display: block; }
+html[data-skin] tr.server-line a.srv,
+html[data-skin] tr.server-line .srv-where { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 /* Long ranking names wrap onto up to two lines (anywhere, also inside long
    words); only beyond that they are cut, the full name stays the link's
    title. The Players/Clans links beside them keep one line. */
@@ -412,6 +417,15 @@ html[data-skin] .heatmap svg { border-radius: 4px; }
 @media (max-width: 900px) {
   html[data-skin] table:has(> tbody > tr.server-line) tr > :nth-child(2),
   html[data-skin] table:has(> tbody > tr.server-line) tr > :nth-child(7) { display: none; }
+}
+/* Phones (address column hidden, flag and address under the name): the name
+   and the map wrap instead of being cut, so the address stays whole and the
+   player count does not run off the screen. */
+@media (max-width: 600px) {
+  html[data-skin] tr.server-line > td { white-space: normal; overflow-wrap: anywhere; }
+  html[data-skin] tr.server-line > td:first-child { max-width: none; width: 48%; }
+  html[data-skin] tr.server-line > td:nth-child(4) { width: 34%; }
+  html[data-skin] tr.server-line a.srv { white-space: normal; }
 }
 
 /* Server load: players in the first series colour like the other area charts,
