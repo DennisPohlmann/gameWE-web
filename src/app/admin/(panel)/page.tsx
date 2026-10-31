@@ -175,6 +175,7 @@ export default async function AdminHome() {
               ))}
               {templates.length ? (
                 <tr>
+                  <td className="num ord" data-l={`${u.colOrder}:`} />
                   <td className="main">
                     <span className="name">{fill(u.templates, { n: nf(templates.length) })}</span>{" "}
                     <span className="subt">
@@ -192,7 +193,7 @@ export default async function AdminHome() {
                     <span className="pill">{u.stTemplate}</span>
                   </td>
                   <td className="end num">
-                    <Link className="button small" href="/admin/rankings">
+                    <Link className="button small" href="/admin/rankings?view=templates">
                       {u.show}
                     </Link>
                   </td>
