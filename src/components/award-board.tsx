@@ -40,7 +40,14 @@ export async function AwardBoard({ game, t, lang, sort }: { game: string; t: Dic
     <Section title={t.dailyAwards}>
       {rows.length ? (
         <TableWrap>
-          <table>
+          {/* Fixed, even columns: the winner and leader columns line up
+              whatever the names are, the award gets a little less. */}
+          <table className="award-table">
+            <colgroup>
+              <col className="award-col" />
+              <col />
+              <col />
+            </colgroup>
             <thead>
               <tr>
                 {th(t.award, "award")}

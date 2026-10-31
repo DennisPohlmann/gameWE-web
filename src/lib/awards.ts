@@ -151,7 +151,9 @@ async function computeDayNow(game: string, day: string, awards: Award[]): Promis
   return new Map(wins.map((x) => [x.awardId, x]));
 }
 
-// Winners stored by the collector for one day.
+// Winners stored by the collector for one day. A day nobody won an award on
+// is stored as a row without winner and with count 0 (as HLstatsX:CE does);
+// such a row is no winner ("Not awarded"), not a nameless player with 0.
 export function storedDay(game: string, day: string): Promise<Map<number, AwardWin>> {
   return cached(`stored:${game}:${day}`, TTL, () => storedDayNow(game, day));
 }
@@ -162,7 +164,8 @@ async function storedDayNow(game: string, day: string): Promise<Map<number, Awar
      FROM hlstats_Awards_History h
      JOIN hlstats_Awards a ON a.awardId = h.award_id
      LEFT JOIN hlstats_Players_Data d ON d.playerId = h.winner_id
-     WHERE a.game = ? AND h.date = ? AND NOT ${hiddenSql("h.winner_id")}`,
+     WHERE a.game = ? AND h.date = ? AND h.winner_id IS NOT NULL AND h.winner_id > 0 AND h.winner_count > 0
+       AND NOT ${hiddenSql("h.winner_id")}`,
     [game, day],
   );
   return new Map(rows.map((r) => [r.awardId, r]));

@@ -162,7 +162,11 @@ website therefore computes some things itself:
   stored, from the same sources (`hlstats_Events_Frags`,
   `hlstats_Events_PlayerActions`, `hlstats_Players_History`; the latency
   award from `hlstats_Events_Latency`: lowest average ping of players with
-  at least 30 ping samples that day, as in the collector).
+  at least 30 ping samples that day, as in the collector). A stored award
+  without a winner that day (no winner, count 0) shows "Not awarded";
+  "Today's leader" stays "-" while nobody has a value for it today (no
+  events of that weapon or action yet, the latency award before 30 samples,
+  the player awards before the player's first event of the day).
   The calendar under `?view=history` links the days up to the last day with
   stored winners (yesterday while none are stored); today and later days are
   greyed out, and a `?date=` after that day shows the last day instead.

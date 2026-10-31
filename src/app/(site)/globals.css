@@ -397,6 +397,10 @@ tr.server-line .vac-mark.vac-insecure { color: color-mix(in srgb, #d32f2f 70%, v
 
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; text-align: left; font-variant-numeric: tabular-nums; }
+/* Daily awards: even winner and leader columns, long names wrap (award-board.tsx). */
+table.award-table { table-layout: fixed; }
+table.award-table col.award-col { width: 30%; }
+table.award-table td { white-space: normal; overflow-wrap: anywhere; }
 th, td { padding: 4px; vertical-align: middle; border: 1px solid var(--border); font-weight: normal; white-space: nowrap; }
 /* Column heads are bold in every table and skin; the sorted one is
    underlined and carries the arrow. */
