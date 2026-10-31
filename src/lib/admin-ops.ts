@@ -22,6 +22,7 @@ import { invalidateSteamKey } from "./steam";
 import { listTemplates } from "./templates";
 import { removeBackupCodes, removeSecret } from "./totp";
 import { discordGuild, discordInvite, tsDisplay, tsHost, tsLink } from "./voice";
+import { resolveNewRanking } from "./new-ranking";
 
 // What the admin area changes, shared by its server actions (app/admin/
 // actions.ts, form in, redirect out) and the admin API (lib/admin-api.ts,
@@ -110,10 +111,24 @@ export async function saveEntity(a: Actor, e: Entity, id: string | null, form: F
       if (other !== null) throw new OpError("duplicate", { dup: String(other) });
     }
   }
-  // A new ranking does not copy a retired game (its realgame would follow).
+  // A new ranking: its game is the one choice; the template defaults to the
+  // game's own ranking and must be of the same game, the name to the game's
+  // name (new-ranking.ts). It does not copy a retired game (its realgame
+  // would follow).
   if (e.key === "games" && id === null) {
-    const template = String(form.get("template") ?? "");
-    if (template && RETIRED_GAMES.includes((await rankingBaseGames()).get(template) ?? "")) throw new OpError("field", { field: "template" });
+    const bases = await rankingBaseGames();
+    const hasGame = e.fields.some((f) => f.name === "realgame");
+    const order = (await optionList("games")).map(([c]) => c);
+    const got = resolveNewRanking(
+      { game: hasGame ? String(form.get("realgame") ?? "") : "", template: String(form.get("template") ?? ""), name: String(form.get("name") ?? "") },
+      bases,
+      order,
+      hasGame,
+    );
+    if ("field" in got) throw new OpError("field", { field: got.field });
+    if (got.template && RETIRED_GAMES.includes(bases.get(got.template) ?? "")) throw new OpError("field", { field: "template" });
+    form = withValue(withValue(form, "template", got.template), "name", got.name);
+    if (hasGame) form = withValue(form, "realgame", got.game);
   }
   let saved: string;
   try {

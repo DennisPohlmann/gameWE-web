@@ -444,7 +444,12 @@ menu button), and lists turn into cards on narrow screens:
   (also on the overview and at the top of a ranking's page) counts every
   player of the ranking: the inactive ones the collector moved to
   `hlstats_PlayersInactive` too, hidden and banned ones, only bots left
-  out. The ranking's page
+  out. "New ranking" (`/admin/games/new`) needs only the game (e.g.
+  Counter-Strike: Source) and a code: the template (optional) defaults to
+  the game's standard ranking (`css` for Counter-Strike: Source) and lists
+  only rankings of the chosen game, an own ranking of that game passes on
+  its adjusted weapons, awards and ranks; a template of another game is
+  refused; an empty name takes the game's name. The ranking's page
   (`/admin/rankings/<code>`) is the one place to manage it: at the top its
   state (active, template or hidden), servers (how many have players now),
   players and scheduled reset, with links to the cards below; a jump bar
@@ -453,7 +458,10 @@ menu button), and lists turn into cards on narrow screens:
   icon) stays below the top bar while scrolling and marks the card in view
   (on a phone one row that scrolls sideways); then the cards Settings (code, game, name, hidden, order; level 100), Servers
   (address, map and players now, edit, move a server into another ranking of
-  the same game, move servers of other rankings in, and "Add server", which
+  the same game, move servers of other rankings of the same game in, only
+  those are listed and every other is refused, also in the server form and
+  the admin API (`409 mismatch`); a ranking without a game takes no server
+  of a known game until its game is set, and "Add server", which
   opens the new-server form `/admin/servers/new?game=<code>` with the
   ranking preset and locked and returns to the ranking's page; a `game` that
   is not an existing ranking is ignored), Values (players counted as on the

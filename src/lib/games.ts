@@ -61,7 +61,10 @@ export const GAME_HAS_DATA = `(EXISTS (SELECT 1 FROM hlstats_Servers s WHERE s.g
   OR EXISTS (SELECT 1 FROM hlstats_Players p WHERE p.game = hlstats_Games.code))`;
 
 // Servers of different base games must not share a ranking (different log
-// formats, weapons and actions). Unknown games are not blocked.
-export function sameBaseGame(a: string | null, b: string | null): boolean {
-  return !a || !b || a === b;
+// formats, weapons and actions): a server only goes into a ranking of its
+// own game, e.g. a Counter-Strike: Source server only into a Counter-Strike:
+// Source ranking. A ranking whose game is not set only takes servers whose
+// game is not known either; set its game first.
+export function sameBaseGame(a: string | null | undefined, b: string | null | undefined): boolean {
+  return (a || null) === (b || null);
 }

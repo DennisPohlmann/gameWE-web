@@ -89,8 +89,13 @@ export async function saveAction(form: FormData) {
   // A new server from a ranking's page ("Add server") goes into that ranking
   // (only an existing one) and the save returns there.
   const ranking = e.key === "servers" && id === null ? presetRanking(form.get("__ranking"), (await optionList("games")).map(([c]) => c)) : null;
-  // The input of a new server is kept after an error.
-  const kept = e.key === "servers" && id === null ? { ...keptValues(e, form), game: ranking ?? undefined } : {};
+  // The input of a new server or ranking is kept after an error.
+  const kept =
+    e.key === "servers" && id === null
+      ? { ...keptValues(e, form), game: ranking ?? undefined }
+      : e.key === "games" && id === null
+        ? { ...keptValues(e, form), v_template: String(form.get("template") ?? "").trim().slice(0, 32) || undefined }
+        : {};
   // A ranking is edited on its own page; its errors and the saved notice go
   // to the settings card there.
   const ownPage = e.key === "games" && id !== null;

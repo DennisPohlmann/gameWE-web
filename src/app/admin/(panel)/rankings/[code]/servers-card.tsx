@@ -46,7 +46,12 @@ export async function ServersCard({ id, code, lang, sp }: { id: number; code: st
   const gameName = (c: string) => gameKind(bases.get(c))?.short ?? "?";
   // No templates (rankings without servers) to move a server into.
   const targets = serverRankingOptions(games, new Set(servers.map((s) => s.game))).filter(([c]) => c !== code && fits(c));
-  const others = servers.filter((s) => s.game !== code);
+  // Only servers of this ranking's game can be moved in (a Counter-Strike:
+  // Source ranking only takes Counter-Strike: Source servers); the others
+  // are not listed, the save refuses them too (admin-ops.ts).
+  const others = servers.filter((s) => s.game !== code && fits(s.game));
+  const otherGames = servers.some((s) => s.game !== code && !fits(s.game));
+  const sameGameHint = base ? fill(a.rankingSameGameOnly, { g: gameKind(base)?.name ?? base }) : a.rankingGameFirst;
   const label = entities.find((e) => e.key === "servers")?.label[lang] ?? "Server";
   const returnTo = encodeURIComponent(`/admin/servers?game=${encodeURIComponent(code)}`);
   const error = sp.serr === "mismatch" ? a.gameMismatch : sp.serr === "db" ? fill(a.dbWriteError, { msg: sp.msg ?? "" }) : null;
@@ -139,26 +144,32 @@ export async function ServersCard({ id, code, lang, sp }: { id: number; code: st
       ) : (
         <p className="empty">{a.rankingNoServers}</p>
       )}
-      {others.length ? (
+      {others.length || otherGames ? (
         <details className="assign-servers" open={!mine.length}>
           <summary>{a.rankingAddServers.replace(/:$/, "")}</summary>
-          <form action={assignServersAction} className="form">
-            <input type="hidden" name="__id" value={String(id)} />
-            {others.map((s) => (
-              <label key={s.serverId} className="check">
-                <input type="checkbox" name="server" value={s.serverId} disabled={!fits(s.game)} /> <GameIcon realgame={bases.get(s.game)} />
-                {s.name || `${s.address}:${s.port}`}{" "}
-                <span className="muted">
-                  ({a.rankingNow}: {s.game}, {gameName(s.game)}
-                  {fits(s.game) ? "" : ` · ${a.gameOther}`})
-                </span>
-              </label>
-            ))}
-            <small className="muted">{a.rankingMoveHint}</small>
-            <button type="submit" className="button">
-              {a.rankingAssign}
-            </button>
-          </form>
+          {others.length ? (
+            <form action={assignServersAction} className="form">
+              <input type="hidden" name="__id" value={String(id)} />
+              {others.map((s) => (
+                <label key={s.serverId} className="check">
+                  <input type="checkbox" name="server" value={s.serverId} /> <GameIcon realgame={bases.get(s.game)} />
+                  {s.name || `${s.address}:${s.port}`}{" "}
+                  <span className="muted">
+                    ({a.rankingNow}: {s.game}, {gameName(s.game)})
+                  </span>
+                </label>
+              ))}
+              {otherGames ? <small className="muted">{sameGameHint}</small> : null}
+              <small className="muted">{a.rankingMoveHint}</small>
+              <button type="submit" className="button">
+                {a.rankingAssign}
+              </button>
+            </form>
+          ) : (
+            <p className="empty">
+              {a.rankingNoFittingServers} {sameGameHint}
+            </p>
+          )}
         </details>
       ) : null}
     </section>

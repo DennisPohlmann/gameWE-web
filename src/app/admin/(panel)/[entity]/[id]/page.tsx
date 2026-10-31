@@ -3,14 +3,17 @@ import { notFound, redirect } from "next/navigation";
 import { deleteAction, saveAction } from "../../../actions";
 import { allServers, rankingBaseGames, rankingPageHref } from "@/lib/admin-rankings";
 import { FieldControl } from "@/components/admin/field-control";
+import { NewRankingSync } from "@/components/admin/new-ranking-sync";
 import { PageHead } from "@/components/admin/page-head";
 import { Section } from "@/components/ui";
 import { getRow, optionList, withColumns } from "@/lib/admin-data";
 import { RankBadge, rankName } from "@/components/badges";
-import { getEntity } from "@/lib/admin-entities";
+import { getEntity, type Field } from "@/lib/admin-entities";
 import { adminDict } from "@/lib/admin-i18n";
 import { requireAdmin } from "@/lib/auth";
+import { GAME_KINDS, sameBaseGame, SUPPORTED_GAMES } from "@/lib/games";
 import { fill, getAdminLang } from "@/lib/i18n";
+import { templateOptions } from "@/lib/new-ranking";
 import { presetRanking, rankingServersHref } from "@/lib/ranking-preset";
 import { safeReturnTo } from "@/lib/return-to";
 import { serverRankingOptions } from "@/lib/server-rankings";
@@ -57,13 +60,25 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
   const cs2 = e.key === "servers" && serverGame !== "" && (await rankingBaseGames()).get(serverGame) === "cs2";
   // A server's ranking: no templates (rankings without servers), but always
   // the server's own one.
+  // An existing server only moves into a ranking of its own game.
+  const bases = e.key === "servers" || (e.key === "games" && isNew) ? await rankingBaseGames() : null;
   const serverGames =
     e.key === "servers" && !preset
-      ? serverRankingOptions(optionSets.games ?? [], new Set((await allServers()).map((s) => s.game)), [serverGame, isNew && sp.error ? sp.v_game : undefined])
+      ? serverRankingOptions(optionSets.games ?? [], new Set((await allServers()).map((s) => s.game)), [serverGame, isNew && sp.error ? sp.v_game : undefined]).filter(
+          ([c]) => isNew || c === serverGame || sameBaseGame(bases?.get(c), bases?.get(serverGame)),
+        )
       : null;
+  // A new ranking: the game is the one choice; the template (optional) only
+  // lists rankings of a game, the name defaults to the game's name.
+  const newRanking = e.key === "games" && isNew;
+  const templates = newRanking ? templateOptions(optionSets.games ?? [], bases!) : [];
+  const createField = (f: Field): Field =>
+    !newRanking ? f : f.name === "realgame" ? { ...f, required: true } : f.name === "name" ? { ...f, required: false } : f;
   const badField = e.fields.find((f) => f.name === sp.field);
   const error =
-    sp.error === "field"
+    newRanking && sp.error === "field" && sp.field === "template"
+      ? a.templateOtherGame
+      : sp.error === "field"
       ? fill(a.invalidField, { f: badField?.label[lang] ?? sp.field ?? "" })
       : sp.error === "db"
         ? fill(a.dbWriteError, { msg: sp.msg ?? "" })
@@ -97,6 +112,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
         }
       />
       {e.key === "games" && !e.fields.some((f) => f.name === "realgame") ? <p className="notice error">{a.realgameMissing}</p> : null}
+      {newRanking ? <p className="lead">{a.newRankingIntro}</p> : null}
       {e.key === "ranks" && !isNew && typeof (row as Record<string, unknown>).name === "string" ? (
         <p className="lead admin-rank">
           <RankBadge name={String((row as Record<string, unknown>).name)} size={36} />
@@ -127,7 +143,11 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
             const value = (preset && f.name === "game" ? preset : kept(f.name)) ?? (row as Record<string, string | number | null>)[f.name];
             const locked = f.readonly || (f.createOnly && !isNew);
             // The preset ranking is the only choice (the save sets it anyway).
-            const opts = Array.isArray(f.options)
+            const opts = newRanking && f.name === "realgame"
+              ? SUPPORTED_GAMES.map((k): [string, string] => [k, `${GAME_KINDS[k].name} (${k})${GAME_KINDS[k].limited ? " – eingeschränkt / limited" : ""}`])
+              : newRanking && f.name === "template"
+                ? templates.map(([c, l]): [string, string] => [c, l])
+              : Array.isArray(f.options)
               ? f.options.map(([v, l]): [string, string] => [v, typeof l === "string" ? l : l[lang]])
               : preset && f.name === "game"
                 ? optionSets.games.filter(([c]) => c === preset)
@@ -142,7 +162,9 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
               <Wrap key={f.name} className={f.type === "secret" ? "form-field" : undefined}>
                 {f.type === "secret" ? <label htmlFor={`f-${f.name}`}>{f.label[lang]}</label> : f.label[lang]}
                 <FieldControl
-                  f={f}
+                  f={createField(f)}
+                  id={newRanking ? `f-${f.name}` : undefined}
+                  emptyLabel={newRanking && f.name === "realgame" ? a.gameUnset : newRanking && f.name === "template" ? a.templateDefault : undefined}
                   value={value}
                   opts={opts}
                   locked={Boolean(locked)}
@@ -154,6 +176,8 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
                   <small className="muted">{fill(a.serverForRanking, { r: presetLabel ?? preset })}</small>
                 ) : cs2 && f.name === "log_secret" ? (
                   <small className="muted">{a.cs2LogSecret}</small>
+                ) : newRanking && f.name === "name" ? (
+                  <small className="muted">{a.nameFromGame}</small>
                 ) : f.help ? (
                   <small className="muted">{f.help[lang]}</small>
                 ) : null}
@@ -161,6 +185,12 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
             );
           })}
           {e.key === "users" && !isNew ? <small className="muted">{a.pwOwnOnly}</small> : null}
+          {newRanking ? (
+            <NewRankingSync
+              templates={Object.fromEntries(templates.map(([c, , g]) => [c, g]))}
+              names={Object.fromEntries(SUPPORTED_GAMES.map((k) => [k, GAME_KINDS[k].name]))}
+            />
+          ) : null}
           <button type="submit" className="button">
             {a.save}
           </button>

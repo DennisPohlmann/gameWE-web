@@ -7,7 +7,7 @@ import { SecretControl } from "./secret-control";
 // shared by the edit page of an entity and the settings card of a ranking.
 // opts: the choices of a select (null for a plain input); locked: shown
 // read-only (readonly or createOnly on an existing row); secretSet: a secret
-// is stored (see SecretControl).
+// is stored (see SecretControl); emptyLabel: the text of the empty choice.
 export function FieldControl({
   f,
   value,
@@ -17,6 +17,7 @@ export function FieldControl({
   secretSet,
   id,
   lang,
+  emptyLabel,
 }: {
   f: Field;
   value: string | number | null | undefined;
@@ -26,11 +27,12 @@ export function FieldControl({
   secretSet?: boolean;
   id?: string;
   lang: Lang;
+  emptyLabel?: string;
 }) {
   if (opts && !locked)
     return (
       <select {...noAutofill} id={id} name={f.name} defaultValue={value === null || value === undefined ? "" : String(value)} required={f.required}>
-        {!f.required || value === undefined ? <option value="" /> : null}
+        {(!f.required || value === undefined) && !opts.some(([v]) => v === "") ? <option value="">{emptyLabel}</option> : null}
         {opts.filter(([v]) => !f.keepOnly?.includes(v) || v === String(value ?? "")).map(([v, l]) => (
           <option key={v} value={v}>
             {l}

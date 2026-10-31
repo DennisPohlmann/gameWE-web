@@ -86,15 +86,13 @@ export const entities: Entity[] = [
       en: "A ranking is a set of servers sharing one player ranking, e.g. \"Assault\" with five assault servers or \"GunGame\" with two gungame servers. Create it here, then assign the servers. Rankings without servers are not shown on the start page and serve as templates.",
     },
     fields: [
-      { name: "code", label: { de: "Kürzel", en: "Code" }, type: "text", inList: true, required: true, createOnly: true, max: 10, pattern: /^[a-z0-9_]+$/, help: { de: "Kurz, nur a–z, 0–9 und _, z. B. assault oder gungame. Steht in der URL und lässt sich später nicht ändern.", en: "Short, only a–z, 0–9 and _, e.g. assault or gungame. Used in the URL and cannot be changed later." } },
-      { name: "template", label: { de: "Vorlage", en: "Template" }, type: "select", options: "games", virtual: true, createOnly: true, help: { de: "Übernimmt Waffen, Aktionen, Teams, Rollen, Awards, Ränge und Ribbons aus dieser Rangliste bzw. diesem Spiel (z. B. css für Counter-Strike: Source, csgo für Counter-Strike: Global Offensive, cstrike für Counter-Strike 1.6, czero für Counter-Strike: Condition Zero).", en: "Copies weapons, actions, teams, roles, awards, ranks and ribbons from this ranking or game (e.g. css for Counter-Strike: Source, csgo for Counter-Strike: Global Offensive, cstrike for Counter-Strike 1.6, czero for Counter-Strike: Condition Zero)." } },
       {
         name: "realgame",
         label: { de: "Spiel", en: "Game" },
         type: "select",
         optional: true,
         options: [
-          ["", { de: "– wie die Vorlage –", en: "– as the template –" }],
+          ["", { de: "– nicht gesetzt –", en: "– not set –" }],
           ...Object.entries(GAME_KINDS).map(([k, g]): [string, string] => [
             k,
             `${g.name} (${k})${g.retired ? " – nicht mehr unterstützt / no longer supported" : g.limited ? " – eingeschränkt / limited" : ""}`,
@@ -103,11 +101,24 @@ export const entities: Entity[] = [
         keepOnly: RETIRED_GAMES,
         inList: true,
         help: {
-          de: "Das Spiel hinter der Rangliste. Der Collector liest daraus das Logformat, die Webseite zeigt es als Kennzeichen an. Leer lassen übernimmt es aus der Vorlage.",
-          en: "The game behind the ranking. The collector reads the log format from it, the website shows it as a tag. Left empty, it is taken from the template.",
+          de: "Das Spiel der Rangliste, z. B. Counter-Strike: Source. Der Collector liest daraus das Logformat, die Webseite zeigt es als Kennzeichen an. Der Rangliste lassen sich nur Server dieses Spiels zuordnen.",
+          en: "The ranking's game, e.g. Counter-Strike: Source. The collector reads the log format from it, the website shows it as a tag. Only servers of this game can be assigned to the ranking.",
+        },
+      },
+      {
+        name: "template",
+        label: { de: "Vorlage (optional)", en: "Template (optional)" },
+        type: "select",
+        options: "games",
+        virtual: true,
+        createOnly: true,
+        help: {
+          de: "Woher Waffen, Aktionen, Teams, Rollen, Awards, Ränge und Ribbons kommen. Leer lassen nimmt die Standardvorlage des Spiels (z. B. css für Counter-Strike: Source). Eine eigene Rangliste desselben Spiels übernimmt deren angepasste Werte; nur Vorlagen des gewählten Spiels sind erlaubt.",
+          en: "Where weapons, actions, teams, roles, awards, ranks and ribbons come from. Left empty, the game's standard template is used (e.g. css for Counter-Strike: Source). One of your own rankings of the same game passes on its adjusted values; only templates of the chosen game are allowed.",
         },
       },
       { name: "name", label: { de: "Name", en: "Name" }, type: "text", inList: true, required: true, max: 255 },
+      { name: "code", label: { de: "Kürzel", en: "Code" }, type: "text", inList: true, required: true, createOnly: true, max: 10, pattern: /^[a-z0-9_]+$/, help: { de: "Kurz, nur a–z, 0–9 und _, z. B. assault oder gungame. Steht in der URL und lässt sich später nicht ändern.", en: "Short, only a–z, 0–9 and _, e.g. assault or gungame. Used in the URL and cannot be changed later." } },
       { name: "hidden", label: { de: "Ausgeblendet", en: "Hidden" }, type: "flag", options: yesNo, inList: true, help: { de: "Ja: Die Webseite zeigt das Ranking nicht, weder auf der Startseite noch mit eigenen Seiten. Die Daten bleiben erhalten.", en: "Yes: the website does not show the ranking, neither on the start page nor with its own pages. The data is kept." } },
       { name: "display_id", label: { de: "Reihenfolge", en: "Order" }, type: "number", inList: true, help: { de: "Position in Menüs und Listen, kleinere Zahlen stehen weiter vorn.", en: "Position in menus and lists, lower numbers come first." } },
     ],

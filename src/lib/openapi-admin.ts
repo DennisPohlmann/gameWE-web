@@ -195,7 +195,7 @@ function entityOps(): AdminOp[] {
         summary: `Create a ${m.one}`,
         description:
           `Creates a ${m.one} with the checks of the admin page.` +
-          (m.key === "games" ? " `template` copies weapons, actions, teams, roles, awards, ranks and ribbons from that ranking; `realgame` empty takes the template's game." : "") +
+          (m.key === "games" ? " `realgame` is the ranking's game; `template` (optional) copies weapons, actions, teams, roles, awards, ranks and ribbons from that ranking, must be of the same game and defaults to the game's standard ranking (e.g. `css`); `name` empty takes the game's name; `realgame` empty takes the template's game, one of the two is required." : "") +
           (m.key === "servers" ? " IP and port must be unique (`409 duplicate`, with the other server's ID)." : "") +
           (m.key === "users" ? " `password` is required." : "") +
           " Fields left out get the value an empty form field gives.",
