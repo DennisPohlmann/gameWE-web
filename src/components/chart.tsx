@@ -174,9 +174,9 @@ export function LineChart({
                 className={`line ${s.className}`}
                 points={run.map((i) => `${x(i).toFixed(1)},${y(s.values[i]!).toFixed(1)}`).join(" ")}
               />
-            ) : (
+            ) : run.length === 1 ? (
               <circle key={`${s.label}-${run[0]}`} className={`dot ${s.className}`} cx={x(run[0])} cy={y(s.values[run[0]]!)} r={4} />
-            ),
+            ) : null,
           ),
         )}
         {/* Every point gets a dot; on dense charts (14 days per quarter hour)
