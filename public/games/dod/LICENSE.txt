@@ -1,9 +1,8 @@
 Game icon: Day of Defeat (dod)
 
-Files:   icon.png (32 x 32, as supplied, edited by gameWE:
-         grey 1-px frame of the screenshot removed)
-Source:  supplied by Dennis Pohlmann (gameWE maintainer) on 2026-10-30;
-         the game's icon; original file SHA-256 fba779994658c33290fe91ed9c4b002eea5b3ef35b7ccd469c88be92c4d2f21a
+Files:   icon.png (32 x 32, as supplied, unchanged)
+Source:  supplied by Dennis Pohlmann (gameWE maintainer) on 2026-10-31;
+         the game's icon; original file SHA-256 48267aebe35e33b85c45e461af4afe475dfed67ffca1f32ec97e7f088bbc7265
 Author:  Valve Corporation (presumably)
 License: UNKNOWN. No license that allows passing the picture on is known;
          it is most likely the copyrighted artwork and trademark of

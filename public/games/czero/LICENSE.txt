@@ -1,9 +1,8 @@
 Game icon: Counter-Strike: Condition Zero (czero)
 
-Files:   icon.png (32 x 32, as supplied, edited by gameWE:
-         grey 1-px frame of the screenshot removed)
-Source:  supplied by Dennis Pohlmann (gameWE maintainer) on 2026-10-30;
-         the game's icon; original file SHA-256 4f384f7b253f8dc5ad5a1496aefa308869b041677b806b21a239ec6aaa390bb5
+Files:   icon.png (32 x 32, as supplied, unchanged)
+Source:  supplied by Dennis Pohlmann (gameWE maintainer) on 2026-10-31;
+         the game's icon; original file SHA-256 81980d7342af083301da86e657aeb550cbbf4f63f36d9015f3b4af2b2b4e052b
 Author:  Valve Corporation (presumably)
 License: UNKNOWN. No license that allows passing the picture on is known;
          it is most likely the copyrighted artwork and trademark of

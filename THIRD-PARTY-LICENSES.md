@@ -184,21 +184,21 @@ its place.
 
 | Game | Folder | Source | Rights holder | Changed by gameWE | License |
 |------|--------|--------|---------------|-------------------|---------|
-| Counter-Strike 2 | `public/games/cs2/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | scaled down | unknown |
-| Counter-Strike: Global Offensive | `public/games/csgo/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | grey 1-px screenshot frame removed | unknown |
-| Counter-Strike: Source | `public/games/css/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | outside of the round logo made transparent; grey 1-px screenshot frame removed | unknown |
-| Counter-Strike 1.6 | `public/games/cstrike/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | grey 1-px screenshot frame removed | unknown |
-| Counter-Strike: Condition Zero | `public/games/czero/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | grey 1-px screenshot frame removed | unknown |
-| Day of Defeat | `public/games/dod/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | grey 1-px screenshot frame removed | unknown |
-| Day of Defeat: Source | `public/games/dods/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | grey 1-px screenshot frame removed | unknown |
-| Fistful of Frags | `public/games/fof/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | the Fistful of Frags Team (presumably) | outside of the round logo made transparent; grey 1-px screenshot frame removed | unknown |
+| Counter-Strike 2 | `public/games/cs2/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
+| Counter-Strike: Global Offensive | `public/games/csgo/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
+| Counter-Strike: Source | `public/games/css/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | scaled down to 32 x 32 | unknown |
+| Counter-Strike 1.6 | `public/games/cstrike/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
+| Counter-Strike: Condition Zero | `public/games/czero/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
+| Day of Defeat | `public/games/dod/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
+| Day of Defeat: Source | `public/games/dods/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
+| Fistful of Frags | `public/games/fof/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | the Fistful of Frags Team (presumably) | none | unknown |
 | Half-Life 2 Deathmatch | `public/games/hl2mp/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | scaled down | unknown |
-| Left 4 Dead | `public/games/l4d/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | grey 1-px screenshot frame removed | unknown |
-| Left 4 Dead 2 | `public/games/l4d2/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | grey 1-px screenshot frame removed | unknown |
-| No More Room in Hell | `public/games/nmrih/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | the No More Room in Hell Team (presumably) | outside of the round logo made transparent; grey 1-px screenshot frame removed | unknown |
-| Team Fortress 2 | `public/games/tf/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | grey 1-px screenshot frame removed | unknown |
-| Half-Life Deathmatch | `public/games/valve/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | grey 1-px screenshot frame removed | unknown |
-| Zombie Panic! Source | `public/games/zps/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | the Zombie Panic! Team (presumably) | grey 1-px screenshot frame removed | unknown |
+| Left 4 Dead | `public/games/l4d/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
+| Left 4 Dead 2 | `public/games/l4d2/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
+| No More Room in Hell | `public/games/nmrih/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | the No More Room in Hell Team (presumably) | none | unknown |
+| Team Fortress 2 | `public/games/tf/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
+| Half-Life Deathmatch | `public/games/valve/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
+| Zombie Panic! Source | `public/games/zps/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | the Zombie Panic! Team (presumably) | none | unknown |
 
 Rank insignia and award ribbons are drawn with SVG and CSS in
 `src/components/badges.tsx` (no third-party images).

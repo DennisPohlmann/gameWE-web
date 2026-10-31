@@ -158,7 +158,7 @@ export default async function LicensesPage() {
                 const name = GAME_KINDS[code].name;
                 const holder = isOwnDrawing(c) ? c.holder : `${c.holder} (${de ? "vermutlich" : "presumably"})`;
                 const license = isOwnDrawing(c) ? "GPL-3.0-or-later" : t.licUnknown;
-                const changes = c.edits.map((e) => EDIT[e][de ? 0 : 1]).join(", ");
+                const changes = c.edits.map((e) => EDIT[e][de ? 0 : 1]).join(", ") || (de ? "keine" : "none");
                 return {
                   key: code,
                   values: [name, holder, changes, license],

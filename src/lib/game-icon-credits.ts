@@ -13,21 +13,21 @@ export type IconCredit = {
 const VALVE = "Valve Corporation";
 
 export const GAME_ICON_CREDITS: Record<string, IconCredit> = {
-  cs2: { holder: VALVE, edits: ["scaled"] },
-  csgo: { holder: VALVE, edits: ["frame"] },
-  css: { holder: VALVE, edits: ["round", "frame"] },
-  cstrike: { holder: VALVE, edits: ["frame"] },
-  czero: { holder: VALVE, edits: ["frame"] },
-  dod: { holder: VALVE, edits: ["frame"] },
-  dods: { holder: VALVE, edits: ["frame"] },
-  fof: { holder: "the Fistful of Frags Team", edits: ["round", "frame"] },
+  cs2: { holder: VALVE, edits: [] },
+  csgo: { holder: VALVE, edits: [] },
+  css: { holder: VALVE, edits: ["scaled"] },
+  cstrike: { holder: VALVE, edits: [] },
+  czero: { holder: VALVE, edits: [] },
+  dod: { holder: VALVE, edits: [] },
+  dods: { holder: VALVE, edits: [] },
+  fof: { holder: "the Fistful of Frags Team", edits: [] },
   hl2mp: { holder: VALVE, edits: ["scaled"] },
-  l4d: { holder: VALVE, edits: ["frame"] },
-  l4d2: { holder: VALVE, edits: ["frame"] },
-  nmrih: { holder: "the No More Room in Hell Team", edits: ["round", "frame"] },
-  tf: { holder: VALVE, edits: ["frame"] },
-  valve: { holder: VALVE, edits: ["frame"] },
-  zps: { holder: "the Zombie Panic! Team", edits: ["frame"] },
+  l4d: { holder: VALVE, edits: [] },
+  l4d2: { holder: VALVE, edits: [] },
+  nmrih: { holder: "the No More Room in Hell Team", edits: [] },
+  tf: { holder: VALVE, edits: [] },
+  valve: { holder: VALVE, edits: [] },
+  zps: { holder: "the Zombie Panic! Team", edits: [] },
 };
 
 // An icon gameWE drew itself (GPL like gameWE) rather than one supplied by the maintainer.
