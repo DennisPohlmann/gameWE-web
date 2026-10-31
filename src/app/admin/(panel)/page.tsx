@@ -36,7 +36,9 @@ export default async function AdminHome() {
     secret ? readSecret(user.username, secret).catch(() => null) : Promise.resolve(undefined),
     updateStatus(true),
   ]);
-  const active = rankings.filter((r) => r.servers > 0 || (players.get(r.code) ?? 0) > 0);
+  // Templates (seeded rankings without servers) are folded into one row; a
+  // new ranking without servers yet is listed (ranking-template.ts).
+  const active = rankings.filter((r) => !r.template || (players.get(r.code) ?? 0) > 0);
   const templates = rankings.filter((r) => !active.includes(r));
   const beatAt = Number(beat[0]?.value ?? 0);
   const now = Math.floor(Date.now() / 1000);
@@ -153,6 +155,10 @@ export default async function AdminHome() {
                   <td>
                     {r.hidden ? (
                       <span className="pill">{u.stHiddenRanking}</span>
+                    ) : r.servers === 0 ? (
+                      <span className="pill warn" title={u.stNoServersSub}>
+                        {u.stNoServers}
+                      </span>
                     ) : (
                       <span className="pill ok">
                         <span className="dot" />

@@ -10,8 +10,9 @@ import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { localeOf } from "@/lib/format";
 import { getAdminLang } from "@/lib/i18n";
 
-// The rankings with servers or, chosen at the top (?view=templates), the
-// templates (rankings without servers), with their game, servers, players and
+// The rankings or, chosen at the top (?view=templates), the templates (seeded
+// rankings without servers, ranking-template.ts; a new ranking without
+// servers yet is listed with the rankings), with their game, servers, players and
 // state; one button per ranking leads to its page, where it is also edited.
 export default async function RankingsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const user = await requireAdmin();
@@ -27,9 +28,9 @@ export default async function RankingsPage({ searchParams }: { searchParams: Pro
   if (isAdmin && hof && ["on", "off", "input", "confirm"].includes(hof)) redirect(`/admin/reset?hof=${hof}#hall-of-fame`);
   const nf = (n: number) => n.toLocaleString(localeOf(lang));
   const [all, players] = await Promise.all([rankingSummaries(), playersByRanking()]);
-  // Rankings with servers or the templates, in display order.
-  const active = all.filter((r) => r.servers > 0);
-  const spare = all.filter((r) => r.servers === 0);
+  // Rankings or the templates, in display order.
+  const active = all.filter((r) => !r.template);
+  const spare = all.filter((r) => r.template);
   const rankings = templates ? spare : active;
   const state = (r: (typeof rankings)[number]) =>
     r.hidden ? (
@@ -38,6 +39,10 @@ export default async function RankingsPage({ searchParams }: { searchParams: Pro
       <span className="pill ok">
         <span className="dot" />
         {u.stActive}
+      </span>
+    ) : !r.template ? (
+      <span className="pill warn" title={u.stNoServersSub}>
+        {u.stNoServers}
       </span>
     ) : (
       <span className="pill">{u.stTemplate}</span>

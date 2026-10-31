@@ -17,6 +17,7 @@ import { adminDict } from "@/lib/admin-i18n";
 import { requireAdmin } from "@/lib/auth";
 import { getAdminLang } from "@/lib/i18n";
 import { listHref, withReturnTo } from "@/lib/return-to";
+import { isTemplateRanking } from "@/lib/ranking-template";
 
 type SP = Promise<Record<string, string | string[] | undefined>>;
 
@@ -170,7 +171,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
                       ) : null}
                       {e.key === "games" ? (
                         <td className="num">
-                          {serverCount(r.code) ? (
+                          {serverCount(r.code) || !isTemplateRanking(String(r.code ?? ""), 0) ? (
                             serverCount(r.code)
                           ) : (
                             <span className="pill" title={a.templateHint}>

@@ -389,7 +389,7 @@ const handlers: Record<string, Handler> = {
 
   // Rankings.
   async rankingsList() {
-    return { body: (await rankingSummaries()).map((r) => ({ id: r.id, code: r.code, name: r.name, hidden: r.hidden, baseGame: r.base, servers: r.servers })) };
+    return { body: (await rankingSummaries()).map((r) => ({ id: r.id, code: r.code, name: r.name, hidden: r.hidden, baseGame: r.base, servers: r.servers, template: r.template })) };
   },
   async rankingServers(c) {
     await ranking(c.params.code);

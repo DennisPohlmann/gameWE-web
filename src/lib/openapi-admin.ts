@@ -370,6 +370,7 @@ export const adminSchemas: Record<string, Schema> = {
     hidden: bool("Hidden on the website"),
     baseGame: nullable(str("The game behind the ranking (css, csgo, cstrike, ...)")),
     servers: int("Number of servers"),
+    template: bool("A seeded ranking without servers: only a template for new rankings"),
   }),
   AdminSchedule: scheduleSchema,
   AdminSettings: obj({
@@ -443,7 +444,7 @@ export const adminOps: AdminOp[] = [
     handler: "rankingsList",
     status: 200,
     response: arr(ref("AdminRankingSummary")),
-    example: [{ id: 3, code: G, name: "Example Assault", hidden: false, baseGame: "css", servers: 2 }],
+    example: [{ id: 3, code: G, name: "Example Assault", hidden: false, baseGame: "css", servers: 2, template: false }],
     errors: [],
   },
   ...entityOps(),

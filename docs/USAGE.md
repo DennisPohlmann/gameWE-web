@@ -87,8 +87,11 @@ A ranking is a row of `hlstats_Games` that you create in the admin area
 awards and ranks from an existing ranking. Servers are assigned on the
 ranking's page (this sets `hlstats_Servers.game`), or created there right
 away with "Add server"; the collector picks the change up within a minute. The start page lists every ranking that has servers;
-the servers are listed on the ranking's page. Rankings without servers serve
-as templates. The ranking choices on the search and help pages and the
+the servers are listed on the ranking's page. The seeded rankings (one per
+game, e.g. `css`, `tf`) serve as templates while they have no servers; a
+ranking an admin created is never a template, also before its first server
+(it is listed with the rankings as "No servers yet" and every server form
+offers it). The ranking choices on the search and help pages and the
 ranking filters of the admin chat and IP pages list only rankings with at
 least one server or player; the admin forms that assign a ranking list all.
 
@@ -454,10 +457,11 @@ menu button), and lists turn into cards on narrow screens:
   [INSTALLATION.md](INSTALLATION.md). Admin → Settings → Monitoring, "Check
   for updates" (`gamewe_update_check`, default on) turns it off; then no
   request goes to GitHub.
-- **Rankings** (`/admin/rankings`): the rankings with servers or, chosen
-  with the switch at the top ("Rankings with servers" / "Templates", each
-  with its count; `?view=templates`), the templates (rankings without
-  servers), each with one "Manage" button to its page. The Players column
+- **Rankings** (`/admin/rankings`): the rankings or, chosen
+  with the switch at the top ("Rankings" / "Templates", each
+  with its count; `?view=templates`), the templates (seeded rankings
+  without servers; a new ranking without servers yet stays under the
+  rankings, marked "No servers yet"), each with one "Manage" button to its page. The Players column
   (also on the overview and at the top of a ranking's page) counts every
   player of the ranking: the inactive ones the collector moved to
   `hlstats_PlayersInactive` too, hidden and banned ones, only bots left
@@ -468,7 +472,7 @@ menu button), and lists turn into cards on narrow screens:
   its adjusted weapons, awards and ranks; a template of another game is
   refused; an empty name takes the game's name. The ranking's page
   (`/admin/rankings/<code>`) is the one place to manage it: at the top its
-  state (active, template or hidden), servers (how many have players now),
+  state (active, no servers yet, template or hidden), servers (how many have players now),
   players and scheduled reset, with links to the cards below; a jump bar
   "On this page" (Settings, Servers in this ranking, Values of this
   ranking, Bots, VAC block, Scheduled reset, Maintenance, each with an
@@ -485,7 +489,7 @@ menu button), and lists turn into cards on narrow screens:
   start page, active and inactive, without bots, with the rows of the players
   list below; clans with two members or more as in the public lists, with the
   clans the collector created below; the definitions as they are), and under "Rules" Bots, VAC block, Hall of fame & scheduled
-  reset (not for templates) and Maintenance (the reset). The old edit address
+  reset (not for rankings without servers) and Maintenance (the reset). The old edit address
   `/admin/games/<id>` leads to the ranking's page. The ranking chosen at the
   top of the side menu applies to everything below it: its page, servers,
   players, clans, weapons, actions, teams, roles, awards, ranks and the reset.

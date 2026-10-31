@@ -54,7 +54,10 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
   const isAdmin = user.acclevel >= LEVEL_ADMIN;
   const nf = (n: number) => n.toLocaleString(localeOf(lang));
   const q = `?game=${encodeURIComponent(r.code)}`;
-  const template = r.servers === 0;
+  // A template (seeded, no servers) or a new ranking before its first server:
+  // neither is reset (the collector refuses rankings without servers).
+  const template = r.template;
+  const noServers = r.servers === 0;
   // The VAC block and whether the collector has a Steam key for it; the bots
   // and the scheduled reset for the summary at the top.
   const [allPlayers, clans, vacBlock, vacKey, bots, hall, ...counts] = await Promise.all([
@@ -90,15 +93,17 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
     ? { pill: <span className="pill">{u.stHiddenRanking}</span>, sub: u.stHiddenSub }
     : template
       ? { pill: <span className="pill">{u.stTemplate}</span>, sub: a.templateHint }
-      : {
-          pill: (
-            <span className="pill ok">
-              <span className="dot" />
-              {u.stActive}
-            </span>
-          ),
-          sub: u.stActiveSub,
-        };
+      : noServers
+        ? { pill: <span className="pill warn">{u.stNoServers}</span>, sub: u.stNoServersSub }
+        : {
+            pill: (
+              <span className="pill ok">
+                <span className="dot" />
+                {u.stActive}
+              </span>
+            ),
+            sub: u.stActiveSub,
+          };
   // The cards of this page, for the jump bar at the top.
   const parts: [string, string, IconName][] = [
     ...(isAdmin
@@ -112,7 +117,7 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
       ? ([
           ["bots", u.partBots, "players"],
           ["vac", u.partVac, "shield"],
-          ...(template ? [] : [["hall-of-fame", u.kpiReset, "clock"]]),
+          ...(noServers ? [] : [["hall-of-fame", u.kpiReset, "clock"]]),
           ["maintenance", u.maintenance, "reset"],
         ] as [string, string, IconName][])
       : []),
@@ -143,13 +148,15 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
         <Kpi href={isAdmin ? "#servers" : undefined} k={u.kpiServers} v={nf(r.servers)} s={busy !== null ? fill(u.kpiServersSub, { n: nf(busy) }) : null} />
         <Kpi k={u.kpiPlayers} v={nf(allPlayers)} s={u.kpiPlayersHere} />
         <Kpi
-          href={isAdmin && !template ? "#hall-of-fame" : undefined}
+          href={isAdmin && !noServers ? "#hall-of-fame" : undefined}
           k={u.kpiReset}
-          v={template ? "–" : hall.effective ? scheduleText(lang, hall.effective) : u.kpiResetOff}
+          v={noServers ? "–" : hall.effective ? scheduleText(lang, hall.effective) : u.kpiResetOff}
           s={
             template
               ? u.kpiResetTemplate
-              : hall.effective
+              : noServers
+                ? u.kpiResetNoServers
+                : hall.effective
                 ? `${hall.source === "global" ? u.kpiResetGlobal : u.kpiResetOwn}${hall.last ? ` · ${fill(u.kpiResetNext, { d: date(nextStart(hall.last, hall.effective)) })}` : ""}`
                 : u.kpiResetNone
           }
@@ -185,14 +192,14 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
           <h2 className="group-head">{u.rulesHead}</h2>
           <BotsCard game={r.code} lang={lang} status={sp.bots} changed={sp.n} />
           <VacCard game={r.code} lang={lang} on={vacBlock} keyStored={vacKey} status={sp.vac} />
-          {/* A template (no servers) is never reset: no schedule to set. */}
-          {!template ? <HallOfFameCard game={r.code} lang={lang} status={sp.hof} /> : null}
+          {/* A ranking without servers is never reset: no schedule to set. */}
+          {!noServers ? <HallOfFameCard game={r.code} lang={lang} status={sp.hof} /> : null}
           <section className="card" id="maintenance">
             <header>
               <h2>{u.maintenance}</h2>
             </header>
-            {template ? (
-              <p className="muted">{u.templateMaintenance}</p>
+            {noServers ? (
+              <p className="muted">{template ? u.templateMaintenance : u.noServersMaintenance}</p>
             ) : (
               <div className="body maintenance">
                 <p>{u.maintenanceIntro}</p>

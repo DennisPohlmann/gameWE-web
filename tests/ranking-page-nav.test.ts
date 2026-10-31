@@ -15,8 +15,9 @@ test("every card of the page has an entry with an icon, level 100 parts only for
     assert.match(page, new RegExp(`\\["${id}", u\\.[A-Za-z]+, "${icon}"\\]`), id);
   }
   assert.match(page, /\.\.\.\(isAdmin\s*\?\s*\(\[\s*\["settings"/);
-  // A template has no scheduled reset, so no entry for it.
-  assert.match(page, /\.\.\.\(template \? \[\] : \[\["hall-of-fame"/);
+  // A ranking without servers (a template or a new one) has no scheduled
+  // reset, so no entry for it.
+  assert.match(page, /\.\.\.\(noServers \? \[\] : \[\["hall-of-fame"/);
   assert.match(page, /<PageNav label=\{u\.onThisPage\} parts=\{parts\} \/>/);
 });
 

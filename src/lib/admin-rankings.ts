@@ -2,6 +2,7 @@ import "server-only";
 import { adminExec, adminQuery } from "./db";
 import { baseGameOf } from "./games";
 import { playersPerRanking, playersPerRankingSql, rankingClansSql, rankingPlayersSql } from "./general-stats";
+import { isTemplateRanking } from "./ranking-template";
 import { addParams } from "./return-to";
 
 // Rankings (hlstats_Games rows) as the admin manages them: a new ranking takes
@@ -68,7 +69,9 @@ export async function assignServers(code: string, ids: number[]): Promise<number
   return res.affectedRows;
 }
 
-export type RankingSummary = { id: number; code: string; name: string; hidden: boolean; base: string | null; servers: number; order: number };
+// template: a seeded ranking without servers (ranking-template.ts); a ranking
+// an admin created is a normal ranking also before its first server.
+export type RankingSummary = { id: number; code: string; name: string; hidden: boolean; base: string | null; servers: number; order: number; template: boolean };
 
 // Every ranking with its base game and number of servers, in display order
 // (admin menu, overview and the list of rankings).
@@ -89,6 +92,7 @@ export async function rankingSummaries(): Promise<RankingSummary[]> {
     base: bases.get(r.code) ?? null,
     servers: count.get(r.code) ?? 0,
     order: Number(r.display_id ?? 0),
+    template: isTemplateRanking(r.code, count.get(r.code) ?? 0),
   }));
 }
 

@@ -82,8 +82,8 @@ export const entities: Entity[] = [
     pk: "id",
     label: { de: "Ranglisten", en: "Rankings" },
     help: {
-      de: "Eine Rangliste ist eine Sammlung von Servern mit einem gemeinsamen Ranking, z. B. „Assault“ mit fünf Assault-Servern oder „GunGame“ mit zwei GunGame-Servern. Lege sie hier an und ordne ihr danach die Server zu. Ranglisten ohne Server erscheinen nicht auf der Startseite und dienen als Vorlagen.",
-      en: "A ranking is a set of servers sharing one player ranking, e.g. \"Assault\" with five assault servers or \"GunGame\" with two gungame servers. Create it here, then assign the servers. Rankings without servers are not shown on the start page and serve as templates.",
+      de: "Eine Rangliste ist eine Sammlung von Servern mit einem gemeinsamen Ranking, z. B. „Assault“ mit fünf Assault-Servern oder „GunGame“ mit zwei GunGame-Servern. Lege sie hier an und ordne ihr danach die Server zu. Ranglisten ohne Server erscheinen nicht auf der Startseite; die mitgelieferten (eine je Spiel) dienen als Vorlagen.",
+      en: "A ranking is a set of servers sharing one player ranking, e.g. \"Assault\" with five assault servers or \"GunGame\" with two gungame servers. Create it here, then assign the servers. Rankings without servers are not shown on the start page; the seeded ones (one per game) serve as templates.",
     },
     fields: [
       {
@@ -151,7 +151,7 @@ export const entities: Entity[] = [
       },
       { name: "address", label: { de: "IP-Adresse", en: "IP address" }, type: "text", inList: true, required: true, max: 32, normalize: canonicalIp, help: { de: "Eine IP-Adresse, kein Hostname. Jede Kombination aus IP und Port gibt es nur einmal.", en: "An IP address, not a host name. Each IP and port combination exists only once." } },
       { name: "port", label: { de: "Port", en: "Port" }, type: "number", inList: true, required: true, min: 1, maxValue: 65535, help: { de: "Spiel- und RCON-Port des Servers.", en: "Game and RCON port of the server." } },
-      { ...gameField, help: { de: "Die Rangliste bestimmt das Spiel: erst unter Ranglisten das Spiel der Rangliste wählen, dann den Server ihr zuordnen. Nur Ranglisten desselben Spiels sind erlaubt. Vorlagen (Ranglisten ohne Server) stehen nicht zur Wahl; den ersten Server bekommt eine neue Rangliste auf ihrer Seite unter Ranglisten („Server hinzufügen“).", en: "The ranking decides the game: first choose the ranking's game under Rankings, then assign the server to it. Only rankings of the same game are allowed. Templates (rankings without servers) are not offered; a new ranking gets its first server on its page under Rankings (“Add server”)." } },
+      { ...gameField, help: { de: "Die Rangliste bestimmt das Spiel: erst unter Ranglisten das Spiel der Rangliste wählen, dann den Server ihr zuordnen. Nur Ranglisten desselben Spiels sind erlaubt. Vorlagen (mitgelieferte Ranglisten ohne Server) stehen nicht zur Wahl, neu angelegte Ranglisten schon, auch vor ihrem ersten Server.", en: "The ranking decides the game: first choose the ranking's game under Rankings, then assign the server to it. Only rankings of the same game are allowed. Templates (seeded rankings without servers) are not offered; rankings you created are, also before their first server." } },
       { name: "rcon_password", label: { de: "RCON-Passwort", en: "RCON password" }, type: "secret", max: 128, help: { de: "Für die Antworten auf !rank, !top10 usw. Leer lassen, um es nicht zu ändern; „Entfernen“ löscht es.", en: "For replies to !rank, !top10 etc. Leave empty to keep it; “Remove” clears it." } },
       {
         name: "log_secret",
