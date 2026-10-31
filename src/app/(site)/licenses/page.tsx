@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SortableTable } from "@/components/sortable-table";
 import { GameIcon, Section, TableWrap } from "@/components/ui";
 import { basePath } from "@/lib/base-path";
-import { GAME_ICON_CREDITS, type IconEdit, isOwnDrawing } from "@/lib/game-icon-credits";
+import { GAME_ICON_CREDITS, type IconEdit, STEAM_AGREEMENT, STEAM_AGREEMENT_URL, isOwnDrawing, underSteamAgreement, withGameOwner } from "@/lib/game-icon-credits";
 import { GAME_KINDS } from "@/lib/games";
 import { getDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
@@ -156,8 +156,8 @@ export default async function LicensesPage() {
               .filter(([code]) => Object.hasOwn(GAME_KINDS, code))
               .map(([code, c]) => {
                 const name = GAME_KINDS[code].name;
-                const holder = isOwnDrawing(c) ? c.holder : `${c.holder} (${de ? "vermutlich" : "presumably"})`;
-                const license = isOwnDrawing(c) ? "GPL-3.0-or-later" : t.licUnknown;
+                const holder = withGameOwner(c) ? t.licGameOwner : c.holder;
+                const license = isOwnDrawing(c) ? "GPL-3.0-or-later" : underSteamAgreement(c) ? STEAM_AGREEMENT : c.rightsUrl ? "All Rights Reserved" : t.licGameOwnerRights;
                 const changes = c.edits.map((e) => EDIT[e][de ? 0 : 1]).join(", ") || (de ? "keine" : "none");
                 return {
                   key: code,
@@ -169,7 +169,7 @@ export default async function LicensesPage() {
                     </span>,
                     holder,
                     changes,
-                    <a key="l" href={`${basePath}/games/${code}/LICENSE.txt`} rel="noopener noreferrer" target="_blank">
+                    <a key="l" href={underSteamAgreement(c) ? STEAM_AGREEMENT_URL : (c.rightsUrl ?? `${basePath}/games/${code}/LICENSE.txt`)} rel="noopener noreferrer" target="_blank">
                       {license}
                     </a>,
                   ],

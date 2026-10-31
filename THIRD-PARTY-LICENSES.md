@@ -156,7 +156,7 @@ all compatible with GPL-3.0-or-later.
 |------|-----------|---------|
 | `public/flags/*.svg` (except `unknown.svg`, gameWE's own placeholder) and `public/flags/sprite.png` (all of them in one picture, made by `scripts/flags-sprite.mjs`) | flag-icons 7.2.3 by Panayiotis Lipiridis, https://github.com/lipis/flag-icons | MIT, text in `public/flags/LICENSE.txt` |
 | `public/icon*.png`, `public/icon.svg`, `public/apple-touch-icon.png`, `public/avatar-unknown.svg` | gameWE's own graphics | GPL-3.0-or-later |
-| `public/games/<code>/icon.png` without an `icon.svg` beside it | the games' own icons before the server names, supplied by the maintainer; presumably the artwork of the game makers (Valve and the mod teams), whose names are their trademarks | unknown, see each folder's `LICENSE.txt` |
+| `public/games/<code>/icon.png` without an `icon.svg` beside it | the games' own icons before the server names, supplied by the maintainer; the artwork of Valve Corporation, the Zombie Panic Team and the rights holders of the other mod games, whose names are their trademarks | Valve's: Steam Subscriber Agreement, section 2.D, https://store.steampowered.com/agreement; Zombie Panic! Source: All Rights Reserved (https://zombiepanicsource.com/); the other mod games': all rights with the rights holder of the game; see each folder's `LICENSE.txt` |
 | `public/games/<code>/icon.svg` and the `icon.png` made from it | gameWE's own drawing of a game icon (not the game's official logo) | GPL-3.0-or-later |
 | `templates/` | gameWE's own design templates | GPL-3.0-or-later |
 | `overviews/cs2/*.png` and their `.json` (de_ancient, de_anubis, de_cache, de_dust2, de_inferno, de_mirage, de_nuke, de_overpass, de_train, de_vertigo) | redrawn by gameWE (`scripts/overviews/restyle.py`) from the radar pictures of Boltobserv (commit 0320883), https://github.com/boltgolt/boltobserv, made with simpleradar; Boltobserv's calibration | GPL-3.0, text in `overviews/cs2/LICENSE-boltobserv.txt` |
@@ -177,28 +177,34 @@ folder holds the icon's `LICENSE.txt` with the source, the original file's
 SHA-256 and the full license note; the website lists the same on
 `/licenses` under "Spiel-Icons / game icons". The names of the games are
 trademarks of their makers; gameWE is not affiliated with or endorsed by
-them. For an icon whose license is unknown no license that allows passing
-it on is known: it is shipped on the maintainer's own decision, and
+them. The Valve icons are listed under the Steam Subscriber Agreement,
+section 2.D "License to Use Valve Game Content in Fan Art"
+(https://store.steampowered.com/agreement). The Zombie Panic! Source
+icon: "Copyright © Zombie Panic Team 2004-2026. All Rights Reserved. Zombie
+Panic is a trademark of Monochrome, Inc." (https://zombiepanicsource.com/).
+The icons of Fistful of Frags and No More Room in Hell belong to the rights
+holder of each game. For these mod games no license that allows passing them on is
+known: they are shipped on the maintainer's own decision, and
 gameWE's own drawing (git history: `public/games/<code>/icon.svg`) can take
 its place.
 
 | Game | Folder | Source | Rights holder | Changed by gameWE | License |
 |------|--------|--------|---------------|-------------------|---------|
-| Counter-Strike 2 | `public/games/cs2/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
-| Counter-Strike: Global Offensive | `public/games/csgo/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
-| Counter-Strike: Source | `public/games/css/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | scaled down to 32 x 32 | unknown |
-| Counter-Strike 1.6 | `public/games/cstrike/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
-| Counter-Strike: Condition Zero | `public/games/czero/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
-| Day of Defeat | `public/games/dod/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
-| Day of Defeat: Source | `public/games/dods/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
-| Fistful of Frags | `public/games/fof/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | the Fistful of Frags Team (presumably) | none | unknown |
-| Half-Life 2 Deathmatch | `public/games/hl2mp/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | scaled down to 32 x 32 | unknown |
-| Left 4 Dead | `public/games/l4d/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
-| Left 4 Dead 2 | `public/games/l4d2/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
-| No More Room in Hell | `public/games/nmrih/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | the No More Room in Hell Team (presumably) | none | unknown |
-| Team Fortress 2 | `public/games/tf/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
-| Half-Life Deathmatch | `public/games/valve/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
-| Zombie Panic! Source | `public/games/zps/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | the Zombie Panic! Team (presumably) | none | unknown |
+| Counter-Strike 2 | `public/games/cs2/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation | none | Steam Subscriber Agreement, section 2.D, https://store.steampowered.com/agreement |
+| Counter-Strike: Global Offensive | `public/games/csgo/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation | none | Steam Subscriber Agreement, section 2.D, https://store.steampowered.com/agreement |
+| Counter-Strike: Source | `public/games/css/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation | scaled down to 32 x 32 | Steam Subscriber Agreement, section 2.D, https://store.steampowered.com/agreement |
+| Counter-Strike 1.6 | `public/games/cstrike/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation | none | Steam Subscriber Agreement, section 2.D, https://store.steampowered.com/agreement |
+| Counter-Strike: Condition Zero | `public/games/czero/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation | none | Steam Subscriber Agreement, section 2.D, https://store.steampowered.com/agreement |
+| Day of Defeat | `public/games/dod/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation | none | Steam Subscriber Agreement, section 2.D, https://store.steampowered.com/agreement |
+| Day of Defeat: Source | `public/games/dods/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation | none | Steam Subscriber Agreement, section 2.D, https://store.steampowered.com/agreement |
+| Fistful of Frags | `public/games/fof/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | the rights holder of the game | none | all rights with the rights holder of the game |
+| Half-Life 2 Deathmatch | `public/games/hl2mp/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation | scaled down to 32 x 32 | Steam Subscriber Agreement, section 2.D, https://store.steampowered.com/agreement |
+| Left 4 Dead | `public/games/l4d/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation | none | Steam Subscriber Agreement, section 2.D, https://store.steampowered.com/agreement |
+| Left 4 Dead 2 | `public/games/l4d2/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation | none | Steam Subscriber Agreement, section 2.D, https://store.steampowered.com/agreement |
+| No More Room in Hell | `public/games/nmrih/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | the rights holder of the game | none | all rights with the rights holder of the game |
+| Team Fortress 2 | `public/games/tf/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation | none | Steam Subscriber Agreement, section 2.D, https://store.steampowered.com/agreement |
+| Half-Life Deathmatch | `public/games/valve/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation | none | Steam Subscriber Agreement, section 2.D, https://store.steampowered.com/agreement |
+| Zombie Panic! Source | `public/games/zps/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Zombie Panic Team ("Zombie Panic" is a trademark of Monochrome, Inc.) | none | All Rights Reserved, https://zombiepanicsource.com/ |
 
 Rank insignia and award ribbons are drawn with SVG and CSS in
 `src/components/badges.tsx` (no third-party images).

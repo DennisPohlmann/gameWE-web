@@ -3,13 +3,12 @@ Game icon: No More Room in Hell (nmrih)
 Files:   icon.png (32 x 32, as supplied, unchanged)
 Source:  supplied by Dennis Pohlmann (gameWE maintainer) on 2026-10-31;
          the game's icon; original file SHA-256 fd48c433fc7015a62580bb52c780f8b815b0fb731070b3d72397b30a166df0a8
-Author:  the No More Room in Hell Team (presumably)
-License: UNKNOWN. No license that allows passing the picture on is known;
-         it is most likely the copyrighted artwork and trademark of
-         the No More Room in Hell Team. It is shipped on the maintainer's own decision. If the
-         rights are not cleared, replace icon.png with gameWE's own drawing
-         (git history: public/games/nmrih/icon.svg) and run
-         npm run game-icons.
+Author:  the rights holder of the game
+License: All rights belong to the rights holder of the game. No license
+         that allows passing the picture on is known; it is shipped on the
+         maintainer's own decision. Should that not hold, replace icon.png
+         with gameWE's own drawing (git history: public/games/nmrih/icon.svg)
+         and run npm run game-icons.
 
-"No More Room in Hell" is a trademark of the No More Room in Hell Team; gameWE is not affiliated with or
-endorsed by them.
+"No More Room in Hell" is a trademark of its rights holder; gameWE is not affiliated
+with or endorsed by them.

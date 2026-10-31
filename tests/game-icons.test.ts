@@ -5,7 +5,7 @@
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { test } from "node:test";
-import { GAME_ICON_CREDITS, isOwnDrawing } from "../src/lib/game-icon-credits.ts";
+import { GAME_ICON_CREDITS, isOwnDrawing, underSteamAgreement } from "../src/lib/game-icon-credits.ts";
 import { gameIconSrc } from "../src/lib/game-icons.ts";
 import { GAME_KINDS, SUPPORTED_GAMES } from "../src/lib/games.ts";
 
@@ -33,8 +33,9 @@ test("the image credits (/licenses, THIRD-PARTY-LICENSES.md) match every LICENSE
   assert.deepEqual(Object.keys(GAME_ICON_CREDITS).sort(), readdirSync(dir).sort());
   for (const [code, c] of Object.entries(GAME_ICON_CREDITS)) {
     const license = readFileSync(`${dir}/${code}/LICENSE.txt`, "utf8");
-    assert.equal(license.match(/^Author: +(.+?)(?: \(presumably\))?$/m)?.[1], c.holder, `${code}: rights holder`);
-    assert.match(license, isOwnDrawing(c) ? /^License: GPL-3\.0-or-later/m : /^License: UNKNOWN/m, `${code}: license`);
+    assert.equal(license.match(/^Author: +(.+?)$/m)?.[1], c.holder, `${code}: rights holder`);
+    const expected = isOwnDrawing(c) ? /^License: GPL-3\.0-or-later/m : underSteamAgreement(c) ? /^License: Steam Subscriber Agreement, section 2\.D .*\n.*https:\/\/store\.steampowered\.com\/agreement$/m : c.rightsUrl ? new RegExp(`^License: All rights reserved\\.[\\s\\S]*\\(${c.rightsUrl.replace(/[.]/g, '\\.')}\\)`, 'm') : /^License: All rights belong to the rights holder of the game\./m;
+    assert.match(license, expected, `${code}: license`);
     assert.ok(md.includes(`| ${GAME_KINDS[code].name} | \`public/games/${code}/\` | `), `${code} missing in THIRD-PARTY-LICENSES.md`);
   }
 });

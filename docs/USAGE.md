@@ -72,8 +72,12 @@ game before it, from
 `public/games/<code>/icon.png` (one folder per game of `src/lib/games.ts`,
 square, at least 32 x 32 px, shown at 16 px). Each folder names the
 picture's source and license in `LICENSE.txt`. Most icons are the games'
-own icons, supplied by the maintainer, whose license is unknown (most
-likely the game makers' artwork and trademarks). A folder with `icon.svg`
+own icons, supplied by the maintainer: Valve's are listed under the Steam
+Subscriber Agreement, section 2.D "License to Use Valve Game Content in
+Fan Art" (https://store.steampowered.com/agreement); Zombie Panic!
+Source's to the Zombie Panic Team (All Rights Reserved,
+https://zombiepanicsource.com/); the other mod games' icons belong to the
+rights holder of each game. A folder with `icon.svg`
 holds gameWE's own drawing (GPL-3.0-or-later); `npm run game-icons` makes
 `icon.png` from it. Replace `icon.png` with another picture only together
 with its source and license in `LICENSE.txt`.
