@@ -8,7 +8,7 @@ import { headerOrder } from "@/lib/header-links";
 import { dicts } from "@/translations";
 import { rawOptions } from "@/lib/admin-data";
 import { adminDict } from "@/lib/admin-i18n";
-import { RAW_GROUP, rawOptionHelp, READONLY_OPTIONS, allSettings, settingGroups, type Setting } from "@/lib/admin-settings";
+import { RAW_GROUP, rawOptionHelp, READONLY_OPTIONS, allSettings, settingGroups, settingsReader, type Setting } from "@/lib/admin-settings";
 import { requireAdmin } from "@/lib/auth";
 import { ENV_FALLBACK, envFormValues, valueSource } from "@/lib/config";
 import { noAutofill } from "@/lib/autofill";
@@ -119,7 +119,7 @@ export default async function SettingsPage({
         <div className="savebar">
           <span className="msg">
             <Icon name="info" />
-            {u.saveHint}
+            {{ web: u.saveHint, collector: u.saveHintCollector, both: u.saveHintBoth }[settingsReader(group)]}
           </span>
           <span className="btns">
             <a className="button" href="">

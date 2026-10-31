@@ -503,7 +503,12 @@ menu button), and lists turn into cards on narrow screens:
   events, search engines, privacy), Services (voice server, SourceBans, Steam, monitoring),
   Collector (points, recording & privacy, in-game commands), Moderation (chat,
   IP addresses), Access (users, my account & 2FA) and Advanced (all options
-  (raw)).
+  (raw)). The save bar says who reads the page's values: the website at once
+  after saving (website pages, voice server, monitoring, admin area), the
+  collector within a minute (Collector pages, SourceBans) or both (Steam,
+  Advanced). Every admin page shows its path at the top (e.g. "Rankings ›
+  Servers › name"), the parts before the current page are links; a part
+  with the same name as the next one is shown once.
 
 What the admin area edits:
 

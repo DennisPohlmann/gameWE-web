@@ -151,8 +151,15 @@ small, .small { font-size: 12.5px; }
 
 /* ----------------------------------------------------------------- main */
 .adm-main { padding: 24px 32px 64px; min-width: 0; max-width: 1440px; width: 100%; }
-.crumbs { font-size: 13px; color: var(--muted); margin: 0 0 6px; display: flex; gap: 6px; flex-wrap: wrap; }
-.crumbs a { color: var(--muted); }
+/* Breadcrumbs: clearly readable, links in the accent colour, the current
+   page in the text colour, a separator between the parts; wraps on phones. */
+.crumbs { margin: 0 0 10px; font-size: 14px; line-height: 1.5; }
+.crumbs ol { margin: 0; padding: 0; list-style: none; overflow-wrap: anywhere; }
+.crumbs li { display: inline; color: var(--soft); font-weight: 500; }
+.crumbs li[aria-current] { color: var(--text); font-weight: 600; }
+.crumbs li + li::before { content: "›"; margin: 0 10px; color: var(--muted); font-weight: 400; font-size: 16px; }
+.crumbs a { color: var(--accent-text); font-weight: 500; text-decoration: none; }
+.crumbs a:hover, .crumbs a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
 .page-head { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
 .page-head > div { min-width: 0; flex: 1 1 360px; }
 .page-head h1 { margin: 0; }
@@ -290,6 +297,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--accent-btn); w
 select { padding-right: 28px; }
 .form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; max-width: 640px; }
 .form label { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; font-weight: 600; }
+/* Number fields as narrow as on the settings pages. */
+.form label > input[type="number"] { max-width: 160px; }
 .form label > small, .form small { font-weight: 400; color: var(--muted); }
 .form label.check, label.check { display: flex; gap: 8px; align-items: center; font-weight: 500; }
 .form .form-field { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; font-weight: 600; }
@@ -317,14 +326,14 @@ select { padding-right: 28px; }
 
 /* settings pages: one row per setting */
 .fields { display: grid; }
-.field { display: grid; grid-template-columns: minmax(200px, 320px) minmax(0, 1fr); gap: 6px 28px; padding: 15px 18px; border-bottom: 1px solid var(--line); }
+.field { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 6px 28px; padding: 15px 18px; border-bottom: 1px solid var(--line); }
 .field:last-child { border-bottom: 0; }
 .field .l b { display: block; font-weight: 600; }
 .field .l span { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
 .field .l code { display: block; font-size: 11px; color: var(--muted); margin-top: 3px; }
 .field .l span.warn-text { color: var(--warn); margin-top: 6px; }
 .field .l span.env-note { color: var(--soft); border-left: 3px solid var(--warn); padding-left: 6px; margin-top: 4px; }
-.field .c { display: flex; flex-direction: column; gap: 6px; max-width: 560px; min-width: 0; }
+.field .c { display: flex; flex-direction: column; gap: 6px; max-width: 640px; min-width: 0; }
 .field .c > input:not([type="number"]), .field .c > select { width: 100%; }
 .field .c > input[type="number"] { max-width: 160px; }
 .field-wide { padding: 15px 18px; border-bottom: 1px solid var(--line); }
@@ -438,7 +447,8 @@ select { padding-right: 28px; }
   .page-head .actions { width: 100%; }
   .page-head .actions .button { flex: 1; }
   .page-head > .adm-gtag { display: none; }
-  .crumbs { display: none; }
+  .crumbs { font-size: 13px; margin-bottom: 8px; }
+  .crumbs li + li::before { margin: 0 7px; }
   .kpis { gap: 10px; }
   .kpi { padding: 12px 14px; }
   .kpi .v { font-size: 22px; }

@@ -39,6 +39,17 @@ export type Setting = {
 export type SettingArea = "website" | "services" | "collector" | "admin";
 export type SettingGroup = { id: string; area: SettingArea; title: L; help?: L; items: Setting[] };
 
+// Who reads a settings page's values, for the hint of its save bar: the
+// website (from its cache, emptied on save), the collector (it rereads
+// hlstats_Options every minute) or both (the Steam key: profiles on the
+// website, VAC checks in the collector).
+export function settingsReader(group: Pick<SettingGroup, "id" | "area"> | undefined): "web" | "collector" | "both" {
+  if (!group) return "both";
+  if (group.area === "collector" || group.id === "bans") return "collector";
+  if (group.id === "steam") return "both";
+  return "web";
+}
+
 const TS = { key: "gamewe_voice_type", value: "teamspeak" };
 
 // Event boxes on the public pages (lib/events-mode.ts).
