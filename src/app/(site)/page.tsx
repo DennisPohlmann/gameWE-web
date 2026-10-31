@@ -4,7 +4,7 @@ import { MiniAvatar } from "@/components/mini-avatar";
 import { externalImage } from "@/lib/consent";
 import { getConsent } from "@/lib/consent-server";
 import { sortHeads } from "@/components/sort-head";
-import { Flag, GameTag, Skeleton } from "@/components/ui";
+import { Flag, GameIcon, GameTag, Skeleton } from "@/components/ui";
 import { basePath } from "@/lib/base-path";
 import { LineChart } from "@/components/chart";
 import { Sparkline } from "@/components/sparkline";
@@ -101,6 +101,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                 {rankings.map((r) => (
                   <tr key={r.code} className="ranking-line">
                     <td className="no-rb">
+                      <GameIcon realgame={r.realgame} />
                       <Link prefetch={false} className="rnk" href={`/${r.code}`} title={r.name}>
                         {r.name}
                       </Link>

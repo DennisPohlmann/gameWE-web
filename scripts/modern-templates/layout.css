@@ -232,7 +232,7 @@ html[data-skin] tr.ranking-line:hover td, html[data-skin] tr.server-line:hover t
 html[data-skin] tr.ranking-line a, html[data-skin] tr.server-line a { color: var(--text); }
 html[data-skin] a.rnk, html[data-skin] a.srv { color: var(--accent) !important; }
 html[data-skin] a.rnk:hover, html[data-skin] a.srv:hover { color: var(--accent-text) !important; text-decoration: none; }
-html[data-skin] tr.ranking-line td:first-child, html[data-skin] tr.server-line td:first-child { padding-left: 12px; }
+html[data-skin] tr.ranking-line td:first-child, html[data-skin] tr.server-line td:first-child { padding-left: 9px; }
 /* Long server names stay on one line and end in "…" (the full name is the
    link's title). max-width: 0 lets the name column take only the room the
    other columns leave; the top player is cut the same way. */
@@ -255,6 +255,9 @@ html[data-skin] table.rankings a.rnk {
   overflow: hidden;
   overflow-wrap: anywhere;
 }
+/* The game icon floats before the name, which is a box of its own (the
+   two-line cut above): both lines start after the icon. */
+html[data-skin] table.rankings td.no-rb .game-icon { float: left; margin: 2px 6px 0 0; }
 html[data-skin] table.rankings td.no-lb { white-space: nowrap; }
 html[data-skin] .voice-box td:first-child { width: 40%; }
 html[data-skin] table.rankings td:nth-child(5) {

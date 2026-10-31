@@ -282,7 +282,7 @@ tr.server-line .vac-mark.vac-insecure { color: color-mix(in srgb, #d32f2f 70%, v
 .flag-svg { position: relative; display: inline-block; width: 16px; height: 12px; vertical-align: -1px; background: no-repeat; background-size: 1600% 1700%; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18), 0 1px 1px rgba(0, 0, 0, 0.25); overflow: hidden; }
 .flag-svg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0) 51%, rgba(255, 255, 255, 0.06)); }
 /* The game's icon before a server name (public/games/<code>/icon.png). */
-.game-icon { display: inline-block; width: 16px; height: 16px; margin-right: 1px; vertical-align: -3px; }
+.game-icon { display: inline-block; width: 16px; height: 16px; margin-right: 3px; vertical-align: -3px; }
 .lang-flag { display: block; width: 18px; height: 13px; }
 
 .cust-logo { padding-top: 20px; width: 95%; margin: 0 auto; text-align: center; }
@@ -437,7 +437,7 @@ tr.ranking-line td { background: var(--line-bg); color: var(--line-text); }
 tr.ranking-line:hover td { background: #f2f2f2; }
 tr.ranking-line a { color: var(--line-text); }
 a.rnk { font-weight: bold; font-size: 14px; text-decoration: none; }
-tr.ranking-line td:first-child { padding-left: 10px; }
+tr.ranking-line td:first-child { padding-left: 7px; }
 a.rnk:hover { text-decoration: underline; }
 td.no-rb { border-right: 0; white-space: normal; }
 td.no-lb { border-left: 0; padding-right: 10px; }
@@ -581,7 +581,7 @@ tr.server-line td { background: var(--line-bg); color: var(--line-text); padding
 tr.server-line:hover td { background: #f2f2f2; }
 tr.server-line a { color: var(--line-text); }
 a.srv { font-weight: bold; font-size: inherit; text-decoration: none; }
-tr.server-line td:first-child { padding: 4px 4px 4px 10px; }
+tr.server-line td:first-child { padding: 4px 4px 4px 7px; }
 a.srv:hover { text-decoration: underline; }
 .server-margin { margin-top: 12px; }
 table.player-livestats { border: 1px solid var(--border); border-top: 0; }
