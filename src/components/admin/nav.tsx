@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Icon, type IconName } from "./icons";
 
 // Menu of the admin area: the three areas (overview, rankings, settings)
@@ -148,11 +148,20 @@ export function AdminSidebar({
   footer: (string | { text: string; href: string; version?: boolean })[];
 }) {
   const { pathname, parts, seg, area, game } = useWhere();
-  // Close the phone menu after a click on one of its links.
+  const picker = useRef<HTMLDetailsElement>(null);
+  // Close the phone menu and the ranking picker after a click on one of
+  // their links: the sidebar stays mounted across pages, so an open
+  // <details> would stay open on the next page.
   useEffect(() => {
     const box = document.getElementById("adm-nav") as HTMLInputElement | null;
     if (box) box.checked = false;
+    if (picker.current) picker.current.open = false;
   }, [pathname, game]);
+  // Also right away on the click, so the list closes even when the choice
+  // is the ranking already shown (no navigation).
+  const closePicker = () => {
+    if (picker.current) picker.current.open = false;
+  };
   const current = rankings.find((r) => r.code === game);
   const q = current ? `?game=${encodeURIComponent(current.code)}` : "";
   const list = (key: string, icon: IconName, label: string, count?: number) => (
@@ -212,7 +221,7 @@ export function AdminSidebar({
         </>
       ) : area === "rankings" ? (
         <>
-          <details className="adm-picker">
+          <details className="adm-picker" ref={picker}>
             <summary>
               <span className="adm-gtag">{current ? current.tag : "∗"}</span>
               <span className="adm-picker-text">
@@ -223,12 +232,12 @@ export function AdminSidebar({
               <Icon name="chevron" />
             </summary>
             <div className="adm-picker-list" role="list">
-              <Link href={pickHref("")} className={current ? undefined : "on"}>
+              <Link href={pickHref("")} className={current ? undefined : "on"} onClick={closePicker}>
                 <span className="adm-gtag">∗</span>
                 {t.noRanking}
               </Link>
               {rankings.map((r) => (
-                <Link key={r.code} href={pickHref(r.code)} className={r.code === game ? "on" : undefined}>
+                <Link key={r.code} href={pickHref(r.code)} className={r.code === game ? "on" : undefined} onClick={closePicker}>
                   <span className="adm-gtag">{r.tag}</span>
                   <span>
                     {r.name}
