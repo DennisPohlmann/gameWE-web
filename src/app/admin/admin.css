@@ -390,9 +390,9 @@ select { padding-right: 28px; }
 .login .adm-brand { color: var(--text); margin-bottom: 18px; font-size: 18px; }
 .login .adm-brand small { color: var(--muted); border-color: var(--line-2); }
 .login h1 { font-size: 20px; margin-bottom: 14px; }
-.login .backup-login { margin: 14px 0 4px; }
-.login .backup-login summary { cursor: pointer; color: var(--soft); font-size: 14px; }
-.login .backup-login .form { margin-top: 10px; }
+.login .code-switch { margin: 12px 0 4px; font-size: 14px; }
+.login .code-switch a { color: var(--accent-text); text-decoration: none; }
+.login .code-switch a:hover { text-decoration: underline; }
 .login .form { max-width: none; }
 .login .form input { width: 100%; }
 .login .form .button { width: 100%; justify-self: stretch; }

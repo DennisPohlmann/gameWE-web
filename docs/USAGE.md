@@ -345,8 +345,9 @@ as text for the authenticator app (in the container:
 that the sign-in also needs the six-digit code. Turning TOTP on makes ten
 backup codes (`abcde-fghjk`), shown once in a dialog to copy or save as a
 text file (`create-admin --totp` prints them): each works once instead of the
-code from the app, at the sign-in ("No app at hand? Sign in with a backup
-code"), to remove TOTP and to confirm a new API token. My account shows how
+code from the app, at the sign-in (the code step shows one field at a
+time: "Use a backup code" switches to the backup code field, "Use
+authenticator code" back), to remove TOTP and to confirm a new API token. My account shows how
 many are left and makes ten new ones with the current code from the app
 (the old ones stop working); with two or fewer left the overview says so.
 `--no-totp` removes TOTP and the backup codes, for example when the phone

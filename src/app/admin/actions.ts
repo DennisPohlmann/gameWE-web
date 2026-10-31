@@ -12,6 +12,7 @@ import { expiryDays, tokenName } from "@/lib/api-token-core";
 import { createToken, revokeToken } from "@/lib/api-tokens";
 import { apiEnabled } from "@/lib/api-switch";
 import { LEVEL_ADMIN, adminSecret, confirmIdentity, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, requireAdmin } from "@/lib/auth";
+import { codeMode, codeStepHref } from "@/lib/login-code";
 import { resetMode } from "@/lib/reset";
 import { addParams, safeReturnTo, withReturnTo } from "@/lib/return-to";
 import { rankingPageHref, resettableRankings } from "@/lib/admin-rankings";
@@ -27,7 +28,7 @@ export async function loginAction(form: FormData) {
 
 export async function loginCodeAction(form: FormData) {
   const res = await loginCode(String(form.get("code") ?? ""));
-  if (res === "code") redirect("/admin/login?step=code&error=code");
+  if (res === "code") redirect(codeStepHref(codeMode(form.get("use")), "code"));
   if (res !== "ok") redirect(`/admin/login?error=${res}`);
   redirect("/admin");
 }
