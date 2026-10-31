@@ -1,6 +1,6 @@
 Game icon: Half-Life 2 Deathmatch (hl2mp)
 
-Files:   icon.png (128 x 128, scaled down from a 256 x 256 PNG with
+Files:   icon.png (32 x 32, scaled down from a 256 x 256 PNG with
          transparent background)
 Source:  supplied by Dennis Pohlmann (gameWE maintainer) on 2026-10-30;
          the game's icon; original file SHA-256 a9a076256ff48b2fd6ac8e3f4c2b5048f4060a18bbd78b5de4f54149b01be3df

@@ -1,4 +1,4 @@
-// Draws public/games/<code>/icon.png (128 x 128) from icon.svg, for every
+// Draws public/games/<code>/icon.png (32 x 32) from icon.svg, for every
 // game folder that has an icon.svg. The pages show icon.png before the
 // server names (src/components/game-icon.tsx); each folder's LICENSE.txt
 // says where the picture comes from and under which license.
@@ -13,7 +13,7 @@ import sharp from "sharp";
 
 const root = path.join(path.dirname(new URL(import.meta.url).pathname), "..");
 const dir = path.join(root, "public", "games");
-const SIZE = 128;
+const SIZE = 32;
 
 for (const code of (await readdir(dir)).sort()) {
   const svg = path.join(dir, code, "icon.svg");

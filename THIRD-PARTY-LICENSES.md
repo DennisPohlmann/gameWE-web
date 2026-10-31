@@ -192,7 +192,7 @@ its place.
 | Day of Defeat | `public/games/dod/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
 | Day of Defeat: Source | `public/games/dods/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
 | Fistful of Frags | `public/games/fof/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | the Fistful of Frags Team (presumably) | none | unknown |
-| Half-Life 2 Deathmatch | `public/games/hl2mp/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | scaled down | unknown |
+| Half-Life 2 Deathmatch | `public/games/hl2mp/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-30 | Valve Corporation (presumably) | scaled down to 32 x 32 | unknown |
 | Left 4 Dead | `public/games/l4d/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
 | Left 4 Dead 2 | `public/games/l4d2/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | Valve Corporation (presumably) | none | unknown |
 | No More Room in Hell | `public/games/nmrih/` | supplied by the maintainer (Dennis Pohlmann), 2026-10-31 | the No More Room in Hell Team (presumably) | none | unknown |
