@@ -377,7 +377,8 @@ cookie is `HttpOnly`, `SameSite=Strict` and `Secure` behind HTTPS (set
 The admin area has its own design, independent of the templates of the
 public pages: light or dark (it follows the device; the user menu top right
 switches it and the language). "To the website" in the top bar and in the
-user menu opens the public pages in a new tab. The top bar has three areas, on phones a bar
+user menu opens the public pages in a new tab (on phones the top bar shows
+only its icon). The top bar has three areas, on phones a bar
 at the bottom; each area has its own side menu (on phones a drawer behind the
 menu button), and lists turn into cards on narrow screens:
 

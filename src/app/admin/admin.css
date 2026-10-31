@@ -410,6 +410,7 @@ select { padding-right: 28px; }
   .adm-top { height: 52px; padding: 0 10px; gap: 8px; }
   .adm-icon-btn { display: inline-grid; place-items: center; }
   .adm-areas, .adm-hide-m, .adm-brand small { display: none; }
+  .adm-site { padding: 6px; }
   .adm-shell { grid-template-columns: minmax(0, 1fr); min-height: calc(100vh - 52px); overflow-x: clip; }
   .adm-brand { min-width: 0; }
   .adm-side { position: fixed; z-index: 40; top: 0; left: 0; bottom: 0; width: 86vw; max-width: 330px; height: auto; transform: translateX(-104%); transition: transform 0.2s ease; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45); padding-top: 10px; }

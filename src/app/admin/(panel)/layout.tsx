@@ -76,9 +76,10 @@ export default async function PanelLayout({ children }: { children: ReactNode })
           <AreaTabs t={text} className="adm-areas" />
         </Suspense>
         <span className="adm-spacer" />
-        <a className="adm-tool adm-hide-m" href={`${basePath}/`} target="_blank" rel="noopener">
+        {/* On phones only the icon, the text stays for screen readers. */}
+        <a className="adm-tool adm-site" href={`${basePath}/`} target="_blank" rel="noopener" aria-label={a.toSite} title={a.toSite}>
           <Icon name="external" />
-          {a.toSite}
+          <span className="adm-hide-m">{a.toSite}</span>
         </a>
         <details className="adm-user">
           <summary>
