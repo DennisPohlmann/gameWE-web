@@ -244,7 +244,7 @@ html[data-skin] .voice-box td:first-child {
   text-overflow: ellipsis;
 }
 /* Inside, the name and the phone's second line (flag and address) are cut
-   the same way. */
+   the same way, after the game icon. */
 html[data-skin] tr.server-line a.srv { display: block; }
 html[data-skin] tr.server-line a.srv,
 html[data-skin] tr.server-line .srv-where { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }

@@ -583,6 +583,12 @@ tr.server-line a { color: var(--line-text); }
 a.srv { font-weight: bold; font-size: inherit; text-decoration: none; }
 tr.server-line td:first-child { padding: 4px 4px 4px 7px; }
 a.srv:hover { text-decoration: underline; }
+/* The game icon before a server name, with more air, and the name beside it
+   as a column of its own: a wrapped name and the phone's second line start
+   after the icon, which stands in the middle of them. */
+.srv-cell { display: flex; align-items: center; gap: 7px; }
+.srv-cell .game-icon { flex: none; margin: 0; vertical-align: 0; }
+.srv-text { min-width: 0; flex: 1 1 auto; }
 /* Flag and address of a server as a second line under its name, only on
    phones (the address column is hidden there). */
 .srv-where { display: none; margin-top: 2px; font-size: 11px; font-weight: normal; opacity: 0.75; white-space: nowrap; }

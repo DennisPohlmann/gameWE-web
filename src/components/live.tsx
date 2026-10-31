@@ -21,9 +21,9 @@ export type ServerSort = keyof typeof serverValues;
 // Server rows as on gameME: name, game, address (steam://connect), map, map
 // time, players. The game is the ranking's base game as the same badge as on
 // the start page ("Counter-Strike: Source"), else the ranking's name. `head` is an optional first header row spanning the table. The
-// flag of the server's country stands before its address (the game's icon
-// only on the site's start page, not here); on phones, where the address
-// column is hidden, flag and address follow the name as a small second line. `details` adds the
+// game's icon stands before its name, the flag of the server's country
+// before its address; on phones, where the address column is hidden, flag
+// and address follow the name as a small second line. `details` adds the
 // server version with an OS icon and the VAC state as the last columns (the
 // ranking's start page only). With `sort` the heads of name, map, time and
 // players sort the list (servers come sorted). All columns are left-aligned,
@@ -83,13 +83,20 @@ export function ServerTable({
             return (
               <tr key={s.serverId} className="server-line">
                 <td className="wrap-cell">
-                  <Link prefetch={false} className="srv" href={`/${game}/servers/${s.serverId}`} title={s.name || addr}>
-                    {s.name || addr}
-                  </Link>
-                  <span className="srv-where">
-                    <ServerFlag code={s.country_code} lang={lang} />
-                    {addr}
-                  </span>
+                  {/* Icon and name side by side, so a wrapped name and the
+                      phone's second line both start after the icon. */}
+                  <div className="srv-cell">
+                    <GameIcon realgame={base} />
+                    <div className="srv-text">
+                      <Link prefetch={false} className="srv" href={`/${game}/servers/${s.serverId}`} title={s.name || addr}>
+                        {s.name || addr}
+                      </Link>
+                      <span className="srv-where">
+                        <ServerFlag code={s.country_code} lang={lang} />
+                        {addr}
+                      </span>
+                    </div>
+                  </div>
                 </td>
                 <td className="hide-sm game-cell">
                   {gameKind(base) ? <GameTag realgame={base} long /> : s.game_name || "-"}
