@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Form from "next/form";
 import { notFound } from "next/navigation";
-import { Empty, GameIcon, Pager, PlayerLink, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
+import { Empty, Pager, PlayerLink, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
 import { noAutofill } from "@/lib/autofill";
 import { getSettings } from "@/lib/settings";
-import { countChat, getChat, getGame, getPlayerFlags } from "@/lib/data";
+import { countChat, getChat, getPlayerFlags } from "@/lib/data";
 import { fmtDateTime, localeOf } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
 import { sortHeads, SortInputs } from "@/components/sort-head";
@@ -30,7 +30,7 @@ export default async function ChatPage({
   const limit = rowsParam(sp.rows, pageSize);
   if (!chatPublic) notFound();
   const order = sortState(sp, timeSorts, "date");
-  const [rows, total, ranking] = await Promise.all([getChat({ game, search: q, shown: true, limit, offset: (page - 1) * limit, asc: order.asc }), countChat({ game, search: q, shown: true }), getGame(game, true)]);
+  const [rows, total] = await Promise.all([getChat({ game, search: q, shown: true, limit, offset: (page - 1) * limit, asc: order.asc }), countChat({ game, search: q, shown: true })]);
   const flags = await getPlayerFlags(rows.map((r) => r.playerId));
   const base = `/${game}/chat`;
   const keep = { q: q || undefined, ...order.keep, rows: limit !== pageSize ? limit : undefined };
@@ -69,7 +69,7 @@ export default async function ChatPage({
                       {c.message_mode === 2 ? <span className="muted">({t.sayTeam}) </span> : null}
                       {c.message}
                     </td>
-                    <td className="hide-sm muted">{c.server ? <><GameIcon realgame={ranking?.realgame} />{c.server}</> : "-"}</td>
+                    <td className="hide-sm muted">{c.server || "-"}</td>
                   </tr>
                 ))}
               </tbody>

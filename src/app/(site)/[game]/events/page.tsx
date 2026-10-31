@@ -8,7 +8,7 @@ import { GameEventsList } from "@/components/game-events-list";
 import { sortHeads, SortInputs } from "@/components/sort-head";
 import { Empty, Pager, PctBar, ROW_OPTIONS, Section, pageParam, rowsParam, strParam } from "@/components/ui";
 import { noAutofill } from "@/lib/autofill";
-import { getGame, getPlayerFlags } from "@/lib/data";
+import { getPlayerFlags } from "@/lib/data";
 import { eventsListLive } from "@/lib/events-mode";
 import { EVENT_GROUPS, EVENT_PERIODS, FILTER_KINDS, MAX_LIST_ROWS, eventShares, eventStats, kindsOf, periodParam, periodRange, typeParam } from "@/lib/events-page";
 import { dateFormat, fmtNum, localeOf, nowUnix, siteTimeZone } from "@/lib/format";
@@ -52,7 +52,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
   const shownTotal = Math.min(total, MAX_LIST_ROWS);
   const pages = Math.max(1, Math.ceil(shownTotal / limit));
   const page = Math.min(pageParam(sp.page), pages);
-  const [rows, withServer, ranking] = await Promise.all([getGameEventList(game, kinds, from, limit, (page - 1) * limit, order.asc), hasEventServer(), getGame(game, true)]);
+  const [rows, withServer] = await Promise.all([getGameEventList(game, kinds, from, limit, (page - 1) * limit, order.asc), hasEventServer()]);
   const flags = await getPlayerFlags(rows.flatMap((r) => [r.actor, r.other]));
 
   const base = `/${game}/events`;
@@ -130,7 +130,6 @@ export default async function EventsPage({ params, searchParams }: Props) {
         timeZone={siteTimeZone()}
         live={live}
         withServer={withServer}
-        serverGame={ranking?.realgame}
         initial={rows}
         initialFlags={Object.fromEntries(flags)}
         labels={{ liveUpdates: t.liveUpdates, evText: t.evText, evKind: t.evKind }}

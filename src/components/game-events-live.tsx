@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { GameIcon, PlayerLink, Section, TableWrap } from "@/components/ui";
+import { PlayerLink, Section, TableWrap } from "@/components/ui";
 import { basePath } from "@/lib/base-path";
 import { fmtDateTime } from "@/lib/format";
 import { newerWith, newestOf } from "@/lib/live-feed";
@@ -169,7 +169,6 @@ export function GameEventsLive({
   timeZone,
   live,
   withServer,
-  serverGame,
   initial,
   initialFlags,
   labels,
@@ -186,8 +185,6 @@ export function GameEventsLive({
   timeZone: string;
   live: boolean;
   withServer: boolean;
-  // The ranking's base game: its icon stands before the server names.
-  serverGame?: string | null;
   initial: GameEvent[];
   initialFlags: Flags;
   labels: Labels;
@@ -229,7 +226,7 @@ export function GameEventsLive({
                   <td className="muted nowrap ev-time">{fmtDateTime(e.ts, lang, timeZone)}</td>
                   <td className="wrap-cell">{text(e)}</td>
                   {withServer ? (
-                    <td className="hide-sm muted ev-name">{e.server ? <><GameIcon realgame={serverGame} />{e.server}</> : "-"}</td>
+                    <td className="hide-sm muted ev-name">{e.server ?? "-"}</td>
                   ) : null}
                   <td className="hide-sm muted ev-name">{e.map ?? "-"}</td>
                 </tr>

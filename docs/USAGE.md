@@ -66,10 +66,9 @@ counts everyone on the servers, real players and bots.
 | `/robots.txt`, `/sitemap.xml` | for search engines, see [CONFIG.md](CONFIG.md#search-engines-and-sharing) |
 | `/admin` | admin area |
 
-Game icons: every server name (server lists, server page, banner list of the
-"More" page, map hover boxes, the server column of events and chat, the
-admin server lists) has the icon of the ranking's game before it, and so
-has every ranking name on the start page, from
+Game icons: every ranking name on the start page has the icon of its game
+before it (on the public pages only there; the admin server lists show it
+before each server name too), from
 `public/games/<code>/icon.png` (one folder per game of `src/lib/games.ts`,
 square, at least 32 x 32 px, shown at 16 px). Each folder names the
 picture's source and license in `LICENSE.txt`. Most icons are the games'

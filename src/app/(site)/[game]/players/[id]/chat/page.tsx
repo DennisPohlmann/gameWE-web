@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { HistoryFrame, historyRobots, loadHistoryPlayer } from "@/components/player-history";
-import { Empty, GameIcon, Pager, ROW_OPTIONS, TableWrap, pageParam, rowsParam } from "@/components/ui";
-import { countChat, getChat, getGame } from "@/lib/data";
+import { Empty, Pager, ROW_OPTIONS, TableWrap, pageParam, rowsParam } from "@/components/ui";
+import { countChat, getChat } from "@/lib/data";
 import { fmtDateTime, localeOf } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
@@ -24,7 +24,7 @@ export default async function PlayerChatPage({ params, searchParams }: Props) {
   const { pageSize } = await getSettings();
   const limit = rowsParam(sp.rows, pageSize);
   const order = sortState(sp, timeSorts, "date");
-  const [rows, total, ranking] = await Promise.all([getChat({ playerId: p.playerId, limit, offset: (page - 1) * limit, asc: order.asc }), countChat({ playerId: p.playerId }), getGame(game, true)]);
+  const [rows, total] = await Promise.all([getChat({ playerId: p.playerId, limit, offset: (page - 1) * limit, asc: order.asc }), countChat({ playerId: p.playerId })]);
   const base = `/${game}/players/${p.playerId}/chat`;
   const keep = { ...order.keep, rows: limit !== pageSize ? limit : undefined };
   const th = sortHeads(order, base, keep);
@@ -49,7 +49,7 @@ export default async function PlayerChatPage({ params, searchParams }: Props) {
                       {c.message_mode === 2 ? <span className="muted">({t.sayTeam}) </span> : null}
                       {c.message}
                     </td>
-                    <td className="hide-sm muted">{c.server ? <><GameIcon realgame={ranking?.realgame} />{c.server}</> : "-"}</td>
+                    <td className="hide-sm muted">{c.server || "-"}</td>
                   </tr>
                 ))}
               </tbody>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { GameEventsLive } from "@/components/game-events-live";
 import { siteTimeZone } from "@/lib/format";
-import { getGame, getPlayerFlags } from "@/lib/data";
+import { getPlayerFlags } from "@/lib/data";
 import { getGameEvents, getMembersGameEvents, getPlayerGameEvents, hasEventServer, PLAYER_EVENTS } from "@/lib/history";
 import { getSettings } from "@/lib/settings";
 import type { Dict, Lang } from "@/lib/i18n";
@@ -14,7 +14,7 @@ export async function GameEvents({ game, t, lang }: { game: string; t: Dict; lan
   const { gameEvents } = await getSettings();
   if (gameEvents === "off") return null;
   const rows = await getGameEvents(game, 10);
-  const [withServer, ranking] = await Promise.all([hasEventServer(), getGame(game, true)]);
+  const withServer = await hasEventServer();
   const flags = await getPlayerFlags(rows.flatMap((r) => [r.actor, r.other]));
   return (
     <GameEventsLive
@@ -27,7 +27,6 @@ export async function GameEvents({ game, t, lang }: { game: string; t: Dict; lan
       timeZone={siteTimeZone()}
       live={gameEvents === "live"}
       withServer={withServer}
-      serverGame={ranking?.realgame}
       initial={rows}
       initialFlags={Object.fromEntries(flags)}
       labels={{ time: t.time, eventText: t.eventText, server: t.server, map: t.map, noData: t.noData, liveData: t.liveData, liveUpdates: t.liveUpdates, evText: t.evText }}
@@ -52,7 +51,7 @@ export async function PlayerEvents({ game, playerId, t, lang }: { game: string; 
   if (playerEvents === "off") return null;
   const rows = await getPlayerGameEvents(playerId, PLAYER_EVENTS);
   if (!rows.length && playerEvents !== "live") return null;
-  const [withServer, ranking] = await Promise.all([hasEventServer(), getGame(game, true)]);
+  const withServer = await hasEventServer();
   const flags = await getPlayerFlags(rows.flatMap((r) => [r.actor, r.other]));
   return (
     <GameEventsLive
@@ -65,7 +64,6 @@ export async function PlayerEvents({ game, playerId, t, lang }: { game: string; 
       timeZone={siteTimeZone()}
       live={playerEvents === "live"}
       withServer={withServer}
-      serverGame={ranking?.realgame}
       initial={rows}
       initialFlags={Object.fromEntries(flags)}
       labels={{ time: t.time, eventText: t.eventText, server: t.server, map: t.map, noData: t.noData, liveData: t.liveData, liveUpdates: t.liveUpdates, evText: t.evText }}
@@ -90,7 +88,7 @@ export async function ClanEvents({ game, clanId, ids, t, lang }: { game: string;
   if (playerEvents === "off" || !ids.length) return null;
   const rows = await getMembersGameEvents(clanId, ids, PLAYER_EVENTS);
   if (!rows.length && playerEvents !== "live") return null;
-  const [withServer, ranking] = await Promise.all([hasEventServer(), getGame(game, true)]);
+  const withServer = await hasEventServer();
   const flags = await getPlayerFlags(rows.flatMap((r) => [r.actor, r.other]));
   return (
     <GameEventsLive
@@ -103,7 +101,6 @@ export async function ClanEvents({ game, clanId, ids, t, lang }: { game: string;
       timeZone={siteTimeZone()}
       live={playerEvents === "live"}
       withServer={withServer}
-      serverGame={ranking?.realgame}
       initial={rows}
       initialFlags={Object.fromEntries(flags)}
       labels={{ time: t.time, eventText: t.eventText, server: t.server, map: t.map, noData: t.noData, liveData: t.liveData, liveUpdates: t.liveUpdates, evText: t.evText }}
