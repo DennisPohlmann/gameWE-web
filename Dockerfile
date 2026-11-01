@@ -11,7 +11,7 @@
 # can update it (a new digest behind the same tag is an Alpine or Node patch).
 # Alpine (musl): the app has no native modules; the banners use next/og
 # (WebAssembly) and the build picks the musl builds of SWC and sharp.
-FROM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS build
+FROM node:24-alpine@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f4077d765542f85 AS build
 # Latest npm, without the "new version available" notice.
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false
 RUN npm install -g npm@latest
@@ -25,7 +25,7 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
     BASE_PATH=/__gamewe_base__
 RUN npm run build
 
-FROM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53
+FROM node:24-alpine@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f4077d765542f85
 ARG VERSION=dev
 LABEL org.opencontainers.image.title="gamewe-web" \
       org.opencontainers.image.description="gameWE statistics website and admin area" \
