@@ -92,8 +92,11 @@ game, e.g. `css`, `tf`) serve as templates while they have no servers; a
 ranking an admin created is never a template, also before its first server
 (it is listed with the rankings as "No servers yet" and every server form
 offers it). The ranking choices on the search and help pages and the
-ranking filters of the admin chat and IP pages list only rankings with at
-least one server or player; the admin forms that assign a ranking list all.
+ranking filters of the admin chat, IP, players, clans and servers pages list
+only rankings with at least one server or player; the ranking choice at the
+top of the admin menu lists no templates (only the one whose definitions are
+open); the definition lists (weapons, actions, awards, ranks …) and the new
+ranking form keep the templates.
 
 `<game>` is `hlstats_Games.code`, for example `css1`; the API documentation on
 `/api` fills its examples with the first ranking of the site.

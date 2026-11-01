@@ -11,7 +11,7 @@ import { Icon, type IconName } from "./icons";
 // comes from its address: /admin/rankings/<code>, ?game=<code> of the lists,
 // or the list an edit page returns to (?returnTo=...game=<code>).
 
-export type NavRanking = { code: string; name: string; servers: number; hidden: boolean; tag: string };
+export type NavRanking = { code: string; name: string; servers: number; hidden: boolean; tag: string; template: boolean };
 export type NavGroup = { id: string; area: string; title: string };
 export type NavText = Record<
   | "areaHome"
@@ -239,7 +239,9 @@ export function AdminSidebar({
                 <span className="adm-gtag">∗</span>
                 {t.noRanking}
               </Link>
-              {rankings.map((r) => (
+              {/* No templates (seeded rankings without servers), except the
+                  one whose definitions are open now. */}
+              {rankings.filter((r) => !r.template || r.code === game).map((r) => (
                 <Link key={r.code} href={pickHref(r.code)} className={r.code === game ? "on" : undefined} onClick={closePicker}>
                   <span className="adm-gtag">{r.tag}</span>
                   <span>
@@ -298,7 +300,7 @@ export function AdminSidebar({
                   icon="list"
                   label={t.manageRankings}
                   on={(seg === "rankings" && !parts[2]) || (seg === "games" && parts[2] !== "new")}
-                  count={rankings.length}
+                  count={rankings.filter((r) => !r.template).length}
                 />
                 <Item href="/admin/games/new" icon="plus" label={t.newRanking} on={seg === "games" && parts[2] === "new"} />
               </nav>

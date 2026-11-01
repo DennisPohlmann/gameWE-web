@@ -166,7 +166,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
               t={text}
               isAdmin={isAdmin}
               footer={footer}
-              rankings={rankings.map((r) => ({ code: r.code, name: r.name, servers: r.servers, hidden: r.hidden, tag: tagOf(r.base, r.code) }))}
+              rankings={rankings.map((r) => ({ code: r.code, name: r.name, servers: r.servers, hidden: r.hidden, tag: tagOf(r.base, r.code), template: r.template }))}
               groups={settingGroups.map((g) => ({ id: g.id, area: g.area, title: g.title[lang] }))}
             />
           </Suspense>
