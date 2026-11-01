@@ -120,29 +120,38 @@ html[data-skin] .header {
   overflow: visible;
 }
 html[data-skin] .logo-word { font: 800 24px/1 var(--m-font); letter-spacing: 0; text-transform: none; }
-html[data-skin] .tabs-top { gap: 2px; padding: 0; align-items: center; }
+html[data-skin] .header .logo { flex: none; margin-right: 18px; }
+/* The links take the rest of the row; with many own links they wrap into
+   right-aligned rows of the same height instead of one link alone below. */
+html[data-skin] .tabs-top { flex: 1 1 auto; min-width: 0; gap: 0 2px; padding: 6px 0; align-items: center; }
 html[data-skin] .tabs-top a {
-  padding: 8px 10px;
+  padding: 7px 6px;
   border: 0;
   border-radius: 3px;
   background: none;
   color: var(--accent);
-  font: 700 14px/1 var(--m-font);
-  letter-spacing: 0.04em;
+  font: 700 12px/1 var(--m-font);
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   text-shadow: none;
+  white-space: nowrap;
 }
 html[data-skin] .tabs-top a:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent-text); }
 
-/* Second bar: breadcrumb (game name), share, languages. */
+/* Second bar: breadcrumb (game name) on the left, share and languages
+   together on the right; when the bar gets narrow, the breadcrumb keeps its
+   row and the two move below it, still on the right. */
 html[data-skin] .nav-bar {
   align-items: center;
+  gap: 6px 14px;
   padding: 9px max(var(--m-gutter), calc((100% - var(--m-width)) / 2 + var(--m-gutter)));
   background: var(--m-bar);
   border-bottom: 1px solid var(--m-bar-border);
   color: var(--muted);
 }
-html[data-skin] .crumbs { font-weight: normal; color: var(--muted); }
+html[data-skin] .crumbs { flex: 1 1 320px; min-width: 0; font-weight: normal; color: var(--muted); }
+html[data-skin] .nav-bar .share-nav { margin-left: auto; }
+html[data-skin] .nav-bar .langs { flex-wrap: nowrap; gap: 4px; }
 html[data-skin] .crumbs a { color: var(--muted); }
 html[data-skin] .crumbs a:hover { color: var(--accent-text); }
 html[data-skin] .crumbs strong, html[data-skin] .crumbs span:nth-child(2) a { color: var(--accent); font-weight: 700; }
