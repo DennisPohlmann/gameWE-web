@@ -114,11 +114,12 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                     <td className="no-lb right">
                       <Link prefetch={false} className="icon-link" href={`/${r.code}/players`}>
                         <span className="icon icon-players" aria-hidden="true" />
-                        {t.players}
+                        {/* On phones only the round icon, the word stays for screen readers. */}
+                        <span className="icon-link-text">{t.players}</span>
                       </Link>
                       <Link prefetch={false} className="icon-link" href={`/${r.code}/clans`}>
                         <span className="icon icon-clans" aria-hidden="true" />
-                        {t.clans}
+                        <span className="icon-link-text">{t.clans}</span>
                       </Link>
                     </td>
                     <td className="hide-sm fit">

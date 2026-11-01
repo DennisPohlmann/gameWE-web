@@ -922,6 +922,31 @@ a.button { display: inline-block; text-decoration: none; }
   .hide-sm { display: none; }
   .srv-where { display: block; }
   .icon-link { display: block; margin: 2px 0; }
+  /* Start page: each ranking takes two lines instead of a wide row: icon and
+     name on top, below it (indented like the name) the players online, the
+     best player and the Players/Clans links as round icons only. The head
+     keeps its sort links in one line. */
+  table.rankings, table.rankings thead, table.rankings tbody { display: block; }
+  table.rankings thead tr { display: flex; flex-wrap: wrap; background: var(--th-bg); }
+  table.rankings thead th { flex: none; border: 0; padding-right: 12px; }
+  table.rankings thead th:empty { display: none; }
+  table.rankings tr.ranking-line {
+    display: grid;
+    grid-template-columns: 104px minmax(0, 1fr) auto;
+    grid-template-areas: "name name name" "count top links";
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--line-bg);
+  }
+  table.rankings tr.ranking-line > td:not(.hide-sm) { display: block; border: 0; background: transparent; min-width: 0; max-width: none; width: auto; }
+  table.rankings tr.ranking-line:hover > td { background: transparent; }
+  table.rankings tr.ranking-line > td:nth-child(1) { grid-area: name; padding: 8px 8px 2px; }
+  table.rankings tr.ranking-line > td:nth-child(2) { grid-area: links; padding: 2px 8px 7px 4px; white-space: nowrap; }
+  table.rankings tr.ranking-line > td:nth-child(4) { grid-area: count; padding: 2px 4px 7px 40px; text-align: left; white-space: normal; }
+  table.rankings tr.ranking-line > td:nth-child(5) { grid-area: top; padding: 2px 4px 7px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  table.rankings .icon-link { display: inline-block; margin: 0 0 0 6px; }
+  table.rankings .icon-link .icon { width: 28px; height: 28px; margin: 0; line-height: 28px; font-size: 14px; }
+  table.rankings .icon-link-text { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   /* Player page: everything fits the phone's width. */
   table.stats td { overflow-wrap: anywhere; }
   /* Long profile values (location, clan, Steam name and IDs) wrap so the
