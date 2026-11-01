@@ -8,6 +8,7 @@ import { getDict } from "@/lib/i18n";
 import { localeOf } from "@/lib/format";
 import { statsOrigin } from "@/lib/site-url";
 import { LANGUAGES } from "@/translations/languages";
+import { LangMenu } from "@/components/lang-menu";
 import { LangFlag } from "@/components/lang-flag";
 import { ShareMenu } from "@/components/share-menu";
 import { HeaderMenu } from "@/components/header-menu";
@@ -164,6 +165,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               </a>
             ))}
           </span>
+          <LangMenu lang={lang} label={t.language} base={basePath} />
         </div>
         {logoUrl ? (
           <div className="cust-logo">
