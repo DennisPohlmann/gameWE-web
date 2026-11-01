@@ -1,11 +1,13 @@
 import { noAutofill } from "@/lib/autofill";
 import { adminDict } from "@/lib/admin-i18n";
 import type { Lang } from "@/lib/i18n";
+import { RevealInput } from "./reveal-input";
 
 // The input of a secret (entity field or setting): whether one is stored as
 // a pill, never the value; an empty field keeps it, and the Remove switch
 // (`<name>__clear`, see secret-field.ts) deletes it on save. isNew: a row
-// not saved yet, nothing to show.
+// not saved yet, nothing to show. The eye button shows what was typed
+// (RevealInput); the stored value itself never reaches the page.
 export function SecretControl({
   id,
   name,
@@ -31,11 +33,12 @@ export function SecretControl({
   const placeholder = disabled ? (set || fromEnv ? a.secretSetLocked : a.secretEmpty) : set ? a.secretSet : fromEnv ? a.secretSetEnv : isNew ? "" : a.secretEmpty;
   return (
     <span className="secret-control">
-      <input
+      <RevealInput
         {...noAutofill}
+        show={a.secretShow}
+        hide={a.secretHide}
         id={id}
         name={name}
-        type="password"
         placeholder={placeholder}
         maxLength={maxLength}
         disabled={disabled}

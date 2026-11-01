@@ -333,7 +333,15 @@ select { padding-right: 28px; }
 .secret-clear input:checked + label { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
 .secret-control:has(.secret-clear input:checked) .secret-now { display: none; }
 .secret-control:has(.secret-clear input:checked) .secret-drop { display: inline-flex; }
-.secret-control:has(.secret-clear input:checked) > input { opacity: 0.5; }
+.secret-control:has(.secret-clear input:checked) .reveal input { opacity: 0.5; }
+/* The secret's input with its show/hide button inside, at the right end. */
+.reveal { position: relative; display: block; min-width: 0; }
+.reveal input { width: 100%; padding-right: 40px !important; }
+.reveal-btn { position: absolute; top: 50%; right: 4px; transform: translateY(-50%); display: inline-grid; place-items: center; width: 32px; height: 30px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
+.reveal-btn:hover { color: var(--text); background: var(--panel-2); }
+.reveal-btn:focus-visible { outline: none; box-shadow: var(--focus); }
+.reveal-btn[aria-pressed="true"] { color: var(--accent-text); }
+.reveal-btn:disabled { cursor: default; opacity: 0.4; }
 .form .button { justify-self: start; }
 .form.box { margin: 16px 18px; padding: 14px; border: 1px dashed var(--line-2); border-radius: var(--radius); max-width: none; overflow-wrap: anywhere; }
 .inline-form { display: inline-flex; gap: 6px; align-items: center; margin: 0; flex-wrap: wrap; }

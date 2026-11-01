@@ -556,6 +556,11 @@ What the admin area edits:
   the form and never shown again: below the field a badge says whether one
   is set ("Set" / "Not set"), an empty field keeps it, and the "Remove"
   switch deletes it on save (the API: `rcon_passwordSet`, `null` clears it).
+  Every secret field (RCON password, log secret, the secrets on the
+  settings pages) has an eye button at its right end that shows what was
+  typed, to check it for typos, and hides it again; it only switches the
+  field in the browser, the field is hidden by default, and the stored
+  value is never sent to the page, so only a new input can be shown.
   Public pages never read it, and the
   read-only web user has no right to that column. The optional **log
   secret** (`sv_logsecret`, a number from 1 to 2147483647, empty by default)
