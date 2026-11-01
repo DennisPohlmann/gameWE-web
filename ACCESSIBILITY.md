@@ -12,6 +12,9 @@ and on small phone screens.
   images and charts where they carry information, enough color contrast, a
   visible keyboard focus, sensible headings and labels, and no content that
   works only on hover.
+- Keep motion optional: parts of a page that fade and slide in while
+  scrolling, smooth scrolling and hover effects are off when the system asks
+  for reduced motion, and without JavaScript everything is shown at once.
 
 gameWE has not had a formal accessibility audit. Some pages, for example kill
 heatmaps and world maps, are visual by nature; their key numbers should also

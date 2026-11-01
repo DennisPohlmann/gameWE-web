@@ -22,6 +22,7 @@ import { resolveTemplate, themeStyle } from "@/lib/templates";
 import { previewSkinOf, SKIN_PREVIEW_COOKIE } from "@/lib/skin-preview";
 import { env } from "@/lib/env";
 import { apiEnabled } from "@/lib/api-switch";
+import { Reveal } from "@/components/reveal";
 import "./globals.css";
 
 // Every page reads live data from the collector's database.
@@ -113,6 +114,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         {/* First in the page, so keyboard and screen reader users reach it
             first; shown fixed at the bottom, so nothing moves. */}
         <ConsentRoot consent={consent} t={t.consent} />
+        <Reveal />
         <header className="header">
           <Link prefetch={false} href="/" className={headerLogo ? "logo logo-img" : "logo"} title={siteName}>
             {headerLogo ? (
