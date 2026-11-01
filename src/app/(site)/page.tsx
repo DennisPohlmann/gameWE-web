@@ -146,7 +146,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                         "-"
                       )}
                     </td>
-                    <td className="hide-sm">
+                    <td className={r.topClanId ? "hide-sm rnk-clan" : "hide-sm"} data-label={t.topClan}>
                       {r.topClanId ? (
                         <>
                           <Flag code={clanFlags.get(r.topClanId)?.flag} title={clanFlags.get(r.topClanId)?.country} />{" "}

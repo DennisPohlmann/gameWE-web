@@ -969,7 +969,7 @@ a.button { display: inline-block; text-decoration: none; }
   table.rankings tr.ranking-line {
     display: grid;
     grid-template-columns: 104px minmax(0, 1fr) auto;
-    grid-template-areas: "name name name" "count top links";
+    grid-template-areas: "name name name" "count top links" "clan clan clan";
     align-items: center;
     border-bottom: 1px solid var(--border);
     background: var(--line-bg);
@@ -980,6 +980,9 @@ a.button { display: inline-block; text-decoration: none; }
   table.rankings tr.ranking-line > td:nth-child(2) { grid-area: links; padding: 2px 8px 7px 4px; white-space: nowrap; }
   table.rankings tr.ranking-line > td:nth-child(3) { grid-area: count; padding: 2px 4px 7px 40px; text-align: left; white-space: normal; }
   table.rankings tr.ranking-line > td:nth-child(4) { grid-area: top; padding: 2px 4px 7px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* The best clan, when there is one, in a third line below. */
+  table.rankings tr.ranking-line > td.rnk-clan { display: block; grid-area: clan; padding: 0 8px 8px 40px; border: 0; background: transparent; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  table.rankings td.rnk-clan::before { content: attr(data-label) ": "; color: var(--muted); }
   table.rankings .icon-link { display: inline-block; margin: 0 0 0 6px; }
   table.rankings .icon-link .icon { width: 28px; height: 28px; margin: 0; line-height: 28px; font-size: 14px; }
   table.rankings .icon-link-text { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
