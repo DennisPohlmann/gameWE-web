@@ -4,7 +4,7 @@ import { MiniAvatar } from "@/components/mini-avatar";
 import { externalImage } from "@/lib/consent";
 import { getConsent } from "@/lib/consent-server";
 import { sortHeads } from "@/components/sort-head";
-import { Flag, GameIcon, GameTag, Skeleton } from "@/components/ui";
+import { Flag, GameIcon, Skeleton } from "@/components/ui";
 import { basePath } from "@/lib/base-path";
 import { LineChart } from "@/components/chart";
 import { Sparkline } from "@/components/sparkline";
@@ -28,7 +28,6 @@ import { dateFormat, fmtDateTime, fmtNum, fmtPct, localeOf } from "@/lib/format"
 import { sumCounts } from "@/lib/player-count";
 import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
 import { sortRows, sortState } from "@/lib/table-sort";
-import { gameKind } from "@/lib/games";
 import { gameIconSrc } from "@/lib/game-icons";
 
 // Sort keys of the rankings list; by default the order of the rankings
@@ -36,7 +35,6 @@ import { gameIconSrc } from "@/lib/game-icons";
 const rankingListValues = {
   order: () => 0,
   name: (r: RankingOverview) => r.name,
-  game: (r: RankingOverview) => gameKind(r.realgame ?? "")?.name ?? r.realgame,
   players: (r: RankingOverview) => Number(r.actPlayers),
   top: (r: RankingOverview) => r.topPlayerName,
   clan: (r: RankingOverview) => r.topClanTag,
@@ -92,7 +90,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                   {/* Two cells like the rows below (name, links), drawn as one. */}
                   {th(t.ranking, "name", "no-rb")}
                   <th className="no-lb" />
-                  {th(t.baseGame, "game", "hide-sm fit")}
                   {th(t.players, "players")}
                   {th(t.topPlayer, "top", "")}
                   {th(t.topClan, "clan", "hide-sm")}
@@ -121,9 +118,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                         <span className="icon icon-clans" aria-hidden="true" />
                         <span className="icon-link-text">{t.clans}</span>
                       </Link>
-                    </td>
-                    <td className="hide-sm fit">
-                      <GameTag realgame={r.realgame} long />
                     </td>
                     <td className="num">
                       <span

@@ -269,7 +269,7 @@ html[data-skin] table.rankings td.no-rb .game-icon { float: left; margin: 2px 6p
 html[data-skin] table.rankings td.no-rb .rnk-cell .game-icon { float: none; margin: 0; }
 html[data-skin] table.rankings td.no-lb { white-space: nowrap; }
 html[data-skin] .voice-box td:first-child { width: 40%; }
-html[data-skin] table.rankings td:nth-child(5) {
+html[data-skin] table.rankings td:nth-child(4) {
   max-width: 200px;
   overflow: hidden;
   white-space: nowrap;
@@ -406,31 +406,30 @@ html[data-skin] .heatmap svg { border-radius: 4px; }
 }
 
 /* Narrow screens: the start page keeps name, Players/Clans links, the
-   player count and (from 641px) the top player; game and top clan go. On
+   player count and (from 641px) the top player; the top clan goes. On
    phones (up to 600px) each ranking takes two lines (globals.css): name on
    top, players, top player and the round links below; the stripes move from
    the cells to the row. */
 @media (max-width: 900px) {
-  html[data-skin] table.rankings tr > :nth-child(3), html[data-skin] table.rankings tr > :nth-child(6) { display: none; }
+  html[data-skin] table.rankings tr > :nth-child(5) { display: none; }
   html[data-skin] table.rankings td.no-rb { width: 60%; }
-  html[data-skin] table.rankings td:nth-child(5) { max-width: 0; width: 40%; }
+  html[data-skin] table.rankings td:nth-child(4) { max-width: 0; width: 40%; }
 }
 @media (min-width: 601px) and (max-width: 640px) {
-  html[data-skin] table.rankings tr > :nth-child(5) { display: none; }
+  html[data-skin] table.rankings tr > :nth-child(4) { display: none; }
   html[data-skin] table.rankings td.no-rb { width: 100%; }
 }
 @media (max-width: 600px) {
-  html[data-skin] table.rankings td.no-rb, html[data-skin] table.rankings td:nth-child(5) { width: auto; max-width: none; }
+  html[data-skin] table.rankings td.no-rb, html[data-skin] table.rankings td:nth-child(4) { width: auto; max-width: none; }
   html[data-skin] table.rankings tr.ranking-line { background: var(--surface); }
   html[data-skin] table.rankings tr.ranking-line:nth-child(even) { background: var(--m-zebra); }
   html[data-skin] table.rankings tr.ranking-line > td, html[data-skin] table.rankings tr.ranking-line:hover > td { background: transparent; }
   html[data-skin] table.rankings tr.ranking-line > td:first-child { padding-left: 8px; }
 }
-/* Server lists up to tablet width: game and version columns go, so the
-   name, address, map and players fit without scrolling. */
+/* Server lists up to tablet width: the version column goes, so the name,
+   address, map and players fit without scrolling. */
 @media (max-width: 900px) {
-  html[data-skin] table:has(> tbody > tr.server-line) tr > :nth-child(2),
-  html[data-skin] table:has(> tbody > tr.server-line) tr > :nth-child(7) { display: none; }
+  html[data-skin] table:has(> tbody > tr.server-line) tr > :nth-child(6) { display: none; }
 }
 /* Phones (address column hidden, flag and address under the name): the name
    and the map wrap instead of being cut, so the address stays whole and the
@@ -438,7 +437,7 @@ html[data-skin] .heatmap svg { border-radius: 4px; }
 @media (max-width: 600px) {
   html[data-skin] tr.server-line > td { white-space: normal; overflow-wrap: anywhere; }
   html[data-skin] tr.server-line > td:first-child { max-width: none; width: 48%; }
-  html[data-skin] tr.server-line > td:nth-child(4) { width: 34%; }
+  html[data-skin] tr.server-line > td:nth-child(3) { width: 34%; }
   html[data-skin] tr.server-line a.srv { white-space: normal; }
 }
 

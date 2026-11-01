@@ -2,12 +2,12 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { botProfiles, gameHasShots, type LivePlayer, type Server } from "@/lib/data";
 import { countryName, fmtDuration, fmtNum, fmtPct, nowUnix, ratio } from "@/lib/format";
-import { baseGameOf, gameKind } from "@/lib/games";
+import { baseGameOf } from "@/lib/games";
 import type { Dict, Lang } from "@/lib/i18n";
 import { playerCount } from "@/lib/player-count";
 import { LINUX_SVG, vacStateHtml, WINDOWS_SVG } from "@/lib/server-icons";
 import { PlayerCount } from "./player-count";
-import { Flag, GameIcon, GameTag, SortTh } from "./ui";
+import { Flag, GameIcon, SortTh } from "./ui";
 
 // Sort keys of the server list: name, map, map time, players online.
 export const serverValues = {
@@ -18,10 +18,9 @@ export const serverValues = {
 };
 export type ServerSort = keyof typeof serverValues;
 
-// Server rows as on gameME: name, game, address (steam://connect), map, map
-// time, players. The game is the ranking's base game as the same badge as on
-// the start page ("Counter-Strike: Source"), else the ranking's name. `head` is an optional first header row spanning the table. The
-// game's icon stands before its name, the flag of the server's country
+// Server rows as on gameME: name, address (steam://connect), map, map time,
+// players. `head` is an optional first header row spanning the table. The
+// game's icon stands before its name (no column of its own for the game), the flag of the server's country
 // before its address; on phones, where the address column is hidden, flag
 // and address follow the name as a small second line. `details` adds the
 // server version with an OS icon and the VAC state as the last columns (the
@@ -48,7 +47,7 @@ export function ServerTable({
 }) {
   const now = nowUnix();
   // Column widths as classes (w-46 = 46%), so sortable heads get them too.
-  const w = details ? { server: "w-36", game: "w-12", address: "w-15", map: "w-8", time: "w-7", players: "w-8" } : { server: "w-46", game: "w-14", address: "w-16", map: "w-8", time: "w-8", players: "w-8" };
+  const w = details ? { server: "w-48", address: "w-15", map: "w-8", time: "w-7", players: "w-8" } : { server: "w-60", address: "w-16", map: "w-8", time: "w-8", players: "w-8" };
   const th = (label: string, key: ServerSort, cls: string) =>
     sort ? <SortTh label={label} sortKey={key} className={cls} {...sort} /> : <th className={cls}>{label}</th>;
   return (
@@ -57,12 +56,11 @@ export function ServerTable({
         <thead>
           {head ? (
             <tr>
-              <th colSpan={details ? 8 : 6} className="wrap-cell">{head}</th>
+              <th colSpan={details ? 7 : 5} className="wrap-cell">{head}</th>
             </tr>
           ) : null}
           <tr>
             {th(t.server, "name", w.server)}
-            <th className={`hide-sm ${w.game}`}>{t.baseGame}</th>
             <th className={`hide-sm ${w.address}`}>{t.address}</th>
             {th(t.map, "map", w.map)}
             {th(t.time, "time", `hide-sm ${w.time}`)}
@@ -97,9 +95,6 @@ export function ServerTable({
                       </span>
                     </div>
                   </div>
-                </td>
-                <td className="hide-sm game-cell">
-                  {gameKind(base) ? <GameTag realgame={base} long /> : s.game_name || "-"}
                 </td>
                 <td className="hide-sm nowrap">
                   <ServerFlag code={s.country_code} lang={lang} />
