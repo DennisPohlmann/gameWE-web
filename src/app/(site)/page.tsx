@@ -196,8 +196,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
 // servers with real players), clans
 // with an active member per day, kills and headshots per 15 minutes (frags,
 // else per day; with their share of the kills below the headshots). Hovering or tapping a
-// card shows what its number and its line count (HoverTip), hovering or
-// tapping its line the time and value of that point. A database error
+// card's ⓘ shows what its number and its line count (HoverTip), hovering
+// or tapping its line the time and value of that point. A database error
 // leaves the block out; a missing line only leaves its card without one.
 async function GeneralStatsSection({ t, lang }: { t: Dict; lang: Lang }) {
   let stats;
@@ -276,8 +276,12 @@ async function GeneralStatsSection({ t, lang }: { t: Dict; lang: Lang }) {
       <HoverTip className="gs-tips">
         <ul className="gs-cards">
           {cards.map((c) => (
-            <li key={c.label} className="gs-card" data-tip={`${c.label}\n${c.tip}`}>
+            <li key={c.label} className="gs-card">
               <Sparkline values={c.line} tip={c.lineTip} />
+              {/* What the number and the line count: on hover or tap of the ⓘ. */}
+              <span className="gs-info" role="img" aria-label={`${c.label}: ${c.tip}`} data-tip={`${c.label}\n${c.tip}`}>
+                i
+              </span>
               <span className="gs-label">{c.label}</span>
               <span className="gs-value">{fmtNum(c.value, lang)}</span>
               <span className="gs-sub">{c.sub}</span>
