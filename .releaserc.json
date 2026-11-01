@@ -48,7 +48,8 @@
       {
         "successComment": false,
         "failComment": false,
-        "releasedLabels": false
+        "releasedLabels": false,
+        "draftRelease": true
       }
     ]
   ]

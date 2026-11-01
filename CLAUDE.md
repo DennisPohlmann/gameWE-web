@@ -18,13 +18,16 @@ Version in `VERSION`, `package.json` and `package-lock.json`; history in
 `/licenses` page.
 
 Releases: Conventional Commits + semantic-release (`.releaserc.json`). CI
-(`.github/workflows/build.yml`) builds and checks every push to `main` and
-publishes the image `ghcr.io/dennispohlmann/gamewe-web:edge`;
-`feat`/`fix`/breaking commits make semantic-release bump the version files,
-write `CHANGELOG.md`, commit `chore(release): vX.Y.Z [skip ci]`, tag
-`vX.Y.Z` and publish the GitHub release with the tar.gz (+ `.sha256`) and
-the image tags `<version>`, `<major>.<minor>`, `latest`. There is no
-tag-triggered workflow.
+(`.github/workflows/build.yml`) builds and checks every push (any branch) and
+pull request like a release (package, chart, image; nothing is published), and
+a push to `main` publishes the image `ghcr.io/dennispohlmann/gamewe-web:edge`.
+A release is only made by hand: the build workflow with `release` ticked (`gh
+workflow run build.yml --ref main -f release=true`). semantic-release then
+bumps the version files for `feat`/`fix`/breaking commits, writes
+`CHANGELOG.md`, commits `chore(release): vX.Y.Z [skip ci]`, tags `vX.Y.Z` and
+creates the GitHub release as a draft; it becomes public once the tar.gz (+
+`.sha256`), chart and SBOM are in it and the image tags `<version>`,
+`<major>.<minor>`, `latest` are pushed. There is no tag-triggered workflow.
 
 ## Documentation layout (the same in all gameWE repos)
 
@@ -45,13 +48,15 @@ tag-triggered workflow.
    run the `security-check` skill on the diff and fix what it finds. Say in
    your answer which checklist points the change touched and the result
    (one or two lines are enough when nothing was found).
-2. **Every release, without exception (standing rule from Dennis):**
-   releases are made by semantic-release in CI when `feat`, `fix` or
-   breaking-change commits reach `main` (version bump, `CHANGELOG.md`, tag
-   `vX.Y.Z`, GitHub release). Before pushing such commits to `main`, run
-   the `release-security-gate` skill over the whole repo, without asking
-   first. Never tag by hand or edit version files / `CHANGELOG.md`; report
-   the gate result and ask Dennis for the go before the push.
+2. **Every release, without exception (standing rule from Dennis):** releases
+   are made by semantic-release in CI, only when the build workflow is started
+   by hand with `release` ticked (`gh workflow run build.yml --ref main -f
+   release=true`; version bump for `feat`, `fix` or breaking-change commits,
+   `CHANGELOG.md`, tag `vX.Y.Z`, GitHub release). Pushing to `main` no longer
+   releases. Before starting a release run the `release-security-gate` skill
+   over the whole repo, without asking first. Never tag by hand or edit
+   version files / `CHANGELOG.md`; report the gate result and ask Dennis for
+   the go before starting the release.
 3. **Sensitive data, every task (standing rule from Dennis):** before you
    call a task done, commit or publish anything, run the
    `security-privacy-audit` skill (credentials, personal data, IPs and

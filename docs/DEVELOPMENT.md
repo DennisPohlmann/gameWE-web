@@ -93,16 +93,23 @@ make image      # local Docker image gamewe-web:<version>
 The version comes from a `v*` git tag on HEAD, otherwise from `VERSION`.
 
 GitHub Actions (`.github/workflows/build.yml`) builds and checks every push
-to `main` (type check, tests, build, tar.gz as a workflow artifact) and publishes the
-container image `ghcr.io/dennispohlmann/gamewe-web` with the tag `edge`.
+(any branch) and every pull request the way a release is built (type check,
+tests, build, Helm chart, tar.gz as a workflow artifact for 7 days, container
+image with Trivy scan). Only a push to `main` (and the weekly run) publishes
+the image `ghcr.io/dennispohlmann/gamewe-web` with the tag `edge`; nothing
+else is published without a release run.
 
 ## Releases
 
 Releases are made by [semantic-release](https://semantic-release.gitbook.io/)
-(`.releaserc.json`) in the same workflow; nobody tags by hand. To make a
-release, push commits written as [Conventional Commits](https://www.conventionalcommits.org/)
-to `main`. semantic-release reads the commits since the last tag and decides
-the next version:
+(`.releaserc.json`) in the same workflow; nobody tags by hand. Pushing to
+`main` does not release: a release is started by hand on `main`, in GitHub
+under Actions → build → Run workflow with `release` ticked, or with
+`gh workflow run build.yml --ref main -f release=true`. Run the `release-security-gate` skill
+first (see `CLAUDE.md`). The run builds and tests everything again; only
+when that passed does semantic-release read the
+[Conventional Commits](https://www.conventionalcommits.org/) since the last
+tag and decide the next version:
 
 | Commit | Release |
 |---|---|
@@ -114,12 +121,14 @@ the next version:
 For a release it writes `VERSION`, `package.json`, `package-lock.json`, the
 `version` and `appVersion` of the Helm chart (`charts/gamewe-web/Chart.yaml`)
 and `CHANGELOG.md`, commits them as `chore(release): vX.Y.Z [skip ci]`, tags
-`vX.Y.Z` and creates the GitHub release. The workflow then builds that tag,
+`vX.Y.Z` and creates the GitHub release as a draft. The workflow then builds that tag,
 uploads the tar.gz and its `.sha256` checksum to the release and publishes
 the image as `<version>`, `<major>.<minor>` and `latest` (for `v0.1.0`:
 `0.1.0`, `0.1` and `latest`); the job `chart` publishes the Helm chart as
 `oci://ghcr.io/<owner>/charts/gamewe-web` and as a `.tgz` in the release
-(every build lints it, `npm test` checks that its version is the web's).
+(every build lints it, `npm test` checks that its version is the web's);
+the job `publish` then makes the release public. The release stays a draft until all files are in it, so it never shows up
+incomplete; if a job fails, re-run the failed jobs of that run.
 Never edit the version files, `Chart.yaml`'s versions or `CHANGELOG.md` by
 hand.
 
