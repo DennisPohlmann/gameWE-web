@@ -1880,3 +1880,8 @@ td.ribbon-wall a:hover { border-color: var(--accent); }
   td.career { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 6px; max-height: 420px; overflow-y: auto; }
   td.career .rank-tip-btn { padding: 8px 4px 6px; }
 }
+
+/* Player trend and current rank side by side in the same height. */
+.p-stats-top { align-items: stretch; }
+.p-stats-top > div { display: flex; flex-direction: column; }
+.p-stats-top > div > table { flex: 1; }

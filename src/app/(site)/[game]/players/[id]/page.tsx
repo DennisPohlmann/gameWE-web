@@ -346,12 +346,40 @@ export default async function PlayerPage({ params, searchParams }: Props) {
 
       <Section id="info" title={t.playerInfo}>
         <div className="cont-2">
-          {/* The Steam profile is asked after the page is sent: the table
-              comes without the Steam rows first and is swapped once the
-              answer is there, so a slow Steam never holds the page. */}
-          <Suspense fallback={<ProfileTable steam={null} pending {...profile} />}>
-            <SteamProfile steam64={ids?.steam64 ?? null} {...profile} />
-          </Suspense>
+          {/* Profile and the forum signature in the left column, beside the
+              summary. The Steam profile is asked after the page is sent:
+              the table comes without the Steam rows first and is swapped
+              once the answer is there, so a slow Steam never holds the page. */}
+          <div>
+            <Suspense fallback={<ProfileTable steam={null} pending {...profile} />}>
+              <SteamProfile steam64={ids?.steam64 ?? null} {...profile} />
+            </Suspense>
+            {/* A banned player has no banner (it is 404), so no signature box either. */}
+            {p.hideranking ? null : (
+              <table className="stats spaced">
+                <thead>
+                  <tr>
+                    <th>{t.forumSignature}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <SigCode
+                        base={sigUrl.replace(/\.png$/, "")}
+                        styles={imgStyles}
+                        link={`${origin}/${game}/players/${id}`}
+                        alt={`${t.forumSignature}: ${p.name ?? id}`}
+                        width={400}
+                        height={100}
+                        labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgSkinDefault, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            )}
+          </div>
 
           {/* Summary and the history links below it share the right column. */}
           <div className="summary-box">
@@ -433,7 +461,9 @@ export default async function PlayerPage({ params, searchParams }: Props) {
       </Section>
 
       <Section title={t.playerStats}>
-        <div className="cont-2">
+        {/* Trend and current rank side by side, career and ribbons across
+            the full width below, so neither column ends in empty space. */}
+        <div className="cont-2 p-stats-top">
           <div>
             <table className="stats">
               <thead>
@@ -455,8 +485,10 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                 </tr>
               </tbody>
             </table>
+          </div>
+          <div>
             {rank ? (
-              <table className="stats spaced">
+              <table className="stats">
                 <thead>
                   <tr>
                     <th colSpan={2}>
@@ -483,133 +515,106 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                 </tbody>
               </table>
             ) : null}
-            {ranks.length ? (
-              <table className="stats spaced">
-                <thead>
-                  <tr>
-                    <th>
-                      {t.career} (<Link prefetch={false} href={`/${game}/awards?view=ranks`}>{t.ranksOverview}</Link>)
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="career">
-                      <RankTips
-                        items={ranks.map((r) => {
-                          const range =
-                            r.next !== null
-                              ? fill(t.killsRange, { min: fmtNum(r.minimum, lang), max: fmtNum(r.next - 1, lang) })
-                              : fill(t.killsFrom, { min: fmtNum(r.minimum, lang) });
-                          const current = r.index === rank?.index;
-                          // Progress towards the next rank (current) or towards this one (locked).
-                          const goal = current ? r.next : careerKills < r.minimum ? r.minimum : null;
-                          const from = current ? r.minimum : 0;
-                          const share = goal !== null ? Math.max(0, Math.min(1, (careerKills - from) / Math.max(1, goal - from))) : null;
-                          return {
-                            key: r.index,
-                            label: rankName(r.name),
-                            state: current ? "current" : careerKills < r.minimum ? "locked" : "reached",
-                            badge: <RankBadge name={r.name} size={40} dim={careerKills < r.minimum} untitled />,
-                            tip: (
-                              <>
-                                <b>{rankName(r.name)}</b>
-                                <span className="tip-line">{range}</span>
-                                <span className={`tip-line rank-tip-state ${current ? "current" : careerKills < r.minimum ? "locked" : "reached"}`}>
-                                  {current ? t.currentRank : careerKills < r.minimum ? t.rankLocked : t.rankReached}
-                                </span>
-                                {current || goal !== null ? (
-                                  <span className="tip-line">
-                                    {t.kills}: <b>{fmtNum(careerKills, lang)}</b>
-                                  </span>
-                                ) : null}
-                                {goal !== null && share !== null ? (
-                                  <>
-                                    <span className="tip-line">{fill(t.killsNeeded, { n: fmtNum(goal - careerKills, lang), pct: pc(share) })}</span>
-                                    <span className="tip-line">
-                                      <Bar value={share} wide />
-                                    </span>
-                                  </>
-                                ) : current ? (
-                                  <span className="tip-line">{t.topRank}</span>
-                                ) : null}
-                              </>
-                            ),
-                          };
-                        })}
-                      />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            ) : null}
-          </div>
-          <div>
-            {/* A banned player has no banner (it is 404), so no signature box either. */}
-            {p.hideranking ? null : (
-              <table className="stats">
-                <thead>
-                  <tr>
-                    <th>{t.forumSignature}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      <SigCode
-                        base={sigUrl.replace(/\.png$/, "")}
-                        styles={imgStyles}
-                        link={`${origin}/${game}/players/${id}`}
-                        alt={`${t.forumSignature}: ${p.name ?? id}`}
-                        width={400}
-                        height={100}
-                        labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgSkinDefault, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
-                      />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            )}
-            {allAwards.length ? (
-              <table className="stats spaced">
-                <thead>
-                  <tr>
-                    <th>
-                      {t.ribbons} ({fill(t.winsCount, { n: totalRibbonWins })}, <Link prefetch={false} href={`/${game}/awards?view=ribbons`}>{t.ribbonsOverview}</Link>)
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="ribbon-wall">
-                      {[...allAwards]
-                        .sort((a, b) => (wonAwards.get(b.awardId) ?? 0) - (wonAwards.get(a.awardId) ?? 0))
-                        .map((a) => {
-                          const wins = wonAwards.get(a.awardId) ?? 0;
-                          const r = ribbonFor(wins, classes);
-                          return (
-                            <Link prefetch={false} key={a.awardId} href={`/${game}/awards?view=ribbons&award=${a.awardId}`}>
-                              <Ribbon
-                                code={a.code}
-                                label={a.name}
-                                title={r ? `${a.name}: ${ribbonClassName(r.name, lang)} ${r.level} (${fill(t.winsCount, { n: wins })})` : a.name}
-                                ribbon={r}
-                              />
-                              <RibbonLevel
-                                progress={ribbonProgress(wins, classes)}
-                                className={(n) => ribbonClassName(n, lang)}
-                                texts={{ toNext: t.ribbonToNext, maxed: t.ribbonMaxed }}
-                              />
-                            </Link>
-                          );
-                        })}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            ) : null}
           </div>
         </div>
+        {ranks.length ? (
+          <table className="stats spaced">
+            <thead>
+              <tr>
+                <th>
+                  {t.career} (<Link prefetch={false} href={`/${game}/awards?view=ranks`}>{t.ranksOverview}</Link>)
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="career">
+                  <RankTips
+                    items={ranks.map((r) => {
+                      const range =
+                        r.next !== null
+                          ? fill(t.killsRange, { min: fmtNum(r.minimum, lang), max: fmtNum(r.next - 1, lang) })
+                          : fill(t.killsFrom, { min: fmtNum(r.minimum, lang) });
+                      const current = r.index === rank?.index;
+                      // Progress towards the next rank (current) or towards this one (locked).
+                      const goal = current ? r.next : careerKills < r.minimum ? r.minimum : null;
+                      const from = current ? r.minimum : 0;
+                      const share = goal !== null ? Math.max(0, Math.min(1, (careerKills - from) / Math.max(1, goal - from))) : null;
+                      return {
+                        key: r.index,
+                        label: rankName(r.name),
+                        state: current ? "current" : careerKills < r.minimum ? "locked" : "reached",
+                        badge: <RankBadge name={r.name} size={40} dim={careerKills < r.minimum} untitled />,
+                        tip: (
+                          <>
+                            <b>{rankName(r.name)}</b>
+                            <span className="tip-line">{range}</span>
+                            <span className={`tip-line rank-tip-state ${current ? "current" : careerKills < r.minimum ? "locked" : "reached"}`}>
+                              {current ? t.currentRank : careerKills < r.minimum ? t.rankLocked : t.rankReached}
+                            </span>
+                            {current || goal !== null ? (
+                              <span className="tip-line">
+                                {t.kills}: <b>{fmtNum(careerKills, lang)}</b>
+                              </span>
+                            ) : null}
+                            {goal !== null && share !== null ? (
+                              <>
+                                <span className="tip-line">{fill(t.killsNeeded, { n: fmtNum(goal - careerKills, lang), pct: pc(share) })}</span>
+                                <span className="tip-line">
+                                  <Bar value={share} wide />
+                                </span>
+                              </>
+                            ) : current ? (
+                              <span className="tip-line">{t.topRank}</span>
+                            ) : null}
+                          </>
+                        ),
+                      };
+                    })}
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        ) : null}
+        {allAwards.length ? (
+          <table className="stats spaced">
+            <thead>
+              <tr>
+                <th>
+                  {t.ribbons} ({fill(t.winsCount, { n: totalRibbonWins })}, <Link prefetch={false} href={`/${game}/awards?view=ribbons`}>{t.ribbonsOverview}</Link>)
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="ribbon-wall">
+                  {[...allAwards]
+                    .sort((a, b) => (wonAwards.get(b.awardId) ?? 0) - (wonAwards.get(a.awardId) ?? 0))
+                    .map((a) => {
+                      const wins = wonAwards.get(a.awardId) ?? 0;
+                      const r = ribbonFor(wins, classes);
+                      return (
+                        <Link prefetch={false} key={a.awardId} href={`/${game}/awards?view=ribbons&award=${a.awardId}`}>
+                          <Ribbon
+                            code={a.code}
+                            label={a.name}
+                            title={r ? `${a.name}: ${ribbonClassName(r.name, lang)} ${r.level} (${fill(t.winsCount, { n: wins })})` : a.name}
+                            ribbon={r}
+                          />
+                          <RibbonLevel
+                            progress={ribbonProgress(wins, classes)}
+                            className={(n) => ribbonClassName(n, lang)}
+                            texts={{ toNext: t.ribbonToNext, maxed: t.ribbonMaxed }}
+                          />
+                        </Link>
+                      );
+                    })}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        ) : null}
       </Section>
 
       {/* From here on gameME's order: teams and actions, maps, weapon
