@@ -2,7 +2,8 @@
 
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
-export type RankTipItem = { key: string | number; badge: ReactNode; tip: ReactNode };
+// label: shown under the badge (the rank's name), state: reached, current or locked.
+export type RankTipItem = { key: string | number; badge: ReactNode; tip: ReactNode; label?: ReactNode; state?: string };
 
 // A row of rank badges with a detail box each (career row of the player
 // page): the box opens on hover, on focus and on a tap, closes on Escape, a
@@ -62,7 +63,7 @@ export function RankTips({ items }: { items: RankTipItem[] }) {
             btns.current[i] = el;
           }}
           type="button"
-          className={open?.i === i ? "rank-tip-btn open" : "rank-tip-btn"}
+          className={`rank-tip-btn${it.state ? ` ${it.state}` : ""}${open?.i === i ? " open" : ""}`}
           aria-describedby={open?.i === i ? tipId : undefined}
           onPointerEnter={(e) => e.pointerType === "mouse" && !open?.pinned && setOpen({ i, pinned: false })}
           onPointerLeave={(e) => e.pointerType === "mouse" && setOpen((o) => (o && !o.pinned ? null : o))}
@@ -71,6 +72,7 @@ export function RankTips({ items }: { items: RankTipItem[] }) {
           onClick={() => setOpen((o) => (o?.i === i && o.pinned ? null : { i, pinned: true }))}
         >
           {it.badge}
+          {it.label ? <span className="rank-tip-name">{it.label}</span> : null}
         </button>
       ))}
       {open ? (

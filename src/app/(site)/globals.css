@@ -1762,3 +1762,73 @@ table.stats.clan-sum td { white-space: normal; }
   .gs-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25); }
 }
 @media print { .reveal { opacity: 1; transform: none; } }
+
+/* ---------------------------------------------------------------- player head */
+
+/* Player page: a head card (picture, name, place, last connect; position,
+   points and activity in large figures), a row of key figures, the
+   favourites and jump links to the parts of the page. */
+.p-hero { width: 95%; margin: 12px auto 18px; }
+.p-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18), 0 6px 18px rgba(0, 0, 0, 0.12); }
+.p-head { display: flex; align-items: center; gap: 18px; padding: 16px 18px; }
+.p-avatar { flex: none; display: grid; place-items: center; width: 92px; height: 92px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); font-size: 40px; font-weight: bold; line-height: 1; object-fit: cover; }
+.p-who { flex: 1; min-width: 0; }
+.p-name { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; color: var(--text); font-size: 22px; font-weight: bold; line-height: 1.2; overflow-wrap: anywhere; }
+.p-name .hof-profile-stars { margin: 0; }
+.p-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 8px; color: var(--muted); font-size: 12.5px; }
+.p-meta a { color: inherit; }
+.p-chip { display: inline-block; padding: 1px 8px; border: 1px solid var(--border); border-radius: 999px; color: var(--accent-text); font-size: 12px; font-weight: bold; text-decoration: none; }
+.p-chip:hover { border-color: var(--accent); text-decoration: none; }
+.p-big { display: flex; flex: none; }
+.p-big > div { min-width: 96px; padding: 0 18px; border-left: 1px solid var(--border); }
+.p-big > div:first-child { border-left: 0; }
+.p-hero small { display: block; color: var(--muted); font-size: 10.5px; font-weight: bold; letter-spacing: 0.08em; text-transform: uppercase; }
+.p-big b { display: block; margin-top: 2px; color: var(--text); font-size: 28px; line-height: 1.15; }
+.p-big b i { font-size: 14px; font-weight: normal; }
+.p-big em, .p-kpis em { font-style: normal; font-size: 12px; font-weight: bold; }
+.p-kpis em { color: var(--muted); }
+.p-meter { display: block; height: 4px; margin-top: 6px; border-radius: 2px; background: var(--surface-2); overflow: hidden; }
+.p-meter > span { display: block; height: 100%; background: var(--accent); }
+.p-kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-top: 10px; }
+.p-kpis > div { padding: 12px 14px; }
+.p-kpis b { display: block; margin-top: 4px; color: var(--text); font-size: 22px; line-height: 1.2; }
+.p-favs { margin-top: 10px; padding: 10px 14px 12px; }
+.p-favs h3 { margin: 0 0 8px; padding: 0; background: none; border: 0; color: var(--text); font-size: 13px; }
+.p-favs h3::before, .p-favs h3::after { content: none; }
+.p-favs > div { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px 16px; }
+.p-favs > div > div { padding-left: 10px; border-left: 3px solid var(--accent); }
+.p-favs a, .p-favs span { font-weight: bold; }
+.p-jump { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 14px; }
+.p-jump a { padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); font-size: 12px; font-weight: bold; text-decoration: none; }
+.p-jump a:hover { border-color: var(--accent); color: var(--accent-text); text-decoration: none; }
+.section { scroll-margin-top: 12px; }
+@media (max-width: 900px) {
+  .p-head { flex-wrap: wrap; }
+  .p-big { width: 100%; padding-top: 12px; border-top: 1px solid var(--border); }
+  .p-big > div { flex: 1; min-width: 0; padding: 0 12px; }
+  .p-big > div:first-child { padding-left: 0; }
+  .p-kpis { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 600px) {
+  .p-hero { width: auto; margin: 10px 8px 14px; }
+  .p-head { gap: 12px; padding: 14px; }
+  .p-avatar { width: 60px; height: 60px; font-size: 28px; }
+  .p-name { font-size: 18px; }
+  .p-big b { font-size: 22px; }
+  .p-kpis { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .p-kpis b { font-size: 19px; }
+}
+
+/* Career ranks and ribbons as tiles: badge (and the rank's name) in a framed box each. */
+td.career { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; padding: 10px; }
+td.career .rank-tip-btn { min-width: 0; flex-direction: column; align-items: center; gap: 6px; padding: 10px 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-2); line-height: 1.2; }
+td.career .rank-tip-btn.current { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+td.career .rank-tip-btn.locked .rank-tip-name { color: var(--muted); font-weight: normal; }
+.rank-tip-name { max-width: 100%; font-size: 11px; font-weight: bold; text-align: center; white-space: normal; overflow-wrap: anywhere; }
+td.ribbon-wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; max-height: 470px; overflow-y: auto; }
+td.ribbon-wall a { padding: 10px 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-2); color: var(--text); text-align: center; }
+td.ribbon-wall a:hover { border-color: var(--accent); }
+@media (max-width: 600px) {
+  td.career { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 6px; max-height: 420px; overflow-y: auto; }
+  td.career .rank-tip-btn { padding: 8px 4px 6px; }
+}

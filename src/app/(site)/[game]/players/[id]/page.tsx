@@ -150,6 +150,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
     .flatMap((x, i) => (i ? [", ", x] : [x]));
   const age = fmtAge(p.last_event, lang);
   const totalTeamJoins = teams.reduce((s, x) => s + x.joined, 0);
+  const favTeam = [...teams].sort((a, b) => b.joined - a.joined)[0] ?? null;
   const zoneTotal = (w: (typeof weapons)[number]) => ZONES.reduce((n, z) => n + w[z], 0);
   const hitboxWeapons = [
     { name: t.allWeapons, hits: Object.fromEntries(ZONES.map((z) => [z, weapons.reduce((n, w) => n + w[z], 0)])) as Record<(typeof ZONES)[number], number> },
@@ -222,7 +223,128 @@ export default async function PlayerPage({ params, searchParams }: Props) {
 
   return (
     <>
-      <Section title={t.playerInfo}>
+      {/* The head of the profile in every skin: a card with picture, name,
+          clan, place and last connect beside position, points and
+          activity; the key figures, the favourites and jump links to the
+          parts of the page below it. The tables further down leave these
+          values out, so nothing is shown twice. */}
+      <div className="p-hero">
+        <div className="p-card p-head">
+          <Suspense fallback={<HeroAvatar steam={null} name={p.name} />}>
+            <SteamAvatar steam64={ids?.steam64 ?? null} name={p.name} />
+          </Suspense>
+          <div className="p-who">
+            <div className="p-name">
+              <Flag code={p.flag} title={p.country} />
+              <span>{p.name ?? `#${id}`}</span>
+              {p.clanTag ? (
+                <Link prefetch={false} className="p-chip" href={`/${game}/clans/${p.clan}`}>
+                  {p.clanTag}
+                </Link>
+              ) : null}
+              {stars && stars.gold + stars.silver + stars.bronze ? (
+                <Link prefetch={false} href={`/${game}/hall-of-fame`} className="hof-profile-stars">
+                  <HallStars gold={stars.gold} silver={stars.silver} bronze={stars.bronze} label={fill(t.hofStarsTip, { gold: stars.gold, silver: stars.silver, bronze: stars.bronze })} />
+                </Link>
+              ) : null}
+            </div>
+            <div className="p-meta">
+              {location.length ? <span>{location}</span> : null}
+              <span>
+                {t.lastConnect}: {age ?? fmtDateTime(p.last_event, lang)} ({fmtNum(p.total_connects, lang)} {t.connections})
+              </span>
+            </div>
+          </div>
+          <div className="p-big">
+            <div>
+              <small>{t.position}</small>
+              <b>{p.hideranking ? <i className="muted">{t.notListed}</i> : position ? `#${fmtNum(position, lang)}` : "-"}</b>
+            </div>
+            <div>
+              <small>{t.points}</small>
+              <b>{p.hideranking ? "–" : fmtNum(p.skill, lang)}</b>
+              {p.hideranking ? null : (
+                <em className={p.last_skill_change >= 0 ? "good" : "bad"}>
+                  {p.last_skill_change > 0 ? "+" : ""}
+                  {fmtNum(p.last_skill_change, lang)}
+                </em>
+              )}
+            </div>
+            <div>
+              <small>{t.activity}</small>
+              <b>{activity(p.last_event, settings.activityDays)} %</b>
+              <span className="p-meter">
+                <span style={{ width: `${activity(p.last_event, settings.activityDays)}%` }} />
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="p-kpis">
+          <div className="p-card">
+            <small>{t.kills}</small>
+            <b>{fmtNum(p.kills, lang)}</b>
+            <em>{fmtNum(kills14, lang)}*</em>
+          </div>
+          <div className="p-card">
+            <small>{t.deaths}</small>
+            <b>{fmtNum(p.deaths, lang)}</b>
+          </div>
+          <div className="p-card">
+            <small>{t.kpdLong}</small>
+            <b>{n2(kpd(p.kills, p.deaths))}</b>
+          </div>
+          <div className="p-card">
+            <small>{t.hpkLong}</small>
+            <b>{pc(ratio(p.headshots, p.kills))}</b>
+          </div>
+          <div className="p-card">
+            <small>{t.killsPerMin}</small>
+            <b>{n2(kpm(p.kills, p.connection_time))}</b>
+          </div>
+          <div className="p-card">
+            <small>{t.killStreak}</small>
+            <b>{fmtNum(p.kill_streak, lang)}</b>
+          </div>
+        </div>
+        {fav || maps.length || favTeam ? (
+          <div className="p-card p-favs">
+            <h3>{t.favourites}</h3>
+            <div>
+              {maps.length ? (
+                <div>
+                  <small>{t.favMap}</small>
+                  <Link prefetch={false} href={`/${game}/maps/${encodeURIComponent(maps[0].map)}`}>
+                    {maps[0].map}
+                  </Link>
+                </div>
+              ) : null}
+              {fav ? (
+                <div>
+                  <small>{t.favWeapon}</small>
+                  <Link prefetch={false} href={`/${game}/weapons/${encodeURIComponent(fav.code)}`}>
+                    {fav.name}
+                  </Link>
+                </div>
+              ) : null}
+              {favTeam ? (
+                <div>
+                  <small>{t.favTeam}</small>
+                  <span>{favTeam.name}</span>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+        <nav className="p-jump" aria-label={t.playerInfo}>
+          <a href="#info">{t.overview}</a>
+          {teams.length || actions.length ? <a href="#teams">{t.teams}</a> : null}
+          {maps.length ? <a href="#maps">{t.maps}</a> : null}
+          {weapons.length ? <a href="#weapons">{t.weapons}</a> : null}
+          {killList.length ? <a href="#kills">{t.killStats}</a> : null}
+        </nav>
+      </div>
+
+      <Section id="info" title={t.playerInfo}>
         <div className="cont-2">
           {/* The Steam profile is asked after the page is sent: the table
               comes without the Steam rows first and is swapped once the
@@ -252,45 +374,12 @@ export default async function PlayerPage({ params, searchParams }: Props) {
               </tr>
             </thead>
             <tbody>
+              {/* Position, points, activity, kills, deaths, kills per minute
+                  and the longest streak are in the head card above. */}
               <tr>
-                <td className="stats-key pair">{t.position}:</td>
-                {/* A banned player (the only hidden one with a profile) has no place and no points. */}
-                <td className="pair-value">
-                  {p.hideranking ? <i className="muted">{t.notListed}</i> : <b>{position ? fmtNum(position, lang) : "-"}</b>}
-                </td>
-                <td className="stats-key pair">{t.points}:</td>
-                <td className="pair-value">
-                  {p.hideranking ? (
-                    "–"
-                  ) : (
-                    <>
-                      <b>{fmtNum(p.skill, lang)}</b>{" "}
-                      <span className={p.last_skill_change >= 0 ? "good" : "bad"}>
-                        ({p.last_skill_change > 0 ? "+" : ""}
-                        {fmtNum(p.last_skill_change, lang)})
-                      </span>
-                    </>
-                  )}
-                </td>
-                <td className="stats-key">{t.activity}:</td>
-                <td className="barcell">
-                  <Bar value={activity(p.last_event, settings.activityDays) / 100} activity label={`${activity(p.last_event, settings.activityDays)} %`} />
-                </td>
-              </tr>
-              <tr>
-                <td colSpan={4} rowSpan={7} className="radar-cell">
+                <td colSpan={4} rowSpan={4} className="radar-cell">
                   <Radar axes={radar} labels={{ avg: t.radarAll, player: t.radarPlayer }} notes={radarNotes} />
                 </td>
-                <td className="stats-key">{t.kills}:</td>
-                <td>
-                  {fmtNum(p.kills, lang)} ({fmtNum(kills14, lang)}*)
-                </td>
-              </tr>
-              <tr>
-                <td className="stats-key">{t.deaths}:</td>
-                <td>{fmtNum(p.deaths, lang)}</td>
-              </tr>
-              <tr>
                 <td className="stats-key">{t.hs}:</td>
                 <td>
                   {fmtNum(p.headshots, lang)} ({fmtNum(hs14, lang)}*)
@@ -312,10 +401,6 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                 <td className="stats-key">{t.suicides}:</td>
                 <td>{fmtNum(p.suicides, lang)}</td>
               </tr>
-              <tr>
-                <td className="stats-key">{t.killsPerMin}:</td>
-                <td>{n2(kpm(p.kills, p.connection_time))}</td>
-              </tr>
               {/* Rounds count only with a winner: servers without win triggers (GunGame, DM) have none. */}
               <Row4 k={t.rounds} v={p.rounds ? `${fmtNum(p.rounds, lang)} (${t.wins}: ${fmtNum(p.wins, lang)}, ${t.losses}: ${fmtNum(p.losses, lang)})` : "—"} />
               <Row4 k={t.winRatio} v={p.rounds ? <Bar value={ratio(p.wins, p.rounds)} green label={pc(ratio(p.wins, p.rounds))} /> : "—"} />
@@ -335,7 +420,6 @@ export default async function PlayerPage({ params, searchParams }: Props) {
               ) : null}
               {/* Assisted kills (kills of this player others helped with) only when the collector counted any. */}
               <Row4 k={t.assists} v={`${fmtNum(p.kill_assists, lang)}${p.kills_assisted > 0 ? ` · ${t.assistedKills}: ${fmtNum(p.kills_assisted, lang)}` : ""}`} />
-              <Row4 k={t.killStreak} v={fmtNum(p.kill_streak, lang)} />
             </tbody>
           </table>
           {/* The history links and the note on the starred values share one line. */}
@@ -424,6 +508,8 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                           const share = goal !== null ? Math.max(0, Math.min(1, (careerKills - from) / Math.max(1, goal - from))) : null;
                           return {
                             key: r.index,
+                            label: rankName(r.name),
+                            state: current ? "current" : careerKills < r.minimum ? "locked" : "reached",
                             badge: <RankBadge name={r.name} size={40} dim={careerKills < r.minimum} untitled />,
                             tip: (
                               <>
@@ -531,7 +617,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
           gameME lacks (victims and killers, events, names, awards, chat)
           follows below. */}
       {teams.length || actions.length ? (
-        <Section title={t.teamsActions}>
+        <Section id="teams" title={t.teamsActions}>
           <div className="cont-2">
             {teams.length ? (
               <TableWrap>
@@ -570,7 +656,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
       ) : null}
 
       {maps.length ? (
-        <Section title={t.mapPerformance}>
+        <Section id="maps" title={t.mapPerformance}>
           <MapTable maps={maps} game={game} t={t} lang={lang} />
         </Section>
       ) : null}
@@ -588,13 +674,13 @@ export default async function PlayerPage({ params, searchParams }: Props) {
       ) : null}
 
       {weapons.length ? (
-        <Section title={t.weapons}>
+        <Section id="weapons" title={t.weapons}>
           <WeaponStats weapons={weapons} game={game} shots={shots} t={t} lang={lang} />
         </Section>
       ) : null}
 
       {killList.length ? (
-        <Section title={t.killStats}>
+        <Section id="kills" title={t.killStats}>
           <p className="muted small">{t.killStatsHint}</p>
           <TableWrap>
             <SortableTable
@@ -769,6 +855,25 @@ async function SteamProfile({ steam64, ...rest }: ProfileProps & { steam64: stri
   return <ProfileTable steam={steam} {...rest} />;
 }
 
+// The picture in the head card: Steam's avatar (only with consent, from
+// Steam's image servers), else the initial of the name. Asked after the page
+// is sent, like the profile table, so a slow Steam never holds the page.
+async function SteamAvatar({ steam64, name }: { steam64: string | null; name: string | null }) {
+  const [found, consent] = await Promise.all([steam64 ? getSteamProfile(steam64) : null, getConsent()]);
+  return <HeroAvatar steam={found ? { avatar: externalImage(consent, found.avatar), name: found.name } : null} name={name} />;
+}
+
+function HeroAvatar({ steam, name }: { steam: { avatar: string | null; name: string | null } | null; name: string | null }) {
+  return steam?.avatar ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img className="p-avatar" src={steam.avatar} alt={steam.name ?? ""} width={92} height={92} referrerPolicy="no-referrer" />
+  ) : (
+    <span className="p-avatar" aria-hidden="true">
+      {(name ?? "").replace(/[^\p{L}\p{N}]/gu, "").slice(0, 1).toUpperCase() || "?"}
+    </span>
+  );
+}
+
 // "Member since" in the site's date format, without a time: Steam's API
 // gives YYYY-MM-DD (taken at noon UTC so no time zone moves the day), the
 // community page a text such as "December 4, 2024"; anything else as it is.
@@ -786,47 +891,14 @@ function ProfileTable({ steam, steamBan, pending = false, game, id, p, ids, isBo
   const bans = mergeBans([...found, ...vac].map((ban) => ({ player: 0, ban })), () => 0)[0]?.bans ?? [];
   // VAC and SourceBans side by side when the site checks them (grey when not banned there).
   const always: BanKind[] = [...(steam ? (["vac"] as const) : []), ...(sourcebans ? (["sourcebans"] as const) : [])];
-  // As on gameME: the name runs across the full width, the avatar sits in
-  // its own framed box beside the seven rows from Clan to Steam name (they
-  // are always there, with or without Steam data) and the rows below use
-  // the full width again.
-  const avatar = (
-    <td rowSpan={7} className="avatar-cell">
-      {steam?.avatar ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={steam.avatar} alt={steam.name ?? ""} width={184} height={184} referrerPolicy="no-referrer" />
-      ) : (
-        <span className="avatar-none" aria-hidden="true">
-          {(p.name ?? "").replace(/[^\p{L}\p{N}]/gu, "").slice(0, 1).toUpperCase() || "?"}
-        </span>
-      )}
-    </td>
-  );
   return (
     <table className="stats profile">
       <thead>
         <tr>
-          <th colSpan={3}>{t.playerProfile}</th>
+          <th colSpan={2}>{t.playerProfile}</th>
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td className="stats-key">{t.name}:</td>
-          <td colSpan={2}>
-            <b>
-              <Flag code={p.flag} title={p.country} />
-              {p.name ?? `#${id}`}
-              <NameBanMark bans={bans} t={t} lang={lang} />
-            </b>
-            {stars && stars.gold + stars.silver + stars.bronze ? (
-              <Link prefetch={false} href={`/${game}/hall-of-fame`} className="hof-profile-stars">
-                <HallStars gold={stars.gold} silver={stars.silver} bronze={stars.bronze} label={fill(t.hofStarsTip, { gold: stars.gold, silver: stars.silver, bronze: stars.bronze })} />
-              </Link>
-            ) : null}
-          </td>
-        </tr>
-        <Row k={t.clan} v={p.clanTag ? <Link prefetch={false} href={`/${game}/clans/${p.clan}`}>{p.clanTag}</Link> : <i>{t.none}</i>} aside={avatar} />
-        <Row k={t.location} v={location.length ? <>{location}</> : <i>{t.notSpecified}</i>} />
         <Row k={t.playerId} v={fmtNum(id, lang)} />
         <Row k={t.steamId} v={isBot ? t.bot : (ids?.steam2 ?? p.uniqueId ?? "-")} />
         <Row k="Steam ID3" v={ids?.steam3 ?? "-"} />
@@ -843,7 +915,7 @@ function ProfileTable({ steam, steamBan, pending = false, game, id, p, ids, isBo
           }
         />
         <Row k={t.steamName} v={steam?.name ?? <i>{pending ? "…" : t.notSpecified}</i>} />
-        {steam?.memberSince ? <Row k={t.memberSince} v={memberDate(steam.memberSince, lang)} span /> : null}
+        {steam?.memberSince ? <Row k={t.memberSince} v={memberDate(steam.memberSince, lang)} /> : null}
         {bans.length || steam ? (
           <Row
             k={t.bans}
@@ -858,30 +930,21 @@ function ProfileTable({ steam, steamBan, pending = false, game, id, p, ids, isBo
                 )}
               </span>
             }
-            span
           />
         ) : null}
-        <Row k={t.lastConnect} v={`${age ?? fmtDateTime(p.last_event, lang)} (${fmtNum(p.total_connects, lang)} ${t.connections})`} span />
-        <Row k={t.firstConnect} v={fmtDateTime(p.first_connect, lang)} span />
-        <Row k={t.playTime} v={fmtDuration(p.connection_time)} span />
-        <Row k={t.avgPing} v={p.average_ping ? `${p.average_ping} ms` : "-"} span />
-        <Row
-          k={t.favWeapon}
-          v={fav ? <Link prefetch={false} href={`/${game}/weapons/${encodeURIComponent(fav.code)}`}>{fav.name}</Link> : "-"}
-          span
-        />
+        <Row k={t.firstConnect} v={fmtDateTime(p.first_connect, lang)} />
+        <Row k={t.playTime} v={fmtDuration(p.connection_time)} />
+        <Row k={t.avgPing} v={p.average_ping ? `${p.average_ping} ms` : "-"} />
       </tbody>
     </table>
   );
 }
 
-// aside: a cell after the value that spans the following rows (the avatar).
-function Row({ k, v, span = false, aside }: { k: string; v: React.ReactNode; span?: boolean; aside?: React.ReactNode }) {
+function Row({ k, v }: { k: string; v: React.ReactNode }) {
   return (
     <tr>
       <td className="stats-key">{k}:</td>
-      <td colSpan={span ? 2 : 1}>{v}</td>
-      {aside}
+      <td>{v}</td>
     </tr>
   );
 }
