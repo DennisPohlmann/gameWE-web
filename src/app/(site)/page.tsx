@@ -119,7 +119,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                         <span className="icon-link-text">{t.clans}</span>
                       </Link>
                     </td>
-                    <td className="num">
+                    <td className="num" data-label={t.players}>
                       <span
                         className={
                           r.maxPlayers > 0 && r.actPlayers >= r.maxPlayers ? "srv-full" : r.actPlayers > 0 ? "srv-nempty" : "srv-empty"
@@ -128,7 +128,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                         <PlayerCount count={r.online} lang={lang} botsLabel={t.bots} />
                       </span>
                     </td>
-                    <td>
+                    <td data-label={t.topPlayer}>
                       {r.topPlayerId ? (
                         <>
                           {/* The Steam picture is fetched by the browser (/avatar), so a
@@ -146,14 +146,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                         "-"
                       )}
                     </td>
-                    <td className={r.topClanId ? "hide-sm rnk-clan" : "hide-sm"} data-label={t.topClan}>
+                    <td className="hide-sm rnk-clan" data-label={t.topClan}>
                       {r.topClanId ? (
                         <>
                           <Flag code={clanFlags.get(r.topClanId)?.flag} title={clanFlags.get(r.topClanId)?.country} />{" "}
                           <Link prefetch={false} href={`/${r.code}/clans/${r.topClanId}`}>{r.topClanTag}</Link>
                         </>
                       ) : (
-                        "-"
+                        <span className="rnk-none">-</span>
                       )}
                     </td>
                   </tr>

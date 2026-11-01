@@ -1041,9 +1041,12 @@ a.button { display: inline-block; text-decoration: none; }
   .hide-sm { display: none; }
   .srv-where { display: block; }
   .icon-link { display: block; margin: 2px 0; }
-  /* Start page: each ranking takes two lines instead of a wide row: icon and
-     name on top, below it (indented like the name) the players online, the
-     best player and the Players/Clans links as round icons only. The head
+  /* Start page: each ranking takes four lines of the same height instead of
+     a wide row: icon and name on top; below it, indented like the name and
+     each with its label in a column of its own, the players online, the best
+     player and the best clan ("-" when there is none); the players online
+     as a small pill in their colour. The Players/Clans
+     links as round icons only, one above the other at the right. The head
      keeps its sort links in one line. */
   table.rankings, table.rankings thead, table.rankings tbody { display: block; }
   table.rankings thead tr { display: flex; flex-wrap: wrap; background: var(--th-bg); }
@@ -1051,24 +1054,46 @@ a.button { display: inline-block; text-decoration: none; }
   table.rankings thead th:empty { display: none; }
   table.rankings tr.ranking-line {
     display: grid;
-    grid-template-columns: 104px minmax(0, 1fr) auto;
-    grid-template-areas: "name name name" "count top links" "clan clan clan";
     align-items: center;
     border-bottom: 1px solid var(--border);
     background: var(--line-bg);
   }
   table.rankings tr.ranking-line > td:not(.hide-sm) { display: block; border: 0; background: transparent; min-width: 0; max-width: none; width: auto; }
   table.rankings tr.ranking-line:hover > td { background: transparent; }
+  table.rankings tr.ranking-line > td.rnk-clan { display: block; grid-area: clan; border: 0; background: transparent; }
+  /* One line per name: a long one ends in "…" (the full name is the link's title). */
+  table.rankings tr.ranking-line > td .rnk-cell a.rnk { display: block; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   table.rankings tr.ranking-line > td:nth-child(1) { grid-area: name; padding: 8px 8px 2px; }
-  table.rankings tr.ranking-line > td:nth-child(2) { grid-area: links; padding: 2px 8px 7px 4px; white-space: nowrap; }
-  table.rankings tr.ranking-line > td:nth-child(3) { grid-area: count; padding: 2px 4px 7px 40px; text-align: left; white-space: normal; }
-  table.rankings tr.ranking-line > td:nth-child(4) { grid-area: top; padding: 2px 4px 7px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  /* The best clan, when there is one, in a third line below. */
-  table.rankings tr.ranking-line > td.rnk-clan { display: block; grid-area: clan; padding: 0 8px 8px 40px; border: 0; background: transparent; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  table.rankings tr.ranking-line > td:nth-child(2) { grid-area: links; white-space: nowrap; }
+  table.rankings tr.ranking-line > td:nth-child(3) { grid-area: count; text-align: left; white-space: nowrap; }
+  table.rankings tr.ranking-line > td:nth-child(4),
+  table.rankings tr.ranking-line > td.rnk-clan { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  table.rankings tr.ranking-line > td:nth-child(4) { grid-area: top; }
   table.rankings td.rnk-clan::before { content: attr(data-label) ": "; color: var(--muted); }
+  table.rankings td.rnk-clan .rnk-none { color: var(--muted); }
   table.rankings .icon-link { display: inline-block; margin: 0 0 0 6px; }
   table.rankings .icon-link .icon { width: 28px; height: 28px; margin: 0; line-height: 28px; font-size: 14px; }
   table.rankings .icon-link-text { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  table.rankings tr.ranking-line {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "name name" "count links" "top links" "clan links";
+  }
+  table.rankings tr.ranking-line > td:nth-child(2) { display: flex; flex-direction: column; gap: 6px; padding: 0 8px 6px 4px; }
+  table.rankings tr.ranking-line > td:nth-child(2) .icon-link { margin: 0; }
+  table.rankings tr.ranking-line > td:nth-child(3),
+  table.rankings tr.ranking-line > td:nth-child(4) { padding: 2px 4px 2px 40px; overflow: hidden; text-overflow: ellipsis; }
+  table.rankings tr.ranking-line > td.rnk-clan { padding: 2px 4px 8px 40px; }
+  table.rankings tr.ranking-line > td:nth-child(3) .player-count {
+    display: inline-block;
+    padding: 0 8px;
+    border: 1px solid color-mix(in srgb, currentColor 40%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, currentColor 10%, transparent);
+    line-height: 1.3;
+  }
+  table.rankings tr.ranking-line > td:nth-child(3)::before,
+  table.rankings tr.ranking-line > td:nth-child(4)::before,
+  table.rankings tr.ranking-line > td.rnk-clan::before { content: attr(data-label) ":"; display: inline-block; min-width: 8em; color: var(--muted); }
   /* Player page: everything fits the phone's width. */
   table.stats td { overflow-wrap: anywhere; }
   /* Long profile values (location, clan, Steam name and IDs) wrap so the
