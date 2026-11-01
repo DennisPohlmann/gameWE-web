@@ -347,6 +347,9 @@ html[data-skin] .search button, html[data-skin] .button, html[data-skin] .sig-co
   font-weight: 700;
 }
 html[data-skin] .button, html[data-skin] .sig-codes-bar button { border-radius: 3px; }
+html[data-skin] .sig-formats { gap: 6px; }
+html[data-skin] .sig-formats button { padding: 5px 12px; border-radius: var(--m-radius); font: 600 12px/1.2 var(--m-font); background: var(--surface-2); color: var(--text); border-color: var(--border); }
+html[data-skin] .sig-formats button[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); box-shadow: none; }
 html[data-skin] .search button:hover, html[data-skin] .button:hover { background: var(--tab-hover); }
 html[data-skin] .button.danger { background: var(--m-danger); border-color: var(--m-danger); color: #ffffff; }
 
