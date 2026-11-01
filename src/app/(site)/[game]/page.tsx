@@ -45,7 +45,13 @@ export default async function ServersPage({
   const { lang, t } = await getDict();
   const { mapLive, mapStyle, gameEvents } = await getSettings();
   const since = nowUnix() - 86400;
-  const [servers, totals, live, loadByServer] = await Promise.all([getServers(game), getTotals(game), getLivePlayers(game), getServerLoads(game, since)]);
+  const [servers, totals, live, loadByServer, frags] = await Promise.all([
+    getServers(game),
+    getTotals(game),
+    getLivePlayers(game),
+    getServerLoads(game, since),
+    getHourlyActivity(game, 1).catch(() => null),
+  ]);
   const loads = servers.map((s) => loadByServer.get(s.serverId) ?? []);
   // With several servers, the list of all of them and one graph of all of
   // them come first; a single server is shown only once.
@@ -55,7 +61,10 @@ export default async function ServersPage({
   const order = sortState(sp, { ...serverValues, order: () => 0 }, "order");
   const listed = order.sort === "order" ? servers : sortRows(servers, serverValues, order.sort, order.asc);
   const boardKeep = awardBoardKeep(sp);
-  const combined = multi ? combinedLoad(servers, loads, since, lang, t.total) : null;
+  const combined = multi ? combinedLoad(servers, loads, since, lang, t.total, frags, { kills: t.kills, headshots: t.headshotsLabel }) : null;
+  // New players of the last 24 hours and hour, above the graph of all servers
+  // (or the single server's graph).
+  const newLine = `${t.newPlayers} 24h: ${fmtNum(totals.newPlayers, lang)} · ${t.lastHour}: ${fmtNum(totals.newPlayersHour, lang)}`;
   // Who is online right now, between the server list and the graphs.
   // Shown also when nobody is online (empty map), so the layout stays the same.
   const liveMap = mapLive ? (
@@ -101,7 +110,7 @@ export default async function ServersPage({
             {liveMap}
             {combined ? (
               <div className="box">
-                <LineChart locale={lang} ariaLabel={t.players} height={220} labels={combined.labels} dates={combined.dates} series={combined.series} />
+                <LineChart locale={lang} ariaLabel={t.players} height={220} title={newLine} labels={combined.labels} dates={combined.dates} series={combined.series} />
               </div>
             ) : null}
           </>
@@ -115,7 +124,7 @@ export default async function ServersPage({
               {multi ? null : liveMap}
               {loads[i].length > 1 ? (
                 <div className="box">
-                  <ServerLoadChart points={loads[i]} slots={s.max_players} locale={lang} labels={{ players: t.players, uptime: t.uptime }} summary={<LoadSummary points={loads[i]} now={since + 86400} t={t} lang={lang} />} />
+                  <ServerLoadChart points={loads[i]} slots={s.max_players} locale={lang} labels={{ players: t.players, uptime: t.uptime }} summary={<LoadSummary points={loads[i]} now={since + 86400} t={t} lang={lang} extra={multi ? undefined : newLine} />} />
                 </div>
               ) : null}
               {players.length ? <LiveTable game={game} players={players} t={t} lang={lang} /> : <NobodyOnline t={t} />}
@@ -274,8 +283,18 @@ async function Trend({ game, totals, t, lang }: { game: string; totals: Totals; 
 }
 
 // Players per server and in total over the last 24 hours, averaged per quarter
-// hour; quarters without samples stay empty.
-function combinedLoad(servers: { name: string }[], loads: { timestamp: number; act_players: number }[][], since: number, lang: string, total: string) {
+// hour; quarters without samples stay empty. With the ranking's frags per
+// quarter hour (getHourlyActivity), kills and headshots as two more lines on
+// an axis of their own.
+function combinedLoad(
+  servers: { name: string }[],
+  loads: { timestamp: number; act_players: number }[][],
+  since: number,
+  lang: string,
+  total: string,
+  frags: { start: number; step: number; kills: number[]; headshots: number[] } | null,
+  fragLabels: { kills: string; headshots: string },
+) {
   const start = Math.floor(since / BUCKET) * BUCKET;
   const n = Math.ceil((nowUnix() - start) / BUCKET);
   const perServer = loads.map((pts) => {
@@ -299,12 +318,28 @@ function combinedLoad(servers: { name: string }[], loads: { timestamp: number; a
   const dayFmt = dateFormat(lang, { weekday: "short", day: "2-digit", month: "2-digit" });
   const labels = Array.from({ length: n }, (_, i) => timeFmt.format((start + i * BUCKET) * 1000));
   const dates = Array.from({ length: n }, (_, i) => dayFmt.format((start + i * BUCKET) * 1000));
+  // The frags on the same quarter hours; the last, still running quarter
+  // is left out (it would end the lines low).
+  const fragAt = (vals: number[]) =>
+    Array.from({ length: n }, (_, i) => {
+      if (!frags || frags.step !== BUCKET) return null;
+      const j = (start + i * BUCKET - frags.start) / BUCKET;
+      return j >= 0 && j < vals.length - 1 ? vals[j] : null;
+    });
+  const kills = frags ? fragAt(frags.kills) : [];
+  const hasFrags = kills.some((v) => (v ?? 0) > 0);
   return {
     labels,
     dates,
     series: [
       { label: total, values: sums, className: "s1" },
       ...servers.map((s, i) => ({ label: s.name, values: perServer[i], className: `srv srv${i % 8}` })),
+      ...(hasFrags && frags
+        ? [
+            { label: fragLabels.kills, values: kills, className: "frag-kills", right: true },
+            { label: fragLabels.headshots, values: fragAt(frags.headshots), className: "frag-hs", right: true },
+          ]
+        : []),
     ],
   };
 }

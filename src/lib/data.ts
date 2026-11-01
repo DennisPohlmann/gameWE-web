@@ -236,10 +236,11 @@ export async function getServer(id: number) {
   );
 }
 
-// newPlayers: first connect in the last 24 hours (API), newPlayersWeek: in
-// the last NEW_PLAYER_DAYS days (the line on the ranking's page and the
-// "New players" list).
-export type Totals = { players: number; newPlayers: number; newPlayersWeek: number; kills: number; headshots: number; servers: number };
+// newPlayers: first connect in the last 24 hours (API and the line above the
+// ranking's server graph), newPlayersHour: in the last hour (that line),
+// newPlayersWeek: in the last NEW_PLAYER_DAYS days (the line on the
+// ranking's page and the "New players" list).
+export type Totals = { players: number; newPlayers: number; newPlayersHour: number; newPlayersWeek: number; kills: number; headshots: number; servers: number };
 
 // A player is new for this many days after the first connect.
 export const NEW_PLAYER_DAYS = 7;
@@ -255,7 +256,7 @@ export function getTotals(game: string): Promise<Totals> {
 }
 
 async function loadTotals(game: string): Promise<Totals> {
-  const [p, k, fresh, week, s] = await Promise.all([
+  const [p, k, fresh, hour, week, s] = await Promise.all([
     queryOne<{ n: number | string }>(rankingPlayersSql, [game, game, game, game]),
     queryOne<{ kills: number | string | null; headshots: number | string | null }>(rankingKillsSql, [game, game]),
     // From the few players of the last day (index first_connect), not by
@@ -267,6 +268,11 @@ async function loadTotals(game: string): Promise<Totals> {
     ),
     queryOne<{ n: number }>(
       `SELECT COUNT(*) AS n FROM hlstats_Players_Data d JOIN hlstats_Players p ON p.playerId = d.playerId
+       WHERE d.first_connect >= ? AND p.game = ?`,
+      [nowUnix() - 3600, game],
+    ),
+    queryOne<{ n: number }>(
+      `SELECT COUNT(*) AS n FROM hlstats_Players_Data d JOIN hlstats_Players p ON p.playerId = d.playerId
        WHERE d.first_connect >= ? AND p.game = ? AND p.hideranking = 0`,
       [nowUnix() - NEW_PLAYER_DAYS * 86400, game],
     ),
@@ -275,6 +281,7 @@ async function loadTotals(game: string): Promise<Totals> {
   return {
     players: Math.max(0, Number(p?.n ?? 0)),
     newPlayers: Number(fresh?.n ?? 0),
+    newPlayersHour: Number(hour?.n ?? 0),
     newPlayersWeek: Number(week?.n ?? 0),
     kills: Number(k?.kills ?? 0),
     headshots: Number(k?.headshots ?? 0),

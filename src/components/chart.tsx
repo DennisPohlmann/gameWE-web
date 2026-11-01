@@ -10,7 +10,9 @@ import { ChartHead } from "./chart-head";
 // null is a point without data: before the first and after the last value
 // nothing is drawn, a gap in between is bridged (the line goes straight to
 // the next value, without a dot where the data is missing).
-type Series = { label: string; values: (number | null)[]; className: string };
+// right: drawn against an axis of its own on the right (e.g. kills beside
+// players), dashed so it stands apart from the lines of the left axis.
+type Series = { label: string; values: (number | null)[]; className: string; right?: boolean };
 
 export function LineChart({
   labels: allLabels,
@@ -84,14 +86,18 @@ export function LineChart({
   const dates = allDates?.slice(first, end);
   const n = labels.length;
   if (n < 2) return null;
-  const { min, max, ticks, tickText, left } = yScale(series.flatMap((s) => s.values), fromZero, locale, alignTo);
-  const pad = { top: 12, right: 24, bottom: dates ? 36 : 22, left };
+  const { min, max, ticks, tickText, left } = yScale(series.filter((s) => !s.right).flatMap((s) => s.values), fromZero, locale, alignTo);
+  const rightSeries = series.filter((s) => s.right);
+  const R = rightSeries.length ? yScale(rightSeries.flatMap((s) => s.values), true, locale, undefined) : null;
+  const pad = { top: 12, right: R ? Math.max(24, R.left) : 24, bottom: dates ? 36 : 22, left };
   const plotW = width - pad.left - pad.right;
   const x = (i: number) => pad.left + (i * plotW) / (n - 1);
   const gap = plotW / (n - 1);
   const dotR = Math.max(1, Math.min(2.5, gap / 3));
   const dense = gap < 6;
   const y = (v: number) => pad.top + (1 - (v - min) / (max - min || 1)) * (height - pad.top - pad.bottom);
+  const yR = (v: number) => (R ? pad.top + (1 - (v - R.min) / (R.max - R.min || 1)) * (height - pad.top - pad.bottom) : y(v));
+  const ys = (s: Series) => (s.right ? yR : y);
   const every = Math.max(1, Math.ceil(n / 6));
   // First point of each day; a date needs about 70 units of room.
   const dayStarts = dates ? dates.flatMap((d, i) => (i === 0 || d !== dates[i - 1] ? [i] : [])) : [];
@@ -112,8 +118,8 @@ export function LineChart({
     const sx = ((e.clientX - r.left) / r.width) * width;
     const i = Math.max(0, Math.min(n - 1, Math.round(((sx - pad.left) / plotW) * (n - 1))));
     const left = r.left - f.left + (x(i) / width) * r.width;
-    const vals = series.map((s) => s.values[i]).filter((v): v is number => v !== null);
-    const top = r.top - f.top + ((vals.length ? y(Math.max(...vals)) : pad.top) / height) * r.height;
+    const ysAt = series.flatMap((s) => (s.values[i] === null || s.values[i] === undefined ? [] : [ys(s)(s.values[i]!)]));
+    const top = r.top - f.top + ((ysAt.length ? Math.min(...ysAt) : pad.top) / height) * r.height;
     setHover({ i, left, top, flip: left > f.width / 2 });
   };
 
@@ -130,6 +136,13 @@ export function LineChart({
             </text>
           </g>
         ))}
+        {R
+          ? R.ticks.map((t, i) => (
+              <text key={`r${i}`} className="axis right" x={width - pad.right + 6} y={yR(t) + 4} textAnchor="start">
+                {R.tickText(t)}
+              </text>
+            ))
+          : null}
         {dayStarts.map((i, k) => (
           <g key={`day${i}`}>
             {i > 0 ? <line className="day-line" x1={x(i)} x2={x(i)} y1={pad.top} y2={height - pad.bottom} /> : null}
@@ -160,8 +173,8 @@ export function LineChart({
             run.length > 1 ? (
               <polygon
                 key={`${s.label}-a${run[0]}`}
-                className={`area ${s.className}`}
-                points={`${run.map((i) => `${x(i).toFixed(1)},${y(s.values[i]!).toFixed(1)}`).join(" ")} ${x(run[run.length - 1]).toFixed(1)},${height - pad.bottom} ${x(run[0]).toFixed(1)},${height - pad.bottom}`}
+                className={`area ${s.className}${s.right ? " right" : ""}`}
+                points={`${run.map((i) => `${x(i).toFixed(1)},${ys(s)(s.values[i]!).toFixed(1)}`).join(" ")} ${x(run[run.length - 1]).toFixed(1)},${height - pad.bottom} ${x(run[0]).toFixed(1)},${height - pad.bottom}`}
               />
             ) : null,
           ),
@@ -171,11 +184,11 @@ export function LineChart({
             run.length > 1 ? (
               <polyline
                 key={`${s.label}-${run[0]}`}
-                className={`line ${s.className}`}
-                points={run.map((i) => `${x(i).toFixed(1)},${y(s.values[i]!).toFixed(1)}`).join(" ")}
+                className={`line ${s.className}${s.right ? " right" : ""}`}
+                points={run.map((i) => `${x(i).toFixed(1)},${ys(s)(s.values[i]!).toFixed(1)}`).join(" ")}
               />
             ) : run.length === 1 ? (
-              <circle key={`${s.label}-${run[0]}`} className={`dot ${s.className}`} cx={x(run[0])} cy={y(s.values[run[0]]!)} r={4} />
+              <circle key={`${s.label}-${run[0]}`} className={`dot ${s.className}`} cx={x(run[0])} cy={ys(s)(s.values[run[0]]!)} r={4} />
             ) : null,
           ),
         )}
@@ -183,11 +196,11 @@ export function LineChart({
             they shrink to the room between two points and lose the white edge. */}
         {series.map((s) =>
           s.values.map((v, i) =>
-            v === null ? null : <circle key={`${s.label}-d${i}`} className={`dot small${dense ? " dense" : ""} ${s.className}`} cx={x(i)} cy={y(v)} r={dotR} />,
+            v === null ? null : <circle key={`${s.label}-d${i}`} className={`dot small${dense ? " dense" : ""} ${s.className}`} cx={x(i)} cy={ys(s)(v)} r={dotR} />,
           ),
         )}
         {hover
-          ? shown.map((s) => <circle key={`${s.label}-h`} className={`dot hot ${s.className}`} cx={x(hover.i)} cy={y(s.values[hover.i]!)} r={5} />)
+          ? shown.map((s) => <circle key={`${s.label}-h`} className={`dot hot ${s.className}`} cx={x(hover.i)} cy={ys(s)(s.values[hover.i]!)} r={5} />)
           : null}
         <rect
           className="hover-area"

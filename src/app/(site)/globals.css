@@ -869,6 +869,16 @@ a.button { display: inline-block; text-decoration: none; }
 .chart .day-line { stroke: var(--chart-day-line); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
 .chart .axis.day { font-weight: 700; fill: var(--chart-axis-strong); }
 .chart .line { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; }
+/* Lines on the right axis (kills and headshots beside the players): dashed. */
+.chart .line.right { stroke-width: 1.5; stroke-dasharray: 5 3; }
+.chart .area.right { display: none; }
+.chart .axis.right { fill: var(--chart-axis); }
+/* Kills and headshots of the ranking's graph: colours of their own, apart
+   from the server lines (the FPS red and a light violet). */
+.chart .frag-kills { stroke: var(--chart-fps); }
+.chart .dot.frag-kills, .swatch.frag-kills { fill: var(--chart-fps); background: var(--chart-fps); }
+.chart .frag-hs { stroke: #b48cff; }
+.chart .dot.frag-hs, .swatch.frag-hs { fill: #b48cff; background: #b48cff; }
 /* Area under a line (chart.tsx, server load): off by default, a template may
    fill it with its own, more specific rule. The selector names the polygon so
    the series and server colour rules below (stroke, fill) never reach it. */
