@@ -59,7 +59,7 @@ carry the same licenses as their linux-x64 counterparts.
 | uqr | 0.1.3 | https://github.com/unjs/uqr |
 | @emnapi/runtime | 1.11.3 | https://github.com/toyobayashi/emnapi |
 | @img/colour | 1.1.0 | https://github.com/lovell/colour |
-| @types/node | 26.6.5 | https://github.com/DefinitelyTyped/DefinitelyTyped (type definitions only, peer dependency) |
+| @types/node | 26.6.6 | https://github.com/DefinitelyTyped/DefinitelyTyped (type definitions only, peer dependency) |
 | undici-types | 8.9.0 | https://github.com/nodejs/undici (type definitions only) |
 
 ### Apache-2.0
@@ -71,9 +71,9 @@ carry the same licenses as their linux-x64 counterparts.
 | @img/sharp-linuxmusl-x64 | 0.35.5 | https://github.com/lovell/sharp |
 | @swc/helpers | 0.5.23 | https://github.com/swc-project/swc |
 | detect-libc | 2.1.2 | https://github.com/lovell/detect-libc |
-| baseline-browser-mapping | 2.11.30 | https://github.com/web-platform-dx/baseline-browser-mapping |
+| baseline-browser-mapping | 2.11.34 | https://github.com/web-platform-dx/baseline-browser-mapping |
 | long | 5.3.2 | https://github.com/dcodeIO/long.js |
-| @opentelemetry/api | 1.9.0 | https://github.com/open-telemetry/opentelemetry-js (optional peer dependency of Next.js, tracing interface only) |
+| @opentelemetry/api | 1.10.0 | https://github.com/open-telemetry/opentelemetry-js (optional peer dependency of Next.js, tracing interface only) |
 
 ### LGPL-3.0-or-later
 
@@ -113,13 +113,13 @@ carry the same licenses as their linux-x64 counterparts.
 
 | Package | Version | Project |
 |---------|---------|---------|
-| tslib | 2.8.1 | https://github.com/microsoft/tslib |
+| tslib | 2.9.1 | https://github.com/microsoft/tslib |
 
 ### CC-BY-4.0
 
 | Package | Version | Project |
 |---------|---------|---------|
-| caniuse-lite | 1.0.30001819 | https://github.com/browserslist/caniuse-lite (browser support data, used at build time) |
+| caniuse-lite | 1.0.30001820 | https://github.com/browserslist/caniuse-lite (browser support data, used at build time) |
 
 ## Bundled inside Next.js
 
