@@ -47,7 +47,10 @@ const idle = readFileSync("src/components/admin/idle-logout.tsx", "utf8");
 
 test("the page reports activity not reported yet before the cookie's time runs out", () => {
   assert.match(idle, /const every = touchEvery\(limit\)/);
-  assert.match(idle, /if \(pending\) return report\(\);/);
+  // Not the activity of the same moment as the last report.
+  assert.match(idle, /if \(last - touched > 1_000\) return report\(\);/);
+  // The countdown follows the server once another tab kept the session.
+  assert.match(idle, /if \(typeof left === "number"\) last = Date.now\(\) - limit \+ left;/);
   assert.match(idle, /schedule\(limit - every\)/);
   assert.doesNotMatch(idle, /IDLE_TOUCH_MS/);
 });
@@ -90,5 +93,16 @@ test("the session route renews only same-origin posts", () => {
 });
 
 test("every admin page runs the sign-out timer", () => {
-  assert.match(layout, /<IdleLogout minutes=\{settings\.adminIdleMinutes\} base=\{basePath\} \/>/);
+  assert.match(layout, /<IdleLogout minutes=\{settings\.adminIdleMinutes\} base=\{basePath\} label=\{u\.idleIn\} \/>/);
+});
+
+test("the countdown in the top bar reads m:ss, rounded up", async () => {
+  const { countdownText } = await import("../src/lib/admin-idle.ts");
+  assert.equal(countdownText(600_000), "10:00");
+  assert.equal(countdownText(59_001), "1:00");
+  assert.equal(countdownText(59_000), "0:59");
+  assert.equal(countdownText(1), "0:01");
+  assert.equal(countdownText(0), "0:00");
+  assert.equal(countdownText(-5), "0:00");
+  assert.equal(countdownText(1440 * 60_000), "1440:00");
 });

@@ -390,7 +390,11 @@ cookie is `HttpOnly`, `SameSite=Strict` and `Secure` behind HTTPS (set
 `ADMIN_COOKIE_SECURE=true` if the proxy does not send `X-Forwarded-Proto`).
 
 The admin area signs out automatically after 10 minutes without activity
-(mouse, keyboard, touch, scrolling); the sign-in page then says why.
+(mouse, keyboard, touch, scrolling); the sign-in page then says why. The
+top bar of every admin page counts the time left down (m:ss, red in the
+last minute) and starts again with each activity; at 0 the page asks the
+server and signs out, unless another tab was active meanwhile (then the
+countdown shows that tab's time).
 Settings → Admin area (level 100) turns it off or sets the time (1 to 1440
 minutes, `gamewe_admin_auto_logout`, `gamewe_admin_logout_minutes` in
 `hlstats_Options`). The session cookie carries the time of the last

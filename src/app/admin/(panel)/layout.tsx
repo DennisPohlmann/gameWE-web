@@ -95,6 +95,8 @@ export default async function PanelLayout({ children }: { children: ReactNode })
           <AreaTabs t={text} className="adm-areas" />
         </Suspense>
         <span className="adm-spacer" />
+        {/* Time left before the automatic sign-out (Settings → Admin area). */}
+        <IdleLogout minutes={settings.adminIdleMinutes} base={basePath} label={u.idleIn} />
         {/* On phones only the icon, the text stays for screen readers. */}
         <a className="adm-tool adm-site" href={`${basePath}/`} target="_blank" rel="noopener" aria-label={a.toSite} title={a.toSite}>
           <Icon name="external" />
@@ -177,7 +179,6 @@ export default async function PanelLayout({ children }: { children: ReactNode })
       <Suspense>
         <AreaTabs t={text} className="adm-bottom" />
       </Suspense>
-      <IdleLogout minutes={settings.adminIdleMinutes} base={basePath} />
     </>
   );
 }

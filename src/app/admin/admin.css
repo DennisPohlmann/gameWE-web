@@ -92,6 +92,10 @@ small, .small { font-size: 12.5px; }
 .adm-areas a:hover { color: var(--top-text); background: var(--top-2); text-decoration: none; }
 .adm-areas a.on { color: #fff; background: var(--top-2); box-shadow: inset 0 -2px 0 var(--accent); }
 .adm-spacer { flex: 1; }
+/* Countdown to the automatic sign-out (components/admin/idle-logout.tsx). */
+.adm-idle { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--top-2); color: var(--top-soft); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.adm-idle .i { width: 15px; height: 15px; }
+.adm-idle.soon { color: #fff; background: #b42318; }
 .adm-tool { display: flex; align-items: center; gap: 6px; color: var(--top-soft); padding: 6px 10px; border-radius: 8px; white-space: nowrap; }
 .adm-tool:hover { background: var(--top-2); color: var(--top-text); text-decoration: none; }
 .adm-icon-btn { display: none; color: inherit; padding: 6px; border-radius: 8px; cursor: pointer; }

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
-import { touchEvery } from "@/lib/admin-idle";
+import { useEffect, useState } from "react";
+import { Icon } from "@/components/admin/icons";
+import { countdownText, touchEvery } from "@/lib/admin-idle";
 
 // Automatic sign-out of the admin area (lib/admin-idle.ts): reports
 // activity (mouse, keys, touch, scrolling) at most once a minute (a quarter
@@ -9,8 +10,11 @@ import { touchEvery } from "@/lib/admin-idle";
 // the time in the cookie runs out. When the time is up it asks there first, because
 // another tab may have been active meanwhile. Only when the session has no
 // time left does the page go to the sign-in, which then shows why.
-// `minutes` 0: off, nothing runs.
-export function IdleLogout({ minutes, base }: { minutes: number; base: string }) {
+// `minutes` 0: off, nothing runs. The top bar shows the time left as a
+// countdown (m:ss), back to the full time on every activity; another tab's
+// activity shows once the server reported it (at the latest at 0).
+export function IdleLogout({ minutes, base, label }: { minutes: number; base: string; label: string }) {
+  const [left, setLeft] = useState(minutes * 60_000);
   useEffect(() => {
     if (minutes <= 0) return;
     const url = `${base}/admin/session`;
@@ -19,10 +23,10 @@ export function IdleLogout({ minutes, base }: { minutes: number; base: string })
     let last = Date.now();
     // The first activity on a freshly loaded page renews the time at once.
     let touched = 0;
-    // Activity that the server has not heard of yet.
-    let pending = false;
     let busy = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    const tick = () => setLeft(Math.max(0, limit - (Date.now() - last)));
+    const clock = setInterval(tick, 1_000);
 
     const leave = () => {
       window.location.assign(`${base}/admin/login?error=idle`);
@@ -49,21 +53,23 @@ export function IdleLogout({ minutes, base }: { minutes: number; base: string })
       const idle = Date.now() - last;
       if (idle < limit) {
         busy = false;
-        // Activity since the last report: report it now, the time in the
-        // cookie (from the last report) runs out before the page's time.
-        if (pending) return report();
+        // Activity since the last report (not the same moment, e.g. the
+        // next mouse move while the report was on its way): report it now,
+        // the time in the cookie runs out before the page's time.
+        if (last - touched > 1_000) return report();
         schedule(limit - idle);
         return;
       }
       const left = await ask("GET");
       busy = false;
       if (left === "gone") return leave();
-      // Another tab kept the session alive: wait for its time.
+      // Another tab kept the session alive: count down its time.
+      if (typeof left === "number") last = Date.now() - limit + left;
+      tick();
       schedule(left ?? 30_000);
     };
     const report = () => {
       touched = Date.now();
-      pending = false;
       busy = true;
       void ask("POST").then((left) => {
         busy = false;
@@ -74,7 +80,7 @@ export function IdleLogout({ minutes, base }: { minutes: number; base: string })
     };
     const active = () => {
       last = Date.now();
-      pending = true;
+      tick();
       if (busy || last - touched < every) return;
       report();
     };
@@ -88,9 +94,16 @@ export function IdleLogout({ minutes, base }: { minutes: number; base: string })
     schedule(limit - every);
     return () => {
       clearTimeout(timer);
+      clearInterval(clock);
       for (const e of events) window.removeEventListener(e, active, { capture: true });
       document.removeEventListener("visibilitychange", visible);
     };
   }, [minutes, base]);
-  return null;
+  if (minutes <= 0) return null;
+  return (
+    <span className={left <= 60_000 ? "adm-idle soon" : "adm-idle"} title={label} aria-label={`${label}: ${countdownText(left)}`} role="timer">
+      <Icon name="clock" />
+      <span aria-hidden="true">{countdownText(left)}</span>
+    </span>
+  );
 }
