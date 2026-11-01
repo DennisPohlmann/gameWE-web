@@ -25,9 +25,21 @@ const nextConfig: NextConfig = {
   // vendored Scalar bundle change only with a release, so the browser may
   // keep them for a day; the flags sprite, whose URL carries its version,
   // for a year.
+  // Security headers on every answer: no framing by other sites
+  // (clickjacking), no MIME sniffing, and only the origin as Referer for
+  // other sites. HSTS belongs to the TLS proxy (docs/INSTALLATION.md).
   async headers() {
     const day = "public, max-age=86400";
     return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "x-frame-options", value: "SAMEORIGIN" },
+          { key: "content-security-policy", value: "frame-ancestors 'self'" },
+          { key: "x-content-type-options", value: "nosniff" },
+          { key: "referrer-policy", value: "strict-origin-when-cross-origin" },
+        ],
+      },
       { source: "/flags/:path*", headers: [{ key: "cache-control", value: day }] },
       // After the rule above: the later rule wins for the same header.
       { source: "/flags/sprite.png", headers: [{ key: "cache-control", value: "public, max-age=31536000, immutable" }] },

@@ -486,6 +486,12 @@ last `X-Forwarded-For` entry, which is the one nginx adds. With a second
 proxy in front (e.g. a CDN), restore the real address with `real_ip_header`
 first.
 
+The website sets `X-Frame-Options: SAMEORIGIN`, `Content-Security-Policy:
+frame-ancestors 'self'` (no framing by other sites), `X-Content-Type-Options:
+nosniff` and `Referrer-Policy: strict-origin-when-cross-origin` itself. HSTS
+belongs to the proxy that terminates TLS (`add_header Strict-Transport-Security`
+in the example below).
+
 At the root of a domain:
 
 ```nginx
@@ -494,6 +500,8 @@ server {
     http2 on;
     server_name stats.example.org;
     # ssl_certificate / ssl_certificate_key ...
+    # Browsers only use HTTPS for this host from now on.
+    add_header Strict-Transport-Security "max-age=31536000" always;
 
     # Compress the pages and JSON feeds (the website only gzips itself).
     gzip on;
