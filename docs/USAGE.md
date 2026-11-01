@@ -351,6 +351,20 @@ website therefore computes some things itself:
 
 3. Sign in at `/admin/login`.
 
+Pictures of the admin area (dark look, demo data):
+
+![Admin overview: rankings, servers, players, what needs attention](screenshots/admin-overview.png)
+
+![Manage rankings](screenshots/admin-rankings.png)
+
+![One ranking: status, servers, players, settings](screenshots/admin-ranking.png)
+
+![Edit a server](screenshots/admin-server-edit.png)
+
+![Settings: design and logo](screenshots/admin-settings-design.png)
+
+<img src="screenshots/admin-phone-menu.png" alt="Admin menu on a phone (light look)" width="300">
+
 Two-factor sign-in with TOTP is optional. Each user can set it up under
 Settings → My account & 2FA (also in the user menu top right), where the password
 can be changed too, or `create-admin <name> --totp` prints a key

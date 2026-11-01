@@ -33,7 +33,9 @@ Current version: see `VERSION` and [CHANGELOG.md](CHANGELOG.md).
 
 ## Screenshots
 
-Server addresses, server names, the domain and Steam IDs are blurred.
+Version 1.7.3 in the default design (`dark`), English, with invented demo
+data (`scripts/demo-data.mjs`): players, Steam IDs, addresses from the
+documentation ranges and the domain `stats.example.org` do not exist.
 
 **Start page: all rankings, players online, best player and clan**
 
@@ -78,6 +80,17 @@ Server addresses, server names, the domain and Steam IDs are blurred.
 **Misc: countries, weekdays, connects**
 
 ![Misc: countries, weekdays, connects](docs/screenshots/misc.png)
+
+**On phones: start page and player profile**
+
+<img src="docs/screenshots/phone-home.png" alt="Start page on a phone" width="300"> <img src="docs/screenshots/phone-player-profile.png" alt="Player profile on a phone" width="300">
+
+**The six built-in designs: dark, light, orange, modern-dark, modern-light, modern-orange**
+
+![The start page in the six built-in designs](docs/screenshots/skins.png)
+
+The admin area has its own look (light or dark); pictures of it are in
+[USAGE.md](docs/USAGE.md#admin-area).
 
 ## Requirements
 
