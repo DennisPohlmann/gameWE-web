@@ -6,8 +6,7 @@ import type { Dict, Lang } from "@/lib/i18n";
 // page): average players over the whole graph and the last hour, the
 // server's average FPS of the last hour when the collector got any, and the
 // uptime of the latest sample.
-// extra: one more part at the end (the new players on the ranking's page).
-export function LoadSummary({ points, now, t, lang, extra }: { points: LoadPoint[]; now: number; t: Dict; lang: Lang; extra?: string }) {
+export function LoadSummary({ points, now, t, lang }: { points: LoadPoint[]; now: number; t: Dict; lang: Lang }) {
   const avg = (vals: number[]) => (vals.length ? vals.reduce((n, v) => n + v, 0) / vals.length : null);
   const hour = points.filter((l) => l.timestamp >= now - 3600);
   const fps = avg(hour.map((l) => l.fps).filter((v) => v > 0));
@@ -21,7 +20,6 @@ export function LoadSummary({ points, now, t, lang, extra }: { points: LoadPoint
         </>
       ) : null}{" "}
       · {t.uptime}: <b>{fmtDuration(points[points.length - 1].uptime * 60)}</b>
-      {extra ? <> · {extra}</> : null}
     </>
   );
 }

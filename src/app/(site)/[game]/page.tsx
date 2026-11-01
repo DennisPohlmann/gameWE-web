@@ -53,17 +53,16 @@ export default async function ServersPage({
     getHourlyActivity(game, 1).catch(() => null),
   ]);
   const loads = servers.map((s) => loadByServer.get(s.serverId) ?? []);
-  // With several servers, the list of all of them and one graph of all of
-  // them come first; a single server is shown only once.
-  const multi = servers.length > 1;
+  // Every ranking, also one with a single server: the list of all servers
+  // and one graph of all of them come first, then each server that has
+  // players or a load graph.
   // The list of all servers sorts by its column heads; the sections of the
   // single servers below keep the configured order.
   const order = sortState(sp, { ...serverValues, order: () => 0 }, "order");
   const listed = order.sort === "order" ? servers : sortRows(servers, serverValues, order.sort, order.asc);
   const boardKeep = awardBoardKeep(sp);
-  const combined = multi ? combinedLoad(servers, loads, since, lang, t.total, frags, { kills: t.kills, headshots: t.headshotsLabel }) : null;
-  // New players of the last 24 hours and hour, above the graph of all servers
-  // (or the single server's graph).
+  const combined = servers.length ? combinedLoad(servers, loads, since, lang, t.total, frags, { kills: t.kills, headshots: t.headshotsLabel }) : null;
+  // New players of the last 24 hours and hour, above the graph of all servers.
   const newLine = `${t.newPlayers} 24h: ${fmtNum(totals.newPlayers, lang)} · ${t.lastHour}: ${fmtNum(totals.newPlayersHour, lang)}`;
   // Who is online right now, between the server list and the graphs.
   // Shown also when nobody is online (empty map), so the layout stays the same.
@@ -96,7 +95,7 @@ export default async function ServersPage({
   return (
     <>
       <Section title={t.participatingServers}>
-        {multi ? (
+        {servers.length ? (
           <>
             <ServerTable
               game={game}
@@ -117,14 +116,13 @@ export default async function ServersPage({
         ) : null}
         {servers.map((s, i) => {
           const players = live.filter((p) => p.server_id === s.serverId);
-          if (multi && !players.length && loads[i].length < 2) return null;
+          if (!players.length && loads[i].length < 2) return null;
           return (
             <div key={s.serverId} className="server-margin">
-              <ServerTable game={game} servers={[s]} t={t} lang={lang} head={multi ? undefined : head} details />
-              {multi ? null : liveMap}
+              <ServerTable game={game} servers={[s]} t={t} lang={lang} details />
               {loads[i].length > 1 ? (
                 <div className="box">
-                  <ServerLoadChart points={loads[i]} slots={s.max_players} locale={lang} labels={{ players: t.players, uptime: t.uptime }} summary={<LoadSummary points={loads[i]} now={since + 86400} t={t} lang={lang} extra={multi ? undefined : newLine} />} />
+                  <ServerLoadChart points={loads[i]} slots={s.max_players} locale={lang} labels={{ players: t.players, uptime: t.uptime }} summary={<LoadSummary points={loads[i]} now={since + 86400} t={t} lang={lang} />} />
                 </div>
               ) : null}
               {players.length ? <LiveTable game={game} players={players} t={t} lang={lang} /> : <NobodyOnline t={t} />}
