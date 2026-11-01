@@ -10,6 +10,8 @@ import { rankingSummaries } from "@/lib/admin-rankings";
 import { settingGroups } from "@/lib/admin-settings";
 import { ADMIN_THEMES, getAdminTheme } from "@/lib/admin-theme";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
+import { collectorStatus } from "@/lib/collector-status";
+import { fmtDateTime } from "@/lib/format";
 import { basePath } from "@/lib/base-path";
 import { gameKind } from "@/lib/games";
 import { fill, getAdminLang, getDict } from "@/lib/i18n";
@@ -24,7 +26,15 @@ import { runtimeSuffix } from "@/lib/runtime-label";
 // by the checkbox #adm-nav without script) and a bottom bar on phones.
 export default async function PanelLayout({ children }: { children: ReactNode }) {
   const user = await requireAdmin();
-  const [{ t: site }, lang, theme, rankings, status, settings] = await Promise.all([getDict(), getAdminLang(), getAdminTheme(), rankingSummaries(), updateStatus(), getSettings()]);
+  const [{ t: site }, lang, theme, rankings, status, settings, collector] = await Promise.all([
+    getDict(),
+    getAdminLang(),
+    getAdminTheme(),
+    rankingSummaries(),
+    updateStatus(),
+    getSettings(),
+    collectorStatus(),
+  ]);
   const a = adminDict(lang);
   const u = a.ui;
   const label = (key: string) => entities.find((e) => e.key === key)?.label[lang] ?? key;
@@ -52,7 +62,14 @@ export default async function PanelLayout({ children }: { children: ReactNode })
   const version = (text: string, href: string | null) => (href ? { text, href, version: true } : text);
   const web = process.env.APP_VERSION;
   // In brackets where it runs: (Docker), (Container), nothing on the host.
-  const footer: Parameters<typeof AdminSidebar>[0]["footer"] = [version(`gameWE Web ${web ? `v${web}` : "?"}${runtimeSuffix(webRuntime())}`, releasePage("web", web))];
+  // First the collector's state, a link to its page (/admin/collector).
+  const footer: Parameters<typeof AdminSidebar>[0]["footer"] = [
+    {
+      text: { ok: u.csOk, stale: fill(u.csStale, { t: fmtDateTime(collector.heartbeat, lang) }), never: u.csNever }[collector.state],
+      href: "/admin/collector",
+      state: collector.state,
+    },
+    version(`gameWE Web ${web ? `v${web}` : "?"}${runtimeSuffix(webRuntime())}`, releasePage("web", web))];
   if (status.collector)
     footer.push(version(`gameWE Collector v${status.collector.slice(0, 32)}${runtimeSuffix(status.collectorRuntime)}`, releasePage("collector", status.collector)));
   for (const up of status.updates) footer.push({ text: `${up.component === "web" ? "Web" : "Collector"}: ${fill(u.footUpdate, { v: `v${up.latest}` })}`, href: up.url });

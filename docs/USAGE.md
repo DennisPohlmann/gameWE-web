@@ -417,6 +417,16 @@ menu button), and lists turn into cards on narrow screens:
   or the collector) and quick links. The side menu ends with the running
   versions of the web and the collector and, when there is one, a link to
   the newer release.
+- **Collector** (`/admin/collector`, in the menu under Overview, and the
+  state shown at the bottom of every admin menu above the versions, a link
+  to this page: green "Collector running", amber "Collector silent since
+  …" after 5 minutes without a sign of life, grey "never seen"): the
+  collector's state, its last sign of life (`gamewe_heartbeat`), version
+  (link to its release), whether it runs in Docker, a container or directly
+  on the server, a known update, the newest database schema version
+  (`hlstats_gamewe_schema_migrations`, "not readable" without access) and
+  the number of waiting or running jobs (link to Jobs). It reloads every 30
+  seconds.
 - **Jobs** (`/admin/jobs`, in the menu under Overview and Settings →
   Collector): what the collector does next, with the time and how long
   until then: the daily awards and the move of inactive players (time and

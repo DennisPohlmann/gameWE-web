@@ -18,9 +18,6 @@ const T = {
   de: {
     title: "Jobs",
     intro: "Was der Collector als Nächstes erledigt, was gerade wartet oder läuft und was er zuletzt gemacht hat.",
-    collectorOk: "Collector läuft",
-    collectorStale: "Collector still seit {t}",
-    collectorNever: "Collector noch nie gesehen",
     collectorDown: "Der Collector läuft gerade nicht. Geplante und wartende Jobs laufen erst, wenn er wieder läuft.",
     next: "Als Nächstes",
     noPlan: "Der Collector meldet die Uhrzeiten seiner täglichen Jobs erst ab Version 0.27.0. Bis dahin fehlen hier die Zeiten der Awards und der inaktiven Spieler.",
@@ -80,9 +77,6 @@ const T = {
   en: {
     title: "Jobs",
     intro: "What the collector does next, what is waiting or running right now and what it did last.",
-    collectorOk: "Collector running",
-    collectorStale: "Collector silent since {t}",
-    collectorNever: "Collector never seen",
     collectorDown: "The collector is not running right now. Planned and waiting jobs only run once it runs again.",
     next: "Next up",
     noPlan: "The collector reports the times of its daily jobs from version 0.27.0. Until then the times of the awards and the inactive players are missing here.",
@@ -276,12 +270,6 @@ export default async function JobsPage() {
         crumbs={[[u.areaHome, "/admin"], [t.title]]}
         title={t.title}
         intro={t.intro}
-        actions={
-          <span className={`pill ${beatOk ? "ok" : ov.heartbeat ? "warn" : ""}`}>
-            <span className="dot" />
-            {beatOk ? t.collectorOk : ov.heartbeat ? fill(t.collectorStale, { t: when(ov.heartbeat) }) : t.collectorNever}
-          </span>
-        }
       />
       {ov.queue.length ? <AutoRefresh seconds={5} /> : <AutoRefresh seconds={60} />}
       {!beatOk ? <p className="notice error">{t.collectorDown}</p> : null}

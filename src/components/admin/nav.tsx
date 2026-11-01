@@ -72,7 +72,7 @@ const RANKING_LISTS = ["servers", "players", "clans", "weapons", "actions", "tea
 function where(pathname: string, params: URLSearchParams) {
   const parts = pathname.split("/").filter(Boolean);
   const seg = parts[1] ?? "";
-  const area: Area = seg === "" || seg === "jobs" ? "home" : RANKING_SEGMENTS.includes(seg) ? "rankings" : "settings";
+  const area: Area = seg === "" || seg === "jobs" || seg === "collector" ? "home" : RANKING_SEGMENTS.includes(seg) ? "rankings" : "settings";
   let game = params.get("game") ?? "";
   if (!game && seg === "rankings" && parts[2] && parts[2] !== "new") game = decodeURIComponent(parts[2]);
   if (!game) {
@@ -145,8 +145,9 @@ export function AdminSidebar({
   groups: NavGroup[];
   isAdmin: boolean;
   // Lines below the menu; one with href is a link to an external page
-  // (the release of a running version, or of an available update).
-  footer: (string | { text: string; href: string; version?: boolean })[];
+  // (the release of a running version, or of an available update), one with
+  // state the collector's state, a link to its page in the admin area.
+  footer: (string | { text: string; href: string; version?: boolean; state?: "ok" | "stale" | "never" })[];
 }) {
   const { pathname, parts, seg, area, game } = useWhere();
   const picker = useRef<HTMLDetailsElement>(null);
@@ -209,6 +210,7 @@ export function AdminSidebar({
           <nav>
             <Item href="/admin" icon="home" label={t.areaHome} on={seg === ""} />
             <Item href="/admin/jobs" icon="clock" label={t.jobs} on={seg === "jobs"} />
+            <Item href="/admin/collector" icon="pulse" label={t.navCollector} on={seg === "collector"} />
           </nav>
           <h4>{t.areas}</h4>
           <nav>
@@ -339,6 +341,11 @@ export function AdminSidebar({
         {footer.map((l) =>
           typeof l === "string" ? (
             <span key={l}>{l}</span>
+          ) : l.state ? (
+            <Link key={l.href} className={`adm-collector ${l.state}`} href={l.href}>
+              <i aria-hidden="true" />
+              {l.text}
+            </Link>
           ) : (
             <a key={l.href} className={l.version ? "adm-version" : "adm-update"} href={l.href} target="_blank" rel="noopener noreferrer">
               {l.text}
