@@ -1,26 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { noAutofill } from "@/lib/autofill";
 import { ZONES, type Zone } from "@/lib/zones";
 export type HitboxWeapon = { name: string; hits: Record<Zone, number> };
 
 // Body shapes, facing the viewer: the player's left arm is on the right.
+// Rounded like a mannequin; each part gets a light from the top left and a
+// shadow on its far side (LIGHT below), so the figure looks solid.
 const SHAPES: Record<Zone, { d: string; lx: number; ly: number }> = {
-  head: { d: "M100 12 a22 25 0 1 0 0.1 0 Z", lx: 100, ly: 42 },
-  neck: { d: "M90 50 L110 50 L113 62 L87 62 Z", lx: 100, ly: 56 },
-  chest: { d: "M66 64 Q100 56 134 64 L138 120 L62 120 Z", lx: 100, ly: 96 },
-  stomach: { d: "M62 122 L138 122 L134 172 L66 172 Z", lx: 100, ly: 150 },
-  rightarm: { d: "M62 66 L42 72 L28 150 L24 196 L40 198 L46 152 L60 112 Z", lx: 40, ly: 130 },
-  leftarm: { d: "M138 66 L158 72 L172 150 L176 196 L160 198 L154 152 L140 112 Z", lx: 160, ly: 130 },
+  head: { d: "M100 11 C114 11 123 22 123 36 C123 51 113 61 100 61 C87 61 77 51 77 36 C77 22 86 11 100 11 Z", lx: 100, ly: 42 },
+  neck: { d: "M89 50 C95 53 105 53 111 50 L114 64 C106 67 94 67 86 64 Z", lx: 100, ly: 56 },
+  chest: { d: "M62 72 C64 62 80 59 100 59 C120 59 136 62 138 72 C141 88 141 104 138 120 C124 125 76 125 62 120 C59 104 59 88 62 72 Z", lx: 100, ly: 96 },
+  stomach: { d: "M62 123 C78 127 122 127 138 123 C137 140 136 156 134 171 C120 177 80 177 66 171 C64 156 63 140 62 123 Z", lx: 100, ly: 150 },
+  rightarm: { d: "M58 68 C46 68 40 76 38 88 C34 108 30 128 28 150 C26 166 24 182 25 194 C27 201 38 201 40 195 C42 182 44 166 47 152 C51 136 56 122 60 110 Z", lx: 40, ly: 130 },
+  leftarm: { d: "M142 68 C154 68 160 76 162 88 C166 108 170 128 172 150 C174 166 176 182 175 194 C173 201 162 201 160 195 C158 182 156 166 153 152 C149 136 144 122 140 110 Z", lx: 160, ly: 130 },
   // Leg labels one above the other, so two wide values never overlap.
-  rightleg: { d: "M66 174 L98 174 L96 250 L92 330 L70 330 L70 250 Z", lx: 82, ly: 236 },
-  leftleg: { d: "M102 174 L134 174 L130 250 L130 330 L108 330 L104 250 Z", lx: 118, ly: 276 },
+  rightleg: { d: "M66 174 C78 178 92 179 98 177 C98 202 97 226 96 250 C95 278 94 306 93 326 C88 333 74 333 70 326 C69 300 68 274 68 250 C67 224 66 198 66 174 Z", lx: 82, ly: 236 },
+  leftleg: { d: "M134 174 C122 178 108 179 102 177 C102 202 103 226 104 250 C105 278 106 306 107 326 C112 333 126 333 130 326 C131 300 132 274 132 250 C133 224 134 198 134 174 Z", lx: 118, ly: 276 },
 };
 
 // With a neck zone the head is drawn smaller, so the neck shows between head
 // and chest.
-const HEAD_WITH_NECK = "M100 10 a20 21 0 1 0 0.1 0 Z";
+const HEAD_WITH_NECK = "M100 9 C112 9 120 19 120 31 C120 44 111 52 100 52 C89 52 80 44 80 31 C80 19 88 9 100 9 Z";
+
+// Back to front: limbs behind the torso, the head last, so parts overlap
+// like a body.
+const DRAW_ORDER: Zone[] = ["rightarm", "leftarm", "rightleg", "leftleg", "stomach", "chest", "neck", "head"];
 
 function heat(t: number): string {
   // t: the zone's hits relative to the most hit zone (0 to 1). Near black
@@ -79,15 +85,37 @@ export function Hitbox({
   const hoverProps = (z: Zone) => ({ onMouseEnter: () => setHover(z), onMouseLeave: () => setHover(null) });
   const cls = (z: Zone, base: string) => (hover === z ? `${base} active` : base);
 
+  // Ids of the gradients and filters, unique per figure on the page.
+  const id = useId().replace(/[^a-zA-Z0-9_-]/g, "");
+  const shape = (z: Zone) => (z === "head" && neck ? HEAD_WITH_NECK : SHAPES[z].d);
   // The figure; dx shifts it right to make room for callouts on the left.
+  // Every part is its heat colour, then a light (bright top left, dark
+  // bottom right) and a soft rim on top; a blurred shadow lies under the feet.
   const figure = (dx: number) => (
     <>
+      <defs>
+        <radialGradient id={`${id}-light`} cx="0.32" cy="0.22" r="0.95">
+          <stop offset="0" stopColor="#fff" stopOpacity="0.42" />
+          <stop offset="0.35" stopColor="#fff" stopOpacity="0.08" />
+          <stop offset="0.7" stopColor="#000" stopOpacity="0.12" />
+          <stop offset="1" stopColor="#000" stopOpacity="0.5" />
+        </radialGradient>
+        <filter id={`${id}-drop`} x="-20%" y="-10%" width="140%" height="130%">
+          <feDropShadow dx="3" dy="5" stdDeviation="4" floodColor="#000" floodOpacity="0.45" />
+        </filter>
+        <filter id={`${id}-floor`} x="-50%" y="-200%" width="200%" height="500%">
+          <feGaussianBlur stdDeviation="5" />
+        </filter>
+      </defs>
       <g transform={`translate(${dx} 0)`}>
-        <g>
-          {zones.map((z) => (
-            <path key={z} d={z === "head" && neck ? HEAD_WITH_NECK : SHAPES[z].d} fill={heat(top ? pct(z) / top : 0)} className={cls(z, "zone")} {...hoverProps(z)}>
+        <ellipse cx="100" cy="332" rx="46" ry="6" className="hb-floor" filter={`url(#${id}-floor)`} />
+        <g filter={`url(#${id}-drop)`}>
+          {DRAW_ORDER.filter((z) => zones.includes(z)).map((z) => (
+            <g key={z} className={cls(z, "zone")} {...hoverProps(z)}>
+              <path d={shape(z)} fill={heat(top ? pct(z) / top : 0)} />
+              <path d={shape(z)} fill={`url(#${id}-light)`} className="zone-light" />
               <title>{`${labels[z]}: ${w.hits[z].toLocaleString(locale)} (${fmtPct(pct(z))})`}</title>
-            </path>
+            </g>
           ))}
         </g>
       </g>

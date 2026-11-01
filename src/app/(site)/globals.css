@@ -778,8 +778,12 @@ td.ribbon-wall { display: flex; flex-wrap: wrap; justify-content: center; gap: 6
 td.ribbon-wall a { text-decoration: none; }
 img.sig { max-width: 100%; height: auto; }
 .sig-code { display: block; width: 100%; margin-top: 3px; font: 10px monospace; background: var(--input-bg); color: var(--input-text); border: 1px solid var(--input-border); resize: vertical; }
-.hitbox .zone { stroke: rgba(255, 255, 255, 0.28); stroke-width: 1.2; stroke-linejoin: round; cursor: pointer; transition: filter 0.15s; }
-.hitbox .zone.active { stroke: #fff; filter: brightness(1.25); }
+.hitbox .zone { cursor: pointer; transition: filter 0.15s; }
+/* The light over each body part (hitbox.tsx) with a soft bright rim. */
+.hitbox .zone .zone-light { stroke: rgba(255, 255, 255, 0.22); stroke-width: 1; stroke-linejoin: round; pointer-events: none; }
+.hitbox .zone.active { filter: brightness(1.3); }
+.hitbox .zone.active .zone-light { stroke: #fff; stroke-width: 1.4; }
+.hitbox .hb-floor { fill: #000; opacity: 0.45; }
 .hb-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 10px; }
 .hb-picker label { display: flex; align-items: center; gap: 8px; font-weight: bold; }
 .hb-picker select { background: var(--input-bg); color: var(--input-text); border: 1px solid var(--input-border); padding: 3px 6px; min-width: 160px; }
