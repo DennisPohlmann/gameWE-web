@@ -87,6 +87,7 @@ them yourself; every key is optional:
 | `barHover` | band behind the day under the pointer | `--text` at 8 % |
 | `band`, `bandOdd` | day bands of the server load chart | `--band`, `--band-odd` |
 | `uptime` | uptime line of the server load chart | `#6fbf73` |
+| `fps` | FPS line of the server load chart | `#e0604f` |
 | `gain`, `loss` | rising and falling bars (points, trends) | `--good`, `--bad` |
 | `tooltip.background`, `.text`, `.border`, `.title` | hover box | `--surface` at 94 %, `--text`, `--border`, `--accent-text` |
 | `spark.total`, `.current`, `.totalLine`, `.currentLine`, `.text`, `.frame`, `.edge`, `.line` | trend graphics of the profile summary | grey/blue pills, `--band`, `--grid-2`, `--soft` |
@@ -108,7 +109,7 @@ at most 16 KB with valid JSON, else all defaults apply. A changed
 
 Colours shown together in one chart never repeat: the total line and the
 server lines (`series[0]` and `servers`), the series among themselves,
-players and uptime (`series[1]`, `uptime`), points, gains and losses
+players, uptime and FPS (`series[1]`, `uptime`, `fps`; FPS also against `series[0]`), points, gains and losses
 (`series[0]`, `gain`, `loss`), the trend pills (`spark.total`,
 `spark.current`, `gain`, `loss`), their reference lines, the two radar
 areas and the pie slices. The site compares the resolved colours (from

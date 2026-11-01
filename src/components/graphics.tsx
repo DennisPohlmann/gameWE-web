@@ -183,8 +183,11 @@ export function WeekdayBars({
   );
 }
 
-// Server load of the last day: players (left axis) and uptime (right axis),
-// with one band per map that was played; summary: text left of the legend.
+// Server load of the last day: players (left axis), the server's FPS (right
+// axis, only when the collector got them over RCON; samples without FPS are
+// gaps) and uptime (on the right axis while there are no FPS, else only in
+// the hover box), with one band per map that was played; summary: text left
+// of the legend.
 export function ServerLoadChart({
   points,
   slots,
@@ -192,7 +195,7 @@ export function ServerLoadChart({
   labels,
   summary,
 }: {
-  points: { timestamp: number; act_players: number; min_players: number; max_players: number; uptime: number; map: string | null }[];
+  points: { timestamp: number; act_players: number; min_players: number; max_players: number; uptime: number; fps: number; map: string | null }[];
   slots: number;
   locale: string;
   labels: { players: string; uptime: string };
@@ -211,6 +214,20 @@ export function ServerLoadChart({
   const yP = (v: number) => pad.t + (1 - v / maxP) * (H - pad.t - pad.b);
   const maxU = Math.max(1, ...points.map((p) => p.uptime)) / 60;
   const yU = (h: number) => pad.t + (1 - h / maxU) * (H - pad.t - pad.b);
+  const hasFps = points.some((p) => p.fps > 0);
+  // The FPS axis up to the next round step above the highest value.
+  const fpsStep = (m: number) => (m > 500 ? 100 : m > 100 ? 50 : 10);
+  const topF = Math.max(1, ...points.map((p) => p.fps));
+  const maxF = Math.ceil(topF / fpsStep(topF)) * fpsStep(topF);
+  const yF = (v: number) => pad.t + (1 - v / maxF) * (H - pad.t - pad.b);
+  // The FPS line as runs of samples with a value.
+  const fpsRuns: string[] = [];
+  let run: string[] = [];
+  for (const p of points) {
+    if (p.fps > 0) run.push(`${x(p.timestamp).toFixed(1)},${yF(p.fps).toFixed(1)}`);
+    else if (run.length) (fpsRuns.push(run.join(" ")), (run = []));
+  }
+  if (run.length) fpsRuns.push(run.join(" "));
   const hhmm = (ts: number) => new Date(ts * 1000).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
   const upText = (m: number) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}h`;
 
@@ -242,7 +259,10 @@ export function ServerLoadChart({
 
   return (
     <figure className="chart load-chart">
-      <ChartHead note={summary} series={[{ label: labels.players, className: "s2" }, { label: labels.uptime, className: "up" }]} />
+      <ChartHead
+        note={summary}
+        series={[{ label: labels.players, className: "s2" }, ...(hasFps ? [{ label: "FPS", className: "fps" }] : []), { label: labels.uptime, className: "up" }]}
+      />
       <HoverTip>
         <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={labels.players}>
           {bands.map((b, i) => {
@@ -260,11 +280,17 @@ export function ServerLoadChart({
               </text>
             </g>
           ))}
-          {uTicks.map((v, i) => (
-            <text key={`u${i}`} className="axis up" x={W - pad.r + 5} y={yU(v) + 3}>
-              {Math.round(v)}h
-            </text>
-          ))}
+          {hasFps
+            ? [0, maxF / 2, maxF].map((v, i) => (
+                <text key={`f${i}`} className="axis fps" x={W - pad.r + 5} y={yF(v) + 3}>
+                  {Math.round(v)}
+                </text>
+              ))
+            : uTicks.map((v, i) => (
+                <text key={`u${i}`} className="axis up" x={W - pad.r + 5} y={yU(v) + 3}>
+                  {Math.round(v)}h
+                </text>
+              ))}
           {hours.map((h) => (
             <text key={h} className="axis" x={x(h)} y={H - pad.b + 14} textAnchor="middle">
               {hhmm(h)}
@@ -291,11 +317,15 @@ export function ServerLoadChart({
             />
           ) : null}
           <polyline className="line-up" points={points.map((p) => `${x(p.timestamp).toFixed(1)},${yU(p.uptime / 60).toFixed(1)}`).join(" ")} />
+          {fpsRuns.map((pts, i) => (
+            <polyline key={`fl${i}`} className="line-fps" points={pts} />
+          ))}
           <polyline className="line-players" points={points.map((p) => `${x(p.timestamp).toFixed(1)},${yP(p.act_players).toFixed(1)}`).join(" ")} />
           {/* A small dot at every sample, like on the graph of all servers. */}
           {points.map((p, i) => (
             <g key={`s${i}`} className="load-mark">
               <circle className="up" cx={x(p.timestamp)} cy={yU(p.uptime / 60)} r="2" />
+              {p.fps > 0 ? <circle className="fps" cx={x(p.timestamp)} cy={yF(p.fps)} r="1.5" /> : null}
               <circle cx={x(p.timestamp)} cy={yP(p.act_players)} r="2.5" />
             </g>
           ))}
@@ -310,6 +340,7 @@ export function ServerLoadChart({
                 className="load-pt"
                 data-tip={tipText(`${hhmm(p.timestamp)} · ${p.map ?? "?"}`, [
                   { swatch: "s2", label: labels.players, value: String(p.act_players) },
+                  ...(hasFps ? [{ swatch: "fps", label: "FPS", value: p.fps > 0 ? String(p.fps) : "-" }] : []),
                   { swatch: "up", label: labels.uptime, value: upText(p.uptime) },
                 ])}
               >
@@ -317,6 +348,7 @@ export function ServerLoadChart({
                 <line className="guide" x1={cx} x2={cx} y1={pad.t} y2={H - pad.b} />
                 <circle className="load-dot" cx={cx} cy={yP(p.act_players)} r="4.5" />
                 <circle className="load-dot up" cx={cx} cy={yU(p.uptime / 60)} r="3.5" />
+                {p.fps > 0 ? <circle className="load-dot fps" cx={cx} cy={yF(p.fps)} r="3.5" /> : null}
               </g>
             );
           })}

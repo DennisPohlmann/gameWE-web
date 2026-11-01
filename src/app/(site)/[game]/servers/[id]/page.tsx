@@ -4,6 +4,7 @@ import { imageStyles } from "@/lib/image-theme";
 import { statsOrigin } from "@/lib/site-url";
 import { notFound, redirect } from "next/navigation";
 import { ServerLoadChart } from "@/components/graphics";
+import { LoadSummary } from "@/components/load-summary";
 import { LiveTable, NobodyOnline, ServerTable } from "@/components/live";
 import { PlayerCount } from "@/components/player-count";
 import { Empty, PlayerLink, Section, Stats, TableWrap } from "@/components/ui";
@@ -42,7 +43,6 @@ export default async function ServerPage({ params }: Props) {
     chatPublic ? getChat({ serverId: s.serverId, shown: true, limit: 20, offset: 0 }) : Promise.resolve([]),
   ]);
   const flags = await getPlayerFlags(chat.map((c) => c.playerId));
-  const avg = (rows: { act_players: number }[]) => (rows.length ? rows.reduce((n, r) => n + r.act_players, 0) / rows.length : null);
 
   return (
     <>
@@ -55,12 +55,7 @@ export default async function ServerPage({ params }: Props) {
               slots={s.max_players}
               locale={lang}
               labels={{ players: t.players, uptime: t.uptime }}
-              summary={
-                <>
-                  {t.avgPlayers24h}: <b>{fmtNum(avg(load24), lang, 1)}</b> · {t.lastHour}: <b>{fmtNum(avg(load24.filter((l) => l.timestamp >= now - 3600)), lang, 1)}</b> · {t.uptime}:{" "}
-                  <b>{fmtDuration(load24[load24.length - 1].uptime * 60)}</b>
-                </>
-              }
+              summary={<LoadSummary points={load24} now={now} t={t} lang={lang} />}
             />
           </div>
         ) : (

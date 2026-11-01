@@ -71,6 +71,7 @@
   --chart-band: var(--band);
   --chart-band-odd: var(--band-odd);
   --chart-uptime: #6fbf73;
+  --chart-fps: #e0604f;
   --chart-gain: var(--good);
   --chart-loss: var(--bad);
   --chart-tip-bg: color-mix(in srgb, var(--surface) 94%, transparent);
@@ -1089,15 +1090,20 @@ table.spaced { margin-top: 10px; }
 .load-chart .band-label:hover { opacity: 1; }
 .load-chart .line-players { fill: none; stroke: var(--chart-series-2); stroke-width: 2; }
 .load-chart .line-up { fill: none; stroke: var(--chart-uptime); stroke-width: 1.5; }
+.load-chart .line-fps { fill: none; stroke: var(--chart-fps); stroke-width: 1.2; stroke-linejoin: round; }
+.load-chart .axis.fps { fill: var(--chart-fps); }
 .load-chart .axis.up { fill: var(--chart-uptime); }
 .load-chart .load-dot { fill: var(--chart-series-2); stroke: var(--chart-dot-edge); stroke-width: 1.5; opacity: 0; }
 .load-chart .load-dot.up { fill: var(--chart-uptime); }
+.load-chart .load-dot.fps { fill: var(--chart-fps); }
 .load-chart .load-mark circle { fill: var(--chart-series-2); stroke: var(--chart-dot-edge); stroke-width: 1; pointer-events: none; }
 .load-chart .load-mark circle.up { fill: var(--chart-uptime); }
+.load-chart .load-mark circle.fps { fill: var(--chart-fps); }
 .load-chart .hover { fill: transparent; }
 .load-chart .guide { opacity: 0; }
 .load-pt:hover .load-dot, .load-pt:hover .guide { opacity: 1; }
 .swatch.up { background: var(--chart-uptime); }
+.swatch.fps { background: var(--chart-fps); }
 .swatch.gain { background: var(--chart-gain); }
 .swatch.loss { background: var(--chart-loss); }
 .load-chart svg { height: auto; max-width: 1100px; }

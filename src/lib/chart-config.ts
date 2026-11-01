@@ -31,6 +31,7 @@ export const CHART_KEYS: [key: string, cssVar: string, fallback: string][] = [
   ["band", "--chart-band", "var(--band)"],
   ["bandOdd", "--chart-band-odd", "var(--band-odd)"],
   ["uptime", "--chart-uptime", "#6fbf73"],
+  ["fps", "--chart-fps", "#e0604f"],
   ["gain", "--chart-gain", "var(--good)"],
   ["loss", "--chart-loss", "var(--bad)"],
   ["tooltip.background", "--chart-tip-bg", "color-mix(in srgb, var(--surface) 94%, transparent)"],
@@ -146,7 +147,8 @@ const range = (k: string, n: number) => Array.from({ length: n }, (_, i) => `${k
 export const CHART_GROUPS: string[][] = [
   range("series", SERIES),
   ["series.0", ...range("servers", SERVERS)],
-  ["series.1", "uptime"],
+  ["series.1", "uptime", "fps"],
+  ["series.0", "fps"],
   ["series.0", "gain", "loss"],
   ["spark.total", "spark.current", "gain", "loss"],
   ["spark.totalLine", "spark.currentLine"],

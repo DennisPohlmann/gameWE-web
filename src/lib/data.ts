@@ -333,13 +333,14 @@ export async function getLivePlayers(game: string, serverId?: number): Promise<L
 // One row per server and 10 minutes (collector 1.5.0): players at that
 // moment (bots included), min/max within the interval, the map and the
 // uptime of the game server in minutes.
-export type LoadPoint = { timestamp: number; act_players: number; min_players: number; max_players: number; uptime: number; map: string | null };
+// fps: the server's frames per second from the collector's RCON stats, 0 when unknown.
+export type LoadPoint = { timestamp: number; act_players: number; min_players: number; max_players: number; uptime: number; fps: number; map: string | null };
 
 // The load of every server of a ranking since `since`, by server id, in one
 // query (the ranking's start page shows a graph per server).
 export async function getServerLoads(game: string, since: number): Promise<Map<number, LoadPoint[]>> {
   const rows = await query<LoadPoint & { server_id: number }>(
-    `SELECT l.server_id, l.timestamp, ${capped("l.")} AS act_players, l.min_players, l.max_players, l.uptime, m.map
+    `SELECT l.server_id, l.timestamp, ${capped("l.")} AS act_players, l.min_players, l.max_players, l.uptime, l.fps, m.map
      FROM hlstats_server_load l LEFT JOIN hlstats_Maps m ON m.id = l.map
      WHERE l.server_id IN (SELECT serverId FROM hlstats_Servers WHERE game = ?) AND l.timestamp >= ?
      ORDER BY l.server_id, l.timestamp`,
@@ -361,11 +362,12 @@ const loadPoint = (r: LoadPoint): LoadPoint => ({
   min_players: Number(r.min_players),
   max_players: Number(r.max_players),
   uptime: Number(r.uptime),
+  fps: Number(r.fps) || 0,
 });
 
 export async function getServerLoad(serverId: number, since: number) {
   const rows = await query<LoadPoint>(
-    `SELECT l.timestamp, ${capped("l.")} AS act_players, l.min_players, l.max_players, l.uptime, m.map
+    `SELECT l.timestamp, ${capped("l.")} AS act_players, l.min_players, l.max_players, l.uptime, l.fps, m.map
      FROM hlstats_server_load l LEFT JOIN hlstats_Maps m ON m.id = l.map
      WHERE l.server_id = ? AND l.timestamp >= ? ORDER BY l.timestamp`,
     [serverId, since],

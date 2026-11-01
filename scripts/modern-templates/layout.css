@@ -442,11 +442,12 @@ html[data-skin] .heatmap svg { border-radius: 4px; }
 }
 
 /* Server load: players in the first series colour like the other area charts,
-   uptime in green. */
+   uptime in green, FPS in its own colour. */
 html[data-skin] .load-chart .line-players { stroke: var(--chart-series-1); }
 html[data-skin] .load-chart .area-players { fill: color-mix(in srgb, var(--chart-series-1) 24%, transparent); }
 html[data-skin] .load-chart .load-dot, html[data-skin] .load-chart .load-mark circle { fill: var(--chart-series-1); }
 html[data-skin] .load-chart .load-dot.up, html[data-skin] .load-chart .load-mark circle.up { fill: var(--chart-uptime); }
+html[data-skin] .load-chart .load-dot.fps, html[data-skin] .load-chart .load-mark circle.fps { fill: var(--chart-fps); }
 html[data-skin] .load-chart .swatch.s2 { background: var(--chart-series-1); }
 
 /* Player profile: the summary needs more room than half the narrow column,

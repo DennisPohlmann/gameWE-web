@@ -5,6 +5,7 @@ import { LiveTable, NobodyOnline, ServerTable, serverValues } from "@/components
 import { Rich } from "@/components/rich";
 import { Section, Skeleton } from "@/components/ui";
 import { ServerLoadChart } from "@/components/graphics";
+import { LoadSummary } from "@/components/load-summary";
 import { everyDay, getDailyActivity, getHourlyActivity, getLivePlayers, getLiveMapPlayers, getMapServers, getServerLoads, getServers, getTotals } from "@/lib/data";
 import { dateFormat, fmtNum, fmtPct, localeOf, nowUnix, ratio } from "@/lib/format";
 import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
@@ -114,7 +115,7 @@ export default async function ServersPage({
               {multi ? null : liveMap}
               {loads[i].length > 1 ? (
                 <div className="box">
-                  <ServerLoadChart points={loads[i]} slots={s.max_players} locale={lang} labels={{ players: t.players, uptime: t.uptime }} />
+                  <ServerLoadChart points={loads[i]} slots={s.max_players} locale={lang} labels={{ players: t.players, uptime: t.uptime }} summary={<LoadSummary points={loads[i]} now={since + 86400} t={t} lang={lang} />} />
                 </div>
               ) : null}
               {players.length ? <LiveTable game={game} players={players} t={t} lang={lang} /> : <NobodyOnline t={t} />}
