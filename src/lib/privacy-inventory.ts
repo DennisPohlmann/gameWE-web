@@ -7,6 +7,7 @@
 // category of lib/consent.ts). Pure functions for the page and the tests.
 
 import type { ConsentCategory } from "./consent";
+import { STEAM_AVATAR_HOSTS } from "./steam-avatar";
 
 // Texts are keys of the "privacy" group of the translations.
 export type StorageRow = {
@@ -87,7 +88,7 @@ export function browserThirdParties(i: InventoryInput): ThirdPartyRow[] {
   if (i.steamProfiles) {
     rows.push({
       provider: "Valve Corporation (Steam)",
-      hosts: ["avatars.steamstatic.com", "avatars.fastly.steamstatic.com", "avatars.akamai.steamstatic.com"],
+      hosts: [...STEAM_AVATAR_HOSTS],
       purpose: "tpSteamImages",
       data: BROWSER_DATA,
       consent: "steam",

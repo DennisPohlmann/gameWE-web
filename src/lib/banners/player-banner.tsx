@@ -9,6 +9,7 @@ import { getSettings } from "@/lib/settings";
 import { statsOrigin } from "@/lib/site-url";
 import { getSteamProfile } from "@/lib/steam";
 import { FLAG_CODES } from "@/lib/flag-codes";
+import { steamAvatarUrl } from "@/lib/steam-avatar";
 import { activity, kpd, ratio, steamIds } from "@/lib/format";
 import { imageTheme, parseImageFile } from "@/lib/image-theme";
 
@@ -113,14 +114,22 @@ export async function playerBanner(file: string, game: string | null) {
 }
 
 // Avatar and flag are embedded so the image renders even if Steam or the flag
-// server is slow later.
-async function toDataUrl(url: string): Promise<string | null> {
+// server is slow later. Only from Steam's avatar hosts, without following
+// redirects, and at most AVATAR_MAX bytes (a full avatar is about 30 KB).
+const AVATAR_MAX = 512 * 1024;
+
+async function toDataUrl(raw: string): Promise<string | null> {
+  const url = steamAvatarUrl(raw);
+  if (!url) return null;
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
+    const res = await fetch(url, { signal: AbortSignal.timeout(3000), redirect: "error" });
     if (!res.ok) return null;
     const type = res.headers.get("content-type") ?? "image/jpeg";
     if (!/^image\/(jpeg|png|gif|webp)/.test(type)) return null;
-    return `data:${type};base64,${Buffer.from(await res.arrayBuffer()).toString("base64")}`;
+    if (Number(res.headers.get("content-length") ?? 0) > AVATAR_MAX) return null;
+    const body = Buffer.from(await res.arrayBuffer());
+    if (body.length > AVATAR_MAX) return null;
+    return `data:${type};base64,${body.toString("base64")}`;
   } catch {
     return null;
   }

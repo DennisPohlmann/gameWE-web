@@ -2,6 +2,7 @@ import "server-only";
 import { steamApiKey, steamKey } from "./config";
 import { query } from "./db";
 import { getSettings } from "./settings";
+import { steamAvatarUrl } from "./steam-avatar";
 
 // Public Steam community profile of a player (avatar, name, VAC status ...).
 // With a Steam Web API key (Admin → Settings → Steam, before that
@@ -131,8 +132,8 @@ async function loadBatch(ids: string[]) {
         s
           ? {
               name: s.personaname || null,
-              avatar: httpsOnly(s.avatarfull),
-              avatarSmall: httpsOnly(s.avatarmedium),
+              avatar: steamAvatarUrl(s.avatarfull),
+              avatarSmall: steamAvatarUrl(s.avatarmedium),
               realName: s.realname || null,
               location: s.loccountrycode || null,
               memberSince: s.timecreated ? new Date(s.timecreated * 1000).toISOString().slice(0, 10) : null,
@@ -153,10 +154,6 @@ async function steamJson<T>(url: string): Promise<T | null> {
   const res = await fetch(url, { signal: AbortSignal.timeout(5000), cache: "no-store" });
   if (!res.ok) return null;
   return (await res.json()) as T;
-}
-
-function httpsOnly(u: string | undefined): string | null {
-  return u && /^https:\/\//.test(u) ? u : null;
 }
 
 // ---------------------------------------------------------------- XML view
@@ -222,8 +219,8 @@ async function viaXml(steam64: string): Promise<SteamProfile | null> {
       if (xml.includes("<profile>")) {
         value = {
           name: tag(xml, "steamID"),
-          avatar: httpsOnly(tag(xml, "avatarFull") ?? undefined),
-          avatarSmall: httpsOnly(tag(xml, "avatarMedium") ?? undefined),
+          avatar: steamAvatarUrl(tag(xml, "avatarFull") ?? undefined),
+          avatarSmall: steamAvatarUrl(tag(xml, "avatarMedium") ?? undefined),
           realName: tag(xml, "realname"),
           location: tag(xml, "location"),
           memberSince: tag(xml, "memberSince"),
