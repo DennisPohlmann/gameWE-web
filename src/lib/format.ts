@@ -110,25 +110,7 @@ export function countryName(code: string | null | undefined, lang: Lang): string
   }
 }
 
-// "STEAM_0:1:123" or "1:123" -> Steam IDs. Bots and unknown formats return null.
-// CS:GO logs "[U:1:123]" or a SteamID64 instead, so those work too.
-export function steamIds(uniqueId: string | null | undefined) {
-  const s = (uniqueId ?? "").trim();
-  const base = 76561197960265728n;
-  let account: bigint;
-  const m = /^(?:STEAM_\d:)?([01]):(\d{1,10})$/.exec(s);
-  const u = /^\[?U:1:(\d{1,10})\]?$/.exec(s);
-  if (m) account = BigInt(m[2]) * 2n + BigInt(m[1]);
-  else if (u) account = BigInt(u[1]);
-  else if (/^7656119\d{10}$/.test(s) && BigInt(s) > base) account = BigInt(s) - base;
-  else return null;
-  if (account <= 0n || account >= 2n ** 32n) return null;
-  return {
-    steam2: `STEAM_0:${account % 2n}:${account / 2n}`,
-    steam3: `[U:1:${account}]`,
-    steam64: String(76561197960265728n + account),
-  };
-}
+export { steamIds, steamSearchIds } from "./steam-id";
 
 // BCP 47 locale of a language, for toLocaleString.
 export function localeOf(lang: Lang): string {

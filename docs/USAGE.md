@@ -670,9 +670,14 @@ What the admin area edits:
   older is gone, collector migration 15 copies its value to every ranking).
   From the console: `gamewe game set CODE -rank-bots=true|false
   -bot-points=true|false -bot-kills=true|false`.
-- **Chat** and **IP addresses:** all stored chat messages and connect
-  addresses, searchable (IP or its start, Steam ID, name, host name), for
-  admins only.
+- **IP addresses** (`/admin/ips`): all stored connect addresses, for admins
+  only, searchable by an IP or its start (`84.12.`), a Steam ID in any form
+  (`STEAM_0:1:23`, `STEAM_1:1:23`, `1:23`, `[U:1:47]`, a SteamID64, also in
+  lower case), part of a player name or host name, or a ranking (its name or
+  code; inactive players count with their ranking too).
+- **Chat** (`/admin/chat`): all stored chat messages, for admins only,
+  searchable by text of the message, a player name, a Steam ID in any form
+  or a server (its name, public address or IP:port).
 - **Rankings and servers** show their game (Counter-Strike: Source, Counter-
   Strike: Condition Zero, Day of Defeat: Source ...). A server can only be moved into a ranking of the same
   game; rankings without a known game are not checked. The game tag has

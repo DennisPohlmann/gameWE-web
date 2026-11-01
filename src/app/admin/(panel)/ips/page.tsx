@@ -62,7 +62,7 @@ export default async function AdminIps({ searchParams }: { searchParams: Promise
               ))}
             </select>
             <SortInputs keep={order.keep} />
-            <input {...noAutofill} type="search" name="q" defaultValue={q} placeholder={t.search} aria-label={t.search} maxLength={100} />
+            <input {...noAutofill} type="search" name="q" defaultValue={q} placeholder={a.ipsSearch} aria-label={a.ipsSearch} maxLength={100} />
             <button type="submit">{a.filter}</button>
           </Form>
         }

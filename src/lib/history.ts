@@ -1,7 +1,7 @@
 import "server-only";
 import { hiddenSql, shownEvents, type EventPerson } from "./hidden";
 import { adminQuery, likeOp, query, queryOne, type Param } from "./db";
-import { steamIds } from "./format";
+import { steamIds, steamSearchIds } from "./format";
 import { dayChanges } from "./points-trend";
 import { awardWinSorts, ipSorts, sortRows, type AwardWinSort, type IpSort } from "./table-sort";
 
@@ -527,7 +527,8 @@ export function getPlayerEventsFeed(playerId: number, kinds: EventKind[]): Promi
 
 // All stored connect addresses, one row per address and player. Admins only:
 // the caller must have checked the login. q is an IPv4 address or its start
-// ("84.12."), a Steam ID, or part of a player name or host name.
+// ("84.12."), a Steam ID in any form, or part of a player name, host name
+// or ranking (name or code).
 export type IpHit = {
   ip: string;
   playerId: number;
@@ -555,13 +556,15 @@ function ipRange(q: string): [number, number] | null {
   return [lo, lo + 256 ** (4 - parts.length) - 1];
 }
 
+const IP_GAME = "COALESCE(p.game, pi.game)";
+
 function ipWhere(f: IpFilter): { where: string; params: Param[] } {
   // 0: connect without a stored address (gamewe_store_player_ip off).
   const where: string[] = [`c.ipAddress <> 0`];
   const params: Param[] = [];
   const q = (f.q ?? "").trim().slice(0, 100);
   if (f.game) {
-    where.push(`p.game = ?`);
+    where.push(`${IP_GAME} = ?`);
     params.push(f.game);
   }
   if (f.days && f.days > 0) {
@@ -570,29 +573,30 @@ function ipWhere(f: IpFilter): { where: string; params: Param[] } {
   }
   if (q) {
     const range = ipRange(q);
-    const ids = range ? null : steamIds(q);
+    const ids = range ? null : steamSearchIds(q);
     if (range) {
       // Unsigned (MariaDB) or signed (PostgreSQL integer) storage; compared
       // as a decimal so neither bound overflows the column type.
       where.push(`((c.ipAddress + 0.0) BETWEEN ? AND ? OR (c.ipAddress + 0.0) BETWEEN ? AND ?)`);
       params.push(range[0], range[1], range[0] - SIGNED, range[1] - SIGNED);
     } else if (ids) {
-      const acc = BigInt(ids.steam64) - 76561197960265728n;
-      const y = acc % 2n;
-      const z = acc / 2n;
       where.push(`c.playerId IN (SELECT u.playerId FROM hlstats_PlayerUniqueIds u WHERE u.uniqueId IN (?))`);
-      params.push([`${y}:${z}`, `STEAM_0:${y}:${z}`, `STEAM_1:${y}:${z}`, `[U:1:${acc}]`, `U:1:${acc}`, ids.steam64]);
+      params.push(ids);
     } else {
+      // Player name, host name or the ranking (its name or code).
       const like = `%${q.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%`;
-      where.push(`(d.lastName ${likeOp()} ? OR c.hostname ${likeOp()} ?)`);
-      params.push(like, like);
+      where.push(`(d.lastName ${likeOp()} ? OR c.hostname ${likeOp()} ? OR ${IP_GAME} IN (SELECT g.code FROM hlstats_Games g WHERE g.name ${likeOp()} ? OR g.code ${likeOp()} ?))`);
+      params.push(like, like, like, like);
     }
   }
   return { where: `WHERE ${where.join(" AND ")}`, params };
 }
 
+// The player's ranking: also of the inactive players the collector moved to
+// hlstats_PlayersInactive.
 const IP_FROM = `FROM hlstats_Events_Connects c
      LEFT JOIN hlstats_Players p ON p.playerId = c.playerId
+     LEFT JOIN hlstats_PlayersInactive pi ON pi.playerId = c.playerId
      LEFT JOIN hlstats_Players_Data d ON d.playerId = c.playerId`;
 
 export async function searchIps(f: IpFilter & { limit: number; offset: number; sort?: IpSort; asc?: boolean }): Promise<IpHit[]> {
@@ -610,7 +614,7 @@ export async function searchIps(f: IpFilter & { limit: number; offset: number; s
     last: number;
     hostname: string | null;
   }>(
-    `SELECT c.ipAddress AS ip, c.playerId, MAX(d.lastName) AS name, MAX(TRIM(p.game)) AS game,
+    `SELECT c.ipAddress AS ip, c.playerId, MAX(d.lastName) AS name, MAX(TRIM(${IP_GAME})) AS game,
             (SELECT MAX(u.uniqueId) FROM hlstats_PlayerUniqueIds u WHERE u.playerId = c.playerId) AS uniqueId,
             COUNT(*) AS connects, MIN(c.timestamp_id) AS first, MAX(c.timestamp_id) AS last, MAX(c.hostname) AS hostname
      ${IP_FROM} ${where}
