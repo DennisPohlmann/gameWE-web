@@ -5,7 +5,7 @@ import { BOT_POINTS_PREFIX, BOT_STATS_PREFIX, botSettingKeys, botSettingOn, botS
 import { addDays, dayOf, siteDay } from "./day";
 import { ttlCache } from "./ttl-cache";
 import { connectTypes, miscCountries, placeOptions, type PlaceCount, type PlaceOption } from "./place-counts";
-import { nowUnix, steamIds } from "./format";
+import { nowUnix, steamIds, steamSearchIds } from "./format";
 import { baseGameOf, GAME_HAS_DATA, gameKind } from "./games";
 import { allClansSql, allKillsSql, allPlayersSql, rankingKillsSql, rankingPlayersSql } from "./general-stats";
 import { hiddenSql, isBotSql, liveEntry } from "./hidden";
@@ -1306,8 +1306,20 @@ function chatWhere(opts: { game?: string; playerId?: number; serverId?: number; 
     params.push(opts.serverId);
   }
   if (opts.search) {
-    where.push(`(c.message ${likeOp()} ? OR d.lastName ${likeOp()} ?)`);
-    params.push(like(opts.search), like(opts.search));
+    // In the admin chat a Steam ID (any form) finds that player's lines;
+    // other text the message, the player's name or the server (name or
+    // address).
+    const ids = opts.shown ? null : steamSearchIds(opts.search);
+    if (ids) {
+      where.push(`c.playerId IN (SELECT u.playerId FROM hlstats_PlayerUniqueIds u WHERE u.uniqueId IN (?))`);
+      params.push(ids);
+    } else {
+      const l = like(opts.search);
+      where.push(
+        `(c.message ${likeOp()} ? OR d.lastName ${likeOp()} ? OR c.server_id IN (SELECT sv.serverId FROM hlstats_Servers sv WHERE sv.name ${likeOp()} ? OR sv.publicaddress ${likeOp()} ? OR CONCAT(sv.address, ':', sv.port) ${likeOp()} ?))`,
+      );
+      params.push(l, l, l, l, l);
+    }
   }
   return { where, params };
 }

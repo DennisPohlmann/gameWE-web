@@ -20,7 +20,7 @@ export default async function AdminChat({ searchParams }: { searchParams: Promis
   const a = adminDict(lang);
   const sp = await searchParams;
   const game = strParam(sp.game);
-  const q = strParam(sp.q);
+  const q = strParam(sp.q).slice(0, 100);
   const player = Number.parseInt(strParam(sp.player), 10) || 0;
   const page = pageParam(sp.page);
   const limit = rowsParam(sp.rows, 100);
@@ -37,6 +37,7 @@ export default async function AdminChat({ searchParams }: { searchParams: Promis
   return (
     <>
       <h1>{t.chat}</h1>
+      <p className="lead">{a.chatHelp}</p>
       <Section
         title={t.chat}
         aside={
@@ -51,7 +52,7 @@ export default async function AdminChat({ searchParams }: { searchParams: Promis
             </select>
             {player ? <input type="hidden" name="player" value={player} /> : null}
             <SortInputs keep={order.keep} />
-            <input {...noAutofill} type="search" name="q" defaultValue={q} placeholder={t.search} aria-label={t.search} />
+            <input {...noAutofill} type="search" name="q" defaultValue={q} placeholder={a.chatSearch} aria-label={a.chatSearch} maxLength={100} />
             <button type="submit">{a.filter}</button>
           </Form>
         }
