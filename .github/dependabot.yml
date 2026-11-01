@@ -44,16 +44,16 @@ updates:
         patterns: ["*"]
 
   # Base image in the Dockerfile, pinned by digest: a new digest behind the
-  # same tag is an Alpine or Node patch, so it is checked daily with a short
-  # cooldown. Node majors stay a manual decision.
+  # same tag is an Alpine or Node patch, so it is checked daily. No cooldown:
+  # Dependabot measures it from the last push of the tag, and node:24-alpine
+  # is pushed again almost every day, so every new digest would be skipped.
+  # Node majors stay a manual decision.
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: daily
       time: "06:00"
       timezone: Europe/Berlin
-    cooldown:
-      default-days: 2
     commit-message:
       prefix: fix
       include: scope
