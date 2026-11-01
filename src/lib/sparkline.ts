@@ -5,23 +5,32 @@
 export const SPARK_W = 100;
 export const SPARK_H = 30;
 
+// One point of the drawn line: the values from..to (indexes into the series
+// given to sparkBuckets), their sum and how many of them are numbers.
+export type SparkBucket = { from: number; to: number; sum: number; n: number };
+
 // The series from its first to its last value (nulls before are times before
 // any data, after it times not recorded yet), cut into at most `max` buckets
-// of consecutive values; a bucket holds the mean of its numbers, or null when
-// it has none.
-export function sparkSeries(values: (number | null)[], max = 90): (number | null)[] {
-  const first = values.findIndex((v) => v !== null && Number.isFinite(v));
+// of consecutive values.
+export function sparkBuckets(values: (number | null)[], max = 90): SparkBucket[] {
+  const isNum = (v: number | null): v is number => v !== null && Number.isFinite(v);
+  const first = values.findIndex(isNum);
   if (first < 0) return [];
   let last = values.length - 1;
-  while (values[last] === null || !Number.isFinite(values[last])) last--;
-  const rest = values.slice(first, last + 1);
-  const size = Math.max(1, Math.ceil(rest.length / Math.max(1, max)));
-  const out: (number | null)[] = [];
-  for (let i = 0; i < rest.length; i += size) {
-    const nums = rest.slice(i, i + size).filter((v): v is number => v !== null && Number.isFinite(v));
-    out.push(nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null);
+  while (!isNum(values[last])) last--;
+  const size = Math.max(1, Math.ceil((last - first + 1) / Math.max(1, max)));
+  const out: SparkBucket[] = [];
+  for (let from = first; from <= last; from += size) {
+    const to = Math.min(from + size - 1, last);
+    const nums = values.slice(from, to + 1).filter(isNum);
+    out.push({ from, to, sum: nums.reduce((a, b) => a + b, 0), n: nums.length });
   }
   return out;
+}
+
+// The buckets' values: the mean of their numbers, or null when they have none.
+export function sparkSeries(values: (number | null)[], max = 90): (number | null)[] {
+  return sparkBuckets(values, max).map((b) => (b.n ? b.sum / b.n : null));
 }
 
 // The line (`line`) and the closed area below it (`area`) of a series, from

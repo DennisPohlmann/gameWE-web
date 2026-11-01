@@ -8,7 +8,7 @@ import { Flag, GameIcon, Skeleton } from "@/components/ui";
 import { basePath } from "@/lib/base-path";
 import { LineChart } from "@/components/chart";
 import { Sparkline } from "@/components/sparkline";
-import { countsSinceFirst, wholeDays } from "@/lib/sparkline";
+import { countsSinceFirst, wholeDays, type SparkBucket } from "@/lib/sparkline";
 import { HoverTip } from "@/components/hover-tip";
 import { PlayerCount } from "@/components/player-count";
 import { VoiceBox } from "@/components/voice-box";
@@ -196,7 +196,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
 // servers with real players), clans
 // with an active member per day, kills and headshots per 15 minutes (frags,
 // else per day; with their share of the kills below the headshots). Hovering or tapping a
-// card shows what its number and its line count (HoverTip). A database error
+// card shows what its number and its line count (HoverTip), hovering or
+// tapping its line the time and value of that point. A database error
 // leaves the block out; a missing line only leaves its card without one.
 async function GeneralStatsSection({ t, lang }: { t: Dict; lang: Lang }) {
   let stats;
@@ -211,33 +212,61 @@ async function GeneralStatsSection({ t, lang }: { t: Dict; lang: Lang }) {
     getDailyActivityAll(30).catch(() => null),
     getActiveClansPerDay(30).catch(() => null),
   ]);
+  // A line is its values and where each one lies in time: per quarter hour
+  // (hourly.start + i * hourly.step) or per day of the last 30 days.
+  type Line = { values: (number | null)[]; at: (i: number) => { start: number; end: number; day: boolean } };
+  const days = everyDay([], 30).map((d) => Date.parse(`${d.day}T12:00:00Z`) / 1000);
+  const dayAt = (i: number) => ({ start: days[i], end: days[i], day: true });
+  const hourAt = (i: number) => ({ start: hourly!.start + i * hourly!.step, end: hourly!.start + (i + 1) * hourly!.step, day: false });
+  const none: Line = { values: [], at: dayAt };
   // Whole days only, unless there are fewer than two yet (wholeDays).
-  const perDay = <T extends { day: string }>(rows: T[] | null, value: (r: T) => number) =>
-    rows ? wholeDays(everyDay(rows, 30).map((d) => (d.point ? value(d.point) : null))) : [];
+  const perDay = <T extends { day: string }>(rows: T[] | null, value: (r: T) => number): Line =>
+    rows ? { values: wholeDays(everyDay(rows, 30).map((d) => (d.point ? value(d.point) : null))), at: dayAt } : none;
   // Kills and headshots per 15 minutes from the frags, like players online:
   // the history per day has only one whole day the day after a reset, so the
   // lines would be gone for a day. The days are the fallback.
-  const fragLine = (counts: number[] | undefined, day: (r: DayPoint) => number) => {
+  const fragLine = (counts: number[] | undefined, day: (r: DayPoint) => number): Line => {
     const line = counts ? countsSinceFirst(counts) : [];
-    return line.length ? line : perDay(daily, day);
+    return line.length ? { values: line, at: hourAt } : perDay(daily, day);
   };
-  const playersLine = hourly?.players.some((v) => v !== null) ? hourly.players : perDay(daily, (r) => Number(r.players));
+  const playersLine = hourly?.players.some((v) => v !== null) ? { values: hourly.players, at: hourAt } : perDay(daily, (r) => Number(r.players));
+  // Hover text of a point of a line: its day or time span, then the value.
+  // Players and servers online are averaged over a span of several quarter
+  // hours ("Ø"), kills and headshots added up.
+  const dayFmt = dateFormat(localeOf(lang), { weekday: "short", day: "2-digit", month: "2-digit" });
+  const timeFmt = dateFormat(localeOf(lang), { hour: "2-digit", minute: "2-digit" });
+  const spanOf = (line: Line, b: SparkBucket) => {
+    const a = line.at(b.from);
+    const z = line.at(b.to);
+    if (a.day) return b.from === b.to ? dayFmt.format(a.start * 1000) : `${dayFmt.format(a.start * 1000)} – ${dayFmt.format(z.start * 1000)}`;
+    const from = `${dayFmt.format(a.start * 1000)}, ${timeFmt.format(a.start * 1000)}`;
+    const sameDay = dayFmt.format(a.start * 1000) === dayFmt.format((z.end - 1) * 1000);
+    return `${from} – ${sameDay ? "" : `${dayFmt.format(z.end * 1000)}, `}${timeFmt.format(z.end * 1000)}`;
+  };
+  const lineTip = (label: string, line: Line, sum: boolean) => (b: SparkBucket) =>
+    `${spanOf(line, b)}\n${label}: ${sum || b.n === 1 ? fmtNum(b.sum, lang) : `Ø ${fmtNum(b.sum / b.n, lang, 1)}`}`;
+  const clansLine = perDay(clanDays, (r) => Number(r.n));
+  const serversLine: Line = hourly ? { values: hourly.servers, at: hourAt } : none;
+  const killsLine = fragLine(hourly?.kills, (r) => Number(r.kills));
+  const headshotsLine = fragLine(hourly?.headshots, (r) => Number(r.headshots ?? 0));
   const cards = [
-    { label: t.players, value: stats.players, sub: fill(t.gsPlayersNow, { n: fmtNum(stats.onlineWithBots, lang) }), line: playersLine, tip: t.gsTipPlayers },
-    { label: t.clans, value: stats.clans, sub: fill(t.gsClansIn, { n: fmtNum(stats.clanRankings, lang) }), line: perDay(clanDays, (r) => Number(r.n)), tip: t.gsTipClans },
-    { label: t.servers, value: stats.servers, sub: fill(t.gsServersActive, { n: fmtNum(stats.serversActive, lang) }), line: hourly?.servers ?? [], tip: t.gsTipServers },
+    { label: t.players, value: stats.players, sub: fill(t.gsPlayersNow, { n: fmtNum(stats.onlineWithBots, lang) }), line: playersLine.values, lineTip: lineTip(t.playersOnline, playersLine, false), tip: t.gsTipPlayers },
+    { label: t.clans, value: stats.clans, sub: fill(t.gsClansIn, { n: fmtNum(stats.clanRankings, lang) }), line: clansLine.values, lineTip: lineTip(t.clans, clansLine, false), tip: t.gsTipClans },
+    { label: t.servers, value: stats.servers, sub: fill(t.gsServersActive, { n: fmtNum(stats.serversActive, lang) }), line: serversLine.values, lineTip: lineTip(t.servers, serversLine, false), tip: t.gsTipServers },
     {
       label: t.kills,
       value: stats.kills,
       sub: stats.lastKill ? fill(t.gsLastKill, { d: fmtDateTime(stats.lastKill, lang) }) : t.gsNoKill,
-      line: fragLine(hourly?.kills, (r) => Number(r.kills)),
+      line: killsLine.values,
+      lineTip: lineTip(t.kills, killsLine, true),
       tip: t.gsTipKills,
     },
     {
       label: t.headshotsLabel,
       value: stats.headshots,
       sub: fill(t.gsHeadshotShare, { p: fmtPct(stats.kills > 0 ? stats.headshots / stats.kills : null, lang) }),
-      line: fragLine(hourly?.headshots, (r) => Number(r.headshots ?? 0)),
+      line: headshotsLine.values,
+      lineTip: lineTip(t.headshotsLabel, headshotsLine, true),
       tip: t.gsTipHeadshots,
     },
   ];
@@ -248,7 +277,7 @@ async function GeneralStatsSection({ t, lang }: { t: Dict; lang: Lang }) {
         <ul className="gs-cards">
           {cards.map((c) => (
             <li key={c.label} className="gs-card" data-tip={`${c.label}\n${c.tip}`}>
-              <Sparkline values={c.line} />
+              <Sparkline values={c.line} tip={c.lineTip} />
               <span className="gs-label">{c.label}</span>
               <span className="gs-value">{fmtNum(c.value, lang)}</span>
               <span className="gs-sub">{c.sub}</span>

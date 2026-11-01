@@ -2,7 +2,7 @@
 // Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { SPARK_H, countsSinceFirst, sparkPaths, sparkSeries, wholeDays } from "../src/lib/sparkline.ts";
+import { SPARK_H, countsSinceFirst, sparkBuckets, sparkPaths, sparkSeries, wholeDays } from "../src/lib/sparkline.ts";
 
 test("the series runs from its first to its last value", () => {
   assert.deepEqual(sparkSeries([null, null, 3, null, 5]), [3, null, 5]);
@@ -71,4 +71,12 @@ test("days: whole days only, today too while fewer than two whole days have valu
   assert.deepEqual(wholeDays([null, null, 307, 699]), [null, null, 307, 699]);
   assert.ok(sparkPaths(sparkSeries(wholeDays([null, null, 307, 699]))));
   assert.deepEqual(wholeDays([null, 5]), [null, 5]);
+});
+
+test("sparkBuckets: index span, sum and count of every point of the line", () => {
+  assert.deepEqual(sparkBuckets([null, 2, 4, null, 6, null], 2), [
+    { from: 1, to: 2, sum: 6, n: 2 },
+    { from: 3, to: 4, sum: 6, n: 1 },
+  ]);
+  assert.deepEqual(sparkBuckets([null, null]), []);
 });
