@@ -404,6 +404,14 @@ html[data-skin] .heatmap svg { border-radius: 4px; }
   html[data-skin] .header-menu-list a { border-top-color: var(--border); color: var(--accent); font: 700 14px/1.2 var(--m-font); letter-spacing: 0.04em; text-transform: uppercase; text-shadow: none; }
   html[data-skin] .header-menu-list a:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent-text); }
   html[data-skin] .nav-bar { padding-top: 7px; padding-bottom: 7px; }
+  /* Share, language and menu in the header (globals.css): one group of
+     outlined buttons in the accent colour. */
+  html[data-skin] .header-tools .share-btn,
+  html[data-skin] .header-tools .lang-menu > summary,
+  html[data-skin] .header-tools .header-menu > summary { height: 34px; padding: 0 9px; border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent); border-radius: var(--m-radius); background: none; color: var(--accent); font: 700 12px/1 var(--m-font); letter-spacing: 0.02em; text-transform: none; }
+  html[data-skin] .header-tools .share-btn:hover,
+  html[data-skin] .header-tools .lang-menu[open] > summary,
+  html[data-skin] .header-tools .header-menu[open] > summary { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); }
   /* The language button and its list (globals.css), like the share button. */
   html[data-skin] .lang-menu > summary { padding: 3px 9px; border: 1px solid var(--accent); border-radius: 3px; background: none; color: var(--accent); font: 700 12px/1.4 var(--m-font); text-shadow: none; }
   html[data-skin] .lang-menu[open] > summary { background: color-mix(in srgb, var(--accent) 12%, transparent); }

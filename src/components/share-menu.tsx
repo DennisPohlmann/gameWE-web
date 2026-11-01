@@ -44,7 +44,8 @@ function ShareIcon({ size }: { size: number }) {
 }
 
 // The small share button in the nav bar of every page.
-export function ShareMenu({ labels }: { labels: Labels }) {
+// icon: only the symbol (the phone header), the text stays its label.
+export function ShareMenu({ labels, icon = false, className }: { labels: Labels; icon?: boolean; className?: string }) {
   const [shown, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [native, setNative] = useState(false);
@@ -69,10 +70,10 @@ export function ShareMenu({ labels }: { labels: Labels }) {
     } catch {}
   };
   return (
-    <div className="share-nav" ref={ref}>
-      <button type="button" className="share-btn" aria-expanded={shown} aria-haspopup="menu" onClick={() => setOpen(!shown)}>
-        <ShareIcon size={12} />
-        {labels.share}
+    <div className={`share-nav${className ? ` ${className}` : ""}`} ref={ref}>
+      <button type="button" className="share-btn" aria-expanded={shown} aria-haspopup="menu" aria-label={icon ? labels.share : undefined} onClick={() => setOpen(!shown)}>
+        <ShareIcon size={icon ? 16 : 12} />
+        {icon ? null : labels.share}
       </button>
       {shown ? (
         <div className="share-menu" role="menu">

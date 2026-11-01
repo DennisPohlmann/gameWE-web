@@ -147,7 +147,14 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               ),
             )}
           </nav>
-          <HeaderMenu tabs={tabs} label={t.menu} navLabel={siteName} />
+          {/* Phones: share, language and menu as one group of buttons in
+              the header (globals.css); the share button and the flags of
+              the bar below are for wide screens. */}
+          <div className="header-tools">
+            <ShareMenu icon className="tool-share" labels={{ share: t.share, copy: t.shareCopy, copied: t.copied, email: t.shareEmail }} />
+            <LangMenu lang={lang} label={t.language} base={basePath} />
+            <HeaderMenu tabs={tabs} label={t.menu} navLabel={siteName} />
+          </div>
         </header>
         <div className="nav-bar">
           <Crumbs
@@ -165,7 +172,6 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               </a>
             ))}
           </span>
-          <LangMenu lang={lang} label={t.language} base={basePath} />
         </div>
         {logoUrl ? (
           <div className="cust-logo">

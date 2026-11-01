@@ -289,11 +289,34 @@ tr.server-line .vac-mark.vac-insecure { color: color-mix(in srgb, #d32f2f 70%, v
 /* Phones: the row of flags becomes one language button with a list
    (src/components/lang-menu.tsx). */
 .lang-menu { display: none; position: relative; }
+/* Share, language and menu in the phone header: one group of buttons of the
+   same height and look. On wide screens only the header tabs show. */
+.header-tools { display: contents; }
+.header-tools .tool-share { display: none; }
 @media (max-width: 700px) {
-  /* Breadcrumb on its own row, share and language button together on the right below it. */
-  .nav-bar { align-items: center; }
-  .nav-bar .crumbs { flex: 1 1 100%; }
-  .nav-bar .langs { display: none; }
+  .header-tools { display: flex; align-items: stretch; gap: 6px; margin-left: auto; }
+  .header-tools .tool-share { display: block; margin: 0; }
+  .header-tools .share-btn,
+  .header-tools .lang-menu > summary,
+  .header-tools .header-menu > summary {
+    box-sizing: border-box;
+    height: 34px;
+    min-width: 34px;
+    justify-content: center;
+    padding: 0 9px;
+    border: 1px solid var(--tab-border);
+    border-radius: 6px;
+    background: var(--tab-bg);
+    color: var(--tab-text);
+    font-size: 12px;
+    font-weight: bold;
+    text-decoration: none;
+  }
+  .header-tools .share-btn:hover { text-decoration: none; }
+  .header-tools .header-menu-label { display: none; }
+}
+@media (max-width: 700px) {
+  .nav-bar .langs, .nav-bar .share-nav { display: none; }
   .lang-menu { display: block; }
   .lang-menu > summary {
     display: flex;
