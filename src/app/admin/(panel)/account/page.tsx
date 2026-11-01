@@ -1,4 +1,5 @@
 import { changePasswordAction, createApiTokenAction, revokeApiTokenAction, totpBackupCodesAction, totpCancelAction, totpConfirmAction, totpDisableAction, totpStartAction } from "../../actions";
+import { PageHead } from "@/components/admin/page-head";
 import { BackupCodesForm, type BackupCodesText } from "@/components/admin/backup-codes-form";
 import { ApiTokenForm } from "@/components/admin/api-token-form";
 import { QrCode } from "@/components/qr-code";
@@ -44,8 +45,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   });
   return (
     <>
-      <h1>{a.account}</h1>
-      <p className="lead">{a.accountIntro}</p>
+      <PageHead crumbs={[[a.ui.areaSettings, "/admin/settings"], [a.ui.navAccess], [a.account]]} title={a.account} intro={a.accountIntro} />
       {pw === "saved" ? <p className="notice">{a.pwSaved}</p> : null}
       {pw && pw !== "saved" ? (
         <p className="notice error">{pw === "wrong" ? a.pwWrong : pw === "mismatch" ? a.pwMismatch : pw === "short" ? a.pwShort : a.pwBlocked}</p>

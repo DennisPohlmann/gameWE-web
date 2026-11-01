@@ -1,4 +1,5 @@
 import Form from "next/form";
+import { PageHead } from "@/components/admin/page-head";
 import Link from "next/link";
 import { Empty, Pager, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
 import { optionList } from "@/lib/admin-data";
@@ -39,8 +40,7 @@ export default async function AdminIps({ searchParams }: { searchParams: Promise
   const gameName = new Map(games);
   return (
     <>
-      <h1>{a.ips}</h1>
-      <p className="lead">{a.ipsHelp}</p>
+      <PageHead crumbs={[[a.ui.areaSettings, "/admin/settings"], [a.ui.navModeration], [a.ips]]} title={a.ips} intro={a.ipsHelp} />
       <Section
         title={a.ips}
         aside={

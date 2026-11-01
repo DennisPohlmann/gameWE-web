@@ -173,10 +173,12 @@ dl.kv dd { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 
 .crumbs a { color: var(--accent-text); font-weight: 500; text-decoration: none; }
 .crumbs a:hover, .crumbs a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
 .page-head { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
-.page-head > div { min-width: 0; flex: 1 1 360px; }
+.page-head > div:not(.actions) { min-width: 0; flex: 1 1 360px; }
 .page-head h1 { margin: 0; }
 .page-head p { margin: 4px 0 0; color: var(--soft); max-width: 75ch; }
-.page-head .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+/* The page's buttons (New ranking, Add new, Back …) always at the right
+   of the title, on phones as a full row under it. */
+.page-head .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; flex: 0 1 auto; }
 .page-head .adm-gtag { width: 48px; height: 48px; border-radius: 12px; font-size: 13px; }
 .adm-main > h1 { margin-bottom: 12px; }
 .adm-main > p.lead, .lead { color: var(--soft); margin: 0 0 16px; max-width: 80ch; }
@@ -455,7 +457,7 @@ select { padding-right: 28px; }
   .adm-main .card[id] { scroll-margin-top: 116px; }
   h1, .page-head h1 { font-size: 21px; }
   .page-head { gap: 12px; }
-  .page-head > div { flex-basis: 100%; }
+  .page-head > div:not(.actions) { flex-basis: 100%; }
   .page-head .actions { width: 100%; }
   .page-head .actions .button { flex: 1; }
   .page-head > .adm-gtag { display: none; }

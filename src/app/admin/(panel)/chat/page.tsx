@@ -1,4 +1,5 @@
 import Form from "next/form";
+import { PageHead } from "@/components/admin/page-head";
 import Link from "next/link";
 import { Empty, Pager, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
 import { noAutofill } from "@/lib/autofill";
@@ -36,8 +37,7 @@ export default async function AdminChat({ searchParams }: { searchParams: Promis
   const th = sortHeads(order, base, keep);
   return (
     <>
-      <h1>{t.chat}</h1>
-      <p className="lead">{a.chatHelp}</p>
+      <PageHead crumbs={[[a.ui.areaSettings, "/admin/settings"], [a.ui.navModeration], [t.chat]]} title={t.chat} intro={a.chatHelp} />
       <Section
         title={t.chat}
         aside={

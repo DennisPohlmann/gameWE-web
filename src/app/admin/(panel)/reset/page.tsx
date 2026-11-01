@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { resetRankingAction } from "../../actions";
 import { AutoRefresh } from "@/components/auto-refresh";
+import { PageHead } from "@/components/admin/page-head";
+import { adminDict } from "@/lib/admin-i18n";
 import { scheduleText } from "@/components/admin/hall-schedule";
 import { JobOriginLine } from "@/components/admin/job-origin";
 import { ResetForm } from "@/components/reset-form";
@@ -165,7 +167,7 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
   if (!(await jobsAvailable())) {
     return (
       <>
-        <h1>{t.title}</h1>
+        <PageHead crumbs={[[adminDict(lang).ui.areaRankings, "/admin/rankings"], [t.title]]} title={t.title} />
         <p className="notice">{t.missing}</p>
         {scheduled}
       </>
@@ -190,7 +192,7 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <h1>{t.title}</h1>
+      <PageHead crumbs={[[adminDict(lang).ui.areaRankings, "/admin/rankings"], [t.title]]} title={t.title} />
       {sp.error === "confirm" ? <p className="notice error">{t.errConfirm}</p> : null}
       {sp.error === "input" ? <p className="notice error">{t.errInput}</p> : null}
       {sp.error === "db" ? <p className="notice error">{t.errDb}</p> : null}
