@@ -444,10 +444,12 @@ a.rnk { font-weight: bold; font-size: 14px; text-decoration: none; }
 tr.ranking-line td:first-child { padding-left: 7px; }
 a.rnk:hover { text-decoration: underline; }
 /* Start page only: the rankings with the game's icon at 24 x 24, the name
-   centred beside it; the rows grow a little to fit the icon. */
+   centred beside it; the rows grow a little to fit the icon. The whole row
+   has the name's size, the name bold and everything else normal. */
 .rnk-cell { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .rnk-cell .game-icon-24 { display: inline-block; flex: none; width: 24px; height: 24px; margin: 0; vertical-align: middle; border-radius: 3px; }
 table.rankings a.rnk { line-height: 1.3; }
+table.rankings tr.ranking-line > td, table.rankings tr.ranking-line a.rnk { font-size: 14px; }
 table.rankings tr.ranking-line td { padding-top: 5px; padding-bottom: 5px; }
 td.no-rb { border-right: 0; white-space: normal; }
 td.no-lb { border-left: 0; padding-right: 10px; }
