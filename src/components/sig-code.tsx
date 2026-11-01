@@ -4,11 +4,13 @@ import { useState } from "react";
 import { noAutofill } from "@/lib/autofill";
 
 // A generated picture (forum signature, server banner) with its code: the
-// format is picked by where it goes (buttons named after the forums and
-// sites: phpBB/SMF/MyBB and XenForo take BBCode, Invision and websites HTML,
-// Discord the image URL with the link in <> so it shows no second preview,
-// or the bare image URL), the style (one per design template, the site's own
-// first) in a select; the preview and the code follow, with a copy button.
+// kind of code in a row of buttons (BBCode for forums, HTML, Discord, the
+// bare image URL; the forums that take each one as tooltip), the style (one
+// per design template, the site's own first) in a select; the preview and
+// the code follow, with a copy button. Discord shows no image inside a link
+// in a message, so its code is a masked link to the page with <> around the
+// URL (no preview card of the page) and the image URL on its own line, which
+// Discord shows as the picture.
 export function SigCode({
   base,
   styles,
@@ -27,19 +29,21 @@ export function SigCode({
   height: number;
   labels: { format: string; style: string; standard: string; url: string; copy: string; copied: string };
 }) {
-  const [kind, setKind] = useState("phpbb");
+  const [kind, setKind] = useState("bbcode");
   const [style, setStyle] = useState("");
   const [copied, setCopied] = useState(false);
   const img = style ? `${base}-${style}.png` : `${base}.png`;
   const attr = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+  // The link text in Discord: the name after "Forum signature: " (the alt
+  // text), without the brackets of the link syntax.
+  const linkText = (alt.includes(": ") ? alt.slice(alt.indexOf(": ") + 2) : alt).replace(/[[\]\\]/g, "");
   const html = `<a href="${attr(link)}"><img src="${attr(img)}" alt="${attr(alt)}" width="${width}" height="${height}"></a>`;
-  const codes: Record<string, [string, string]> = {
-    phpbb: ["phpBB, SMF, MyBB", `[url=${link}][img]${img}[/img][/url]`],
-    xenforo: ["XenForo", `[URL=${link}][IMG]${img}[/IMG][/URL]`],
-    invision: ["Invision", html],
-    html: ["HTML", html],
-    discord: ["Discord", `${img}\n<${link}>`],
-    url: [labels.url, img],
+  // [label, code, tooltip]
+  const codes: Record<string, [string, string, string]> = {
+    bbcode: ["BBCode", `[url=${link}][img]${img}[/img][/url]`, "phpBB, SMF, MyBB, XenForo, vBulletin, Invision"],
+    html: ["HTML", html, "Websites, Invision"],
+    discord: ["Discord", `[${linkText}](<${link}>)\n${img}`, "Discord"],
+    url: [labels.url, img, labels.url],
   };
   const code = codes[kind][1];
   const copy = async () => {
@@ -54,8 +58,8 @@ export function SigCode({
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img className="sig" src={img} alt={alt} width={width} height={height} />
       <div className="sig-formats" role="group" aria-label={labels.format}>
-        {Object.entries(codes).map(([k, [label]]) => (
-          <button key={k} type="button" aria-pressed={k === kind} onClick={() => setKind(k)}>
+        {Object.entries(codes).map(([k, [label, , hint]]) => (
+          <button key={k} type="button" aria-pressed={k === kind} title={hint} onClick={() => setKind(k)}>
             {label}
           </button>
         ))}
