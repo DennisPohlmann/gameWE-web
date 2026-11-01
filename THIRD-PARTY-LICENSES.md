@@ -73,7 +73,6 @@ carry the same licenses as their linux-x64 counterparts.
 | detect-libc | 2.1.2 | https://github.com/lovell/detect-libc |
 | baseline-browser-mapping | 2.11.34 | https://github.com/web-platform-dx/baseline-browser-mapping |
 | long | 5.3.2 | https://github.com/dcodeIO/long.js |
-| @opentelemetry/api | 1.10.0 | https://github.com/open-telemetry/opentelemetry-js (optional peer dependency of Next.js, tracing interface only) |
 
 ### LGPL-3.0-or-later
 
@@ -141,7 +140,7 @@ the links above.
 
 The page `/api` renders the OpenAPI description of the public API with the
 self-hosted browser bundle of **Scalar API Reference**
-(`@scalar/api-reference` 1.75.1, devDependency, https://github.com/scalar/scalar,
+(`@scalar/api-reference` 1.76.4, devDependency, https://github.com/scalar/scalar,
 MIT). `npm run build` copies `dist/browser/standalone.js` to
 `public/vendor/scalar/standalone.js` together with Scalar's MIT license text
 (`public/vendor/scalar/LICENSE.txt`); nothing is loaded from Scalar's
