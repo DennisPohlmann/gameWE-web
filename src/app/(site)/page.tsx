@@ -29,6 +29,7 @@ import { sumCounts } from "@/lib/player-count";
 import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
 import { sortRows, sortState } from "@/lib/table-sort";
 import { gameKind } from "@/lib/games";
+import { gameIconSrc } from "@/lib/game-icons";
 
 // Sort keys of the rankings list; by default the order of the rankings
 // (hlstats_Games), which is not a column of its own.
@@ -101,10 +102,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                 {rankings.map((r) => (
                   <tr key={r.code} className="ranking-line">
                     <td className="no-rb">
-                      <GameIcon realgame={r.realgame} />
-                      <Link prefetch={false} className="rnk" href={`/${r.code}`} title={r.name}>
-                        {r.name}
-                      </Link>
+                      {/* Only here the game's icon is 32 x 32, the name beside it. */}
+                      <span className="rnk-cell">
+                        {/* Without a known game an empty square, so the names line up. */}
+                        {gameIconSrc(r.realgame) ? <GameIcon realgame={r.realgame} size={32} /> : <span className="game-icon-32" aria-hidden="true" />}
+                        <Link prefetch={false} className="rnk" href={`/${r.code}`} title={r.name}>
+                          {r.name}
+                        </Link>
+                      </span>
                     </td>
                     <td className="no-lb right">
                       <Link prefetch={false} className="icon-link" href={`/${r.code}/players`}>
