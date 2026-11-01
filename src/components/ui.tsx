@@ -71,14 +71,14 @@ export function GameTag({ realgame, long = false }: { realgame: string | null | 
 
 // The game's icon (public/games/<code>/icon.png) before a server name, with
 // the game's name as tooltip; nothing for an unknown game.
-// size 32: the start page's rankings (the pictures are 32 x 32).
-export function GameIcon({ realgame, size = 16 }: { realgame: string | null | undefined; size?: 16 | 32 }) {
+// size 24: the start page's rankings (the pictures are 32 x 32).
+export function GameIcon({ realgame, size = 16 }: { realgame: string | null | undefined; size?: 16 | 24 }) {
   const src = gameIconSrc(realgame);
   if (!src) return null;
   return (
     <>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img className={size === 32 ? "game-icon game-icon-32" : "game-icon"} src={src} width={size} height={size} alt="" title={gameKind(realgame)?.name} loading="lazy" decoding="async" />{" "}
+      <img className={size === 24 ? "game-icon game-icon-24" : "game-icon"} src={src} width={size} height={size} alt="" title={gameKind(realgame)?.name} loading="lazy" decoding="async" />{" "}
     </>
   );
 }

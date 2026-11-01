@@ -102,10 +102,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                 {rankings.map((r) => (
                   <tr key={r.code} className="ranking-line">
                     <td className="no-rb">
-                      {/* Only here the game's icon is 32 x 32, the name beside it. */}
+                      {/* Only here the game's icon is 24 x 24, the name beside it. */}
                       <span className="rnk-cell">
                         {/* Without a known game an empty square, so the names line up. */}
-                        {gameIconSrc(r.realgame) ? <GameIcon realgame={r.realgame} size={32} /> : <span className="game-icon-32" aria-hidden="true" />}
+                        {gameIconSrc(r.realgame) ? <GameIcon realgame={r.realgame} size={24} /> : <span className="game-icon-24" aria-hidden="true" />}
                         <Link prefetch={false} className="rnk" href={`/${r.code}`} title={r.name}>
                           {r.name}
                         </Link>
