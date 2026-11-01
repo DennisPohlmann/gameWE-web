@@ -72,8 +72,11 @@ function sign(payload: string, secret: string) {
 }
 
 // Simple in-memory brake against password guessing: 10 failures per IP per 15 minutes.
+// At most FAILURES_MAX addresses are kept: expired ones go first, then the
+// oldest (a Map keeps the order of insertion), so many addresses cannot grow
+// the map without bound.
 const failures = new Map<string, { n: number; until: number }>();
-
+const FAILURES_MAX = 10_000;
 
 async function blocked(ip: string) {
   const f = failures.get(ip);
@@ -81,8 +84,17 @@ async function blocked(ip: string) {
 }
 
 function fail(ip: string) {
+  const now = Date.now();
   const f = failures.get(ip);
-  failures.set(ip, { n: (f && f.until > Date.now() ? f.n : 0) + 1, until: Date.now() + 15 * 60_000 });
+  failures.delete(ip);
+  if (failures.size >= FAILURES_MAX) {
+    for (const [k, v] of failures) if (v.until <= now) failures.delete(k);
+    for (const k of failures.keys()) {
+      if (failures.size < FAILURES_MAX) break;
+      failures.delete(k);
+    }
+  }
+  failures.set(ip, { n: (f && f.until > now ? f.n : 0) + 1, until: now + 15 * 60_000 });
 }
 
 export async function cookieSecure() {
