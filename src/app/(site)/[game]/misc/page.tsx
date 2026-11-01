@@ -40,7 +40,9 @@ export default async function MiscPage({ params }: { params: Promise<{ game: str
     <>
     <Section title={t.miscStats}>
       <div className="cont-2">
-        <div>
+        {/* As high as the right column (weekdays and connect methods), the
+            countries' pie centred in it. */}
+        <div className="misc-countries">
           <table className="stats">
             <thead>
               <tr>
