@@ -61,6 +61,17 @@ function fixedWhere(e: Entity, alias: string) {
   return { parts, params };
 }
 
+// What a read of the entity selects from: its table, or with alsoTable a
+// union of both (inactive = 1 for the rows only in alsoTable). Table and
+// column names are constants of the entity definition.
+function source(e: Entity) {
+  if (!e.alsoTable || !e.alsoColumns) return e.table;
+  const cols = e.alsoColumns.join(", ");
+  return `(SELECT ${cols}, 0 AS inactive FROM ${e.table}
+    UNION ALL SELECT ${e.alsoColumns.map((c) => `a.${c}`).join(", ")}, 1 AS inactive FROM ${e.alsoTable} a
+    WHERE NOT EXISTS (SELECT 1 FROM ${e.table} m WHERE m.${e.pk} = a.${e.pk}))`;
+}
+
 function selectCols(e: Entity) {
   const own = e.fields.filter(
     (f) => !f.virtual && f.type !== "password" && f.type !== "secret" && !(e.joinCols && f.readonly && f.name === "lastName"),
@@ -104,21 +115,45 @@ export async function listRows(e: Entity, opts: { game?: string; q?: string; sta
     ...(sortCol ? [`t.${e.pk}`] : []),
   ].join(", ");
   const [rows, [count]] = await Promise.all([
-    adminQuery<Row>(`SELECT ${selectCols(e)} FROM ${e.table} t ${e.join ?? ""} ${where} ORDER BY ${order} LIMIT ? OFFSET ?`, [
+    adminQuery<Row>(`SELECT ${selectCols(e)} FROM ${source(e)} t ${e.join ?? ""} ${where} ORDER BY ${order} LIMIT ? OFFSET ?`, [
       ...params,
       size + 1,
       (opts.page - 1) * size,
     ]),
-    adminQuery<{ n: number | string }>(`SELECT COUNT(*) AS n FROM ${e.table} t ${e.join ?? ""} ${where}`, params),
+    adminQuery<{ n: number | string }>(`SELECT COUNT(*) AS n FROM ${source(e)} t ${e.join ?? ""} ${where}`, params),
   ]);
   return { rows: rows.slice(0, size), hasNext: rows.length > size, total: Number(count?.n ?? 0) };
+}
+
+// The number of rows per status filter (its buttons), with the list's
+// ranking and search but no status; all in one pass. The conditions are
+// constants of the entity definition.
+export async function statusCounts(e: Entity, opts: { game?: string; q?: string }): Promise<Record<string, number>> {
+  if (!e.statusFilter?.length) return {};
+  const { parts, params } = fixedWhere(e, "t");
+  if (opts.game && e.gameColumn) {
+    parts.push(`t.${e.gameColumn} = ?`);
+    params.push(opts.game);
+  }
+  if (opts.q && e.search?.length) {
+    parts.push(`(${e.search.map((c) => `${c.includes(".") ? c : `t.${c}`} ${likeOp()} ?`).join(" OR ")})`);
+    for (const _ of e.search) params.push(`%${opts.q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`);
+  }
+  const where = parts.length ? `WHERE ${parts.join(" AND ")}` : "";
+  // The player name is only needed for a search.
+  const join = opts.q ? (e.join ?? "") : "";
+  const sums = e.statusFilter.map((f, i) => `SUM(CASE WHEN ${f.where} THEN 1 ELSE 0 END) AS s${i}`).join(", ");
+  const [r] = await adminQuery<Record<string, number | string | null>>(`SELECT COUNT(*) AS n, ${sums} FROM ${source(e)} t ${join} ${where}`, params);
+  const out: Record<string, number> = { "": Number(r?.n ?? 0) };
+  e.statusFilter.forEach((f, i) => (out[f.value] = Number(r?.[`s${i}`] ?? 0)));
+  return out;
 }
 
 export async function getRow(e: Entity, id: string): Promise<Row | undefined> {
   const { parts, params } = fixedWhere(e, "t");
   parts.push(`t.${e.pk} = ?`);
   const rows = await adminQuery<Row>(
-    `SELECT ${selectCols(e)} FROM ${e.table} t ${e.join ?? ""} WHERE ${parts.join(" AND ")}`,
+    `SELECT ${selectCols(e)} FROM ${source(e)} t ${e.join ?? ""} WHERE ${parts.join(" AND ")}`,
     [...params, e.pkIsText ? id : Number(id)],
   );
   return rows[0];
@@ -219,10 +254,21 @@ export async function saveRow(e: Entity, id: string | null, form: Pick<FormData,
   }
   const cols = Object.keys(values);
   if (cols.length) {
-    await adminExec(`UPDATE ${e.table} SET ${cols.map((c) => `${c} = ?`).join(", ")} WHERE ${e.pk} = ?`, [
-      ...cols.map((c) => values[c]),
-      e.pkIsText ? id : Number(id),
-    ]);
+    const key = e.pkIsText ? id : Number(id);
+    const set = cols.map((c) => `${c} = ?`).join(", ");
+    await adminExec(`UPDATE ${e.table} SET ${set} WHERE ${e.pk} = ?`, [...cols.map((c) => values[c]), key]);
+    // An inactive player's row is in alsoTable (after a crash in both). The
+    // admin database user may lack the right to change it (collector grants
+    // before UPDATE on hlstats_PlayersInactive): then the field "inactive"
+    // is at fault, the page says why.
+    if (e.alsoTable && (await adminQuery(`SELECT 1 AS x FROM ${e.alsoTable} WHERE ${e.pk} = ?`, [key])).length) {
+      try {
+        await adminExec(`UPDATE ${e.alsoTable} SET ${set} WHERE ${e.pk} = ?`, [...cols.map((c) => values[c]), key]);
+      } catch (err) {
+        if (isDenied(err)) throw new InputError("inactive");
+        throw err;
+      }
+    }
   }
   return id;
 }
@@ -235,6 +281,13 @@ export async function otherServerAt(address: string, port: number, exceptId: str
     [address, port, exceptId === null ? 0 : Number(exceptId)],
   );
   return rows.length ? Number(rows[0].serverId) : null;
+}
+
+// A write the database user has no right to (MySQL/MariaDB table or column
+// access denied, PostgreSQL 42501).
+function isDenied(err: unknown): boolean {
+  const code = (err as { code?: unknown } | null)?.code;
+  return code === "ER_TABLEACCESS_DENIED_ERROR" || code === "ER_COLUMNACCESS_DENIED_ERROR" || code === "42501";
 }
 
 // A write that broke a unique key (MySQL/MariaDB ER_DUP_ENTRY, PostgreSQL 23505).

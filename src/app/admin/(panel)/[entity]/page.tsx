@@ -7,7 +7,7 @@ import { PageHead } from "@/components/admin/page-head";
 import { Empty, GameIcon, GameTag, Pager, ROW_OPTIONS, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
 import { noAutofill } from "@/lib/autofill";
 import { localeOf } from "@/lib/format";
-import { listRows, listSortColumn, optionList, withColumns } from "@/lib/admin-data";
+import { listRows, listSortColumn, optionList, statusCounts, withColumns } from "@/lib/admin-data";
 import { sortHeads, SortInputs } from "@/components/sort-head";
 import { sortState } from "@/lib/table-sort";
 import { allServers, rankingBaseGames } from "@/lib/admin-rankings";
@@ -43,13 +43,14 @@ export default async function EntityList({ params, searchParams }: { params: Pro
   const sortable: Record<string, true> = { __default: true };
   for (const f of cols) if (listSortColumn(e, f.name)) sortable[f.name] = true;
   const order = sortState(sp, sortable, "__default");
-  const [{ rows, total }, games, servers] = await Promise.all([
+  const [{ rows, total }, games, servers, counts] = await Promise.all([
     listRows(e, { game: game || undefined, q: q || undefined, status: status || undefined, page, pageSize: size, sort: order.sort === "__default" ? undefined : order.sort, asc: order.asc }),
     // Players, clans and servers only exist in rankings with a server or a
     // player: the filter leaves the empty templates out; the definitions
     // (weapons, awards …) of a template can be edited, so all stay there.
     e.gameColumn ? optionList("games", ["players", "clans", "servers"].includes(e.key)) : Promise.resolve([]),
     e.key === "games" ? allServers() : Promise.resolve([]),
+    statusCounts(e, { game: game || undefined, q: q || undefined }),
   ]);
   // Base game of rankings and servers (realgame, or the code of a seeded game).
   const bases = e.key === "games" || e.key === "servers" ? await rankingBaseGames() : new Map<string, string | null>();
@@ -68,6 +69,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
   const mainCol = ["lastName", "name", "tag", "username", "code"].find((n) => cols.some((f) => f.name === n));
   const statusOf = (v: unknown) => e.statusFilter?.find((f) => f.value === statusValue(v));
   const area = e.key === "users" ? u.areaSettings : u.areaRankings;
+  const nfmt = (n: number) => n.toLocaleString(localeOf(lang));
 
   return (
     <>
@@ -119,11 +121,11 @@ export default async function EntityList({ params, searchParams }: { params: Pro
             {e.statusFilter ? (
               <span className="adm-seg" role="group" aria-label={u.status}>
                 <Link href={listHref(e.key, { ...listParams, status: undefined, page: undefined })} className={status ? undefined : "on"}>
-                  {u.stAll}
+                  {u.stAll} <span className="n">{nfmt(counts[""] ?? 0)}</span>
                 </Link>
                 {e.statusFilter.map((f) => (
                   <Link key={f.value} href={listHref(e.key, { ...listParams, status: f.value, page: undefined })} className={status === f.value ? "on" : undefined}>
-                    {f.label[lang]}
+                    {f.label[lang]} <span className="n">{nfmt(counts[f.value] ?? 0)}</span>
                   </Link>
                 ))}
               </span>

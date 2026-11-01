@@ -88,15 +88,20 @@ export function playersPerRanking(r: { active: Counts; inactive: Counts; both: C
 
 // The admin overview's "Players" card: its number is the sum of
 // playersByRanking (every player of every ranking, as above); below it the
-// hidden or banned ones and, on the "Active today" card, the players with an
-// event since midnight (one `?`, Unix time), both of hlstats_Players and
+// hidden or banned ones (of hlstats_Players and hlstats_PlayersInactive) and,
+// on the "Active today" card, the players with an event since midnight (two
+// `?`, Unix time, of hlstats_Players: an inactive one had none), both
 // without bots (the collector hides bots, hideranking 1, so they made most
 // of the hidden ones). The bots come along the uniqueId index, then their
 // player by its key.
 export const adminPlayerTotalsSql = `SELECT
   (SELECT COUNT(*) FROM hlstats_Players p WHERE p.hideranking <> 0) -
   (SELECT COUNT(*) FROM hlstats_PlayerUniqueIds u JOIN hlstats_Players p ON p.playerId = u.playerId AND p.hideranking <> 0
-   WHERE u.uniqueId LIKE 'BOT%') AS hidden,
+   WHERE u.uniqueId LIKE 'BOT%') +
+  (SELECT COUNT(*) FROM hlstats_PlayersInactive i WHERE i.hideranking <> 0
+     AND NOT EXISTS (SELECT 1 FROM hlstats_Players p WHERE p.playerId = i.playerId)) -
+  (SELECT COUNT(*) FROM hlstats_PlayerUniqueIds u JOIN hlstats_PlayersInactive i ON i.playerId = u.playerId AND i.hideranking <> 0
+   WHERE u.uniqueId LIKE 'BOT%' AND NOT EXISTS (SELECT 1 FROM hlstats_Players p WHERE p.playerId = i.playerId)) AS hidden,
   (SELECT COUNT(*) FROM hlstats_Players p WHERE p.last_event >= ?) -
   (SELECT COUNT(*) FROM hlstats_PlayerUniqueIds u JOIN hlstats_Players p ON p.playerId = u.playerId AND p.last_event >= ?
    WHERE u.uniqueId LIKE 'BOT%') AS today`;

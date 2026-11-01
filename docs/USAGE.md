@@ -683,6 +683,20 @@ What the admin area edits:
   older is gone, collector migration 15 copies its value to every ranking).
   From the console: `gamewe game set CODE -rank-bots=true|false
   -bot-points=true|false -bot-kills=true|false`.
+- **Players** (`/admin/players`): every player of every ranking, also the
+  inactive ones the collector moved to `hlstats_PlayersInactive` (marked
+  "Inactive"; a player in both tables after a crash counts once), so the
+  list has as many players as the overview counts with bots. The state
+  buttons show their counts for the chosen ranking and search: Visible,
+  Hidden (by an admin, a bot, or by the player), Banned (`hideranking = 2`:
+  a running ban the collector recorded from SourceBans or a VAC ban the VAC
+  block kicked, or set by an admin; a VAC ban on record alone hides
+  nobody) and Inactive. A change (hide, points, clan) is written to the row
+  in both tables; for an inactive player the admin database user needs
+  UPDATE on `hlstats_PlayersInactive` (`skill`, `hideranking`, `clan`),
+  which the collector's grants do not give yet: without it the form says
+  so and the player can be changed after their next connect. The overview's "hidden or banned" counts inactive players
+  too.
 - **IP addresses** (`/admin/ips`): all stored connect addresses, for admins
   only, searchable by an IP or its start (`84.12.`), a Steam ID in any form
   (`STEAM_0:1:23`, `STEAM_1:1:23`, `1:23`, `[U:1:47]`, a SteamID64, also in

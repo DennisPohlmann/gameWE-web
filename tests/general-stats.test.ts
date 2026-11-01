@@ -81,6 +81,8 @@ test("the line at the top of a ranking's page counts from the players, all of th
 
 test("the admin overview counts the hidden and today's players without bots", () => {
   assert.equal(adminPlayerTotalsSql.match(/\?/g)?.length, 2);
-  assert.equal(adminPlayerTotalsSql.match(/u\.uniqueId LIKE 'BOT%'/g)?.length, 2);
+  assert.equal(adminPlayerTotalsSql.match(/u\.uniqueId LIKE 'BOT%'/g)?.length, 3);
   assert.match(adminPlayerTotalsSql, /p\.hideranking <> 0\) -/);
+  // Hidden and banned inactive players count too, once.
+  assert.match(adminPlayerTotalsSql, /FROM hlstats_PlayersInactive i WHERE i\.hideranking <> 0\s+AND NOT EXISTS/);
 });

@@ -79,7 +79,9 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
     newRanking && sp.error === "field" && sp.field === "template"
       ? a.templateOtherGame
       : sp.error === "field"
-      ? fill(a.invalidField, { f: badField?.label[lang] ?? sp.field ?? "" })
+      ? sp.field === "inactive"
+        ? a.inactiveNoRight
+        : fill(a.invalidField, { f: badField?.label[lang] ?? sp.field ?? "" })
       : sp.error === "db"
         ? fill(a.dbWriteError, { msg: sp.msg ?? "" })
         : sp.error === "self"

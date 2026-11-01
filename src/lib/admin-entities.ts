@@ -66,6 +66,13 @@ export type Entity = {
   statusFilter?: { value: string; label: L; where: string; tone?: "ok" | "warn" | "bad" }[];
   // The list column shown as a coloured state (value -> filter value).
   statusColumn?: string;
+  // A second table with the same columns whose rows belong to the entity
+  // too: the inactive players the collector moved to hlstats_PlayersInactive.
+  // Lists, counts and reads cover both (a row in both counts once, the one
+  // of table); a save writes the row in both tables.
+  alsoTable?: string;
+  // The columns of both tables the list and the edit form read (constants).
+  alsoColumns?: string[];
 };
 
 const yesNo: [string, L][] = [
@@ -190,6 +197,8 @@ export const entities: Entity[] = [
     key: "players",
     table: "hlstats_Players",
     pk: "playerId",
+    alsoTable: "hlstats_PlayersInactive",
+    alsoColumns: ["playerId", "game", "skill", "hideranking", "clan"],
     label: { de: "Spieler", en: "Players" },
     help: {
       de: "Der Name kommt aus dem Spiel und wird vom Collector bei jeder Verbindung aktualisiert.",
@@ -214,6 +223,16 @@ export const entities: Entity[] = [
         inList: true,
       },
       { name: "clan", label: { de: "Clan", en: "Clan" }, type: "select", options: "clans" },
+      {
+        name: "inactive",
+        label: { de: "Inaktiv", en: "Inactive" },
+        type: "bool",
+        readonly: true,
+        help: {
+          de: "Der Collector hat den Spieler wegen langer Abwesenheit nach hlstats_PlayersInactive verschoben; beim nächsten Verbinden kommt er zurück.",
+          en: "The collector moved the player to hlstats_PlayersInactive after a long absence; the next connect brings them back.",
+        },
+      },
     ],
     order: "t.skill DESC",
     search: ["d.lastName"],
@@ -222,7 +241,11 @@ export const entities: Entity[] = [
     statusFilter: [
       { value: "visible", label: { de: "Sichtbar", en: "Visible" }, where: "t.hideranking = 0", tone: "ok" },
       { value: "hidden", label: { de: "Versteckt", en: "Hidden" }, where: "t.hideranking IN (1, 3)", tone: "warn" },
-      { value: "banned", label: { de: "Gebannt", en: "Banned" }, where: "t.hideranking = 2", tone: "bad" },
+      // hideranking 2: a running ban the collector recorded (SourceBans, or
+      // a VAC ban the VAC block kicked) or set by an admin; a VAC ban on
+      // record alone hides nobody.
+      { value: "banned", label: { de: "Gebannt (SourceBans, VAC-Sperre)", en: "Banned (SourceBans, VAC block)" }, where: "t.hideranking = 2", tone: "bad" },
+      { value: "inactive", label: { de: "Inaktiv", en: "Inactive" }, where: "t.inactive = 1" },
     ],
     statusColumn: "hideranking",
     gameColumn: "game",
