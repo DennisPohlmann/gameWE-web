@@ -14,7 +14,7 @@
 FROM node:24-alpine@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f4077d765542f85 AS build
 # Latest npm, without the "new version available" notice.
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false
-RUN npm install -g npm@latest
+RUN npm install -g npm@12.2.1
 WORKDIR /src
 COPY package.json package-lock.json ./
 RUN npm ci
