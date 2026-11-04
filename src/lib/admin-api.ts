@@ -1,4 +1,5 @@
 import "server-only";
+import { secretOptions } from "./secret-options";
 import { getEntity, type Entity } from "./admin-entities";
 import { getRow, listRows, listSortColumn, rawOptions, withColumns, type Row } from "./admin-data";
 import {
@@ -322,7 +323,7 @@ async function settingsOut(groupId: string, level: number) {
   const g = settingGroups.find((x) => x.id === groupId);
   if (!g) throw new ApiFail(404, "not_found", "unknown settings page");
   const rows = await adminQuery<{ keyname: string; value: string | null }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [g.items.map((s) => s.key)]);
-  const stored = new Map(rows.map((r) => [r.keyname, r.value ?? ""]));
+  const stored = new Map<string, string>([...rows.map((r): [string, string] => [r.keyname, r.value ?? ""]), ...Object.entries(await secretOptions())]);
   return {
     id: g.id,
     area: g.area,

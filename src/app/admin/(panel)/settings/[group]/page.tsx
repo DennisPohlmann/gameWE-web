@@ -15,6 +15,7 @@ import { noAutofill } from "@/lib/autofill";
 import { pageSizeStep } from "@/lib/page-size";
 import { adminQuery } from "@/lib/db";
 import { fill, getAdminLang } from "@/lib/i18n";
+import { secretOptions } from "@/lib/secret-options";
 import { replacedTemplate } from "@/lib/skin-fallback";
 import { listTemplates } from "@/lib/templates";
 import { voiceType } from "@/lib/voice";
@@ -46,7 +47,7 @@ export default async function SettingsPage({
     items.some((s) => s.type === "template") ? listTemplates() : Promise.resolve([]),
     isRaw ? rawOptions() : Promise.resolve([]),
   ]);
-  const values: Record<string, string> = Object.fromEntries(rows.map((r) => [r.keyname, r.value]));
+  const values: Record<string, string> = { ...Object.fromEntries(rows.map((r) => [r.keyname, r.value])), ...(await secretOptions()) };
   // Settings that older installations set in the environment (lib/config.ts):
   // where the value comes from, and the environment's value while none is stored.
   const envValues = envFormValues();

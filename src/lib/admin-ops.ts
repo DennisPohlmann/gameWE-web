@@ -8,6 +8,7 @@ import { RAW_GROUP, READONLY_OPTIONS, adminOnlyOption, homeValue, linkValue, raw
 import { purgeTokens } from "./api-tokens";
 import { LEVEL_ADMIN, revokeSessions, type AdminUser } from "./auth";
 import { steamKey } from "./config";
+import { saveSecret, SECRET_OPTIONS } from "./secret-options";
 import { adminExec, adminQuery, upsert } from "./db";
 import { RETIRED_GAMES, sameBaseGame } from "./games";
 import { MAX_EVERY, parseSchedule, scheduleValue } from "./hall-period";
@@ -18,7 +19,6 @@ import { operatorValues } from "./privacy-operator";
 import { jobsAvailable, queueReset, type ResetMode } from "./reset";
 import { imageUrl, invalidateSettings } from "./settings";
 import { sourcebansBase } from "./sourcebans";
-import { invalidateSteamKey } from "./steam";
 import { listTemplates } from "./templates";
 import { removeBackupCodes, removeSecret } from "./totp";
 import { discordGuild, discordInvite, tsDisplay, tsHost, tsLink } from "./voice";
@@ -352,11 +352,11 @@ export async function saveSettings(a: Actor, groupId: string, form: Form, only?:
     }
   }
   for (const [k, v] of values) {
-    await adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [k, v]);
+    if (SECRET_OPTIONS.includes(k)) await saveSecret(k, v);
+    else await adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [k, v]);
   }
   for (const k of removed) await adminExec(`DELETE FROM hlstats_Options WHERE keyname = ?`, [k]);
   invalidateSettings();
-  invalidateSteamKey();
   if (a.via) console.info(`gameWE: settings ${groupId} changed (${values.map(([k]) => k).join(", ") || "-"}${removed.length ? `; removed ${removed.join(", ")}` : ""}) by ${who(a)}`);
   return { written: values.map(([k]) => k), removed };
 }

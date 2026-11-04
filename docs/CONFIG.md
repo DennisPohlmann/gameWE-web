@@ -104,9 +104,12 @@ The Steam Web API key (https://steamcommunity.com/dev/apikey) and the
 metrics token are write-only: the form shows only whether they are set (also
 when set in the environment), an empty field keeps them and "clear" removes
 the stored value. Only admins with level 100 can change the Steam key. They
-are never sent to the browser or listed under the raw options. The public
-pages read these rows with the read-only database user, like every other
-setting.
+are never sent to the browser or listed under the raw options. They and the
+TeamSpeak passwords are stored in `hlstats_gamewe_secrets`, not in
+`hlstats_Options`: the read-only database user cannot read that table, the site
+reads it with `DB_ADMIN_USER`. Without an admin user only the environment
+counts. The table comes with the collector's migration 25; update the website
+together with the collector, an older website no longer finds these values.
 
 `FASTDL_ALLOW_PRIVATE=1` lets the FastDL download reach private addresses, for
 a FastDL in your own network; see "Fetching maps by FastDL" in

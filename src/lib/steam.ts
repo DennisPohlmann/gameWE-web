@@ -1,5 +1,6 @@
 import "server-only";
 import { steamApiKey, steamKey } from "./config";
+import { secretOptions } from "./secret-options";
 import { query } from "./db";
 import { getSettings } from "./settings";
 import { steamAvatarUrl } from "./steam-avatar";
@@ -66,38 +67,17 @@ export async function getSteamProfile(steam64: string): Promise<SteamProfile | n
   return p;
 }
 
-// The key from gamewe_steam_api_key, else STEAM_API_KEY; read with the
-// public (SELECT-only) user and kept for 30 seconds. Never logged or sent to
-// the browser.
-let keyCache: { at: number; value: string | null } | null = null;
-
+// The key from gamewe_steam_api_key, else STEAM_API_KEY; never logged or sent
+// to the browser.
 async function apiKey(): Promise<string | null> {
-  if (keyCache && Date.now() - keyCache.at < 30_000) return keyCache.value;
-  let stored: string | undefined;
-  try {
-    stored = (await query<{ value: string }>(`SELECT value FROM hlstats_Options WHERE keyname = ?`, ["gamewe_steam_api_key"]))[0]?.value;
-  } catch {
-    // Database down: the environment alone.
-  }
-  keyCache = { at: Date.now(), value: steamApiKey(stored) };
-  return keyCache.value;
+  return steamApiKey((await secretOptions()).gamewe_steam_api_key);
 }
 
 // Whether a valid key is stored in the database (gamewe_steam_api_key):
 // the collector's VAC block (hlstats_Games.block_vac) reads only that one,
 // not STEAM_API_KEY of the website's environment. The key is not returned.
 export async function steamKeyStored(): Promise<boolean> {
-  try {
-    const v = (await query<{ value: string }>(`SELECT value FROM hlstats_Options WHERE keyname = ?`, ["gamewe_steam_api_key"]))[0]?.value;
-    return steamKey(v) !== null;
-  } catch {
-    return false;
-  }
-}
-
-// After saving the Steam settings (admin action).
-export function invalidateSteamKey() {
-  keyCache = null;
+  return steamKey((await secretOptions()).gamewe_steam_api_key) !== null;
 }
 
 // ---------------------------------------------------------------- Web API

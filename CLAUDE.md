@@ -108,7 +108,9 @@ the audit summary of `security-privacy-audit`.
   entity definitions), never from `searchParams`, `params` or form data.
 - Admin writes use the admin DB user (`DB_ADMIN_USER`); public pages run
   with the SELECT-only `gamewe_web` user. Code for public pages must not
-  call `adminQuery`/`adminExec`, except reading data the public may see.
+  call `adminQuery`/`adminExec`, except reading data the public may see and
+  `secretOptions()` (`src/lib/secret-options.ts`), whose values never leave
+  the server.
 - Public pages never show: hidden players (`hideranking` other than 0,
   i.e. also banned ones, or `player_hidden`; `src/lib/hidden.ts`, their own
   pages are 404, every list leaves them out; only a server's live list shows

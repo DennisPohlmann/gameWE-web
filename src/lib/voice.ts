@@ -1,6 +1,7 @@
 import "server-only";
 import { Socket } from "node:net";
 import { query } from "./db";
+import { secretOptions } from "./secret-options";
 import { FLAG_CODES } from "./flag-codes";
 
 // Voice server box: either a TeamSpeak 3 server (people online read over its
@@ -145,7 +146,7 @@ let discordCache: { at: number; id: string; value: { name: string; online: numbe
 async function options(): Promise<Record<string, string> | null> {
   try {
     const rows = await query<{ keyname: string; value: string }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [[...KEYS]]);
-    return Object.fromEntries(rows.map((r) => [r.keyname, r.value]));
+    return { ...Object.fromEntries(rows.map((r) => [r.keyname, r.value])), ...(await secretOptions()) };
   } catch {
     return null;
   }
