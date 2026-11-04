@@ -13,7 +13,9 @@
     "templates": "node scripts/modern-templates.mjs",
     "shots": "node scripts/skin-shots.mjs",
     "flags": "node scripts/flags-sprite.mjs",
-    "game-icons": "node scripts/game-icons.mjs"
+    "game-icons": "node scripts/game-icons.mjs",
+    "radar": "tsc -p tsconfig.radar.json && node scripts/overviews/build/radar.js",
+    "radar:all": "tsc -p tsconfig.radar.json && node scripts/overviews/build/run_all.js"
   },
   "dependencies": {
     "leaflet": "^1.9.4",

@@ -1,0 +1,17 @@
+{
+  // Compiles the radar generator to plain JS (scripts/overviews/build), which
+  // also runs on Node builds without type stripping; `npm run build` does it,
+  // as the site starts it for the FastDL download.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "strict": true,
+    "skipLibCheck": true,
+    "rewriteRelativeImportExtensions": true,
+    "rootDir": "scripts/overviews",
+    "outDir": "scripts/overviews/build",
+    "types": ["node"]
+  },
+  "include": ["scripts/overviews/*.ts"]
+}

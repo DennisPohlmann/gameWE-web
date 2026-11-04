@@ -18,7 +18,7 @@ map they are. The site reads two folders, like the design templates:
     game's radar pictures, with the game's calibration;
   - `css/`: the 18 stock maps of Counter-Strike: Source (de_nuke with the
     lower level), drawn from the map files themselves by
-    `scripts/overviews/radar.py`;
+    `scripts/overviews/radar.ts`;
   - `tf/` (Team Fortress 2, 228 maps), `dods/` (Day of Defeat: Source, 9),
     `hl2mp/` (Half-Life 2 Deathmatch, 7), `nmrih/`
     (No More Room in Hell, 34), `fof/` (Fistful of Frags, 34) and `zps/`
@@ -94,7 +94,7 @@ you measured (see "Checking" below).
 
 ## Getting the pictures
 
-For a Source map (also community maps) `scripts/overviews/radar.py` draws
+For a Source map (also community maps) `scripts/overviews/radar.ts` draws
 the picture and its calibration from the map file, see
 [scripts/overviews/README.md](../scripts/overviews/README.md);
 `scripts/overviews/restyle.py` redraws another radar picture in the same
