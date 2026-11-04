@@ -1,3 +1,4 @@
+import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { sortHeads } from "@/components/sort-head";
@@ -38,6 +39,7 @@ const banValues = {
 // ?view=inactive, players the collector moved to hlstats_PlayersInactive.
 // Every banned player is listed, one page of them at a time.
 export default async function BansPage({ params, searchParams }: { params: Promise<{ game: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  await rankingGate((await params).game);
   const { game } = await params;
   const sp = await searchParams;
   const { lang, t } = await getDict();

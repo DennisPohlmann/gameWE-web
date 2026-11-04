@@ -1,3 +1,4 @@
+import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AutoForm } from "@/components/auto-form";
@@ -32,6 +33,7 @@ const weaponName = (w: WeaponRow) => w.name?.trim() || w.code;
 // the images were removed again), full name, modifier, kills and headshots
 // with their share of all, and headshots per kill, as small bars.
 export default async function WeaponsPage({ params, searchParams }: { params: Promise<{ game: string }>; searchParams: SP }) {
+  await rankingGate((await params).game);
   const { game } = await params;
   const sp = await searchParams;
   const { lang, t } = await getDict();

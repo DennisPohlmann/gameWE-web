@@ -1,3 +1,4 @@
+import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import { HistoryFrame, loadHistoryPlayer } from "@/components/player-history";
 import { Empty, TableWrap } from "@/components/ui";
@@ -27,6 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
 // The addresses a player connected from. loadHistoryPlayer answers 404 to
 // anyone who is not signed in as admin.
 export default async function PlayerIpsPage({ params, searchParams }: Props) {
+  await rankingGate((await params).game);
   const { game, id } = await params;
   const p = await loadHistoryPlayer(game, id, "ips");
   const { lang, t } = await getDict();

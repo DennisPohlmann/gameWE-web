@@ -1,3 +1,4 @@
+import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import { LineChart } from "@/components/chart";
 import { Pie, WeekdayBars } from "@/components/graphics";
@@ -17,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 // gameME's "Miscellaneous Statistics": countries, weekdays, connects.
 export default async function MiscPage({ params }: { params: Promise<{ game: string }> }) {
+  await rankingGate((await params).game);
   const { game } = await params;
   const { lang, t } = await getDict();
   const [m, servers, origin, imgStyles] = await Promise.all([getMiscStats(game, 30), getServers(game), statsOrigin(), imageStyles(lang === "de" ? "de" : "en")]);

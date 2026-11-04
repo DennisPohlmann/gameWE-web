@@ -1,3 +1,4 @@
+import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import { HistoryFrame, historyRobots, loadHistoryPlayer } from "@/components/player-history";
 import { Empty, Pager, ROW_OPTIONS, TableWrap, pageParam, rowsParam } from "@/components/ui";
@@ -16,6 +17,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function PlayerChatPage({ params, searchParams }: Props) {
+  await rankingGate((await params).game);
   const { game, id } = await params;
   const sp = await searchParams;
   const page = pageParam(sp.page);

@@ -1,3 +1,4 @@
+import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { BarChart, LineChart } from "@/components/chart";
@@ -40,6 +41,7 @@ export default async function ServersPage({
   params: Promise<{ game: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  await rankingGate((await params).game);
   const { game } = await params;
   const sp = await searchParams;
   const { lang, t } = await getDict();

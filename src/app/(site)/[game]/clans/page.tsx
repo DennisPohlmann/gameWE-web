@@ -1,3 +1,4 @@
+import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Empty, Flag, Pager, PctBar, ROW_OPTIONS, Section, SortTh, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
@@ -18,6 +19,7 @@ export default async function ClansPage({
   params: Promise<{ game: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  await rankingGate((await params).game);
   const { game } = await params;
   const sp = await searchParams;
   const page = pageParam(sp.page);

@@ -1,3 +1,4 @@
+import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { sortHeads } from "@/components/sort-head";
@@ -28,6 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ActionPage({ params, searchParams }: Props) {
+  await rankingGate((await params).game);
   const { game, id } = await params;
   const a = await load(id);
   if (!a) notFound();

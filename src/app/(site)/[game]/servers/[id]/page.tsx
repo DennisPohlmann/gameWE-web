@@ -1,3 +1,4 @@
+import { rankingGate, rankingShown } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import { SigCode } from "@/components/sig-code";
 import { imageStyles } from "@/lib/image-theme";
@@ -19,7 +20,8 @@ type Props = { params: Promise<{ game: string; id: string }> };
 
 async function load(raw: string) {
   const id = Number.parseInt(raw, 10);
-  return Number.isSafeInteger(id) && id > 0 ? getServer(id) : undefined;
+  const s = Number.isSafeInteger(id) && id > 0 ? await getServer(id) : undefined;
+  return s && (await rankingShown(s.game)) ? s : undefined;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -30,6 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ServerPage({ params }: Props) {
+  await rankingGate((await params).game);
   const { game, id } = await params;
   const s = await load(id);
   if (!s) notFound();

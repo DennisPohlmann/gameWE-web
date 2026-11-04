@@ -1,3 +1,4 @@
+import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import Form from "next/form";
 import Link from "next/link";
@@ -35,6 +36,7 @@ const TYPE_CLASS = Object.fromEntries(EVENT_GROUPS.flatMap((g) => g.kinds.map((k
 // run in on the first page, "Async" is a plain list, "Off": no page (404)
 // and no tab.
 export default async function EventsPage({ params, searchParams }: Props) {
+  await rankingGate((await params).game);
   const { game } = await params;
   const sp = await searchParams;
   const { pageSize, gameEvents } = await getSettings();

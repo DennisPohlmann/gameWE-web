@@ -1,3 +1,4 @@
+import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import Form from "next/form";
 import { notFound } from "next/navigation";
@@ -21,6 +22,7 @@ export default async function ChatPage({
   params: Promise<{ game: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  await rankingGate((await params).game);
   const { game } = await params;
   const sp = await searchParams;
   const q = strParam(sp.q);

@@ -1,3 +1,4 @@
+import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Rich } from "@/components/rich";
@@ -18,6 +19,7 @@ type SP = Promise<Record<string, string | string[] | undefined>>;
 // its share of all actions. Sortable (?sort=name|bonus|count&dir=asc) and
 // paged like the other long tables.
 export default async function ActionsPage({ params, searchParams }: { params: Promise<{ game: string }>; searchParams: SP }) {
+  await rankingGate((await params).game);
   const { game } = await params;
   const sp = await searchParams;
   const { lang, t } = await getDict();

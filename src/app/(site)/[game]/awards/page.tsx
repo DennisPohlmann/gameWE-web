@@ -1,3 +1,4 @@
+import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
@@ -55,6 +56,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 // gameME's awards section: daily awards, their history, ranks and ribbons.
 export default async function AwardsPage({ params, searchParams }: { params: Promise<{ game: string }>; searchParams: SP }) {
+  await rankingGate((await params).game);
   const { game } = await params;
   const sp = await searchParams;
   const { lang, t } = await getDict();

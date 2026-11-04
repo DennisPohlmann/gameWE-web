@@ -1,3 +1,4 @@
+import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import { Rich } from "@/components/rich";
 import { Empty, PctBar, Section, SortTh, TableWrap, strParam } from "@/components/ui";
@@ -16,6 +17,7 @@ type SP = Promise<Record<string, string | string[] | undefined>>;
 // with their share of the table's total. Each table sorts with its own
 // params (tsort/tdir, rsort/rdir), so sorting one keeps the other.
 export default async function TeamsPage({ params, searchParams }: { params: Promise<{ game: string }>; searchParams: SP }) {
+  await rankingGate((await params).game);
   const { game } = await params;
   const sp = await searchParams;
   const { lang, t } = await getDict();

@@ -1,3 +1,4 @@
+import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import { Ribbon, RibbonLevel, ribbonClassName } from "@/components/badges";
 import { HistoryFrame, historyRobots, loadHistoryPlayer } from "@/components/player-history";
@@ -19,6 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 // Every daily award the player won: a summary per award, then by date.
 export default async function PlayerAwardsPage({ params, searchParams }: Props) {
+  await rankingGate((await params).game);
   const { game, id } = await params;
   const sp = await searchParams;
   const page = pageParam(sp.page);

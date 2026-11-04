@@ -1,3 +1,4 @@
+import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -44,6 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // kill on the map (all time, hidden players only counted), sortable and
 // paged.
 export default async function MapPage({ params, searchParams }: Props) {
+  await rankingGate((await params).game);
   const { game, id } = await params;
   const m = await load(id);
   if (!m) notFound();

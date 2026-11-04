@@ -1,3 +1,4 @@
+import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Rich } from "@/components/rich";
@@ -29,6 +30,7 @@ const SORTS: Record<string, (m: MapRow) => number | string> = {
 // headshots per kill. The share bars are filled relative to the largest
 // share of the list, the label shows the real share.
 export default async function MapsPage({ params, searchParams }: { params: Promise<{ game: string }>; searchParams: SP }) {
+  await rankingGate((await params).game);
   const { game } = await params;
   const sp = await searchParams;
   const { lang, t } = await getDict();

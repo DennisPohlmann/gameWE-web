@@ -1,3 +1,4 @@
+import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import Form from "next/form";
 import Link from "next/link";
@@ -48,6 +49,7 @@ export default async function PlayersPage({
   params: Promise<{ game: string }>;
   searchParams: SP;
 }) {
+  await rankingGate((await params).game);
   const { game } = await params;
   const sp = await searchParams;
   const { lang, t } = await getDict();

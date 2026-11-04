@@ -1,3 +1,4 @@
+import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -23,6 +24,7 @@ const STAR_ROWS = 10;
 const PERIODS = 6;
 
 export default async function HallOfFamePage({ params, searchParams }: { params: Promise<{ game: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  await rankingGate((await params).game);
   const { game } = await params;
   const sp = await searchParams;
   const allStars = sp.stars === "all";

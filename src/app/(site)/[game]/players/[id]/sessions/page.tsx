@@ -1,3 +1,4 @@
+import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import { PlayerKillsTrend, PlayerTrend } from "@/components/player-trend";
 import { BackToPlayer, HistoryFrame, historyRobots, loadHistoryPlayer } from "@/components/player-history";
@@ -31,6 +32,7 @@ function ChangeArrow({ up, label }: { up: boolean; label: string }) {
 // summary box, then one row per day the player played
 // (hlstats_Players_History), every column sortable, newest day first.
 export default async function SessionsPage({ params, searchParams }: Props) {
+  await rankingGate((await params).game);
   const { game, id } = await params;
   const sp = await searchParams;
   const p = await loadHistoryPlayer(game, id, "sessions");

@@ -1,3 +1,4 @@
+import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import Form from "next/form";
 import { HistoryFrame, historyRobots, loadHistoryPlayer } from "@/components/player-history";
@@ -21,6 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function EventsPage({ params, searchParams }: Props) {
+  await rankingGate((await params).game);
   const { game, id } = await params;
   const sp = await searchParams;
   const p = await loadHistoryPlayer(game, id, "events");

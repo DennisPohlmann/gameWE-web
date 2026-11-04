@@ -1,3 +1,4 @@
+import { rankingGate, rankingShown } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
@@ -65,7 +66,7 @@ function playerId(raw: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const id = playerId((await params).id);
   const p = id ? await getPlayer(id) : undefined;
-  if (!p || (await noProfile(p, true))) return { title: `#${id}` };
+  if (!p || (await noProfile(p, true)) || !(await rankingShown(p.game))) return { title: `#${id}` };
   const [{ lang, t }, { siteName }, position, image] = await Promise.all([
     getDict(),
     getSettings(),
@@ -81,11 +82,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function PlayerPage({ params, searchParams }: Props) {
+  await rankingGate((await params).game);
   const { game, id: raw } = await params;
   const id = playerId(raw);
   if (!id) notFound();
   const p = await getPlayer(id);
-  if (!p || (await noProfile(p, true))) notFound();
+  if (!p || (await noProfile(p, true)) || !(await rankingShown(p.game))) notFound();
   if (p.game !== game) redirect(`/${p.game}/players/${id}`);
 
   const { lang, t } = await getDict();
