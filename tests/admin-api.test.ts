@@ -244,7 +244,7 @@ test("the admin levels are those of the admin pages", () => {
   }
   // Rankings, servers and users need level 100 (as requireAdmin(100) and
   // requireAdmin(LEVEL_ADMIN) in app/admin/actions.ts).
-  const admin = ["rankingServers", "rankingAssign", "serverMove", "botsSet", "vacSet", "hallSet", "hallEntries", "hallRemove", "hallRestore", "reset", "globalHallSet"];
+  const admin = ["playerErase", "rankingServers", "rankingAssign", "serverMove", "botsSet", "vacSet", "hallSet", "hallEntries", "hallRemove", "hallRestore", "reset", "globalHallSet"];
   for (const h of admin) assert.equal(adminOps.find((o) => o.handler === h)?.level, 100, h);
   for (const op of adminOps.filter((o) => o.path.startsWith("/admin/users"))) assert.equal(op.level, 100, op.operationId);
 });
@@ -259,6 +259,7 @@ test("every server action of the admin area has an API operation or is account-o
     saveSettingsAction: ["settingsSet", "rawSet"],
     savePrivacyAction: ["privacySet"],
     resetRankingAction: ["reset"],
+    deletePlayerAction: ["playerErase"],
     rankingBotsAction: ["botsSet"],
     rankingVacAction: ["vacSet"],
     hallOfFameSettingsAction: ["hallSet"],

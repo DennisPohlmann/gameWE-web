@@ -26,6 +26,7 @@ import {
   assignServersTo,
   deleteEntity,
   moveServer,
+  deletePlayer,
   resetRanking,
   saveEntity,
   savePrivacy,
@@ -490,6 +491,11 @@ const handlers: Record<string, Handler> = {
     if (!boolField(b, "confirm")) throw new ApiFail(400, "confirmation_required", "a reset deletes data for good: send confirm: true", { field: "confirm" });
     const job = await resetRanking(c.actor, c.params.code, mode);
     return { body: { job: job.id, existing: job.existing } };
+  },
+  async playerErase(c) {
+    const b = onlyKeys(c.body, ["confirm"], ["confirm"]);
+    if (!boolField(b, "confirm")) throw new ApiFail(400, "confirmation_required", "this deletes data for good: send confirm: true", { field: "confirm" });
+    return { body: { job: await deletePlayer(c.actor, c.params.id) } };
   },
   async globalHallGet() {
     const g = await globalHall();

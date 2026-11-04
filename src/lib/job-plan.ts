@@ -97,8 +97,8 @@ export function effectiveSchedule(own: string | null | undefined, global: string
   return parseSchedule(global ?? "");
 }
 
-export type JobType = "reset" | "scheduled-reset" | "inactive" | "awards";
-export const JOB_TYPES: readonly JobType[] = ["reset", "scheduled-reset", "inactive", "awards"];
+export type JobType = "reset" | "scheduled-reset" | "inactive" | "awards" | "delete-player";
+export const JOB_TYPES: readonly JobType[] = ["reset", "scheduled-reset", "inactive", "awards", "delete-player"];
 
 export function jobType(v: string): JobType | null {
   return (JOB_TYPES as readonly string[]).includes(v) ? (v as JobType) : null;

@@ -731,6 +731,12 @@ What the admin area edits:
   which the collector's grants do not give yet: without it the form says
   so and the player can be changed after their next connect. The overview's "hidden or banned" counts inactive players
   too.
+  **Delete player data** on a player's page (level 100, for erasure requests)
+  queues a job for the collector, which pauses the ranking's servers and deletes
+  the player with names, Steam IDs, statistics, events, chat, connection data,
+  bans and hall of fame entries; the job list shows the deleted rows. Events
+  shared with another player (a kill) go too, that player's totals stay. If the
+  person plays again, they are recorded as a new player.
 - **IP addresses** (`/admin/ips`): all stored connect addresses, for admins
   only, searchable by an IP or its start (`84.12.`), a Steam ID in any form
   (`STEAM_0:1:23`, `STEAM_1:1:23`, `1:23`, `[U:1:47]`, a SteamID64, also in

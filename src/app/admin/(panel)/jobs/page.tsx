@@ -66,7 +66,7 @@ const T = {
     colResult: "Ergebnis",
     anAdmin: "ein anderer Admin",
     status: { pending: "Wartet", running: "Läuft", done: "Erledigt", failed: "Fehlgeschlagen" } as Record<string, string>,
-    types: { reset: "Ranking zurücksetzen", "scheduled-reset": "Geplanter Reset", inactive: "Inaktive Spieler verschieben", awards: "Tägliche Awards" } as Record<JobType, string>,
+    types: { "delete-player": "Spielerdaten löschen", reset: "Ranking zurücksetzen", "scheduled-reset": "Geplanter Reset", inactive: "Inaktive Spieler verschieben", awards: "Tägliche Awards" } as Record<JobType, string>,
     modes: { "player-stats": "Nur Spielerstatistiken", "all-stats": "Alle Statistiken", all: "Alles, auch die Spieler" } as Record<ResetMode, string>,
     forDay: "für den {d}",
     allRankings: "alle Rankings",
@@ -125,7 +125,7 @@ const T = {
     colResult: "Result",
     anAdmin: "another admin",
     status: { pending: "Waiting", running: "Running", done: "Done", failed: "Failed" } as Record<string, string>,
-    types: { reset: "Reset ranking", "scheduled-reset": "Scheduled reset", inactive: "Move inactive players", awards: "Daily awards" } as Record<JobType, string>,
+    types: { "delete-player": "Delete player data", reset: "Reset ranking", "scheduled-reset": "Scheduled reset", inactive: "Move inactive players", awards: "Daily awards" } as Record<JobType, string>,
     modes: { "player-stats": "Player statistics only", "all-stats": "All statistics", all: "Everything, players too" } as Record<ResetMode, string>,
     forDay: "for {d}",
     allRankings: "all rankings",
@@ -243,6 +243,7 @@ export default async function JobsPage() {
       const m = jobModeName(j.mode);
       return m ? t.modes[m] : j.mode;
     }
+    if (j.type === "delete-player") return `#${j.mode}`;
     return "";
   };
   const ranking = (j: Job) => (j.game ? (names.get(j.game) ?? j.game) : t.allRankings);

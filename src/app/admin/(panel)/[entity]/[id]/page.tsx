@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { deleteAction, saveAction } from "../../../actions";
+import { deleteAction, deletePlayerAction, saveAction } from "../../../actions";
 import { allServers, rankingBaseGames, rankingPageHref } from "@/lib/admin-rankings";
 import { FieldControl } from "@/components/admin/field-control";
 import { NewRankingSync } from "@/components/admin/new-ranking-sync";
@@ -10,7 +10,7 @@ import { getRow, optionList, withColumns } from "@/lib/admin-data";
 import { RankBadge, rankName } from "@/components/badges";
 import { getEntity, type Field } from "@/lib/admin-entities";
 import { adminDict } from "@/lib/admin-i18n";
-import { requireAdmin } from "@/lib/auth";
+import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { GAME_KINDS, sameBaseGame, SUPPORTED_GAMES } from "@/lib/games";
 import { fill, getAdminLang } from "@/lib/i18n";
 import { templateOptions } from "@/lib/new-ranking";
@@ -25,7 +25,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
   const found = getEntity(entity);
   if (!found) notFound();
   const e = await withColumns(found);
-  await requireAdmin(e.minLevel);
+  const user = await requireAdmin(e.minLevel);
   const id = decodeURIComponent(rawId);
   const isNew = id === "new";
   if (isNew && !e.canCreate) notFound();
@@ -198,6 +198,20 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
           </button>
         </form>
       </Section>
+      {!isNew && e.key === "players" && user.acclevel >= LEVEL_ADMIN ? (
+        <Section title={a.deletePlayer}>
+          <p className="notice warn">{a.deletePlayerHelp}</p>
+          <form action={deletePlayerAction} className="form">
+            <input type="hidden" name="id" value={id} />
+            <label className="check">
+              <input type="checkbox" name="confirm" value="1" required /> {a.deletePlayerConfirm}
+            </label>
+            <button type="submit" className="button danger">
+              {a.deletePlayer}
+            </button>
+          </form>
+        </Section>
+      ) : null}
       {!isNew && e.canDelete ? (
         <Section title={a.delete}>
           <form action={deleteAction} className="form">

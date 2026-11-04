@@ -5,7 +5,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getEntity } from "@/lib/admin-entities";
 import { getRow, keptValues, optionList, withColumns } from "@/lib/admin-data";
-import { OpError, assignServersTo, deleteEntity, moveServer, resetRanking, saveEntity, savePrivacy, saveSettings, setGlobalHall, setHallEntry, setRankingBots, setRankingHall, setRankingVac } from "@/lib/admin-ops";
+import { OpError, assignServersTo, deleteEntity, deletePlayer, moveServer, resetRanking, saveEntity, savePrivacy, saveSettings, setGlobalHall, setHallEntry, setRankingBots, setRankingHall, setRankingVac } from "@/lib/admin-ops";
 import { ADMIN_THEME_COOKIE, isAdminTheme } from "@/lib/admin-theme";
 import { basePath } from "@/lib/base-path";
 import { expiryDays, tokenName } from "@/lib/api-token-core";
@@ -166,6 +166,24 @@ export async function deleteAction(form: FormData) {
     redirect(editHref(e.key, id, form));
   }
   redirect(addParams(safeReturnTo(form.get("__returnTo"), e.key), { deleted: "1" }));
+}
+
+// Erases a player with everything recorded about them: admins only, confirmed
+// by the checkbox; the collector does it, the job list shows the result.
+export async function deletePlayerAction(form: FormData) {
+  const user = await requireAdmin(LEVEL_ADMIN);
+  const id = String(form.get("id") ?? "");
+  const back = `/admin/players/${encodeURIComponent(id)}`;
+  if (form.get("confirm") !== "1") redirect(back);
+  try {
+    await deletePlayer({ user }, id);
+  } catch (err) {
+    if (!(err instanceof OpError)) throw err;
+    if (err.code === "db") redirect(`${back}?error=db&msg=${encodeURIComponent(err.detail.msg ?? "?")}`);
+    if (err.code === "nojobs") redirect("/admin/jobs");
+    redirect("/admin/players");
+  }
+  redirect("/admin/jobs");
 }
 
 // One settings page (/admin/settings/<group>) is one form: only the settings

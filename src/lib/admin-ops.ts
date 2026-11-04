@@ -1,6 +1,6 @@
 import "server-only";
-import type { Entity } from "./admin-entities";
-import { deleteRow, getRow, InputError, isDuplicateKey, optionList, otherServerAt, rawOptions, saveRow } from "./admin-data";
+import { getEntity, type Entity } from "./admin-entities";
+import { deleteRow, getRow, InputError, isDuplicateKey, optionList, otherServerAt, rawOptions, saveRow, withColumns } from "./admin-data";
 import { globalHall, hallSettings, saveGlobalHall, saveHallSettings, setHallRemoved } from "./admin-hall";
 import { saveRankingBlockVac, saveRankingBots, type RankingBots } from "./admin-ranking-bots";
 import { allServers, assignServers, copyDefinitions, rankingBaseGames, resettableRankings } from "./admin-rankings";
@@ -16,7 +16,7 @@ import { invalidateHallOfFame } from "./hall-of-fame";
 import { headerOrder } from "./header-links";
 import { canonicalIp } from "./ip";
 import { operatorValues } from "./privacy-operator";
-import { jobsAvailable, queueReset, type ResetMode } from "./reset";
+import { jobsAvailable, queuePlayerDelete, queueReset, type ResetMode } from "./reset";
 import { imageUrl, invalidateSettings } from "./settings";
 import { sourcebansBase } from "./sourcebans";
 import { listTemplates } from "./templates";
@@ -386,6 +386,22 @@ export async function resetRanking(a: Actor, game: string, mode: ResetMode): Pro
   }
   console.info(`gameWE: reset of ranking ${game} (${mode}) queued as job ${job.id} by ${who(a)}${job.existing ? " (already queued)" : ""}`);
   return job;
+}
+
+// Queues the erasure of a player (active or inactive) for the collector.
+export async function deletePlayer(a: Actor, id: string): Promise<number> {
+  if (!/^\d{1,10}$/.test(id)) throw new OpError("notfound");
+  const players = getEntity("players");
+  const row = players ? ((await getRow(await withColumns(players), id)) as { game?: unknown } | null | undefined) : null;
+  if (!row || typeof row.game !== "string") throw new OpError("notfound");
+  if (!(await jobsAvailable())) throw new OpError("nojobs");
+  try {
+    const job = await queuePlayerDelete(row.game, id, a.user.username);
+    console.info(`gameWE: erasure of player ${id} queued as job ${job} by ${who(a)}`);
+    return job;
+  } catch (e) {
+    throw new OpError("db", { msg: dbMsg(e) });
+  }
 }
 
 export async function setRankingBots(a: Actor, game: string, next: RankingBots): Promise<number> {

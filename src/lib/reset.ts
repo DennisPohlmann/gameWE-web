@@ -90,3 +90,22 @@ export async function queueReset(game: string, mode: ResetMode, user: string, to
   );
   return { id, existing: false };
 }
+
+// Erases one player: the collector does it with the servers of the ranking
+// paused. mode holds the player id (digits only, checked by the caller).
+export async function queuePlayerDelete(game: string, playerId: string, user: string): Promise<number> {
+  const origin: Record<string, string> = (await jobOriginColumns()) ? { origin: "admin", origin_detail: webOriginDetail(undefined) } : {};
+  return adminInsert(
+    "hlstats_gamewe_jobs",
+    {
+      job_type: "delete-player",
+      game,
+      mode: playerId,
+      status: "pending",
+      requested_by: user.slice(0, 64),
+      requested_at: Math.floor(Date.now() / 1000),
+      ...origin,
+    },
+    "id",
+  );
+}

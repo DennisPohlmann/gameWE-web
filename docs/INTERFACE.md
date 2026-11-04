@@ -192,8 +192,8 @@ are listed once in `src/lib/openapi-admin.ts`, and the router
   give `400` naming the field. `PATCH` changes only the fields sent. The
   checks and writes are the same functions as the admin pages
   (`src/lib/admin-ops.ts`), with the admin database user. Destructive
-  operations need `"confirm": true` (ranking reset, switching on a reset
-  schedule, removing hall of fame entries). Errors are
+  operations need `"confirm": true` (ranking reset, deleting a player's data,
+  switching on a reset schedule, removing hall of fame entries). Errors are
   `{"error": "<code>", "message": "...", "field"?: "..."}`.
 
 ```bash
