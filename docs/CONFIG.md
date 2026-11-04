@@ -20,7 +20,7 @@ Everything else is set in the admin area (Admin → Settings) and stored in
 4. [Languages](#languages)
 5. [Search engines and sharing](#search-engines-and-sharing)
 6. [Voice server](#voice-server)
-7. [Access log](#access-log)
+7. [Client address and proxies](#client-address-and-proxies), [Access log](#access-log)
 8. [Turning the API off](#turning-the-api-off)
 9. [Privacy and cookie consent](#privacy-and-cookie-consent)
 
@@ -231,7 +231,7 @@ used, else Discord. The players are read via
 ServerQuery (`serverinfo`, every 60 seconds); without a query login the guest
 group needs the permission to see server info. The Discord count comes from
 the server widget, which must be enabled in the Discord server settings
-(every 5 minutes). The ServerQuery password is never shown. The server
+(every 5 minutes). The ServerQuery password is never shown, and only level 100 may change it or the host, query port and query user it is sent to. The server
 password is shown only with "Allow showing the TeamSpeak password" (default
 no): then a click or tap on the lock in the box and on `/voice` shows it and
 `/api/v1/voice` returns it; otherwise visitors see only the lock and the
@@ -249,6 +249,18 @@ The TeamSpeak banner `/banner/teamspeak.png` (code at the bottom of `/voice`)
 uses the same `serverinfo` answer as the box: name, the shown address (the
 display address when set), users of the slots, channels, uptime and type.
 The server password, the query login and the query port are never in it.
+
+## Client address and proxies
+
+The login brake, the API limits and the access log use the client address:
+the last `X-Forwarded-For` entry from a proxy listed in `TRUSTED_PROXIES`
+(addresses or networks, comma-separated; default `127.0.0.1,::1`, a proxy on
+the same host), otherwise the address of the connection. From anyone else
+`X-Forwarded-For` and `X-Real-IP` are removed, so a client reaching the port
+directly cannot choose its address. If the proxy runs on another host or in
+another container, set `TRUSTED_PROXIES` to its address or network, or all
+clients count as one and share one limit. The chart sets the private networks
+for its ingress (`env` in `values.yaml`).
 
 ## Access log
 

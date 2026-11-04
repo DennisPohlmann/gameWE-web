@@ -18,6 +18,8 @@ env:
   DB_USER: gamewe_web
   # DB_ADMIN_USER: gamewe_web_admin
   TZ: Europe/Berlin # the same zone as the collector
+  # Whose X-Forwarded-For counts: the ingress, over the cluster network.
+  TRUSTED_PROXIES: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
   # BASE_PATH: /new   # sub path behind the ingress
   # DB_TABLE_PREFIX: hlstats
   # DB_TLS: off

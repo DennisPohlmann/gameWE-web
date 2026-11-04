@@ -482,7 +482,10 @@ the folder to move or mount.
 Put nginx (or another proxy with TLS) in front of port 3000 and pass
 `X-Forwarded-Proto`, so the admin cookie is marked `Secure`. The website takes
 the client address (access log, brake against password guessing) from the
-last `X-Forwarded-For` entry, which is the one nginx adds. With a second
+last `X-Forwarded-For` entry, which is the one nginx adds. This header counts
+only from a proxy in `TRUSTED_PROXIES` (default: this host): for a proxy on
+another host or in a container, set it to that address or network
+([CONFIG.md](CONFIG.md#client-address-and-proxies)). With a second
 proxy in front (e.g. a CDN), restore the real address with `real_ip_header`
 first.
 

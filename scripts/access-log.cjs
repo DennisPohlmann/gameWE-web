@@ -7,9 +7,39 @@
 // address is the last X-Forwarded-For entry (the one the reverse proxy
 // added; earlier ones come from the client), otherwise the socket address. ACCESS_LOG=off turns it off; health checks
 // (/healthz) are left out unless ACCESS_LOG=all.
+//
+// Also, whatever ACCESS_LOG says: X-Forwarded-For and X-Real-IP count only
+// from a proxy in TRUSTED_PROXIES (addresses or networks, comma-separated,
+// default this host). From anyone else they are removed, as the client
+// address decides the login brake and the API limits (lib/client-ip.ts).
 "use strict";
 
 const http = require("node:http");
+const net = require("node:net");
+
+const trusted = new net.BlockList();
+for (const entry of (process.env.TRUSTED_PROXIES ?? "127.0.0.1,::1").split(",")) {
+  const [addr, bits] = entry.trim().split("/");
+  const family = net.isIP(addr) === 6 ? "ipv6" : net.isIP(addr) === 4 ? "ipv4" : null;
+  if (!family) {
+    if (entry.trim()) console.error(`TRUSTED_PROXIES: ignoring "${entry.trim()}"`);
+    continue;
+  }
+  if (bits === undefined) trusted.addAddress(addr, family);
+  else trusted.addSubnet(addr, Number(bits), family);
+}
+const fromProxy = (socket) => {
+  const peer = (socket?.remoteAddress ?? "").replace(/^::ffff:/, "");
+  return net.isIP(peer) !== 0 && trusted.check(peer, net.isIP(peer) === 6 ? "ipv6" : "ipv4");
+};
+const emitRaw = http.Server.prototype.emit;
+http.Server.prototype.emit = function (event, req) {
+  if (event === "request" && !fromProxy(req.socket)) {
+    delete req.headers["x-forwarded-for"];
+    delete req.headers["x-real-ip"];
+  }
+  return emitRaw.apply(this, arguments);
+};
 
 const mode = (process.env.ACCESS_LOG || "on").toLowerCase();
 if (mode !== "off" && mode !== "0" && mode !== "false") {
