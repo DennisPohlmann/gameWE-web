@@ -256,8 +256,10 @@ The login brake, the API limits and the access log use the client address:
 the last `X-Forwarded-For` entry from a proxy listed in `TRUSTED_PROXIES`
 (addresses or networks, comma-separated; default `127.0.0.1,::1`, a proxy on
 the same host), otherwise the address of the connection. From anyone else
-`X-Forwarded-For` and `X-Real-IP` are removed, so a client reaching the port
-directly cannot choose its address. If the proxy runs on another host or in
+`X-Forwarded-For`, `X-Forwarded-Host`, `X-Forwarded-Proto` and `X-Real-IP` are
+removed, so a client reaching the port directly cannot choose its address or
+the host shown in banners. The proxy must set `X-Forwarded-Host` itself, as in
+the nginx example, so that a client's value does not pass through it. If the proxy runs on another host or in
 another container, set `TRUSTED_PROXIES` to its address or network, or all
 clients count as one and share one limit. The chart sets the private networks
 for its ingress (`env` in `values.yaml`).

@@ -8,7 +8,7 @@
 // added; earlier ones come from the client), otherwise the socket address. ACCESS_LOG=off turns it off; health checks
 // (/healthz) are left out unless ACCESS_LOG=all.
 //
-// Also, whatever ACCESS_LOG says: X-Forwarded-For and X-Real-IP count only
+// Also, whatever ACCESS_LOG says: X-Forwarded-For, -Host, -Proto and X-Real-IP count only
 // from a proxy in TRUSTED_PROXIES (addresses or networks, comma-separated,
 // default this host). From anyone else they are removed, as the client
 // address decides the login brake and the API limits (lib/client-ip.ts).
@@ -37,6 +37,8 @@ http.Server.prototype.emit = function (event, req) {
   if (event === "request" && !fromProxy(req.socket)) {
     delete req.headers["x-forwarded-for"];
     delete req.headers["x-real-ip"];
+    delete req.headers["x-forwarded-host"];
+    delete req.headers["x-forwarded-proto"];
   }
   return emitRaw.apply(this, arguments);
 };
