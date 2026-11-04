@@ -245,6 +245,26 @@ const definitions: Omit<SettingGroup, "area">[] = [
       en: "World maps with each player's Steam picture at their GeoIP location. The visitor's browser loads the map tiles directly from the provider.",
     },
     items: [
+      {
+        key: "gamewe_fastdl",
+        label: { de: "Radarbilder per FastDL holen", en: "Fetch radar pictures by FastDL" },
+        type: "bool",
+        def: "0",
+        help: {
+          de: "Ja: fehlt einer Karte (Source-Spiele) das Radarbild, lädt die Webseite beim Aufruf der Kartenseite die Karte vom FastDL und zeichnet das Bild daraus. Der Ordner /var/lib/gamewe/web/overviews muss dafür beschreibbar sein.",
+          en: "Yes: when a map (Source games) has no radar picture, opening its page makes the website download the map from FastDL and draw the picture from it. The folder /var/lib/gamewe/web/overviews must be writable for this.",
+        },
+      },
+      {
+        key: "gamewe_fastdl_url",
+        label: { de: "FastDL-Adresse", en: "FastDL address" },
+        type: "text",
+        def: "",
+        help: {
+          de: "Der Ordner über maps/, z. B. https://dl.example.org/cstrike/ (sv_downloadurl). Geladen wird maps/<Karte>.bsp.bz2, sonst maps/<Karte>.bsp; keine Weiterleitungen, höchstens 512 MB Download und 1 GB entpackt.",
+          en: "The folder above maps/, e.g. https://dl.example.org/cstrike/ (sv_downloadurl). It loads maps/<map>.bsp.bz2, otherwise maps/<map>.bsp; no redirects, at most 512 MB download and 1 GB unpacked.",
+        },
+      },
       { key: "gamewe_map_live", label: { de: "Karte „Gerade online“ (Spielübersicht)", en: "\"Online now\" map (game overview)" }, type: "bool", def: "1" },
       { key: "gamewe_map_players", label: { de: "Karte über der Rangliste und auf den Clan-Seiten", en: "Map above the ranking and on clan pages" }, type: "bool", def: "1" },
       {
@@ -591,7 +611,7 @@ export const settingGroups: SettingGroup[] = [
     area: "website",
     title: { de: "Karten & Ereignisse", en: "Maps & events" },
     help: helpOf("maps"),
-    items: pick("gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_game_events", "gamewe_player_events"),
+    items: pick("gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_fastdl", "gamewe_fastdl_url", "gamewe_game_events", "gamewe_player_events"),
   },
   { id: "seo", area: "website", title: { de: "Suchmaschinen", en: "Search engines" }, help: helpOf("seo"), items: definitions.find((g) => g.id === "seo")!.items },
   { id: "voice", area: "services", title: { de: "Voiceserver", en: "Voice server" }, help: helpOf("voice"), items: definitions.find((g) => g.id === "voice")!.items },

@@ -54,3 +54,10 @@ letters, textures and colours of the source are dropped); the calibration
 stays that of the source picture. The built-in pictures of
 `overviews/cs2/` and `overviews/csgo/` are made with it (threshold 20 for
 pictures with a dark floor, 45 for the CS:GO pictures).
+
+## FastDL
+
+`fastdl.ts` fetches one map and draws it, for the site's own switch; see
+"Fetching maps by FastDL" in [overviews/README.md](../../overviews/README.md).
+`npm run build` compiles it to `build/`, which ships with the site. There is no
+`.nav` on FastDL, so these pictures take the walkable floor from the spawn points.

@@ -5,6 +5,7 @@ import { eventsMode, type EventsMode } from "./events-mode";
 import { idleMinutes } from "./admin-idle";
 import { query } from "./db";
 import { mapStyleId } from "./map-styles";
+import { fastdlBase } from "./overview-format";
 import { sourcebansBase } from "./sourcebans";
 import { LINK_SLOTS, type HeaderLink, type TabId, headerOrder, parseHome, parseLink, safeUrl } from "./header-links";
 
@@ -85,6 +86,9 @@ export type Settings = {
   mapStyle: string;
   // Base address of a SourceBans installation for the bans page.
   sourcebansUrl: string;
+  // FastDL address for maps without a radar picture; empty while the switch is
+  // off (lib/overview-fastdl.ts).
+  fastdlUrl: string;
 };
 
 const linkKeys = Array.from({ length: LINK_SLOTS }, (_, i) => `gamewe_link_${i + 1}`);
@@ -140,7 +144,7 @@ export async function getSettings(): Promise<Settings> {
   try {
     const rows = await query<{ keyname: string; value: string }>(
       `SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`,
-      [["sitename", "MinActivity", "gamewe_page_size", "gamewe_default_lang", "gamewe_steam_profiles", "gamewe_site_url", "gamewe_logo_url", "gamewe_header_logo", "gamewe_favicon", "gamewe_apple_icon", "gamewe_title_format", "gamewe_title_ranking", "gamewe_geoip_credit", "gamewe_sig_brand", "gamewe_chat_public", "gamewe_game_events", "gamewe_player_events", "gamewe_skin", "gamewe_game_skins", "gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_sourcebans_url", "gamewe_seo_description", "gamewe_seo_keywords", "gamewe_seo_image", "gamewe_seo_index", "gamewe_seo_twitter", "gamewe_header_home", "gamewe_header_order", "gamewe_admin_auto_logout", "gamewe_admin_logout_minutes", "gamewe_api_enabled", ...linkKeys]],
+      [["sitename", "MinActivity", "gamewe_page_size", "gamewe_default_lang", "gamewe_steam_profiles", "gamewe_site_url", "gamewe_logo_url", "gamewe_header_logo", "gamewe_favicon", "gamewe_apple_icon", "gamewe_title_format", "gamewe_title_ranking", "gamewe_geoip_credit", "gamewe_sig_brand", "gamewe_chat_public", "gamewe_game_events", "gamewe_player_events", "gamewe_skin", "gamewe_game_skins", "gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_sourcebans_url", "gamewe_fastdl", "gamewe_fastdl_url", "gamewe_seo_description", "gamewe_seo_keywords", "gamewe_seo_image", "gamewe_seo_index", "gamewe_seo_twitter", "gamewe_header_home", "gamewe_header_order", "gamewe_admin_auto_logout", "gamewe_admin_logout_minutes", "gamewe_api_enabled", ...linkKeys]],
     );
     o = Object.fromEntries(rows.map((r) => [r.keyname, r.value]));
   } catch {
@@ -181,6 +185,7 @@ export async function getSettings(): Promise<Settings> {
     mapPlayers: o.gamewe_map_players?.trim() !== "0",
     mapStyle: mapStyleId(o.gamewe_map_style),
     sourcebansUrl: sourcebansBase(o.gamewe_sourcebans_url),
+    fastdlUrl: o.gamewe_fastdl?.trim() === "1" ? fastdlBase(o.gamewe_fastdl_url) : "",
     adminIdleMinutes: idleMinutes(o.gamewe_admin_auto_logout, o.gamewe_admin_logout_minutes),
     skin: /^[a-z0-9][a-z0-9_-]{0,31}$/.test(o.gamewe_skin?.trim() ?? "") ? o.gamewe_skin.trim() : "dark",
   };

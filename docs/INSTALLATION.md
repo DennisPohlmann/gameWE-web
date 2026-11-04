@@ -465,6 +465,10 @@ container runs as uid 1000 (`node`), so there make them world-readable
 (`chmod -R o+rX /var/lib/gamewe/web/templates /var/lib/gamewe/web/overviews`,
 the folders hold nothing secret) or give uid 1000 read access.
 
+For radar pictures fetched by FastDL (off by default) the service must be able
+to write to the overviews folder, see "Fetching maps by FastDL" in
+[overviews/README.md](../overviews/README.md).
+
 **Coming from v0.35 or older:** the environment variables `TEMPLATES_DIR` and
 `OVERVIEWS_DIR` are no longer read. Move the folders to the paths above (the
 earlier examples used `/etc/gamewe/web/templates` and

@@ -23,6 +23,8 @@ ProtectSystem=strict
 ProtectHome=true
 PrivateTmp=true
 ReadWritePaths=/opt/gamewe/web/.next/cache
+# Radar pictures fetched by FastDL (off by default); the folder may be missing.
+ReadWritePaths=-/var/lib/gamewe/web/overviews
 
 [Install]
 WantedBy=multi-user.target

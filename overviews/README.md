@@ -98,7 +98,8 @@ For a Source map (also community maps) `scripts/overviews/radar.ts` draws
 the picture and its calibration from the map file, see
 [scripts/overviews/README.md](../scripts/overviews/README.md);
 `scripts/overviews/restyle.py` redraws another radar picture in the same
-style. The games' own radar pictures:
+style. With a switch (Settings → Maps & events, off by default) the site does
+it by itself, see "Fetching maps by FastDL" below. The games' own radar pictures:
 
 - **Counter-Strike 2:** the pictures are in `game/csgo/pak01_dir.vpk` under
   `panorama/images/overheadmaps/` (`de_dust2_radar_psd.vtex_c`, ...). Open
@@ -117,3 +118,26 @@ calibration belongs to another version of the map: the heatmap is shown
 without the picture and the server log says
 `overview <map>: most positions lie outside the picture`. A picture or
 calibration that cannot be read is noted in the log too.
+
+## Fetching maps by FastDL
+
+With **Fetch radar pictures by FastDL** on and the **FastDL address** set
+(Settings → Maps & events; the folder above `maps/`, as in `sv_downloadurl`),
+opening the page of a map without a picture starts a download of
+`maps/<map>.bsp.bz2`, or else `maps/<map>.bsp`. The picture and its calibration
+appear in `/var/lib/gamewe/web/overviews/<game>/`; the next visit shows them
+(after a minute at most). Pictures that exist are never replaced, so this does
+nothing for the built-in maps. Only Source maps work.
+
+- That folder must be writable for the site. tar.gz:
+  `chown -R gamewe:gamewe /var/lib/gamewe/web/overviews`; container: mount it
+  without `:ro`, owned by uid 1000.
+- The download and the drawing run in a process of their own without the
+  site's environment, one map at a time, for 15 minutes at most, and a map
+  takes up to about 1 GB of memory while it is drawn.
+- Limits: map names with `[a-z0-9_.+-]` only, no redirects, 512 MB download,
+  1 GB unpacked, 5 minutes per download. A map that fails is tried again after
+  a day at the earliest (or a restart); the reason is in the site's log.
+- The server gets requests only for names of maps your game servers logged,
+  from the site's address. Set an address you trust: there is no check against
+  private addresses, as this setting is for admins only.

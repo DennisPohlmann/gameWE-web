@@ -66,6 +66,11 @@ async function scanDir(dir: string, key: string, into: Map<string, Entry>) {
   for (const [k, e] of here) into.set(k, e);
 }
 
+// A new picture was drawn (lib/overview-fastdl.ts): look again at the next request.
+export function forgetOverviewIndex() {
+  cache = undefined;
+}
+
 async function index(): Promise<Map<string, Entry>> {
   if (cache && Date.now() - cache.at < 60_000) return cache.index;
   const out = new Map<string, Entry>();

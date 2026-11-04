@@ -215,6 +215,22 @@ export function insideShare(frame: Frame, dots: [number, number, ...number[]][])
 // <map>_radar(_psd).png, the lower level as <map>_lower(...); the
 // calibration as <map>.json or <map>.txt. Map names in lower case.
 export const MAP_NAME = /^[a-z0-9][a-z0-9_.+-]{0,63}$/;
+// The FastDL address from the setting: http(s) only, no user/password, ends with "/".
+export function fastdlBase(v: string | undefined): string {
+  const s = (v ?? "").trim();
+  if (!s || (/^[a-z][a-z0-9+.-]*:/i.test(s) && !/^https?:\/\//i.test(s))) return "";
+  try {
+    const u = new URL(/^https?:\/\//i.test(s) ? s : `https://${s}`);
+    if (u.username || u.password) return "";
+    u.search = "";
+    u.hash = "";
+    u.pathname = u.pathname.replace(/\/?$/, "/");
+    return u.toString();
+  } catch {
+    return "";
+  }
+}
+
 const PICTURE = /^([a-z0-9][a-z0-9_.+-]{0,63}?)(_lower)?(?:_radar(?:_psd)?)?\.(png|webp|jpe?g)$/;
 const CALIBRATION = /^([a-z0-9][a-z0-9_.+-]{0,63})\.(json|txt)$/;
 
