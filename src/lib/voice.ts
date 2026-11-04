@@ -464,6 +464,15 @@ function tsQuery(host: string, queryPort: number, voicePort: number, user: strin
     };
     sock.setTimeout(4000, () => fail("timeout"));
     sock.on("error", (e) => fail(e.message));
+    // Also after a clean close and for a trickling peer: callers share this
+    // promise (inflight), so it must always settle.
+    const deadline = setTimeout(() => {
+      if (!done) fail("timeout");
+    }, 8000);
+    sock.on("close", () => {
+      clearTimeout(deadline);
+      if (!done) fail("connection closed");
+    });
     sock.on("data", (chunk) => {
       if (done) return;
       buf += chunk.toString("utf8");
