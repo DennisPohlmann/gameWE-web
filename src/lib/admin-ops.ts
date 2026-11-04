@@ -396,7 +396,7 @@ export async function deletePlayer(a: Actor, id: string): Promise<number> {
   if (!row || typeof row.game !== "string") throw new OpError("notfound");
   if (!(await jobsAvailable())) throw new OpError("nojobs");
   try {
-    const job = await queuePlayerDelete(row.game, id, a.user.username);
+    const job = await queuePlayerDelete(row.game, id, a.user.username, a.via);
     console.info(`gameWE: erasure of player ${id} queued as job ${job} by ${who(a)}`);
     return job;
   } catch (e) {

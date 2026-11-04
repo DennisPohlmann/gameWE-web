@@ -93,8 +93,8 @@ export async function queueReset(game: string, mode: ResetMode, user: string, to
 
 // Erases one player: the collector does it with the servers of the ranking
 // paused. mode holds the player id (digits only, checked by the caller).
-export async function queuePlayerDelete(game: string, playerId: string, user: string): Promise<number> {
-  const origin: Record<string, string> = (await jobOriginColumns()) ? { origin: "admin", origin_detail: webOriginDetail(undefined) } : {};
+export async function queuePlayerDelete(game: string, playerId: string, user: string, token?: string): Promise<number> {
+  const origin: Record<string, string> = (await jobOriginColumns()) ? { origin: token ? "api" : "admin", origin_detail: webOriginDetail(token) } : {};
   return adminInsert(
     "hlstats_gamewe_jobs",
     {
