@@ -1191,12 +1191,11 @@ async function opponentSums(game: string, id: number): Promise<OpponentSums> {
 
 async function loadOpponentSums(id: number, bots: number[]): Promise<OpponentSums> {
   // Summed per opponent first, then joined: the names and the ranking rows
-  // once per opponent, not per frag. hidden is hiddenSql on the joined row:
-  // a hidden player who is not a bot; a player without a ranking row
-  // (deleted, inactive) is not hidden.
+  // once per opponent, not per frag. A hidden player stays hidden when moved
+  // to the inactive table; only a deleted one is not hidden.
   const rows = await query<{ playerId: number; name: string | null; kills: number; deaths: number; kHs: number; dHs: number; hidden: number; hideranking: number | null; skill: number | null; game: string | null }>(
     `SELECT o.playerId, d.lastName AS name, o.kills, o.deaths, o.kHs, o.dHs, p.hideranking, p.skill, TRIM(p.game) AS game,
-            CASE WHEN p.hideranking <> 0 AND NOT ${isBotSql("o.playerId")} THEN 1 ELSE 0 END AS hidden
+            CASE WHEN ${hiddenSql("o.playerId")} THEN 1 ELSE 0 END AS hidden
      FROM (SELECT u.playerId, SUM(u.k) AS kills, SUM(u.d) AS deaths, SUM(u.khs) AS kHs, SUM(u.dhs) AS dHs
            FROM (SELECT victimId AS playerId, 1 AS k, 0 AS d, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS khs, 0 AS dhs
                  FROM hlstats_Events_Frags WHERE killerId = ? AND victimId <> killerId${notIn("victimId", bots)}

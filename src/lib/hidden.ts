@@ -12,9 +12,11 @@ export const isBotSql = (col: string) =>
   `EXISTS (SELECT 1 FROM hlstats_PlayerUniqueIds hu WHERE hu.playerId = ${col} AND hu.uniqueId LIKE 'BOT%')`;
 
 // SQL condition: the player in column `col` is hidden (hidden from the
-// ranking and not a bot). A missing or deleted player is not hidden.
+// ranking and not a bot), also one the collector moved to the inactive table
+// with all columns. A missing or deleted player is not hidden.
 export const hiddenSql = (col: string) =>
-  `EXISTS (SELECT 1 FROM hlstats_Players hp WHERE hp.playerId = ${col} AND hp.hideranking <> 0 AND NOT ${isBotSql("hp.playerId")})`;
+  `(EXISTS (SELECT 1 FROM hlstats_Players hp WHERE hp.playerId = ${col} AND hp.hideranking <> 0 AND NOT ${isBotSql("hp.playerId")})
+    OR EXISTS (SELECT 1 FROM hlstats_PlayersInactive hi WHERE hi.playerId = ${col} AND hi.hideranking <> 0 AND NOT ${isBotSql("hi.playerId")}))`;
 
 // The same check on a loaded row (bot: 1 or true for a bot).
 export function isHidden(p: { hideranking: number | string | null | undefined; bot?: number | string | boolean | null }): boolean {
