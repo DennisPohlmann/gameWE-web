@@ -129,6 +129,10 @@ appear in `/var/lib/gamewe/web/overviews/<game>/`; the next visit shows them
 (after a minute at most). Pictures that exist are never replaced, so this does
 nothing for the built-in maps. Only Source maps work.
 
+- Only admins with level 100 can change both settings. The address must be
+  public: private, loopback and link-local addresses are refused, also when a
+  name resolves to one. For a FastDL in your own network, set
+  `FASTDL_ALLOW_PRIVATE=1` in the site's environment.
 - That folder must be writable for the site. tar.gz:
   `chown -R gamewe:gamewe /var/lib/gamewe/web/overviews`; container: mount it
   without `:ro`, owned by uid 1000.

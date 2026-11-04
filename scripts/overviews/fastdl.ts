@@ -4,8 +4,13 @@
 // with a time limit, and cannot stall the pages.
 //
 //   node scripts/overviews/build/fastdl.js <base url> <map> <out folder>
+import { lookup } from "node:dns";
 import { existsSync, mkdirSync, renameSync, rmSync } from "node:fs";
+import http from "node:http";
+import https from "node:https";
+import { BlockList, isIP, type LookupFunction } from "node:net";
 import path from "node:path";
+import { Readable } from "node:stream";
 import { Bsp } from "./bsp.ts";
 import { bunzip2 } from "./bzip2.ts";
 import { render } from "./render.ts";
@@ -18,7 +23,50 @@ const DOWNLOAD_TIMEOUT_MS = 5 * 60_000;
 
 type Get = (url: string) => Promise<Response>;
 
-const get: Get = (url) => fetch(url, { redirect: "error", signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS) });
+// The site's own network is off limits: the address is an admin setting, but a
+// visitor's page view starts the request, and a name may resolve to anything.
+const PRIVATE = new BlockList();
+for (const [net, bits] of [["0.0.0.0", 8], ["10.0.0.0", 8], ["100.64.0.0", 10], ["127.0.0.0", 8], ["169.254.0.0", 16], ["172.16.0.0", 12], ["192.0.0.0", 24], ["192.168.0.0", 16], ["198.18.0.0", 15], ["224.0.0.0", 4], ["240.0.0.0", 4]] as const) PRIVATE.addSubnet(net, bits, "ipv4");
+for (const [net, bits] of [["::", 128], ["::1", 128], ["64:ff9b::", 96], ["fc00::", 7], ["fe80::", 10], ["ff00::", 8]] as const) PRIVATE.addSubnet(net, bits, "ipv6");
+
+/** An address of this host, its network or no real destination; IPv4 in IPv6 counts as IPv4. */
+export function isPrivateAddress(ip: string): boolean {
+  const family = isIP(ip);
+  return family === 0 || PRIVATE.check(ip, family === 6 ? "ipv6" : "ipv4");
+}
+
+// Checked at connect time, so a name cannot change between check and use.
+const publicLookup: LookupFunction = (host, options, done) => {
+  lookup(host, { ...options, all: true }, (err, found) => {
+    const bad = err ?? (found.some((a) => isPrivateAddress(a.address)) ? new Error(`${host} is a private address`) : null);
+    if (bad) done(bad as NodeJS.ErrnoException, options.all ? [] : "", 0);
+    else if (options.all) done(null, found);
+    else done(null, found[0].address, found[0].family);
+  });
+};
+
+/** A GET without redirects that reaches public addresses only, unless allowed. */
+export function guardedGet(allowPrivate: boolean, timeoutMs = DOWNLOAD_TIMEOUT_MS): Get {
+  return (url) =>
+    new Promise((resolve, reject) => {
+      const u = new URL(url);
+      const literal = u.hostname.replace(/^\[|\]$/g, "");
+      if (!allowPrivate && isIP(literal) && isPrivateAddress(literal)) return reject(new Error(`${literal} is a private address`));
+      const req = (u.protocol === "https:" ? https : http).get(u, { lookup: allowPrivate ? undefined : publicLookup, signal: AbortSignal.timeout(timeoutMs) }, (res) => {
+        const status = res.statusCode ?? 0;
+        if (status >= 300 && status < 400) {
+          res.destroy();
+          return reject(new Error(`redirect (HTTP ${status})`));
+        }
+        const headers = new Headers();
+        if (res.headers["content-length"]) headers.set("content-length", res.headers["content-length"]);
+        const empty = status === 204 || status === 205;
+        if (empty) res.resume();
+        resolve(new Response(empty ? null : (Readable.toWeb(res) as ReadableStream), { status, headers }));
+      });
+      req.on("error", reject);
+    });
+}
 
 /** The body, stopping as soon as it is larger than the limit. */
 export async function readLimited(res: Response, max: number): Promise<Buffer> {
@@ -35,7 +83,7 @@ export async function readLimited(res: Response, max: number): Promise<Buffer> {
 }
 
 /** <base>maps/<map>.bsp.bz2, then <base>maps/<map>.bsp, as game clients ask. */
-export async function downloadMap(base: string, map: string, fetchUrl: Get = get, maxDownload = MAX_DOWNLOAD, maxMap = MAX_MAP): Promise<Buffer> {
+export async function downloadMap(base: string, map: string, fetchUrl: Get = guardedGet(false), maxDownload = MAX_DOWNLOAD, maxMap = MAX_MAP): Promise<Buffer> {
   if (!MAP_NAME.test(map)) throw new Error("bad map name");
   const u = new URL(base);
   if ((u.protocol !== "http:" && u.protocol !== "https:") || u.username || u.password) throw new Error("bad FastDL address");
@@ -50,7 +98,7 @@ export async function downloadMap(base: string, map: string, fetchUrl: Get = get
 
 /** Draws <dir>/<map>.png and .json; both appear only when both are done, and
  *  a picture that is already there stays. */
-export async function fetchOverview(base: string, map: string, dir: string, fetchUrl?: Get): Promise<void> {
+export async function fetchOverview(base: string, map: string, dir: string, fetchUrl: Get = guardedGet(false)): Promise<void> {
   if (!MAP_NAME.test(map)) throw new Error("bad map name");
   const png = path.join(dir, `${map}.png`);
   const json = path.join(dir, `${map}.json`);
@@ -71,7 +119,7 @@ export async function fetchOverview(base: string, map: string, dir: string, fetc
 
 if (require.main === module) {
   const [base, map, dir] = process.argv.slice(2);
-  fetchOverview(base, map, dir).catch((e: Error) => {
+  fetchOverview(base, map, dir, guardedGet(process.env.FASTDL_ALLOW_PRIVATE === "1")).catch((e: Error) => {
     console.error(e.message);
     process.exit(1);
   });

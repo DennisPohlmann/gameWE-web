@@ -1,10 +1,12 @@
 // FastDL download of maps (scripts/overviews/fastdl.ts, src/lib/overview-fastdl.ts).
 // Run with `npm test`.
 import assert from "node:assert/strict";
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
 import { test } from "node:test";
 import { bzip2Fixture, zeroBomb } from "./overview-fastdl-fixtures.ts";
 import { bunzip2 } from "../scripts/overviews/bzip2.ts";
-import { MAP_NAME, downloadMap, readLimited } from "../scripts/overviews/fastdl.ts";
+import { MAP_NAME, downloadMap, guardedGet, isPrivateAddress, readLimited } from "../scripts/overviews/fastdl.ts";
 import { fastdlBase, MAP_NAME as SITE_MAP_NAME } from "../src/lib/overview-format.ts";
 import { fastdlQueue } from "../src/lib/overview-fastdl.ts";
 
@@ -93,4 +95,33 @@ test("the queue: one at a time, each map once a day, strict names", () => {
   runs[2].done(false);
   for (let i = 0; i < 40; i++) ask(B, "tf", `m${i}`);
   assert.ok(runs.length <= 4, "busy: the others wait");
+});
+
+test("private addresses, also inside IPv6", () => {
+  for (const ip of ["127.0.0.1", "10.1.2.3", "100.64.0.1", "169.254.169.254", "172.16.0.1", "192.168.1.1", "0.0.0.0", "::1", "::", "fd00::1", "fe80::1", "::ffff:127.0.0.1", "::ffff:169.254.169.254", "not an address"]) {
+    assert.equal(isPrivateAddress(ip), true, ip);
+  }
+  for (const ip of ["1.1.1.1", "172.32.0.1", "2606:4700::1111", "::ffff:1.1.1.1"]) assert.equal(isPrivateAddress(ip), false, ip);
+});
+
+test("guarded download: the site's own network only when allowed, no redirects", async () => {
+  const server = createServer((req, res) => {
+    if (req.url === "/moved") res.writeHead(302, { location: "/ok" }).end();
+    else if (req.url === "/empty") res.writeHead(204).end();
+    else res.writeHead(200, { "content-length": "2" }).end("ok");
+  });
+  await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
+  const { port } = server.address() as AddressInfo;
+  try {
+    for (const url of [`http://127.0.0.1:${port}/ok`, `http://localhost:${port}/ok`, `http://2130706433:${port}/ok`, `http://[::1]:${port}/ok`]) {
+      await assert.rejects(guardedGet(false)(url), /private address/, url);
+    }
+    const res = await guardedGet(true)(`http://127.0.0.1:${port}/ok`);
+    assert.equal(res.status, 200);
+    assert.equal((await readLimited(res, 10)).toString(), "ok");
+    assert.equal((await guardedGet(true)(`http://127.0.0.1:${port}/empty`)).status, 204);
+    await assert.rejects(guardedGet(true)(`http://127.0.0.1:${port}/moved`), /redirect/);
+  } finally {
+    server.close();
+  }
 });

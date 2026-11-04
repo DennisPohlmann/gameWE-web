@@ -247,6 +247,7 @@ const definitions: Omit<SettingGroup, "area">[] = [
     items: [
       {
         key: "gamewe_fastdl",
+        minLevel: 100,
         label: { de: "Radarbilder per FastDL holen", en: "Fetch radar pictures by FastDL" },
         type: "bool",
         def: "0",
@@ -257,12 +258,13 @@ const definitions: Omit<SettingGroup, "area">[] = [
       },
       {
         key: "gamewe_fastdl_url",
+        minLevel: 100,
         label: { de: "FastDL-Adresse", en: "FastDL address" },
         type: "text",
         def: "",
         help: {
-          de: "Der Ordner über maps/, z. B. https://dl.example.org/cstrike/ (sv_downloadurl). Geladen wird maps/<Karte>.bsp.bz2, sonst maps/<Karte>.bsp; keine Weiterleitungen, höchstens 512 MB Download und 1 GB entpackt.",
-          en: "The folder above maps/, e.g. https://dl.example.org/cstrike/ (sv_downloadurl). It loads maps/<map>.bsp.bz2, otherwise maps/<map>.bsp; no redirects, at most 512 MB download and 1 GB unpacked.",
+          de: "Der Ordner über maps/, z. B. https://dl.example.org/cstrike/ (sv_downloadurl). Nur öffentliche Adressen (FASTDL_ALLOW_PRIVATE=1 erlaubt private). Geladen wird maps/<Karte>.bsp.bz2, sonst maps/<Karte>.bsp; keine Weiterleitungen, höchstens 512 MB Download und 1 GB entpackt.",
+          en: "The folder above maps/, e.g. https://dl.example.org/cstrike/ (sv_downloadurl). Public addresses only (FASTDL_ALLOW_PRIVATE=1 allows private ones). It loads maps/<map>.bsp.bz2, otherwise maps/<map>.bsp; no redirects, at most 512 MB download and 1 GB unpacked.",
         },
       },
       { key: "gamewe_map_live", label: { de: "Karte „Gerade online“ (Spielübersicht)", en: "\"Online now\" map (game overview)" }, type: "bool", def: "1" },

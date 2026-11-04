@@ -108,6 +108,10 @@ are never sent to the browser or listed under the raw options. The public
 pages read these rows with the read-only database user, like every other
 setting.
 
+`FASTDL_ALLOW_PRIVATE=1` lets the FastDL download reach private addresses, for
+a FastDL in your own network; see "Fetching maps by FastDL" in
+[overviews/README.md](../overviews/README.md).
+
 `ADMIN_COOKIE_SECURE` stays in the environment on purpose: a wrong cookie
 setting set from the browser could lock every admin out.
 `SOURCEBANS_ALLOW_PRIVATE` is gone: the website no longer reads the

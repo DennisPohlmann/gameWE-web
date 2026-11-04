@@ -21,7 +21,8 @@ export type Runner = (base: string, map: string, dir: string, done: (ok: boolean
 const runProcess: Runner = (base, map, dir, done) => {
   const script = path.join(process.cwd(), "scripts/overviews/build/fastdl.js");
   // No environment: the process has no business with the site's secrets.
-  const child = spawn(process.execPath, [`--max-old-space-size=${HEAP_MB}`, script, base, map, dir], { env: {} as NodeJS.ProcessEnv, stdio: ["ignore", "ignore", "pipe"], timeout: RUN_LIMIT_MS, killSignal: "SIGKILL" });
+  const env = process.env.FASTDL_ALLOW_PRIVATE === "1" ? { FASTDL_ALLOW_PRIVATE: "1" } : {};
+  const child = spawn(process.execPath, [`--max-old-space-size=${HEAP_MB}`, script, base, map, dir], { env: env as NodeJS.ProcessEnv, stdio: ["ignore", "ignore", "pipe"], timeout: RUN_LIMIT_MS, killSignal: "SIGKILL" });
   let err = "";
   child.stderr.on("data", (d) => {
     if (err.length < 400) err += String(d);
