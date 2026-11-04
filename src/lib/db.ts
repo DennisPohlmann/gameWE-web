@@ -74,7 +74,11 @@ interface Driver {
   run(sql: string, params: Param[]): Promise<Result>;
 }
 
-function mariadbDriver(user: string | undefined, password: string | undefined, limit: number): Driver {
+// Longest statement of the public pages, in seconds: an expensive search must
+// not hold their small pool. The admin pool has none (resets, large lists).
+const PUBLIC_STATEMENT_SECONDS = 30;
+
+function mariadbDriver(user: string | undefined, password: string | undefined, limit: number, statementSeconds: number): Driver {
   const pool = mysql.createPool({
     host: env("DB_HOST") ?? "127.0.0.1",
     port: Number(env("DB_PORT") ?? 3306),
@@ -88,6 +92,11 @@ function mariadbDriver(user: string | undefined, password: string | undefined, l
     supportBigNumbers: true,
     dateStrings: true,
   });
+  // mysql2 fills in the values on the client with backslash escaping, which
+  // would not hold in a session with NO_BACKSLASH_ESCAPES. A failed SET (MySQL
+  // has no max_statement_time) is left to the first query's own error.
+  const session = `SET SESSION sql_mode = REPLACE(@@SESSION.sql_mode, 'NO_BACKSLASH_ESCAPES', '')${statementSeconds ? `, max_statement_time = ${statementSeconds}` : ""}`;
+  pool.on("connection", (c) => void (c as unknown as { query(sql: string, cb: (err: unknown) => void): void }).query(session, (err) => err && console.error("db session:", err instanceof Error ? err.message : err)));
   return {
     async run(sql, params) {
       let res;
@@ -156,7 +165,7 @@ function keyMap(sql: string): Map<string, string> {
   return m;
 }
 
-function postgresDriver(user: string | undefined, password: string | undefined, limit: number): Driver {
+function postgresDriver(user: string | undefined, password: string | undefined, limit: number, statementSeconds: number): Driver {
   setPgTypes();
   const pool = new pg.Pool({
     host: env("DB_HOST") ?? "127.0.0.1",
@@ -166,6 +175,7 @@ function postgresDriver(user: string | undefined, password: string | undefined, 
     database: env("DB_NAME") ?? "gamewe",
     ssl: tls() ?? false,
     max: limit,
+    ...(statementSeconds ? { statement_timeout: statementSeconds * 1000 } : {}),
   });
   // An idle client losing its connection must not take the process down.
   pool.on("error", (err) => console.error("postgres:", err.message));
@@ -187,8 +197,8 @@ function postgresDriver(user: string | undefined, password: string | undefined, 
 
 // The queries name the tables hlstats_*; with DB_TABLE_PREFIX (the
 // collector's database.table_prefix) the driver rewrites them (table-prefix.ts).
-function createDriver(user: string | undefined, password: string | undefined, limit: number): Driver {
-  const d = isPg() ? postgresDriver(user, password, limit) : mariadbDriver(user, password, limit);
+function createDriver(user: string | undefined, password: string | undefined, limit: number, statementSeconds = 0): Driver {
+  const d = isPg() ? postgresDriver(user, password, limit, statementSeconds) : mariadbDriver(user, password, limit, statementSeconds);
   const prefix = normalizeTablePrefix(env("DB_TABLE_PREFIX"));
   if (prefix === DEFAULT_TABLE_PREFIX) return d;
   return { run: (sql, params) => d.run(prefixSql(prefix, sql), params) };
@@ -200,7 +210,7 @@ declare global {
 }
 
 function db(): Driver {
-  globalThis.__gameweDb ??= createDriver(env("DB_USER"), env("DB_PASSWORD"), 10);
+  globalThis.__gameweDb ??= createDriver(env("DB_USER"), env("DB_PASSWORD"), 10, PUBLIC_STATEMENT_SECONDS);
   return globalThis.__gameweDb;
 }
 

@@ -1,3 +1,4 @@
+import { overLimit } from "@/lib/api";
 import type { Metadata } from "next";
 import Form from "next/form";
 import Link from "next/link";
@@ -33,7 +34,8 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
 
   let players: SearchHit[] = [];
   let clans: ClanHit[] = [];
-  if (q && !short) {
+  // A text search scans: the API has its limit, this page gets one too.
+  if (q && !short && !(await overLimit("search", 30))) {
     if (by === "clans") clans = await searchClans(q, game);
     else players = await searchPlayers(q, by, game);
   }
