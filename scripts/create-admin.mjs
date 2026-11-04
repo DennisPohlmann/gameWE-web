@@ -74,6 +74,8 @@ function backupHash(code) {
 const hashName = createHash("sha256").update(name).digest("hex").slice(0, 32);
 const totpKey = `gamewe_totp_${hashName}`;
 const pendingKey = `gamewe_totpp_${hashName}`;
+// As sessionEpochKey in src/lib/totp.ts: all sessions of the user end now.
+const epochKey = `gamewe_totps_${createHash("sha256").update(name.trim().toLowerCase()).digest("hex").slice(0, 32)}`;
 const backupKeys = Array.from({ length: 10 }, (_, i) => `gamewe_totpb_${hashName}_${i}`);
 const totpSecret = totp === "new" ? newSecret() : null;
 const backupCodes = totpSecret ? newBackupCodes() : [];
@@ -109,6 +111,9 @@ const conn = {
   database: e.DB_NAME ?? "gamewe",
 };
 
+// The token record starts {"v":1,"u":"<owner>", (api-token-core.ts).
+const ownerLike = `${JSON.stringify({ v: 1, u: name }).slice(0, -1).replace(/[\\%_]/g, "\\$&")},%`;
+
 let issuer;
 if (pg) {
   const { default: postgres } = await import("pg");
@@ -119,6 +124,9 @@ if (pg) {
      ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password, acclevel = 100`,
     [name, hash],
   );
+  await db.query(`INSERT INTO ${options} (keyname, value) VALUES ($1, $2) ON CONFLICT (keyname) DO UPDATE SET value = EXCLUDED.value`, [epochKey, String(Date.now())]);
+  // API tokens of this user end too: this is the recovery of a lost account.
+  await db.query(`DELETE FROM ${options} WHERE keyname LIKE 'gamewe\\_apitoken\\_%' AND value LIKE $1`, [ownerLike]);
   const keys = [totpKey, pendingKey, ...backupKeys];
   if (totp) await db.query(`DELETE FROM ${options} WHERE keyname IN (${keys.map((_, i) => `$${i + 1}`).join(", ")})`, keys);
   if (totpSecret) await db.query(`INSERT INTO ${options} (keyname, value) VALUES ($1, $2)`, [totpKey, seal(totpSecret)]);
@@ -133,6 +141,9 @@ if (pg) {
      ON DUPLICATE KEY UPDATE password = VALUES(password), acclevel = 100`,
     [name, hash],
   );
+  await db.query(`INSERT INTO ${options} (keyname, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)`, [epochKey, String(Date.now())]);
+  // API tokens of this user end too: this is the recovery of a lost account.
+  await db.query(`DELETE FROM ${options} WHERE keyname LIKE 'gamewe\\_apitoken\\_%' AND value LIKE ?`, [ownerLike]);
   const keys = [totpKey, pendingKey, ...backupKeys];
   if (totp) await db.query(`DELETE FROM ${options} WHERE keyname IN (${keys.map(() => "?").join(", ")})`, keys);
   if (totpSecret) await db.query(`INSERT INTO ${options} (keyname, value) VALUES (?, ?)`, [totpKey, seal(totpSecret)]);

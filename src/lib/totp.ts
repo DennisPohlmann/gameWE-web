@@ -58,6 +58,12 @@ function optionKey(user: string, pending: boolean) {
   return `gamewe_totp${pending ? "p" : ""}_${createHash("sha256").update(user).digest("hex").slice(0, 32)}`;
 }
 
+// When the user's sessions were last ended (auth.ts). Not bound to the exact
+// spelling, as the database may compare names without case or trailing spaces.
+export function sessionEpochKey(user: string) {
+  return `gamewe_totps_${createHash("sha256").update(user.trim().toLowerCase()).digest("hex").slice(0, 32)}`;
+}
+
 function key(adminSecret: string) {
   return createHash("sha256").update(`gamewe-totp:${adminSecret}`).digest();
 }

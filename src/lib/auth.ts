@@ -7,8 +7,8 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { basePath } from "./base-path";
 import { clientIp } from "./client-ip";
-import { adminExec, adminQuery } from "./db";
-import { readSecret, secondFactor } from "./totp";
+import { adminExec, adminQuery, upsert } from "./db";
+import { readSecret, secondFactor, sessionEpochKey } from "./totp";
 import { idleLeft } from "./admin-idle";
 import { getSettings } from "./settings";
 
@@ -97,6 +97,18 @@ function fail(ip: string) {
   failures.set(ip, { n: (f && f.until > now ? f.n : 0) + 1, until: now + 15 * 60_000 });
 }
 
+// The brake around a second-factor code asked of a signed-in user (removing
+// TOTP, new backup codes): wrong codes count per address and per account, so
+// a stolen session cannot try codes without limit. check says whether the
+// code is right; while blocked it is not called.
+export async function brakedCode(username: string, check: () => Promise<boolean>): Promise<"ok" | "code" | "blocked"> {
+  const keys = [await clientIp(), `user:${username}`];
+  for (const k of keys) if (await blocked(k)) return "blocked";
+  if (await check()) return "ok";
+  for (const k of keys) fail(k);
+  return "code";
+}
+
 export async function cookieSecure() {
   return (await headers()).get("x-forwarded-proto") === "https" || env("ADMIN_COOKIE_SECURE") === "true";
 }
@@ -151,6 +163,10 @@ export async function changePassword(username: string, current: string, next: st
     return "wrong";
   }
   await adminExec(`UPDATE hlstats_Users SET password = ? WHERE username = ?`, [hashPassword(next), username]);
+  // Every other session of the account ends; this browser stays signed in.
+  const at = await revokeSessions(username);
+  const secret = adminSecret();
+  if (secret) await startSession(username, secret, at + 1);
   return "ok";
 }
 
@@ -230,9 +246,19 @@ export async function loginCode(code: string): Promise<"ok" | "code" | "expired"
   return "ok";
 }
 
-// The session cookie: user, end of the session (12 hours after the sign-in)
-// and the time of the last activity for the automatic sign-out (a).
-type SessionData = { u: string; exp: number; a: number };
+// The session cookie: user, end of the session (12 hours after the sign-in),
+// the time of the last activity for the automatic sign-out (a) and of the
+// sign-in (i). A cookie is only signed, so ending a session needs a stored
+// time: sessions of the account signed in up to then are refused.
+type SessionData = { u: string; exp: number; a: number; i: number };
+
+// Ends all sessions of a user name (sign-out, new password, deleted user: a
+// later user of that name does not inherit them). Returns the time stored.
+export async function revokeSessions(username: string): Promise<number> {
+  const at = Date.now();
+  await adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [sessionEpochKey(username), String(at)]);
+  return at;
+}
 
 async function writeSession(data: SessionData, secret: string) {
   const payload = Buffer.from(JSON.stringify(data)).toString("base64url");
@@ -245,9 +271,8 @@ async function writeSession(data: SessionData, secret: string) {
   });
 }
 
-async function startSession(username: string, secret: string) {
-  const now = Date.now();
-  await writeSession({ u: username, exp: now + SESSION_HOURS * 3600_000, a: now }, secret);
+async function startSession(username: string, secret: string, now = Date.now()) {
+  await writeSession({ u: username, exp: now + SESSION_HOURS * 3600_000, a: now, i: now }, secret);
 }
 
 // The checked cookie of the session, or null. A cookie from before the
@@ -261,7 +286,7 @@ async function readSession(secret: string): Promise<SessionData | null> {
   const want = Buffer.from(sign(payload, secret));
   const got = Buffer.from(mac);
   if (want.length !== got.length || !timingSafeEqual(want, got)) return null;
-  let data: { u?: unknown; exp?: unknown; a?: unknown };
+  let data: { u?: unknown; exp?: unknown; a?: unknown; i?: unknown };
   try {
     data = JSON.parse(Buffer.from(payload, "base64url").toString());
   } catch {
@@ -269,7 +294,8 @@ async function readSession(secret: string): Promise<SessionData | null> {
   }
   if (typeof data.u !== "string" || !data.u || typeof data.exp !== "number" || data.exp < Date.now()) return null;
   const a = typeof data.a === "number" ? data.a : data.exp - SESSION_HOURS * 3600_000;
-  return { u: data.u, exp: data.exp, a };
+  const i = typeof data.i === "number" ? data.i : data.exp - SESSION_HOURS * 3600_000;
+  return { u: data.u, exp: data.exp, a, i };
 }
 
 // Milliseconds until the automatic sign-out of this session (Infinity when
@@ -298,6 +324,9 @@ export async function touchSession(): Promise<number | null> {
 }
 
 export async function logout() {
+  const secret = adminSecret();
+  const s = secret ? await readSession(secret) : null;
+  if (s) await revokeSessions(s.u);
   const jar = await cookies();
   jar.delete({ name: COOKIE, path: basePath || "/" });
   jar.delete({ name: OLD_COOKIE, path: `${basePath}/admin` });
@@ -311,6 +340,9 @@ export const currentAdmin = cache(async (): Promise<AdminUser | null> => {
   if (!data) return null;
   // Signed out after too long without activity (Settings → Admin area).
   if (idleLeft(data.a, (await getSettings()).adminIdleMinutes, Date.now()) <= 0) return null;
+  // Ended by a sign-out or a new password, also from another browser.
+  const [ended] = await adminQuery<{ value: string }>(`SELECT value FROM hlstats_Options WHERE keyname = ?`, [sessionEpochKey(data.u)]);
+  if (ended && data.i <= Number(ended.value)) return null;
   // Re-read the account so a deleted or demoted user loses access at once.
   const [user] = await adminQuery<AdminUser>(`SELECT username, acclevel FROM hlstats_Users WHERE username = ?`, [data.u]);
   return user && user.acclevel >= LEVEL_MIN ? user : null;

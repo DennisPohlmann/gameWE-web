@@ -8,8 +8,8 @@ import { headerOrder } from "@/lib/header-links";
 import { dicts } from "@/translations";
 import { rawOptions } from "@/lib/admin-data";
 import { adminDict } from "@/lib/admin-i18n";
-import { RAW_GROUP, rawOptionHelp, READONLY_OPTIONS, allSettings, settingGroups, settingsReader, type Setting } from "@/lib/admin-settings";
-import { requireAdmin } from "@/lib/auth";
+import { RAW_GROUP, adminOnlyOption, rawOptionHelp, READONLY_OPTIONS, allSettings, settingGroups, settingsReader, type Setting } from "@/lib/admin-settings";
+import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { ENV_FALLBACK, envFormValues, valueSource } from "@/lib/config";
 import { noAutofill } from "@/lib/autofill";
 import { pageSizeStep } from "@/lib/page-size";
@@ -113,7 +113,7 @@ export default async function SettingsPage({
                 />
               ),
             )}
-            {isRaw ? <RawFields raw={raw} lang={lang} /> : null}
+            {isRaw ? <RawFields raw={raw} lang={lang} level={user.acclevel} /> : null}
           </div>
         </section>
         <div className="savebar">
@@ -162,8 +162,8 @@ function SettingField({
     // The hidden 0 is sent when the switch is off (lib: saveSettingsAction).
     control = (
       <label className="switch">
-        <input type="hidden" name={s.key} value="0" />
-        <input {...noAutofill} id={id} type="checkbox" name={s.key} value="1" defaultChecked={v === "1"} />
+        <input type="hidden" name={s.key} value="0" disabled={readOnly} />
+        <input {...noAutofill} id={id} type="checkbox" name={s.key} value="1" defaultChecked={v === "1"} disabled={readOnly} />
         <i aria-hidden="true" />
         <span className="on-t">{a.ui.on}</span>
         <span className="off-t">{a.ui.off}</span>
@@ -202,6 +202,7 @@ function SettingField({
         id={id}
         name={s.key}
         defaultValue={v}
+        disabled={readOnly}
         type={s.type === "number" ? "number" : "text"}
         min={s.min}
         max={s.max}
@@ -227,23 +228,24 @@ function SettingField({
 }
 
 // The rows of hlstats_Options without a field of their own.
-function RawFields({ raw, lang }: { raw: { keyname: string; value: string }[]; lang: Lang }) {
+function RawFields({ raw, lang, level }: { raw: { keyname: string; value: string }[]; lang: Lang; level: number }) {
   const a = adminDict(lang);
   return (
     <>
       {raw.length ? null : <p className="settings-help">{a.rawNone}</p>}
       {raw.map((r, i) => {
         const help = rawOptionHelp(r.keyname, lang) ?? a.rawUnknown;
+        const locked = READONLY_OPTIONS.includes(r.keyname) || (level < LEVEL_ADMIN && adminOnlyOption(r.keyname));
         return (
           <div className="field" key={r.keyname}>
             <div className="l">
               <b>
                 <code>{r.keyname}</code>
               </b>
-              <span>{READONLY_OPTIONS.includes(r.keyname) ? `${a.rawReadonly} ${help}` : help}</span>
+              <span>{locked ? `${a.rawReadonly} ${help}` : help}</span>
             </div>
             <div className="c">
-              {READONLY_OPTIONS.includes(r.keyname) ? (
+              {locked ? (
                 <input {...noAutofill} value={r.value} readOnly aria-readonly="true" aria-label={r.keyname} />
               ) : (
                 <>

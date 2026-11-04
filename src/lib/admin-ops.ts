@@ -4,9 +4,9 @@ import { deleteRow, getRow, InputError, isDuplicateKey, optionList, otherServerA
 import { globalHall, hallSettings, saveGlobalHall, saveHallSettings, setHallRemoved } from "./admin-hall";
 import { saveRankingBlockVac, saveRankingBots, type RankingBots } from "./admin-ranking-bots";
 import { allServers, assignServers, copyDefinitions, rankingBaseGames, resettableRankings } from "./admin-rankings";
-import { RAW_GROUP, READONLY_OPTIONS, homeValue, linkValue, rawKeyAllowed, settingGroups } from "./admin-settings";
+import { RAW_GROUP, READONLY_OPTIONS, adminOnlyOption, homeValue, linkValue, rawKeyAllowed, settingGroups } from "./admin-settings";
 import { purgeTokens } from "./api-tokens";
-import { LEVEL_ADMIN, type AdminUser } from "./auth";
+import { LEVEL_ADMIN, revokeSessions, type AdminUser } from "./auth";
 import { steamKey } from "./config";
 import { adminExec, adminQuery, upsert } from "./db";
 import { RETIRED_GAMES, sameBaseGame } from "./games";
@@ -137,7 +137,7 @@ export async function saveEntity(a: Actor, e: Entity, id: string | null, form: F
     if (err instanceof InputError) throw new OpError("field", { field: err.message });
     // Another admin saved the same IP and port in the meantime.
     if (e.key === "servers" && isDuplicateKey(err)) throw new OpError("duplicate");
-    console.error("admin save:", err);
+    console.error("admin save:", err instanceof Error ? err.message : err);
     throw new OpError("db", { msg: dbMsg(err), ...(isDuplicateKey(err) ? { dupkey: "1" } : {}) });
   }
   // A new user never inherits the API tokens of an earlier user of that name.
@@ -175,7 +175,7 @@ export async function deleteEntity(a: Actor, e: Entity, id: string): Promise<voi
   if (e.key === "users" && id === a.user.username) throw new OpError("self");
   try {
     await deleteRow(e, id);
-    if (e.key === "users") await Promise.all([removeSecret(id, false), removeSecret(id, true), removeBackupCodes(id), purgeTokens(id)]);
+    if (e.key === "users") await Promise.all([removeSecret(id, false), removeSecret(id, true), removeBackupCodes(id), purgeTokens(id), revokeSessions(id)]);
   } catch (err) {
     throw new OpError("db", { msg: dbMsg(err) });
   }
@@ -323,6 +323,7 @@ export async function saveSettings(a: Actor, groupId: string, form: Form, only?:
       if (!m) continue;
       const key = String(entry);
       if (!rawKeys.has(key) || READONLY_OPTIONS.includes(key)) continue;
+      if (a.user.acclevel < LEVEL_ADMIN && adminOnlyOption(key)) bad(`raw:${key}`);
       if (form.get(`raw_del_${m[1]}`) === "1") {
         removed.push(key);
         continue;
@@ -334,7 +335,7 @@ export async function saveSettings(a: Actor, groupId: string, form: Form, only?:
     const newKey = String(form.get("raw_new_key") ?? "").trim();
     if (newKey) {
       const v = String(form.get("raw_new_val") ?? "");
-      if (!rawKeyAllowed(newKey) || rawKeys.has(newKey) || v.length > 255 || /[\r\n]/.test(v)) bad("raw_new");
+      if ((a.user.acclevel < LEVEL_ADMIN && adminOnlyOption(newKey)) || !rawKeyAllowed(newKey) || rawKeys.has(newKey) || v.length > 255 || /[\r\n]/.test(v)) bad("raw_new");
       const exists = await adminQuery(`SELECT keyname FROM hlstats_Options WHERE keyname = ?`, [newKey]);
       if (exists.length) bad("raw_new");
       values.push([newKey, v]);

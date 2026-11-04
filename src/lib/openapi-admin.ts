@@ -781,7 +781,7 @@ export const adminOps: AdminOp[] = [
     operationId: "adminUpdateRawOptions",
     tag: "Admin: settings",
     summary: "Change other options (raw)",
-    description: "Changes or deletes listed rows and adds one new key (letters, digits, `_ . -`; not a key of a settings page or a hidden one). Values: at most 255 characters, no line breaks.",
+    description: "Changes or deletes listed rows and adds one new key (letters, digits, `_ . -`; not a key of a settings page or a hidden one). Below level 100, rows of reset schedules, the VAC block and bot settings are refused. Values: at most 255 characters, no line breaks.",
     level: 80,
     handler: "rawSet",
     body: obj({ set: { type: "object", additionalProperties: { type: "string", maxLength: 255 }, description: "Existing keys and their new values" }, delete: arr(str("Key"), "Existing keys to delete"), create: obj({ key: str("New key", { maxLength: 128 }), value: str("Value", { maxLength: 255 }) }) }, ["set", "delete", "create"]),

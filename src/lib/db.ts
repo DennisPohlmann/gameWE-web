@@ -90,7 +90,15 @@ function mariadbDriver(user: string | undefined, password: string | undefined, l
   });
   return {
     async run(sql, params) {
-      const [res] = await pool.query(sql, params);
+      let res;
+      try {
+        [res] = await pool.query(sql, params);
+      } catch (err) {
+        // mysql2 adds the statement with its values (passwords too), which
+        // logging the error would print.
+        if (err && typeof err === "object") delete (err as { sql?: string }).sql;
+        throw err;
+      }
       if (Array.isArray(res)) return { rows: res as Record<string, unknown>[], affectedRows: 0, insertId: 0 };
       const h = res as mysql.ResultSetHeader;
       return { rows: [], affectedRows: h.affectedRows, insertId: h.insertId };

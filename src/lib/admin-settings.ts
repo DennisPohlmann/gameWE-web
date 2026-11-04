@@ -339,11 +339,11 @@ const definitions: Omit<SettingGroup, "area">[] = [
         ],
         help: { de: "Nach dem Wechsel speichern; die Felder der anderen Art bleiben gespeichert, werden aber nicht genutzt.", en: "Save after switching; the fields of the other kind stay stored but are not used." },
       },
-      { key: "gamewe_ts_host", label: { de: "TeamSpeak-Server (Adresse)", en: "TeamSpeak server (address)" }, type: "text", def: "", help: { de: "z. B. ts.example.org", en: "e.g. ts.example.org" }, show: TS },
+      { key: "gamewe_ts_host", label: { de: "TeamSpeak-Server (Adresse)", en: "TeamSpeak server (address)" }, type: "text", def: "", minLevel: 100, help: { de: "z. B. ts.example.org", en: "e.g. ts.example.org" }, show: TS },
       { key: "gamewe_ts_port", label: { de: "TeamSpeak-Port", en: "TeamSpeak port" }, type: "number", def: "9987", min: 1, max: 65535, show: TS },
-      { key: "gamewe_ts_query_port", label: { de: "ServerQuery-Port", en: "ServerQuery port" }, type: "number", def: "10011", min: 1, max: 65535, help: { de: "Raw-Query (nicht SSH). Muss vom Webserver aus erreichbar sein.", en: "Raw query (not SSH). Must be reachable from the web server." }, show: TS },
-      { key: "gamewe_ts_query_user", label: { de: "ServerQuery-Benutzer", en: "ServerQuery user" }, type: "text", def: "", help: { de: "Leer: als Gast abfragen (geht nur, wenn die Gast-Gruppe serverinfo darf).", en: "Empty: query as guest (works only if the guest group may use serverinfo)." }, show: TS },
-      { key: "gamewe_ts_query_password", label: { de: "ServerQuery-Passwort", en: "ServerQuery password" }, type: "secret", def: "", help: { de: "Wird nie angezeigt. Leer lassen, um es zu behalten.", en: "Never shown. Leave empty to keep it." }, show: TS },
+      { key: "gamewe_ts_query_port", label: { de: "ServerQuery-Port", en: "ServerQuery port" }, type: "number", def: "10011", minLevel: 100, min: 1, max: 65535, help: { de: "Raw-Query (nicht SSH). Muss vom Webserver aus erreichbar sein.", en: "Raw query (not SSH). Must be reachable from the web server." }, show: TS },
+      { key: "gamewe_ts_query_user", label: { de: "ServerQuery-Benutzer", en: "ServerQuery user" }, type: "text", def: "", minLevel: 100, help: { de: "Leer: als Gast abfragen (geht nur, wenn die Gast-Gruppe serverinfo darf).", en: "Empty: query as guest (works only if the guest group may use serverinfo)." }, show: TS },
+      { key: "gamewe_ts_query_password", label: { de: "ServerQuery-Passwort", en: "ServerQuery password" }, type: "secret", def: "", minLevel: 100, help: { de: "Wird nie angezeigt. Leer lassen, um es zu behalten.", en: "Never shown. Leave empty to keep it." }, show: TS },
       { key: "gamewe_ts_password", label: { de: "TeamSpeak-Serverpasswort", en: "TeamSpeak server password" }, type: "text", def: "", help: { de: "Besucher sehen ein Schloss, wenn eins gesetzt ist; das Passwort selbst nur mit der Einstellung darunter. Leer: „-“.", en: "Visitors see a lock when one is set; the password itself only with the setting below. Empty: \"-\"." }, show: TS },
       {
         key: "gamewe_ts_password_reveal",
@@ -652,6 +652,11 @@ export const definedSettings = definitions.flatMap((g) => g.items);
 // above and the privacy page's keys (their own page, /admin/privacy; the address and the
 // text hold line breaks a raw value may not have).
 export const HIDDEN_OPTION_PREFIXES = ["gamewe_totp", "gamewe_apitoken", "gamewe_ts_query_password", "gamewe_metrics_token", "gamewe_steam_api_key", "gamewe_privacy_"];
+// Rows the level 100 operations write (reset schedules, VAC block, bots), which
+// the collector acts on, or that it opens as a file: below level 100 the raw
+// list shows them read-only and refuses them.
+const ADMIN_ONLY_OPTION_PREFIXES = ["gamewe_reset_", "gamewe_next_reset_", "gamewe_hof_", "gamewe_block_vac_", "gamewe_rank_bots_", "gamewe_bot_points_", "gamewe_bot_kills_", "gamewe_bot_stats_", "gamewe_geoip_db"];
+export const adminOnlyOption = (key: string) => ADMIN_ONLY_OPTION_PREFIXES.some((p) => key.toLowerCase().startsWith(p));
 // Written by the collector, shown read-only.
 export const READONLY_OPTIONS = ["gamewe_heartbeat", "gamewe_collector_version", "gamewe_collector_runtime"];
 

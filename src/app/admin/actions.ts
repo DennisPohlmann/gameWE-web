@@ -9,9 +9,9 @@ import { OpError, assignServersTo, deleteEntity, moveServer, resetRanking, saveE
 import { ADMIN_THEME_COOKIE, isAdminTheme } from "@/lib/admin-theme";
 import { basePath } from "@/lib/base-path";
 import { expiryDays, tokenName } from "@/lib/api-token-core";
-import { createToken, revokeToken } from "@/lib/api-tokens";
+import { createToken, purgeTokens, revokeToken } from "@/lib/api-tokens";
 import { apiEnabled } from "@/lib/api-switch";
-import { LEVEL_ADMIN, adminSecret, confirmIdentity, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, requireAdmin } from "@/lib/auth";
+import { LEVEL_ADMIN, adminSecret, brakedCode, confirmIdentity, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, requireAdmin } from "@/lib/auth";
 import { codeMode, codeStepHref } from "@/lib/login-code";
 import { resetMode } from "@/lib/reset";
 import { addParams, safeReturnTo, withReturnTo } from "@/lib/return-to";
@@ -240,8 +240,11 @@ export async function totpBackupCodesAction(_prev: BackupCodesState, form: FormD
   const { user, secret } = await totpUser();
   const at = Date.now();
   const active = await readSecret(user, secret);
-  const step = active ? checkCode(active, String(form.get("code") ?? "")) : null;
-  if (step === null || !consumeStep(user, step)) return { error: "code", at };
+  const right = await brakedCode(user, async () => {
+    const step = active ? checkCode(active, String(form.get("code") ?? "")) : null;
+    return step !== null && consumeStep(user, step);
+  });
+  if (right !== "ok") return { error: "code", at };
   const codes = newBackupCodes();
   await storeBackupCodes(user, codes, secret);
   return { codes, at };
@@ -251,9 +254,12 @@ export async function totpBackupCodesAction(_prev: BackupCodesState, form: FormD
 export async function totpDisableAction(form: FormData) {
   const { user, secret } = await totpUser();
   const active = await readSecret(user, secret);
-  if (active === null || !(await secondFactor(user, active, String(form.get("code") ?? ""), secret))) redirect("/admin/account?error=code");
+  const right = await brakedCode(user, async () => active !== null && (await secondFactor(user, active, String(form.get("code") ?? ""), secret)) !== null);
+  if (right !== "ok") redirect("/admin/account?error=code");
   await removeSecret(user, false);
   await removeBackupCodes(user);
+  // Whoever had the old second factor may have made a token with it.
+  await purgeTokens(user);
   redirect("/admin/account?done=off");
 }
 
@@ -263,6 +269,8 @@ export async function changePasswordAction(form: FormData) {
   const next = String(form.get("next") ?? "");
   if (next !== String(form.get("repeat") ?? "")) redirect("/admin/account?pw=mismatch");
   const r = await changePassword(user.username, String(form.get("current") ?? ""), next);
+  // Whoever had the old password may have made a token with it.
+  if (r === "ok") await purgeTokens(user.username);
   redirect(`/admin/account?pw=${r === "ok" ? "saved" : r}`);
 }
 

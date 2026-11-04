@@ -390,10 +390,14 @@ admin. Each user creates and revokes their own under My account → API
 tokens (name, expiry; confirmed with the password and the TOTP code). The
 token is shown only once. With a token, the own password, TOTP, level and
 account cannot be changed, and tokens cannot be managed; deleting a user or
-lowering them below level 80 stops their tokens at once.
+lowering them below level 80 stops their tokens at once. A new password,
+removing TOTP and `create-admin` delete the user's tokens too, so scripts need
+a new token afterwards.
 
 Users are the rows of `hlstats_Users`. Level 100 may change everything, level 80
-everything except games, servers and users. A new user gets a first password
+everything except games, servers and users, and it cannot change rows that
+belong to those (reset schedules, VAC block and bot settings in the raw
+options; they are read-only there) or the TeamSpeak query login and address. A new user gets a first password
 when they are created; after that each user changes only their own password
 (My account, with the current one), in the admin area and in the API, and
 only the user sets up or removes their TOTP. On the server,
@@ -418,7 +422,11 @@ time runs out if there was activity since; `/admin/session`), and the server ref
 setting, so the limit holds also without the page's script. Activity in
 another tab of the same browser keeps the session alive. Public pages do not
 count as activity in the admin area. The session still ends 12 hours after
-the sign-in.
+the sign-in. Signing out, a new password, `create-admin` and deleting the user
+end all sessions of that account in every browser (after a new password the
+current browser stays signed in). Removing TOTP or making new backup codes
+counts wrong codes like the sign-in: 10 per address or account block for 15
+minutes.
 
 The admin area has its own design, independent of the templates of the
 public pages: light or dark (it follows the device; the user menu top right
