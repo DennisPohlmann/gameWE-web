@@ -29,8 +29,23 @@ const RETRY = 10 * 60 * 1000;
 const cache = new Map<string, { at: number; value: SteamProfile | null }>();
 const inflight = new Map<string, Promise<SteamProfile | null>>();
 
+const CALLS_PER_DAY = 50_000;
+let callDay = 0;
+let callsToday = 0;
+
+function callBudget(now: number): boolean {
+  const day = Math.floor(now / 86_400_000);
+  if (day !== callDay) {
+    callDay = day;
+    callsToday = 0;
+  }
+  return ++callsToday <= CALLS_PER_DAY;
+}
+
 function remember(steam64: string, value: SteamProfile | null, retryIn = RETRY) {
-  if (cache.size > 20000) cache.clear();
+  // The oldest go first: clearing all would make a walk over the ids cost
+  // the whole quota again (a Map keeps the order of insertion).
+  while (cache.size >= 20000) cache.delete(cache.keys().next().value as string);
   // Failures are retried after retryIn, not a day.
   cache.set(steam64, { at: value ? Date.now() : Date.now() - TTL + retryIn, value });
 }
@@ -119,6 +134,12 @@ type Summary = {
 async function loadBatch(ids: string[]) {
   const key = await apiKey();
   if (!key || !ids.length) return;
+  // Anonymous requests start these calls, and the collector shares the key:
+  // past half of Steam's documented 100,000 calls a day, the answer is "unknown".
+  if (!callBudget(Date.now())) {
+    for (const id of ids) remember(id, null);
+    return;
+  }
   const q = ids.join(",");
   try {
     // Only the profile: the bans come from the collector (hlstats_Bans,

@@ -1,3 +1,4 @@
+import { overLimit } from "@/lib/api";
 import type { NextRequest } from "next/server";
 import { CONSENT_COOKIE, parseConsent } from "@/lib/consent";
 import { getPlayer, noProfile } from "@/lib/data";
@@ -11,6 +12,8 @@ import { getSteamProfile } from "@/lib/steam";
 // on that cookie and is kept by the browser only.
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const headers = { "cache-control": "private, max-age=120", vary: "Cookie" };
+  const wait = await overLimit("avatar", 240);
+  if (wait) return new Response("rate limit", { status: 429, headers: { "retry-after": String(wait), "cache-control": "no-store" } });
   if (!parseConsent(req.cookies.get(CONSENT_COOKIE)?.value).steam) return new Response("no consent", { status: 404, headers: { ...headers, "cache-control": "private, no-store" } });
   const m = /^\d{1,10}$/.exec((await params).id);
   const found = m ? await getPlayer(Number(m[0])) : undefined;
