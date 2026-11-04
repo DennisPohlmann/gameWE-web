@@ -1,5 +1,6 @@
 import { serverBanner } from "@/lib/banners/server-banner";
 import { voiceBanner } from "@/lib/banners/voice-banner";
+import { bannerBusy } from "@/lib/banners/cache";
 
 // /banner/teamspeak.png (and -<template>.png): the TeamSpeak banner. Any
 // other file is the old server banner URL /banner/<serverId>.png (and
@@ -7,6 +8,8 @@ import { voiceBanner } from "@/lib/banners/voice-banner";
 // already posted in forums keep working. The segment is named [game] because
 // Next.js allows one slug name per level; here it holds the file name.
 export async function GET(_req: Request, { params }: { params: Promise<{ game: string }> }) {
+  const busy = await bannerBusy();
+  if (busy) return busy;
   const file = (await params).game;
   return file.startsWith("teamspeak") ? voiceBanner(file) : serverBanner(file, null);
 }

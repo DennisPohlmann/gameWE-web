@@ -1,4 +1,5 @@
 import "server-only";
+import { cachedBanner } from "./cache";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { ImageResponse } from "next/og";
@@ -27,7 +28,11 @@ const ADDR = 140;
 // address, port, status, players with a pie, map and, on the left, the
 // players of the last 24 hours. With code set (banner/<code>/server/...) the
 // server must belong to that ranking; null only for the old /banner/<file>.
-export async function serverBanner(file: string, code: string | null) {
+export function serverBanner(file: string, code: string | null) {
+  return cachedBanner(`server|${code ?? ""}`, file, () => render(file, code));
+}
+
+async function render(file: string, code: string | null) {
   const f = parseImageFile(file);
   const s = f ? await getServer(f.id) : undefined;
   if (!s || (code !== null && s.game !== code)) return new Response("not found", { status: 404 });

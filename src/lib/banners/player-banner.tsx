@@ -1,4 +1,5 @@
 import "server-only";
+import { cachedBanner } from "./cache";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { ImageResponse } from "next/og";
@@ -20,7 +21,11 @@ import { imageTheme, parseImageFile } from "@/lib/image-theme";
 // hidden ranking and for bots while they have no profile; hidden players
 // keep it, without their position. With game set (banner/<game>/player/...)
 // the player must belong to that ranking; null only for the old /sig/<file>.
-export async function playerBanner(file: string, game: string | null) {
+export function playerBanner(file: string, game: string | null) {
+  return cachedBanner(`player|${game ?? ""}`, file, () => render(file, game));
+}
+
+async function render(file: string, game: string | null) {
   const f = parseImageFile(file);
   const p = f ? await getPlayer(f.id) : undefined;
   const g = p && (game === null || p.game === game) && !(await noProfile(p)) ? await getGame(p.game) : undefined;

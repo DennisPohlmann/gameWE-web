@@ -1,4 +1,5 @@
 import "server-only";
+import { cachedBanner } from "./cache";
 import { ImageResponse } from "next/og";
 import { FLAG_CODES } from "@/lib/flag-codes";
 import { fmtDuration } from "@/lib/format";
@@ -22,7 +23,11 @@ const ADDR = 170;
 // flag, address, status, users online of the slots (big on the left with a
 // fill bar), channels, uptime and server type. When the query fails the
 // banner says Offline; 404 unless TeamSpeak is the voice server.
-export async function voiceBanner(file: string) {
+export function voiceBanner(file: string) {
+  return cachedBanner("voice", file, () => render(file));
+}
+
+async function render(file: string) {
   const f = parseVoiceBannerFile(file);
   const box = f ? await getVoiceBox() : null;
   if (!f || !box?.ts) return new Response("not found", { status: 404 });
