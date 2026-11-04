@@ -675,6 +675,30 @@ table.stats.summary td.radar-cell { width: auto; }
 @container (max-width: 360px) {
   .summary-box .spark { width: 146px; min-width: 146px; }
 }
+/* The player's summary: the radar as a block of its own (beside the list in a
+   wide box, above it in a narrow one) and one list of labels and values, all
+   rows on the same grid and of the same height. The radar's labels reach into
+   the margin around it, so none is cut. */
+table.stats.psum { table-layout: fixed; }
+.psum-side { width: 290px; }
+table.stats.psum td.psum-radar { padding: 10px 0; vertical-align: top; text-align: center; }
+table.stats.psum td.psum-list { padding: 0; white-space: normal; vertical-align: top; }
+.psum .radar-wrap { width: 200px; max-width: 200px; }
+.psum .radar-wrap .radar { max-width: none; overflow: visible; }
+.psum .radar-label { font-size: 11.5px; }
+.psum dl { margin: 0; }
+.psum-row { display: grid; grid-template-columns: 11em minmax(0, 1fr); gap: 0 8px; align-items: center; min-height: 28px; padding: 2px 6px; box-sizing: border-box; }
+.psum-row + .psum-row { border-top: 1px solid var(--border); }
+.psum-row dt { color: var(--th-text); font-weight: bold; }
+.psum-row dd { margin: 0; min-width: 0; }
+.psum .spark { width: 100%; min-width: 0; max-width: 240px; height: auto; }
+@container (max-width: 640px) {
+  .psum > colgroup { display: none; }
+  table.stats.psum, .psum > thead, .psum > tbody, .psum > * > tr, .psum > * > tr > * { display: block; width: auto; }
+  table.stats.psum td.psum-radar { border-bottom: 0; }
+  .psum .radar-wrap { width: min(62%, 260px); max-width: none; }
+  .psum-row { grid-template-columns: 7.5em minmax(0, 1fr); min-height: 40px; }
+}
 /* The history links under the summary and the note on the starred values
    (last 14 days) share one line; on a narrow screen the note wraps below. */
 .summary-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin: 6px 0 10px; }

@@ -385,71 +385,47 @@ export default async function PlayerPage({ params, searchParams }: Props) {
 
           {/* Summary and the history links below it share the right column. */}
           <div className="summary-box">
-          <table className="stats summary">
-            {/* gameME's split: the left half holds position and points (four
-                cells) and below them the radar, the right half the labels
-                and values beside it; the rows below put the label in the
-                left half and the value in the right one. */}
+          {/* The radar is a block of its own; every value is one row of one
+              list, so labels, values and trend graphics line up. */}
+          <table className="stats psum">
             <colgroup>
-              <col className="sum-q" />
-              <col className="sum-q" />
-              <col className="sum-q" />
-              <col className="sum-q" />
-              <col className="sum-key" />
-              <col className="sum-val" />
+              <col className="psum-side" />
+              <col />
             </colgroup>
             <thead>
               <tr>
-                <th colSpan={6}>{t.playerSummary}</th>
+                <th colSpan={2}>{t.playerSummary}</th>
               </tr>
             </thead>
             <tbody>
-              {/* Position, points, activity, kills, deaths, kills per minute
-                  and the longest streak are in the head card above. */}
               <tr>
-                <td colSpan={4} rowSpan={4} className="radar-cell">
+                <td className="psum-radar">
                   <Radar axes={radar} labels={{ avg: t.radarAll, player: t.radarPlayer }} notes={radarNotes} />
                 </td>
-                <td className="stats-key">{t.hs}:</td>
-                <td>
-                  {fmtNum(p.headshots, lang)} ({fmtNum(hs14, lang)}*)
+                <td className="psum-list">
+                  {/* Position, points, activity, kills, deaths, kills per minute
+                      and the longest streak are in the head card above. */}
+                  <dl>
+                    <SumRow k={t.hs} v={`${fmtNum(p.headshots, lang)} (${fmtNum(hs14, lang)}*)`} />
+                    <SumRow k={t.kpdLong} v={<Spark values={kpdDays} total={kpd(p.kills, p.deaths)} current={kpdNow} fmt={n2} titles={sparkTitles} />} />
+                    <SumRow k={t.hpkLong} v={<Spark values={hpkDays} total={ratio(p.headshots, p.kills)} current={hpkNow} fmt={pc} titles={sparkTitles} />} />
+                    <SumRow k={t.suicides} v={fmtNum(p.suicides, lang)} />
+                    {/* Rounds count only with a winner: servers without win triggers (GunGame, DM) have none. */}
+                    <SumRow k={t.rounds} v={p.rounds ? `${fmtNum(p.rounds, lang)} (${t.wins}: ${fmtNum(p.wins, lang)}, ${t.losses}: ${fmtNum(p.losses, lang)})` : "—"} />
+                    <SumRow k={t.winRatio} v={p.rounds ? <Bar value={ratio(p.wins, p.rounds)} green label={pc(ratio(p.wins, p.rounds))} /> : "—"} />
+                    <SumRow k={t.survived} v={p.rounds ? `${fmtNum(p.survived_count, lang)} ${t.rounds} (${pc(ratio(p.survived_count, p.rounds))})` : "—"} />
+                    <SumRow k={t.teamkills} v={fmtNum(p.team_kills, lang)} />
+                    {shots ? (
+                      <>
+                        <SumRow k={t.acc} v={<Spark values={accDays} total={ratio(p.hits, p.shots)} current={accNow} fmt={pc} titles={sparkTitles} />} />
+                        <SumRow k={t.shotsPerKill} v={<Spark values={spkDays} total={p.kills && p.shots ? p.shots / p.kills : null} current={spkNow} fmt={n2} titles={sparkTitles} lowerIsBetter />} />
+                      </>
+                    ) : null}
+                    {/* Assisted kills (kills of this player others helped with) only when the collector counted any. */}
+                    <SumRow k={t.assists} v={`${fmtNum(p.kill_assists, lang)}${p.kills_assisted > 0 ? ` · ${t.assistedKills}: ${fmtNum(p.kills_assisted, lang)}` : ""}`} />
+                  </dl>
                 </td>
               </tr>
-              <tr>
-                <td className="stats-key">{t.kpdLong}:</td>
-                <td>
-                  <Spark values={kpdDays} total={kpd(p.kills, p.deaths)} current={kpdNow} fmt={n2} titles={sparkTitles} />
-                </td>
-              </tr>
-              <tr>
-                <td className="stats-key">{t.hpkLong}:</td>
-                <td>
-                  <Spark values={hpkDays} total={ratio(p.headshots, p.kills)} current={hpkNow} fmt={pc} titles={sparkTitles} />
-                </td>
-              </tr>
-              <tr>
-                <td className="stats-key">{t.suicides}:</td>
-                <td>{fmtNum(p.suicides, lang)}</td>
-              </tr>
-              {/* Rounds count only with a winner: servers without win triggers (GunGame, DM) have none. */}
-              <Row4 k={t.rounds} v={p.rounds ? `${fmtNum(p.rounds, lang)} (${t.wins}: ${fmtNum(p.wins, lang)}, ${t.losses}: ${fmtNum(p.losses, lang)})` : "—"} />
-              <Row4 k={t.winRatio} v={p.rounds ? <Bar value={ratio(p.wins, p.rounds)} green label={pc(ratio(p.wins, p.rounds))} /> : "—"} />
-              <Row4 k={t.survived} v={p.rounds ? `${fmtNum(p.survived_count, lang)} ${t.rounds} (${pc(ratio(p.survived_count, p.rounds))})` : "—"} />
-              <Row4 k={t.teamkills} v={fmtNum(p.team_kills, lang)} />
-              {shots ? (
-                <>
-                  <Row4
-                    k={t.acc}
-                    v={<Spark values={accDays} total={ratio(p.hits, p.shots)} current={accNow} fmt={pc} titles={sparkTitles} />}
-                  />
-                  <Row4
-                    k={t.shotsPerKill}
-                    v={<Spark values={spkDays} total={p.kills && p.shots ? p.shots / p.kills : null} current={spkNow} fmt={n2} titles={sparkTitles} lowerIsBetter />}
-                  />
-                </>
-              ) : null}
-              {/* Assisted kills (kills of this player others helped with) only when the collector counted any. */}
-              <Row4 k={t.assists} v={`${fmtNum(p.kill_assists, lang)}${p.kills_assisted > 0 ? ` · ${t.assistedKills}: ${fmtNum(p.kills_assisted, lang)}` : ""}`} />
             </tbody>
           </table>
           {/* The history links and the note on the starred values share one line. */}
@@ -956,14 +932,12 @@ function Row({ k, v }: { k: string; v: React.ReactNode }) {
   );
 }
 
-function Row4({ k, v }: { k: string; v: React.ReactNode }) {
+function SumRow({ k, v }: { k: string; v: React.ReactNode }) {
   return (
-    <tr>
-      <td colSpan={4} className="stats-key">
-        {k}:
-      </td>
-      <td colSpan={2}>{v}</td>
-    </tr>
+    <div className="psum-row">
+      <dt>{k}:</dt>
+      <dd>{v}</dd>
+    </div>
   );
 }
 
