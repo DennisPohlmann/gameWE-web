@@ -66,6 +66,17 @@ function best(rows: Row[], awards: Award[], kind: (a: Award) => boolean): AwardW
   });
 }
 
+// hlstats_Events_PlayerActions.log_only (collector schema 24): rows only for
+// the event lists, no award counts them. Older databases do not have the
+// column; the pages look again for it every 5 minutes.
+let logOnlyCol: { ok: Promise<boolean>; at: number } | undefined;
+async function logOnlyColumn() {
+  if (!logOnlyCol || (Date.now() - logOnlyCol.at > 300_000 && !(await logOnlyCol.ok))) {
+    logOnlyCol = { ok: query(`SELECT log_only FROM hlstats_Events_PlayerActions WHERE 1 = 0`).then(() => true, () => false), at: Date.now() };
+  }
+  return logOnlyCol.ok;
+}
+
 // The winners of one day (in the site's time zone), computed from the events of that day.
 export function computeDay(game: string, day: string, awards: Award[]): Promise<Map<number, AwardWin>> {
   return cached(`day:${game}:${day}`, day === siteDay() ? TODAY_TTL : TTL, () => computeDayNow(game, day, awards));
@@ -79,6 +90,7 @@ async function computeDayNow(game: string, day: string, awards: Award[]): Promis
   const weapons = awards.filter(isWeapon).map((a) => a.code);
   const actions = awards.filter((a) => a.awardType !== "W" && !isPlayer(a)).map((a) => a.code);
   const players = awards.filter(isPlayer);
+  const countedOnly = (await logOnlyColumn()) ? " AND e.log_only = 0" : "";
 
   const [w, o, p, l] = await Promise.all([
     weapons.length
@@ -101,7 +113,7 @@ async function computeDayNow(game: string, day: string, awards: Award[]): Promis
           `SELECT ac.code, x.playerId, d.lastName AS name, x.value
            FROM (SELECT e.actionId, e.playerId, COUNT(*) AS value
                  FROM hlstats_Events_PlayerActions e
-                 WHERE e.timestamp_id >= ? AND e.timestamp_id < ?
+                 WHERE e.timestamp_id >= ? AND e.timestamp_id < ?${countedOnly}
                    AND e.actionId IN (SELECT id FROM hlstats_Actions WHERE game = ? AND code IN (?))
                  GROUP BY e.actionId, e.playerId) x
            JOIN hlstats_Actions ac ON ac.id = x.actionId

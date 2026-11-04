@@ -705,6 +705,8 @@ What the admin area edits:
   existing bots at once (`hideranking` 0 ↔ 1; banned bots stay hidden).
   "Points for bot kills": off, kills with bots (either side) still count as
   kills, deaths and for the kill-based ranks, but change nobody's points;
+  with "Bot kills for the career rank" on, their headshots and kill streaks
+  still show in the event lists, without points and outside the awards;
   the help page then says so for that ranking. "Bot kills count as kills":
   off, a kill of a bot is stored (events, weapons, maps) but not added to
   the player's kills and headshots, so it raises neither the kill ranking,
