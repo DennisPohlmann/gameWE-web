@@ -394,7 +394,8 @@ lowering them below level 80 stops their tokens at once. A new password,
 removing TOTP and `create-admin` delete the user's tokens too, so scripts need
 a new token afterwards.
 
-Users are the rows of `hlstats_Users`. Level 100 may change everything, level 80
+Users are the rows of `hlstats_Users`. Changing the address, port or public address of a server without entering the
+RCON password again clears the stored one. Level 100 may change everything, level 80
 everything except games, servers and users, and it cannot change rows that
 belong to those (reset schedules, VAC block and bot settings in the raw
 options; they are read-only there) or the TeamSpeak query login and address. A new user gets a first password

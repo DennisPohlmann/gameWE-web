@@ -101,6 +101,16 @@ export async function saveEntity(a: Actor, e: Entity, id: string | null, form: F
     if (from !== to && !sameBaseGame(bases.get(from) ?? null, bases.get(to) ?? null)) throw new OpError("mismatch");
   }
   if (opts.ranking) form = withValue(form, "game", opts.ranking);
+  // The RCON password is sent to this address (the public address first): a
+  // new destination without a new password clears it, so nobody who may not
+  // read it can have it sent elsewhere.
+  if (e.key === "servers" && row && !String(form.get("rcon_password") ?? "").trim()) {
+    const moved = ["address", "port", "publicaddress"].some((f) => writes(f) && String(form.get(f) ?? "").trim() !== String(row[f] ?? "").trim());
+    if (moved) {
+      form = withValue(form, "rcon_password__clear", "1");
+      if (opts.only) opts = { ...opts, only: new Set([...opts.only, "rcon_password"]) };
+    }
+  }
   // One server per IP and port: point to the existing one instead of the
   // database's duplicate key error.
   if (e.key === "servers") {

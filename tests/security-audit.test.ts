@@ -102,3 +102,25 @@ test("forwarded addresses count only from a trusted proxy", async () => {
   assert.equal(direct["x-real-ip"], undefined);
   assert.equal((await seen("127.0.0.0/8"))["x-forwarded-for"], "203.0.113.7");
 });
+
+test("every ranking page checks the ranking, not only the layout", () => {
+  for (const f of ["players/page.tsx", "weapons/page.tsx", "chat/page.tsx", "bans/page.tsx"]) assert.match(src(`src/app/(site)/[game]/${f}`), /await rankingGate\(\(await params\)\.game\)/, f);
+  assert.match(src("src/app/(site)/[game]/servers/[id]/page.tsx"), /rankingShown\(s\.game\)/);
+  assert.match(src("src/app/(site)/[game]/players/[id]/page.tsx"), /rankingShown\(p\.game\)/);
+});
+
+test("a cut-off password hash signs nobody in, and unknown names cost the same", () => {
+  const auth = src("src/lib/auth.ts");
+  assert.match(auth, /want\.length < 32\) return \{ ok: false/);
+  assert.match(auth, /verifyPassword\(password, user \? user\.password : DUMMY_HASH\)/);
+});
+
+test("database sessions: backslash escaping holds, public statements have a deadline", () => {
+  const db = src("src/lib/db.ts");
+  assert.match(db, /REPLACE\(@@SESSION\.sql_mode, 'NO_BACKSLASH_ESCAPES', ''\)/);
+  assert.match(db, /env\("DB_PASSWORD"\), 10, PUBLIC_STATEMENT_SECONDS/);
+});
+
+test("a server's new address clears the stored RCON password", () => {
+  assert.match(src("src/lib/admin-ops.ts"), /rcon_password__clear", "1"/);
+});
