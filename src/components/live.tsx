@@ -6,6 +6,7 @@ import { baseGameOf } from "@/lib/games";
 import type { Dict, Lang } from "@/lib/i18n";
 import { playerCount } from "@/lib/player-count";
 import { LINUX_SVG, vacStateHtml, WINDOWS_SVG } from "@/lib/server-icons";
+import { MapLink } from "./map-link";
 import { PlayerCount } from "./player-count";
 import { Flag, GameIcon, SortTh } from "./ui";
 
@@ -100,7 +101,9 @@ export function ServerTable({
                   <ServerFlag code={s.country_code} lang={lang} />
                   <a href={`steam://connect/${addr}/`}>{addr}</a>
                 </td>
-                <td>{s.act_map || "-"}</td>
+                <td>
+                  <MapLink game={game} id={s.act_map_id} name={s.act_map} />
+                </td>
                 <td className="hide-sm">{s.map_started ? fmtDuration(now - s.map_started) : "-"}</td>
                 <td>
                   <span className={cls}>

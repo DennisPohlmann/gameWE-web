@@ -32,6 +32,7 @@ export type PlayerEvent = {
   text: string; // action/team/role/weapon name, old name
   code: string; // action/team/role/weapon code, new name
   map: string | null;
+  map_id: number | null;
 };
 
 // A row of the events page, with the other player's name.
@@ -52,28 +53,28 @@ const SHOWN_OTHER: Partial<Record<EventKind, string>> = {
 function sources(kinds: EventKind[]): string[] {
   const m = `LEFT JOIN hlstats_Maps m ON m.id = e.map`;
   const all: Record<EventKind, string> = {
-    connect: `SELECT e.timestamp_id AS ts, 'connect' AS kind, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map
+    connect: `SELECT e.timestamp_id AS ts, 'connect' AS kind, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map, m.id AS map_id
               FROM hlstats_Events_Connects e ${m} WHERE e.playerId = ?`,
-    entry: `SELECT e.timestamp_id AS ts, 'entry' AS kind, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map FROM hlstats_Events_Entries e ${m} WHERE e.playerId = ?`,
-    disconnect: `SELECT e.timestamp_id AS ts, 'disconnect' AS kind, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map FROM hlstats_Events_Disconnects e ${m} WHERE e.playerId = ?`,
-    team: `SELECT e.timestamp_id AS ts, 'team' AS kind, 0 AS num, 0 AS other, COALESCE(t.name, '') AS text, COALESCE(t.code, '') AS code, m.map AS map
+    entry: `SELECT e.timestamp_id AS ts, 'entry' AS kind, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map, m.id AS map_id FROM hlstats_Events_Entries e ${m} WHERE e.playerId = ?`,
+    disconnect: `SELECT e.timestamp_id AS ts, 'disconnect' AS kind, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map, m.id AS map_id FROM hlstats_Events_Disconnects e ${m} WHERE e.playerId = ?`,
+    team: `SELECT e.timestamp_id AS ts, 'team' AS kind, 0 AS num, 0 AS other, COALESCE(t.name, '') AS text, COALESCE(t.code, '') AS code, m.map AS map, m.id AS map_id
            FROM hlstats_Events_ChangeTeam e LEFT JOIN hlstats_Teams t ON t.teamId = e.team ${m} WHERE e.playerId = ?`,
-    role: `SELECT e.timestamp_id AS ts, 'role' AS kind, 0 AS num, 0 AS other, COALESCE(r.name, '') AS text, COALESCE(r.code, '') AS code, m.map AS map
+    role: `SELECT e.timestamp_id AS ts, 'role' AS kind, 0 AS num, 0 AS other, COALESCE(r.name, '') AS text, COALESCE(r.code, '') AS code, m.map AS map, m.id AS map_id
            FROM hlstats_Events_ChangeRole e LEFT JOIN hlstats_Roles r ON r.roleId = e.role ${m} WHERE e.playerId = ?`,
-    name: `SELECT e.timestamp_id AS ts, 'name' AS kind, 0 AS num, 0 AS other, e.oldName AS text, e.newName AS code, m.map AS map FROM hlstats_Events_ChangeName e ${m} WHERE e.playerId = ?`,
-    action: `SELECT e.timestamp_id AS ts, 'action' AS kind, e.bonus AS num, 0 AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map
+    name: `SELECT e.timestamp_id AS ts, 'name' AS kind, 0 AS num, 0 AS other, e.oldName AS text, e.newName AS code, m.map AS map, m.id AS map_id FROM hlstats_Events_ChangeName e ${m} WHERE e.playerId = ?`,
+    action: `SELECT e.timestamp_id AS ts, 'action' AS kind, e.bonus AS num, 0 AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map, m.id AS map_id
              FROM hlstats_Events_PlayerActions e LEFT JOIN hlstats_Actions a ON a.id = e.actionId ${m} WHERE e.playerId = ?`,
-    playeraction: `SELECT e.timestamp_id AS ts, 'playeraction' AS kind, e.bonus AS num, e.victimId AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map
+    playeraction: `SELECT e.timestamp_id AS ts, 'playeraction' AS kind, e.bonus AS num, e.victimId AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map, m.id AS map_id
                    FROM hlstats_Events_PlayerPlayerActions e LEFT JOIN hlstats_Actions a ON a.id = e.actionId ${m} WHERE e.playerId = ? AND ${SHOWN_OTHER.playeraction}`,
-    teambonus: `SELECT e.timestamp_id AS ts, 'teambonus' AS kind, e.bonus AS num, 0 AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map
+    teambonus: `SELECT e.timestamp_id AS ts, 'teambonus' AS kind, e.bonus AS num, 0 AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map, m.id AS map_id
                 FROM hlstats_Events_TeamBonuses e LEFT JOIN hlstats_Actions a ON a.id = e.actionId ${m} WHERE e.playerId = ?`,
-    kill: `SELECT e.timestamp_id AS ts, 'kill' AS kind, e.headshot AS num, e.victimId AS other, COALESCE(w.name, '') AS text, COALESCE(w.code, '') AS code, m.map AS map
+    kill: `SELECT e.timestamp_id AS ts, 'kill' AS kind, e.headshot AS num, e.victimId AS other, COALESCE(w.name, '') AS text, COALESCE(w.code, '') AS code, m.map AS map, m.id AS map_id
            FROM hlstats_Events_Frags e LEFT JOIN hlstats_Weapons w ON w.weaponId = e.weapon ${m} WHERE e.killerId = ? AND ${SHOWN_OTHER.kill}`,
-    death: `SELECT e.timestamp_id AS ts, 'death' AS kind, e.headshot AS num, e.killerId AS other, COALESCE(w.name, '') AS text, COALESCE(w.code, '') AS code, m.map AS map
+    death: `SELECT e.timestamp_id AS ts, 'death' AS kind, e.headshot AS num, e.killerId AS other, COALESCE(w.name, '') AS text, COALESCE(w.code, '') AS code, m.map AS map, m.id AS map_id
             FROM hlstats_Events_Frags e LEFT JOIN hlstats_Weapons w ON w.weaponId = e.weapon ${m} WHERE e.victimId = ? AND ${SHOWN_OTHER.death}`,
-    suicide: `SELECT e.timestamp_id AS ts, 'suicide' AS kind, 0 AS num, 0 AS other, COALESCE(w.name, '') AS text, COALESCE(w.code, '') AS code, m.map AS map
+    suicide: `SELECT e.timestamp_id AS ts, 'suicide' AS kind, 0 AS num, 0 AS other, COALESCE(w.name, '') AS text, COALESCE(w.code, '') AS code, m.map AS map, m.id AS map_id
               FROM hlstats_Events_Suicides e LEFT JOIN hlstats_Weapons w ON w.weaponId = e.weapon ${m} WHERE e.playerId = ?`,
-    teamkill: `SELECT e.timestamp_id AS ts, 'teamkill' AS kind, 0 AS num, e.victimId AS other, COALESCE(w.name, '') AS text, COALESCE(w.code, '') AS code, m.map AS map
+    teamkill: `SELECT e.timestamp_id AS ts, 'teamkill' AS kind, 0 AS num, e.victimId AS other, COALESCE(w.name, '') AS text, COALESCE(w.code, '') AS code, m.map AS map, m.id AS map_id
                FROM hlstats_Events_Teamkills e LEFT JOIN hlstats_Weapons w ON w.weaponId = e.weapon ${m} WHERE e.killerId = ? AND ${SHOWN_OTHER.teamkill}`,
   };
   return kinds.map((k) => all[k]);
@@ -297,27 +298,27 @@ function gameSource(kind: GameEventKind, by: string, withServer: boolean, match 
   const mapOnly = `LEFT JOIN hlstats_Maps m ON m.id = e.map`;
   const all: Record<GameEventKind, string> = {
     // Only the columns the public DB user may read (never ipAddress).
-    connect: `SELECT e.timestamp_id AS ts, 'connect' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map, '' AS server
+    connect: `SELECT e.timestamp_id AS ts, 'connect' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map, m.id AS map_id, '' AS server
               FROM hlstats_Events_Connects e ${mapOnly} ${w}`,
-    entry: `SELECT e.timestamp_id AS ts, 'entry' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map, ${srv} FROM hlstats_Events_Entries e ${m} ${w}`,
-    disconnect: `SELECT e.timestamp_id AS ts, 'disconnect' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map, ${srv} FROM hlstats_Events_Disconnects e ${m} ${w}`,
-    team: `SELECT e.timestamp_id AS ts, 'team' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, COALESCE(t.name, '') AS text, COALESCE(t.code, '') AS code, m.map AS map, ${srv}
+    entry: `SELECT e.timestamp_id AS ts, 'entry' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map, m.id AS map_id, ${srv} FROM hlstats_Events_Entries e ${m} ${w}`,
+    disconnect: `SELECT e.timestamp_id AS ts, 'disconnect' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map, m.id AS map_id, ${srv} FROM hlstats_Events_Disconnects e ${m} ${w}`,
+    team: `SELECT e.timestamp_id AS ts, 'team' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, COALESCE(t.name, '') AS text, COALESCE(t.code, '') AS code, m.map AS map, m.id AS map_id, ${srv}
            FROM hlstats_Events_ChangeTeam e LEFT JOIN hlstats_Teams t ON t.teamId = e.team ${m} ${w}`,
-    role: `SELECT e.timestamp_id AS ts, 'role' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, COALESCE(r.name, '') AS text, COALESCE(r.code, '') AS code, m.map AS map, '' AS server
+    role: `SELECT e.timestamp_id AS ts, 'role' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, COALESCE(r.name, '') AS text, COALESCE(r.code, '') AS code, m.map AS map, m.id AS map_id, '' AS server
            FROM hlstats_Events_ChangeRole e LEFT JOIN hlstats_Roles r ON r.roleId = e.role ${mapOnly} ${w}`,
-    name: `SELECT e.timestamp_id AS ts, 'name' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, e.oldName AS text, e.newName AS code, m.map AS map, '' AS server
+    name: `SELECT e.timestamp_id AS ts, 'name' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, e.oldName AS text, e.newName AS code, m.map AS map, m.id AS map_id, '' AS server
            FROM hlstats_Events_ChangeName e ${mapOnly} ${w}`,
-    action: `SELECT e.timestamp_id AS ts, 'action' AS kind, e.playerId AS actor, e.bonus AS num, 0 AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map, ${srv}
+    action: `SELECT e.timestamp_id AS ts, 'action' AS kind, e.playerId AS actor, e.bonus AS num, 0 AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map, m.id AS map_id, ${srv}
              FROM hlstats_Events_PlayerActions e LEFT JOIN hlstats_Actions a ON a.id = e.actionId ${m} ${w}`,
-    playeraction: `SELECT e.timestamp_id AS ts, 'playeraction' AS kind, e.playerId AS actor, e.bonus AS num, e.victimId AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map, ${srv}
+    playeraction: `SELECT e.timestamp_id AS ts, 'playeraction' AS kind, e.playerId AS actor, e.bonus AS num, e.victimId AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map, m.id AS map_id, ${srv}
                    FROM hlstats_Events_PlayerPlayerActions e LEFT JOIN hlstats_Actions a ON a.id = e.actionId ${m} ${w}`,
-    teambonus: `SELECT e.timestamp_id AS ts, 'teambonus' AS kind, e.playerId AS actor, e.bonus AS num, 0 AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map, ${srv}
+    teambonus: `SELECT e.timestamp_id AS ts, 'teambonus' AS kind, e.playerId AS actor, e.bonus AS num, 0 AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map, m.id AS map_id, ${srv}
                 FROM hlstats_Events_TeamBonuses e LEFT JOIN hlstats_Actions a ON a.id = e.actionId ${m} ${w}`,
-    kill: `SELECT e.timestamp_id AS ts, 'kill' AS kind, e.killerId AS actor, e.headshot AS num, e.victimId AS other, COALESCE(w.name, '') AS text, COALESCE(w.code, '') AS code, m.map AS map, ${srv}
+    kill: `SELECT e.timestamp_id AS ts, 'kill' AS kind, e.killerId AS actor, e.headshot AS num, e.victimId AS other, COALESCE(w.name, '') AS text, COALESCE(w.code, '') AS code, m.map AS map, m.id AS map_id, ${srv}
            FROM hlstats_Events_Frags e LEFT JOIN hlstats_Weapons w ON w.weaponId = e.weapon ${m} ${w}`,
-    suicide: `SELECT e.timestamp_id AS ts, 'suicide' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, COALESCE(w.name, '') AS text, COALESCE(w.code, '') AS code, m.map AS map, ${srv}
+    suicide: `SELECT e.timestamp_id AS ts, 'suicide' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, COALESCE(w.name, '') AS text, COALESCE(w.code, '') AS code, m.map AS map, m.id AS map_id, ${srv}
               FROM hlstats_Events_Suicides e LEFT JOIN hlstats_Weapons w ON w.weaponId = e.weapon ${m} ${w}`,
-    teamkill: `SELECT e.timestamp_id AS ts, 'teamkill' AS kind, e.killerId AS actor, 0 AS num, e.victimId AS other, COALESCE(w.name, '') AS text, COALESCE(w.code, '') AS code, m.map AS map, ${srv}
+    teamkill: `SELECT e.timestamp_id AS ts, 'teamkill' AS kind, e.killerId AS actor, 0 AS num, e.victimId AS other, COALESCE(w.name, '') AS text, COALESCE(w.code, '') AS code, m.map AS map, m.id AS map_id, ${srv}
                FROM hlstats_Events_Teamkills e LEFT JOIN hlstats_Weapons w ON w.weaponId = e.weapon ${m} ${w}`,
   };
   return all[kind];

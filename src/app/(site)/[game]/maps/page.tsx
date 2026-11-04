@@ -1,6 +1,6 @@
 import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
-import Link from "next/link";
+import { MapLink } from "@/components/map-link";
 import { Rich } from "@/components/rich";
 import { Empty, PctBar, Section, SortTh, TableWrap, WinRatioBar, strParam } from "@/components/ui";
 import { getGame, getMapWins, getMaps, type MapRow } from "@/lib/data";
@@ -101,9 +101,7 @@ export default async function MapsPage({ params, searchParams }: { params: Promi
                     <tr key={m.id}>
                       <td className="rank">{i + 1}</td>
                       <td>
-                        <Link prefetch={false} className="player" href={`/${game}/maps/${m.id}`}>
-                          {m.map}
-                        </Link>
+                        <MapLink className="player" game={game} id={m.id} name={m.map} />
                       </td>
                       <td className="num hide-sm">{fmtNum(m.played, lang)}</td>
                       {hasTime ? <td className="num hide-sm">{fmtDuration(m.play_time)}</td> : null}

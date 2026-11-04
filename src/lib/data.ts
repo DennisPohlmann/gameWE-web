@@ -142,6 +142,7 @@ export type Server = {
   bots: number;
   max_players: number;
   act_map: string;
+  act_map_id: number | null; // its map page, null when there is none
   map_started: number;
   kills: number;
   headshots: number;
@@ -202,6 +203,7 @@ async function botsOnline(p: string) {
 
 // With the ranking's name and base game (hlstats_Games) for the Game column.
 const serverCols = `s.serverId, s.address, s.port, s.publicaddress, s.name, ${capped("s.")} AS act_players, s.max_players, s.act_map,
+  (SELECT mp.id FROM hlstats_Maps mp WHERE mp.game = s.game AND mp.map = s.act_map) AS act_map_id,
   s.map_started, s.kills, s.headshots, s.suicides, s.rounds, s.players, s.ct_wins, s.ts_wins, s.bombs_planted,
   s.bombs_defused, s.country_code, s.game, g.name AS game_name, g.realgame`;
 const serverFrom = "hlstats_Servers s LEFT JOIN hlstats_Games g ON g.code = s.game";

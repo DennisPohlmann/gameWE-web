@@ -7,6 +7,7 @@ import { fmtDateTime } from "@/lib/format";
 import { newerWith, newestOf } from "@/lib/live-feed";
 import type { GameEvent } from "@/lib/history";
 import type { Lang } from "@/translations/languages";
+import { MapLink } from "./map-link";
 
 export type Flags = Record<number, { flag: string; country: string; nolink?: boolean }>;
 type Labels = { time: string; eventText: string; server: string; map: string; noData: string; liveData: string; liveUpdates: string; evText: Record<string, string> };
@@ -228,7 +229,9 @@ export function GameEventsLive({
                   {withServer ? (
                     <td className="hide-sm muted ev-name">{e.server ?? "-"}</td>
                   ) : null}
-                  <td className="hide-sm muted ev-name">{e.map ?? "-"}</td>
+                  <td className="hide-sm muted ev-name">
+                    <MapLink game={game} id={e.map_id} name={e.map} />
+                  </td>
                 </tr>
               ))}
             </tbody>

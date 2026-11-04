@@ -6,6 +6,7 @@ import { PlayerLink, TableWrap } from "@/components/ui";
 import { fmtDateTime } from "@/lib/format";
 import type { PlayerEventRow } from "@/lib/history";
 import type { Lang } from "@/translations/languages";
+import { MapLink } from "./map-link";
 
 type Labels = { liveUpdates: string; evText: Record<string, string>; evKind: Record<string, string> };
 
@@ -81,7 +82,9 @@ export function PlayerEventsLive({
                   <td className="muted nowrap">{fmtDateTime(e.ts, lang, timeZone)}</td>
                   <td>{labels.evKind[e.kind]}</td>
                   <td className="wrap-cell">{text(e)}</td>
-                  <td className="hide-sm muted">{e.map ?? "-"}</td>
+                  <td className="hide-sm muted">
+                    <MapLink game={game} id={e.map_id} name={e.map} />
+                  </td>
                 </tr>
               ))}
             </tbody>

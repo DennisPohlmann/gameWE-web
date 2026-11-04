@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { assignServersAction, moveServerAction } from "../../../actions";
 import { Icon } from "@/components/admin/icons";
+import { MapLink } from "@/components/map-link";
 import { GameIcon } from "@/components/ui";
 import { optionList } from "@/lib/admin-data";
 import { entities } from "@/lib/admin-entities";
@@ -29,11 +30,12 @@ export async function ServersCard({ id, code, lang, sp }: { id: number; code: st
       port: number;
       publicaddress: string | null;
       act_map: string | null;
+      act_map_id: number | null;
       act_players: number;
       max_players: number;
       display_id: number;
     }>(
-      `SELECT serverId, name, address, port, publicaddress, act_map, act_players, max_players, display_id FROM hlstats_Servers WHERE TRIM(game) = ? ORDER BY display_id, serverId`,
+      `SELECT s.serverId, s.name, s.address, s.port, s.publicaddress, s.act_map, (SELECT mp.id FROM hlstats_Maps mp WHERE mp.game = TRIM(s.game) AND mp.map = s.act_map) AS act_map_id, s.act_players, s.max_players, s.display_id FROM hlstats_Servers s WHERE TRIM(s.game) = ? ORDER BY s.display_id, s.serverId`,
       [code],
     ),
     allServers(),
@@ -99,7 +101,9 @@ export async function ServersCard({ id, code, lang, sp }: { id: number; code: st
                     </Link>
                   </td>
                   <td className="mono">{s.publicaddress || `${s.address}:${s.port}`}</td>
-                  <td>{s.act_map || "–"}</td>
+                  <td>
+                    <MapLink game={code} id={s.act_map_id} name={s.act_map} />
+                  </td>
                   <td className="num">
                     <span className={s.act_players > 0 ? "pill ok" : "pill"}>
                       {nf(s.act_players)} / {nf(s.max_players)}

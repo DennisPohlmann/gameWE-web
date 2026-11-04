@@ -6,6 +6,7 @@ import { TableWrap } from "@/components/ui";
 import { fmtDateTime } from "@/lib/format";
 import type { GameEvent } from "@/lib/history";
 import type { Lang } from "@/translations/languages";
+import { MapLink } from "./map-link";
 
 type Labels = { liveUpdates: string; evText: Record<string, string>; evKind: Record<string, string> };
 
@@ -74,7 +75,9 @@ export function GameEventsList({
                     <GameEventText e={e} game={game} flags={flags} evText={labels.evText} />
                   </td>
                   {withServer ? <td className="hide-sm muted ev-name">{e.server ?? "-"}</td> : null}
-                  <td className="hide-sm muted ev-name">{e.map ?? "-"}</td>
+                  <td className="hide-sm muted ev-name">
+                    <MapLink game={game} id={e.map_id} name={e.map} />
+                  </td>
                 </tr>
               ))}
             </tbody>

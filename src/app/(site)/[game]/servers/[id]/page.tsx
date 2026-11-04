@@ -6,6 +6,7 @@ import { statsOrigin } from "@/lib/site-url";
 import { notFound, redirect } from "next/navigation";
 import { ServerLoadChart } from "@/components/graphics";
 import { LoadSummary } from "@/components/load-summary";
+import { MapLink } from "@/components/map-link";
 import { LiveTable, NobodyOnline, ServerTable } from "@/components/live";
 import { PlayerCount } from "@/components/player-count";
 import { Empty, PlayerLink, Section, Stats, TableWrap } from "@/components/ui";
@@ -70,7 +71,7 @@ export default async function ServerPage({ params }: Props) {
         <Section title={t.overview}>
           <Stats
             items={[
-              [t.map, s.act_map || "-"],
+              [t.map, <MapLink key="map" game={game} id={s.act_map_id} name={s.act_map} />],
               [t.time, s.map_started ? fmtDuration(now - s.map_started) : "-"],
               [t.playersOnline, <PlayerCount key="online" count={playerCount(s.act_players, s.bots, s.max_players)} lang={lang} botsLabel={t.bots} slots={s.max_players > 0} />],
               [t.kills, fmtNum(s.kills, lang)],

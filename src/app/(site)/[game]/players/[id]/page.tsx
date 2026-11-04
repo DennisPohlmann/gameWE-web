@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { BanBadges, NameBanMark, sourcebansSearchUrl } from "@/components/ban-badges";
+import { MapLink } from "@/components/map-link";
 import { Bar, Empty, Flag, PctBar, PlayerLink, Section, TableWrap } from "@/components/ui";
 import { SortableTable } from "@/components/sortable-table";
 import { RankBadge, Ribbon, RibbonLevel, rankName, ribbonClassName } from "@/components/badges";
@@ -315,9 +316,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
               {maps.length ? (
                 <div>
                   <small>{t.favMap}</small>
-                  <Link prefetch={false} href={`/${game}/maps/${encodeURIComponent(maps[0].map)}`}>
-                    {maps[0].map}
-                  </Link>
+                  <MapLink game={game} id={maps[0].id} name={maps[0].map} />
                 </div>
               ) : null}
               {fav ? (

@@ -4,6 +4,7 @@ import { PctBar, TableWrap } from "@/components/ui";
 import { fmtNum, kpd, ratio } from "@/lib/format";
 import type { Dict } from "@/translations";
 import type { Lang } from "@/translations/languages";
+import { MapLink } from "./map-link";
 
 // The tables gameME shows on the player page, shared by the player and the
 // clan page so both look the same: map performance and weapon usage, each
@@ -34,9 +35,7 @@ export function MapTable({ maps, game, t, lang }: { maps: MapRow[]; game: string
           key: m.id,
           values: [m.map, Number(m.kills), null, Number(m.deaths), kpd(Number(m.kills), Number(m.deaths)), Number(m.headshots), null, ratio(Number(m.headshots), Number(m.kills))],
           cells: [
-            <Link prefetch={false} key="m" href={`/${game}/maps/${m.id}`}>
-              {m.map}
-            </Link>,
+            <MapLink key="m" game={game} id={m.id} name={m.map} />,
             fmtNum(Number(m.kills), lang),
             <PctBar key="k" value={ratio(Number(m.kills), kills)} lang={lang} tone="share" />,
             fmtNum(Number(m.deaths), lang),
