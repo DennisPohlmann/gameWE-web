@@ -19,7 +19,7 @@ Some values the collector does not store are computed by the website, see
 
 ## Public API
 
-With `API_ENABLED=off` the whole API (public and admin, and the
+With the API turned off in Admin → Settings → API, the whole API (public and admin, and the
 documentation) answers `404` `{"error":"api_disabled"}`, see
 [CONFIG.md](CONFIG.md#turning-the-api-off).
 

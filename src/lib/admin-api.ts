@@ -40,7 +40,8 @@ import { rankingBlockVac, rankingBots } from "./admin-ranking-bots";
 import { allServers, rankingSummaries } from "./admin-rankings";
 import { RAW_GROUP, READONLY_OPTIONS, settingGroups } from "./admin-settings";
 import { overLimit } from "./api";
-import { apiDisabledResponse, apiEnabled } from "./api-switch";
+import { apiDisabledResponse } from "./api-switch";
+import { apiEnabled } from "./settings";
 import { bearerToken, sameOwner } from "./api-token-core";
 import { authenticate } from "./api-tokens";
 import { LEVEL_ADMIN } from "./auth";
@@ -111,8 +112,8 @@ type Result = { status?: number; body?: unknown };
 type Handler = (c: Ctx) => Promise<Result>;
 
 export async function adminApi(req: Request, segments: string[]): Promise<Response> {
-  // API_ENABLED=off: no token is even looked at.
-  if (!apiEnabled()) return apiDisabledResponse();
+  // API off: no token is even looked at.
+  if (!(await apiEnabled())) return apiDisabledResponse();
   const method = req.method.toUpperCase();
   const ip = await clientIp();
   const wait = failedBefore(ip);

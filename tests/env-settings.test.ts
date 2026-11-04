@@ -18,7 +18,7 @@ test("without database and environment the defaults apply", () => {
 
 test("the environment is the fallback when nothing is stored", () => {
   const env = fromEnv({ SITE_NAME: "Env Site", DEFAULT_LANG: "EN", ACTIVITY_DAYS: "14", PAGE_SIZE: "25", STEAM_PROFILES: "off" });
-  assert.deepEqual(envBacked({}, env), { siteName: "Env Site", defaultLang: "en", activityDays: 14, pageSize: 25, steamProfiles: false });
+  assert.deepEqual(envBacked({}, env), { siteName: "Env Site", defaultLang: "en", activityDays: 14, pageSize: 25, steamProfiles: false, apiEnabled: true });
   // Empty rows (a saved but empty field) count as not stored.
   assert.equal(envBacked({ sitename: " ", MinActivity: "" }, env).siteName, "Env Site");
 });
@@ -26,7 +26,7 @@ test("the environment is the fallback when nothing is stored", () => {
 test("a stored value wins over the environment", () => {
   const env = fromEnv({ SITE_NAME: "Env Site", DEFAULT_LANG: "en", ACTIVITY_DAYS: "14", PAGE_SIZE: "25", STEAM_PROFILES: "off" });
   const o = { sitename: "DB Site", gamewe_default_lang: "fr", MinActivity: "60", gamewe_page_size: "100", gamewe_steam_profiles: "1" };
-  assert.deepEqual(envBacked(o, env), { siteName: "DB Site", defaultLang: "fr", activityDays: 60, pageSize: 100, steamProfiles: true });
+  assert.deepEqual(envBacked(o, env), { siteName: "DB Site", defaultLang: "fr", activityDays: 60, pageSize: 100, steamProfiles: true, apiEnabled: true });
   assert.equal(envBacked({ gamewe_steam_profiles: "0" }, fromEnv({ STEAM_PROFILES: "on" })).steamProfiles, false);
 });
 

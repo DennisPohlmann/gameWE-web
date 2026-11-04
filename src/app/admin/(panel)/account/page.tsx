@@ -5,7 +5,6 @@ import { ApiTokenForm } from "@/components/admin/api-token-form";
 import { QrCode } from "@/components/qr-code";
 import { Section } from "@/components/ui";
 import { adminDict } from "@/lib/admin-i18n";
-import { apiEnabled } from "@/lib/api-switch";
 import { EXPIRY_DAYS } from "@/lib/api-token-core";
 import { listTokens } from "@/lib/api-tokens";
 import { adminSecret, requireAdmin } from "@/lib/auth";
@@ -13,17 +12,17 @@ import { noAutofill } from "@/lib/autofill";
 import { basePath } from "@/lib/base-path";
 import { fmtDateTime, nowUnix } from "@/lib/format";
 import { fill, getAdminLang } from "@/lib/i18n";
-import { getSettings } from "@/lib/settings";
+import { apiEnabled, getSettings } from "@/lib/settings";
 import { BACKUP_CODES, countBackupCodes, otpauthUri, readSecret } from "@/lib/totp";
 
 // The signed-in user's own account: password, optional TOTP with its backup
-// codes and API tokens (only a notice while API_ENABLED is off).
+// codes and API tokens (only a notice while the API is off).
 export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; done?: string; pw?: string; token?: string }> }) {
   const user = await requireAdmin();
   const lang = await getAdminLang();
   const a = adminDict(lang);
   const { error, done, pw, token } = await searchParams;
-  const api = apiEnabled();
+  const api = await apiEnabled();
   const tokens = api ? await listTokens(user.username) : [];
   const now = nowUnix();
   const secret = adminSecret();

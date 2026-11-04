@@ -3,7 +3,7 @@
 The environment (`/etc/gamewe/web/web.env` for the tar.gz, the container's
 `--env-file`) holds only what the website needs before it can reach the
 database or what must not be changeable from the browser: database access,
-`ADMIN_SECRET`, `BASE_PATH`, `TZ`, `ACCESS_LOG`, `API_ENABLED`,
+`ADMIN_SECRET`, `BASE_PATH`, `TZ`, `ACCESS_LOG`,
 `ADMIN_COOKIE_SECURE`, `SKIN_PREVIEW` (only for
 screenshot runs, see [DEVELOPMENT.md](DEVELOPMENT.md#screenshots-of-the-skins))
 and the runtime variables (`PORT`, `HOSTNAME`, `NODE_ENV`). Every variable is listed with a comment in
@@ -98,6 +98,7 @@ removed from `web.env`.
 | Steam → Fetch Steam profiles | `gamewe_steam_profiles` | `STEAM_PROFILES` (`on`/`off`) | on | `1` / `0` |
 | Steam → Steam Web API key | `gamewe_steam_api_key` | `STEAM_API_KEY` | - | 32 hex characters |
 | Monitoring → Token for /-/metrics | `gamewe_metrics_token` | `GAMEWE_METRICS_TOKEN` | - | at least 16 characters |
+| API → Turn the API on | `gamewe_api_enabled` | `API_ENABLED` (`on`/`off`) | on | `1` / `0` |
 
 The Steam Web API key (https://steamcommunity.com/dev/apikey) and the
 metrics token are write-only: the form shows only whether they are set (also
@@ -275,8 +276,8 @@ plus the response time, with the client address from the last
 
 ## Turning the API off
 
-`API_ENABLED` (default `on`) switches the whole API. With `API_ENABLED=off`
-(also `false`, `0`, `no`):
+Admin → Settings → API (default on, only admins with level 100 change it)
+switches the whole API. While it is off:
 
 - every path under `/api/v1` (the public API, the banner pictures there and
   the admin API `/api/v1/admin/...`) and `/api/openapi.json` answer `404`
@@ -289,12 +290,14 @@ plus the response time, with the client address from the last
   once the API is on.
 
 The website itself, `/sig/...`, `/banner/...`, the event feeds and `/-/metrics`
-are not part of the API and keep working. The value is read on every request,
-not at build time: the same Docker image or tar.gz switches with a restart
-after changing `web.env` or the container's environment (Compose:
-`API_ENABLED: "off"`, quoted, under `environment:`). An empty or missing value
-is `on`; an unknown value counts as `off` and is logged as a warning, so
-a typo never leaves open an API that was meant to be closed.
+are not part of the API and keep working. A change takes effect without a
+restart, within 30 seconds. While the database cannot be reached the API counts
+as off too, because the switch cannot be read.
+
+The environment no longer switches the API. An older `API_ENABLED=off` keeps
+the API off after an update until the settings page is saved once (an unknown
+value counts as `off`, so a typo never opens an API that was meant to be
+closed); from then on only the setting counts and the variable can go.
 
 ## Privacy and cookie consent
 

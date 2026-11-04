@@ -22,7 +22,6 @@ import { getGames } from "@/lib/data";
 import { resolveTemplate, themeStyle } from "@/lib/templates";
 import { previewSkinOf, SKIN_PREVIEW_COOKIE } from "@/lib/skin-preview";
 import { env } from "@/lib/env";
-import { apiEnabled } from "@/lib/api-switch";
 import { Reveal } from "@/components/reveal";
 import "./globals.css";
 
@@ -84,7 +83,7 @@ async function previewSkin(): Promise<string | null> {
 // the languages, optional logo, content, footer.
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const { lang, t } = await getDict();
-  const { siteName, siteUrl, logoUrl, headerLogo, links, headerHome, headerOrder, geoipCredit, skin, sourcebansUrl } = await getSettings();
+  const { siteName, siteUrl, logoUrl, headerLogo, links, headerHome, headerOrder, geoipCredit, skin, sourcebansUrl, apiEnabled } = await getSettings();
   const [games, template, os, consent] = await Promise.all([getGames().catch(() => []), previewSkin().then((p) => resolveTemplate(p ?? skin)), clientOs(), getConsent()]);
   const theme = template ? await themeStyle(template) : null;
   const sections = {
@@ -191,7 +190,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               {t.consent.footerLink}
             </a>{" "}
             · <Link prefetch={false} href="/licenses">{t.licenses}</Link>
-            {apiEnabled() ? (
+            {apiEnabled ? (
               <>
                 {" · "}
                 <Link prefetch={false} href="/api">

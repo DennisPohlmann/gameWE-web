@@ -214,6 +214,17 @@ const definitions: Omit<SettingGroup, "area">[] = [
         },
       },
       {
+        key: "gamewe_api_enabled",
+        label: { de: "API einschalten", en: "Turn the API on" },
+        type: "bool",
+        def: "1",
+        minLevel: 100,
+        help: {
+          de: "Nein: die öffentliche API, die Admin-API, ihre Dokumentation unter /api und die API-Tokens unter Mein Konto sind aus. Vorhandene Tokens bleiben gespeichert. Wirkt spätestens nach 30 Sekunden.",
+          en: "No: the public API, the admin API, their documentation on /api and the API tokens under My account are off. Existing tokens stay stored. Takes effect within 30 seconds.",
+        },
+      },
+      {
         key: "gamewe_update_check",
         label: { de: "Nach Updates suchen", en: "Check for updates" },
         type: "bool",
@@ -596,6 +607,7 @@ export const settingGroups: SettingGroup[] = [
     },
     items: pick("gamewe_metrics_token", "gamewe_update_check"),
   },
+  { id: "api", area: "services", title: { de: "API", en: "API" }, items: pick("gamewe_api_enabled") },
   { id: "points", area: "collector", title: { de: "Punkte", en: "Points" }, help: helpOf("points"), items: definitions.find((g) => g.id === "points")!.items },
   {
     id: "capture",

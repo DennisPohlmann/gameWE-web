@@ -161,8 +161,6 @@ TZ=Europe/Berlin
 # Own templates and map pictures: no setting, see section 5.
 # Access log on stdout: on, off or all
 #ACCESS_LOG=on
-# API (public, admin API and its tokens, /api): on or off
-#API_ENABLED=on
 ```
 
 ### Example: container, database on the Docker host
@@ -201,15 +199,14 @@ TZ=Europe/Berlin
 # ---- Optional ----
 # Own templates and map pictures: no setting, mount the folders (section 5).
 #ACCESS_LOG=on
-#API_ENABLED=on
 ```
 
 The site settings (title, default language, activity days, rows per page,
 logo, favicon, design, header links, voice server, SourceBans, Steam
-profiles and the Steam Web API key, the /-/metrics token) are set later in
+profiles and the Steam Web API key, the /-/metrics token, the API switch) are set later in
 the admin area and stored in the database. An older `web.env` with
 `SITE_NAME`, `DEFAULT_LANG`, `ACTIVITY_DAYS`, `PAGE_SIZE`, `STEAM_PROFILES`,
-`STEAM_API_KEY` or `GAMEWE_METRICS_TOKEN` keeps working: each one is used
+`STEAM_API_KEY`, `GAMEWE_METRICS_TOKEN` or `API_ENABLED` keeps working: each one is used
 while the setting is not stored, and saving its settings page moves the
 value into the database (see [CONFIG.md](CONFIG.md#settings-that-moved-into-the-database)).
 

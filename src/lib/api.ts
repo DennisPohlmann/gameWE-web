@@ -1,6 +1,7 @@
 import "server-only";
 import { ApiError, kpd, share } from "./api-params";
-import { apiDisabledResponse, apiEnabled } from "./api-switch";
+import { apiDisabledResponse } from "./api-switch";
+import { apiEnabled } from "./settings";
 import { basePath } from "./base-path";
 import { clientIp } from "./client-ip";
 import { activity } from "./format";
@@ -59,7 +60,7 @@ export async function defaultGame(): Promise<string> {
 }
 
 export async function api(handler: () => Promise<unknown | null>): Promise<Response> {
-  if (!apiEnabled()) return apiDisabledResponse();
+  if (!(await apiEnabled())) return apiDisabledResponse();
   const wait = await overLimit("api", LIMIT);
   if (wait) return json({ error: "rate limit" }, 429, { "retry-after": String(wait) });
   try {
@@ -75,7 +76,7 @@ export async function api(handler: () => Promise<unknown | null>): Promise<Respo
 // Picture endpoints (banners): rate limited, with CORS, like the JSON ones.
 // handler answers the PNG of the website's banner route, or null (404).
 export async function apiImage(handler: () => Promise<Response | null>): Promise<Response> {
-  if (!apiEnabled()) return apiDisabledResponse();
+  if (!(await apiEnabled())) return apiDisabledResponse();
   const wait = await overLimit("api", LIMIT);
   if (wait) return json({ error: "rate limit" }, 429, { "retry-after": String(wait) });
   try {

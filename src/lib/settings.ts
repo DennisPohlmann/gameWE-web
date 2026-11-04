@@ -20,6 +20,8 @@ export const SEO_KEYWORDS = "game server statistics, player ranking, stats, awar
 
 export type Settings = {
   siteName: string;
+  // The whole API on or off (lib/api-switch.ts).
+  apiEnabled: boolean;
   // Minutes without activity until the admin area signs out; 0 = off
   // (lib/admin-idle.ts).
   adminIdleMinutes: number;
@@ -127,21 +129,29 @@ export function invalidateSettings() {
   cache = null;
 }
 
+export async function apiEnabled(): Promise<boolean> {
+  return (await getSettings()).apiEnabled;
+}
+
 export async function getSettings(): Promise<Settings> {
   if (cache && Date.now() - cache.at < 30_000) return cache.value;
   let o: Record<string, string> = {};
+  let dbDown = false;
   try {
     const rows = await query<{ keyname: string; value: string }>(
       `SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`,
-      [["sitename", "MinActivity", "gamewe_page_size", "gamewe_default_lang", "gamewe_steam_profiles", "gamewe_site_url", "gamewe_logo_url", "gamewe_header_logo", "gamewe_favicon", "gamewe_apple_icon", "gamewe_title_format", "gamewe_title_ranking", "gamewe_geoip_credit", "gamewe_sig_brand", "gamewe_chat_public", "gamewe_game_events", "gamewe_player_events", "gamewe_skin", "gamewe_game_skins", "gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_sourcebans_url", "gamewe_seo_description", "gamewe_seo_keywords", "gamewe_seo_image", "gamewe_seo_index", "gamewe_seo_twitter", "gamewe_header_home", "gamewe_header_order", "gamewe_admin_auto_logout", "gamewe_admin_logout_minutes", ...linkKeys]],
+      [["sitename", "MinActivity", "gamewe_page_size", "gamewe_default_lang", "gamewe_steam_profiles", "gamewe_site_url", "gamewe_logo_url", "gamewe_header_logo", "gamewe_favicon", "gamewe_apple_icon", "gamewe_title_format", "gamewe_title_ranking", "gamewe_geoip_credit", "gamewe_sig_brand", "gamewe_chat_public", "gamewe_game_events", "gamewe_player_events", "gamewe_skin", "gamewe_game_skins", "gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_sourcebans_url", "gamewe_seo_description", "gamewe_seo_keywords", "gamewe_seo_image", "gamewe_seo_index", "gamewe_seo_twitter", "gamewe_header_home", "gamewe_header_order", "gamewe_admin_auto_logout", "gamewe_admin_logout_minutes", "gamewe_api_enabled", ...linkKeys]],
     );
     o = Object.fromEntries(rows.map((r) => [r.keyname, r.value]));
   } catch {
     // Database down: fall back to the environment so the error page still has a title.
+    dbDown = true;
   }
   const base = envBacked(o);
   const value: Settings = {
     siteName: base.siteName,
+    // Database down: the switch is unknown, and an API turned off stays closed.
+    apiEnabled: !dbDown && base.apiEnabled,
     seoDescription: (o.gamewe_seo_description ?? "").trim().slice(0, 300),
     seoKeywords: (o.gamewe_seo_keywords ?? "").trim().slice(0, 255) || SEO_KEYWORDS,
     seoImage: safeUrl(o.gamewe_seo_image),

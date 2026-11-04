@@ -1,3 +1,4 @@
+import { apiSwitch } from "./api-switch";
 import { env } from "./env";
 import { isLang, type Lang } from "../translations/languages";
 import { DEFAULT_PAGE_SIZE, pageSizeStep } from "./page-size";
@@ -18,9 +19,10 @@ export const ENV_FALLBACK = {
   gamewe_page_size: "PAGE_SIZE",
   gamewe_steam_profiles: "STEAM_PROFILES",
   gamewe_steam_api_key: "STEAM_API_KEY",
+  gamewe_api_enabled: "API_ENABLED",
 } as const;
 
-export const DEFAULTS = { siteName: "gameWE", defaultLang: "de" as Lang, activityDays: 28, pageSize: DEFAULT_PAGE_SIZE, steamProfiles: true };
+export const DEFAULTS = { siteName: "gameWE", defaultLang: "de" as Lang, activityDays: 28, pageSize: DEFAULT_PAGE_SIZE, steamProfiles: true, apiEnabled: true };
 
 const set = (v: string | undefined) => (v ?? "").trim();
 
@@ -50,7 +52,7 @@ export function steamKey(v: string | undefined): string | null {
   return /^[0-9A-Fa-f]{32}$/.test(s) ? s : null;
 }
 
-export type EnvBacked = { siteName: string; defaultLang: Lang; activityDays: number; pageSize: number; steamProfiles: boolean };
+export type EnvBacked = { siteName: string; defaultLang: Lang; activityDays: number; pageSize: number; steamProfiles: boolean; apiEnabled: boolean };
 
 // o: the hlstats_Options rows by key (empty when the database is down).
 export function envBacked(o: Record<string, string | undefined>, get: Get = env): EnvBacked {
@@ -60,6 +62,7 @@ export function envBacked(o: Record<string, string | undefined>, get: Get = env)
     activityDays: int(o.MinActivity, 3650) ?? int(get("ACTIVITY_DAYS"), 3650) ?? DEFAULTS.activityDays,
     pageSize: pageSizeStep(o.gamewe_page_size) ?? pageSizeStep(get("PAGE_SIZE")) ?? DEFAULTS.pageSize,
     steamProfiles: onOff(o.gamewe_steam_profiles) ?? onOff(get("STEAM_PROFILES")) ?? DEFAULTS.steamProfiles,
+    apiEnabled: onOff(o.gamewe_api_enabled) ?? apiSwitch(get("API_ENABLED")).on,
   };
 }
 
@@ -88,5 +91,6 @@ export function envFormValues(get: Get = env): Record<string, string> {
     MinActivity: String(b.activityDays),
     gamewe_page_size: String(b.pageSize),
     gamewe_steam_profiles: b.steamProfiles ? "1" : "0",
+    gamewe_api_enabled: b.apiEnabled ? "1" : "0",
   };
 }
