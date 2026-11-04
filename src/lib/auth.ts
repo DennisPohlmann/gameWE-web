@@ -1,7 +1,8 @@
 import "server-only";
 import { env } from "./env";
 import { adminSecretProblem } from "./admin-secret";
-import { createHmac, randomBytes, scryptSync, timingSafeEqual, createHash } from "node:crypto";
+import { createHmac, randomBytes, scrypt, scryptSync, timingSafeEqual, createHash } from "node:crypto";
+import { promisify } from "node:util";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
@@ -52,11 +53,20 @@ export function hashPassword(pw: string): string {
   return `scrypt$${salt.toString("base64")}$${hash.toString("base64")}`;
 }
 
-function verifyPassword(pw: string, stored: string): { ok: boolean; legacy: boolean } {
+const DUMMY_HASH = hashPassword(randomBytes(16).toString("hex"));
+const scryptAsync = promisify<string, Buffer, number, { N: number; r: number; p: number }, Buffer>(scrypt);
+// Far above any real password: scrypt's cost must not grow with the input.
+const PASSWORD_MAX = 1024;
+
+async function verifyPassword(pw: string, stored: string): Promise<{ ok: boolean; legacy: boolean }> {
+  if (pw.length > PASSWORD_MAX) return { ok: false, legacy: false };
   if (stored.startsWith("scrypt$")) {
     const [, salt, hash] = stored.split("$");
-    const want = Buffer.from(hash, "base64");
-    const got = scryptSync(pw, Buffer.from(salt, "base64"), want.length, { N: 16384, r: 8, p: 1 });
+    const want = Buffer.from(hash ?? "", "base64");
+    // A cut-off value (a too narrow column) has an empty hash, and comparing
+    // nothing with nothing must not sign anyone in.
+    if (want.length < 32) return { ok: false, legacy: false };
+    const got = await scryptAsync(pw, Buffer.from(salt, "base64"), want.length, { N: 16384, r: 8, p: 1 });
     return { ok: got.length === want.length && timingSafeEqual(got, want), legacy: false };
   }
   if (/^[0-9a-f]{32}$/i.test(stored)) {
@@ -125,7 +135,8 @@ export async function login(username: string, password: string): Promise<"ok" | 
     `SELECT username, password, acclevel FROM hlstats_Users WHERE username = ?`,
     [username],
   );
-  const check = user ? verifyPassword(password, user.password) : { ok: false, legacy: false };
+  // The same work for an unknown name, so the answer time does not tell which names exist.
+  const check = await verifyPassword(password, user ? user.password : DUMMY_HASH);
   if (!user || !check.ok || user.acclevel < LEVEL_MIN) {
     fail(ip);
     return "invalid";
@@ -158,7 +169,7 @@ export async function changePassword(username: string, current: string, next: st
   if (await blocked(ip)) return "blocked";
   if (next.length < 10 || next.length > 200) return "short";
   const [user] = await adminQuery<{ password: string }>(`SELECT password FROM hlstats_Users WHERE username = ?`, [username]);
-  if (!user || !verifyPassword(current, user.password).ok) {
+  if (!user || !(await verifyPassword(current, user.password)).ok) {
     fail(ip);
     return "wrong";
   }
@@ -180,7 +191,7 @@ export async function confirmIdentity(username: string, password: string, code: 
   const ip = await clientIp();
   if (await blocked(ip)) return "blocked";
   const [user] = await adminQuery<{ password: string }>(`SELECT password FROM hlstats_Users WHERE username = ?`, [username]);
-  if (!user || !verifyPassword(password, user.password).ok) {
+  if (!user || !(await verifyPassword(password, user.password)).ok) {
     fail(ip);
     return "wrong";
   }
