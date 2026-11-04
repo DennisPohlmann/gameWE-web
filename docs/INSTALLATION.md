@@ -321,7 +321,7 @@ docker rm -f gamewe-web && docker run ...           # same command as above
 docker compose pull && docker compose up -d
 ```
 
-The container keeps no data, so it can be replaced at any time. It runs as
+Coming from 1.7: read [Update to 1.8](#update-to-18) first. The container keeps no data, so it can be replaced at any time. It runs as
 user `node` (uid 1000) and has a health check on `/healthz`
 (`docker ps` shows `healthy`).
 
@@ -422,6 +422,28 @@ The admin overview shows when a newer release is out
 ```bash
 journalctl -u gamewe-web -f
 ```
+
+### Update to 1.8
+
+Update together with the collector 1.7: stop both, update the collector first
+(it migrates the database at start), then the website.
+
+- **`DB_ADMIN_USER`:** the Steam Web API key, the metrics token and the TeamSpeak
+  passwords move to `hlstats_gamewe_secrets`, which the public user cannot read.
+  The site reads them with the admin user. Without it, only the environment
+  counts ([CONFIG.md](CONFIG.md)).
+- **`TRUSTED_PROXIES`:** `X-Forwarded-For`, `-Host`, `-Proto` and `X-Real-IP` now
+  count only from a listed proxy, by default this host. With a proxy on another
+  host or in another container (also nginx on the Docker host in front of a
+  bridged container), set it first, or all clients share one login brake and API
+  limit and the admin cookie loses `Secure`
+  ([CONFIG.md](CONFIG.md#client-address-and-proxies)).
+- **nginx:** add `proxy_set_header X-Forwarded-Host $host;` ([section 6](#6-reverse-proxy)).
+- **API switch:** now under Admin → Settings → API. An old `API_ENABLED=off` keeps
+  the API off until that page is saved.
+- **Sign-ins:** a sign-out ends all sessions of the account; a new password or
+  removing TOTP also deletes its API tokens, so scripts need a new token.
+- **Servers:** a new address without entering the RCON password again clears it.
 
 ## 5. Own templates and map pictures
 
