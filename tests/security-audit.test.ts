@@ -23,7 +23,7 @@ test("level 100 rows cannot be written through the raw options below level 100",
   assert.match(ops, /acclevel < LEVEL_ADMIN && adminOnlyOption\(key\)\) bad/);
   assert.match(ops, /acclevel < LEVEL_ADMIN && adminOnlyOption\(newKey\)\)/);
   const s = src("src/lib/admin-settings.ts");
-  for (const p of ["gamewe_reset_", "gamewe_hof_", "gamewe_block_vac_", "gamewe_rank_bots_", "gamewe_geoip_db"]) assert.ok(s.includes(`"${p}"`), p);
+  for (const p of ["gamewe_reset_", "gamewe_hof_", "gamewe_block_vac_", "gamewe_rank_bots_", "gamewe_fastdl_url_", "gamewe_geoip_db"]) assert.ok(s.includes(`"${p}"`), p);
   assert.match(src("src/app/admin/(panel)/settings/[group]/page.tsx"), /level < LEVEL_ADMIN && adminOnlyOption\(r\.keyname\)/);
 });
 

@@ -5,7 +5,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getEntity } from "@/lib/admin-entities";
 import { getRow, keptValues, optionList, withColumns } from "@/lib/admin-data";
-import { OpError, assignServersTo, deleteEntity, deletePlayer, moveServer, resetRanking, saveEntity, savePrivacy, saveSettings, setGlobalHall, setHallEntry, setRankingBots, setRankingHall, setRankingVac } from "@/lib/admin-ops";
+import { OpError, assignServersTo, deleteEntity, deletePlayer, moveServer, resetRanking, saveEntity, savePrivacy, saveSettings, setGlobalHall, setHallEntry, setRankingBots, setRankingFastdl, setRankingHall, setRankingVac } from "@/lib/admin-ops";
 import { ADMIN_THEME_COOKIE, isAdminTheme } from "@/lib/admin-theme";
 import { basePath } from "@/lib/base-path";
 import { expiryDays, tokenName } from "@/lib/api-token-core";
@@ -378,6 +378,21 @@ export async function rankingVacAction(form: FormData) {
     throw err;
   }
   redirect(`/admin/rankings/${encodeURIComponent(game)}?vac=saved#vac`);
+}
+
+// The FastDL address of one ranking (gamewe_fastdl_url_<game>), on the ranking's
+// admin page: admins only.
+export async function rankingFastdlAction(form: FormData) {
+  const user = await requireAdmin(LEVEL_ADMIN);
+  const game = String(form.get("game") ?? "");
+  const page = `/admin/rankings/${encodeURIComponent(game)}`;
+  try {
+    await setRankingFastdl({ user }, game, String(form.get("url") ?? ""));
+  } catch (err) {
+    if (err instanceof OpError) redirect(err.code === "field" ? `${page}?fastdl=bad#fastdl` : "/admin/rankings");
+    throw err;
+  }
+  redirect(`${page}?fastdl=saved#fastdl`);
 }
 
 // Scheduled ranking reset and hall of fame of one ranking (lib/admin-hall.ts),

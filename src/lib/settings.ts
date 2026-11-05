@@ -5,7 +5,7 @@ import { eventsMode, type EventsMode } from "./events-mode";
 import { idleMinutes } from "./admin-idle";
 import { query } from "./db";
 import { mapStyleId } from "./map-styles";
-import { fastdlBase } from "./overview-format";
+import { FASTDL_URL_PREFIX, fastdlBase, fastdlOf } from "./overview-format";
 import { sourcebansBase } from "./sourcebans";
 import { LINK_SLOTS, type HeaderLink, type TabId, headerOrder, parseHome, parseLink, safeUrl } from "./header-links";
 
@@ -86,8 +86,9 @@ export type Settings = {
   mapStyle: string;
   // Base address of a SourceBans installation for the bans page.
   sourcebansUrl: string;
-  // FastDL address for maps without a radar picture; empty while the switch is
-  // off (lib/overview-fastdl.ts).
+  // Radar pictures by FastDL on, and the global address for maps without one
+  // (lib/overview-fastdl.ts); a ranking may override it, see fastdlUrlOf.
+  fastdlOn: boolean;
   fastdlUrl: string;
 };
 
@@ -185,10 +186,19 @@ export async function getSettings(): Promise<Settings> {
     mapPlayers: o.gamewe_map_players?.trim() !== "0",
     mapStyle: mapStyleId(o.gamewe_map_style),
     sourcebansUrl: sourcebansBase(o.gamewe_sourcebans_url),
-    fastdlUrl: o.gamewe_fastdl?.trim() === "1" ? fastdlBase(o.gamewe_fastdl_url) : "",
+    fastdlOn: o.gamewe_fastdl?.trim() === "1",
+    fastdlUrl: fastdlBase(o.gamewe_fastdl_url),
     adminIdleMinutes: idleMinutes(o.gamewe_admin_auto_logout, o.gamewe_admin_logout_minutes),
     skin: /^[a-z0-9][a-z0-9_-]{0,31}$/.test(o.gamewe_skin?.trim() ?? "") ? o.gamewe_skin.trim() : "dark",
   };
   cache = { at: Date.now(), value };
   return value;
+}
+
+// The FastDL address of one ranking; empty while the switch is off.
+export async function fastdlUrlOf(game: string): Promise<string> {
+  const { fastdlOn, fastdlUrl } = await getSettings();
+  if (!fastdlOn) return "";
+  const rows = await query<{ value: string }>(`SELECT value FROM hlstats_Options WHERE keyname = ?`, [`${FASTDL_URL_PREFIX}${game}`]);
+  return fastdlOf(rows[0]?.value, fastdlUrl);
 }

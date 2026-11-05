@@ -21,7 +21,7 @@ import { requestOverview } from "@/lib/overview-fastdl";
 import { forgetOverviewIndex, getOverview, noteMismatch } from "@/lib/overviews";
 import { fill, getDict } from "@/lib/i18n";
 import { kpm, mapPlayTime, mapSort } from "@/lib/map-table";
-import { getSettings } from "@/lib/settings";
+import { fastdlUrlOf, getSettings } from "@/lib/settings";
 
 type Props = {
   params: Promise<{ game: string; id: string }>;
@@ -60,7 +60,7 @@ export default async function MapPage({ params, searchParams }: Props) {
   const show: HeatShow = pos === "killer" || pos === "victim" ? pos : "all";
   const { sort, flipped, desc } = mapSort(strParam(sp.sort), strParam(sp.dir));
   const page = pageParam(sp.page);
-  const { pageSize, fastdlUrl } = await getSettings();
+  const { pageSize } = await getSettings();
   const limit = rowsParam(sp.rows, pageSize);
   const [players, counts, fullHeat, wins, accuracy, loadTime, shots, g] = await Promise.all([
     getMapPlayerTable(game, m.id, sort, desc, limit, (page - 1) * limit),
@@ -77,7 +77,7 @@ export default async function MapPage({ params, searchParams }: Props) {
   // (src/lib/overviews.ts); its calibration may name a lower level too.
   const overview = fullHeat ? await getOverview(game, g?.realgame, m.map).catch(() => null) : null;
   // No picture: drawn in the background from the map on FastDL, if set up.
-  if (fullHeat && !overview) requestOverview(fastdlUrl, game, m.map.trim().toLowerCase(), forgetOverviewIndex);
+  if (fullHeat && !overview) requestOverview(await fastdlUrlOf(game).catch(() => ""), game, m.map.trim().toLowerCase(), forgetOverviewIndex);
   // Maps with two levels (Counter-Strike 2's de_nuke, de_vertigo): the
   // heatmap shows the upper or the lower level alone on request.
   const split = levelSplit(g?.realgame, m.map) ?? overview?.lowerSplit ?? null;

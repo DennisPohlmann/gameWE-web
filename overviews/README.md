@@ -129,7 +129,11 @@ appear in `/var/lib/gamewe/web/overviews/<game>/`; the next visit shows them
 (after a minute at most). Pictures that exist are never replaced, so this does
 nothing for the built-in maps. Only Source maps work.
 
-- Only admins with level 100 can change both settings. The address must be
+That address applies to all rankings. A ranking whose maps are on another
+FastDL sets its own under Rankings → the ranking → **FastDL**; left empty, it
+uses the global one. The switch and all the rules below apply to both.
+
+- Only admins with level 100 can change these settings. The address must be
   public: private, loopback and link-local addresses are refused, also when a
   name resolves to one. For a FastDL in your own network, set
   `FASTDL_ALLOW_PRIVATE=1` in the site's environment.
@@ -141,7 +145,7 @@ nothing for the built-in maps. Only Source maps work.
   takes up to about 1 GB of memory while it is drawn.
 - Limits: map names with `[a-z0-9_.+-]` only, no redirects, 512 MB download,
   1 GB unpacked, 5 minutes per download. A map that fails is tried again after
-  a day at the earliest (or a restart); the reason is in the site's log.
+  a day at the earliest (or a restart, or at once from a new address); the reason is in the site's log.
 - The server gets requests only for names of maps your game servers logged,
   from the site's address. Set an address you trust: there is no check against
   private addresses, as this setting is for admins only.

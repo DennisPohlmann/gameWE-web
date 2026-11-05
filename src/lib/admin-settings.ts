@@ -263,8 +263,8 @@ const definitions: Omit<SettingGroup, "area">[] = [
         type: "text",
         def: "",
         help: {
-          de: "Der Ordner über maps/, z. B. https://dl.example.org/cstrike/ (sv_downloadurl). Nur öffentliche Adressen (FASTDL_ALLOW_PRIVATE=1 erlaubt private). Geladen wird maps/<Karte>.bsp.bz2, sonst maps/<Karte>.bsp; keine Weiterleitungen, höchstens 512 MB Download und 1 GB entpackt.",
-          en: "The folder above maps/, e.g. https://dl.example.org/cstrike/ (sv_downloadurl). Public addresses only (FASTDL_ALLOW_PRIVATE=1 allows private ones). It loads maps/<map>.bsp.bz2, otherwise maps/<map>.bsp; no redirects, at most 512 MB download and 1 GB unpacked.",
+          de: "Der Ordner über maps/, z. B. https://dl.example.org/cstrike/ (sv_downloadurl). Gilt für alle Rankings, außer ein Ranking hat eine eigene Adresse (Rankings → Ranking → FastDL). Nur öffentliche Adressen (FASTDL_ALLOW_PRIVATE=1 erlaubt private). Geladen wird maps/<Karte>.bsp.bz2, sonst maps/<Karte>.bsp; keine Weiterleitungen, höchstens 512 MB Download und 1 GB entpackt.",
+          en: "The folder above maps/, e.g. https://dl.example.org/cstrike/ (sv_downloadurl). Applies to all rankings, unless a ranking has its own address (Rankings → ranking → FastDL). Public addresses only (FASTDL_ALLOW_PRIVATE=1 allows private ones). It loads maps/<map>.bsp.bz2, otherwise maps/<map>.bsp; no redirects, at most 512 MB download and 1 GB unpacked.",
         },
       },
       { key: "gamewe_map_live", label: { de: "Karte „Gerade online“ (Spielübersicht)", en: "\"Online now\" map (game overview)" }, type: "bool", def: "1" },
@@ -685,10 +685,10 @@ export const definedSettings = definitions.flatMap((g) => g.items);
 // above and the privacy page's keys (their own page, /admin/privacy; the address and the
 // text hold line breaks a raw value may not have).
 export const HIDDEN_OPTION_PREFIXES = ["gamewe_totp", "gamewe_apitoken", "gamewe_ts_query_password", "gamewe_metrics_token", "gamewe_steam_api_key", "gamewe_privacy_"];
-// Rows the level 100 operations write (reset schedules, VAC block, bots), which
+// Rows the level 100 operations write (reset schedules, VAC block, bots, the FastDL address), which
 // the collector acts on, or that it opens as a file: below level 100 the raw
 // list shows them read-only and refuses them.
-const ADMIN_ONLY_OPTION_PREFIXES = ["gamewe_reset_", "gamewe_next_reset_", "gamewe_hof_", "gamewe_block_vac_", "gamewe_rank_bots_", "gamewe_bot_points_", "gamewe_bot_kills_", "gamewe_bot_stats_", "gamewe_geoip_db"];
+const ADMIN_ONLY_OPTION_PREFIXES = ["gamewe_reset_", "gamewe_next_reset_", "gamewe_hof_", "gamewe_block_vac_", "gamewe_rank_bots_", "gamewe_bot_points_", "gamewe_bot_kills_", "gamewe_bot_stats_", "gamewe_fastdl_url_", "gamewe_geoip_db"];
 export const adminOnlyOption = (key: string) => ADMIN_ONLY_OPTION_PREFIXES.some((p) => key.toLowerCase().startsWith(p));
 // Written by the collector, shown read-only.
 export const READONLY_OPTIONS = ["gamewe_heartbeat", "gamewe_collector_version", "gamewe_collector_runtime"];
@@ -739,6 +739,13 @@ export const RAW_OPTION_HELP: Record<string, L> = {
 
 // Meaning of keys per ranking (<prefix><game>) without a field here.
 export const RAW_PREFIX_HELP: [string, L][] = [
+  [
+    "gamewe_fastdl_url_",
+    {
+      de: "Eigene FastDL-Adresse dieses Rankings statt der globalen. Einstellbar auf der Ranking-Seite unter „FastDL“.",
+      en: "This ranking's own FastDL address instead of the global one. Set on the ranking's page under \"FastDL\".",
+    },
+  ],
   [
     "gamewe_rank_bots_",
     {

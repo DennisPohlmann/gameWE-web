@@ -23,6 +23,7 @@ import { BotsCard } from "./bots-card";
 import { HallOfFameCard } from "./hall-of-fame-card";
 import { ServersCard } from "./servers-card";
 import { SettingsCard } from "./settings-card";
+import { FastdlCard } from "./fastdl-card";
 import { VacCard } from "./vac-card";
 
 // The lists of a ranking with their table and ranking column (constants).
@@ -117,6 +118,7 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
       ? ([
           ["bots", u.partBots, "players"],
           ["vac", u.partVac, "shield"],
+          ["fastdl", u.partFastdl, "map"],
           ...(noServers ? [] : [["hall-of-fame", u.kpiReset, "clock"]]),
           ["maintenance", u.maintenance, "reset"],
         ] as [string, string, IconName][])
@@ -192,6 +194,7 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
           <h2 className="group-head">{u.rulesHead}</h2>
           <BotsCard game={r.code} lang={lang} status={sp.bots} changed={sp.n} />
           <VacCard game={r.code} lang={lang} on={vacBlock} keyStored={vacKey} status={sp.vac} />
+          <FastdlCard game={r.code} lang={lang} status={sp.fastdl} />
           {/* A ranking without servers is never reset: no schedule to set. */}
           {!noServers ? <HallOfFameCard game={r.code} lang={lang} status={sp.hof} /> : null}
           <section className="card" id="maintenance">

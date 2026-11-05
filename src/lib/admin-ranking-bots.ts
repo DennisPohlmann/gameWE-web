@@ -1,6 +1,7 @@
 import "server-only";
 import { adminExec, adminQuery, upsert } from "./db";
 import { blockVacKey, blockVacOn, botSettingKeys, botSettingOn, botStatsOn } from "./bot-settings";
+import { FASTDL_URL_PREFIX } from "./overview-format";
 
 // Admin side of the bot settings of one ranking (lib/bot-settings.ts):
 // whether its bots are ranked, whether kills with bots give points and
@@ -49,4 +50,17 @@ export async function rankingBlockVac(game: string): Promise<boolean> {
 
 export async function saveRankingBlockVac(game: string, on: boolean): Promise<void> {
   await adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [blockVacKey(game), on ? "1" : "0"]);
+}
+
+// The FastDL address of one ranking (gamewe_fastdl_url_<game>): empty uses the
+// global address, so no row is kept for it.
+export async function rankingFastdl(game: string): Promise<string> {
+  const rows = await adminQuery<{ value: string | null }>(`SELECT value FROM hlstats_Options WHERE keyname = ?`, [`${FASTDL_URL_PREFIX}${game}`]);
+  return rows[0]?.value ?? "";
+}
+
+export async function saveRankingFastdl(game: string, url: string): Promise<void> {
+  const key = `${FASTDL_URL_PREFIX}${game}`;
+  if (url) await adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [key, url]);
+  else await adminExec(`DELETE FROM hlstats_Options WHERE keyname = ?`, [key]);
 }

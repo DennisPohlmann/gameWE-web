@@ -231,6 +231,11 @@ export function fastdlBase(v: string | undefined): string {
   }
 }
 
+// One ranking may have its own address (gamewe_fastdl_url_<game>); an empty or
+// unusable one falls back to the global address.
+export const FASTDL_URL_PREFIX = "gamewe_fastdl_url_";
+export const fastdlOf = (own: string | undefined, global: string) => fastdlBase(own) || global;
+
 const PICTURE = /^([a-z0-9][a-z0-9_.+-]{0,63}?)(_lower)?(?:_radar(?:_psd)?)?\.(png|webp|jpe?g)$/;
 const CALIBRATION = /^([a-z0-9][a-z0-9_.+-]{0,63})\.(json|txt)$/;
 

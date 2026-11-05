@@ -2,9 +2,10 @@ import "server-only";
 import { getEntity, type Entity } from "./admin-entities";
 import { deleteRow, getRow, InputError, isDuplicateKey, optionList, otherServerAt, rawOptions, saveRow, withColumns } from "./admin-data";
 import { globalHall, hallSettings, saveGlobalHall, saveHallSettings, setHallRemoved } from "./admin-hall";
-import { saveRankingBlockVac, saveRankingBots, type RankingBots } from "./admin-ranking-bots";
+import { saveRankingBlockVac, saveRankingBots, saveRankingFastdl, type RankingBots } from "./admin-ranking-bots";
 import { allServers, assignServers, copyDefinitions, rankingBaseGames, resettableRankings } from "./admin-rankings";
 import { RAW_GROUP, READONLY_OPTIONS, adminOnlyOption, homeValue, linkValue, rawKeyAllowed, settingGroups } from "./admin-settings";
+import { fastdlBase } from "./overview-format";
 import { purgeTokens } from "./api-tokens";
 import { LEVEL_ADMIN, revokeSessions, type AdminUser } from "./auth";
 import { steamKey } from "./config";
@@ -315,6 +316,11 @@ export async function saveSettings(a: Actor, groupId: string, form: Form, only?:
       bad(s.key);
     } else if ((s.key === "gamewe_title_format" || s.key === "gamewe_title_ranking") && !v.includes("{page}")) {
       bad(s.key);
+    } else if (s.key === "gamewe_fastdl_url" && v) {
+      const base = fastdlBase(v);
+      if (!base || base.length > 255) bad(s.key);
+      values.push([s.key, base]);
+      continue;
     } else if (s.key === "gamewe_sourcebans_url" && v) {
       const base = sourcebansBase(v);
       if (!base) bad(s.key);
@@ -415,6 +421,17 @@ export async function setRankingVac(a: Actor, game: string, on: boolean): Promis
   if (!(await rankingExists(game))) throw new OpError("notfound");
   await saveRankingBlockVac(game, on);
   console.info(`gameWE: VAC block of ranking ${game} ${on ? "on" : "off"}, by ${who(a)}`);
+}
+
+// The address as it is stored; refused when it is not one fastdlBase accepts.
+export async function setRankingFastdl(a: Actor, game: string, url: string): Promise<string> {
+  if (!(await rankingExists(game))) throw new OpError("notfound");
+  const v = url.trim();
+  const base = v ? fastdlBase(v) : "";
+  if ((v && !base) || base.length > 255) throw new OpError("field", { field: "url" });
+  await saveRankingFastdl(game, base);
+  console.info(`gameWE: FastDL address of ranking ${game} ${base ? "set" : "removed"}, by ${who(a)}`);
+  return base;
 }
 
 // The schedule of the hall of fame forms: every N units with the start day

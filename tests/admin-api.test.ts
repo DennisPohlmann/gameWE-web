@@ -262,6 +262,7 @@ test("every server action of the admin area has an API operation or is account-o
     deletePlayerAction: ["playerErase"],
     rankingBotsAction: ["botsSet"],
     rankingVacAction: ["vacSet"],
+    rankingFastdlAction: ["fastdlSet"],
     hallOfFameSettingsAction: ["hallSet"],
     globalHallAction: ["globalHallSet"],
     hallEntryAction: ["hallRemove", "hallRestore"],

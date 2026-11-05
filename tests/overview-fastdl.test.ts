@@ -7,7 +7,7 @@ import { test } from "node:test";
 import { bzip2Fixture, zeroBomb } from "./overview-fastdl-fixtures.ts";
 import { bunzip2 } from "../scripts/overviews/bzip2.ts";
 import { MAP_NAME, downloadMap, guardedGet, isPrivateAddress, readLimited } from "../scripts/overviews/fastdl.ts";
-import { fastdlBase, MAP_NAME as SITE_MAP_NAME } from "../src/lib/overview-format.ts";
+import { fastdlBase, fastdlOf, MAP_NAME as SITE_MAP_NAME } from "../src/lib/overview-format.ts";
 import { fastdlQueue } from "../src/lib/overview-fastdl.ts";
 
 const bytes = (b: Buffer, status = 200) => new Response(new Uint8Array(b), { status });
@@ -68,6 +68,25 @@ test("the address of the setting", () => {
   assert.equal(fastdlBase(" dl.example.org/x/ "), "https://dl.example.org/x/");
   assert.equal(fastdlBase("http://dl.example.org/?a=1#b"), "http://dl.example.org/");
   for (const bad of ["", "   ", "ftp://x/", "file:///etc", "https://u:p@x/", "javascript:alert(1)"]) assert.equal(fastdlBase(bad), "");
+});
+
+test("a ranking's own address overrides the global one", () => {
+  const G = "https://global.example.org/";
+  assert.equal(fastdlOf("https://own.example.org/x", G), "https://own.example.org/x/");
+  assert.equal(fastdlOf(undefined, G), G);
+  assert.equal(fastdlOf("", G), G);
+  assert.equal(fastdlOf("file:///etc", G), G, "unusable, from the raw options");
+  assert.equal(fastdlOf(undefined, ""), "");
+});
+
+test("a new address tries a failed map at once", () => {
+  const runs: { base: string; done: (ok: boolean) => void }[] = [];
+  const ask = fastdlQueue((base, _m, _d, done) => runs.push({ base, done }), (g) => `/own/${g}`);
+  assert.equal(ask("https://a.example.org/", "css", "de_a"), true);
+  runs[0].done(false);
+  assert.equal(ask("https://a.example.org/", "css", "de_a"), false);
+  assert.equal(ask("https://b.example.org/", "css", "de_a"), true);
+  assert.equal(runs[1].base, "https://b.example.org/");
 });
 
 test("the queue: one at a time, each map once a day, strict names", () => {

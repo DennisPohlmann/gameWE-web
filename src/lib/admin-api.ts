@@ -34,11 +34,12 @@ import {
   setGlobalHall,
   setHallEntry,
   setRankingBots,
+  setRankingFastdl,
   setRankingHall,
   setRankingVac,
   type Actor,
 } from "./admin-ops";
-import { rankingBlockVac, rankingBots } from "./admin-ranking-bots";
+import { rankingBlockVac, rankingBots, rankingFastdl } from "./admin-ranking-bots";
 import { allServers, rankingSummaries } from "./admin-rankings";
 import { RAW_GROUP, READONLY_OPTIONS, settingGroups } from "./admin-settings";
 import { overLimit } from "./api";
@@ -441,6 +442,15 @@ const handlers: Record<string, Handler> = {
     const on = boolField(b, "block");
     await setRankingVac(c.actor, c.params.code, on);
     return { body: { block: on } };
+  },
+  async fastdlGet(c) {
+    await ranking(c.params.code);
+    return { body: { url: await rankingFastdl(c.params.code) } };
+  },
+  async fastdlSet(c) {
+    await ranking(c.params.code);
+    const b = onlyKeys(c.body, ["url"], ["url"]);
+    return { body: { url: await setRankingFastdl(c.actor, c.params.code, strField(b, "url", 255)) } };
   },
   async hallGet(c) {
     await ranking(c.params.code);

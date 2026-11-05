@@ -1,5 +1,6 @@
 // Radar pictures of maps that have none, drawn from the map on the game
-// server's FastDL (Settings → Maps & events, off by default): a page asks,
+// server's FastDL (Settings → Maps & events, off by default; a ranking may have
+// its own address): a page asks,
 // a separate process (scripts/overviews/fastdl.ts) does the work, one at a
 // time, and the next visit of the page has the picture. Map names come from
 // the game servers, so only strict names get here, each is tried once a day
@@ -54,7 +55,8 @@ export function fastdlQueue(run: Runner, dirOf: (game: string) => string, now: (
   };
   return (base: string, game: string, map: string, done?: () => void): boolean => {
     if (!base || !GAME.test(game) || !MAP_NAME.test(map) || waiting.length >= MAX_QUEUE) return false;
-    const key = `${game}/${map}`;
+    // With the address: a map that failed on the old one can try a new one at once.
+    const key = `${base} ${game}/${map}`;
     const at = tried.get(key);
     if (at !== undefined && now() - at < RETRY_MS) return false;
     if (tried.size >= MAX_REMEMBERED) tried.clear();
