@@ -71,3 +71,27 @@ export function mainReason(bans: BanEntry[]): string {
   const red = bans.filter((b) => b.kind !== "vac").sort((a, b) => (b.at ?? 0) - (a.at ?? 0));
   return (red[0] ?? bans[0])?.reason ?? "";
 }
+
+// Stands in for the language's "permanent" in the lists shared between
+// requests (bans.ts), so one list serves every language; banRowsIn puts the
+// text in for the rows shown.
+export const BAN_PERMANENT = "\0permanent";
+
+export function banRowsIn<R extends { bans: BanEntry[] }>(rows: R[], permanent: string): R[] {
+  return rows.map((r) => ({ ...r, bans: r.bans.map((b) => (b.length === BAN_PERMANENT ? { ...b, length: permanent } : b)) }));
+}
+
+// Sorting tens of thousands of rows costs more than a page view should, so a
+// list keeps its sorted copies until it is replaced (key: what the order
+// depends on).
+const sortedLists = new WeakMap<object[], Map<string, object[]>>();
+
+export function sortedBans<R extends object>(rows: R[], key: string, sort: () => R[]): R[] {
+  const byKey = sortedLists.get(rows) ?? new Map<string, object[]>();
+  sortedLists.set(rows, byKey);
+  const hit = byKey.get(key);
+  if (hit) return hit as R[];
+  const sorted = sort();
+  byKey.set(key, sorted);
+  return sorted;
+}

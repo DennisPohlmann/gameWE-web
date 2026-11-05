@@ -1,5 +1,5 @@
 import "server-only";
-import { banKind, mainReason, mergeBans, steamBanEntry, type BanEntry, type BanKind } from "./ban-merge";
+import { BAN_PERMANENT, banKind, mainReason, mergeBans, steamBanEntry, type BanEntry, type BanKind } from "./ban-merge";
 import { getBanPlayers, getBanRecords, getPlayerBans, getPlayerStoredBans, getStoredBans, type BanPlayer, type PlayerDetail, type StoredBan } from "./data";
 import { queryOne } from "./db";
 import { fmtBanMinutes, nowUnix, steamIds } from "./format";
@@ -7,6 +7,7 @@ import type { Dict } from "./i18n";
 import { BANS_PLAN_KEY, parseBansPlan } from "./job-plan";
 import { getSettings } from "./settings";
 import { getSteamProfile, steamBansAvailable } from "./steam";
+import { ttlCache } from "./ttl-cache";
 
 // The bans the public site shows, for the bans page, the profile and the
 // API alike, all read from the database: bans the collector recorded from
@@ -68,20 +69,16 @@ async function sourcebansState(): Promise<RankingBans["sourcebans"]> {
   return "ok";
 }
 
-// Every banned player of a ranking, newest ban first: those still in the
-// ranking (hlstats_Players) or, with inactive, those the collector moved
-// to hlstats_PlayersInactive (the bans page's two tabs). The page and the
-// API page through the rows.
-export async function getRankingBans(game: string, t: T, inactive = false): Promise<RankingBans> {
-  const now = nowUnix();
-  const [{ sourcebansUrl }, steamBans, records, stored, sbState] = await Promise.all([
-    getSettings(),
-    steamBansAvailable(),
-    getBanRecords(game),
-    getStoredBans(game, now),
-    sourcebansState(),
-  ]);
-  const players = await getBanPlayers([...records.map((r) => Number(r.playerId)), ...(stored ?? []).map((b) => Number(b.playerId))]);
+type BanLists = { active: BanRow[]; inactive: BanRow[]; stored: boolean };
+
+// Reading and merging every ban of a ranking takes seconds with many bans, so
+// the list is kept for five minutes (ttl-cache.ts).
+const banListsCache = ttlCache<BanLists>(300_000, 600_000, 100);
+
+async function loadBanLists(game: string): Promise<BanLists> {
+  const t = { banStatePermanent: BAN_PERMANENT };
+  const [records, stored] = await Promise.all([getBanRecords(game), getStoredBans(game, nowUnix())]);
+  const players = await getBanPlayers(game, records.length > 0, !!stored?.length);
   const found: Found[] = [];
   for (const r of records) {
     const player = players.get(Number(r.playerId));
@@ -94,13 +91,21 @@ export async function getRankingBans(game: string, t: T, inactive = false): Prom
   }
   // A player is listed once, with one badge per kind of ban (a SourceBans
   // ban the collector recorded and the same ban on the list are one).
-  const rows: BanRow[] = mergeBans(found, (p) => Number(p.playerId))
-    .filter((m) => !!Number(m.player.inactive) === inactive)
-    .map((m) => ({ ...m, reason: mainReason(m.bans) }));
+  const rows: BanRow[] = mergeBans(found, (p) => Number(p.playerId)).map((m) => ({ ...m, reason: mainReason(m.bans) }));
   // Newest first; without a date at the end.
   rows.sort((a, b) => (b.at ?? 0) - (a.at ?? 0));
+  return { active: rows.filter((r) => !Number(r.player.inactive)), inactive: rows.filter((r) => Number(r.player.inactive)), stored: stored !== null };
+}
+
+// Every banned player of a ranking, newest ban first: those still in the
+// ranking (hlstats_Players) or, with inactive, those the collector moved
+// to hlstats_PlayersInactive (the bans page's two tabs). The page and the
+// API page through the rows and pass those they show through banRowsIn (ban-merge.ts). The
+// rows are shared between requests: never change them.
+export async function getRankingBans(game: string, inactive = false): Promise<RankingBans> {
+  const [{ sourcebansUrl }, steamBans, lists, sbState] = await Promise.all([getSettings(), steamBansAvailable(), banListsCache(game, () => loadBanLists(game)), sourcebansState()]);
   const always: BanKind[] = [...(steamBans ? (["vac"] as const) : []), ...(sourcebansUrl ? (["sourcebans"] as const) : [])];
-  return { rows, sourcebans: sourcebansUrl ? (stored ? sbState : null) : null, sourcebansUrl, stored: stored !== null, always };
+  return { rows: inactive ? lists.inactive : lists.active, sourcebans: sourcebansUrl ? (lists.stored ? sbState : null) : null, sourcebansUrl, stored: lists.stored, always };
 }
 
 // The bans of one player as the profile shows them: recorded bans, the

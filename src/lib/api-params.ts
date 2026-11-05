@@ -149,11 +149,13 @@ export function pageOf<T>(all: T[], p: Paging): T[] {
 }
 
 // Sorts a copy of `rows` by `key` (numbers or strings), ties by `tie`.
+const collator = new Intl.Collator();
+
 export function sortRows<T>(rows: T[], key: (r: T) => number | string, asc: boolean, tie: (r: T) => number): T[] {
   return [...rows].sort((a, b) => {
     const x = key(a);
     const y = key(b);
-    const c = typeof x === "string" || typeof y === "string" ? String(x).localeCompare(String(y)) : x - y;
+    const c = typeof x === "string" || typeof y === "string" ? collator.compare(String(x), String(y)) : x - y;
     return (asc ? c : -c) || tie(a) - tie(b);
   });
 }

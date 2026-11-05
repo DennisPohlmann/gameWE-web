@@ -4,6 +4,7 @@ import Link from "next/link";
 import { sortHeads } from "@/components/sort-head";
 import { BanBadges, banKindLabel, banWhen, NameBanMark, sourcebansSearchUrl } from "@/components/ban-badges";
 import { Empty, Pager, PctBar, PlayerLink, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
+import { banRowsIn, sortedBans } from "@/lib/ban-merge";
 import { getRankingBans, type BanRow } from "@/lib/bans";
 import { gameHasShots } from "@/lib/data";
 import { fmtDate, fmtNum, kpd, localeOf, ratio, steamIds } from "@/lib/format";
@@ -49,9 +50,10 @@ export default async function BansPage({ params, searchParams }: { params: Promi
   const values = { ...banValues, type: (r: BanRow) => r.bans.map((b) => banKindLabel(b.kind, t)).join(", ") };
   const order = sortState(sp, values, "order");
   // Counter-Strike 2 logs no shots: no accuracy column.
-  const [shots, { rows, sourcebans, sourcebansUrl, stored, always }] = await Promise.all([gameHasShots(game), getRankingBans(game, t, inactive)]);
+  const [shots, { rows, sourcebans, sourcebansUrl, stored, always }] = await Promise.all([gameHasShots(game), getRankingBans(game, inactive)]);
   const sb = sourcebans ? { state: sourcebans } : null;
-  const sorted = sortRows(rows, values, order.sort, order.asc);
+  // Only the type's names depend on the language.
+  const sorted = sortedBans(rows, `${order.sort === "type" ? lang : ""}|${order.sort}|${order.asc}`, () => sortRows(rows, values, order.sort, order.asc));
   // Only one page of rows is drawn; sorting covers all of them.
   const limit = rowsParam(sp.rows, PER_PAGE);
   const pages = Math.max(1, Math.ceil(sorted.length / limit));
@@ -108,7 +110,7 @@ export default async function BansPage({ params, searchParams }: { params: Promi
               </tr>
             </thead>
             <tbody>
-              {sorted.slice(offset, offset + limit).map((r, i) => (
+              {banRowsIn(sorted.slice(offset, offset + limit), t.banStatePermanent).map((r, i) => (
                 <tr key={r.player.playerId}>
                   <td className="rank">{fmtNum(offset + i + 1, lang)}</td>
                   <td>

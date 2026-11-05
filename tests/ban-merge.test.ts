@@ -3,7 +3,7 @@
 // the others and split when both run. Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { banKind, banSlots, mainReason, markKind, mergeBans, steamBanEntry, type BanEntry } from "../src/lib/ban-merge.ts";
+import { BAN_PERMANENT, banKind, banRowsIn, banSlots, mainReason, markKind, mergeBans, sortedBans, steamBanEntry, type BanEntry } from "../src/lib/ban-merge.ts";
 
 const ban = (kind: BanEntry["kind"], at: number | null, reason = ""): BanEntry => ({ kind, at, dateText: "", reason, length: "", until: null });
 
@@ -71,4 +71,24 @@ test("Steam's ban list: VAC and game bans both make the VAC badge (bans page and
   const both = [steamBanEntry({ vac: 0, game: 1, days: 0 }, 5)!, ban("sourcebans", 1)];
   assert.equal(markKind(both), "both");
   assert.deepEqual(banSlots(mergeBans(both.map((b) => ({ player: 0, ban: b })), () => 0)[0].bans, ["vac", "sourcebans"]).map((x) => [x.kind, !!x.ban]), [["vac", true], ["sourcebans", true]]);
+});
+
+test("a shared list stays language-neutral: only the rows shown get the text", () => {
+  const rows = [{ bans: [{ ...ban("sourcemod", 1), length: BAN_PERMANENT }, { ...ban("amx", 2), length: "7 d" }] }];
+  const shown = banRowsIn(rows, "dauerhaft");
+  assert.deepEqual(shown[0].bans.map((b) => b.length), ["dauerhaft", "7 d"]);
+  assert.equal(rows[0].bans[0].length, BAN_PERMANENT);
+});
+
+test("a list is sorted once per key, until it is replaced", () => {
+  let runs = 0;
+  const sort = (list: { n: number }[]) => () => (runs++, [...list].sort((a, b) => a.n - b.n));
+  const one = [{ n: 2 }, { n: 1 }];
+  assert.equal(sortedBans(one, "n", sort(one)), sortedBans(one, "n", sort(one)));
+  assert.equal(runs, 1);
+  sortedBans(one, "other", sort(one));
+  assert.equal(runs, 2);
+  const two = [...one];
+  sortedBans(two, "n", sort(two));
+  assert.equal(runs, 3);
 });

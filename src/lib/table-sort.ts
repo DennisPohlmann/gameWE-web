@@ -85,6 +85,9 @@ export type SortValue = number | string | null | undefined;
 
 // Sorts loaded rows by a value of the allowlist, a copy, stable (equal
 // values keep the server's order), empty values last in both directions.
+// One collator for all comparisons: localeCompare with options builds a new one per call, 12 s for 50,000 names.
+const collator = new Intl.Collator(undefined, { sensitivity: "base", numeric: true });
+
 export function sortRows<T, K extends string>(rows: readonly T[], values: Record<K, (r: T) => SortValue>, sort: K, asc: boolean): T[] {
   const value = values[sort];
   return rows
@@ -99,7 +102,7 @@ export function sortRows<T, K extends string>(rows: readonly T[], values: Record
         const d = Number(x === null || x === undefined) - Number(y === null || y === undefined);
         return d || a.i - b.i;
       }
-      const d = typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y), undefined, { sensitivity: "base", numeric: true });
+      const d = typeof x === "number" && typeof y === "number" ? x - y : collator.compare(String(x), String(y));
       return (asc ? d : -d) || a.i - b.i;
     })
     .map((e) => e.r);

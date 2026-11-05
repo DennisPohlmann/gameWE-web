@@ -1,5 +1,6 @@
 import { api, apiBan, apiCountry, apiPath, visibleGame } from "@/lib/api";
 import { enumArg, kpd, pageOf, pagingArg, paged, share, sortArg, sortRows } from "@/lib/api-params";
+import { banRowsIn, sortedBans } from "@/lib/ban-merge";
 import { getRankingBans, type BanRow } from "@/lib/bans";
 import { dicts } from "@/translations";
 
@@ -28,10 +29,10 @@ export function GET(req: Request, { params }: { params: Promise<{ game: string }
     const pg = pagingArg(q);
     const { sort, asc } = sortArg(q, SORTS, "date", ["name", "type", "reason"]);
     const view = enumArg(q, "view", ["ranked", "inactive"] as const, "ranked");
-    const { rows } = await getRankingBans(game.code, dicts.en, view === "inactive");
-    const all = sortRows(rows, key[sort], asc, (r) => Number(r.player.playerId));
+    const { rows } = await getRankingBans(game.code, view === "inactive");
+    const all = sortedBans(rows, `api|${sort}|${asc}`, () => sortRows(rows, key[sort], asc, (r) => Number(r.player.playerId)));
     return paged(
-      pageOf(all, pg).map((r, i) => ({
+      banRowsIn(pageOf(all, pg), dicts.en.banStatePermanent).map((r, i) => ({
         position: pg.offset + i + 1,
         id: Number(r.player.playerId),
         name: r.player.name,

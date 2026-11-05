@@ -2480,10 +2480,11 @@ export type BanPlayer = {
 // while; the ban still runs). Two queries instead of a UNION, so that each
 // uses the indexes of its table.
 const playerTables = ["hlstats_Players", "hlstats_PlayersInactive"] as const;
-const bannedPlayerSql = (table: (typeof playerTables)[number]) => `SELECT p.playerId, d.lastName AS name, l.flag, l.country, u.uniqueId,
+const bannedPlayerSql = (table: (typeof playerTables)[number], ids: string) => `SELECT p.playerId, d.lastName AS name, l.flag, l.country, u.uniqueId,
     p.skill, p.kills, p.deaths, p.headshots, p.shots, p.hits, p.last_event, p.hideranking,
     ${table === "hlstats_PlayersInactive" ? 1 : 0} AS inactive
-  FROM hlstats_PlayerUniqueIds u
+  FROM (${ids}) ids
+  JOIN hlstats_PlayerUniqueIds u ON u.playerId = ids.id
   JOIN ${table} p ON p.playerId = u.playerId AND p.hideranking IN (0, 2)
   LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
   LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id`;
@@ -2573,17 +2574,20 @@ export async function getPlayerStoredBans(playerId: number, steam64: string | nu
   }
 }
 
-// The players of the given ids, as shown on the bans page (also those
-// hidden as banned, also inactive ones).
-export async function getBanPlayers(ids: number[]): Promise<Map<number, BanPlayer>> {
-  const uniq = [...new Set(ids.filter((x) => x > 0))];
+// The banned players of a ranking, as shown on the bans page (also those
+// hidden as banned, also inactive ones). records and stored name the sources
+// the ranking has rows in, so a table a collector does not have yet stays out.
+export async function getBanPlayers(game: string, records: boolean, stored: boolean): Promise<Map<number, BanPlayer>> {
+  const ids = [
+    ...(records ? [`SELECT player_id AS id FROM hlstats_Players_Bans WHERE game = ? AND active = 1`] : []),
+    ...(stored ? [`SELECT bp.playerId AS id FROM hlstats_Bans_Players bp JOIN hlstats_Bans b ON b.steamid64 = bp.steamid64 WHERE bp.game = ? AND b.banned = 1`] : []),
+  ];
   const out = new Map<number, BanPlayer>();
-  for (const table of playerTables) {
-    for (let i = 0; i < uniq.length; i += 1000) {
-      const rows = await query<BanPlayer>(`${bannedPlayerSql(table)} WHERE p.playerId IN (?)`, [uniq.slice(i, i + 1000)]);
-      for (const r of rows) if (!out.has(Number(r.playerId))) out.set(Number(r.playerId), r);
-    }
-  }
+  if (!ids.length) return out;
+  const params = ids.map(() => game);
+  // One query per table instead of an IN list per 1000 players, up to 100+ queries.
+  const lists = await Promise.all(playerTables.map((table) => query<BanPlayer>(bannedPlayerSql(table, ids.join(" UNION ")), params)));
+  for (const rows of lists) for (const r of rows) if (!out.has(Number(r.playerId))) out.set(Number(r.playerId), r);
   return out;
 }
 
