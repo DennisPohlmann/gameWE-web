@@ -2,9 +2,9 @@ import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import { MapLink } from "@/components/map-link";
 import { Rich } from "@/components/rich";
-import { Empty, PctBar, Section, SortTh, TableWrap, WinRatioBar, strParam } from "@/components/ui";
+import { Empty, Pager, PctBar, ROW_OPTIONS, Section, SortTh, TableWrap, WinRatioBar, pageParam, rowsParam, strParam } from "@/components/ui";
 import { getGame, getMapWins, getMaps, type MapRow } from "@/lib/data";
-import { fmtDuration, fmtNum, ratio } from "@/lib/format";
+import { fmtDuration, fmtNum, localeOf, ratio } from "@/lib/format";
 import { fill, getDict } from "@/lib/i18n";
 import { SIDE_GAMES, relativeFill } from "@/lib/shares";
 
@@ -13,6 +13,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 type SP = Promise<Record<string, string | string[] | undefined>>;
+
+// Rows per page unless the visitor picks another number: four bars per row
+// made the whole list almost 1 MB of HTML.
+const PER_PAGE = 50;
 
 // Sort keys of the column heads; default most kills first.
 const SORTS: Record<string, (m: MapRow) => number | string> = {
@@ -66,7 +70,12 @@ export default async function MapsPage({ params, searchParams }: { params: Promi
   const hasWins = wins.size > 0 || SIDE_GAMES.has(g?.realgame ?? "");
   const winLabels = { ct: t.sideCt, t: t.sideT, noData: t.winNoData };
   const base = `/${game}/maps`;
-  const sortProps = { current: sort, asc: flipped, base, params: { sort } };
+  const limit = rowsParam(sp.rows, PER_PAGE);
+  const pages = Math.max(1, Math.ceil(sorted.length / limit));
+  const page = Math.min(pageParam(sp.page), pages);
+  const offset = (page - 1) * limit;
+  const rowsKeep = limit !== PER_PAGE ? limit : undefined;
+  const sortProps = { current: sort, asc: flipped, base, params: { sort, rows: rowsKeep } };
   const th = (label: string, k: string, cls = "num") => <SortTh label={label} sortKey={k} className={cls} {...sortProps} />;
   return (
     <Section title={t.maps} aside={`${fmtNum(total.kills, lang)} ${t.kills}`}>
@@ -94,12 +103,12 @@ export default async function MapsPage({ params, searchParams }: { params: Promi
                 </tr>
               </thead>
               <tbody>
-                {sorted.map((m, i) => {
+                {sorted.slice(offset, offset + limit).map((m, i) => {
                   const s = share(m);
                   const w = wins.get(Number(m.id));
                   return (
                     <tr key={m.id}>
-                      <td className="rank">{i + 1}</td>
+                      <td className="rank">{offset + i + 1}</td>
                       <td>
                         <MapLink className="player" game={game} id={m.id} name={m.map} />
                       </td>
@@ -133,6 +142,7 @@ export default async function MapsPage({ params, searchParams }: { params: Promi
               </tbody>
             </table>
           </TableWrap>
+          <Pager base={base} params={{ sort: rawSort === sort ? sort : undefined, dir: flipped ? "asc" : undefined, rows: rowsKeep }} page={page} pages={pages} total={sorted.length} rows={{ value: limit, options: ROW_OPTIONS }} locale={localeOf(lang)} labels={t} />
         </>
       ) : (
         <Empty>{t.noData}</Empty>

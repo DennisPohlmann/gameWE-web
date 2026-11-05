@@ -2007,6 +2007,9 @@ async function loadGeneralCounts(): Promise<GeneralCounts> {
   };
 }
 
+// Stops at the first shown kill, so newest kills of hidden players make it long.
+const lastKillCache = ttlCache<{ t: number | string } | undefined>(60_000, 600_000);
+
 export async function getGeneralStats(): Promise<GeneralStats> {
   const [counts, s, k] = await Promise.all([
     generalCache("all", loadGeneralCounts),
@@ -2016,11 +2019,13 @@ export async function getGeneralStats(): Promise<GeneralStats> {
     ),
     // Newest first along the timestamp index; stops at the first shown kill
     // (NOT EXISTS keeps the index, an IN on the rankings sorts every frag).
-    queryOne<{ t: number | string }>(
-      `SELECT f.timestamp_id AS t FROM hlstats_Events_Frags f
-       WHERE NOT EXISTS (SELECT 1 FROM hlstats_Games g WHERE g.id = f.game_id AND g.hidden <> '0')
-         AND NOT ${hiddenSql("f.killerId")} AND NOT ${hiddenSql("f.victimId")}
-       ORDER BY f.timestamp_id DESC LIMIT 1`,
+    lastKillCache("all", () =>
+      queryOne<{ t: number | string }>(
+        `SELECT f.timestamp_id AS t FROM hlstats_Events_Frags f
+         WHERE NOT EXISTS (SELECT 1 FROM hlstats_Games g WHERE g.id = f.game_id AND g.hidden <> '0')
+           AND NOT ${hiddenSql("f.killerId")} AND NOT ${hiddenSql("f.victimId")}
+         ORDER BY f.timestamp_id DESC LIMIT 1`,
+      ),
     ),
   ]);
   const online = s.map((r) => playerCount(r.act, r.bots, r.max));
