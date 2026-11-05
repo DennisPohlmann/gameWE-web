@@ -17,6 +17,12 @@ test("players read both tables, each player once", () => {
   assert.equal(data.match(/FROM \$\{source\(e\)\} t/g)?.length, 4);
 });
 
+test("a page without search or state reads the best rows of each table", () => {
+  assert.match(data, /const top = !!e\.alsoColumns && !status && !opts\.q/);
+  // Same condition as the full union: a player in both tables counts once.
+  assert.match(data, /NOT EXISTS \(SELECT 1 FROM \$\{e\.table\} m WHERE m\.\$\{e\.pk\} = t\.\$\{e\.pk\}\)/);
+});
+
 test("a save writes both tables, a missing right on the inactive one is named", () => {
   assert.match(data, /await adminExec\(`UPDATE \$\{e\.alsoTable\} SET \$\{set\} WHERE \$\{e\.pk\} = \?`/);
   assert.match(data, /if \(isDenied\(err\)\) throw new InputError\("inactive"\);/);

@@ -75,6 +75,16 @@ function source(e: Entity) {
     WHERE NOT EXISTS (SELECT 1 FROM ${e.table} m WHERE m.${e.pk} = a.${e.pk}))`;
 }
 
+// The same union for one page of a list: each table gives only its own best n
+// rows along its index, instead of the database joining all rows and sorting
+// them. where and order use the alias t and only columns of both tables.
+function topOfSource(e: Entity, where: string, order: string) {
+  const cols = e.alsoColumns!.map((c) => `t.${c}`).join(", ");
+  const also = where ? `${where} AND` : "WHERE";
+  return `((SELECT ${cols}, 0 AS inactive FROM ${e.table} t ${where} ORDER BY ${order} LIMIT ?)
+    UNION ALL (SELECT ${cols}, 1 AS inactive FROM ${e.alsoTable} t ${also} NOT EXISTS (SELECT 1 FROM ${e.table} m WHERE m.${e.pk} = t.${e.pk}) ORDER BY ${order} LIMIT ?))`;
+}
+
 function selectCols(e: Entity) {
   const own = e.fields.filter(
     (f) => !f.virtual && f.type !== "password" && f.type !== "secret" && !(e.joinCols && f.readonly && f.name === "lastName"),
@@ -115,14 +125,23 @@ export async function listRows(e: Entity, opts: { game?: string; q?: string; sta
   const order = [
     ...(sortCol ? [`${sortCol} ${opts.asc ? "ASC" : "DESC"}`] : []),
     ...e.order.split(",").map((s) => (s.trim().includes(".") ? s.trim() : `t.${s.trim()}`)),
-    ...(sortCol ? [`t.${e.pk}`] : []),
+    // Without a chosen column the key runs the same way as the index of the order.
+    ...(sortCol ? [`t.${e.pk}`] : e.alsoTable ? [`t.${e.pk}${/ DESC$/i.test(e.order) ? " DESC" : ""}`] : []),
   ].join(", ");
+  const offset = (opts.page - 1) * size;
+  // Conditions on the player name or the state need the union's own columns.
+  const top = !!e.alsoColumns && !status && !opts.q && (!sortCol || e.alsoColumns.some((c) => `t.${c}` === sortCol));
   const [rows, [count]] = await Promise.all([
-    adminQuery<Row>(`SELECT ${selectCols(e)} FROM ${source(e)} t ${e.join ?? ""} ${where} ORDER BY ${order} LIMIT ? OFFSET ?`, [
-      ...params,
-      size + 1,
-      (opts.page - 1) * size,
-    ]),
+    top
+      ? adminQuery<Row>(`SELECT ${selectCols(e)} FROM ${topOfSource(e, where, order)} t ${e.join ?? ""} ORDER BY ${order} LIMIT ? OFFSET ?`, [
+          ...params,
+          offset + size + 1,
+          ...params,
+          offset + size + 1,
+          size + 1,
+          offset,
+        ])
+      : adminQuery<Row>(`SELECT ${selectCols(e)} FROM ${source(e)} t ${e.join ?? ""} ${where} ORDER BY ${order} LIMIT ? OFFSET ?`, [...params, size + 1, offset]),
     // The page takes the number from statusCounts, one scan less on large lists.
     opts.noTotal ? [] : adminQuery<{ n: number | string }>(`SELECT COUNT(*) AS n FROM ${source(e)} t ${e.join ?? ""} ${where}`, params),
   ]);

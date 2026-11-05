@@ -1,6 +1,6 @@
 import "server-only";
 import { BAN_PERMANENT, banKind, mainReason, mergeBans, steamBanEntry, type BanEntry, type BanKind } from "./ban-merge";
-import { getBanPlayers, getBanRecords, getPlayerBans, getPlayerStoredBans, getStoredBans, type BanPlayer, type PlayerDetail, type StoredBan } from "./data";
+import { getBanPlayers, getBanRecords, getGames, getPlayerBans, getPlayerStoredBans, getStoredBans, type BanPlayer, type PlayerDetail, type StoredBan } from "./data";
 import { queryOne } from "./db";
 import { fmtBanMinutes, nowUnix, steamIds } from "./format";
 import type { Dict } from "./i18n";
@@ -72,8 +72,10 @@ async function sourcebansState(): Promise<RankingBans["sourcebans"]> {
 type BanLists = { active: BanRow[]; inactive: BanRow[]; stored: boolean };
 
 // Reading and merging every ban of a ranking takes seconds with many bans, so
-// the list is kept for five minutes (ttl-cache.ts).
-const banListsCache = ttlCache<BanLists>(300_000, 600_000, 100);
+// the list is kept for five minutes (ttl-cache.ts). On globalThis, as pages, API
+// routes and the warm-up at the start are separate bundles with their own modules.
+const shared = globalThis as { gameweBanLists?: ReturnType<typeof ttlCache<BanLists>> };
+const banListsCache = (shared.gameweBanLists ??= ttlCache<BanLists>(300_000, 600_000, 100));
 
 async function loadBanLists(game: string): Promise<BanLists> {
   const t = { banStatePermanent: BAN_PERMANENT };
@@ -106,6 +108,12 @@ export async function getRankingBans(game: string, inactive = false): Promise<Ra
   const [{ sourcebansUrl }, steamBans, lists, sbState] = await Promise.all([getSettings(), steamBansAvailable(), banListsCache(game, () => loadBanLists(game)), sourcebansState()]);
   const always: BanKind[] = [...(steamBans ? (["vac"] as const) : []), ...(sourcebansUrl ? (["sourcebans"] as const) : [])];
   return { rows: inactive ? lists.inactive : lists.active, sourcebans: sourcebansUrl ? (lists.stored ? sbState : null) : null, sourcebansUrl, stored: lists.stored, always };
+}
+
+// Reads the lists of the rankings shown once at the server's start, so the first
+// visitor does not wait for them.
+export async function warmBanLists(): Promise<void> {
+  for (const { code } of await getGames(true)) await banListsCache(code, () => loadBanLists(code));
 }
 
 // The bans of one player as the profile shows them: recorded bans, the
