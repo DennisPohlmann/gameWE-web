@@ -507,7 +507,6 @@ const definitions: Omit<SettingGroup, "area">[] = [
       { key: "gamewe_raw_messages", label: { de: "Antworten als Raw-Messages", en: "Replies as raw messages" }, type: "bool", def: "0", help: { de: "An ein Nachrichten-Plugin statt als Chattext.", en: "To a message plugin instead of chat text." } },
       { key: "gamewe_store_locations", label: { de: "Kill- und Todespositionen speichern (Heatmap)", en: "Store kill and death positions (heatmap)" }, type: "bool", def: "1", help: { de: "Die Plugin-Cvar gamewe_log_locations muss dafür 1 sein.", en: "The plugin cvar gamewe_log_locations must be 1 for this." } },
       { key: "gamewe_idle_timeout", label: { de: "Besuch endet nach (s ohne Logzeile)", en: "A visit ends after (s without a log line)" }, type: "number", def: "300", min: 0, max: 86400, help: { de: "Für Bots höchstens 3 Minuten; 0 = nie.", en: "At most 3 minutes for bots; 0 = never." } },
-      { key: "gamewe_log_lines", label: { de: "Jede Logzeile ins Journal schreiben", en: "Write every log line to the journal" }, type: "bool", def: "1" },
       {
         key: "gamewe_player_reset",
         label: { de: "Spieler dürfen ihre Stats zurücksetzen (!gamewe_reset)", en: "Players may reset their stats (!gamewe_reset)" },
@@ -639,7 +638,7 @@ export const settingGroups: SettingGroup[] = [
       de: "Was der Collector speichert. Der Collector übernimmt Änderungen innerhalb einer Minute.",
       en: "What the collector stores. The collector picks up changes within a minute.",
     },
-    items: pick("gamewe_server_load", "gamewe_store_chat", "gamewe_store_player_ip", "gamewe_store_locations", "gamewe_idle_timeout", "gamewe_log_lines"),
+    items: pick("gamewe_server_load", "gamewe_store_chat", "gamewe_store_player_ip", "gamewe_store_locations", "gamewe_idle_timeout"),
   },
   {
     id: "commands",
