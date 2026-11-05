@@ -140,8 +140,8 @@ export const entities: Entity[] = [
     pk: "serverId",
     label: { de: "Server", en: "Servers" },
     help: {
-      de: "Der Collector nimmt nur Logs von Servern an, die hier eingetragen sind, und liest die Liste jede Minute neu. Auf dem Gameserver: logaddress_add <Collector-IP>:41337; Counter-Strike 2 (mit -usercon): logaddress_delall_http und logaddress_add_http \"http://<Collector-IP>:41338/<Spielport>/<Log-Token>\" (Spielport und Log-Token wie hier eingetragen; mit listen.http.token des Collectors steht dieser vor dem Spielport).",
-      en: "The collector only accepts logs from servers listed here and re-reads the list every minute. On the game server: logaddress_add <collector IP>:41337; Counter-Strike 2 (with -usercon): logaddress_delall_http and logaddress_add_http \"http://<collector IP>:41338/<game port>/<log token>\" (game port and log token as entered here; the collector's listen.http.token, if set, comes before the game port).",
+      de: "Der Collector nimmt nur Logs von Servern an, die hier eingetragen sind, und liest die Liste jede Minute neu. Auf dem Gameserver: logaddress_add <Collector-IP>:41337; Counter-Strike 2 (mit -usercon): logaddress_delall_http und logaddress_add_http \"http://<Collector-IP>:41338/<Spielport>/<Log-Token>\" (Spielport und Log-Token wie hier eingetragen).",
+      en: "The collector only accepts logs from servers listed here and re-reads the list every minute. On the game server: logaddress_add <collector IP>:41337; Counter-Strike 2 (with -usercon): logaddress_delall_http and logaddress_add_http \"http://<collector IP>:41338/<game port>/<log token>\" (game port and log token as entered here).",
     },
     fields: [
       {

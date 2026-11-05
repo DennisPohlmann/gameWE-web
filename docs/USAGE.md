@@ -757,10 +757,9 @@ What the admin area edits:
   with its game port filled in. The **log token** is this server's own, 16 to
   64 letters, digits, `-` or `_`, write-only like the secret: when it is set,
   the collector accepts only logs whose URL ends with it, and registers that
-  URL over RCON itself (`logaddress_delall_http` removes the old one). If
-  `listen.http.token` is set in the collector's config (one for all CS2
-  servers, not `sv_logsecret`), it comes before the port. The
-  port must be the game port exactly as entered in the form, since the
+  URL over RCON itself (`logaddress_delall_http` removes the old one). It
+  is not `sv_logsecret`; the collector has no token of its own in its config.
+  The port must be the game port exactly as entered in the form, since the
   collector finds the server by sender IP and port (new servers within
   about a minute). It also says that CS2 needs `-usercon`; 404 in the
   collector's log means a wrong path or token, 403 an IP and port that are no CS2 server of the admin.
