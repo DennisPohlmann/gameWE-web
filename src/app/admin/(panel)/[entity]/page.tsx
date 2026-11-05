@@ -43,8 +43,8 @@ export default async function EntityList({ params, searchParams }: { params: Pro
   const sortable: Record<string, true> = { __default: true };
   for (const f of cols) if (listSortColumn(e, f.name)) sortable[f.name] = true;
   const order = sortState(sp, sortable, "__default");
-  const [{ rows, total }, games, servers, counts] = await Promise.all([
-    listRows(e, { game: game || undefined, q: q || undefined, status: status || undefined, page, pageSize: size, sort: order.sort === "__default" ? undefined : order.sort, asc: order.asc }),
+  const [{ rows, total: listTotal }, games, servers, counts] = await Promise.all([
+    listRows(e, { game: game || undefined, q: q || undefined, status: status || undefined, page, pageSize: size, sort: order.sort === "__default" ? undefined : order.sort, asc: order.asc, noTotal: !!e.statusFilter?.length }),
     // Players, clans and servers only exist in rankings with a server or a
     // player: the filter leaves the empty templates out; the definitions
     // (weapons, awards …) of a template can be edited, so all stay there.
@@ -52,6 +52,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
     e.key === "games" ? allServers() : Promise.resolve([]),
     statusCounts(e, { game: game || undefined, q: q || undefined }),
   ]);
+  const total = e.statusFilter?.length ? (counts[e.statusFilter.some((f) => f.value === status) ? status : ""] ?? 0) : listTotal;
   // Base game of rankings and servers (realgame, or the code of a seeded game).
   const bases = e.key === "games" || e.key === "servers" ? await rankingBaseGames() : new Map<string, string | null>();
   const baseOf = (code: unknown) => bases.get(String(code ?? "").trim()) ?? null;

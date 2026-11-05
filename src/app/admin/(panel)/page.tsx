@@ -3,8 +3,7 @@ import { Icon } from "@/components/admin/icons";
 import { PageHead } from "@/components/admin/page-head";
 import { GameTag } from "@/components/ui";
 import { adminDict } from "@/lib/admin-i18n";
-import { playersByRanking, rankingSummaries } from "@/lib/admin-rankings";
-import { adminPlayerTotalsSql } from "@/lib/general-stats";
+import { adminPlayerTotals, playersByRanking, rankingSummaries } from "@/lib/admin-rankings";
 import { LEVEL_ADMIN, adminSecret, requireAdmin } from "@/lib/auth";
 import { adminQuery } from "@/lib/db";
 import { localeOf } from "@/lib/format";
@@ -25,10 +24,10 @@ export default async function AdminHome() {
   const midnight = new Date();
   midnight.setHours(0, 0, 0, 0);
   const secret = adminSecret();
-  const [rankings, players, [totals], [servers], beat, totp, status] = await Promise.all([
+  const [rankings, players, totals, [servers], beat, totp, status] = await Promise.all([
     rankingSummaries(),
     playersByRanking(),
-    adminQuery<{ hidden: number | string; today: number | string }>(adminPlayerTotalsSql, [Math.floor(midnight.getTime() / 1000), Math.floor(midnight.getTime() / 1000)]),
+    adminPlayerTotals(Math.floor(midnight.getTime() / 1000)),
     adminQuery<{ n: number | string; busy: number | string }>(
       `SELECT COUNT(*) AS n, SUM(CASE WHEN act_players > 0 THEN 1 ELSE 0 END) AS busy FROM hlstats_Servers`,
     ),

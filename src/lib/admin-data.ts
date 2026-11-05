@@ -7,6 +7,7 @@ import { adminExec, adminInsert, adminQuery, likeOp, type Param } from "./db";
 import { rankingBaseGames } from "./admin-rankings";
 import { isLogSecret, isLogToken } from "./log-secret";
 import { secretFormValue } from "./secret-field";
+import { ttlCache } from "./ttl-cache";
 
 export type Row = Record<string, string | number | null>;
 
@@ -94,7 +95,7 @@ export function listSortColumn(e: Entity, key: string): string | null {
   return e.joinCols && f.readonly && f.name === "lastName" ? "d.lastName" : `t.${f.name}`;
 }
 
-export async function listRows(e: Entity, opts: { game?: string; q?: string; status?: string; page: number; pageSize?: number; sort?: string; asc?: boolean }) {
+export async function listRows(e: Entity, opts: { game?: string; q?: string; status?: string; page: number; pageSize?: number; sort?: string; asc?: boolean; noTotal?: boolean }) {
   const size = opts.pageSize ?? PAGE;
   const { parts, params } = fixedWhere(e, "t");
   // Only a condition of the entity's own list, chosen by its value.
@@ -122,7 +123,8 @@ export async function listRows(e: Entity, opts: { game?: string; q?: string; sta
       size + 1,
       (opts.page - 1) * size,
     ]),
-    adminQuery<{ n: number | string }>(`SELECT COUNT(*) AS n FROM ${source(e)} t ${e.join ?? ""} ${where}`, params),
+    // The page takes the number from statusCounts, one scan less on large lists.
+    opts.noTotal ? [] : adminQuery<{ n: number | string }>(`SELECT COUNT(*) AS n FROM ${source(e)} t ${e.join ?? ""} ${where}`, params),
   ]);
   return { rows: rows.slice(0, size), hasNext: rows.length > size, total: Number(count?.n ?? 0) };
 }
@@ -130,7 +132,14 @@ export async function listRows(e: Entity, opts: { game?: string; q?: string; sta
 // The number of rows per status filter (its buttons), with the list's
 // ranking and search but no status; all in one pass. The conditions are
 // constants of the entity definition.
-export async function statusCounts(e: Entity, opts: { game?: string; q?: string }): Promise<Record<string, number>> {
+// Lists over two tables scan hundreds of thousands of rows for it: kept for a minute.
+const statusCountsCache = ttlCache<Record<string, number>>(60_000, 600_000, 500);
+
+export function statusCounts(e: Entity, opts: { game?: string; q?: string }): Promise<Record<string, number>> {
+  return e.alsoTable ? statusCountsCache(JSON.stringify([e.key, opts.game, opts.q]), () => loadStatusCounts(e, opts)) : loadStatusCounts(e, opts);
+}
+
+async function loadStatusCounts(e: Entity, opts: { game?: string; q?: string }): Promise<Record<string, number>> {
   if (!e.statusFilter?.length) return {};
   const { parts, params } = fixedWhere(e, "t");
   if (opts.game && e.gameColumn) {

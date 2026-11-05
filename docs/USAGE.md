@@ -437,6 +437,7 @@ only its icon). The top bar has three areas, on phones a bar
 at the bottom; each area has its own side menu (on phones a drawer behind the
 menu button), and lists turn into cards on narrow screens:
 
+- The player counts of the admin pages (overview, rankings, a ranking's page and the numbers above the players list) are kept for a minute, as those counts read every inactive player; the lists themselves stay live.
 - **Overview** (`/admin`): active rankings, servers (and how many have
   players right now), players (every player of every ranking as in the
   Players column of Rankings, below: bots left out, and how many of

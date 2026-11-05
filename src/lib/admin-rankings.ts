@@ -1,9 +1,10 @@
 import "server-only";
 import { adminExec, adminQuery } from "./db";
 import { baseGameOf } from "./games";
-import { playersPerRanking, playersPerRankingSql, rankingClansSql, rankingPlayersSql } from "./general-stats";
+import { adminPlayerTotalsSql, playersPerRanking, playersPerRankingSql, rankingClansSql, rankingPlayersSql } from "./general-stats";
 import { isTemplateRanking } from "./ranking-template";
 import { addParams } from "./return-to";
+import { ttlCache } from "./ttl-cache";
 
 // Rankings (hlstats_Games rows) as the admin manages them: a new ranking takes
 // its definitions from a template, and servers are moved between rankings by
@@ -110,7 +111,15 @@ export async function resettableRankings(): Promise<[string, string][]> {
 // All players of each ranking: also the inactive ones the collector moved
 // to hlstats_PlayersInactive, hidden and banned ones, only bots left out
 // (general-stats.ts, as on the start page).
-export async function playersByRanking(): Promise<Map<string, number>> {
+// Counting scans every inactive player, on most admin pages: kept for a minute.
+const playersCache = ttlCache<Map<string, number>>(60_000, 600_000);
+const rankingCountCache = ttlCache<number>(60_000, 600_000);
+
+export function playersByRanking(): Promise<Map<string, number>> {
+  return playersCache("all", loadPlayersByRanking);
+}
+
+async function loadPlayersByRanking(): Promise<Map<string, number>> {
   type Rows = { game: string; n: number | string }[];
   const [active, inactive, both, bots] = await Promise.all(
     [playersPerRankingSql.active, playersPerRankingSql.inactive, playersPerRankingSql.both, playersPerRankingSql.bots].map((q) => adminQuery<Rows[number]>(q)),
@@ -118,16 +127,27 @@ export async function playersByRanking(): Promise<Map<string, number>> {
   return playersPerRanking({ active, inactive, both, bots } as { active: Rows; inactive: Rows; both: Rows; bots: Rows });
 }
 
+// Hidden players and those active today (admin overview); from: today's midnight.
+const totalsCache = ttlCache<{ hidden: number | string; today: number | string }>(60_000, 600_000);
+
+export function adminPlayerTotals(from: number) {
+  return totalsCache(String(from), async () => (await adminQuery<{ hidden: number | string; today: number | string }>(adminPlayerTotalsSql, [from, from]))[0]);
+}
+
 // The same for one ranking (its page).
-export async function rankingPlayers(code: string): Promise<number> {
-  const rows = await adminQuery<{ n: number | string }>(rankingPlayersSql, [code, code, code, code]);
-  return Math.max(0, Number(rows[0]?.n ?? 0));
+export function rankingPlayers(code: string): Promise<number> {
+  return rankingCountCache(`players|${code}`, async () => {
+    const rows = await adminQuery<{ n: number | string }>(rankingPlayersSql, [code, code, code, code]);
+    return Math.max(0, Number(rows[0]?.n ?? 0));
+  });
 }
 
 // The clans of one ranking that its public lists show (two members or more).
-export async function rankingClans(code: string): Promise<number> {
-  const rows = await adminQuery<{ n: number | string }>(rankingClansSql, [code, code]);
-  return Number(rows[0]?.n ?? 0);
+export function rankingClans(code: string): Promise<number> {
+  return rankingCountCache(`clans|${code}`, async () => {
+    const rows = await adminQuery<{ n: number | string }>(rankingClansSql, [code, code]);
+    return Number(rows[0]?.n ?? 0);
+  });
 }
 
 // Number of rows per ranking in one of the per-ranking tables. Table and
