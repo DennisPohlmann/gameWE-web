@@ -2,7 +2,7 @@
 // Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { SPARK_H, countsSinceFirst, sparkBuckets, sparkPaths, sparkSeries, wholeDays } from "../src/lib/sparkline.ts";
+import { SPARK_H, SPARK_W, countsSinceFirst, sparkBuckets, sparkHits, sparkPaths, sparkSeries, wholeDays } from "../src/lib/sparkline.ts";
 
 test("the series runs from its first to its last value", () => {
   assert.deepEqual(sparkSeries([null, null, 3, null, 5]), [3, null, 5]);
@@ -16,6 +16,13 @@ test("long series are averaged into at most max buckets", () => {
   // A bucket of only gaps stays a gap, partly empty buckets average their numbers.
   assert.deepEqual(sparkSeries([2, 4, null, null, 6, null], 3), [3, null, 6]);
   assert.equal(sparkSeries(Array.from({ length: 2881 }, (_, i) => i), 90).length <= 90, true);
+});
+
+test("the hover strips cover the whole width and snap to the nearest point", () => {
+  // Points at 0, 25 and 100, with a gap in between.
+  const hits = sparkHits(sparkBuckets([4, 6, null, null, 8]));
+  assert.deepEqual(hits.map((h) => h.x), [0, 25, 100]);
+  assert.deepEqual(hits.map((h) => [h.from, h.from + h.width]), [[0, 12.5], [12.5, 62.5], [62.5, SPARK_W]]);
 });
 
 test("fewer than two values draw no line", () => {

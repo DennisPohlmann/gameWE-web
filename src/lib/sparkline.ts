@@ -28,6 +28,19 @@ export function sparkBuckets(values: (number | null)[], max = 90): SparkBucket[]
   return out;
 }
 
+// The hover strips of the buckets with values: x is the point on the line,
+// from..from+width the part of the box closest to it, so together they cover
+// the whole width, also over gaps in the series.
+export function sparkHits(buckets: SparkBucket[]): { bucket: SparkBucket; x: number; from: number; width: number }[] {
+  const step = SPARK_W / Math.max(1, buckets.length - 1);
+  const pts = buckets.flatMap((bucket, i) => (bucket.n ? [{ bucket, x: i * step }] : []));
+  return pts.map(({ bucket, x }, i) => {
+    const from = i ? (pts[i - 1].x + x) / 2 : 0;
+    const to = i < pts.length - 1 ? (x + pts[i + 1].x) / 2 : SPARK_W;
+    return { bucket, x, from, width: to - from };
+  });
+}
+
 // The buckets' values: the mean of their numbers, or null when they have none.
 export function sparkSeries(values: (number | null)[], max = 90): (number | null)[] {
   return sparkBuckets(values, max).map((b) => (b.n ? b.sum / b.n : null));
