@@ -594,7 +594,8 @@ What the admin area edits:
   secret it accepts all log packets of the server. The collector never sets
   or changes the secret itself (see the collector's CONFIG.md, "Log
   secret"). The field appears once the collector's database has schema
-  version 4 (`gamewe db migrate`). **Slots (max players)** can be entered
+  version 4 (`gamewe db migrate`). On a Counter-Strike 2 server the same field
+  is the server's **log token**, see below. **Slots (max players)** can be entered
   when creating or editing a server (0 to 255, 0 or empty: unknown), so a
   server that has never been online shows its slots on the public pages.
   Once the server answers, the collector overwrites the value with the real
@@ -751,14 +752,17 @@ What the admin area edits:
   the colour of its engine (GoldSrc, Source, Source 2). The form of a
   Counter-Strike 2 server shows its `server.cfg` lines (`log on`,
   `logaddress_delall_http`,
-  `logaddress_add_http "http://<collector IP>:41338/<token>/<game port>"`)
-  with its game port filled in: `<token>` is `listen.http.token` of the
-  collector's config, one for all CS2 servers (not `sv_logsecret`), and the
+  `logaddress_add_http "http://<collector IP>:41338/<game port>/<log token>"`)
+  with its game port filled in. The **log token** is this server's own, 16 to
+  64 letters, digits, `-` or `_`, write-only like the secret: when it is set,
+  the collector accepts only logs whose URL ends with it, and registers that
+  URL over RCON itself (`logaddress_delall_http` removes the old one). If
+  `listen.http.token` is set in the collector's config (one for all CS2
+  servers, not `sv_logsecret`), it comes before the port. The
   port must be the game port exactly as entered in the form, since the
   collector finds the server by sender IP and port (new servers within
-  about a minute). It also says that CS2 needs `-usercon` and that its log
-  secret is ignored; 404 in the collector's log means a wrong path or
-  token, 403 an IP and port that are no CS2 server of the admin.
+  about a minute). It also says that CS2 needs `-usercon`; 404 in the
+  collector's log means a wrong path or token, 403 an IP and port that are no CS2 server of the admin.
 
 ## Health and monitoring
 

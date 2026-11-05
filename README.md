@@ -284,10 +284,11 @@ Counter-Strike 2 sends its logs over HTTP: add to the collector's config
 `http:` part with `enabled: true`, `port: 41338` and a random `token`,
 restart the collector, open TCP 41338 for the game servers, start CS2 with
 `-usercon` and put `log on`, `logaddress_delall_http` and
-`logaddress_add_http "http://<docker host>:41338/<token>/<game port>"`
+`logaddress_add_http "http://<docker host>:41338/<token>/<game port>/<log token>"`
 into `server.cfg` instead of `logaddress_add` (`<token>` is
 `listen.http.token`, the same for all servers; the game port as in the web
-admin); details in
+admin; `<log token>` the server's own, entered in the web admin; a token not
+set is left out with its `/`); details in
 [Counter-Strike 2](https://github.com/DennisPohlmann/gameWE-collector/blob/main/docs/GAMES.md#counter-strike-2).
 
 For production put a reverse proxy with TLS in front of the web (bind it

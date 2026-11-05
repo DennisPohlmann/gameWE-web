@@ -4,6 +4,8 @@ import { HIDDEN_OPTION_PREFIXES, allSettings } from "./admin-settings";
 import { hashPassword } from "./auth";
 import { GAME_HAS_DATA } from "./games";
 import { adminExec, adminInsert, adminQuery, likeOp, type Param } from "./db";
+import { rankingBaseGames } from "./admin-rankings";
+import { isLogSecret, isLogToken } from "./log-secret";
 import { secretFormValue } from "./secret-field";
 
 export type Row = Record<string, string | number | null>;
@@ -244,6 +246,12 @@ export async function saveRow(e: Entity, id: string | null, form: Pick<FormData,
       values[f.name] = v;
       if (f.changedAt) values[f.changedAt] = Math.floor(Date.now() / 1000);
     }
+  }
+  // A server's log secret: a number for sv_logsecret, a token on Counter-Strike 2.
+  if (e.key === "servers" && values.log_secret) {
+    const game = String(values.game ?? (id === null ? "" : (await getRow(e, id))?.game ?? "")).trim();
+    const cs2 = (await rankingBaseGames()).get(game) === "cs2";
+    if (!(cs2 ? isLogToken : isLogSecret)(String(values.log_secret))) throw new InputError("log_secret");
   }
   if (id === null) {
     const key = String(values[e.pk] ?? "").toLowerCase();

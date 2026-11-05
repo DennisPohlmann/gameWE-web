@@ -1,6 +1,6 @@
 import { GAME_KINDS, RETIRED_GAMES } from "./games";
 import { canonicalIp } from "./ip";
-import { isLogSecret } from "./log-secret";
+import { isLogSecret, isLogToken } from "./log-secret";
 
 // What the admin area can edit. Each entity is one table; the generic list,
 // edit and save code in app/admin works from these definitions only, so
@@ -140,8 +140,8 @@ export const entities: Entity[] = [
     pk: "serverId",
     label: { de: "Server", en: "Servers" },
     help: {
-      de: "Der Collector nimmt nur Logs von Servern an, die hier eingetragen sind, und liest die Liste jede Minute neu. Auf dem Gameserver: logaddress_add <Collector-IP>:41337; Counter-Strike 2 (mit -usercon): logaddress_delall_http und logaddress_add_http \"http://<Collector-IP>:41338/<Token>/<Spielport>\" (Token: listen.http.token des Collectors, Spielport wie hier eingetragen).",
-      en: "The collector only accepts logs from servers listed here and re-reads the list every minute. On the game server: logaddress_add <collector IP>:41337; Counter-Strike 2 (with -usercon): logaddress_delall_http and logaddress_add_http \"http://<collector IP>:41338/<token>/<game port>\" (token: the collector's listen.http.token, the game port as entered here).",
+      de: "Der Collector nimmt nur Logs von Servern an, die hier eingetragen sind, und liest die Liste jede Minute neu. Auf dem Gameserver: logaddress_add <Collector-IP>:41337; Counter-Strike 2 (mit -usercon): logaddress_delall_http und logaddress_add_http \"http://<Collector-IP>:41338/<Spielport>/<Log-Token>\" (Spielport und Log-Token wie hier eingetragen; mit listen.http.token des Collectors steht dieser vor dem Spielport).",
+      en: "The collector only accepts logs from servers listed here and re-reads the list every minute. On the game server: logaddress_add <collector IP>:41337; Counter-Strike 2 (with -usercon): logaddress_delall_http and logaddress_add_http \"http://<collector IP>:41338/<game port>/<log token>\" (game port and log token as entered here; the collector's listen.http.token, if set, comes before the game port).",
     },
     fields: [
       {
@@ -165,12 +165,13 @@ export const entities: Entity[] = [
         label: { de: "Log-Secret", en: "Log secret" },
         type: "secret",
         optional: true,
-        max: 10,
-        valid: isLogSecret,
+        max: 64,
+        // Which of the two fits the server's game: saveRow.
+        valid: (s) => isLogSecret(s) || isLogToken(s),
         changedAt: "log_secret_changed",
         help: {
-          de: "Optional: sv_logsecret des Gameservers, eine Zahl von 1 bis 2147483647. Ist es gesetzt, nimmt der Collector nur Logpakete mit genau diesem Secret an; trage denselben Wert als sv_logsecret in die server.cfg des Gameservers ein. Ohne Secret werden alle Logpakete des Servers angenommen. Der Collector setzt oder ändert es nie selbst. Leer lassen, um es nicht zu ändern; „Entfernen“ löscht es.",
-          en: "Optional: the game server's sv_logsecret, a number from 1 to 2147483647. When it is set, the collector accepts only log packets with exactly this secret; put the same value as sv_logsecret into the game server's server.cfg. Without a secret all log packets of the server are accepted. The collector never sets or changes it itself. Leave empty to keep it; “Remove” clears it.",
+          de: "Optional: sv_logsecret des Gameservers, eine Zahl von 1 bis 2147483647. Ist es gesetzt, nimmt der Collector nur Logpakete mit genau diesem Secret an; trage denselben Wert als sv_logsecret in die server.cfg des Gameservers ein. Ohne Secret werden alle Logpakete des Servers angenommen. Der Collector setzt oder ändert es nie selbst. Bei Counter-Strike 2 steht hier stattdessen der Log-Token des Servers: 16 bis 64 Buchstaben, Ziffern, - oder _. Leer lassen, um es nicht zu ändern; „Entfernen“ löscht es.",
+          en: "Optional: the game server's sv_logsecret, a number from 1 to 2147483647. When it is set, the collector accepts only log packets with exactly this secret; put the same value as sv_logsecret into the game server's server.cfg. Without a secret all log packets of the server are accepted. The collector never sets or changes it itself. On Counter-Strike 2 this holds the server's log token instead: 16 to 64 letters, digits, - or _. Leave empty to keep it; “Remove” clears it.",
         },
       },
       { name: "publicaddress", label: { de: "Öffentliche Adresse", en: "Public address" }, type: "text", max: 255, help: { de: "Wird statt IP:Port angezeigt, z. B. ein Hostname.", en: "Shown instead of IP:port, e.g. a host name." } },

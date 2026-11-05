@@ -104,7 +104,7 @@ function fieldSchema(f: Field, input: boolean): Schema {
       return f.options === "clans" ? int(`${d}. Clan ID, 0 for none`) : str(`${d}. Code of a ranking`);
     case "secret":
       return input
-        ? nullable(str(`${d}. Write-only: a string sets it, null clears it, left out it stays${f.name === "log_secret" ? "; a number from 1 to 2147483647, the game server's sv_logsecret" : ""}`, f.max ? { maxLength: f.max } : {}))
+        ? nullable(str(`${d}. Write-only: a string sets it, null clears it, left out it stays${f.name === "log_secret" ? "; a number from 1 to 2147483647, the game server's sv_logsecret; on Counter-Strike 2 the server's log token, 16 to 64 letters, digits, - or _" : ""}`, f.max ? { maxLength: f.max } : {}))
         : bool(`${f.label.en} is set (the value is never returned)`);
     case "password":
       return str(`${d}. Write-only, at least 10 characters; stored as a hash. Left out, it stays`, { minLength: 10 });

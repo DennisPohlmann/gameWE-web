@@ -55,7 +55,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
   const presetLabel = preset ? (optionSets.games ?? []).find(([c]) => c === preset)?.[1] ?? preset : null;
   // Rankings are managed on /admin/rankings; their plain list is only the editor's.
   const back = preset ? rankingServersHref(preset) : e.key === "games" && returnTo === "/admin/games" ? "/admin/rankings" : returnTo;
-  // Counter-Strike 2 servers log over HTTP and have no log secret.
+  // Counter-Strike 2 servers log over HTTP: a log token instead of a log secret.
   const serverGame = preset ?? (isNew ? "" : String(r0.game ?? "").trim());
   const cs2 = e.key === "servers" && serverGame !== "" && (await rankingBaseGames()).get(serverGame) === "cs2";
   // A server's ranking: no templates (rankings without servers), but always
@@ -81,7 +81,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
       : sp.error === "field"
       ? sp.field === "inactive"
         ? a.inactiveNoRight
-        : fill(a.invalidField, { f: badField?.label[lang] ?? sp.field ?? "" })
+        : fill(a.invalidField, { f: cs2 && sp.field === "log_secret" ? a.cs2LogToken : badField?.label[lang] ?? sp.field ?? "" })
       : sp.error === "db"
         ? fill(a.dbWriteError, { msg: sp.msg ?? "" })
         : sp.error === "self"
@@ -162,7 +162,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
             const Wrap = f.type === "secret" ? "div" : "label";
             return (
               <Wrap key={f.name} className={f.type === "secret" ? "form-field" : undefined}>
-                {f.type === "secret" ? <label htmlFor={`f-${f.name}`}>{f.label[lang]}</label> : f.label[lang]}
+                {f.type === "secret" ? <label htmlFor={`f-${f.name}`}>{cs2 && f.name === "log_secret" ? a.cs2LogToken : f.label[lang]}</label> : f.label[lang]}
                 <FieldControl
                   f={createField(f)}
                   id={newRanking ? `f-${f.name}` : undefined}
