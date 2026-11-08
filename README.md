@@ -97,6 +97,14 @@ documentation ranges and the domain `stats.example.org` do not exist.
 
 ![The start page in the six built-in designs](docs/screenshots/skins.png)
 
+**In game: `!rank` from the game plugins (Day of Defeat: Source, CS2, Counter-Strike: Source)**
+
+![!rank in Day of Defeat: Source](docs/screenshots/plugin-rank-dods.png)
+
+![!rank in CS2](docs/screenshots/plugin-rank-cs2.png)
+
+![!rank in Counter-Strike: Source](docs/screenshots/plugin-rank-css.png)
+
 The admin area has its own look (light or dark); pictures of it are in
 [USAGE.md](docs/USAGE.md#admin-area).
 
