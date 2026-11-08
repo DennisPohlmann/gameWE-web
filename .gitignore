@@ -10,3 +10,5 @@ next-env.d.ts
 /public/vendor/
 /scripts/overviews/build/
 /tools/release/node_modules/
+.claude/
+CLAUDE.md
