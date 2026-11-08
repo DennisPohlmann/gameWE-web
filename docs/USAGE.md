@@ -738,7 +738,10 @@ What the admin area edits:
   the player with names, Steam IDs, statistics, events, chat, connection data,
   bans and hall of fame entries; the job list shows the deleted rows. Events
   shared with another player (a kill) go too, that player's totals stay. If the
-  person plays again, they are recorded as a new player.
+  person plays again, they are recorded as a new player. A player belongs to
+  one ranking: whoever plays in three rankings has three players
+  there and needs three requests, one on each player's page.
+  On the collector host `gamewe delete-player GAME PLAYER-ID` does the same.
 - **IP addresses** (`/admin/ips`): all stored connect addresses, for admins
   only, searchable by an IP or its start (`84.12.`), a Steam ID in any form
   (`STEAM_0:1:23`, `STEAM_1:1:23`, `1:23`, `[U:1:47]`, a SteamID64, also in
