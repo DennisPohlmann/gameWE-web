@@ -230,6 +230,7 @@
   "favWeapon": "Ulubiona broń",
   "overview": "Przegląd",
   "position": "Pozycja",
+  "positionOf": "z {n} w rankingu",
   "last14": "* Ostatnie 14 dni",
   "suicides": "Samobójstwa",
   "killsPerMin": "Zabójstwa na minutę",

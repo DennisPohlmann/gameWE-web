@@ -230,6 +230,7 @@
   "favWeapon": "Arme favorite",
   "overview": "Aperçu",
   "position": "Position",
+  "positionOf": "sur {n} au classement",
   "last14": "* 14 derniers jours",
   "suicides": "Suicides",
   "killsPerMin": "Frags par minute",

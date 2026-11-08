@@ -238,6 +238,7 @@
   "favTeam": "Favourite team",
   "overview": "Overview",
   "position": "Position",
+  "positionOf": "of {n} in the ranking",
   "last14": "* last 14 days",
   "suicides": "Suicides",
   "killsPerMin": "Kills per minute",

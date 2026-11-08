@@ -49,6 +49,7 @@ import {
   getPlayerMaps,
   getPlayerNames,
   getPlayerPosition,
+  getRankedCount,
   getPlayerTeams,
   getRadarAverage,
   getPlayerWeapons,
@@ -117,7 +118,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
       getPlayerSkillBefore(id, 30),
     ]);
   // The rest of the reads at once, not one after the other.
-  const [imgStyles, flags, shots, radarAvg, hallShown, bans] = await Promise.all([
+  const [imgStyles, flags, shots, radarAvg, hallShown, bans, ranked] = await Promise.all([
     imageStyles(lang === "de" ? "de" : "en"),
     getPlayerFlags([...victims.map((o) => o.playerId), ...killers.map((o) => o.playerId), ...killStats.map((o) => o.playerId)]),
     // Counter-Strike 2 logs no shots (and the collector counts no hits for
@@ -126,6 +127,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
     getRadarAverage(game),
     hallOfFameShown(game),
     profileBans(p, t),
+    position ? getRankedCount(game) : Promise.resolve(0),
   ]);
   const stars = hallShown ? await getPlayerStars(game, id) : null;
   // Hidden players stay out of the list; bots are shown with their tag.
@@ -222,6 +224,9 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const wonAwards = new Map(ribbons.map((r) => [r.awardId, r.wins]));
   const totalRibbonWins = ribbons.reduce((n, r) => n + r.wins, 0);
 
+  // Places 1 to 3 in gold, silver and bronze (the colours of the hall of fame).
+  const medal = position && Number(position) <= 3 ? ` p-medal p-medal-${Number(position)}` : "";
+
   const profile = { game, id, p, ids, isBot, location, age, fav, stars, bans: bans.bans, steamBan: bans.steam, sourcebans: !!settings.sourcebansUrl, sourcebansUrl: settings.sourcebansUrl, t, lang };
 
   return (
@@ -232,7 +237,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
           parts of the page below it. The tables further down leave these
           values out, so nothing is shown twice. */}
       <div className="p-hero">
-        <div className="p-card p-head">
+        <div className={`p-card p-head${medal}`}>
           <Suspense fallback={<HeroAvatar steam={null} name={p.name} />}>
             <SteamAvatar steam64={ids?.steam64 ?? null} name={p.name} />
           </Suspense>
@@ -259,9 +264,10 @@ export default async function PlayerPage({ params, searchParams }: Props) {
             </div>
           </div>
           <div className="p-big">
-            <div>
+            <div className="p-place">
               <small>{t.position}</small>
               <b>{p.hideranking ? <i className="muted">{t.notListed}</i> : position ? `#${fmtNum(position, lang)}` : "-"}</b>
+              {position && ranked ? <span>{fill(t.positionOf, { n: fmtNum(Math.max(ranked, Number(position)), lang) })}</span> : null}
             </div>
             <div>
               <small>{t.points}</small>

@@ -230,6 +230,7 @@
   "favWeapon": "最爱武器",
   "overview": "概览",
   "position": "名次",
+  "positionOf": "共 {n} 名玩家",
   "last14": "* 最近 14 天",
   "suicides": "自杀",
   "killsPerMin": "每分钟击杀",

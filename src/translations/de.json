@@ -238,6 +238,7 @@
   "favTeam": "Lieblingsteam",
   "overview": "Übersicht",
   "position": "Platz",
+  "positionOf": "von {n} in der Rangliste",
   "last14": "* letzte 14 Tage",
   "suicides": "Selbstmorde",
   "killsPerMin": "Kills pro Minute",

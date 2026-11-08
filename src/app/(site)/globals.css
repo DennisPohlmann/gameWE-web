@@ -1842,18 +1842,33 @@ table.stats.clan-sum td { white-space: normal; }
    favourites and jump links to the parts of the page. */
 .p-hero { width: 95%; margin: 12px auto 18px; }
 .p-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18), 0 6px 18px rgba(0, 0, 0, 0.12); }
-.p-head { display: flex; align-items: center; gap: 18px; padding: 16px 18px; }
-.p-avatar { flex: none; display: grid; place-items: center; width: 92px; height: 92px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); font-size: 40px; font-weight: bold; line-height: 1; object-fit: cover; }
+.p-head { display: flex; align-items: center; gap: 20px; padding: 20px 22px; border-top: 3px solid var(--accent); background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, var(--surface)), var(--surface) 55%); }
+.p-avatar { flex: none; display: grid; place-items: center; width: 104px; height: 104px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); font-size: 40px; font-weight: bold; line-height: 1; object-fit: cover; }
 .p-who { flex: 1; min-width: 0; }
-.p-name { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; color: var(--text); font-size: 22px; font-weight: bold; line-height: 1.2; overflow-wrap: anywhere; }
+.p-name { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; color: var(--text); font-size: 30px; font-weight: bold; line-height: 1.15; letter-spacing: -0.01em; overflow-wrap: anywhere; }
 .p-name .hof-profile-stars { margin: 0; }
 .p-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 8px; color: var(--muted); font-size: 12.5px; }
 .p-meta a { color: inherit; }
 .p-chip { display: inline-block; padding: 1px 8px; border: 1px solid var(--border); border-radius: 999px; color: var(--accent-text); font-size: 12px; font-weight: bold; text-decoration: none; }
 .p-chip:hover { border-color: var(--accent); text-decoration: none; }
-.p-big { display: flex; flex: none; }
+.p-big { display: flex; flex: none; align-items: center; }
 .p-big > div { min-width: 96px; padding: 0 18px; border-left: 1px solid var(--border); }
 .p-big > div:first-child { border-left: 0; }
+/* The place in the ranking as its own tile, "of N" below it; places 1 to 3
+   as a gold, silver or bronze plaque (colours of the hall of fame), and the
+   head card's top edge and picture frame in the same colour. */
+.p-big > div.p-place { min-width: 150px; margin-right: 6px; padding: 10px 18px 11px; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border)); border-radius: 8px; background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+.p-big > div.p-place + div { border-left: 0; }
+.p-head .p-big .p-place b { color: var(--accent-text); font-size: 38px; line-height: 1.05; }
+.p-place span { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; white-space: nowrap; }
+.p-medal { --medal: #c4ccd6; --medal-dark: #6b7480; border-top-color: var(--medal); background: linear-gradient(135deg, color-mix(in srgb, var(--medal) 16%, var(--surface)), var(--surface) 60%); }
+.p-medal-1 { --medal: #f5c400; --medal-dark: #8a6a00; }
+.p-medal-3 { --medal: #d4823c; --medal-dark: #7a3f10; }
+.p-medal .p-avatar { border: 3px solid var(--medal); box-shadow: 0 0 0 1px var(--medal-dark), 0 2px 10px color-mix(in srgb, var(--medal) 35%, transparent); }
+.p-medal .p-big > div.p-place { border-color: var(--medal-dark); background: linear-gradient(145deg, #fff -25%, var(--medal) 45%, var(--medal-dark) 135%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 2px 10px color-mix(in srgb, var(--medal) 40%, transparent); }
+.p-head.p-medal .p-big .p-place b, .p-head.p-medal .p-place small, .p-medal .p-place span { color: #1a1a1a; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35); }
+.p-medal .p-place span { opacity: 0.8; }
+.p-medal-1 .p-place small::before { content: "♛ "; }
 .p-hero small { display: block; color: var(--muted); font-size: 10.5px; font-weight: bold; letter-spacing: 0.08em; text-transform: uppercase; }
 .p-big b { display: block; margin-top: 2px; color: var(--text); font-size: 28px; line-height: 1.15; }
 .p-big b i { font-size: 14px; font-weight: normal; }
@@ -1879,14 +1894,17 @@ table.stats.clan-sum td { white-space: normal; }
   .p-big { width: 100%; padding-top: 12px; border-top: 1px solid var(--border); }
   .p-big > div { flex: 1; min-width: 0; padding: 0 12px; }
   .p-big > div:first-child { padding-left: 0; }
+  .p-big > div.p-place { flex: 1.4; padding: 8px 12px 9px; }
   .p-kpis { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 600px) {
   .p-hero { width: auto; margin: 10px 8px 14px; }
   .p-head { gap: 12px; padding: 14px; }
-  .p-avatar { width: 60px; height: 60px; font-size: 28px; }
-  .p-name { font-size: 18px; }
+  .p-avatar { width: 68px; height: 68px; font-size: 30px; }
+  .p-name { font-size: 23px; }
   .p-big b { font-size: 22px; }
+  .p-head .p-big .p-place b { font-size: 30px; }
+  .p-place span { white-space: normal; }
   .p-kpis { grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .p-kpis b { font-size: 19px; }
 }

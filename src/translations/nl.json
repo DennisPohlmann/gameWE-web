@@ -230,6 +230,7 @@
   "favWeapon": "Favoriete wapen",
   "overview": "Overzicht",
   "position": "Positie",
+  "positionOf": "van {n} in de ranglijst",
   "last14": "* Laatste 14 dagen",
   "suicides": "Zelfmoorden",
   "killsPerMin": "Kills per minuut",

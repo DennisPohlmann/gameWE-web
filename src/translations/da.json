@@ -230,6 +230,7 @@
   "favWeapon": "Yndlingsvåben",
   "overview": "Oversigt",
   "position": "Position",
+  "positionOf": "af {n} på ranglisten",
   "last14": "* Sidste 14 dage",
   "suicides": "Selvmord",
   "killsPerMin": "Drab pr. minut",
