@@ -9,3 +9,4 @@ next-env.d.ts
 /shots/
 /public/vendor/
 /scripts/overviews/build/
+/tools/release/node_modules/
