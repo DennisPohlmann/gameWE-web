@@ -133,6 +133,21 @@ That address applies to all rankings. A ranking whose maps are on another
 FastDL sets its own under Rankings → the ranking → **FastDL**; left empty, it
 uses the global one. The switch and all the rules below apply to both.
 
+When the FastDL wants more than a plain request (a block on the browser in
+`.htaccess`, a login), the same settings page sets what every download sends:
+**User-Agent**, **Referer** (game clients send e.g. `hl2://203.0.113.5:27015`),
+a **bearer token** (`Authorization: Bearer ...`), a **user and password** for
+basic auth, and **one more header** as `Name: value` (e.g. `X-Api-Key: ...` or
+`Cookie: ...`; not Host, Authorization, User-Agent, Referer or connection
+headers). They apply to all rankings; a ranking sets any of them again on its
+**FastDL** card, and an empty field there takes the global value. The
+authentication goes as one: a ranking with its own token or user uses only its
+own, and a token wins over a user. Token, password and the header are stored
+in `hlstats_gamewe_secrets`, which the public database user cannot read, are
+never shown again or logged, and reach the download process only through its
+environment. Over `http://` they cross the network unencrypted: prefer
+`https://`.
+
 - Only admins with level 100 can change these settings. The address must be
   public: private, loopback and link-local addresses are refused, also when a
   name resolves to one. For a FastDL in your own network, set

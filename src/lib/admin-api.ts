@@ -35,11 +35,13 @@ import {
   setHallEntry,
   setRankingBots,
   setRankingFastdl,
+  setRankingFastdlAccess,
   setRankingHall,
   setRankingVac,
   type Actor,
 } from "./admin-ops";
-import { rankingBlockVac, rankingBots, rankingFastdl } from "./admin-ranking-bots";
+import { rankingBlockVac, rankingBots, rankingFastdl, rankingFastdlAccess } from "./admin-ranking-bots";
+import { ACCESS_SECRETS, FASTDL_ACCESS, type Access, type AccessField } from "./fastdl-access";
 import { allServers, rankingSummaries } from "./admin-rankings";
 import { RAW_GROUP, READONLY_OPTIONS, settingGroups } from "./admin-settings";
 import { overLimit } from "./api";
@@ -445,12 +447,27 @@ const handlers: Record<string, Handler> = {
   },
   async fastdlGet(c) {
     await ranking(c.params.code);
-    return { body: { url: await rankingFastdl(c.params.code) } };
+    const [url, access] = await Promise.all([rankingFastdl(c.params.code), rankingFastdlAccess(c.params.code)]);
+    return { body: { url, ...access } };
   },
   async fastdlSet(c) {
-    await ranking(c.params.code);
-    const b = onlyKeys(c.body, ["url"], ["url"]);
-    return { body: { url: await setRankingFastdl(c.actor, c.params.code, strField(b, "url", 255)) } };
+    const code = c.params.code;
+    await ranking(code);
+    const b = onlyKeys(c.body, ["url", ...FASTDL_ACCESS], ["url"]);
+    // A missing field keeps what is stored; null removes a secret.
+    const now = await rankingFastdlAccess(code);
+    const access: Access = {};
+    const clear: AccessField[] = [];
+    for (const f of FASTDL_ACCESS) {
+      const secret = ACCESS_SECRETS.includes(f);
+      if (b[f] === undefined) {
+        if (!secret) access[f] = now[f as "agent" | "referer" | "user"];
+      } else if (b[f] === null && secret) clear.push(f);
+      else access[f] = strField(b, f, 255);
+    }
+    const url = await setRankingFastdl(c.actor, code, strField(b, "url", 255));
+    await setRankingFastdlAccess(c.actor, code, access, clear);
+    return { body: { url, ...(await rankingFastdlAccess(code)) } };
   },
   async hallGet(c) {
     await ranking(c.params.code);

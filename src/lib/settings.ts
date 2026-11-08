@@ -5,7 +5,9 @@ import { eventsMode, type EventsMode } from "./events-mode";
 import { idleMinutes } from "./admin-idle";
 import { query } from "./db";
 import { mapStyleId } from "./map-styles";
+import { ACCESS_SECRETS, FASTDL_ACCESS, accessKey, fastdlHeaders, type Access } from "./fastdl-access";
 import { FASTDL_URL_PREFIX, fastdlBase, fastdlOf } from "./overview-format";
+import { secretsOf } from "./secret-options";
 import { sourcebansBase } from "./sourcebans";
 import { LINK_SLOTS, type HeaderLink, type TabId, headerOrder, parseHome, parseLink, safeUrl } from "./header-links";
 
@@ -195,10 +197,18 @@ export async function getSettings(): Promise<Settings> {
   return value;
 }
 
-// The FastDL address of one ranking; empty while the switch is off.
-export async function fastdlUrlOf(game: string): Promise<string> {
+// The FastDL address of one ranking and the headers its download sends
+// (lib/fastdl-access.ts); the address is empty while the switch is off.
+export async function fastdlRequestOf(game: string): Promise<{ base: string; headers: Record<string, string> }> {
   const { fastdlOn, fastdlUrl } = await getSettings();
-  if (!fastdlOn) return "";
-  const rows = await query<{ value: string }>(`SELECT value FROM hlstats_Options WHERE keyname = ?`, [`${FASTDL_URL_PREFIX}${game}`]);
-  return fastdlOf(rows[0]?.value, fastdlUrl);
+  if (!fastdlOn) return { base: "", headers: {} };
+  const plain = FASTDL_ACCESS.filter((f) => !ACCESS_SECRETS.includes(f));
+  const keys = [`${FASTDL_URL_PREFIX}${game}`, ...plain.flatMap((f) => [accessKey(f), accessKey(f, game)])];
+  const [rows, secrets] = await Promise.all([
+    query<{ keyname: string; value: string }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [keys]),
+    secretsOf(ACCESS_SECRETS.flatMap((f) => [accessKey(f), accessKey(f, game)])),
+  ]);
+  const v: Record<string, string> = { ...Object.fromEntries(rows.map((r) => [r.keyname, r.value ?? ""])), ...secrets };
+  const level = (g?: string): Access => Object.fromEntries(FASTDL_ACCESS.map((f) => [f, v[accessKey(f, g)] ?? ""]));
+  return { base: fastdlOf(v[`${FASTDL_URL_PREFIX}${game}`], fastdlUrl), headers: fastdlHeaders(level(), level(game)) };
 }

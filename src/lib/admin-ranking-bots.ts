@@ -1,7 +1,9 @@
 import "server-only";
 import { adminExec, adminQuery, upsert } from "./db";
 import { blockVacKey, blockVacOn, botSettingKeys, botSettingOn, botStatsOn } from "./bot-settings";
+import { ACCESS_SECRETS, FASTDL_ACCESS, accessKey, type Access, type AccessField } from "./fastdl-access";
 import { FASTDL_URL_PREFIX } from "./overview-format";
+import { deleteSecrets, saveSecret, secretsOf } from "./secret-options";
 
 // Admin side of the bot settings of one ranking (lib/bot-settings.ts):
 // whether its bots are ranked, whether kills with bots give points and
@@ -63,4 +65,33 @@ export async function saveRankingFastdl(game: string, url: string): Promise<void
   const key = `${FASTDL_URL_PREFIX}${game}`;
   if (url) await adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [key, url]);
   else await adminExec(`DELETE FROM hlstats_Options WHERE keyname = ?`, [key]);
+}
+
+// What one ranking's FastDL downloads send besides the address
+// (lib/fastdl-access.ts): the plain fields, and only whether a secret is set.
+export type RankingFastdlAccess = { agent: string; referer: string; user: string; password: boolean; token: boolean; header: boolean };
+
+export async function rankingFastdlAccess(game: string): Promise<RankingFastdlAccess> {
+  const plain = FASTDL_ACCESS.filter((f) => !ACCESS_SECRETS.includes(f));
+  const [rows, secrets] = await Promise.all([
+    adminQuery<{ keyname: string; value: string | null }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [plain.map((f) => accessKey(f, game))]),
+    secretsOf(ACCESS_SECRETS.map((f) => accessKey(f, game))),
+  ]);
+  const v = Object.fromEntries(rows.map((r) => [r.keyname, r.value ?? ""]));
+  const set = (f: AccessField) => Boolean(secrets[accessKey(f, game)]);
+  return { agent: v[accessKey("agent", game)] ?? "", referer: v[accessKey("referer", game)] ?? "", user: v[accessKey("user", game)] ?? "", password: set("password"), token: set("token"), header: set("header") };
+}
+
+// Plain fields: empty removes the row. Secrets: undefined or empty keeps the
+// stored one, a name in clear removes it.
+export async function saveRankingFastdlAccess(game: string, a: Access, clear: AccessField[]): Promise<void> {
+  for (const f of FASTDL_ACCESS) {
+    const key = accessKey(f, game);
+    const v = a[f] ?? "";
+    if (ACCESS_SECRETS.includes(f)) {
+      if (clear.includes(f)) await deleteSecrets([key]);
+      else if (v) await saveSecret(key, v);
+    } else if (v) await adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [key, v]);
+    else await adminExec(`DELETE FROM hlstats_Options WHERE keyname = ?`, [key]);
+  }
 }

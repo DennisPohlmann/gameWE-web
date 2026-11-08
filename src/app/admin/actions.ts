@@ -5,7 +5,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getEntity } from "@/lib/admin-entities";
 import { getRow, keptValues, optionList, withColumns } from "@/lib/admin-data";
-import { OpError, assignServersTo, deleteEntity, deletePlayer, moveServer, resetRanking, saveEntity, savePrivacy, saveSettings, setGlobalHall, setHallEntry, setRankingBots, setRankingFastdl, setRankingHall, setRankingVac } from "@/lib/admin-ops";
+import { OpError, assignServersTo, deleteEntity, deletePlayer, moveServer, resetRanking, saveEntity, savePrivacy, saveSettings, setGlobalHall, setHallEntry, setRankingBots, setRankingFastdl, setRankingFastdlAccess, setRankingHall, setRankingVac } from "@/lib/admin-ops";
 import { ADMIN_THEME_COOKIE, isAdminTheme } from "@/lib/admin-theme";
 import { basePath } from "@/lib/base-path";
 import { expiryDays, tokenName } from "@/lib/api-token-core";
@@ -18,6 +18,7 @@ import { addParams, safeReturnTo, withReturnTo } from "@/lib/return-to";
 import { rankingPageHref, resettableRankings } from "@/lib/admin-rankings";
 import { presetRanking, rankingServersHref } from "@/lib/ranking-preset";
 import { checkCode, consumeStep, newBackupCodes, newSecret, readSecret, removeBackupCodes, removeSecret, secondFactor, storeBackupCodes, storeSecret } from "@/lib/totp";
+import { FASTDL_ACCESS } from "@/lib/fastdl-access";
 
 export async function loginAction(form: FormData) {
   const res = await login(String(form.get("username") ?? ""), String(form.get("password") ?? ""));
@@ -388,8 +389,10 @@ export async function rankingFastdlAction(form: FormData) {
   const page = `/admin/rankings/${encodeURIComponent(game)}`;
   try {
     await setRankingFastdl({ user }, game, String(form.get("url") ?? ""));
+    const access = Object.fromEntries(FASTDL_ACCESS.map((f) => [f, String(form.get(f) ?? "")]));
+    await setRankingFastdlAccess({ user }, game, access, FASTDL_ACCESS.filter((f) => form.get(`${f}__clear`) === "1"));
   } catch (err) {
-    if (err instanceof OpError) redirect(err.code === "field" ? `${page}?fastdl=bad#fastdl` : "/admin/rankings");
+    if (err instanceof OpError) redirect(err.code !== "field" ? "/admin/rankings" : err.detail.field === "url" ? `${page}?fastdl=bad#fastdl` : `${page}?fastdl=bad-${encodeURIComponent(err.detail.field ?? "")}#fastdl`);
     throw err;
   }
   redirect(`${page}?fastdl=saved#fastdl`);

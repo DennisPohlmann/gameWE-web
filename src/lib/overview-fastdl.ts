@@ -17,12 +17,16 @@ const MAX_REMEMBERED = 2000;
 const RUN_LIMIT_MS = 15 * 60_000;
 const HEAP_MB = 2048;
 
-export type Runner = (base: string, map: string, dir: string, done: (ok: boolean) => void) => void;
+// headers: what the download sends besides the address (lib/fastdl-access.ts).
+export type Runner = (base: string, map: string, dir: string, done: (ok: boolean) => void, headers?: Record<string, string>) => void;
 
-const runProcess: Runner = (base, map, dir, done) => {
+const runProcess: Runner = (base, map, dir, done, headers = {}) => {
   const script = path.join(process.cwd(), "scripts/overviews/build/fastdl.js");
-  // No environment: the process has no business with the site's secrets.
-  const env = process.env.FASTDL_ALLOW_PRIVATE === "1" ? { FASTDL_ALLOW_PRIVATE: "1" } : {};
+  // No environment but its own: the process has no business with the site's
+  // secrets. The headers go in the environment, not the command line, which
+  // every user of the host can see.
+  const env: Record<string, string> = process.env.FASTDL_ALLOW_PRIVATE === "1" ? { FASTDL_ALLOW_PRIVATE: "1" } : {};
+  if (Object.keys(headers).length) env.FASTDL_HEADERS = JSON.stringify(headers);
   const child = spawn(process.execPath, [`--max-old-space-size=${HEAP_MB}`, script, base, map, dir], { env: env as NodeJS.ProcessEnv, stdio: ["ignore", "ignore", "pipe"], timeout: RUN_LIMIT_MS, killSignal: "SIGKILL" });
   let err = "";
   child.stderr.on("data", (d) => {
@@ -39,7 +43,7 @@ const runProcess: Runner = (base, map, dir, done) => {
 
 export function fastdlQueue(run: Runner, dirOf: (game: string) => string, now: () => number = Date.now) {
   const tried = new Map<string, number>();
-  const waiting: { base: string; map: string; dir: string; done?: () => void }[] = [];
+  const waiting: { base: string; map: string; dir: string; done?: () => void; headers?: Record<string, string> }[] = [];
   let busy = false;
   const next = () => {
     const job = waiting.shift();
@@ -48,12 +52,18 @@ export function fastdlQueue(run: Runner, dirOf: (game: string) => string, now: (
       return;
     }
     busy = true;
-    run(job.base, job.map, job.dir, (ok) => {
-      if (ok) job.done?.();
-      next();
-    });
+    run(
+      job.base,
+      job.map,
+      job.dir,
+      (ok) => {
+        if (ok) job.done?.();
+        next();
+      },
+      job.headers,
+    );
   };
-  return (base: string, game: string, map: string, done?: () => void): boolean => {
+  return (base: string, game: string, map: string, done?: () => void, headers?: Record<string, string>): boolean => {
     if (!base || !GAME.test(game) || !MAP_NAME.test(map) || waiting.length >= MAX_QUEUE) return false;
     // With the address: a map that failed on the old one can try a new one at once.
     const key = `${base} ${game}/${map}`;
@@ -61,7 +71,7 @@ export function fastdlQueue(run: Runner, dirOf: (game: string) => string, now: (
     if (at !== undefined && now() - at < RETRY_MS) return false;
     if (tried.size >= MAX_REMEMBERED) tried.clear();
     tried.set(key, now());
-    waiting.push({ base, map, dir: dirOf(game), done });
+    waiting.push({ base, map, dir: dirOf(game), done, headers });
     if (!busy) next();
     return true;
   };

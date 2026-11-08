@@ -267,6 +267,69 @@ const definitions: Omit<SettingGroup, "area">[] = [
           en: "The folder above maps/, e.g. https://dl.example.org/cstrike/ (sv_downloadurl). Applies to all rankings, unless a ranking has its own address (Rankings → ranking → FastDL). Public addresses only (FASTDL_ALLOW_PRIVATE=1 allows private ones). It loads maps/<map>.bsp.bz2, otherwise maps/<map>.bsp; no redirects, at most 512 MB download and 1 GB unpacked.",
         },
       },
+      {
+        key: "gamewe_fastdl_agent",
+        minLevel: 100,
+        label: { de: "FastDL: User-Agent", en: "FastDL: User-Agent" },
+        type: "text",
+        def: "",
+        help: {
+          de: "Was der Download als Browser angibt, z. B. für eine Sperre per .htaccess. Leer: die Kennung von Node.js. Gilt für alle Rankings; ein Ranking kann jedes FastDL-Feld unter Rankings → Ranking → FastDL selbst setzen.",
+          en: "What the download names as its browser, e.g. for a block in .htaccess. Empty: the one of Node.js. Applies to all rankings; a ranking may set every FastDL field itself under Rankings → ranking → FastDL.",
+        },
+      },
+      {
+        key: "gamewe_fastdl_referer",
+        minLevel: 100,
+        label: { de: "FastDL: Referer", en: "FastDL: Referer" },
+        type: "text",
+        def: "",
+        help: {
+          de: "Die Seite, von der der Download angeblich kommt, wie ihn Spiele-Clients senden (z. B. hl2://203.0.113.5:27015). Leer: keiner.",
+          en: "The page the download claims to come from, as game clients send it (e.g. hl2://203.0.113.5:27015). Empty: none.",
+        },
+      },
+      {
+        key: "gamewe_fastdl_token",
+        minLevel: 100,
+        label: { de: "FastDL: Bearer-Token", en: "FastDL: bearer token" },
+        type: "secret",
+        def: "",
+        help: {
+          de: "Gesendet als „Authorization: Bearer <Token>“. Ist auch ein Benutzer gesetzt, gilt der Token. Wird nie angezeigt; leer lassen behält es. Über http:// geht es unverschlüsselt durchs Netz.",
+          en: "Sent as \"Authorization: Bearer <token>\". With a user set as well, the token wins. Never shown; leave empty to keep it. Over http:// it crosses the network unencrypted.",
+        },
+      },
+      {
+        key: "gamewe_fastdl_user",
+        minLevel: 100,
+        label: { de: "FastDL: Benutzer (Basic-Auth)", en: "FastDL: user (basic auth)" },
+        type: "text",
+        def: "",
+        help: {
+          de: "Mit dem Passwort darunter als „Authorization: Basic …“ gesendet, ohne Doppelpunkt. Leer: keine Basic-Auth.",
+          en: "Sent with the password below as \"Authorization: Basic ...\", no colon. Empty: no basic auth.",
+        },
+      },
+      {
+        key: "gamewe_fastdl_password",
+        minLevel: 100,
+        label: { de: "FastDL: Passwort (Basic-Auth)", en: "FastDL: password (basic auth)" },
+        type: "secret",
+        def: "",
+        help: { de: "Wird nie angezeigt; leer lassen behält es.", en: "Never shown; leave empty to keep it." },
+      },
+      {
+        key: "gamewe_fastdl_header",
+        minLevel: 100,
+        label: { de: "FastDL: weiterer Header", en: "FastDL: one more header" },
+        type: "secret",
+        def: "",
+        help: {
+          de: "Ein Header als „Name: Wert“, z. B. „X-Api-Key: …“ oder „Cookie: …“. Host, Authorization, User-Agent, Referer und Header der Verbindung gehen nicht. Wird nie angezeigt; leer lassen behält ihn.",
+          en: "One header as \"Name: value\", e.g. \"X-Api-Key: ...\" or \"Cookie: ...\". Host, Authorization, User-Agent, Referer and connection headers are refused. Never shown; leave empty to keep it.",
+        },
+      },
       { key: "gamewe_map_live", label: { de: "Karte „Gerade online“ (Spielübersicht)", en: "\"Online now\" map (game overview)" }, type: "bool", def: "1" },
       { key: "gamewe_map_players", label: { de: "Karte über der Rangliste und auf den Clan-Seiten", en: "Map above the ranking and on clan pages" }, type: "bool", def: "1" },
       {
@@ -612,7 +675,7 @@ export const settingGroups: SettingGroup[] = [
     area: "website",
     title: { de: "Karten & Ereignisse", en: "Maps & events" },
     help: helpOf("maps"),
-    items: pick("gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_fastdl", "gamewe_fastdl_url", "gamewe_game_events", "gamewe_player_events"),
+    items: pick("gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_fastdl", "gamewe_fastdl_url", "gamewe_fastdl_agent", "gamewe_fastdl_referer", "gamewe_fastdl_token", "gamewe_fastdl_user", "gamewe_fastdl_password", "gamewe_fastdl_header", "gamewe_game_events", "gamewe_player_events"),
   },
   { id: "seo", area: "website", title: { de: "Suchmaschinen", en: "Search engines" }, help: helpOf("seo"), items: definitions.find((g) => g.id === "seo")!.items },
   { id: "voice", area: "services", title: { de: "Voiceserver", en: "Voice server" }, help: helpOf("voice"), items: definitions.find((g) => g.id === "voice")!.items },
@@ -688,7 +751,7 @@ export const HIDDEN_OPTION_PREFIXES = ["gamewe_totp", "gamewe_apitoken", "gamewe
 // Rows the level 100 operations write (reset schedules, VAC block, bots, the FastDL address), which
 // the collector acts on, or that it opens as a file: below level 100 the raw
 // list shows them read-only and refuses them.
-const ADMIN_ONLY_OPTION_PREFIXES = ["gamewe_reset_", "gamewe_next_reset_", "gamewe_hof_", "gamewe_block_vac_", "gamewe_rank_bots_", "gamewe_bot_points_", "gamewe_bot_kills_", "gamewe_bot_stats_", "gamewe_fastdl_url_", "gamewe_geoip_db"];
+const ADMIN_ONLY_OPTION_PREFIXES = ["gamewe_reset_", "gamewe_next_reset_", "gamewe_hof_", "gamewe_block_vac_", "gamewe_rank_bots_", "gamewe_bot_points_", "gamewe_bot_kills_", "gamewe_bot_stats_", "gamewe_fastdl_url_", "gamewe_fastdl_agent_", "gamewe_fastdl_referer_", "gamewe_fastdl_user_", "gamewe_fastdl_password_", "gamewe_fastdl_token_", "gamewe_fastdl_header_", "gamewe_geoip_db"];
 export const adminOnlyOption = (key: string) => ADMIN_ONLY_OPTION_PREFIXES.some((p) => key.toLowerCase().startsWith(p));
 // Written by the collector, shown read-only.
 export const READONLY_OPTIONS = ["gamewe_heartbeat", "gamewe_collector_version", "gamewe_collector_runtime"];
@@ -739,6 +802,27 @@ export const RAW_OPTION_HELP: Record<string, L> = {
 
 // Meaning of keys per ranking (<prefix><game>) without a field here.
 export const RAW_PREFIX_HELP: [string, L][] = [
+  [
+    "gamewe_fastdl_agent_",
+    {
+      de: "User-Agent der FastDL-Downloads dieses Rankings statt des globalen. Einstellbar auf der Ranking-Seite unter „FastDL“.",
+      en: "User-Agent of this ranking's FastDL downloads instead of the global one. Set on the ranking's page under \"FastDL\".",
+    },
+  ],
+  [
+    "gamewe_fastdl_referer_",
+    {
+      de: "Referer der FastDL-Downloads dieses Rankings statt des globalen. Einstellbar auf der Ranking-Seite unter „FastDL“.",
+      en: "Referer of this ranking's FastDL downloads instead of the global one. Set on the ranking's page under \"FastDL\".",
+    },
+  ],
+  [
+    "gamewe_fastdl_user_",
+    {
+      de: "Basic-Auth-Benutzer der FastDL-Downloads dieses Rankings. Einstellbar auf der Ranking-Seite unter „FastDL“.",
+      en: "Basic auth user of this ranking's FastDL downloads. Set on the ranking's page under \"FastDL\".",
+    },
+  ],
   [
     "gamewe_fastdl_url_",
     {

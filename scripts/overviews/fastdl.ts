@@ -48,13 +48,13 @@ const publicLookup: LookupFunction = (host, options, done) => {
 };
 
 /** A GET without redirects that reaches public addresses only, unless allowed. */
-export function guardedGet(allowPrivate: boolean, timeoutMs = DOWNLOAD_TIMEOUT_MS): Get {
+export function guardedGet(allowPrivate: boolean, timeoutMs = DOWNLOAD_TIMEOUT_MS, headers: Record<string, string> = {}): Get {
   return (url) =>
     new Promise((resolve, reject) => {
       const u = new URL(url);
       const literal = u.hostname.replace(/^\[|\]$/g, "");
       if (!allowPrivate && isIP(literal) && isPrivateAddress(literal)) return reject(new Error(`${literal} is a private address`));
-      const req = (u.protocol === "https:" ? https : http).get(u, { lookup: allowPrivate ? undefined : publicLookup, signal: AbortSignal.timeout(timeoutMs) }, (res) => {
+      const req = (u.protocol === "https:" ? https : http).get(u, { headers, lookup: allowPrivate ? undefined : publicLookup, signal: AbortSignal.timeout(timeoutMs) }, (res) => {
         const status = res.statusCode ?? 0;
         if (status >= 300 && status < 400) {
           res.destroy();
@@ -121,7 +121,16 @@ export async function fetchOverview(base: string, map: string, dir: string, fetc
 
 if (require.main === module) {
   const [base, map, dir] = process.argv.slice(2);
-  fetchOverview(base, map, dir, guardedGet(process.env.FASTDL_ALLOW_PRIVATE === "1")).catch((e: Error) => {
+  // FASTDL_HEADERS: what the site set (User-Agent, Referer, Authorization, one
+  // more), as a JSON object; never written to the output.
+  let headers: Record<string, string> = {};
+  try {
+    const h: unknown = JSON.parse(process.env.FASTDL_HEADERS || "{}");
+    if (h && typeof h === "object" && Object.values(h).every((v) => typeof v === "string")) headers = h as Record<string, string>;
+  } catch {
+    // none
+  }
+  fetchOverview(base, map, dir, guardedGet(process.env.FASTDL_ALLOW_PRIVATE === "1", undefined, headers)).catch((e: Error) => {
     console.error(e.message);
     process.exit(1);
   });

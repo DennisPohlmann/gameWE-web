@@ -2,10 +2,11 @@ import "server-only";
 import { getEntity, type Entity } from "./admin-entities";
 import { deleteRow, getRow, InputError, isDuplicateKey, optionList, otherServerAt, rawOptions, saveRow, withColumns } from "./admin-data";
 import { globalHall, hallSettings, saveGlobalHall, saveHallSettings, setHallRemoved } from "./admin-hall";
-import { saveRankingBlockVac, saveRankingBots, saveRankingFastdl, type RankingBots } from "./admin-ranking-bots";
+import { saveRankingBlockVac, saveRankingBots, saveRankingFastdl, saveRankingFastdlAccess, type RankingBots } from "./admin-ranking-bots";
 import { allServers, assignServers, copyDefinitions, rankingBaseGames, resettableRankings } from "./admin-rankings";
 import { RAW_GROUP, READONLY_OPTIONS, adminOnlyOption, homeValue, linkValue, rawKeyAllowed, settingGroups } from "./admin-settings";
 import { fastdlBase } from "./overview-format";
+import { ACCESS_KEYS, ACCESS_SECRETS, FASTDL_ACCESS, accessValueOk, type Access, type AccessField } from "./fastdl-access";
 import { purgeTokens } from "./api-tokens";
 import { LEVEL_ADMIN, revokeSessions, type AdminUser } from "./auth";
 import { steamKey } from "./config";
@@ -24,6 +25,8 @@ import { listTemplates } from "./templates";
 import { removeBackupCodes, removeSecret } from "./totp";
 import { discordGuild, discordInvite, tsDisplay, tsHost, tsLink } from "./voice";
 import { resolveNewRanking } from "./new-ranking";
+
+const accessFieldOf = (key: string) => (Object.keys(ACCESS_KEYS) as AccessField[]).find((f) => ACCESS_KEYS[f] === key);
 
 // What the admin area changes, shared by its server actions (app/admin/
 // actions.ts, form in, redirect out) and the admin API (lib/admin-api.ts,
@@ -274,6 +277,7 @@ export async function saveSettings(a: Actor, groupId: string, form: Form, only?:
       else if (v) {
         if (v.length > 255 || /[\r\n]/.test(v)) bad(s.key);
         if (s.key === "gamewe_steam_api_key" && !steamKey(v)) bad(s.key);
+        if (accessFieldOf(s.key) && !accessValueOk(accessFieldOf(s.key)!, v)) bad(s.key);
         values.push([s.key, s.key === "gamewe_steam_api_key" ? v.trim() : v]);
       }
       continue;
@@ -315,6 +319,8 @@ export async function saveSettings(a: Actor, groupId: string, form: Form, only?:
     } else if ((s.key === "gamewe_header_logo" || s.key === "gamewe_favicon" || s.key === "gamewe_apple_icon") && v && !imageUrl(v)) {
       bad(s.key);
     } else if ((s.key === "gamewe_title_format" || s.key === "gamewe_title_ranking") && !v.includes("{page}")) {
+      bad(s.key);
+    } else if (accessFieldOf(s.key) && !accessValueOk(accessFieldOf(s.key)!, v)) {
       bad(s.key);
     } else if (s.key === "gamewe_fastdl_url" && v) {
       const base = fastdlBase(v);
@@ -432,6 +438,21 @@ export async function setRankingFastdl(a: Actor, game: string, url: string): Pro
   await saveRankingFastdl(game, base);
   console.info(`gameWE: FastDL address of ranking ${game} ${base ? "set" : "removed"}, by ${who(a)}`);
   return base;
+}
+
+// What one ranking's FastDL downloads send (lib/fastdl-access.ts). Plain
+// fields: empty removes them, so the global one applies; secrets: empty keeps
+// the stored one, `clear` removes it. Values are never logged.
+export async function setRankingFastdlAccess(a: Actor, game: string, access: Access, clear: AccessField[] = []): Promise<void> {
+  if (!(await rankingExists(game))) throw new OpError("notfound");
+  const v: Access = {};
+  for (const f of FASTDL_ACCESS) {
+    const s = ACCESS_SECRETS.includes(f) ? (access[f] ?? "") : (access[f] ?? "").trim();
+    if (!accessValueOk(f, s)) throw new OpError("field", { field: f });
+    v[f] = f === "header" && s ? s.trim() : s;
+  }
+  await saveRankingFastdlAccess(game, v, clear.filter((f) => ACCESS_SECRETS.includes(f)));
+  console.info(`gameWE: FastDL access of ranking ${game} changed (${FASTDL_ACCESS.filter((f) => v[f] || clear.includes(f)).join(", ") || "-"}), by ${who(a)}`);
 }
 
 // The schedule of the hall of fame forms: every N units with the start day
