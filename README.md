@@ -73,6 +73,14 @@ documentation ranges and the domain `stats.example.org` do not exist.
 
 ![Daily awards with calendar](docs/screenshots/awards.png)
 
+**Hall of fame: star table and points of the top three per period**
+
+![Hall of fame: star table and points of the top three per period](docs/screenshots/hall-of-fame.png)
+
+**Hall of fame: the podium of one period**
+
+![Hall of fame: the podium of one period](docs/screenshots/hall-of-fame-podium.png)
+
 **Activity**
 
 ![Activity](docs/screenshots/activity.png)
