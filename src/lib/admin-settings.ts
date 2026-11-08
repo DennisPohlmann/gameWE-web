@@ -252,8 +252,8 @@ const definitions: Omit<SettingGroup, "area">[] = [
         type: "bool",
         def: "0",
         help: {
-          de: "Ja: fehlt einer Karte (Source-Spiele) das Radarbild, lädt die Webseite beim Aufruf der Kartenseite die Karte vom FastDL und zeichnet das Bild daraus. Das Bild landet im Ordner des Spiels, z. B. /var/lib/gamewe/web/overviews/css, und gilt für alle Rankings dieses Spiels. Der Ordner /var/lib/gamewe/web/overviews muss dafür beschreibbar sein.",
-          en: "Yes: when a map (Source games) has no radar picture, opening its page makes the website download the map from FastDL and draw the picture from it. The picture goes into the game's folder, e.g. /var/lib/gamewe/web/overviews/css, and serves all rankings of that game. The folder /var/lib/gamewe/web/overviews must be writable for this.",
+          de: "Ja: fehlt einer Karte (Source-Spiele) das Radarbild, lädt die Webseite die Karte vom FastDL, sobald ein Server sie lädt (geprüft alle 10 Sekunden) oder jemand die Kartenseite aufruft, und zeichnet das Bild daraus. Das Bild landet im Ordner des Spiels, z. B. /var/lib/gamewe/web/overviews/css, und gilt für alle Rankings dieses Spiels. Der Ordner /var/lib/gamewe/web/overviews muss dafür beschreibbar sein.",
+          en: "Yes: when a map (Source games) has no radar picture, the website downloads the map from FastDL as soon as a server changes to it (checked every 10 seconds) or someone opens its page, and draws the picture from it. The picture goes into the game's folder, e.g. /var/lib/gamewe/web/overviews/css, and serves all rankings of that game. The folder /var/lib/gamewe/web/overviews must be writable for this.",
         },
       },
       {

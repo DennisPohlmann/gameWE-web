@@ -8,6 +8,7 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { OWN_OVERVIEWS } from "./content-dirs";
+import { gameKind } from "./games";
 import { MAP_NAME } from "./overview-format";
 
 const GAME = /^[a-z0-9][a-z0-9_-]{0,31}$/;
@@ -78,3 +79,18 @@ export function fastdlQueue(run: Runner, dirOf: (game: string) => string, now: (
 }
 
 export const requestOverview = fastdlQueue(runProcess, (game) => path.join(OWN_OVERVIEWS, game));
+
+// The maps worth asking for: Source games only (FastDL serves .bsp; CS2 and
+// GoldSrc have none), one per ranking and map.
+export function mapsToDraw(servers: { game: string; map: string }[], baseOf: Map<string, string | null>): { game: string; base: string; map: string }[] {
+  const seen = new Set<string>();
+  const out: { game: string; base: string; map: string }[] = [];
+  for (const s of servers) {
+    const map = s.map.trim().toLowerCase();
+    const base = baseOf.get(s.game) ?? null;
+    if (!map || !base || gameKind(base)?.engine !== "source" || seen.has(`${s.game} ${map}`)) continue;
+    seen.add(`${s.game} ${map}`);
+    out.push({ game: s.game, base, map });
+  }
+  return out;
+}

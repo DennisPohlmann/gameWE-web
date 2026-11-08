@@ -8,7 +8,7 @@ import { bzip2Fixture, zeroBomb } from "./overview-fastdl-fixtures.ts";
 import { bunzip2 } from "../scripts/overviews/bzip2.ts";
 import { MAP_NAME, downloadMap, guardedGet, isPrivateAddress, readLimited } from "../scripts/overviews/fastdl.ts";
 import { fastdlBase, fastdlOf, MAP_NAME as SITE_MAP_NAME } from "../src/lib/overview-format.ts";
-import { fastdlQueue } from "../src/lib/overview-fastdl.ts";
+import { fastdlQueue, mapsToDraw } from "../src/lib/overview-fastdl.ts";
 import { GAME_KINDS } from "../src/lib/games.ts";
 
 const bytes = (b: Buffer, status = 200) => new Response(new Uint8Array(b), { status });
@@ -152,4 +152,25 @@ test("each base game is a picture folder the queue takes", () => {
   const ask = fastdlQueue((_b, _m, dir, done) => { dirs.push(dir); done(true); }, (g) => `/own/${g}`);
   for (const g of Object.keys(GAME_KINDS)) assert.equal(ask("https://dl.example.org/", g, "de_a"), true, g);
   assert.deepEqual(dirs, Object.keys(GAME_KINDS).map((g) => `/own/${g}`));
+});
+
+test("server maps to draw: Source games with a known base game, once per ranking and map", () => {
+  const base = new Map<string, string | null>([["css", "css"], ["css2", "css"], ["cs2", "cs2"], ["cstrike", "cstrike"], ["x", null]]);
+  const got = mapsToDraw(
+    [
+      { game: "css", map: "de_new" },
+      { game: "css2", map: " DE_NEW " },
+      { game: "css2", map: "de_new" },
+      { game: "cs2", map: "de_dust2" },
+      { game: "cstrike", map: "de_dust2" },
+      { game: "x", map: "de_a" },
+      { game: "gone", map: "de_a" },
+      { game: "css", map: "" },
+    ],
+    base,
+  );
+  assert.deepEqual(got, [
+    { game: "css", base: "css", map: "de_new" },
+    { game: "css2", base: "css", map: "de_new" },
+  ]);
 });

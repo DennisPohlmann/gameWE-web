@@ -151,7 +151,9 @@ calibration that cannot be read is noted in the log too.
 
 With **Fetch radar pictures by FastDL** on and the **FastDL address** set
 (Settings → Maps & events; the folder above `maps/`, as in `sv_downloadurl`),
-opening the page of a map without a picture starts a download of
+a game server changing to a map without a picture (the site looks at the
+servers' current maps every 10 seconds), or opening the page of such a map,
+starts a download of
 `maps/<map>.bsp.bz2`, or else `maps/<map>.bsp`. The picture and its calibration
 appear in `/var/lib/gamewe/web/overviews/<game>/`, `<game>` being the
 ranking's game (`css`, `cs2`, ... as in the table under "Layout"), so a map
