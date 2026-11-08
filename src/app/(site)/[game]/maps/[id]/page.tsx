@@ -76,10 +76,11 @@ export default async function MapPage({ params, searchParams }: Props) {
   // The map's overview picture under the dots, from the overview folders
   // (src/lib/overviews.ts); its calibration may name a lower level too.
   const overview = fullHeat ? await getOverview(game, g?.realgame, m.map).catch(() => null) : null;
-  // No picture: drawn in the background from the map on FastDL, if set up.
-  if (fullHeat && !overview) {
+  // No picture: drawn in the background from the map on FastDL, if set up,
+  // into the base game's folder (css, cs2 ...), shared by all its rankings.
+  if (fullHeat && !overview && g?.realgame) {
     const { base, headers } = await fastdlRequestOf(game).catch(() => ({ base: "", headers: {} }));
-    requestOverview(base, game, m.map.trim().toLowerCase(), forgetOverviewIndex, headers);
+    requestOverview(base, g.realgame, m.map.trim().toLowerCase(), forgetOverviewIndex, headers);
   }
   // Maps with two levels (Counter-Strike 2's de_nuke, de_vertigo): the
   // heatmap shows the upper or the lower level alone on request.

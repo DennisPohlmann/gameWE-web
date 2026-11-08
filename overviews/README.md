@@ -40,7 +40,7 @@ New or changed files show up within a minute, without a restart.
 
 ```
 overviews/
-  cs2/                   # one folder per game: the game code or the base game
+  cs2/                   # one folder per game: the game's short form (table below)
     de_dust2.png         # the picture
     de_dust2.json        # its calibration (or Valve's de_dust2.txt)
     de_nuke.png
@@ -49,8 +49,36 @@ overviews/
   de_mymap.txt
 ```
 
-For a map the site looks in the folder of the game code (e.g. `cs2comp`), then
-in the folder of the base game (`cs2`), then directly in the folder. Picture
+The folder of a game is named after its short form, the ranking's base game
+(Admin → Rankings → the ranking → Game, `hlstats_Games.realgame`), not after
+the ranking: all rankings and servers of one game share its pictures, e.g.
+the rankings `css` and `css2` of Counter-Strike: Source both use `css/`.
+
+| Folder | Game |
+|---|---|
+| `css` | Counter-Strike: Source |
+| `csgo` | Counter-Strike: Global Offensive |
+| `cs2` | Counter-Strike 2 |
+| `cstrike` | Counter-Strike 1.6 |
+| `czero` | Counter-Strike: Condition Zero |
+| `tf` | Team Fortress 2 |
+| `hl2mp` | Half-Life 2 Deathmatch |
+| `valve` | Half-Life Deathmatch |
+| `dods` | Day of Defeat: Source |
+| `dod` | Day of Defeat |
+| `l4d` | Left 4 Dead |
+| `l4d2` | Left 4 Dead 2 |
+| `zps` | Zombie Panic! Source |
+| `fof` | Fistful of Frags |
+| `nmrih` | No More Room in Hell |
+| `tfc`, `ns`, `insurgency`, `ff`, `csp` | retired games (Team Fortress Classic, Natural Selection, Insurgency, Fortress Forever, CSPromod) |
+
+GoldSrc games (`cstrike`, `czero`, `valve`, `dod`) log no positions, so they
+have no heatmap and need no pictures.
+
+For a map the site looks in a folder named after the ranking's code first
+(e.g. `cs2comp`, only for a picture of one ranking alone), then in the
+folder of the game (`cs2`), then directly in the folder. Picture
 and calibration are looked up separately: a `de_dust2.png` of your own in
 `/var/lib/gamewe/web/overviews/cs2/` uses the built-in `cs2/de_dust2.json`. A picture from
 the game itself is framed differently from the built-in `cs2` and `css`
@@ -125,9 +153,12 @@ With **Fetch radar pictures by FastDL** on and the **FastDL address** set
 (Settings → Maps & events; the folder above `maps/`, as in `sv_downloadurl`),
 opening the page of a map without a picture starts a download of
 `maps/<map>.bsp.bz2`, or else `maps/<map>.bsp`. The picture and its calibration
-appear in `/var/lib/gamewe/web/overviews/<game>/`; the next visit shows them
+appear in `/var/lib/gamewe/web/overviews/<game>/`, `<game>` being the
+ranking's game (`css`, `cs2`, ... as in the table under "Layout"), so a map
+is drawn once for all rankings of that game; the next visit shows them
 (after a minute at most). Pictures that exist are never replaced, so this does
-nothing for the built-in maps. Only Source maps work.
+nothing for the built-in maps. Only Source maps work, and only for a ranking
+whose game is set.
 
 That address applies to all rankings. A ranking whose maps are on another
 FastDL sets its own under Rankings → the ranking → **FastDL**; left empty, it

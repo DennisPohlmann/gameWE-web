@@ -454,7 +454,7 @@ the container; there is no setting for them:
 | Folder | What | Container |
 |---|---|---|
 | `/var/lib/gamewe/web/templates/` | own design templates, one subfolder each ([templates/README.md](../templates/README.md)) | mount point, e.g. `-v /var/lib/gamewe/web/templates:/var/lib/gamewe/web/templates:ro` |
-| `/var/lib/gamewe/web/overviews/` | own map pictures for the heatmap, one subfolder per game ([overviews/README.md](../overviews/README.md)) | mount point, e.g. `-v /var/lib/gamewe/web/overviews:/var/lib/gamewe/web/overviews:ro` |
+| `/var/lib/gamewe/web/overviews/` | own map pictures for the heatmap, one subfolder per game, named by its short form such as `css` or `cs2` (table in [overviews/README.md](../overviews/README.md#layout)) | mount point, e.g. `-v /var/lib/gamewe/web/overviews:/var/lib/gamewe/web/overviews:ro` |
 
 Both add to the built-in `templates/` and `overviews/`, which stay as they
 are. A name in both (a template folder, a map picture or calibration file)

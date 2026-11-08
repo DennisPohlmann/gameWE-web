@@ -9,7 +9,8 @@ import { type Calibration, type Frame, type ImageInfo, MAP_NAME, imageInfo, over
 // Map overviews (radar pictures) under the heatmap, like the templates: the
 // built-in folder overviews/ next to the server, /var/lib/gamewe/web/overviews
 // adds your own (the same file name: yours wins, src/lib/content-dirs.ts). In each, one subfolder per
-// game (the game code or the base game, e.g. cs2, css) and files for every
+// game (the base game, e.g. cs2, css; a ranking code like css2 only for a
+// picture of one ranking; FastDL writes into the base game's) and files for every
 // game directly in the folder; the game's subfolder is asked first. Picture
 // and calibration are looked up separately, so a picture of your own uses
 // the built-in calibration. Only plain files and folders with short

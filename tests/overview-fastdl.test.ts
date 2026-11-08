@@ -9,6 +9,7 @@ import { bunzip2 } from "../scripts/overviews/bzip2.ts";
 import { MAP_NAME, downloadMap, guardedGet, isPrivateAddress, readLimited } from "../scripts/overviews/fastdl.ts";
 import { fastdlBase, fastdlOf, MAP_NAME as SITE_MAP_NAME } from "../src/lib/overview-format.ts";
 import { fastdlQueue } from "../src/lib/overview-fastdl.ts";
+import { GAME_KINDS } from "../src/lib/games.ts";
 
 const bytes = (b: Buffer, status = 200) => new Response(new Uint8Array(b), { status });
 
@@ -143,4 +144,12 @@ test("guarded download: the site's own network only when allowed, no redirects",
   } finally {
     server.close();
   }
+});
+
+test("each base game is a picture folder the queue takes", () => {
+  // The map page passes the ranking's base game (lib/games.ts), not its code.
+  const dirs: string[] = [];
+  const ask = fastdlQueue((_b, _m, dir, done) => { dirs.push(dir); done(true); }, (g) => `/own/${g}`);
+  for (const g of Object.keys(GAME_KINDS)) assert.equal(ask("https://dl.example.org/", g, "de_a"), true, g);
+  assert.deepEqual(dirs, Object.keys(GAME_KINDS).map((g) => `/own/${g}`));
 });

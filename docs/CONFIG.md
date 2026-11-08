@@ -37,7 +37,7 @@ points:
 | Folder | Content |
 |---|---|
 | `/var/lib/gamewe/web/templates` | own design templates, one subfolder each ([templates/README.md](../templates/README.md)); a template's optional `chart.json` sets the colours of its charts (section "Charts" there) |
-| `/var/lib/gamewe/web/overviews` | own map overviews: radar pictures with their calibration, which the heatmap of a map draws its dots on ([overviews/README.md](../overviews/README.md)); also where pictures fetched by FastDL go (off by default, then the folder must be writable) |
+| `/var/lib/gamewe/web/overviews` | own map overviews: radar pictures with their calibration, which the heatmap of a map draws its dots on ([overviews/README.md](../overviews/README.md)); also where pictures fetched by FastDL go, into the folder of the game, e.g. `overviews/css/` (off by default, then the folder must be writable) |
 
 The release archives of
 [gameWE-web-content](https://github.com/DennisPohlmann/gameWE-web-content)
