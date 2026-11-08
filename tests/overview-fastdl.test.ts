@@ -117,7 +117,7 @@ test("the queue: one at a time, each map once a day, strict names", () => {
 });
 
 test("private addresses, also inside IPv6", () => {
-  for (const ip of ["127.0.0.1", "10.1.2.3", "100.64.0.1", "169.254.169.254", "172.16.0.1", "192.168.1.1", "0.0.0.0", "::1", "::", "fd00::1", "fe80::1", "::ffff:127.0.0.1", "::ffff:169.254.169.254", "not an address"]) {
+  for (const ip of ["127.0.0.1", "10.1.2.3", "100.64.0.1", "169.254.169.254", "172.16.0.1", "192.168.1.1", "0.0.0.0", "::1", "::", "fd00::1", "fe80::1", "::ffff:127.0.0.1", "::ffff:169.254.169.254", "2002:7f00:1::1", "2001:0:4136:e378::1", "not an address"]) {
     assert.equal(isPrivateAddress(ip), true, ip);
   }
   for (const ip of ["1.1.1.1", "172.32.0.1", "2606:4700::1111", "::ffff:1.1.1.1"]) assert.equal(isPrivateAddress(ip), false, ip);

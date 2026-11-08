@@ -25,9 +25,11 @@ type Get = (url: string) => Promise<Response>;
 
 // The site's own network is off limits: the address is an admin setting, but a
 // visitor's page view starts the request, and a name may resolve to anything.
+// 6to4 (2002::/16) and Teredo (2001::/32) tunnel to an IPv4 address that the list
+// cannot see.
 const PRIVATE = new BlockList();
 for (const [net, bits] of [["0.0.0.0", 8], ["10.0.0.0", 8], ["100.64.0.0", 10], ["127.0.0.0", 8], ["169.254.0.0", 16], ["172.16.0.0", 12], ["192.0.0.0", 24], ["192.168.0.0", 16], ["198.18.0.0", 15], ["224.0.0.0", 4], ["240.0.0.0", 4]] as const) PRIVATE.addSubnet(net, bits, "ipv4");
-for (const [net, bits] of [["::", 128], ["::1", 128], ["64:ff9b::", 96], ["fc00::", 7], ["fe80::", 10], ["ff00::", 8]] as const) PRIVATE.addSubnet(net, bits, "ipv6");
+for (const [net, bits] of [["::", 128], ["::1", 128], ["64:ff9b::", 96], ["2001::", 32], ["2002::", 16], ["fc00::", 7], ["fe80::", 10], ["ff00::", 8]] as const) PRIVATE.addSubnet(net, bits, "ipv6");
 
 /** An address of this host, its network or no real destination; IPv4 in IPv6 counts as IPv4. */
 export function isPrivateAddress(ip: string): boolean {
