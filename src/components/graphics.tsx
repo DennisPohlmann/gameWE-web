@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ChartHead } from "./chart-head";
 import { HoverTip } from "./hover-tip";
 import { tipText } from "./tip-text";
+import { steadyFps } from "@/lib/fps";
 
 // Server-rendered SVG graphics: spark pills of the player profile, pies,
 // weekday bars and the server load. Hovering shows the values (HoverTip box,
@@ -185,11 +186,11 @@ export function WeekdayBars({
 
 // Server load of the last day: players (left axis), the server's FPS (right
 // axis, only when the collector got them over RCON; samples without FPS are
-// gaps) and uptime (on the right axis while there are no FPS, else only in
-// the hover box), with one band per map that was played; summary: text left
+// gaps, a single low sample is smoothed, steadyFps) and uptime (on the right
+// axis while there are no FPS, else only in the hover box), with one band per map that was played; summary: text left
 // of the legend.
 export function ServerLoadChart({
-  points,
+  points: raw,
   slots,
   locale,
   labels,
@@ -201,6 +202,8 @@ export function ServerLoadChart({
   labels: { players: string; uptime: string };
   summary?: ReactNode;
 }) {
+  const steady = steadyFps(raw.map((p) => p.fps));
+  const points = raw.map((p, i) => ({ ...p, fps: steady[i] }));
   const W = 960;
   const H = 280;
   const pad = { l: 40, r: 46, t: 10, b: 36 };
