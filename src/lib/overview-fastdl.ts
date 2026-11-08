@@ -6,6 +6,7 @@
 // the game servers, so only strict names get here, each is tried once a day
 // and the queue is short.
 import { spawn } from "node:child_process";
+import { accessSync, constants } from "node:fs";
 import path from "node:path";
 import { OWN_OVERVIEWS } from "./content-dirs";
 import { gameKind } from "./games";
@@ -78,7 +79,26 @@ export function fastdlQueue(run: Runner, dirOf: (game: string) => string, now: (
   };
 }
 
-export const requestOverview = fastdlQueue(runProcess, (game) => path.join(OWN_OVERVIEWS, game));
+const queue = fastdlQueue(runProcess, (game) => path.join(OWN_OVERVIEWS, game));
+
+// Whether the folder of your own is there and writable (in Docker: mounted
+// without :ro); without it nothing is downloaded and the log says so once.
+export function ownFolderWritable(dir: string, warn: (msg: string) => void, state: { warned: boolean }): boolean {
+  try {
+    accessSync(dir, constants.W_OK);
+    state.warned = false;
+    return true;
+  } catch {
+    if (!state.warned) warn(`overviews: ${dir} is missing or not writable (in Docker: mount it without :ro), radar pictures are not fetched by FastDL`);
+    state.warned = true;
+    return false;
+  }
+}
+
+const folder = { warned: false };
+export const canFetchOverviews = () => ownFolderWritable(OWN_OVERVIEWS, console.warn, folder);
+
+export const requestOverview: typeof queue = (...args) => (args[0] && canFetchOverviews() ? queue(...args) : false);
 
 // The maps worth asking for: Source games only (FastDL serves .bsp; CS2 and
 // GoldSrc have none), one per ranking and map.

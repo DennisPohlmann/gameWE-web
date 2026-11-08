@@ -187,7 +187,10 @@ environment. Over `http://` they cross the network unencrypted: prefer
   `FASTDL_ALLOW_PRIVATE=1` in the site's environment.
 - That folder must be writable for the site. tar.gz:
   `chown -R gamewe:gamewe /var/lib/gamewe/web/overviews`; container: mount it
-  without `:ro`, owned by uid 1000.
+  without `:ro`, owned by uid 1000. The game folders in it (`css/`, `cs2/`
+  ...) are made by the site. Without the folder (in Docker: not mounted) or
+  without write access nothing is downloaded, and the site's log says once
+  `overviews: /var/lib/gamewe/web/overviews is missing or not writable`.
 - The download and the drawing run in a process of their own without the
   site's environment, one map at a time, for 15 minutes at most, and a map
   takes up to about 1 GB of memory while it is drawn.

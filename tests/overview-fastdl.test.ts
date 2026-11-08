@@ -2,13 +2,15 @@
 // Run with `npm test`.
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
+import os from "node:os";
+import path from "node:path";
 import type { AddressInfo } from "node:net";
 import { test } from "node:test";
 import { bzip2Fixture, zeroBomb } from "./overview-fastdl-fixtures.ts";
 import { bunzip2 } from "../scripts/overviews/bzip2.ts";
 import { MAP_NAME, downloadMap, guardedGet, isPrivateAddress, readLimited } from "../scripts/overviews/fastdl.ts";
 import { fastdlBase, fastdlOf, MAP_NAME as SITE_MAP_NAME } from "../src/lib/overview-format.ts";
-import { fastdlQueue, mapsToDraw } from "../src/lib/overview-fastdl.ts";
+import { fastdlQueue, mapsToDraw, ownFolderWritable } from "../src/lib/overview-fastdl.ts";
 import { GAME_KINDS } from "../src/lib/games.ts";
 
 const bytes = (b: Buffer, status = 200) => new Response(new Uint8Array(b), { status });
@@ -173,4 +175,16 @@ test("server maps to draw: Source games with a known base game, once per ranking
     { game: "css", base: "css", map: "de_new" },
     { game: "css2", base: "css", map: "de_new" },
   ]);
+});
+
+test("no folder of your own (no Docker mount): nothing fetched, one warning", () => {
+  const warnings: string[] = [];
+  const state = { warned: false };
+  const missing = path.join(os.tmpdir(), `gamewe-no-overviews-${process.pid}`);
+  assert.equal(ownFolderWritable(missing, (m) => warnings.push(m), state), false);
+  assert.equal(ownFolderWritable(missing, (m) => warnings.push(m), state), false);
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /missing or not writable/);
+  assert.equal(ownFolderWritable(os.tmpdir(), (m) => warnings.push(m), state), true);
+  assert.equal(state.warned, false, "warns again after it was back");
 });

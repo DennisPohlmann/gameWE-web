@@ -1,7 +1,7 @@
 import "server-only";
 import { getGames } from "./data";
 import { query } from "./db";
-import { mapsToDraw, requestOverview } from "./overview-fastdl";
+import { canFetchOverviews, mapsToDraw, requestOverview } from "./overview-fastdl";
 import { forgetOverviewIndex, getOverview } from "./overviews";
 import { fastdlRequestOf, getSettings } from "./settings";
 
@@ -12,7 +12,8 @@ import { fastdlRequestOf, getSettings } from "./settings";
 const EVERY_MS = 10_000;
 
 async function look() {
-  if (!(await getSettings()).fastdlOn) return;
+  // FastDL on but no folder to write to: the log says so once, at the start.
+  if (!(await getSettings()).fastdlOn || !canFetchOverviews()) return;
   const [servers, games] = await Promise.all([
     query<{ game: string; map: string }>(`SELECT DISTINCT TRIM(game) AS game, act_map AS map FROM hlstats_Servers WHERE act_map <> ''`),
     getGames(),
