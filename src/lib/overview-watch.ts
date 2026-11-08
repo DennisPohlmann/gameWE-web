@@ -25,17 +25,24 @@ async function look() {
 }
 
 export function watchServerMaps() {
-  // The same error (e.g. no database) is logged once, not every minute.
+  // The same error (e.g. no database) is logged once, not on every run; a
+  // run still waiting on a stuck database is not joined by the next one.
   let last = "";
-  const run = () =>
-    look().then(
-      () => (last = ""),
-      (err) => {
-        const msg = err instanceof Error ? err.message : String(err);
-        if (msg !== last) console.warn("overview watch:", msg);
-        last = msg;
-      },
-    );
+  let busy = false;
+  const run = () => {
+    if (busy) return;
+    busy = true;
+    look()
+      .then(
+        () => (last = ""),
+        (err) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          if (msg !== last) console.warn("overview watch:", msg);
+          last = msg;
+        },
+      )
+      .finally(() => (busy = false));
+  };
   setInterval(run, EVERY_MS).unref();
   run();
 }
