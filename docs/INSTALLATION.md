@@ -18,7 +18,7 @@ machine, and the tar.gz if you prefer a plain service next to the collector.
 |------|-------|
 | The gameWE collector | Installed, with its database set up (section 1.2). Its full guide: [collector INSTALLATION.md](https://github.com/DennisPohlmann/gameWE-collector/blob/main/docs/INSTALLATION.md). |
 | Database | **MariaDB 11.4 or 12.3**, or **PostgreSQL 17 or 18** (tested on every release). MySQL 8 is not supported by the collector's schema scripts. |
-| Node.js 22 or newer | Only for the tar.gz (Node.js 24 LTS recommended). The container brings its own Node.js 24. |
+| Node.js 22 or newer | Only for the tar.gz (Node.js 26 LTS recommended). The container brings its own Node.js 26. |
 | Reverse proxy with TLS | nginx, Caddy, Apache or similar in front of port 3000 (see [section 6](#6-reverse-proxy)). |
 | A secret | At least 32 characters for the admin session: `openssl rand -hex 32`. |
 

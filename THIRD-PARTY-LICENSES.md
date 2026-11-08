@@ -23,10 +23,10 @@ carry the same licenses as their linux-x64 counterparts.
 
 | Package | Version | Project |
 |---------|---------|---------|
-| next | 16.4.3 | https://github.com/vercel/next.js |
-| @next/env | 16.4.3 | https://github.com/vercel/next.js |
-| @next/swc-linux-x64-gnu | 16.4.3 | https://github.com/vercel/next.js |
-| @next/swc-linux-x64-musl | 16.4.3 | https://github.com/vercel/next.js |
+| next | 16.4.5 | https://github.com/vercel/next.js |
+| @next/env | 16.4.5 | https://github.com/vercel/next.js |
+| @next/swc-linux-x64-gnu | 16.4.5 | https://github.com/vercel/next.js |
+| @next/swc-linux-x64-musl | 16.4.5 | https://github.com/vercel/next.js |
 | react | 19.3.1 | https://github.com/facebook/react |
 | react-dom | 19.3.1 | https://github.com/facebook/react |
 | scheduler | 0.28.0 | https://github.com/facebook/react |
@@ -71,7 +71,7 @@ carry the same licenses as their linux-x64 counterparts.
 | @img/sharp-linuxmusl-x64 | 0.35.5 | https://github.com/lovell/sharp |
 | @swc/helpers | 0.5.23 | https://github.com/swc-project/swc |
 | detect-libc | 2.1.2 | https://github.com/lovell/detect-libc |
-| baseline-browser-mapping | 2.11.34 | https://github.com/web-platform-dx/baseline-browser-mapping |
+| baseline-browser-mapping | 2.11.35 | https://github.com/web-platform-dx/baseline-browser-mapping |
 | long | 5.3.2 | https://github.com/dcodeIO/long.js |
 
 ### LGPL-3.0-or-later
@@ -105,7 +105,7 @@ carry the same licenses as their linux-x64 counterparts.
 |---------|---------|---------|
 | pg-int8 | 1.0.1 | https://github.com/charmander/pg-int8 |
 | split2 | 4.2.0 | https://github.com/mcollina/split2 |
-| semver | 7.8.5 | https://github.com/npm/node-semver |
+| semver | 7.8.6 | https://github.com/npm/node-semver |
 | picocolors | 1.1.1 | https://github.com/alexeyraspopov/picocolors |
 
 ### 0BSD
@@ -118,7 +118,7 @@ carry the same licenses as their linux-x64 counterparts.
 
 | Package | Version | Project |
 |---------|---------|---------|
-| caniuse-lite | 1.0.30001820 | https://github.com/browserslist/caniuse-lite (browser support data, used at build time) |
+| caniuse-lite | 1.0.30001823 | https://github.com/browserslist/caniuse-lite (browser support data, used at build time) |
 
 ## Bundled inside Next.js
 
@@ -140,7 +140,7 @@ the links above.
 
 The page `/api` renders the OpenAPI description of the public API with the
 self-hosted browser bundle of **Scalar API Reference**
-(`@scalar/api-reference` 1.76.4, devDependency, https://github.com/scalar/scalar,
+(`@scalar/api-reference` 1.77.0, devDependency, https://github.com/scalar/scalar,
 MIT). `npm run build` copies `dist/browser/standalone.js` to
 `public/vendor/scalar/standalone.js` together with Scalar's MIT license text
 (`public/vendor/scalar/LICENSE.txt`); nothing is loaded from Scalar's
