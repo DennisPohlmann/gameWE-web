@@ -855,12 +855,13 @@ export type PlayerDetail = {
   country: string | null;
   flag: string | null;
   uniqueId: string | null;
+  inactive: boolean; // In hlstats_PlayersInactive: no place in the ranking.
 };
 
 export async function getPlayer(id: number): Promise<PlayerDetail | undefined> {
   // Players that went inactive are moved to hlstats_PlayersInactive.
   for (const table of ["hlstats_Players", "hlstats_PlayersInactive"]) {
-    const row = await queryOne<PlayerDetail>(
+    const row = await queryOne<Omit<PlayerDetail, "inactive">>(
       `SELECT p.playerId, TRIM(p.game) AS game, p.game_id, d.lastName AS name, p.skill, p.last_skill_change,
               p.last_event, p.connection_time, p.kills, ${await careerKills()} AS careerKills, p.deaths, p.suicides, p.headshots, p.shots, p.hits,
               p.rounds, p.wins, p.losses, p.team_kills, p.kill_streak, p.kill_assists, p.kills_assisted,
@@ -876,7 +877,7 @@ export async function getPlayer(id: number): Promise<PlayerDetail | undefined> {
        WHERE p.playerId = ?`,
       [id],
     );
-    if (row) return row;
+    if (row) return { ...row, inactive: table === "hlstats_PlayersInactive" };
   }
   return undefined;
 }

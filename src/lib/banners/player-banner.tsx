@@ -32,7 +32,7 @@ async function render(file: string, game: string | null) {
   if (!p || !g) return new Response("not found", { status: 404 });
   const ids = steamIds(p.uniqueId);
   const [position, total, ranks, settings, origin, steam] = await Promise.all([
-    p.hideranking ? Promise.resolve(null) : getPlayerPosition(p.game, p.skill),
+    p.hideranking || p.inactive ? Promise.resolve(null) : getPlayerPosition(p.game, p.skill),
     getRankedCount(p.game),
     getRanks(p.game),
     getSettings(),

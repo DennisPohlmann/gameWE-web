@@ -20,8 +20,8 @@ export function GET(_req: Request, { params }: { params: Promise<{ id: string }>
     const p = await publicPlayer(pathId(id));
     if (!p) return null;
     const [rank, { activityDays }, weapons, ranks, hall] = await Promise.all([
-      // As on the profile: a player banned in the ranking has no place.
-      Number(p.hideranking) ? Promise.resolve(null) : getPlayerPosition(p.game, p.skill),
+      // As on the profile: a hidden, banned or inactive player has no place.
+      Number(p.hideranking) || p.inactive ? Promise.resolve(null) : getPlayerPosition(p.game, p.skill),
       getSettings(),
       getPlayerWeapons(p.playerId),
       getRanks(p.game),

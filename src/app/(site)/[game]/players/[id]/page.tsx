@@ -72,7 +72,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const [{ lang, t }, { siteName }, position, image] = await Promise.all([
     getDict(),
     getSettings(),
-    p.hideranking ? Promise.resolve(null) : getPlayerPosition(p.game, p.skill),
+    p.hideranking || p.inactive ? Promise.resolve(null) : getPlayerPosition(p.game, p.skill),
     bannerUrl(p.game, "player", p.playerId),
   ]);
   const name = p.name ?? `#${id}`;
@@ -97,7 +97,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const ids = steamIds(p.uniqueId);
   const [position, history, names, weapons, maps, teams, actions, victims, killers, killStats, awards, ranks, chat, ribbons, allAwards, classes, sigUrl, origin, skillBefore] =
     await Promise.all([
-      p.hideranking ? Promise.resolve(null) : getPlayerPosition(game, p.skill),
+      p.hideranking || p.inactive ? Promise.resolve(null) : getPlayerPosition(game, p.skill),
       getPlayerHistory(id, 30),
       getPlayerNames(id),
       getPlayerWeapons(id),
@@ -266,7 +266,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
           <div className="p-big">
             <div className="p-place">
               <small>{t.position}</small>
-              <b>{p.hideranking ? <i className="muted">{t.notListed}</i> : position ? `#${fmtNum(position, lang)}` : "-"}</b>
+              <b>{p.hideranking || p.inactive ? <i className="muted">{t.notListed}</i> : position ? `#${fmtNum(position, lang)}` : "-"}</b>
               {position && ranked ? <span>{fill(t.positionOf, { n: fmtNum(Math.max(ranked, Number(position)), lang) })}</span> : null}
             </div>
             <div>
