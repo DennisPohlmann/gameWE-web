@@ -489,7 +489,11 @@ the folders hold nothing secret) or give uid 1000 read access.
 
 For radar pictures fetched by FastDL (off by default) the service must be able
 to write to the overviews folder, see "Fetching maps by FastDL" in
-[overviews/README.md](../overviews/README.md).
+[overviews/README.md](../overviews/README.md). With rootless Podman, uid 1000
+in the container is a different uid on the host, so a plain `chown 1000` does
+not help: run `podman unshare chown -R 1000:1000 /var/lib/gamewe/web/overviews`
+once, or mount the folder with the option `:U`
+(`-v /var/lib/gamewe/web/overviews:/var/lib/gamewe/web/overviews:U`).
 
 **Coming from v0.35 or older:** the environment variables `TEMPLATES_DIR` and
 `OVERVIEWS_DIR` are no longer read. Move the folders to the paths above (the
