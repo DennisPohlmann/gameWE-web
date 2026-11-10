@@ -4,7 +4,7 @@ The website shows the statistics that the gameWE collector writes to the
 database, and has an admin area for settings, rankings, servers and users.
 There are two ways to run it, and both read the same settings:
 
-- **A: container** (Docker or Docker Compose), the image
+- **A: container** (Docker, Docker Compose or [Podman](#with-podman)), the image
   `ghcr.io/dennispohlmann/gamewe-web`
 - **B: tar.gz with systemd**, the archive
   `gamewe-web-<version>-linux-amd64.tar.gz` from the GitHub release
@@ -324,6 +324,46 @@ docker compose pull && docker compose up -d
 Coming from 1.7: read [Update to 1.8](#update-to-18) first. The container keeps no data, so it can be replaced at any time. It runs as
 user `node` (uid 1000) and has a health check on `/healthz`
 (`docker ps` shows `healthy`).
+
+### With Podman
+
+The commands above and `docker-compose.quickstart.yml` also run with Podman,
+rootless as well (tested with Podman 5.7): write `podman` for `docker`. What
+is different:
+
+- **Compose:** use Docker Compose against the Podman socket, not
+  podman-compose. podman-compose (1.5) leaves out `configs:` with `content:`
+  without a warning, so in `docker-compose.quickstart.yml` the database
+  users and the collector's config are missing.
+
+  ```bash
+  systemctl --user enable --now podman.socket
+  export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock
+  podman compose -f docker-compose.quickstart.yml up -d   # runs docker-compose if installed
+  ```
+
+- **Short image names:** `podman run` and `podman pull` can pull
+  `mariadb:12.3` only if `/etc/containers/registries.conf` names a search
+  registry. Write `docker.io/library/mariadb:12.3`. Through the socket
+  (Compose) Podman takes Docker Hub itself.
+- **Health check:** Podman does not take the `HEALTHCHECK` of the published
+  image (OCI format), so `podman ps` shows no `healthy` for the web. Check it
+  with `curl -f http://127.0.0.1:3000/healthz`. The health check of the
+  database in the Compose file works, and so does
+  `depends_on: condition: service_healthy`.
+- **Start after a reboot:** there is no daemon. Rootless containers come back
+  only through `podman-restart.service`, and only those with the restart
+  policy `always` (not `unless-stopped`):
+  `systemctl --user enable podman-restart.service` and
+  `loginctl enable-linger <user>` (user services without a login).
+- **Rootless files:** `--env-file` is read by your user, so the file must be
+  readable by that user (owner or group), `root:root` is not enough (section 2). A bind-mounted folder is
+  read by uid 1000 of the container, which is a different uid on the host
+  (writing: section 5). On hosts with SELinux (Fedora, RHEL) add `:Z` to the
+  bind mounts, e.g. `...templates:ro,Z`.
+- **Ports:** rootless Podman cannot bind ports below 1024
+  (`net.ipv4.ip_unprivileged_port_start`, default 1024). gameWE uses 3000,
+  41337 and 41338 only.
 
 ### On Kubernetes (Helm)
 
