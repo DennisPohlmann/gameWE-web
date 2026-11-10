@@ -64,3 +64,6 @@ html[data-skin] {
   --banner-bar-bg: #333333;
   --banner-bar-border: #555555;
 }
+
+/* Grey muted text next to a section title sits on the orange page (hall of fame period dates); grey on orange is unreadable. */
+html[data-skin] .section-aside .muted { color: var(--accent-on); }
