@@ -756,16 +756,19 @@ What the admin area edits:
   the colour of its engine (GoldSrc, Source, Source 2). The form of a
   Counter-Strike 2 server shows its `server.cfg` lines (`log on`,
   `logaddress_delall_http`,
-  `logaddress_add_http "http://<collector IP>:41338/<game port>/<log token>"`)
-  with its game port filled in. The **log token** is this server's own, 16 to
-  64 letters, digits, `-` or `_`, write-only like the secret: when it is set,
-  the collector accepts only logs whose URL ends with it, and registers that
-  URL over RCON itself (`logaddress_delall_http` removes the old one). It
-  is not `sv_logsecret`; the collector has no token of its own in its config.
-  The port must be the game port exactly as entered in the form, since the
-  collector finds the server by sender IP and port (new servers within
-  about a minute). It also says that CS2 needs `-usercon`; 404 in the
-  collector's log means a wrong path or token, 403 an IP and port that are no CS2 server of the admin.
+  `logaddress_add_http "http://<collector IP>:41338/<log token>"`).
+  The **log token** is this server's own, 16 to 64 letters, digits, `-` or
+  `_`, write-only like the secret, and needed for its logs: the token picks
+  the server, the logs must come from the server's IP (new servers and tokens
+  within about a minute). Two servers cannot have the same token (the form
+  says the field is invalid). **Generate token** fills the field with a
+  random one and shows it: copy it for `server.cfg` before saving, it is not
+  shown again. With an RCON password the collector registers the URL itself
+  (`logaddress_delall_http` removes old ones). It is not `sv_logsecret`. The
+  old URL with the game port (`/<game port>`, collector 1.10 and older) is no
+  longer accepted. The form also says that CS2 needs `-usercon`; 404 in the
+  collector's log means a wrong path or token, the old URL, or no CS2 server
+  with this token at the sender's IP.
 
 ## Health and monitoring
 

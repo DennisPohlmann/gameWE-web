@@ -5,6 +5,7 @@ import { allServers, rankingBaseGames, rankingPageHref } from "@/lib/admin-ranki
 import { FieldControl } from "@/components/admin/field-control";
 import { NewRankingSync } from "@/components/admin/new-ranking-sync";
 import { PageHead } from "@/components/admin/page-head";
+import { TokenGenerate } from "@/components/admin/token-generate";
 import { Section } from "@/components/ui";
 import { getRow, optionList, withColumns } from "@/lib/admin-data";
 import { RankBadge, rankName } from "@/components/badges";
@@ -177,7 +178,10 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
                 {preset && f.name === "game" ? (
                   <small className="muted">{fill(a.serverForRanking, { r: presetLabel ?? preset })}</small>
                 ) : cs2 && f.name === "log_secret" ? (
-                  <small className="muted">{a.cs2LogSecret}</small>
+                  <>
+                    <TokenGenerate target={`f-${f.name}`} label={a.cs2LogTokenNew} />
+                    <small className="muted">{a.cs2LogSecret}</small>
+                  </>
                 ) : newRanking && f.name === "name" ? (
                   <small className="muted">{a.nameFromGame}</small>
                 ) : f.help ? (

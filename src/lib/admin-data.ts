@@ -280,6 +280,9 @@ export async function saveRow(e: Entity, id: string | null, form: Pick<FormData,
     const game = String(values.game ?? (id === null ? "" : (await getRow(e, id))?.game ?? "")).trim();
     const cs2 = (await rankingBaseGames()).get(game) === "cs2";
     if (!(cs2 ? isLogToken : isLogSecret)(String(values.log_secret))) throw new InputError("log_secret");
+    // The token alone picks the server of a CS2 log post (URL /<log token>).
+    if (cs2 && (await adminQuery(`SELECT 1 AS x FROM hlstats_Servers WHERE log_secret = ? AND serverId <> ?`, [String(values.log_secret), id === null ? 0 : Number(id)])).length)
+      throw new InputError("log_secret");
   }
   if (id === null) {
     const key = String(values[e.pk] ?? "").toLowerCase();
