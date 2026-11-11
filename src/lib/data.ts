@@ -4,6 +4,7 @@ import { adminQuery, dialect, likeOp, query, queryOne, sinceDays, type Param } f
 import { BOT_POINTS_PREFIX, BOT_STATS_PREFIX, botSettingKeys, botSettingOn, botStatsOn, RANK_BOTS_PREFIX } from "./bot-settings";
 import { addDays, dayOf, siteDay } from "./day";
 import { ttlCache } from "./ttl-cache";
+import { bucketCache, type BucketRow } from "./bucket-cache";
 import { connectTypes, miscCountries, placeOptions, type PlaceCount, type PlaceOption } from "./place-counts";
 import { nowUnix, steamIds, steamSearchIds } from "./format";
 import { baseGameOf, GAME_HAS_DATA, gameKind } from "./games";
@@ -431,6 +432,9 @@ export type HourlyActivity = { start: number; step: number; players: (number | n
 const ACTIVITY_STEP = 900;
 
 const hourlyCache = ttlCache<HourlyActivity>(300_000, 86_400_000, 100);
+// The frags per 15 minutes of each graph: older buckets kept, only the last
+// half hour read again on a reload, everything once an hour (bucket-cache.ts).
+const fragBuckets = bucketCache(ACTIVITY_STEP, 3_600_000);
 
 // game null: all rankings together (start page).
 export function getHourlyActivity(game: string | null, days: number): Promise<HourlyActivity> {
@@ -443,12 +447,14 @@ async function loadHourlyActivity(game: string | null, days: number): Promise<Ho
   const start = Math.floor((now - days * 86400) / step) * step;
   const n = Math.floor((now - start) / step) + 1;
   const [frags, load] = await Promise.all([
-    query<{ h: number; kills: number; headshots: number }>(
-      `SELECT FLOOR(f.timestamp_id / ?) AS h, COUNT(*) AS kills, SUM(f.headshot) AS headshots
-       FROM hlstats_Events_Frags f
-       WHERE ${game === null ? "" : "f.game_id = (SELECT id FROM hlstats_Games WHERE code = ?) AND "}f.timestamp_id >= ?
-       GROUP BY 1`,
-      game === null ? [step, start] : [step, game, start],
+    fragBuckets(`${game ?? "*"}|${days}`, start, now, (from) =>
+      query<BucketRow>(
+        `SELECT FLOOR(f.timestamp_id / ?) AS h, COUNT(*) AS a, SUM(f.headshot) AS b
+         FROM hlstats_Events_Frags f
+         WHERE ${game === null ? "" : "f.game_id = (SELECT id FROM hlstats_Games WHERE code = ?) AND "}f.timestamp_id >= ?
+         GROUP BY 1`,
+        game === null ? [step, from] : [step, game, from],
+      ),
     ),
     query<{ server_id: number; h: number; p: number }>(
       `SELECT l.server_id, FLOOR(l.timestamp / ?) AS h, AVG(${capped("l.")}) AS p
@@ -461,11 +467,11 @@ async function loadHourlyActivity(game: string | null, days: number): Promise<Ho
   const first = start / step;
   const kills = new Array<number>(n).fill(0);
   const headshots = new Array<number>(n).fill(0);
-  for (const r of frags) {
-    const i = Number(r.h) - first;
+  for (const [h, [k, hs]] of frags) {
+    const i = h - first;
     if (i >= 0 && i < n) {
-      kills[i] = Number(r.kills);
-      headshots[i] = Number(r.headshots ?? 0);
+      kills[i] = k;
+      headshots[i] = hs;
     }
   }
   const players = new Array<number | null>(n).fill(null);
