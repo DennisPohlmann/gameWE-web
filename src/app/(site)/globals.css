@@ -622,7 +622,8 @@ ul.sections a.active { color: var(--accent-text); }
   font-size: 11px;
   line-height: 21px;
 }
-ul.sections a.active .sec-icon { background: radial-gradient(circle at 35% 30%, #ffb066, #c25e00); }
+/* color: 🖥 and 🗺 are text glyphs and would take the orange link colour. */
+ul.sections a.active .sec-icon { background: radial-gradient(circle at 35% 30%, #ffb066, #c25e00); color: #fff; }
 
 /* Label/value tables of the info pages. */
 /* The label column is bold, like the column heads. */
