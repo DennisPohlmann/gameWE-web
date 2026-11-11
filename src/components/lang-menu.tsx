@@ -37,6 +37,20 @@ export function LangMenu({ lang, label, base, icon = false, className }: { lang:
     return () => document.removeEventListener("pointerdown", outside);
   }, [shown]);
 
+  const face = (
+    <>
+      <LangIcon size={icon ? 16 : 13} />
+      {icon ? <span className="lang-code">{current.code.slice(0, 2).toUpperCase()}</span> : current.name}
+    </>
+  );
+  const links = (menu: boolean) =>
+    LANGUAGES.map((l) => (
+      <a key={l.code} role={menu ? "menuitem" : undefined} href={`${base}/lang/${l.code}`} hrefLang={l.locale} lang={l.locale} aria-current={l.code === lang ? "true" : undefined}>
+        <LangFlag code={l.flag} title="" />
+        {l.name}
+      </a>
+    ));
+
   const keys = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Escape" && shown) {
       e.preventDefault();
@@ -65,19 +79,23 @@ export function LangMenu({ lang, label, base, icon = false, className }: { lang:
       }}
     >
       <button type="button" className="share-btn" aria-expanded={shown} aria-haspopup="menu" aria-label={`${label}: ${current.name}`} onClick={() => setOpen(!shown)}>
-        <LangIcon size={icon ? 16 : 13} />
-        {icon ? <span className="lang-code">{current.code.slice(0, 2).toUpperCase()}</span> : current.name}
+        {face}
       </button>
       {shown ? (
         <div className="share-menu lang-list" role="menu" aria-label={label}>
-          {LANGUAGES.map((l) => (
-            <a key={l.code} role="menuitem" href={`${base}/lang/${l.code}`} hrefLang={l.locale} lang={l.locale} aria-current={l.code === lang ? "true" : undefined}>
-              <LangFlag code={l.flag} title="" />
-              {l.name}
-            </a>
-          ))}
+          {links(true)}
         </div>
       ) : null}
+      {/* Without JavaScript the button does nothing: the same list as a
+          <details> (CSS hides the button, see .lang-nav:has(.lang-noscript)). */}
+      <noscript>
+        <details className="lang-noscript">
+          <summary className="share-btn" aria-label={`${label}: ${current.name}`}>
+            {face}
+          </summary>
+          <div className="share-menu lang-list">{links(false)}</div>
+        </details>
+      </noscript>
     </div>
   );
 }

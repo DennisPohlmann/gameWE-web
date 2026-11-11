@@ -1561,6 +1561,11 @@ td.ribbon-wall a { display: inline-flex; flex-direction: column; align-items: ce
    beside it; the items are links with the flag. */
 .share-nav.lang-nav { margin-left: 0; margin-right: 0; }
 .share-btn .lang-icon { fill: none; stroke-width: 1.7; }
+/* No JavaScript (lang-menu.tsx): the <noscript> list replaces the button.
+   Its content only becomes elements when scripting is off. */
+.lang-nav:has(.lang-noscript) > .share-btn { display: none; }
+.lang-noscript > summary { list-style: none; }
+.lang-noscript > summary::-webkit-details-marker { display: none; }
 .lang-list { max-height: min(440px, calc(100vh - 120px)); overflow-y: auto; }
 .share-menu a { display: flex; align-items: center; gap: 8px; padding: 5px 8px; font-size: 12px; color: var(--text); white-space: nowrap; border-radius: 3px; text-decoration: none; }
 .share-menu a:hover, .share-menu a:focus-visible { background: var(--surface-2); text-decoration: none; }

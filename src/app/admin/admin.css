@@ -109,6 +109,12 @@ small, .small { font-size: 12.5px; }
 .adm-lang .share-menu a { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; color: var(--text); white-space: nowrap; }
 .adm-lang .share-menu a:hover, .adm-lang .share-menu a:focus-visible { background: var(--panel-2); text-decoration: none; }
 .adm-lang .share-menu a[aria-current] { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+/* No JavaScript (lang-menu.tsx): the <noscript> list replaces the button.
+   Its content only becomes elements when scripting is off. */
+.lang-nav:has(.lang-noscript) > .share-btn { display: none; }
+.lang-noscript > summary { list-style: none; }
+.lang-noscript > summary::-webkit-details-marker { display: none; }
+.adm-lang [open] > .share-btn { background: var(--top-2); color: var(--top-text); }
 .flag-svg { position: relative; display: block; flex: none; width: 18px; height: 13px; background: no-repeat; background-size: 1600% 1700%; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18); overflow: hidden; }
 .adm-user { position: relative; }
 .adm-user summary { list-style: none; display: flex; align-items: center; gap: 8px; padding: 4px 8px 4px 4px; border-radius: 999px; cursor: pointer; color: var(--top-text); font-weight: 600; }
