@@ -179,7 +179,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
                   <small className="muted">{fill(a.serverForRanking, { r: presetLabel ?? preset })}</small>
                 ) : cs2 && f.name === "log_secret" ? (
                   <>
-                    <TokenGenerate target={`f-${f.name}`} label={a.cs2LogTokenNew} />
+                    <TokenGenerate target={`f-${f.name}`} label={a.cs2LogTokenNew} copy={a.tokCopy} copied={a.tokCopied} />
                     <small className="muted">{a.cs2LogSecret}</small>
                   </>
                 ) : newRanking && f.name === "name" ? (

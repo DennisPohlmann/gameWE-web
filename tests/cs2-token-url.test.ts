@@ -13,7 +13,8 @@ test("the CS2 hints show the URL /<log token>, not the game port form", () => {
   assert.doesNotMatch(i18n, /41338\/\{port\}/);
   assert.equal(i18n.match(/cs2LogTokenNew:/g)?.length, 2);
   assert.doesNotMatch(src("src/lib/admin-entities.ts"), /41338\/<(Spielport|game port)>/);
-  assert.match(src("src/app/admin/(panel)/[entity]/[id]/page.tsx"), /<TokenGenerate target=/);
+  assert.match(src("src/app/admin/(panel)/[entity]/[id]/page.tsx"), /<TokenGenerate target=.* copy=\{a\.tokCopy\} copied=\{a\.tokCopied\}/);
+  assert.match(src("src/components/admin/token-generate.tsx"), /navigator\.clipboard\.writeText\(token\)/);
 });
 
 test("a log token another server has is refused", () => {
