@@ -3,12 +3,7 @@ import type { Metadata } from "next";
 import { LineChart } from "@/components/chart";
 import { Pie, WeekdayBars } from "@/components/graphics";
 import { Flag, Section } from "@/components/ui";
-import Link from "next/link";
-import { ServerFlag } from "@/components/live";
-import { SigCode } from "@/components/sig-code";
-import { getMiscStats, getServers } from "@/lib/data";
-import { imageStyles } from "@/lib/image-theme";
-import { statsOrigin } from "@/lib/site-url";
+import { getMiscStats } from "@/lib/data";
 import { fill, getDict } from "@/lib/i18n";
 import { dateFormat, localeOf } from "@/lib/format";
 
@@ -21,7 +16,7 @@ export default async function MiscPage({ params }: { params: Promise<{ game: str
   await rankingGate((await params).game);
   const { game } = await params;
   const { lang, t } = await getDict();
-  const [m, servers, origin, imgStyles] = await Promise.all([getMiscStats(game, 30), getServers(game), statsOrigin(), imageStyles(lang === "de" ? "de" : "en")]);
+  const m = await getMiscStats(game, 30);
   const top = m.countries.slice(0, 8);
   const rest = m.countries.slice(8).reduce((n, c) => n + c.n, 0);
   const slices = [
@@ -113,28 +108,6 @@ export default async function MiscPage({ params }: { params: Promise<{ game: str
         empty
       )}
     </Section>
-    {/* Banner of every server of this ranking, with its code (also on each server page). */}
-    {servers.length ? (
-      <Section title={t.serverBanner}>
-        {servers.map((s) => (
-          <div key={s.serverId} className="box banner-box">
-            <h3>
-              <ServerFlag code={s.country_code} lang={lang} />
-              <Link prefetch={false} href={`/${game}/servers/${s.serverId}`}>{s.name || `${s.address}:${s.port}`}</Link>
-            </h3>
-            <SigCode
-              base={`${origin}/banner/${game}/server/${s.serverId}`}
-              styles={imgStyles}
-              link={`${origin}/${game}/servers/${s.serverId}`}
-              alt={`${t.serverBanner}: ${s.name}`}
-              width={560}
-              height={95}
-              labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgSkinDefault, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
-            />
-          </div>
-        ))}
-      </Section>
-    ) : null}
     </>
   );
 }
