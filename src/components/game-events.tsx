@@ -2,7 +2,7 @@ import Link from "next/link";
 import { GameEventsLive } from "@/components/game-events-live";
 import { siteTimeZone } from "@/lib/format";
 import { getPlayerFlags } from "@/lib/data";
-import { getGameEvents, getMembersGameEvents, getPlayerGameEvents, hasEventServer, PLAYER_EVENTS } from "@/lib/history";
+import { getGameEvents, getMembersGameEvents, getPlayerGameEvents, getServerGameEvents, hasEventServer, PLAYER_EVENTS } from "@/lib/history";
 import { getSettings } from "@/lib/settings";
 import type { Dict, Lang } from "@/lib/i18n";
 
@@ -101,6 +101,33 @@ export async function ClanEvents({ game, clanId, ids, t, lang }: { game: string;
       timeZone={siteTimeZone()}
       live={playerEvents === "live"}
       withServer={withServer}
+      initial={rows}
+      initialFlags={Object.fromEntries(flags)}
+      labels={{ time: t.time, eventText: t.eventText, server: t.server, map: t.map, noData: t.noData, liveData: t.liveData, liveUpdates: t.liveUpdates, evText: t.evText }}
+    />
+  );
+}
+
+// The latest events of one server, on the server page; the same setting as
+// the start page's box. Left out without events (e.g. an older collector
+// without the server column) unless live.
+export async function ServerEvents({ game, serverId, t, lang }: { game: string; serverId: number; t: Dict; lang: Lang }) {
+  const { gameEvents } = await getSettings();
+  if (gameEvents === "off") return null;
+  const rows = await getServerGameEvents(serverId, PLAYER_EVENTS);
+  if (!rows.length && gameEvents !== "live") return null;
+  const flags = await getPlayerFlags(rows.flatMap((r) => [r.actor, r.other]));
+  return (
+    <GameEventsLive
+      title={t.recentEvents}
+      feed={`/${encodeURIComponent(game)}/servers/${serverId}/events-feed`}
+      pauseKey="gamewe-live-server-events"
+      shown={PLAYER_EVENTS}
+      game={game}
+      lang={lang}
+      timeZone={siteTimeZone()}
+      live={gameEvents === "live"}
+      withServer={false}
       initial={rows}
       initialFlags={Object.fromEntries(flags)}
       labels={{ time: t.time, eventText: t.eventText, server: t.server, map: t.map, noData: t.noData, liveData: t.liveData, liveUpdates: t.liveUpdates, evText: t.evText }}

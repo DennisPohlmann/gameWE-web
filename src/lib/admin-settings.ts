@@ -189,8 +189,8 @@ const definitions: Omit<SettingGroup, "area">[] = [
         def: "live",
         choices: EVENT_MODES,
         help: {
-          de: "Gilt auch für die Seite „Events“ einer Rangliste (alle Ereignisse mit Diagramm und Liste). Aus: kein Reiter „Events“, die Seite gibt es nicht.",
-          en: "Also applies to a ranking's \"Events\" page (all events with a chart and a list). Off: no \"Events\" tab, the page does not exist.",
+          de: "Gilt auch für die Seite „Events“ einer Rangliste (alle Ereignisse mit Diagramm und Liste) und für die Ereignisse auf der Seite eines Servers. Aus: kein Reiter „Events“, die Seite gibt es nicht.",
+          en: "Also applies to a ranking's \"Events\" page (all events with a chart and a list) and to the events on a server's page. Off: no \"Events\" tab, the page does not exist.",
         },
       },
       {
@@ -200,8 +200,8 @@ const definitions: Omit<SettingGroup, "area">[] = [
         def: "live",
         choices: EVENT_MODES,
         help: {
-          de: "Wie auf der Startseite einer Rangliste, aber nur Ereignisse dieses Spielers: seine Kills und Tode, Aktionen von ihm und gegen ihn, Teamboni.",
-          en: "As on a ranking's start page, but only the events of that player: their kills and deaths, actions by and against them, team bonuses.",
+          de: "Wie auf der Startseite einer Rangliste, aber nur Ereignisse dieses Spielers (auf der Clan-Seite: der Mitglieder): Verbinden, Betreten, Verlassen, Team-, Rollen- und Namenswechsel, Kills und Tode, Aktionen von ihm und gegen ihn, Teamboni, Selbstmorde und Teamkills.",
+          en: "As on a ranking's start page, but only the events of that player (on the clan page: of the members): connects, entries, leaves, team, role and name changes, kills and deaths, actions by and against them, team bonuses, suicides and team kills.",
         },
       },
       {

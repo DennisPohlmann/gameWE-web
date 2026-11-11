@@ -1607,7 +1607,7 @@ export const endpoints: Endpoint[] = [
     operationId: "listClanEvents",
     tag: "Events",
     summary: "Latest events of a clan",
-    description: "The latest events of the clan page: kills, deaths and actions of the active members, newest first, at most 25. Events with a hidden player are left out. 404 while the site shows no player event boxes.",
+    description: "The latest events of the clan page: connects, entries, leaves, team, role and name changes, actions, kills, deaths, suicides and team kills of the active members, newest first, at most 25. Events with a hidden player are left out. 404 while the site shows no player event boxes.",
     params: [gameParam, idParam("clan", 3)],
     schema: obj({ game: str("Code of the ranking"), id: int("Clan ID"), data: arr(ref("Event")) }),
     example: { game: G, id: 3, data: [event] },

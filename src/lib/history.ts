@@ -276,38 +276,48 @@ export type GameEvent = Omit<PlayerEvent, "kind"> & { kind: GameEventKind; actor
 // The server of an event (server_id on the event tables) comes with newer
 // collector init scripts; without it the server column is left out. Looked up
 // again every 5 minutes while missing. hlstats_Events_Connects, _ChangeRole
-// and _ChangeName have no server_id: their rows show "-" as server.
-let serverCol: { ok: Promise<boolean>; at: number } | undefined;
-export async function hasEventServer() {
-  if (!serverCol || (Date.now() - serverCol.at > 300_000 && !(await serverCol.ok))) {
-    serverCol = { ok: query(`SELECT server_id FROM hlstats_Events_Frags WHERE 1 = 0`).then(() => true, () => false), at: Date.now() };
+// and _ChangeName have server_id only from collector schema 28 on (before:
+// their rows show "-" as server and are not on the server page).
+const serverCols = new Map<string, { ok: Promise<boolean>; at: number }>();
+async function hasServerCol(table: string) {
+  const c = serverCols.get(table);
+  if (!c || (Date.now() - c.at > 300_000 && !(await c.ok))) {
+    serverCols.set(table, { ok: query(`SELECT server_id FROM ${table} WHERE 1 = 0`).then(() => true, () => false), at: Date.now() });
   }
-  return serverCol.ok;
+  return serverCols.get(table)!.ok;
 }
+export function hasEventServer() {
+  return hasServerCol("hlstats_Events_Frags");
+}
+// Schema 28: connects, name and role changes have their server too.
+function hasLateServer() {
+  return hasServerCol("hlstats_Events_Connects");
+}
+const LATE_SERVER: GameEventKind[] = ["connect", "role", "name"];
 
 // One SELECT per event table, all with the same columns; `by` is the column
 // the source is filtered on (a constant from GAME_BY / PLAYER_BY, never input).
 // match: the test on `by`, "= ?" (one id) or "IN (?)" (a list of ids).
-function gameSource(kind: GameEventKind, by: string, withServer: boolean, match = "= ?"): string {
+function gameSource(kind: GameEventKind, by: string, withServer: boolean, match = "= ?", lateServer = false): string {
   // Only the name of the server, never other columns of hlstats_Servers.
+  if (LATE_SERVER.includes(kind) && !lateServer) withServer = false;
   const m = withServer
     ? `LEFT JOIN hlstats_Maps m ON m.id = e.map LEFT JOIN (SELECT serverId, name FROM hlstats_Servers) s ON s.serverId = e.server_id`
     : `LEFT JOIN hlstats_Maps m ON m.id = e.map`;
   const srv = withServer ? `COALESCE(s.name, '') AS server` : `'' AS server`;
   const w = `WHERE ${by} ${match}`;
-  const mapOnly = `LEFT JOIN hlstats_Maps m ON m.id = e.map`;
   const all: Record<GameEventKind, string> = {
     // Only the columns the public DB user may read (never ipAddress).
-    connect: `SELECT e.timestamp_id AS ts, 'connect' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map, m.id AS map_id, '' AS server
-              FROM hlstats_Events_Connects e ${mapOnly} ${w}`,
+    connect: `SELECT e.timestamp_id AS ts, 'connect' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map, m.id AS map_id, ${srv}
+              FROM hlstats_Events_Connects e ${m} ${w}`,
     entry: `SELECT e.timestamp_id AS ts, 'entry' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map, m.id AS map_id, ${srv} FROM hlstats_Events_Entries e ${m} ${w}`,
     disconnect: `SELECT e.timestamp_id AS ts, 'disconnect' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, '' AS text, '' AS code, m.map AS map, m.id AS map_id, ${srv} FROM hlstats_Events_Disconnects e ${m} ${w}`,
     team: `SELECT e.timestamp_id AS ts, 'team' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, COALESCE(t.name, '') AS text, COALESCE(t.code, '') AS code, m.map AS map, m.id AS map_id, ${srv}
            FROM hlstats_Events_ChangeTeam e LEFT JOIN hlstats_Teams t ON t.teamId = e.team ${m} ${w}`,
-    role: `SELECT e.timestamp_id AS ts, 'role' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, COALESCE(r.name, '') AS text, COALESCE(r.code, '') AS code, m.map AS map, m.id AS map_id, '' AS server
-           FROM hlstats_Events_ChangeRole e LEFT JOIN hlstats_Roles r ON r.roleId = e.role ${mapOnly} ${w}`,
-    name: `SELECT e.timestamp_id AS ts, 'name' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, e.oldName AS text, e.newName AS code, m.map AS map, m.id AS map_id, '' AS server
-           FROM hlstats_Events_ChangeName e ${mapOnly} ${w}`,
+    role: `SELECT e.timestamp_id AS ts, 'role' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, COALESCE(r.name, '') AS text, COALESCE(r.code, '') AS code, m.map AS map, m.id AS map_id, ${srv}
+           FROM hlstats_Events_ChangeRole e LEFT JOIN hlstats_Roles r ON r.roleId = e.role ${m} ${w}`,
+    name: `SELECT e.timestamp_id AS ts, 'name' AS kind, e.playerId AS actor, 0 AS num, 0 AS other, e.oldName AS text, e.newName AS code, m.map AS map, m.id AS map_id, ${srv}
+           FROM hlstats_Events_ChangeName e ${m} ${w}`,
     action: `SELECT e.timestamp_id AS ts, 'action' AS kind, e.playerId AS actor, e.bonus AS num, 0 AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map, m.id AS map_id, ${srv}
              FROM hlstats_Events_PlayerActions e LEFT JOIN hlstats_Actions a ON a.id = e.actionId ${m} ${w}`,
     playeraction: `SELECT e.timestamp_id AS ts, 'playeraction' AS kind, e.playerId AS actor, e.bonus AS num, e.victimId AS other, COALESCE(a.description, '') AS text, COALESCE(a.code, '') AS code, m.map AS map, m.id AS map_id, ${srv}
@@ -324,27 +334,43 @@ function gameSource(kind: GameEventKind, by: string, withServer: boolean, match 
   return all[kind];
 }
 
+// Player columns of each kind: the actor and, for events on another player,
+// the other side (constants, never input).
+const ACTOR_COL: Record<GameEventKind, string> = {
+  connect: "e.playerId",
+  entry: "e.playerId",
+  disconnect: "e.playerId",
+  team: "e.playerId",
+  role: "e.playerId",
+  name: "e.playerId",
+  action: "e.playerId",
+  playeraction: "e.playerId",
+  teambonus: "e.playerId",
+  kill: "e.killerId",
+  suicide: "e.playerId",
+  teamkill: "e.killerId",
+};
 // The live box of a ranking: every kind of the ranking's servers.
 const GAME_BY: [GameEventKind, string][] = GAME_EVENT_KINDS.map((k) => [k, "e.game_id"]);
-// The live box of a player: the same kinds with the player on either side
-// (kills and deaths, actions on and by the player). Each column has an
-// index (killer_time, victim_time, playerId, victimId).
+// The live box of a player: every kind with the player on either side
+// (kills and deaths, actions and team kills on and by the player). Each
+// column has an index (killer_time, victim_time, playerId, victimId, ...).
 const PLAYER_BY: [GameEventKind, string][] = [
-  ["kill", "e.killerId"],
+  ...GAME_EVENT_KINDS.map((k): [GameEventKind, string] => [k, ACTOR_COL[k]]),
   ["kill", "e.victimId"],
-  ["action", "e.playerId"],
-  ["playeraction", "e.playerId"],
   ["playeraction", "e.victimId"],
-  ["teambonus", "e.playerId"],
+  ["teamkill", "e.victimId"],
 ];
+// The live box of a server: every kind of that server.
+const SERVER_BY: [GameEventKind, string][] = GAME_EVENT_KINDS.map((k) => [k, "e.server_id"]);
 
 type RawEvent = Omit<GameEvent, "actorName" | "otherName">;
 
 // Newest `n` rows over the sources, each source limited to `n` itself, so a
 // long history is not read in full.
 async function loadEvents(by: [GameEventKind, string][], id: number, n: number): Promise<RawEvent[]> {
-  const withServer = await hasEventServer();
-  const parts = by.map(([k, col]) => `(${gameSource(k, col, withServer)} ORDER BY 1 DESC LIMIT ${Number(n)})`);
+  const [withServer, late] = await Promise.all([hasEventServer(), hasLateServer()]);
+  const parts = by.map(([k, col]) => `(${gameSource(k, col, withServer, "= ?", late)} ORDER BY 1 DESC LIMIT ${Number(n)})`);
   return query<RawEvent>(`SELECT * FROM (${parts.join(" UNION ALL ")}) x ORDER BY ts DESC, kind LIMIT ?`, [...by.map(() => id), n]);
 }
 
@@ -399,22 +425,6 @@ export function getGameEvents(game: string, limit: number): Promise<GameEvent[]>
 // or banned player on either side are left out in SQL, so the counts, the
 // pager and the list agree.
 
-// Player columns of each kind: the actor and, for events on another player,
-// the other side (constants, never input).
-const ACTOR_COL: Record<GameEventKind, string> = {
-  connect: "e.playerId",
-  entry: "e.playerId",
-  disconnect: "e.playerId",
-  team: "e.playerId",
-  role: "e.playerId",
-  name: "e.playerId",
-  action: "e.playerId",
-  playeraction: "e.playerId",
-  teambonus: "e.playerId",
-  kill: "e.killerId",
-  suicide: "e.playerId",
-  teamkill: "e.killerId",
-};
 const OTHER_COL: Partial<Record<GameEventKind, string>> = { playeraction: "e.victimId", kill: "e.victimId", teamkill: "e.victimId" };
 const EVENT_TABLE: Record<GameEventKind, string> = {
   connect: "hlstats_Events_Connects",
@@ -448,9 +458,9 @@ async function gameIdOf(game: string): Promise<number | undefined> {
 export async function getGameEventList(game: string, kinds: GameEventKind[], from: number, limit: number, offset: number, asc = false): Promise<GameEvent[]> {
   const id = await gameIdOf(game);
   if (id === undefined || !kinds.length) return [];
-  const withServer = await hasEventServer();
+  const [withServer, late] = await Promise.all([hasEventServer(), hasLateServer()]);
   const dir = asc ? "ASC" : "DESC";
-  const parts = kinds.map((k) => `(${gameSource(k, "e.game_id", withServer)} AND e.timestamp_id >= ? AND ${shownSides(k)} ORDER BY 1 ${dir} LIMIT ${Number(offset + limit)})`);
+  const parts = kinds.map((k) => `(${gameSource(k, "e.game_id", withServer, "= ?", late)} AND e.timestamp_id >= ? AND ${shownSides(k)} ORDER BY 1 ${dir} LIMIT ${Number(offset + limit)})`);
   const rows = await query<RawEvent>(`SELECT * FROM (${parts.join(" UNION ALL ")}) x ORDER BY ts ${dir}, kind LIMIT ? OFFSET ?`, [
     ...kinds.flatMap(() => [id, from]),
     limit,
@@ -497,6 +507,18 @@ export function getPlayerGameEvents(playerId: number, limit: number): Promise<Ga
   return cached(`p|${playerId}|${limit}`, async () => named(await loadEvents(PLAYER_BY, playerId, limit), limit, playerId));
 }
 
+// The latest events of one server, for the live box on the server page
+// (more rows than shown, as hidden players are dropped afterwards). Without
+// the server column (an older collector) there are none; without schema 28
+// connects, name and role changes are left out.
+export function getServerGameEvents(serverId: number, limit: number): Promise<GameEvent[]> {
+  return cached(`s|${serverId}|${limit}`, async () => {
+    const [withServer, late] = await Promise.all([hasEventServer(), hasLateServer()]);
+    if (!withServer) return [];
+    return named(await loadEvents(late ? SERVER_BY : SERVER_BY.filter(([k]) => !LATE_SERVER.includes(k)), serverId, limit * 3), limit);
+  });
+}
+
 // The latest events with a clan member on either side, for the live box on
 // the clan page: the kinds of the player page's box, each source limited to
 // `limit` rows. A kill between two members comes from both sides and is
@@ -504,8 +526,8 @@ export function getPlayerGameEvents(playerId: number, limit: number): Promise<Ga
 export function getMembersGameEvents(clanId: number, ids: number[], limit: number): Promise<GameEvent[]> {
   if (!ids.length) return Promise.resolve([]);
   return cached(`clan|${clanId}|${ids.join(",")}|${limit}`, async () => {
-    const withServer = await hasEventServer();
-    const parts = PLAYER_BY.map(([k, col]) => `(${gameSource(k, col, withServer, "IN (?)")} ORDER BY 1 DESC LIMIT ${Number(limit)})`);
+    const [withServer, late] = await Promise.all([hasEventServer(), hasLateServer()]);
+    const parts = PLAYER_BY.map(([k, col]) => `(${gameSource(k, col, withServer, "IN (?)", late)} ORDER BY 1 DESC LIMIT ${Number(limit)})`);
     const rows = await query<RawEvent>(`SELECT * FROM (${parts.join(" UNION ALL ")}) x ORDER BY ts DESC, kind LIMIT ?`, [...PLAYER_BY.map(() => ids), limit * 2]);
     const seen = new Set<string>();
     const once = rows.filter((r) => {

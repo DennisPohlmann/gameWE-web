@@ -179,12 +179,15 @@ Two choices under Admin → Settings → Maps & events decide how the "Latest ev
 behave: "Latest events (ranking start page)" (`gamewe_game_events`: every
 event on all servers of the ranking: connects, entries, leaves, team, role
 and name changes, actions, team bonuses, kills, suicides and teamkills;
-never chat or addresses) and "Latest events (player page)"
-(`gamewe_player_events`: only the events with that player on either side:
-their kills and deaths, actions by and against them, their team bonuses).
+never chat or addresses; also the box on a server's page with the events
+of that server) and "Latest events (player page)" (`gamewe_player_events`:
+the same kinds, only those with that player on either side, also the box
+of a clan's members).
 There is no setting per event type. Rows with a hidden or banned player as
 actor, victim or target are left out in both boxes. Connects, role and name
-changes have no server in the database, so their server column shows "-".
+changes have a server from collector schema 28 (migration `event-servers`)
+on; older rows and an older collector show "-" there, and the server page
+then lists them only from that version on.
 Each is "Sync" (`live`, default: new events flow in while the page is
 open), "Async" (`static`: only the latest ones as of loading the page) or
 "Off" (`off`: the section is not shown). Both boxes show time, event,
@@ -192,7 +195,8 @@ server and map the same way; a victim or target no longer in the player
 table is shown as "?". In "Sync" the heading says "(Live data)" and a switch
 top right pauses the updates (no requests while paused; the choice is kept
 per browser and box). The live boxes ask `/<game>/events-feed` and
-`/<game>/players/<id>/events-feed` every 4 seconds while the tab is
+`/<game>/players/<id>/events-feed`, `/<game>/clans/<id>/events-feed` and
+`/<game>/servers/<id>/events-feed` every 4 seconds while the tab is
 visible, with `?since=<unix seconds>` of the newest row they show and
 `&seen=<n>` rows of that second; the feeds answer `204` without a body
 when nothing newer has happened (the usual case), so the browser has nothing to download or draw. Both answer

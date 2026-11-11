@@ -4,7 +4,7 @@ import { getClanMembers } from "@/lib/data";
 import { getMembersGameEvents, PLAYER_EVENTS } from "@/lib/history";
 import { getSettings } from "@/lib/settings";
 
-// The latest events of the clan page: kills, deaths and actions of the
+// The latest events of the clan page: every event kind of the
 // active members (at most 25, newest first). 404 while the site shows no
 // event boxes.
 export function GET(_req: Request, { params }: { params: Promise<{ game: string; id: string }> }) {

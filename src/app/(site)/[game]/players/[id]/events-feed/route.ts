@@ -10,7 +10,7 @@ import { getSettings } from "@/lib/settings";
 const LIMIT = 60;
 
 // The latest events of one player as JSON, for the live box on the player
-// page: kills and deaths, actions by and on the player, team bonuses. The
+// page: every event kind with the player on either side. The
 // same rows the page itself shows, and only where the page exists.
 // With `?list=` (empty or an event kind): the newest rows of the player's
 // events page with that type filter instead, for its live table.

@@ -4,6 +4,7 @@ import { SigCode } from "@/components/sig-code";
 import { imageStyles } from "@/lib/image-theme";
 import { statsOrigin } from "@/lib/site-url";
 import { notFound, redirect } from "next/navigation";
+import { ServerEvents } from "@/components/game-events";
 import { ServerLoadChart } from "@/components/graphics";
 import { LoadSummary } from "@/components/load-summary";
 import { MapLink } from "@/components/map-link";
@@ -97,6 +98,7 @@ export default async function ServerPage({ params }: Props) {
           </div>
         </Section>
       </div>
+      <ServerEvents game={game} serverId={s.serverId} t={t} lang={lang} />
       {chat.length ? (
         <Section title={t.chat}>
           <TableWrap>
