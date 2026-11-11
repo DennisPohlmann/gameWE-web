@@ -2,7 +2,7 @@
 // Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { SPARK_H, SPARK_W, countsSinceFirst, sparkBuckets, sparkHits, sparkPaths, sparkSeries, wholeDays } from "../src/lib/sparkline.ts";
+import { SPARK_H, SPARK_W, countsSinceFirst, sparkBuckets, sparkHits, sparkPaths, sparkSeries, sparkTipValue, wholeDays } from "../src/lib/sparkline.ts";
 
 test("the series runs from its first to its last value", () => {
   assert.deepEqual(sparkSeries([null, null, 3, null, 5]), [3, null, 5]);
@@ -86,4 +86,12 @@ test("sparkBuckets: index span, sum and count of every point of the line", () =>
     { from: 3, to: 4, sum: 6, n: 1 },
   ]);
   assert.deepEqual(sparkBuckets([null, null]), []);
+});
+
+test("hover values are whole numbers: players averaged, kills added up", () => {
+  // One quarter hour of 78.1 players (mean of the load samples) and a span of three.
+  assert.equal(sparkTipValue({ from: 0, to: 0, sum: 78.1, n: 1 }, false), 78);
+  assert.equal(sparkTipValue({ from: 0, to: 2, sum: 234.6, n: 3 }, false), 78);
+  assert.equal(sparkTipValue({ from: 0, to: 2, sum: 235, n: 3 }, false), 78);
+  assert.equal(sparkTipValue({ from: 0, to: 2, sum: 12, n: 3 }, true), 12);
 });

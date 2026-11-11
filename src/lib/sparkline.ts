@@ -41,6 +41,13 @@ export function sparkHits(buckets: SparkBucket[]): { bucket: SparkBucket; x: num
   });
 }
 
+// A point's value in the hover text: the sum (kills, headshots) or the mean
+// (players, servers, clans), as a whole number: the means of the quarter hours
+// would show "78.1" players.
+export function sparkTipValue(b: SparkBucket, sum: boolean): number {
+  return Math.round(sum || b.n <= 1 ? b.sum : b.sum / b.n);
+}
+
 // The buckets' values: the mean of their numbers, or null when they have none.
 export function sparkSeries(values: (number | null)[], max = 90): (number | null)[] {
   return sparkBuckets(values, max).map((b) => (b.n ? b.sum / b.n : null));

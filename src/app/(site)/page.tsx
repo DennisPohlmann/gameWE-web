@@ -8,7 +8,7 @@ import { Flag, GameIcon, Skeleton } from "@/components/ui";
 import { basePath } from "@/lib/base-path";
 import { LineChart } from "@/components/chart";
 import { Sparkline } from "@/components/sparkline";
-import { countsSinceFirst, wholeDays, type SparkBucket } from "@/lib/sparkline";
+import { countsSinceFirst, sparkTipValue, wholeDays, type SparkBucket } from "@/lib/sparkline";
 import { HoverTip } from "@/components/hover-tip";
 import { PlayerCount } from "@/components/player-count";
 import { VoiceBox } from "@/components/voice-box";
@@ -244,7 +244,7 @@ async function GeneralStatsSection({ t, lang }: { t: Dict; lang: Lang }) {
     return `${from} – ${sameDay ? "" : `${dayFmt.format(z.end * 1000)}, `}${timeFmt.format(z.end * 1000)}`;
   };
   const lineTip = (label: string, line: Line, sum: boolean) => (b: SparkBucket) =>
-    `${spanOf(line, b)}\n${label}: ${sum || b.n === 1 ? fmtNum(b.sum, lang) : `Ø ${fmtNum(b.sum / b.n, lang, 1)}`}`;
+    `${spanOf(line, b)}\n${label}: ${sum || b.n === 1 ? "" : "Ø "}${fmtNum(sparkTipValue(b, sum), lang)}`;
   const clansLine = perDay(clanDays, (r) => Number(r.n));
   const serversLine: Line = hourly ? { values: hourly.servers, at: hourAt } : none;
   const killsLine = fragLine(hourly?.kills, (r) => Number(r.kills));
