@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ServerFlag } from "@/components/live";
 import { SigCode } from "@/components/sig-code";
+import { bannerChoices } from "@/lib/banners/options";
 import { TsPassword } from "@/components/ts-password";
 import { Empty, Flag, Section, Stats } from "@/components/ui";
 import { fmtDateTime, fmtDuration, fmtNum } from "@/lib/format";
@@ -130,13 +131,14 @@ export default async function VoicePage() {
       <Section title={t.voiceBanner}>
         <div className="box">
           <SigCode
-            base={`${origin}/banner/teamspeak`}
+            base={`${origin}/banner/${lang}/teamspeak`}
             styles={imgStyles}
+            {...bannerChoices("voice", t)}
             link={`${origin}/voice`}
             alt={`${t.voiceBanner}: ${box.name}`}
             width={560}
             height={95}
-            labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgSkinDefault, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
+            labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgSkinDefault, layout: t.bannerLayout, background: t.bannerBackground, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
           />
         </div>
       </Section>

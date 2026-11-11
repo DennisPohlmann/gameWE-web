@@ -718,5 +718,25 @@
     "statsText": "The game servers report what happens in the game. This site shows player names, Steam IDs, statistics and the rough location (city and country from the IP address) of the players. IP addresses themselves are never shown publicly. Players can ask the operator to hide their profile.",
     "rightsTitle": "Your rights",
     "rightsText": "Under the GDPR you have the right to access, rectification, erasure, restriction of processing, data portability and objection, and you can withdraw a consent at any time with effect for the future. You can also complain to a data protection supervisory authority. Please contact the controller named above."
-  }
+  },
+  "bannerLayout": "Layout",
+  "bannerBackground": "Background",
+  "bannerLayouts": {
+    "a": "Clear",
+    "b": "Card",
+    "c": "Badge",
+    "d": "Trend"
+  },
+  "bannerBackgrounds": {
+    "plain": "Plain",
+    "dots": "Dots",
+    "grid": "Grid",
+    "stripes": "Stripes",
+    "carbon": "Carbon",
+    "glow": "Glow"
+  },
+  "offline": "Offline",
+  "port": "Port",
+  "players24h": "Players (24 h)",
+  "slotsShare": "{n} of the slots"
 }

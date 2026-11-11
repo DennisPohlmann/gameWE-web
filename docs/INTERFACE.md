@@ -98,7 +98,7 @@ website's # column) and `rank` (the place in the whole ranking by points);
 | `/api/v1/rankings/<game>/servers` | servers of a ranking (`players` online with bots, `bots` among them; `version`, `os` (`linux`, `windows`, `mac`) and `vac` (true / false), each null while unknown) with the players online (name, team, points, kills; bots without an id) |
 | `/api/v1/rankings/<game>/servers/<id>` | one server of that ranking (also suicides, CT/T wins, bombs planted and defused), with the players online (a hidden player with `id: null`, like a bot; HS/kill, accuracy, ping, points and their change, place) |
 | `/api/v1/rankings/<game>/servers/<id>/load?hours=24` | players on that server per 10 minutes (1-168 hours), with the uptime in seconds |
-| `/api/v1/rankings/<game>/servers/<id>/banner` | the server banner as PNG (`?style=<template>`) |
+| `/api/v1/rankings/<game>/servers/<id>/banner` | the server banner as PNG (`?style=<template>`, `?layout=`, `?bg=`, `?lang=`; an unknown value is `400`) |
 | `/api/v1/rankings/<game>/load?hours=24` | the load of all servers of the ranking in one answer |
 | `/api/v1/rankings/<game>/activity?days=14` | players online, servers with players, kills and headshots per 15 minutes (`days` 1, 7, 14 or 30) |
 | `/api/v1/rankings/<game>/map/live` | the live map: players online and the servers at their GeoIP city point (404 while the live map is off) |
@@ -116,7 +116,7 @@ website's # column) and `rank` (the place in the whole ranking by points);
 | `/api/v1/points` | the help page's point rules and the bot settings per ranking |
 | `/api/v1/voice` | the voice server box (TeamSpeak or Discord) |
 | `/api/v1/voice/teamspeak` | the TeamSpeak page: server info, channel tree, people online (names only while shown); `passwordProtected`, and `password` only while "Allow showing the TeamSpeak password" is on (404 unless TeamSpeak is the voice server) |
-| `/api/v1/voice/teamspeak/banner` | the TeamSpeak banner as PNG (`?style=<template>`) |
+| `/api/v1/voice/teamspeak/banner` | the TeamSpeak banner as PNG (`?style=<template>`, `?layout=`, `?bg=`, `?lang=`; an unknown value is `400`) |
 | `/api/v1/banners/styles` | the styles (design templates) the banners take |
 | `/api/v1/players/<id>` | the values of a player's profile: place (`rank`, null for a hidden, banned or inactive player), points and last change, kills, K:D, HS/kill, kills per minute, assists, accuracy, shots per kill, rounds, win ratio, survived, connections, ping, location, career rank, favourite weapon, hall of fame stars, `banned` and the running `bans` (source, reason, date, length, end) |
 | `/api/v1/rankings/<game>/bans` | the bans page: every banned player with the running bans (server logs; SourceBans and VAC/game bans from Steam as the collector stores them in `hlstats_Bans`), newest first, paged; `?view=inactive` the "Inactive players" tab |
@@ -132,7 +132,7 @@ website's # column) and `rank` (the place in the whole ranking by points);
 | `/api/v1/players/<id>/awards` | daily awards won (`sort=date\|award`) |
 | `/api/v1/players/<id>/events` | the player's events page (`type`, `order`), at most 10000 deep |
 | `/api/v1/players/<id>/radar` | the profile's radar: last 14 days against the average |
-| `/api/v1/players/<id>/banner` | the player banner as PNG (`?style=<template>`) |
+| `/api/v1/players/<id>/banner` | the player banner as PNG (`?style=<template>`, `?layout=`, `?bg=`, `?lang=`; an unknown value is `400`) |
 | `/api/v1/players/<id>/ribbons` | rank by kills and ribbons per award |
 
 Unknown rankings, servers, players and other ids, and unknown paths under
@@ -207,15 +207,23 @@ curl -X PATCH -H "Authorization: Bearer $GAMEWE_TOKEN" -H 'Content-Type: applica
 PNG pictures for forums and other sites, under the base path like every
 page (with `BASE_PATH=/stats`: `/stats/banner/...`). `<game>` is the ranking
 code (e.g. `css1`); `-<template>` before `.png` picks a design template's
-colours. The codes on the profile, server, Misc and `/voice` pages use these
-URLs.
+colours. A language folder right before the file gives the texts in that
+language (`/banner/<game>/player/de/12.png`, `/sig/de/12.png`,
+`/banner/de/teamspeak.png`; the codes of the site's languages, Chinese gets
+English texts); without one they are English. `?layout=` picks the layout
+(`a` clear, the default, `b` card, `c` badge, the player banner also `d`
+with the points of the last 30 days) and `?bg=` a background pattern
+(`plain`, the default, `dots`, `grid`, `stripes`, `carbon`, `glow`);
+unknown values give the defaults. The codes on the profile, server, Misc
+and `/voice` pages use these URLs, in the page's language.
 
 | URL | Content |
 |-----|---------|
 | `/banner/<game>/player/<playerId>.png` | player banner (forum signature), 400x100, cached 15 minutes |
 | `/banner/<game>/server/<serverId>.png` | server banner, 560x95, cached 5 minutes |
 | `/banner/teamspeak.png` | TeamSpeak banner, 560x95, live ServerQuery data (no history), cached 1 minute; offline banner when the query fails |
-| `/sig/<playerId>.png`, `/banner/<serverId>.png` | old URLs, aliases of the two above (same picture, no redirect) |
+| `/banner/<game>/player/<lang>/<playerId>.png`, `/banner/<game>/server/<lang>/<serverId>.png`, `/banner/<lang>/teamspeak.png` | the same in a language |
+| `/sig/<playerId>.png`, `/sig/<lang>/<playerId>.png`, `/banner/<serverId>.png` | old URLs, aliases of the two above (same picture, no redirect) |
 
 A player or server that does not belong to `<game>`, a hidden ranking and a
 bot of a ranking whose "Bots in the ranking" is off give `404`, and so do players hidden from the

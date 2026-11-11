@@ -659,5 +659,25 @@
     "statsText": "Serwery gry przekazują, co dzieje się w grze. Ta strona pokazuje nazwy graczy, Steam ID, statystyki i przybliżoną lokalizację (miasto i kraj na podstawie adresu IP) graczy. Same adresy IP nigdy nie są pokazywane publicznie. Gracze mogą poprosić operatora o ukrycie swojego profilu.",
     "rightsTitle": "Twoje prawa",
     "rightsText": "Zgodnie z RODO masz prawo dostępu, sprostowania, usunięcia, ograniczenia przetwarzania, przenoszenia danych i sprzeciwu, a zgodę możesz w każdej chwili wycofać ze skutkiem na przyszłość. Możesz też złożyć skargę do organu nadzorczego ochrony danych. Skontaktuj się z administratorem wymienionym powyżej."
-  }
+  },
+  "bannerLayout": "Układ",
+  "bannerBackground": "Tło",
+  "bannerLayouts": {
+    "a": "Przejrzysty",
+    "b": "Karta",
+    "c": "Plakietka",
+    "d": "Trend"
+  },
+  "bannerBackgrounds": {
+    "plain": "Gładkie",
+    "dots": "Kropki",
+    "grid": "Siatka",
+    "stripes": "Paski",
+    "carbon": "Karbon",
+    "glow": "Poświata"
+  },
+  "offline": "Offline",
+  "port": "Port",
+  "players24h": "Gracze (24 h)",
+  "slotsShare": "{n} miejsc"
 }

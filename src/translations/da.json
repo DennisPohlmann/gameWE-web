@@ -659,5 +659,25 @@
     "statsText": "Spilserverne melder, hvad der sker i spillet. Siden viser spillernavne, Steam-ID'er, statistik og den omtrentlige placering (by og land ud fra IP-adressen) af spillerne. Selve IP-adresserne vises aldrig offentligt. Spillere kan bede operatøren om at skjule deres profil.",
     "rightsTitle": "Dine rettigheder",
     "rightsText": "Efter GDPR har du ret til indsigt, berigtigelse, sletning, begrænsning af behandling, dataportabilitet og indsigelse, og du kan til enhver tid trække et samtykke tilbage med virkning for fremtiden. Du kan også klage til en datatilsynsmyndighed. Kontakt den dataansvarlige nævnt ovenfor."
-  }
+  },
+  "bannerLayout": "Layout",
+  "bannerBackground": "Baggrund",
+  "bannerLayouts": {
+    "a": "Klar",
+    "b": "Kort",
+    "c": "Plakette",
+    "d": "Udvikling"
+  },
+  "bannerBackgrounds": {
+    "plain": "Enkel",
+    "dots": "Prikker",
+    "grid": "Gitter",
+    "stripes": "Striber",
+    "carbon": "Kulfiber",
+    "glow": "Glød"
+  },
+  "offline": "Offline",
+  "port": "Port",
+  "players24h": "Spillere (24 t)",
+  "slotsShare": "{n} af pladserne"
 }

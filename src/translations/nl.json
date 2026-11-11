@@ -659,5 +659,25 @@
     "statsText": "De gameservers melden wat er in het spel gebeurt. Deze site toont spelersnamen, Steam-ID's, statistieken en de globale locatie (stad en land op basis van het IP-adres) van de spelers. IP-adressen zelf worden nooit openbaar getoond. Spelers kunnen de beheerder vragen hun profiel te verbergen.",
     "rightsTitle": "Je rechten",
     "rightsText": "Volgens de AVG heb je recht op inzage, rectificatie, wissing, beperking van de verwerking, overdraagbaarheid en bezwaar, en kun je een toestemming altijd intrekken met werking voor de toekomst. Je kunt ook een klacht indienen bij een toezichthoudende autoriteit. Neem daarvoor contact op met de hierboven genoemde verantwoordelijke."
-  }
+  },
+  "bannerLayout": "Indeling",
+  "bannerBackground": "Achtergrond",
+  "bannerLayouts": {
+    "a": "Helder",
+    "b": "Kaart",
+    "c": "Plaquette",
+    "d": "Verloop"
+  },
+  "bannerBackgrounds": {
+    "plain": "Effen",
+    "dots": "Stippen",
+    "grid": "Raster",
+    "stripes": "Strepen",
+    "carbon": "Carbon",
+    "glow": "Gloed"
+  },
+  "offline": "Offline",
+  "port": "Poort",
+  "players24h": "Spelers (24 u)",
+  "slotsShare": "{n} van de plaatsen"
 }

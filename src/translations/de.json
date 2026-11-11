@@ -718,5 +718,25 @@
     "statsText": "Die Gameserver melden, was im Spiel passiert. Diese Seite zeigt Spielernamen, Steam-IDs, Statistiken und den ungefähren Ort (Stadt und Land aus der IP-Adresse) der Spieler. IP-Adressen selbst werden nie öffentlich gezeigt. Spieler können den Betreiber bitten, ihr Profil auszublenden.",
     "rightsTitle": "Deine Rechte",
     "rightsText": "Nach der DSGVO hast du das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch, und du kannst eine Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen. Außerdem kannst du dich bei einer Datenschutz-Aufsichtsbehörde beschweren. Wende dich dazu an den oben genannten Verantwortlichen."
-  }
+  },
+  "bannerLayout": "Aufbau",
+  "bannerBackground": "Hintergrund",
+  "bannerLayouts": {
+    "a": "Klar",
+    "b": "Karte",
+    "c": "Plakette",
+    "d": "Verlauf"
+  },
+  "bannerBackgrounds": {
+    "plain": "Schlicht",
+    "dots": "Punktraster",
+    "grid": "Gitter",
+    "stripes": "Streifen",
+    "carbon": "Carbon",
+    "glow": "Leuchten"
+  },
+  "offline": "Offline",
+  "port": "Port",
+  "players24h": "Spieler (24 h)",
+  "slotsShare": "{n} der Plätze"
 }

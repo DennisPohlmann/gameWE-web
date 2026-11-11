@@ -16,6 +16,7 @@ import { FIXED_MAX, radarPoints, type PlayerRatios, type RadarKey } from "@/lib/
 import { MapTable, WeaponStats, WeaponUsage, targetLabels } from "@/components/usage-tables";
 import { WeaponTargets } from "@/components/weapon-targets";
 import { SigCode } from "@/components/sig-code";
+import { bannerChoices } from "@/lib/banners/options";
 import { PlayerEvents } from "@/components/game-events";
 import { ZONES } from "@/lib/zones";
 import { awardValue, getAwards, getPlayerRibbons, getRanks, getRibbonClasses, rankFor, ribbonFor, ribbonProgress } from "@/lib/awards";
@@ -113,7 +114,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
       getPlayerRibbons(id),
       getAwards(game),
       getRibbonClasses(game),
-      bannerUrl(game, "player", id),
+      bannerUrl(game, "player", id, lang),
       statsOrigin(),
       getPlayerSkillBefore(id, 30),
     ]);
@@ -375,11 +376,12 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                       <SigCode
                         base={sigUrl.replace(/\.png$/, "")}
                         styles={imgStyles}
+                        {...bannerChoices("player", t)}
                         link={`${origin}/${game}/players/${id}`}
                         alt={`${t.forumSignature}: ${p.name ?? id}`}
                         width={400}
                         height={100}
-                        labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgSkinDefault, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
+                        labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgSkinDefault, layout: t.bannerLayout, background: t.bannerBackground, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
                       />
                     </td>
                   </tr>

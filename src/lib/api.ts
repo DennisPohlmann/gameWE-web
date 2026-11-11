@@ -16,6 +16,8 @@ import { ZONES } from "./zones";
 import type { BanEntry } from "./ban-merge";
 import { playerCount } from "./player-count";
 import { winSplit } from "./shares";
+import { BACKGROUNDS, LAYOUTS, bannerOptions, type BannerKind, type BannerOptions } from "./banners/options";
+import { LANGUAGES } from "@/translations/languages";
 
 export { RANKING_SORT_ALIASES } from "./sorts";
 
@@ -391,4 +393,15 @@ export function styleArg(q: { get(name: string): string | null }): string | null
   if (v === null || v === "") return null;
   if (!/^[a-z0-9][a-z0-9_-]{0,31}$/.test(v)) throw new ApiError(400, "invalid style: template id (a-z, 0-9, _ and -, at most 32 characters)");
   return v;
+}
+
+// Layout, background and language of a banner (?layout=, ?bg=, ?lang=);
+// unlike the website an unknown value is an error.
+export function bannerArgs(kind: BannerKind, url: URL): BannerOptions {
+  const allowed: [string, readonly string[]][] = [["layout", LAYOUTS[kind]], ["bg", BACKGROUNDS], ["lang", LANGUAGES.map((l) => l.code)]];
+  for (const [name, ok] of allowed) {
+    const v = url.searchParams.get(name);
+    if (v !== null && v !== "" && !ok.includes(v)) throw new ApiError(400, `invalid ${name}: one of ${ok.join(", ")}`);
+  }
+  return bannerOptions(kind, url);
 }

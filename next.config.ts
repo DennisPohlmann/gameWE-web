@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import type { NextConfig } from "next";
+import { LANGUAGES } from "./src/translations/languages";
 
 // Sub path the site runs under behind a reverse proxy, e.g. BASE_PATH=/new.
 // Next.js bakes it in at build time, so it must be set for `npm run build`.
@@ -46,6 +47,17 @@ const nextConfig: NextConfig = {
       { source: "/:file(icon\\.svg|icon-32\\.png|icon-192\\.png|icon-512\\.png|apple-touch-icon\\.png|avatar-unknown\\.svg)", headers: [{ key: "cache-control", value: day }] },
       { source: "/games/:path*", headers: [{ key: "cache-control", value: day }] },
       { source: "/vendor/:path*", headers: [{ key: "cache-control", value: day }] },
+    ];
+  },
+  // Banners in a language: the language folder right before the file
+  // (/banner/<game>/player/de/12.png, /sig/de/12.png, /banner/de/teamspeak.png)
+  // is the picture without it; lib/banners/options.ts reads the language.
+  async rewrites() {
+    const lang = LANGUAGES.map((l) => l.code).join("|");
+    return [
+      { source: `/banner/:game/:kind(player|server)/:lang(${lang})/:file`, destination: "/banner/:game/:kind/:file?lang=:lang" },
+      { source: `/sig/:lang(${lang})/:file`, destination: "/sig/:file?lang=:lang" },
+      { source: `/banner/:lang(${lang})/:file(teamspeak[^/]*)`, destination: "/banner/:file?lang=:lang" },
     ];
   },
   // The old raw list "Advanced: all options" is a settings page now.

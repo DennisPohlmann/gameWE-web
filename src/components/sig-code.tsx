@@ -5,8 +5,10 @@ import { noAutofill } from "@/lib/autofill";
 
 // A generated picture (forum signature, server banner) with its code: the
 // kind of code in a row of buttons (BBCode for forums, HTML, Discord, the
-// bare image URL; the forums that take each one as tooltip), the style (one
-// per design template, the site's own first) in a select; the preview and
+// bare image URL; the forums that take each one as tooltip), and three
+// selects: the colours (one per design template, the site's own first), the
+// layout and the background pattern (?layout=, ?bg=, lib/banners/options.ts,
+// left out at their defaults, the first of each list); the preview and
 // the code follow, with a copy button. Discord shows no image inside a link
 // in a message, so its code is a masked link to the page with <> around the
 // URL (no preview card of the page) and the image URL on its own line, which
@@ -14,6 +16,8 @@ import { noAutofill } from "@/lib/autofill";
 export function SigCode({
   base,
   styles,
+  layouts,
+  backgrounds,
   link,
   alt,
   width,
@@ -23,16 +27,24 @@ export function SigCode({
   // Absolute URL without ".png": <base>.png is the site's style, <base>-<style>.png another one.
   base: string;
   styles: { id: string; name: string }[];
+  layouts: { id: string; name: string }[];
+  backgrounds: { id: string; name: string }[];
   link: string;
   alt: string;
   width: number;
   height: number;
-  labels: { format: string; style: string; standard: string; url: string; copy: string; copied: string };
+  labels: { format: string; style: string; standard: string; layout: string; background: string; url: string; copy: string; copied: string };
 }) {
   const [kind, setKind] = useState("bbcode");
   const [style, setStyle] = useState("");
+  const [layout, setLayout] = useState(layouts[0]?.id ?? "");
+  const [bg, setBg] = useState(backgrounds[0]?.id ?? "");
   const [copied, setCopied] = useState(false);
-  const img = style ? `${base}-${style}.png` : `${base}.png`;
+  const q = new URLSearchParams();
+  if (layout !== layouts[0]?.id) q.set("layout", layout);
+  if (bg !== backgrounds[0]?.id) q.set("bg", bg);
+  const qs = q.toString();
+  const img = `${style ? `${base}-${style}.png` : `${base}.png`}${qs ? `?${qs}` : ""}`;
   const attr = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
   // The link text in Discord: the name after "Forum signature: " (the alt
   // text), without the brackets of the link syntax.
@@ -66,11 +78,25 @@ export function SigCode({
       </div>
       <textarea {...noAutofill} className="sig-code" readOnly rows={3} value={code} onFocus={(e) => e.currentTarget.select()} />
       <div className="sig-codes-bar">
-        <select {...noAutofill} value={style} onChange={(e) => setStyle(e.target.value)} aria-label={labels.style}>
+        <select {...noAutofill} value={layout} onChange={(e) => setLayout(e.target.value)} aria-label={labels.layout} title={labels.layout}>
+          {layouts.map((l) => (
+            <option key={l.id} value={l.id}>
+              {l.name}
+            </option>
+          ))}
+        </select>
+        <select {...noAutofill} value={style} onChange={(e) => setStyle(e.target.value)} aria-label={labels.style} title={labels.style}>
           <option value="">{labels.standard}</option>
           {styles.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name}
+            </option>
+          ))}
+        </select>
+        <select {...noAutofill} value={bg} onChange={(e) => setBg(e.target.value)} aria-label={labels.background} title={labels.background}>
+          {backgrounds.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.name}
             </option>
           ))}
         </select>

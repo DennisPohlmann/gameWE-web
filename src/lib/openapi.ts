@@ -5,6 +5,8 @@ import { MAP_SORTS } from "./map-table.ts";
 import { PLACE_SORT_ALIASES, PLACE_SORT_DEFAULT, RANKING_SORT_ALIASES, placeSorts, rankingSorts } from "./sorts.ts";
 import { rankPlayerSorts } from "./table-sort.ts";
 import { ZONES } from "./zones.ts";
+import { BACKGROUNDS, LAYOUTS, type BannerKind } from "./banners/options.ts";
+import { LANGUAGES } from "../translations/languages.ts";
 import { ADMIN_API_INFO, ADMIN_SECURITY_SCHEMES, ADMIN_TAGS, adminPathItems, adminSchemas } from "./openapi-admin.ts";
 
 // OpenAPI 3.1 description of the public API (/api/v1/...), shown on /api by
@@ -407,6 +409,11 @@ const PLAYER_EVENT_TYPES = ["connect", "entry", "disconnect", "team", "role", "n
 const FILTER_EVENT_TYPES = FILTER_KINDS;
 const periodQuery: Param = { name: "period", in: "query", description: "The last hour, 24 hours or 7 days", schema: str("", { enum: Object.keys(EVENT_PERIODS), default: "24h" }) };
 const styleQuery: Param = { name: "style", in: "query", description: "Design template of the banner (an id of /banners/styles); without it, or with an unknown one, the active skin", schema: str("", { pattern: "^[a-z0-9][a-z0-9_-]{0,31}$" }) };
+const bannerQuery = (kind: BannerKind): Param[] => [
+  { name: "layout", in: "query", description: "Layout of the banner (a: clear, b: card, c: badge" + (kind === "player" ? ", d: points trend of the last 30 days" : "") + ")", schema: str("", { enum: [...LAYOUTS[kind]], default: "a" }) },
+  { name: "bg", in: "query", description: "Background pattern over the design's background", schema: str("", { enum: [...BACKGROUNDS], default: "plain" }) },
+  { name: "lang", in: "query", description: "Language of the texts (Chinese gets English: the banner fonts have no Chinese glyphs)", schema: str("", { enum: LANGUAGES.map((l) => l.code), default: "en" }) },
+];
 const activityDays = (def: number): Param => ({ name: "days", in: "query", description: "Days back", schema: int("", { enum: [1, 7, 14, 30], default: def }) });
 const activityPoint = { time: 1767225600, players: 12.5, servers: 2, kills: 41, headshots: 13 };
 const marker = { id: 42, name: "ExamplePlayer", country: de, city: "Munich", lat: 48.14, lng: 11.58, rank: 1, points: 2210, kills: 5321, deaths: 2410, kpd: 2.21, lastEvent: 1767225600, server: null, inactive: false };
@@ -1267,8 +1274,8 @@ export const endpoints: Endpoint[] = [
     tag: "Banners",
     summary: "Player banner",
     description:
-      "The player banner (forum signature, 400×100 PNG) of the profile: rank insignia with the progress to the next rank, Steam avatar, name, place and key numbers. The same picture as `/banner/{game}/player/{id}.png` on the website; `style` picks a design template (`/banners/styles`), without it the active skin.",
-    params: [idParam("player"), styleQuery],
+      "The player banner (forum signature, 400×100 PNG) of the profile: rank insignia with the progress to the next rank, Steam avatar, name, place and key numbers. The same picture as `/banner/{game}/player/{id}.png` (in a language `/banner/{game}/player/{lang}/{id}.png`) on the website; `style` picks a design template (`/banners/styles`), without it the active skin; `layout`, `bg` and `lang` as the website's `?layout=`, `?bg=` and language folder.",
+    params: [idParam("player"), styleQuery, ...bannerQuery("player")],
     image: { width: 400, height: 100 },
     example: v1("/players/42/banner"),
     notFound: "Unknown, hidden or bot player",
@@ -1279,8 +1286,8 @@ export const endpoints: Endpoint[] = [
     tag: "Banners",
     summary: "Server banner",
     description:
-      "The server banner (560×95 PNG) of the server and misc pages: name with flag, address, port, status, players with a pie, map and the players of the last 24 hours. The same picture as `/banner/{game}/server/{id}.png` on the website; `style` picks a design template.",
-    params: [gameParam, idParam("server", 1), styleQuery],
+      "The server banner (560×95 PNG) of the server and misc pages: name with flag, address, port, status, players with a pie, map and the players of the last 24 hours. The same picture as `/banner/{game}/server/{id}.png` (in a language `/banner/{game}/server/{lang}/{id}.png`) on the website; `style` picks a design template, `layout`, `bg` and `lang` as on the website.",
+    params: [gameParam, idParam("server", 1), styleQuery, ...bannerQuery("server")],
     image: { width: 560, height: 95 },
     example: v1(`/rankings/${G}/servers/1/banner`),
     notFound: "Unknown ranking or server, or the server belongs to another ranking",
@@ -1291,8 +1298,8 @@ export const endpoints: Endpoint[] = [
     tag: "Banners",
     summary: "TeamSpeak banner",
     description:
-      "The TeamSpeak banner (560×95 PNG) of the TeamSpeak page: name with flag, address, status, users online of the slots, channels, uptime and server type, live from the ServerQuery. The same picture as `/banner/teamspeak.png` on the website; `style` picks a design template.",
-    params: [styleQuery],
+      "The TeamSpeak banner (560×95 PNG) of the TeamSpeak page: name with flag, address, status, users online of the slots, channels, uptime and server type, live from the ServerQuery. The same picture as `/banner/teamspeak.png` (in a language `/banner/{lang}/teamspeak.png`) on the website; `style` picks a design template, `layout`, `bg` and `lang` as on the website.",
+    params: [styleQuery, ...bannerQuery("voice")],
     image: { width: 560, height: 95 },
     example: v1("/voice/teamspeak/banner"),
     notFound: "TeamSpeak is not the voice server of this site",

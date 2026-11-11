@@ -659,5 +659,25 @@
     "statsText": "Los servidores de juego informan de lo que ocurre en la partida. Este sitio muestra nombres de jugadores, Steam ID, estadísticas y la ubicación aproximada (ciudad y país según la dirección IP) de los jugadores. Las direcciones IP nunca se muestran públicamente. Los jugadores pueden pedir al operador que oculte su perfil.",
     "rightsTitle": "Tus derechos",
     "rightsText": "Según el RGPD tienes derecho de acceso, rectificación, supresión, limitación del tratamiento, portabilidad y oposición, y puedes retirar un consentimiento en cualquier momento con efecto para el futuro. También puedes reclamar ante una autoridad de control de protección de datos. Dirígete al responsable indicado arriba."
-  }
+  },
+  "bannerLayout": "Diseño",
+  "bannerBackground": "Fondo",
+  "bannerLayouts": {
+    "a": "Claro",
+    "b": "Tarjeta",
+    "c": "Placa",
+    "d": "Tendencia"
+  },
+  "bannerBackgrounds": {
+    "plain": "Liso",
+    "dots": "Puntos",
+    "grid": "Cuadrícula",
+    "stripes": "Rayas",
+    "carbon": "Carbono",
+    "glow": "Brillo"
+  },
+  "offline": "Desconectado",
+  "port": "Puerto",
+  "players24h": "Jugadores (24 h)",
+  "slotsShare": "{n} de las plazas"
 }

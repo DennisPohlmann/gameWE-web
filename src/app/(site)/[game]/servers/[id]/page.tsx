@@ -1,6 +1,7 @@
 import { rankingGate, rankingShown } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import { SigCode } from "@/components/sig-code";
+import { bannerChoices } from "@/lib/banners/options";
 import { imageStyles } from "@/lib/image-theme";
 import { statsOrigin } from "@/lib/site-url";
 import { notFound, redirect } from "next/navigation";
@@ -87,13 +88,14 @@ export default async function ServerPage({ params }: Props) {
         <Section title={t.serverBanner}>
           <div className="box">
             <SigCode
-              base={`${origin}/banner/${game}/server/${s.serverId}`}
+              base={`${origin}/banner/${game}/server/${lang}/${s.serverId}`}
               styles={imgStyles}
+              {...bannerChoices("server", t)}
               link={`${origin}/${game}/servers/${s.serverId}`}
               alt={`${t.serverBanner}: ${s.name}`}
               width={560}
               height={95}
-              labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgSkinDefault, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
+              labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgSkinDefault, layout: t.bannerLayout, background: t.bannerBackground, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
             />
           </div>
         </Section>

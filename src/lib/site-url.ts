@@ -14,7 +14,8 @@ export async function statsOrigin(): Promise<string> {
 }
 
 // Banner pictures: /banner/<game>/player/<id>.png (forum signature) and
-// /banner/<game>/server/<id>.png. The game code comes from the database.
-export async function bannerUrl(game: string, kind: "player" | "server", id: number): Promise<string> {
-  return `${await statsOrigin()}/banner/${encodeURIComponent(game)}/${kind}/${id}.png`;
+// /banner/<game>/server/<id>.png, with lang /banner/<game>/<kind>/<lang>/<id>.png
+// (next.config.ts). The game code comes from the database.
+export async function bannerUrl(game: string, kind: "player" | "server", id: number, lang?: string): Promise<string> {
+  return `${await statsOrigin()}/banner/${encodeURIComponent(game)}/${kind}/${lang ? `${lang}/` : ""}${id}.png`;
 }

@@ -22,9 +22,15 @@ writeFileSync(join(out, "LICENSE.txt"), readFileSync(join(root, "node_modules/@s
 // The fonts (OFL-1.1) are bundled by Next into .next/static/media without
 // their license; the OFL wants it shipped with them.
 const fonts = join(root, "public/vendor/fonts");
+const BANNER_SUBSETS = ["latin", "latin-ext", "cyrillic", "greek"];
 mkdirSync(fonts, { recursive: true });
 for (const name of ["inter", "noto-sans"]) {
   writeFileSync(join(fonts, `${name}-LICENSE.txt`), readFileSync(join(root, `node_modules/@fontsource/${name}/LICENSE`)));
+  // The banner pictures (lib/banners/fonts.ts) render with these; Satori reads woff, not woff2.
+  for (const subset of BANNER_SUBSETS) for (const weight of [400, 700]) {
+    const file = `${name}-${subset}-${weight}-normal.woff`;
+    writeFileSync(join(fonts, file), readFileSync(join(root, `node_modules/@fontsource/${name}/files/${file}`)));
+  }
 }
 
 const v1 = join(root, "src/app/api/v1");
