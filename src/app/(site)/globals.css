@@ -1263,7 +1263,9 @@ table.spaced { margin-top: 10px; }
 .map-avatar.p2 { --podium: #c4ccd6; }
 .map-avatar.p3 { --podium: #d4823c; }
 .map-avatar.podium img,
-.map-avatar.podium span { border-color: var(--podium); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45), 0 0 9px 4px var(--podium); }
+.map-avatar.podium span { border-color: var(--podium); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45); }
+/* Their glow pulses like the servers' (the glow rule below), in their colour. */
+.map-avatar.podium a { --glow: color-mix(in srgb, var(--podium) 70%, transparent); --cycle: 4s; isolation: isolate; }
 /* Game servers: hexagons, unlike the round player avatars. The edge, face
    and rack keep their colours on every design and map (also where a design
    colours every link). */
@@ -1284,7 +1286,7 @@ table.spaced { margin-top: 10px; }
 .map-server.on a { --led: #6dff8a; --glow: rgba(80, 230, 110, 0.65); --cycle: 4s; }
 .map-server.part a { --led: #ffb020; --glow: rgba(255, 170, 30, 0.65); }
 .map-server .led { fill: var(--led); stroke: none; animation: led-flash var(--cycle) ease-in-out infinite; }
-.map-server a::after { content: ""; position: absolute; inset: -9px; z-index: -1; border-radius: 50%; background: radial-gradient(circle, var(--glow) 45%, transparent 70%); pointer-events: none; animation: glow-flash var(--cycle) ease-in-out infinite; }
+.map-server a::after, .map-avatar.podium a::after { content: ""; position: absolute; inset: -9px; z-index: -1; border-radius: 50%; background: radial-gradient(circle, var(--glow) 45%, transparent 70%); pointer-events: none; animation: glow-flash var(--cycle) ease-in-out infinite; }
 @keyframes led-flash {
   0%, 65%, 100% { opacity: 0.2; }
   25%, 40% { opacity: 1; }
@@ -1294,8 +1296,8 @@ table.spaced { margin-top: 10px; }
   25%, 40% { opacity: 0.9; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .map-server .led, .map-server a::after { animation: none; }
-  .map-server a::after { opacity: 0.6; }
+  .map-server .led, .map-server a::after, .map-avatar.podium a::after { animation: none; }
+  .map-server a::after, .map-avatar.podium a::after { opacity: 0.6; }
 }
 .map-server:hover { z-index: 1000 !important; }
 /* Several servers at one place: their number in the middle of the hexagon,

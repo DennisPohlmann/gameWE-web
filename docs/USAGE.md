@@ -284,7 +284,8 @@ website therefore computes some things itself:
   rank (the same position as on the ranking and the player page: 1 + ranked
   players with more points, hidden players not counted), points, kills, K/D
   and the server or last connect. Places 1, 2 and 3 of that ranking get a
-  gold, silver or bronze edge with a glow in the same colour and lie above
+  gold, silver or bronze edge with a glow in the same colour that
+  pulses like the servers' (steady with reduced motion) and lie above
   the other pictures of their city, on every design and map style. Both maps also show the ranking's game
   servers as hexagons at the location the collector stores for their address
   (`hlstats_Servers` `lat`/`lng` from GeoIP: a city, or only the country's
