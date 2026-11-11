@@ -2,6 +2,7 @@
 // that Steam pictures and maps stay blocked without consent.
 // Run with `npm test`.
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import {
   CONSENT_VERSION,
@@ -59,3 +60,15 @@ test("the choice is only taken from the site itself", () => {
   assert.equal(sameOrigin("https://stats.example.org", "stats.example.org", "same-site"), false);
 });
 
+
+// After "Accept all" the page is refreshed in place (router.refresh), so
+// MiniAvatar keeps its state while src changes from null to /avatar/<id>.
+// A plain "failed" flag started as true for null and kept the placeholder.
+test("MiniAvatar tries a new picture after consent instead of keeping the placeholder", () => {
+  const src = readFileSync("src/components/mini-avatar.tsx", "utf8");
+  assert.doesNotMatch(src, /useState\(!src\)/);
+  assert.match(src, /useState<string \| null>\(null\)/);
+  assert.match(src, /src=\{src && failed !== src \? src : fallback\}/);
+  assert.match(src, /onError=\{\(\) => setFailed\(src\)\}/);
+  assert.match(src, /\}, \[src\]\);/);
+});
