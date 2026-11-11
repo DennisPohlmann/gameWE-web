@@ -17,8 +17,10 @@ test("players read both tables, each player once", () => {
   assert.equal(data.match(/FROM \$\{source\(e\)\} t/g)?.length, 4);
 });
 
-test("a page without search or state reads the best rows of each table", () => {
-  assert.match(data, /const top = !!e\.alsoColumns && !status && !opts\.q/);
+test("a page without state, also a search, reads the best rows of each table", () => {
+  assert.match(data, /const top = !!e\.alsoColumns && !status && \(!sortCol/);
+  // A search needs the player name: each table joins it itself.
+  assert.match(data, /topOfSource\(e, where, order, opts\.q \? \(e\.join \?\? ""\) : ""\)/);
   // Same condition as the full union: a player in both tables counts once.
   assert.match(data, /NOT EXISTS \(SELECT 1 FROM \$\{e\.table\} m WHERE m\.\$\{e\.pk\} = t\.\$\{e\.pk\}\)/);
 });

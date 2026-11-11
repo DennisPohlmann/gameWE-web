@@ -77,12 +77,14 @@ function source(e: Entity) {
 
 // The same union for one page of a list: each table gives only its own best n
 // rows along its index, instead of the database joining all rows and sorting
-// them. where and order use the alias t and only columns of both tables.
-function topOfSource(e: Entity, where: string, order: string) {
+// them. where and order use the alias t and only columns of both tables, or of
+// the entity's join (a search on the player name: each table walks its index
+// and stops at n matches, 562 -> 31 ms for "a" over 500k players).
+function topOfSource(e: Entity, where: string, order: string, join = "") {
   const cols = e.alsoColumns!.map((c) => `t.${c}`).join(", ");
   const also = where ? `${where} AND` : "WHERE";
-  return `((SELECT ${cols}, 0 AS inactive FROM ${e.table} t ${where} ORDER BY ${order} LIMIT ?)
-    UNION ALL (SELECT ${cols}, 1 AS inactive FROM ${e.alsoTable} t ${also} NOT EXISTS (SELECT 1 FROM ${e.table} m WHERE m.${e.pk} = t.${e.pk}) ORDER BY ${order} LIMIT ?))`;
+  return `((SELECT ${cols}, 0 AS inactive FROM ${e.table} t ${join} ${where} ORDER BY ${order} LIMIT ?)
+    UNION ALL (SELECT ${cols}, 1 AS inactive FROM ${e.alsoTable} t ${join} ${also} NOT EXISTS (SELECT 1 FROM ${e.table} m WHERE m.${e.pk} = t.${e.pk}) ORDER BY ${order} LIMIT ?))`;
 }
 
 function selectCols(e: Entity) {
@@ -129,11 +131,13 @@ export async function listRows(e: Entity, opts: { game?: string; q?: string; sta
     ...(sortCol ? [`t.${e.pk}`] : e.alsoTable ? [`t.${e.pk}${/ DESC$/i.test(e.order) ? " DESC" : ""}`] : []),
   ].join(", ");
   const offset = (opts.page - 1) * size;
-  // Conditions on the player name or the state need the union's own columns.
-  const top = !!e.alsoColumns && !status && !opts.q && (!sortCol || e.alsoColumns.some((c) => `t.${c}` === sortCol));
+  // The state needs the union's own column (inactive); a search goes through
+  // the entity's join in each table. Sorting by the joined name stays on the
+  // union: without an index on the name neither way is faster (1.4 s).
+  const top = !!e.alsoColumns && !status && (!sortCol || e.alsoColumns.some((c) => `t.${c}` === sortCol));
   const [rows, [count]] = await Promise.all([
     top
-      ? adminQuery<Row>(`SELECT ${selectCols(e)} FROM ${topOfSource(e, where, order)} t ${e.join ?? ""} ORDER BY ${order} LIMIT ? OFFSET ?`, [
+      ? adminQuery<Row>(`SELECT ${selectCols(e)} FROM ${topOfSource(e, where, order, opts.q ? (e.join ?? "") : "")} t ${e.join ?? ""} ORDER BY ${order} LIMIT ? OFFSET ?`, [
           ...params,
           offset + size + 1,
           ...params,
