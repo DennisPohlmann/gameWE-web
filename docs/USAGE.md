@@ -592,7 +592,10 @@ What the admin area edits:
   sets `log_secret_changed` to the current time. When a secret is set, the
   collector accepts only log packets with exactly this secret, so put the
   same value as `sv_logsecret` into the game server's `server.cfg`; without a
-  secret it accepts all log packets of the server. The collector never sets
+  secret it accepts all log packets of the server. On a Source server
+  **Generate secret** fills in a random number and shows it, with **Copy**:
+  copy it for `server.cfg` before saving (GoldSrc servers send no secret,
+  so they have no button). The collector never sets
   or changes the secret itself (see the collector's CONFIG.md, "Log
   secret"). The field appears once the collector's database has schema
   version 4 (`gamewe db migrate`). On a Counter-Strike 2 server the same field
@@ -762,8 +765,8 @@ What the admin area edits:
   the server, the logs must come from the server's IP (new servers and tokens
   within about a minute). Two servers cannot have the same token (the form
   says the field is invalid). **Generate token** fills the field with a
-  random one and shows it: copy it for `server.cfg` before saving, it is not
-  shown again. With an RCON password the collector registers the URL itself
+  random one and shows it, **Copy** puts it on the clipboard: copy it for
+  `server.cfg` before saving, it is not shown again. With an RCON password the collector registers the URL itself
   (`logaddress_delall_http` removes old ones). It is not `sv_logsecret`. The
   old URL with the game port (`/<game port>`, collector 1.10 and older) is no
   longer accepted. The form also says that CS2 needs `-usercon`; 404 in the

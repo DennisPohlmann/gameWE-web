@@ -58,7 +58,10 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
   const back = preset ? rankingServersHref(preset) : e.key === "games" && returnTo === "/admin/games" ? "/admin/rankings" : returnTo;
   // Counter-Strike 2 servers log over HTTP: a log token instead of a log secret.
   const serverGame = preset ?? (isNew ? "" : String(r0.game ?? "").trim());
-  const cs2 = e.key === "servers" && serverGame !== "" && (await rankingBaseGames()).get(serverGame) === "cs2";
+  const baseGame = e.key === "servers" && serverGame !== "" ? (await rankingBaseGames()).get(serverGame) : undefined;
+  const cs2 = baseGame === "cs2";
+  // A Source server's sv_logsecret can be generated too (GoldSrc sends none).
+  const sourceSecret = baseGame !== undefined && GAME_KINDS[baseGame as keyof typeof GAME_KINDS]?.engine === "source";
   // A server's ranking: no templates (rankings without servers), but always
   // the server's own one.
   // An existing server only moves into a ranking of its own game.
@@ -181,6 +184,11 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
                   <>
                     <TokenGenerate target={`f-${f.name}`} label={a.cs2LogTokenNew} copy={a.tokCopy} copied={a.tokCopied} />
                     <small className="muted">{a.cs2LogSecret}</small>
+                  </>
+                ) : sourceSecret && f.name === "log_secret" ? (
+                  <>
+                    <TokenGenerate target={`f-${f.name}`} label={a.logSecretNew} copy={a.tokCopy} copied={a.tokCopied} numeric />
+                    {f.help ? <small className="muted">{f.help[lang]}</small> : null}
                   </>
                 ) : newRanking && f.name === "name" ? (
                   <small className="muted">{a.nameFromGame}</small>
