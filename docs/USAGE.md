@@ -283,7 +283,9 @@ website therefore computes some things itself:
   players of that place. Hovering a player shows name, city and country,
   rank (the same position as on the ranking and the player page: 1 + ranked
   players with more points, hidden players not counted), points, kills, K/D
-  and the server or last connect. Both maps also show the ranking's game
+  and the server or last connect. Places 1, 2 and 3 of that ranking get a
+  gold, silver or bronze edge with a glow in the same colour and lie above
+  the other pictures of their city, on every design and map style. Both maps also show the ranking's game
   servers as hexagons at the location the collector stores for their address
   (`hlstats_Servers` `lat`/`lng` from GeoIP: a city, or only the country's
   centre when GeoIP knows no city). The map always opens with all players and

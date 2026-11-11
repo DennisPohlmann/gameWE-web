@@ -24,6 +24,7 @@ export function mapMarkers(players: (MapPlayer & { server?: string | null; serve
       lng: p.lng,
       serverId: p.serverId,
       faded: p.inactive || undefined,
+      podium: p.rank && p.rank <= 3 ? (p.rank as 1 | 2 | 3) : undefined,
       flag: svg ? flagPos(code) : undefined,
       lines: [
         svg ? name : `${flagEmoji(p.flag)} ${name}`.trim(),

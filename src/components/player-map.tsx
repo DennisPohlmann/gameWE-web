@@ -22,6 +22,8 @@ export type MapMarker = {
   serverId?: number;
   // Drawn faded (an inactive clan member).
   faded?: boolean;
+  // Place 1, 2 or 3 in the ranking: a gold, silver or bronze glow.
+  podium?: 1 | 2 | 3;
 };
 
 // One game server: name (with the flag), page and hover details. vac: the
@@ -120,7 +122,7 @@ export function PlayerMap({ markers, servers = NO_SERVERS, style }: { markers: M
         const srv = m.serverId === undefined ? undefined : serverAt.get(m.serverId);
         if (srv) links.push({ from: pos, dx, dy, to: srv.pos, online: srv.online });
         const icon = L.divIcon({
-          className: m.faded ? "map-avatar faded" : "map-avatar",
+          className: `map-avatar${m.faded ? " faded" : ""}${m.podium ? ` podium p${m.podium}` : ""}`,
           // The initial shows until the avatar has loaded, then the avatar fades
           // in over it; if it does not load, the initial stays.
           html: `<a href="${esc(m.href)}" aria-label="${esc(m.name)}"><span>${esc(m.initial)}</span><img src="${esc(m.avatar)}" alt="" loading="lazy" onload="this.classList.add('ok')" onerror="this.remove()"></a>`,
@@ -128,7 +130,8 @@ export function PlayerMap({ markers, servers = NO_SERVERS, style }: { markers: M
           iconAnchor: [15 - dx, 15 - dy],
         });
         // No title: the browser's own tooltip would repeat the name under ours.
-        const marker = L.marker(pos, { icon })
+        // The top three lie above the other avatars of their city.
+        const marker = L.marker(pos, { icon, zIndexOffset: m.podium ? 500 : 0 })
           .bindTooltip(tip(m), { direction: "top", offset: [dx, dy - 14] })
           .addTo(map);
         keepTipInside(marker, map, [dx, dy - 14], [dx, dy + 14]);
