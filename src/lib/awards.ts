@@ -47,10 +47,14 @@ export const LATENCY_MIN_SAMPLES = 30;
 export type Award = { awardId: number; awardType: string; code: string; name: string; verb: string };
 export type AwardWin = { awardId: number; playerId: number; name: string | null; value: number };
 
+// Definitions (awards, ribbon classes, ranks) change only in the admin area:
+// read once a minute instead of on every page (a ranking table and the profile
+// each asked for the ranks).
+const DEFINITIONS_TTL = 60_000;
+
 export function getAwards(game: string) {
-  return query<Award>(
-    `SELECT awardId, awardType, code, name, verb FROM hlstats_Awards WHERE game = ? ORDER BY name, awardId`,
-    [game],
+  return cached(`awards:${game}`, DEFINITIONS_TTL, () =>
+    query<Award>(`SELECT awardId, awardType, code, name, verb FROM hlstats_Awards WHERE game = ? ORDER BY name, awardId`, [game]),
   );
 }
 
@@ -263,7 +267,11 @@ export function awardValue(a: Pick<Award, "code" | "verb">, value: number, fmt: 
 
 export type RibbonClass = { name: string; maximum: number; steps: number; class: number };
 
-export async function getRibbonClasses(game: string): Promise<RibbonClass[]> {
+export function getRibbonClasses(game: string): Promise<RibbonClass[]> {
+  return cached(`ribbonclasses:${game}`, DEFINITIONS_TTL, () => loadRibbonClasses(game));
+}
+
+async function loadRibbonClasses(game: string): Promise<RibbonClass[]> {
   const rows = await query<RibbonClass>(
     `SELECT name, maximum, steps, class FROM hlstats_Definition_Ribbons_Classes WHERE game_code = ? ORDER BY class`,
     [game],
@@ -369,7 +377,11 @@ export function getRibbonHolders(awardId: number, limit: number) {
 
 export { rankFor, rankStep, type Rank } from "./career";
 
-export async function getRanks(game: string): Promise<Rank[]> {
+export function getRanks(game: string): Promise<Rank[]> {
+  return cached(`ranks:${game}`, DEFINITIONS_TTL, () => loadRanks(game));
+}
+
+async function loadRanks(game: string): Promise<Rank[]> {
   const rows = await query<{ name: string; minimum: number }>(
     `SELECT name, minimum FROM hlstats_Definition_Ranks_Ribbons
      WHERE game_code = ? AND definition_type IN ('ranks', 'rank') AND restriction_type = 'kills'
