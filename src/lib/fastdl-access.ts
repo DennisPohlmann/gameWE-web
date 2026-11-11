@@ -3,7 +3,7 @@
 // field is set for all rankings (Settings → Maps & events) and may be set again
 // for one ranking (Rankings → ranking → FastDL); an empty field there takes
 // the global one. password, token and header are secrets
-// (hlstats_gamewe_secrets): never logged, never shown again.
+// (hlstats_gamewe_secrets): never logged, shown only to an admin by the eye button.
 
 export const FASTDL_ACCESS = ["agent", "referer", "user", "password", "token", "header"] as const;
 export type AccessField = (typeof FASTDL_ACCESS)[number];

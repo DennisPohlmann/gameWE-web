@@ -20,6 +20,7 @@ export function FieldControl({
   id,
   lang,
   emptyLabel,
+  reveal,
 }: {
   f: Field;
   value: string | number | null | undefined;
@@ -30,6 +31,7 @@ export function FieldControl({
   id?: string;
   lang: Lang;
   emptyLabel?: string;
+  reveal?: string;
 }) {
   if (opts && !locked)
     return (
@@ -45,7 +47,7 @@ export function FieldControl({
   if (f.type === "password") return <RevealInput {...noAutofill} show={adminDict(lang).secretShow} hide={adminDict(lang).secretHide} id={id} name={f.name} minLength={10} required={isNew} />;
   // A read-only number: plain text, no input.
   if (f.readonly && f.type === "number") return <span className="field-value">{value === null || value === undefined ? "–" : String(value)}</span>;
-  if (f.type === "secret") return <SecretControl id={id ?? `f-${f.name}`} name={f.name} maxLength={f.max} set={Boolean(secretSet)} isNew={isNew} lang={lang} />;
+  if (f.type === "secret") return <SecretControl id={id ?? `f-${f.name}`} name={f.name} maxLength={f.max} set={Boolean(secretSet)} isNew={isNew} reveal={reveal} lang={lang} />;
   return (
     <input
       {...noAutofill}

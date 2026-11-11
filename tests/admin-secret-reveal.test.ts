@@ -60,3 +60,26 @@ test("secrets shown once are dropped when Back/Forward restores the page", () =>
   assert.match(src("src/components/admin/forget-on-restore.ts"), /e\.persisted && forget\(\)/);
   for (const f of ["api-token-form.tsx", "backup-codes-form.tsx", "totp-setup.tsx"]) assert.match(src(`src/components/admin/${f}`), /useForgetOnRestore\(/, f);
 });
+
+test("a stored secret is loaded only on click and only for an admin allowed to change it", () => {
+  const actions = src("src/app/admin/actions.ts");
+  const fn = actions.slice(actions.indexOf("export async function revealSecretAction"));
+  assert.match(fn, /^export async function revealSecretAction\(ref: string\): Promise<string> \{\n  await requireAdmin\(\);/);
+  // Entity: only a field defined as secret (no other column), at the entity's level.
+  assert.match(fn, /f\.name === c && f\.type === "secret"\)\) return "";\n    await requireAdmin\(e\.minLevel\);/);
+  // Setting: only a secret setting, at its level; FastDL access: level 100.
+  assert.match(fn, /x\.key === a && x\.type === "secret"\);\n    if \(!s\) return "";\n    await requireAdmin\(s\.minLevel \?\? LEVEL_MIN\);/);
+  assert.match(fn, /kind === "fastdl" && ACCESS_SECRETS\.includes[^\n]*\n    await requireAdmin\(LEVEL_ADMIN\);/);
+  // Never from the environment: only stored values are read.
+  assert.doesNotMatch(fn, /env\(|process\.env/);
+  const control = src("src/components/admin/secret-control.tsx");
+  // Only a stored, editable secret gets the loader; nothing of it is in the page.
+  assert.match(control, /load=\{reveal && set && !disabled \? revealSecretAction\.bind\(null, reveal\) : undefined\}/);
+  assert.doesNotMatch(control, /defaultValue|value=\{/);
+  const input = src("src/components/admin/reveal-input.tsx");
+  assert.match(input, /if \(!shown && load && el && !el\.value\)/);
+  // Every caller of a stored secret passes its reference.
+  assert.match(src("src/app/admin/(panel)/[entity]/[id]/page.tsx"), /reveal=\{isNew \? undefined : `entity:\$\{e\.key\}:\$\{id\}:\$\{f\.name\}`\}/);
+  assert.match(src("src/app/admin/(panel)/settings/[group]/page.tsx"), /reveal=\{`setting:\$\{s\.key\}`\}/);
+  assert.match(src("src/app/admin/(panel)/rankings/[code]/fastdl-card.tsx"), /reveal=\{`fastdl:\$\{game\}:\$\{f\}`\}/);
+});

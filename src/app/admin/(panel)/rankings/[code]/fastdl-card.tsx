@@ -50,7 +50,7 @@ const T = {
 type Field = "agent" | "referer" | "token" | "user" | "password" | "header";
 
 // The FastDL address of one ranking and what its downloads send, overriding
-// the global settings (admins only). Secrets are never shown again.
+// the global settings (admins only). Secrets show only through their eye button.
 export async function FastdlCard({ game, lang, status }: { game: string; lang: Lang; status?: string }) {
   const t = T[lang === "de" ? "de" : "en"];
   const [url, access, { fastdlOn, fastdlUrl }, globals] = await Promise.all([
@@ -74,7 +74,7 @@ export async function FastdlCard({ game, lang, status }: { game: string; lang: L
   );
   const plain = (f: "agent" | "referer" | "user") =>
     row(f, <input {...noAutofill} id={`fastdl-${f}`} name={f} type="text" maxLength={255} defaultValue={access[f]} placeholder={inherited(f)} aria-invalid={badField === f || undefined} spellCheck={false} />);
-  const secret = (f: "token" | "password" | "header") => row(f, <SecretControl id={`fastdl-${f}`} name={f} maxLength={255} set={access[f]} invalid={badField === f} lang={lang} />);
+  const secret = (f: "token" | "password" | "header") => row(f, <SecretControl id={`fastdl-${f}`} name={f} maxLength={255} set={access[f]} invalid={badField === f} reveal={`fastdl:${game}:${f}`} lang={lang} />);
   return (
     <section className="card" id="fastdl">
       <header>

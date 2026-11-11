@@ -176,6 +176,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
                   locked={Boolean(locked)}
                   isNew={isNew}
                   secretSet={Boolean((row as Record<string, unknown>)[`${f.name}__set`])}
+                  reveal={isNew ? undefined : `entity:${e.key}:${id}:${f.name}`}
                   lang={lang}
                 />
                 {preset && f.name === "game" ? (

@@ -10,7 +10,7 @@ import { ADMIN_THEME_COOKIE, isAdminTheme } from "@/lib/admin-theme";
 import { basePath } from "@/lib/base-path";
 import { expiryDays, tokenName } from "@/lib/api-token-core";
 import { createToken, purgeTokens, revokeToken } from "@/lib/api-tokens";
-import { LEVEL_ADMIN, adminSecret, brakedCode, confirmIdentity, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, requireAdmin } from "@/lib/auth";
+import { LEVEL_ADMIN, LEVEL_MIN, adminSecret, brakedCode, confirmIdentity, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, requireAdmin } from "@/lib/auth";
 import { codeMode, codeStepHref } from "@/lib/login-code";
 import { resetMode } from "@/lib/reset";
 import { apiEnabled, getSettings } from "@/lib/settings";
@@ -19,7 +19,10 @@ import { addParams, safeReturnTo, withReturnTo } from "@/lib/return-to";
 import { rankingPageHref, resettableRankings } from "@/lib/admin-rankings";
 import { presetRanking, rankingServersHref } from "@/lib/ranking-preset";
 import { checkCode, consumeStep, newBackupCodes, newSecret, otpauthUri, readSecret, removeBackupCodes, removeSecret, secondFactor, storeBackupCodes, storeSecret } from "@/lib/totp";
-import { FASTDL_ACCESS } from "@/lib/fastdl-access";
+import { ACCESS_SECRETS, FASTDL_ACCESS, accessKey, type AccessField } from "@/lib/fastdl-access";
+import { allSettings } from "@/lib/admin-settings";
+import { adminQuery } from "@/lib/db";
+import { secretOptions, secretsOf } from "@/lib/secret-options";
 
 export async function loginAction(form: FormData) {
   const res = await login(String(form.get("username") ?? ""), String(form.get("password") ?? ""));
@@ -454,4 +457,32 @@ export async function hallEntryAction(form: FormData) {
     redirect(err.code === "confirm" ? `${back}?hof=confirm#p-${start}` : `${back}?hof=input`);
   }
   redirect(`${back}?hof=${op === "remove" ? "removed" : "restored"}#p-${start}`);
+}
+
+// The stored value of one secret for its eye button (SecretControl), loaded
+// only on click and only for an admin allowed to change it; never part of
+// the page. ref: "entity:<entity>:<id>:<field>", "setting:<key>" or
+// "fastdl:<ranking>:<field>". A value only from the environment stays hidden.
+export async function revealSecretAction(ref: string): Promise<string> {
+  await requireAdmin();
+  const [kind, a = "", b = "", c = ""] = ref.split(":");
+  if (kind === "entity") {
+    const e = getEntity(a);
+    if (!e?.fields.some((f) => f.name === c && f.type === "secret")) return "";
+    await requireAdmin(e.minLevel);
+    const [row] = await adminQuery<{ v: string | null }>(`SELECT ${c} AS v FROM ${e.table} WHERE ${e.pk} = ?`, [b]);
+    return row?.v ?? "";
+  }
+  if (kind === "setting") {
+    const s = allSettings.find((x) => x.key === a && x.type === "secret");
+    if (!s) return "";
+    await requireAdmin(s.minLevel ?? LEVEL_MIN);
+    return (await secretOptions())[a] ?? "";
+  }
+  if (kind === "fastdl" && ACCESS_SECRETS.includes(b as AccessField)) {
+    await requireAdmin(LEVEL_ADMIN);
+    const key = accessKey(b as AccessField, a);
+    return (await secretsOf([key]))[key] ?? "";
+  }
+  return "";
 }

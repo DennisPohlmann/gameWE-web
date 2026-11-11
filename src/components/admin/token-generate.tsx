@@ -5,7 +5,8 @@ import { useState } from "react";
 // Fills a log token field with a new random token (24 random bytes as hex,
 // like openssl rand -hex 24), or with numeric a random sv_logsecret
 // (1 to 2147483647), and shows it, with a button to copy it, so that it can
-// go into server.cfg before saving: after saving it is never shown again.
+// go into server.cfg right away; after saving the field's eye button shows
+// it again.
 export function TokenGenerate({ target, label, copy, copied, numeric }: { target: string; label: string; copy: string; copied: string; numeric?: boolean }) {
   const [token, setToken] = useState("");
   const [done, setDone] = useState(false);

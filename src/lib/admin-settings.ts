@@ -16,7 +16,8 @@ export type Setting = {
   label: L;
   // "link": two fields, name and URL, stored as "Name|URL".
   // "template": a folder from templates/ (lib/templates.ts).
-  // "secret": never shown again; an empty field keeps the stored value.
+  // "secret": masked, shown only by its eye button (revealSecretAction); an
+  // empty field keeps the stored value.
   // "home": the Home tab, "Label|URL" with optional parts; "order": the
   // order of the header tabs (lib/header-links.ts). Both, like "link", are
   // edited in the header links list of the group with `id: "header"`.
@@ -209,8 +210,8 @@ const definitions: Omit<SettingGroup, "area">[] = [
         type: "secret",
         def: "",
         help: {
-          de: "Mindestens 16 Zeichen, z. B. openssl rand -hex 24. Leer: /-/metrics ist aus. Prometheus schickt es als „Authorization: Bearer <Token>“. Wird nie angezeigt; leer lassen behält es.",
-          en: "At least 16 characters, e.g. openssl rand -hex 24. Empty: /-/metrics is off. Prometheus sends it as \"Authorization: Bearer <token>\". Never shown; leave empty to keep it.",
+          de: "Mindestens 16 Zeichen, z. B. openssl rand -hex 24. Leer: /-/metrics ist aus. Prometheus schickt es als „Authorization: Bearer <Token>“. Maskiert, das Auge zeigt den gespeicherten Wert; leer lassen behält es.",
+          en: "At least 16 characters, e.g. openssl rand -hex 24. Empty: /-/metrics is off. Prometheus sends it as \"Authorization: Bearer <token>\". Masked, the eye button shows the stored value; leave empty to keep it.",
         },
       },
       {
@@ -296,8 +297,8 @@ const definitions: Omit<SettingGroup, "area">[] = [
         type: "secret",
         def: "",
         help: {
-          de: "Gesendet als „Authorization: Bearer <Token>“. Ist auch ein Benutzer gesetzt, gilt der Token. Wird nie angezeigt; leer lassen behält es. Über http:// geht es unverschlüsselt durchs Netz.",
-          en: "Sent as \"Authorization: Bearer <token>\". With a user set as well, the token wins. Never shown; leave empty to keep it. Over http:// it crosses the network unencrypted.",
+          de: "Gesendet als „Authorization: Bearer <Token>“. Ist auch ein Benutzer gesetzt, gilt der Token. Maskiert, das Auge zeigt den gespeicherten Wert; leer lassen behält es. Über http:// geht es unverschlüsselt durchs Netz.",
+          en: "Sent as \"Authorization: Bearer <token>\". With a user set as well, the token wins. Masked, the eye button shows the stored value; leave empty to keep it. Over http:// it crosses the network unencrypted.",
         },
       },
       {
@@ -317,7 +318,7 @@ const definitions: Omit<SettingGroup, "area">[] = [
         label: { de: "FastDL: Passwort (Basic-Auth)", en: "FastDL: password (basic auth)" },
         type: "secret",
         def: "",
-        help: { de: "Wird nie angezeigt; leer lassen behält es.", en: "Never shown; leave empty to keep it." },
+        help: { de: "Maskiert, das Auge zeigt den gespeicherten Wert; leer lassen behält es.", en: "Masked, the eye button shows the stored value; leave empty to keep it." },
       },
       {
         key: "gamewe_fastdl_header",
@@ -326,8 +327,8 @@ const definitions: Omit<SettingGroup, "area">[] = [
         type: "secret",
         def: "",
         help: {
-          de: "Ein Header als „Name: Wert“, z. B. „X-Api-Key: …“ oder „Cookie: …“. Host, Authorization, User-Agent, Referer und Header der Verbindung gehen nicht. Wird nie angezeigt; leer lassen behält ihn.",
-          en: "One header as \"Name: value\", e.g. \"X-Api-Key: ...\" or \"Cookie: ...\". Host, Authorization, User-Agent, Referer and connection headers are refused. Never shown; leave empty to keep it.",
+          de: "Ein Header als „Name: Wert“, z. B. „X-Api-Key: …“ oder „Cookie: …“. Host, Authorization, User-Agent, Referer und Header der Verbindung gehen nicht. Maskiert, das Auge zeigt den gespeicherten Wert; leer lassen behält ihn.",
+          en: "One header as \"Name: value\", e.g. \"X-Api-Key: ...\" or \"Cookie: ...\". Host, Authorization, User-Agent, Referer and connection headers are refused. Masked, the eye button shows the stored value; leave empty to keep it.",
         },
       },
       { key: "gamewe_map_live", label: { de: "Karte „Gerade online“ (Spielübersicht)", en: "\"Online now\" map (game overview)" }, type: "bool", def: "1" },
@@ -394,8 +395,8 @@ const definitions: Omit<SettingGroup, "area">[] = [
         def: "",
         minLevel: 100,
         help: {
-          de: "Optional, 32 Hex-Zeichen von https://steamcommunity.com/dev/apikey. Damit kommen die Avatare zu je 100 über die Steam-API statt einzeln von steamcommunity.com (das viele Abrufe hintereinander sperrt), und die Bans-Seite zeigt VAC- und Spiel-Bans. Wird nie angezeigt; leer lassen behält ihn. Nur Admins mit Level 100.",
-          en: "Optional, 32 hex characters from https://steamcommunity.com/dev/apikey. With it avatars come 100 at a time from the Steam API instead of one by one from steamcommunity.com (which blocks many requests in a row), and the bans page shows VAC and game bans. Never shown; leave empty to keep it. Admins with level 100 only.",
+          de: "Optional, 32 Hex-Zeichen von https://steamcommunity.com/dev/apikey. Damit kommen die Avatare zu je 100 über die Steam-API statt einzeln von steamcommunity.com (das viele Abrufe hintereinander sperrt), und die Bans-Seite zeigt VAC- und Spiel-Bans. Maskiert, das Auge zeigt den gespeicherten Wert; leer lassen behält ihn. Nur Admins mit Level 100.",
+          en: "Optional, 32 hex characters from https://steamcommunity.com/dev/apikey. With it avatars come 100 at a time from the Steam API instead of one by one from steamcommunity.com (which blocks many requests in a row), and the bans page shows VAC and game bans. Masked, the eye button shows the stored value; leave empty to keep it. Admins with level 100 only.",
         },
       },
     ],
@@ -439,7 +440,7 @@ const definitions: Omit<SettingGroup, "area">[] = [
       { key: "gamewe_ts_port", label: { de: "TeamSpeak-Port", en: "TeamSpeak port" }, type: "number", def: "9987", min: 1, max: 65535, show: TS },
       { key: "gamewe_ts_query_port", label: { de: "ServerQuery-Port", en: "ServerQuery port" }, type: "number", def: "10011", minLevel: 100, min: 1, max: 65535, help: { de: "Raw-Query (nicht SSH). Muss vom Webserver aus erreichbar sein.", en: "Raw query (not SSH). Must be reachable from the web server." }, show: TS },
       { key: "gamewe_ts_query_user", label: { de: "ServerQuery-Benutzer", en: "ServerQuery user" }, type: "text", def: "", minLevel: 100, help: { de: "Leer: als Gast abfragen (geht nur, wenn die Gast-Gruppe serverinfo darf).", en: "Empty: query as guest (works only if the guest group may use serverinfo)." }, show: TS },
-      { key: "gamewe_ts_query_password", label: { de: "ServerQuery-Passwort", en: "ServerQuery password" }, type: "secret", def: "", minLevel: 100, help: { de: "Wird nie angezeigt. Leer lassen, um es zu behalten.", en: "Never shown. Leave empty to keep it." }, show: TS },
+      { key: "gamewe_ts_query_password", label: { de: "ServerQuery-Passwort", en: "ServerQuery password" }, type: "secret", def: "", minLevel: 100, help: { de: "Maskiert, das Auge zeigt den gespeicherten Wert (Stufe 100). Leer lassen, um es zu behalten.", en: "Masked, the eye button shows the stored value (level 100). Leave empty to keep it." }, show: TS },
       { key: "gamewe_ts_password", label: { de: "TeamSpeak-Serverpasswort", en: "TeamSpeak server password" }, type: "text", def: "", help: { de: "Besucher sehen ein Schloss, wenn eins gesetzt ist; das Passwort selbst nur mit der Einstellung darunter. Leer: „-“.", en: "Visitors see a lock when one is set; the password itself only with the setting below. Empty: \"-\"." }, show: TS },
       {
         key: "gamewe_ts_password_reveal",

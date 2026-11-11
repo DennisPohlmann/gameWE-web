@@ -239,7 +239,7 @@ used, else Discord. The players are read via
 ServerQuery (`serverinfo`, every 60 seconds); without a query login the guest
 group needs the permission to see server info. The Discord count comes from
 the server widget, which must be enabled in the Discord server settings
-(every 5 minutes). The ServerQuery password is never shown, and only level 100 may change it or the host, query port and query user it is sent to. The server
+(every 5 minutes). The ServerQuery password is masked (its eye button shows it to level 100 only), and only level 100 may change it or the host, query port and query user it is sent to. The server
 password is shown only with "Allow showing the TeamSpeak password" (default
 no): then a click or tap on the lock in the box and on `/voice` shows it and
 `/api/v1/voice` returns it; otherwise visitors see only the lock and the

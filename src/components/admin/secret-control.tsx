@@ -1,3 +1,4 @@
+import { revealSecretAction } from "@/app/admin/actions";
 import { noAutofill } from "@/lib/autofill";
 import { adminDict } from "@/lib/admin-i18n";
 import type { Lang } from "@/lib/i18n";
@@ -7,7 +8,8 @@ import { RevealInput } from "./reveal-input";
 // a pill, never the value; an empty field keeps it, and the Remove switch
 // (`<name>__clear`, see secret-field.ts) deletes it on save. isNew: a row
 // not saved yet, nothing to show. The eye button shows what was typed
-// (RevealInput); the stored value itself never reaches the page.
+// (RevealInput), or with reveal (see revealSecretAction) the stored value,
+// fetched on click; it is never part of the page itself.
 export function SecretControl({
   id,
   name,
@@ -17,6 +19,7 @@ export function SecretControl({
   disabled,
   invalid,
   isNew,
+  reveal,
   lang,
 }: {
   id: string;
@@ -27,6 +30,7 @@ export function SecretControl({
   disabled?: boolean;
   invalid?: boolean;
   isNew?: boolean;
+  reveal?: string;
   lang: Lang;
 }) {
   const a = adminDict(lang);
@@ -37,6 +41,7 @@ export function SecretControl({
         {...noAutofill}
         show={a.secretShow}
         hide={a.secretHide}
+        load={reveal && set && !disabled ? revealSecretAction.bind(null, reveal) : undefined}
         id={id}
         name={name}
         placeholder={placeholder}

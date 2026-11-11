@@ -194,8 +194,8 @@ function SettingField({
       </select>
     );
   } else if (s.type === "secret") {
-    // Only "set" or "not set", never the value (also not one from the environment).
-    control = <SecretControl id={id} name={s.key} maxLength={255} set={Boolean(stored)} fromEnv={Boolean(fromEnv)} disabled={readOnly} invalid={bad} lang={lang} />;
+    // "set" or "not set"; the eye button loads a stored value on click, never one from the environment.
+    control = <SecretControl id={id} name={s.key} maxLength={255} set={Boolean(stored)} fromEnv={Boolean(fromEnv)} disabled={readOnly} invalid={bad} reveal={`setting:${s.key}`} lang={lang} />;
   } else {
     control = (
       <input

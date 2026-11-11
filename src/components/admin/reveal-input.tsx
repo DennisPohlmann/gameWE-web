@@ -1,17 +1,31 @@
 "use client";
 
-import { useState, type InputHTMLAttributes } from "react";
+import { useRef, useState, type InputHTMLAttributes } from "react";
 import { Icon } from "./icons";
 
 // A secret's input (log secret, RCON password …) with a button that shows
-// what was typed, to check it for typos. A password field by default; the
-// button only switches the type in the browser. The stored value is never
-// sent to the page (SecretControl), so only the new input can be shown.
-export function RevealInput({ show, hide, ...input }: InputHTMLAttributes<HTMLInputElement> & { show: string; hide: string }) {
+// what was typed, masked by default; the button only switches the type in
+// the browser. load: the stored value (SecretControl), fetched on the first
+// show of an empty field and put into it; never part of the page itself.
+export function RevealInput({ show, hide, load, ...input }: InputHTMLAttributes<HTMLInputElement> & { show: string; hide: string; load?: () => Promise<string> }) {
   const [shown, setShown] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const field = useRef<HTMLInputElement>(null);
+  const toggle = async () => {
+    const el = field.current;
+    if (!shown && load && el && !el.value) {
+      setBusy(true);
+      try {
+        el.value = await load();
+      } finally {
+        setBusy(false);
+      }
+    }
+    setShown((v) => !v);
+  };
   return (
     <span className="reveal">
-      <input {...input} type={shown ? "text" : "password"} />
+      <input {...input} ref={field} type={shown ? "text" : "password"} />
       <button
         type="button"
         className="reveal-btn"
@@ -19,8 +33,9 @@ export function RevealInput({ show, hide, ...input }: InputHTMLAttributes<HTMLIn
         title={shown ? hide : show}
         aria-pressed={shown}
         aria-controls={input.id}
-        disabled={input.disabled}
-        onClick={() => setShown((v) => !v)}
+        aria-busy={busy || undefined}
+        disabled={input.disabled || busy}
+        onClick={toggle}
       >
         <Icon name={shown ? "eyeOff" : "eye"} />
       </button>

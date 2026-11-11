@@ -578,19 +578,22 @@ What the admin area edits:
   ranking preset by "Add server" (never the RCON password or log secret). The address is stored in the form the
   collector matches log packets by (IPv4 without leading zeros, IPv6
   compressed in lower case, IPv4-mapped IPv6 as IPv4), so `192.000.002.010` and
-  `192.0.2.10` are the same server. The RCON password is write-only in
-  the form and never shown again: below the field a badge says whether one
+  `192.0.2.10` are the same server. The RCON password is masked in
+  the form: below the field a badge says whether one
   is set ("Set" / "Not set"), an empty field keeps it, and the "Remove"
   switch deletes it on save (the API: `rcon_passwordSet`, `null` clears it).
   Every secret field (RCON password, log secret, the secrets on the
   settings pages) has an eye button at its right end that shows what was
-  typed, to check it for typos, and hides it again; it only switches the
-  field in the browser, the field is hidden by default, and the stored
-  value is never sent to the page, so only a new input can be shown.
+  typed, or, when the field is empty and a value is stored, the stored
+  value, and hides it again. The field is masked by default; the stored
+  value is not in the page but loaded on that click (server action
+  `revealSecretAction`), only for an admin allowed to change it (the
+  entity's or setting's level, FastDL access level 100). A value set only
+  in the environment is never shown. The admin API never returns secrets.
   Public pages never read it, and the
   read-only web user has no right to that column. The optional **log
   secret** (`sv_logsecret`, a number from 1 to 2147483647, empty by default)
-  is handled the same way: write-only, "Remove" clears it, and saving it also
+  is handled the same way: masked, "Remove" clears it, and saving it also
   sets `log_secret_changed` to the current time. When a secret is set, the
   collector accepts only log packets with exactly this secret, so put the
   same value as `sv_logsecret` into the game server's `server.cfg`; without a
@@ -767,8 +770,8 @@ What the admin area edits:
   the server, the logs must come from the server's IP (new servers and tokens
   within about a minute). Two servers cannot have the same token (the form
   says the field is invalid). **Generate token** fills the field with a
-  random one and shows it, **Copy** puts it on the clipboard: copy it for
-  `server.cfg` before saving, it is not shown again. With an RCON password the collector registers the URL itself
+  random one and shows it, **Copy** puts it on the clipboard for
+  `server.cfg`; after saving the field's eye button shows it again. With an RCON password the collector registers the URL itself
   (`logaddress_delall_http` removes old ones). It is not `sv_logsecret`. The
   old URL with the game port (`/<game port>`, collector 1.10 and older) is no
   longer accepted. The form also says that CS2 needs `-usercon`; 404 in the
