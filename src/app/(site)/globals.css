@@ -1870,6 +1870,8 @@ table.stats.clan-sum td { white-space: normal; }
 .p-jump { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 14px; }
 .p-jump a { padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); font-size: 12px; font-weight: bold; text-decoration: none; }
 .p-jump a:hover { border-color: var(--accent); color: var(--accent-text); text-decoration: none; }
+/* The open tab of the profile (?tab=; three selectors' weight, so it also wins over the modern skins' outline). */
+.p-jump a.active[aria-current="page"] { border-color: var(--accent); color: var(--accent-text); box-shadow: inset 0 0 0 1px var(--accent); }
 .section { scroll-margin-top: 12px; }
 @media (max-width: 900px) {
   .p-head { flex-wrap: wrap; }

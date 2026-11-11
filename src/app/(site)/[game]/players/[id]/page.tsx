@@ -6,6 +6,8 @@ import { notFound, redirect } from "next/navigation";
 import { BanBadges, NameBanMark, sourcebansSearchUrl } from "@/components/ban-badges";
 import { MapLink } from "@/components/map-link";
 import { Bar, Empty, Flag, PctBar, PlayerLink, Section, TableWrap } from "@/components/ui";
+import { LinkPending } from "@/components/pending";
+import { profileTab, profileTabHref } from "@/lib/profile-tabs";
 import { SortableTable } from "@/components/sortable-table";
 import { RankBadge, Ribbon, RibbonLevel, rankName, ribbonClassName } from "@/components/badges";
 import { Spark } from "@/components/graphics";
@@ -94,6 +96,10 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   if (p.game !== game) redirect(`/${p.game}/players/${id}`);
 
   const { lang, t } = await getDict();
+  // Maps, weapons, opponents and kills are tabs of their own (?tab=), read and
+  // rendered only when opened; the overview leaves them out.
+  const tab = profileTab((await searchParams).tab);
+  const base = `/${game}/players/${id}`;
   const [settings, access] = await Promise.all([getSettings(), historyAccess()]);
   const ids = steamIds(p.uniqueId);
   const [position, history, names, weapons, maps, teams, actions, victims, killers, killStats, awards, ranks, chat, ribbons, allAwards, classes, sigUrl, origin, skillBefore] =
@@ -105,9 +111,9 @@ export default async function PlayerPage({ params, searchParams }: Props) {
       getPlayerMaps(game, id),
       getPlayerTeams(id),
       getPlayerActions(id),
-      getOpponents(game, id, "victims"),
-      getOpponents(game, id, "killers"),
-      getPlayerKillStats(game, id),
+      tab === "opponents" ? getOpponents(game, id, "victims") : Promise.resolve([] as Opponents),
+      tab === "opponents" ? getOpponents(game, id, "killers") : Promise.resolve([] as Opponents),
+      tab === "kills" ? getPlayerKillStats(game, id) : Promise.resolve([] as KillStats),
       getPlayerAwards(id),
       getRanks(game),
       access.chat ? getChat({ playerId: id, limit: 15, offset: 0 }) : Promise.resolve([]),
@@ -344,433 +350,466 @@ export default async function PlayerPage({ params, searchParams }: Props) {
           </div>
         ) : null}
         <nav className="p-jump" aria-label={t.playerInfo}>
-          <a href="#info">{t.overview}</a>
-          {teams.length || actions.length ? <a href="#teams">{t.teams}</a> : null}
-          {maps.length ? <a href="#maps">{t.maps}</a> : null}
-          {weapons.length ? <a href="#weapons">{t.weapons}</a> : null}
-          {killList.length ? <a href="#kills">{t.killStats}</a> : null}
+          <ProfileTabLink href={profileTabHref(base, "")} on={tab === ""} label={t.overview} />
+          {tab === "" && (teams.length || actions.length) ? <a href="#teams">{t.teams}</a> : null}
+          {maps.length ? <ProfileTabLink href={profileTabHref(base, "maps")} on={tab === "maps"} label={t.maps} /> : null}
+          {weapons.length ? <ProfileTabLink href={profileTabHref(base, "weapons")} on={tab === "weapons"} label={t.weapons} /> : null}
+          {p.kills || p.deaths ? <ProfileTabLink href={profileTabHref(base, "opponents")} on={tab === "opponents"} label={t.opponents} /> : null}
+          {p.kills || p.deaths ? <ProfileTabLink href={profileTabHref(base, "kills")} on={tab === "kills"} label={t.killStats} /> : null}
         </nav>
       </div>
 
-      <Section id="info" title={t.playerInfo}>
-        <div className="cont-2">
-          {/* Profile and the forum signature in the left column, beside the
-              summary. The Steam profile is asked after the page is sent:
-              the table comes without the Steam rows first and is swapped
-              once the answer is there, so a slow Steam never holds the page. */}
-          <div>
-            <Suspense fallback={<ProfileTable steam={null} pending {...profile} />}>
-              <SteamProfile steam64={ids?.steam64 ?? null} {...profile} />
-            </Suspense>
-            {/* A banned player has no banner (it is 404), so no signature box either. */}
-            {p.hideranking ? null : (
-              <table className="stats spaced">
+      {tab === "" ? (
+        <>
+          <Section id="info" title={t.playerInfo}>
+            <div className="cont-2">
+              {/* Profile and the forum signature in the left column, beside the
+                  summary. The Steam profile is asked after the page is sent:
+                  the table comes without the Steam rows first and is swapped
+                  once the answer is there, so a slow Steam never holds the page. */}
+              <div>
+                <Suspense fallback={<ProfileTable steam={null} pending {...profile} />}>
+                  <SteamProfile steam64={ids?.steam64 ?? null} {...profile} />
+                </Suspense>
+                {/* A banned player has no banner (it is 404), so no signature box either. */}
+                {p.hideranking ? null : (
+                  <table className="stats spaced">
+                    <thead>
+                      <tr>
+                        <th>{t.forumSignature}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>
+                          <SigCode
+                            base={sigUrl.replace(/\.png$/, "")}
+                            styles={imgStyles}
+                            {...bannerChoices("player", t)}
+                            link={`${origin}/${game}/players/${id}`}
+                            alt={`${t.forumSignature}: ${p.name ?? id}`}
+                            width={400}
+                            height={100}
+                            labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgSkinDefault, layout: t.bannerLayout, background: t.bannerBackground, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              {/* Summary and the history links below it share the right column. */}
+              <div className="summary-box">
+              {/* The radar is a block of its own; every value is one row of one
+                  list, so labels, values and trend graphics line up. */}
+              <table className="stats psum">
+                <colgroup>
+                  <col className="psum-side" />
+                  <col />
+                </colgroup>
                 <thead>
                   <tr>
-                    <th>{t.forumSignature}</th>
+                    <th colSpan={2}>{t.playerSummary}</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td>
-                      <SigCode
-                        base={sigUrl.replace(/\.png$/, "")}
-                        styles={imgStyles}
-                        {...bannerChoices("player", t)}
-                        link={`${origin}/${game}/players/${id}`}
-                        alt={`${t.forumSignature}: ${p.name ?? id}`}
-                        width={400}
-                        height={100}
-                        labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgSkinDefault, layout: t.bannerLayout, background: t.bannerBackground, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
-                      />
+                    <td className="psum-radar">
+                      <Radar axes={radar} labels={{ avg: t.radarAll, player: t.radarPlayer }} notes={radarNotes} />
+                    </td>
+                    <td className="psum-list">
+                      {/* Position, points, activity, kills, deaths, kills per minute
+                          and the longest streak are in the head card above. */}
+                      <dl>
+                        <SumRow k={t.hs} v={`${fmtNum(p.headshots, lang)} (${fmtNum(hs14, lang)}*)`} />
+                        <SumRow k={t.kpdLong} v={<Spark values={kpdDays} total={kpd(p.kills, p.deaths)} current={kpdNow} fmt={n2} titles={sparkTitles} />} />
+                        <SumRow k={t.hpkLong} v={<Spark values={hpkDays} total={ratio(p.headshots, p.kills)} current={hpkNow} fmt={pc} titles={sparkTitles} />} />
+                        <SumRow k={t.suicides} v={fmtNum(p.suicides, lang)} />
+                        {/* Rounds count only with a winner: servers without win triggers (GunGame, DM) have none. */}
+                        <SumRow k={t.rounds} v={p.rounds ? `${fmtNum(p.rounds, lang)} (${t.wins}: ${fmtNum(p.wins, lang)}, ${t.losses}: ${fmtNum(p.losses, lang)})` : "—"} />
+                        <SumRow k={t.winRatio} v={p.rounds ? <Bar value={ratio(p.wins, p.rounds)} green label={pc(ratio(p.wins, p.rounds))} /> : "—"} />
+                        <SumRow k={t.survived} v={p.rounds ? `${fmtNum(p.survived_count, lang)} ${t.rounds} (${pc(ratio(p.survived_count, p.rounds))})` : "—"} />
+                        <SumRow k={t.teamkills} v={fmtNum(p.team_kills, lang)} />
+                        {shots ? (
+                          <>
+                            <SumRow k={t.acc} v={<Spark values={accDays} total={ratio(p.hits, p.shots)} current={accNow} fmt={pc} titles={sparkTitles} />} />
+                            <SumRow k={t.shotsPerKill} v={<Spark values={spkDays} total={p.kills && p.shots ? p.shots / p.kills : null} current={spkNow} fmt={n2} titles={sparkTitles} lowerIsBetter />} />
+                          </>
+                        ) : null}
+                        {/* Assisted kills (kills of this player others helped with) only when the collector counted any. */}
+                        <SumRow k={t.assists} v={`${fmtNum(p.kill_assists, lang)}${p.kills_assisted > 0 ? ` · ${t.assistedKills}: ${fmtNum(p.kills_assisted, lang)}` : ""}`} />
+                      </dl>
                     </td>
                   </tr>
                 </tbody>
               </table>
-            )}
-          </div>
+              {/* The history links and the note on the starred values share one line. */}
+              <div className="summary-foot">
+                {/* A banned player's history pages stay closed (only the profile shows the ban). */}
+                <PlayerLinks game={game} id={id} name={p.name} t={t} />
+                <p className="footnote">{t.last14}</p>
+              </div>
+              </div>
+            </div>
+          </Section>
 
-          {/* Summary and the history links below it share the right column. */}
-          <div className="summary-box">
-          {/* The radar is a block of its own; every value is one row of one
-              list, so labels, values and trend graphics line up. */}
-          <table className="stats psum">
-            <colgroup>
-              <col className="psum-side" />
-              <col />
-            </colgroup>
-            <thead>
-              <tr>
-                <th colSpan={2}>{t.playerSummary}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="psum-radar">
-                  <Radar axes={radar} labels={{ avg: t.radarAll, player: t.radarPlayer }} notes={radarNotes} />
-                </td>
-                <td className="psum-list">
-                  {/* Position, points, activity, kills, deaths, kills per minute
-                      and the longest streak are in the head card above. */}
-                  <dl>
-                    <SumRow k={t.hs} v={`${fmtNum(p.headshots, lang)} (${fmtNum(hs14, lang)}*)`} />
-                    <SumRow k={t.kpdLong} v={<Spark values={kpdDays} total={kpd(p.kills, p.deaths)} current={kpdNow} fmt={n2} titles={sparkTitles} />} />
-                    <SumRow k={t.hpkLong} v={<Spark values={hpkDays} total={ratio(p.headshots, p.kills)} current={hpkNow} fmt={pc} titles={sparkTitles} />} />
-                    <SumRow k={t.suicides} v={fmtNum(p.suicides, lang)} />
-                    {/* Rounds count only with a winner: servers without win triggers (GunGame, DM) have none. */}
-                    <SumRow k={t.rounds} v={p.rounds ? `${fmtNum(p.rounds, lang)} (${t.wins}: ${fmtNum(p.wins, lang)}, ${t.losses}: ${fmtNum(p.losses, lang)})` : "—"} />
-                    <SumRow k={t.winRatio} v={p.rounds ? <Bar value={ratio(p.wins, p.rounds)} green label={pc(ratio(p.wins, p.rounds))} /> : "—"} />
-                    <SumRow k={t.survived} v={p.rounds ? `${fmtNum(p.survived_count, lang)} ${t.rounds} (${pc(ratio(p.survived_count, p.rounds))})` : "—"} />
-                    <SumRow k={t.teamkills} v={fmtNum(p.team_kills, lang)} />
-                    {shots ? (
-                      <>
-                        <SumRow k={t.acc} v={<Spark values={accDays} total={ratio(p.hits, p.shots)} current={accNow} fmt={pc} titles={sparkTitles} />} />
-                        <SumRow k={t.shotsPerKill} v={<Spark values={spkDays} total={p.kills && p.shots ? p.shots / p.kills : null} current={spkNow} fmt={n2} titles={sparkTitles} lowerIsBetter />} />
-                      </>
-                    ) : null}
-                    {/* Assisted kills (kills of this player others helped with) only when the collector counted any. */}
-                    <SumRow k={t.assists} v={`${fmtNum(p.kill_assists, lang)}${p.kills_assisted > 0 ? ` · ${t.assistedKills}: ${fmtNum(p.kills_assisted, lang)}` : ""}`} />
-                  </dl>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          {/* The history links and the note on the starred values share one line. */}
-          <div className="summary-foot">
-            {/* A banned player's history pages stay closed (only the profile shows the ban). */}
-            <PlayerLinks game={game} id={id} name={p.name} t={t} />
-            <p className="footnote">{t.last14}</p>
-          </div>
-          </div>
-        </div>
-      </Section>
-
-      <Section title={t.playerStats}>
-        {/* Trend and current rank side by side, career and ribbons across
-            the full width below, so neither column ends in empty space. */}
-        <div className="cont-2 p-stats-top">
-          <div>
-            <table className="stats">
-              <thead>
-                <tr>
-                  <th>
-                    {t.playerTrend} (
-                    <Link prefetch={false} className="th-link" href={`/${game}/players/${id}/sessions`}>
-                      {t.overview}
-                    </Link>
-                    )
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="center">
-                    <PlayerTrend history={history} before={skillBefore} locale={lang} t={t} />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div>
-            {rank ? (
-              <table className="stats">
+          <Section title={t.playerStats}>
+            {/* Trend and current rank side by side, career and ribbons across
+                the full width below, so neither column ends in empty space. */}
+            <div className="cont-2 p-stats-top">
+              <div>
+                <table className="stats">
+                  <thead>
+                    <tr>
+                      <th>
+                        {t.playerTrend} (
+                        <Link prefetch={false} className="th-link" href={`/${game}/players/${id}/sessions`}>
+                          {t.overview}
+                        </Link>
+                        )
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="center">
+                        <PlayerTrend history={history} before={skillBefore} locale={lang} t={t} />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div>
+                {rank ? (
+                  <table className="stats">
+                    <thead>
+                      <tr>
+                        <th colSpan={2}>
+                          {t.currentRank}: <b>{rankName(rank.name)}</b>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td colSpan={2} className="center">
+                          <Link prefetch={false} href={`/${game}/awards?view=ranks&rank=${rank.index}`}>
+                            <RankBadge name={rank.name} size={110} />
+                          </Link>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="barcell" style={{ width: "50%" }}>
+                          <Bar value={rankProgress} wide label={pc(rankProgress)} />
+                        </td>
+                        <td className="center">
+                          {rank.next !== null ? fill(t.killsNeeded, { n: fmtNum(rank.next - careerKills, lang), pct: pc(rankProgress) }) : t.topRank}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                ) : null}
+              </div>
+            </div>
+            {ranks.length ? (
+              <table className="stats spaced">
                 <thead>
                   <tr>
-                    <th colSpan={2}>
-                      {t.currentRank}: <b>{rankName(rank.name)}</b>
+                    <th>
+                      {t.career} (<Link prefetch={false} href={`/${game}/awards?view=ranks`}>{t.ranksOverview}</Link>)
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td colSpan={2} className="center">
-                      <Link prefetch={false} href={`/${game}/awards?view=ranks&rank=${rank.index}`}>
-                        <RankBadge name={rank.name} size={110} />
-                      </Link>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="barcell" style={{ width: "50%" }}>
-                      <Bar value={rankProgress} wide label={pc(rankProgress)} />
-                    </td>
-                    <td className="center">
-                      {rank.next !== null ? fill(t.killsNeeded, { n: fmtNum(rank.next - careerKills, lang), pct: pc(rankProgress) }) : t.topRank}
+                    <td className="career">
+                      <RankTips
+                        items={ranks.map((r) => {
+                          const range =
+                            r.next !== null
+                              ? fill(t.killsRange, { min: fmtNum(r.minimum, lang), max: fmtNum(r.next - 1, lang) })
+                              : fill(t.killsFrom, { min: fmtNum(r.minimum, lang) });
+                          const current = r.index === rank?.index;
+                          // Progress towards the next rank (current) or towards this one (locked).
+                          const goal = current ? r.next : careerKills < r.minimum ? r.minimum : null;
+                          const from = current ? r.minimum : 0;
+                          const share = goal !== null ? Math.max(0, Math.min(1, (careerKills - from) / Math.max(1, goal - from))) : null;
+                          return {
+                            key: r.index,
+                            label: rankName(r.name),
+                            state: current ? "current" : careerKills < r.minimum ? "locked" : "reached",
+                            badge: <RankBadge name={r.name} size={40} dim={careerKills < r.minimum} untitled />,
+                            tip: (
+                              <>
+                                <b>{rankName(r.name)}</b>
+                                <span className="tip-line">{range}</span>
+                                <span className={`tip-line rank-tip-state ${current ? "current" : careerKills < r.minimum ? "locked" : "reached"}`}>
+                                  {current ? t.currentRank : careerKills < r.minimum ? t.rankLocked : t.rankReached}
+                                </span>
+                                {current || goal !== null ? (
+                                  <span className="tip-line">
+                                    {t.kills}: <b>{fmtNum(careerKills, lang)}</b>
+                                  </span>
+                                ) : null}
+                                {goal !== null && share !== null ? (
+                                  <>
+                                    <span className="tip-line">{fill(t.killsNeeded, { n: fmtNum(goal - careerKills, lang), pct: pc(share) })}</span>
+                                    <span className="tip-line">
+                                      <Bar value={share} wide />
+                                    </span>
+                                  </>
+                                ) : current ? (
+                                  <span className="tip-line">{t.topRank}</span>
+                                ) : null}
+                              </>
+                            ),
+                          };
+                        })}
+                      />
                     </td>
                   </tr>
                 </tbody>
               </table>
             ) : null}
-          </div>
-        </div>
-        {ranks.length ? (
-          <table className="stats spaced">
-            <thead>
-              <tr>
-                <th>
-                  {t.career} (<Link prefetch={false} href={`/${game}/awards?view=ranks`}>{t.ranksOverview}</Link>)
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="career">
-                  <RankTips
-                    items={ranks.map((r) => {
-                      const range =
-                        r.next !== null
-                          ? fill(t.killsRange, { min: fmtNum(r.minimum, lang), max: fmtNum(r.next - 1, lang) })
-                          : fill(t.killsFrom, { min: fmtNum(r.minimum, lang) });
-                      const current = r.index === rank?.index;
-                      // Progress towards the next rank (current) or towards this one (locked).
-                      const goal = current ? r.next : careerKills < r.minimum ? r.minimum : null;
-                      const from = current ? r.minimum : 0;
-                      const share = goal !== null ? Math.max(0, Math.min(1, (careerKills - from) / Math.max(1, goal - from))) : null;
-                      return {
-                        key: r.index,
-                        label: rankName(r.name),
-                        state: current ? "current" : careerKills < r.minimum ? "locked" : "reached",
-                        badge: <RankBadge name={r.name} size={40} dim={careerKills < r.minimum} untitled />,
-                        tip: (
-                          <>
-                            <b>{rankName(r.name)}</b>
-                            <span className="tip-line">{range}</span>
-                            <span className={`tip-line rank-tip-state ${current ? "current" : careerKills < r.minimum ? "locked" : "reached"}`}>
-                              {current ? t.currentRank : careerKills < r.minimum ? t.rankLocked : t.rankReached}
-                            </span>
-                            {current || goal !== null ? (
-                              <span className="tip-line">
-                                {t.kills}: <b>{fmtNum(careerKills, lang)}</b>
-                              </span>
-                            ) : null}
-                            {goal !== null && share !== null ? (
-                              <>
-                                <span className="tip-line">{fill(t.killsNeeded, { n: fmtNum(goal - careerKills, lang), pct: pc(share) })}</span>
-                                <span className="tip-line">
-                                  <Bar value={share} wide />
-                                </span>
-                              </>
-                            ) : current ? (
-                              <span className="tip-line">{t.topRank}</span>
-                            ) : null}
-                          </>
-                        ),
-                      };
-                    })}
+            {allAwards.length ? (
+              <table className="stats spaced">
+                <thead>
+                  <tr>
+                    <th>
+                      {t.ribbons} ({fill(t.winsCount, { n: totalRibbonWins })}, <Link prefetch={false} href={`/${game}/awards?view=ribbons`}>{t.ribbonsOverview}</Link>)
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="ribbon-wall">
+                      {[...allAwards]
+                        .sort((a, b) => (wonAwards.get(b.awardId) ?? 0) - (wonAwards.get(a.awardId) ?? 0))
+                        .map((a) => {
+                          const wins = wonAwards.get(a.awardId) ?? 0;
+                          const r = ribbonFor(wins, classes);
+                          return (
+                            <Link prefetch={false} key={a.awardId} href={`/${game}/awards?view=ribbons&award=${a.awardId}`}>
+                              <Ribbon
+                                code={a.code}
+                                label={a.name}
+                                title={r ? `${a.name}: ${ribbonClassName(r.name, lang)} ${r.level} (${fill(t.winsCount, { n: wins })})` : a.name}
+                                ribbon={r}
+                              />
+                              <RibbonLevel
+                                progress={ribbonProgress(wins, classes)}
+                                className={(n) => ribbonClassName(n, lang)}
+                                texts={{ toNext: t.ribbonToNext, maxed: t.ribbonMaxed }}
+                              />
+                            </Link>
+                          );
+                        })}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            ) : null}
+          </Section>
+
+          {/* From here on gameME's order: teams and actions, maps, weapon
+              usage, weapon targets, weapons and the kill statistics; what
+              gameME lacks (victims and killers, events, names, awards, chat)
+              follows below. */}
+          {teams.length || actions.length ? (
+            <Section id="teams" title={t.teamsActions}>
+              <div className="cont-2">
+                {teams.length ? (
+                  <TableWrap>
+                    <SortableTable
+                      initial={1}
+                      cols={[{ label: t.team }, { label: t.joined, className: "num" }, { label: t.percentage, className: "barcell", noSort: true }]}
+                      rows={teams.map((x) => ({
+                        key: x.id,
+                        values: [x.name, x.joined, null],
+                        cells: [x.name, fmtNum(x.joined, lang), <PctBar key="s" value={ratio(x.joined, totalTeamJoins)} lang={lang} tone="share" />],
+                      }))}
+                    />
+                  </TableWrap>
+                ) : null}
+                {actions.length ? (
+                  <TableWrap>
+                    <SortableTable
+                      initial={1}
+                      cols={[{ label: t.actions }, { label: t.count, className: "num" }, { label: t.reward, className: "num" }]}
+                      rows={actions.map((a) => ({
+                        key: a.id,
+                        values: [a.description, a.count, a.points],
+                        cells: [
+                          <Link prefetch={false} key="a" href={`/${game}/actions/${a.id}`}>
+                            {a.description}
+                          </Link>,
+                          fmtNum(a.count, lang),
+                          fmtNum(a.points, lang),
+                        ],
+                      }))}
+                    />
+                  </TableWrap>
+                ) : null}
+              </div>
+            </Section>
+          ) : null}
+
+          {p.hideranking ? null : <PlayerEvents game={game} playerId={id} t={t} lang={lang} />}
+
+          <div className="grid-2">
+            {names.length ? (
+              <Section title={t.names}>
+                <TableWrap>
+                  <SortableTable
+                    initial={3}
+                    cols={[{ label: t.name }, { label: t.time, className: "num" }, { label: t.kills, className: "num" }, { label: t.lastUse, className: "num hide-sm" }]}
+                    rows={names.map((n) => ({
+                      key: n.name,
+                      values: [n.name, n.connection_time, n.kills, n.lastuse || null],
+                      cells: [n.name, fmtDuration(n.connection_time), fmtNum(n.kills, lang), n.lastuse ? `${n.lastuse.slice(0, 16)} UTC` : "-"],
+                    }))}
                   />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        ) : null}
-        {allAwards.length ? (
-          <table className="stats spaced">
-            <thead>
-              <tr>
-                <th>
-                  {t.ribbons} ({fill(t.winsCount, { n: totalRibbonWins })}, <Link prefetch={false} href={`/${game}/awards?view=ribbons`}>{t.ribbonsOverview}</Link>)
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="ribbon-wall">
-                  {[...allAwards]
-                    .sort((a, b) => (wonAwards.get(b.awardId) ?? 0) - (wonAwards.get(a.awardId) ?? 0))
-                    .map((a) => {
-                      const wins = wonAwards.get(a.awardId) ?? 0;
-                      const r = ribbonFor(wins, classes);
-                      return (
-                        <Link prefetch={false} key={a.awardId} href={`/${game}/awards?view=ribbons&award=${a.awardId}`}>
-                          <Ribbon
-                            code={a.code}
-                            label={a.name}
-                            title={r ? `${a.name}: ${ribbonClassName(r.name, lang)} ${r.level} (${fill(t.winsCount, { n: wins })})` : a.name}
-                            ribbon={r}
-                          />
-                          <RibbonLevel
-                            progress={ribbonProgress(wins, classes)}
-                            className={(n) => ribbonClassName(n, lang)}
-                            texts={{ toNext: t.ribbonToNext, maxed: t.ribbonMaxed }}
-                          />
-                        </Link>
-                      );
-                    })}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        ) : null}
-      </Section>
-
-      {/* From here on gameME's order: teams and actions, maps, weapon
-          usage, weapon targets, weapons and the kill statistics; what
-          gameME lacks (victims and killers, events, names, awards, chat)
-          follows below. */}
-      {teams.length || actions.length ? (
-        <Section id="teams" title={t.teamsActions}>
-          <div className="cont-2">
-            {teams.length ? (
-              <TableWrap>
-                <SortableTable
-                  initial={1}
-                  cols={[{ label: t.team }, { label: t.joined, className: "num" }, { label: t.percentage, className: "barcell", noSort: true }]}
-                  rows={teams.map((x) => ({
-                    key: x.id,
-                    values: [x.name, x.joined, null],
-                    cells: [x.name, fmtNum(x.joined, lang), <PctBar key="s" value={ratio(x.joined, totalTeamJoins)} lang={lang} tone="share" />],
-                  }))}
-                />
-              </TableWrap>
+                </TableWrap>
+              </Section>
             ) : null}
-            {actions.length ? (
-              <TableWrap>
-                <SortableTable
-                  initial={1}
-                  cols={[{ label: t.actions }, { label: t.count, className: "num" }, { label: t.reward, className: "num" }]}
-                  rows={actions.map((a) => ({
-                    key: a.id,
-                    values: [a.description, a.count, a.points],
-                    cells: [
-                      <Link prefetch={false} key="a" href={`/${game}/actions/${a.id}`}>
-                        {a.description}
-                      </Link>,
-                      fmtNum(a.count, lang),
-                      fmtNum(a.points, lang),
-                    ],
-                  }))}
-                />
-              </TableWrap>
+
+            {awards.length ? (
+              <Section title={t.awards}>
+                <TableWrap>
+                  <table>
+                    <tbody>
+                      {awards.map((a, i) => (
+                        <tr key={i}>
+                          <td className="muted">{a.date}</td>
+                          <td>{a.name}</td>
+                          <td className="num">
+                            {awardValue(a, a.winner_count, (n) => fmtNum(n, lang), fmtDuration)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </TableWrap>
+              </Section>
+            ) : null}
+
+            {chat.length ? (
+              <Section title={t.chat}>
+                <TableWrap>
+                  <table>
+                    <tbody>
+                      {chat.map((c, i) => (
+                        <tr key={i}>
+                          <td className="muted nowrap">{fmtDateTime(c.timestamp_id, lang)}</td>
+                          <td className="wrap-cell">
+                            {c.message_mode === 2 ? <span className="muted">({t.sayTeam}) </span> : null}
+                            {c.message}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </TableWrap>
+              </Section>
             ) : null}
           </div>
-        </Section>
+          {!weapons.length && !history.length ? <Empty>{t.noData}</Empty> : null}
+        </>
       ) : null}
 
-      {maps.length ? (
-        <Section id="maps" title={t.mapPerformance}>
-          <MapTable maps={maps} game={game} t={t} lang={lang} />
-        </Section>
+      {tab === "maps" ? (
+        <>
+          {maps.length ? (
+            <Section id="maps" title={t.mapPerformance}>
+              <MapTable maps={maps} game={game} t={t} lang={lang} />
+            </Section>
+          ) : null}
+        </>
       ) : null}
 
-      {weapons.length ? (
-        <Section title={t.weaponUsage}>
-          <WeaponUsage weapons={weapons} game={game} t={t} lang={lang} />
-        </Section>
+      {tab === "weapons" ? (
+        <>
+          {weapons.length ? (
+            <Section title={t.weaponUsage}>
+              <WeaponUsage weapons={weapons} game={game} t={t} lang={lang} />
+            </Section>
+          ) : null}
+
+          {hitboxWeapons[0] && ZONES.some((z) => hitboxWeapons[0].hits[z] > 0) ? (
+            <Section id="targets" title={t.weaponTargets}>
+              <WeaponTargets weapons={hitboxWeapons} locale={lang} labels={targetLabels(t)} initial={hwParam((await searchParams).hw, hitboxWeapons.length)} query="tab=weapons&" />
+            </Section>
+          ) : null}
+
+          {weapons.length ? (
+            <Section id="weapons" title={t.weapons}>
+              <WeaponStats weapons={weapons} game={game} shots={shots} t={t} lang={lang} />
+            </Section>
+          ) : null}
+        </>
       ) : null}
 
-      {hitboxWeapons[0] && ZONES.some((z) => hitboxWeapons[0].hits[z] > 0) ? (
-        <Section id="targets" title={t.weaponTargets}>
-          <WeaponTargets weapons={hitboxWeapons} locale={lang} labels={targetLabels(t)} initial={hwParam((await searchParams).hw, hitboxWeapons.length)} />
-        </Section>
-      ) : null}
-
-      {weapons.length ? (
-        <Section id="weapons" title={t.weapons}>
-          <WeaponStats weapons={weapons} game={game} shots={shots} t={t} lang={lang} />
-        </Section>
-      ) : null}
-
-      {killList.length ? (
-        <Section id="kills" title={t.killStats}>
-          <p className="muted small">{t.killStatsHint}</p>
-          <TableWrap>
-            <SortableTable
-              initial={2}
-              cols={[
-                { label: t.player },
-                { label: t.position, className: "num" },
-                { label: t.kills, className: "num" },
-                { label: t.deaths, className: "num" },
-                { label: t.kpd, className: "num" },
-                { label: t.hs, className: "num hide-sm" },
-                { label: t.hpk, className: "barcell" },
-              ]}
-              rows={killList.map((o) => ({
-                key: o.playerId,
-                values: [o.name ?? "", o.position, o.kills, o.deaths, kpd(o.kills, o.deaths), o.headshots, ratio(o.headshots, o.kills)],
-                cells: [
-                  <PlayerLink key="p" game={game} id={o.playerId} name={o.name} flag={flags.get(o.playerId)} />,
-                  o.position ? fmtNum(o.position, lang) : "-",
-                  fmtNum(o.kills, lang),
-                  fmtNum(o.deaths, lang),
-                  fmtNum(kpd(o.kills, o.deaths), lang, 2),
-                  fmtNum(o.headshots, lang),
-                  <PctBar key="h" value={ratio(o.headshots, o.kills)} lang={lang} />,
-                ],
-              }))}
-            />
-          </TableWrap>
-        </Section>
-      ) : null}
-
-      {victims.length || killers.length ? (
-        <div className="grid-2">
-          {victims.length ? <OpponentTable title={t.victims} rows={victims} game={game} t={t} lang={lang} flags={flags} /> : null}
-          {killers.length ? <OpponentTable title={t.killers} rows={killers} game={game} t={t} lang={lang} flags={flags} /> : null}
-        </div>
-      ) : null}
-
-      {p.hideranking ? null : <PlayerEvents game={game} playerId={id} t={t} lang={lang} />}
-
-      <div className="grid-2">
-        {names.length ? (
-          <Section title={t.names}>
+      {tab === "kills" ? (
+        killList.length ? (
+          <Section id="kills" title={t.killStats}>
+            <p className="muted small">{t.killStatsHint}</p>
             <TableWrap>
               <SortableTable
-                initial={3}
-                cols={[{ label: t.name }, { label: t.time, className: "num" }, { label: t.kills, className: "num" }, { label: t.lastUse, className: "num hide-sm" }]}
-                rows={names.map((n) => ({
-                  key: n.name,
-                  values: [n.name, n.connection_time, n.kills, n.lastuse || null],
-                  cells: [n.name, fmtDuration(n.connection_time), fmtNum(n.kills, lang), n.lastuse ? `${n.lastuse.slice(0, 16)} UTC` : "-"],
+                initial={2}
+                cols={[
+                  { label: t.player },
+                  { label: t.position, className: "num" },
+                  { label: t.kills, className: "num" },
+                  { label: t.deaths, className: "num" },
+                  { label: t.kpd, className: "num" },
+                  { label: t.hs, className: "num hide-sm" },
+                  { label: t.hpk, className: "barcell" },
+                ]}
+                rows={killList.map((o) => ({
+                  key: o.playerId,
+                  values: [o.name ?? "", o.position, o.kills, o.deaths, kpd(o.kills, o.deaths), o.headshots, ratio(o.headshots, o.kills)],
+                  cells: [
+                    <PlayerLink key="p" game={game} id={o.playerId} name={o.name} flag={flags.get(o.playerId)} />,
+                    o.position ? fmtNum(o.position, lang) : "-",
+                    fmtNum(o.kills, lang),
+                    fmtNum(o.deaths, lang),
+                    fmtNum(kpd(o.kills, o.deaths), lang, 2),
+                    fmtNum(o.headshots, lang),
+                    <PctBar key="h" value={ratio(o.headshots, o.kills)} lang={lang} />,
+                  ],
                 }))}
               />
             </TableWrap>
           </Section>
-        ) : null}
+        ) : (
+          <Empty>{t.noData}</Empty>
+        )
+      ) : null}
 
-        {awards.length ? (
-          <Section title={t.awards}>
-            <TableWrap>
-              <table>
-                <tbody>
-                  {awards.map((a, i) => (
-                    <tr key={i}>
-                      <td className="muted">{a.date}</td>
-                      <td>{a.name}</td>
-                      <td className="num">
-                        {awardValue(a, a.winner_count, (n) => fmtNum(n, lang), fmtDuration)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </TableWrap>
-          </Section>
-        ) : null}
-
-        {chat.length ? (
-          <Section title={t.chat}>
-            <TableWrap>
-              <table>
-                <tbody>
-                  {chat.map((c, i) => (
-                    <tr key={i}>
-                      <td className="muted nowrap">{fmtDateTime(c.timestamp_id, lang)}</td>
-                      <td className="wrap-cell">
-                        {c.message_mode === 2 ? <span className="muted">({t.sayTeam}) </span> : null}
-                        {c.message}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </TableWrap>
-          </Section>
-        ) : null}
-      </div>
-
-      {!weapons.length && !history.length ? <Empty>{t.noData}</Empty> : null}
+      {tab === "opponents" ? (
+        victims.length || killers.length ? (
+          <div className="grid-2">
+            {victims.length ? <OpponentTable title={t.victims} rows={victims} game={game} t={t} lang={lang} flags={flags} /> : null}
+            {killers.length ? <OpponentTable title={t.killers} rows={killers} game={game} t={t} lang={lang} flags={flags} /> : null}
+          </div>
+        ) : (
+          <Empty>{t.noData}</Empty>
+        )
+      ) : null}
     </>
+  );
+}
+
+type Opponents = Awaited<ReturnType<typeof getOpponents>>;
+type KillStats = Awaited<ReturnType<typeof getPlayerKillStats>>;
+
+// A tab of the profile; the mark shows while its part loads.
+function ProfileTabLink({ href, on, label }: { href: string; on: boolean; label: string }) {
+  return (
+    <Link prefetch={false} scroll={false} href={href} className={on ? "active" : undefined} aria-current={on ? "page" : undefined}>
+      {label}
+      <LinkPending />
+    </Link>
   );
 }
 

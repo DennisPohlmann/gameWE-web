@@ -21,7 +21,8 @@ type Labels = Record<Zone, string> & {
 // and the right side of the body. A click on a weapon shows it in the
 // figure; without JavaScript the link does the same through ?hw=. The same
 // block on the player and the clan page. weapons[0] is all weapons together.
-export function WeaponTargets({ weapons, labels, locale, initial = 0 }: { weapons: HitboxWeapon[]; labels: Labels; locale: string; initial?: number }) {
+// query: more of the page's address before hw= (the profile's "tab=weapons&").
+export function WeaponTargets({ weapons, labels, locale, initial = 0, query = "" }: { weapons: HitboxWeapon[]; labels: Labels; locale: string; initial?: number; query?: string }) {
   const [sel, setSel] = useState(initial);
   const sum = (w: HitboxWeapon, zones: Zone[]) => zones.reduce((n, z) => n + (w.hits[z] ?? 0), 0);
   const pct = (part: number, total: number) => (total ? `${((part / total) * 100).toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %` : "-");
@@ -37,7 +38,7 @@ export function WeaponTargets({ weapons, labels, locale, initial = 0 }: { weapon
       cells: [
         <a
           key="w"
-          href={`?hw=${i}#targets`}
+          href={`?${query}hw=${i}#targets`}
           className={i === 0 ? "wt-all" : undefined}
           aria-current={i === sel ? "true" : undefined}
           onClick={(e) => {
