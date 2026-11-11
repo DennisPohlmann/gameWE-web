@@ -82,15 +82,20 @@ async function rankPositions(players: { game: string; skill: number }[]): Promis
 }
 
 // The players of one country, state or city (a WHERE on l.flag, l.state or
-// l.city): read from the matching locations to their players. Left to itself
-// MariaDB walks the whole ranking by the index game_skill and looks up each
-// player's location, which takes seconds for a city ranking or a small
-// country; STRAIGHT_JOIN keeps this order there.
+// l.city), joined from the locations to their players. The planner picks the
+// order: a forced order from the locations (STRAIGHT_JOIN) scanned every
+// location for a large country (266 ms against 1 ms, 500k players).
 function placeJoins(table: string) {
-  const join = dialect() === "mariadb" ? "STRAIGHT_JOIN" : "JOIN";
   return `hlstats_Players_Locations l
-    ${join} hlstats_Players_Data d ON d.location_id = l.id
-    ${join} ${table} p ON p.playerId = d.playerId`;
+    JOIN hlstats_Players_Data d ON d.location_id = l.id
+    JOIN ${table} p ON p.playerId = d.playerId`;
+}
+
+// "<column> = ?" for a lower-case place value. MariaDB's collations of these
+// columns ignore case, so the plain column keeps its index usable (LOWER()
+// turned a one-player country into a 164 ms scan); PostgreSQL compares case.
+function placeIs(col: "l.flag" | "l.state" | "l.city") {
+  return dialect() === "mariadb" ? `${col} = ?` : `LOWER(${col}) = ?`;
 }
 
 // ---------------------------------------------------------------- games
@@ -626,15 +631,15 @@ async function loadRanking(opts: {
     params.push(like(opts.search));
   }
   if (opts.country) {
-    where.push(`LOWER(l.flag) = ?`);
+    where.push(placeIs("l.flag"));
     params.push(opts.country);
   }
   if (opts.state) {
-    where.push(`LOWER(l.state) = ?`);
+    where.push(placeIs("l.state"));
     params.push(opts.state.toLowerCase());
   }
   if (opts.city) {
-    where.push(`LOWER(l.city) = ?`);
+    where.push(placeIs("l.city"));
     params.push(opts.city.toLowerCase());
   }
   if (opts.newDays) {
@@ -799,7 +804,7 @@ async function loadPlaceRanking(opts: { game: string; kind: PlaceKind; country: 
   const col = opts.kind === "state" ? "l.state" : opts.kind === "city" ? "l.city" : "";
   if (col) where.push(col === "l.state" ? STATE_NAME : `${col} <> ''`);
   if (opts.country) {
-    where.push(`LOWER(l.flag) = ?`);
+    where.push(placeIs("l.flag"));
     params.push(opts.country);
   }
   const group = col ? `LOWER(l.flag), ${col}` : `LOWER(l.flag)`;
@@ -2321,15 +2326,15 @@ async function loadMapPlayers(
   const params: Param[] = [game];
   let where = "";
   if (place.country) {
-    where += " AND LOWER(l.flag) = ?";
+    where += ` AND ${placeIs("l.flag")}`;
     params.push(place.country);
   }
   if (place.state) {
-    where += " AND LOWER(l.state) = ?";
+    where += ` AND ${placeIs("l.state")}`;
     params.push(place.state.toLowerCase());
   }
   if (place.city) {
-    where += " AND LOWER(l.city) = ?";
+    where += ` AND ${placeIs("l.city")}`;
     params.push(place.city.toLowerCase());
   }
   const rows = await query<Omit<MapPlayer, "lat" | "lng"> & { lat: string; lng: string }>(
