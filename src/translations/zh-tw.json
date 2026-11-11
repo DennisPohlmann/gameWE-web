@@ -103,7 +103,7 @@
   "searchSteam": "Steam ID",
   "searchClans": "戰隊標籤和名稱",
   "searchAllRankings": "（全部）",
-  "searchShort": "請至少輸入 2 個字元。",
+  "searchShort": "請至少輸入 {n} 個字元。",
   "searchSteamHint": "請輸入完整的 Steam ID，例如 STEAM_0:1:12345、[U:1:24691] 或 76561197960290419。",
   "searchUsedName": "曾用名",
   "searchMore": "最多顯示 {n} 條結果。",

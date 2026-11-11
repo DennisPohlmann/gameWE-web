@@ -4,7 +4,7 @@ import Form from "next/form";
 import Link from "next/link";
 import { Empty, PlayerLink, Section, TableWrap, strParam } from "@/components/ui";
 import { noAutofill } from "@/lib/autofill";
-import { getGames, searchClans, searchPlayers, unlinkedBots, type ClanHit, type SearchHit, type SearchIn } from "@/lib/data";
+import { getGames, NAME_SEARCH_MIN, searchClans, searchPlayers, unlinkedBots, type ClanHit, type SearchHit, type SearchIn } from "@/lib/data";
 import { fmtNum, kpd } from "@/lib/format";
 import { fill, getDict } from "@/lib/i18n";
 import { sortHeads, SortInputs } from "@/components/sort-head";
@@ -30,7 +30,8 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
   const rawGame = strParam(sp.game);
   const game = games.some((g) => g.code === rawGame) ? rawGame : "";
   const gameName = new Map(games.map((g) => [g.code, g.name]));
-  const short = q !== "" && by !== "uniqueid" && q.length < 2;
+  const min = by === "names" ? NAME_SEARCH_MIN : 2;
+  const short = q !== "" && by !== "uniqueid" && q.length < min;
 
   let players: SearchHit[] = [];
   let clans: ClanHit[] = [];
@@ -127,7 +128,7 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
       {q ? (
         <Section title={`${labels[by]}: „${q}“`}>
           {short ? (
-            <Empty>{t.searchShort}</Empty>
+            <Empty>{fill(t.searchShort, { n: min })}</Empty>
           ) : !found ? (
             <Empty>{t.noResults}</Empty>
           ) : by === "clans" ? (

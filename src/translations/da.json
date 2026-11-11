@@ -103,7 +103,7 @@
   "searchSteam": "Steam ID",
   "searchClans": "Klantags og -navne",
   "searchAllRankings": "(Alle)",
-  "searchShort": "Skriv mindst 2 tegn.",
+  "searchShort": "Skriv mindst {n} tegn.",
   "searchSteamHint": "Skriv hele Steam ID'et, fx STEAM_0:1:12345, [U:1:24691] eller 76561197960290419.",
   "searchUsedName": "også som",
   "searchMore": "Der vises højst {n} resultater.",

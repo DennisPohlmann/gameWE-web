@@ -37,3 +37,17 @@ test("only hidden, banned and hidden rankings stay out; the ranking only when ch
   assert.doesNotMatch(s, /last_event\s*[<>]|rounds|kills\)?\s*>|skill\)?\s*>/);
   assert.match(s, /ORDER BY skill DESC LIMIT \?`,\s*\[\.\.\.params, \.\.\.\(game \? \[game\] : \[\]\), SEARCH_LIMIT\]/);
 });
+
+test("a name needs 3 characters: page, API and the search itself, no database read below", () => {
+  assert.match(data, /export const NAME_SEARCH_MIN = 3;/);
+  assert.match(body("searchPlayers"), /if \(q\.trim\(\)\.length < NAME_SEARCH_MIN\) return \[\];\s*const rows = await searchHits/);
+  const api = readFileSync("src/lib/api-search.ts", "utf8");
+  assert.match(api, /const min = by === "names" \? NAME_SEARCH_MIN : 2;/);
+  const page = readFileSync("src/app/(site)/search/page.tsx", "utf8");
+  assert.match(page, /const min = by === "names" \? NAME_SEARCH_MIN : 2;/);
+  assert.match(page, /fill\(t\.searchShort, \{ n: min \}\)/);
+  for (const lang of ["en", "de", "ru", "es", "fr", "pt", "nl", "da", "pl", "pt-br", "sr", "zh-tw", "zh-cn"]) {
+    const t = JSON.parse(readFileSync(`src/translations/${lang}.json`, "utf8"));
+    assert.match(t.searchShort, /\{n\}/, lang);
+  }
+});

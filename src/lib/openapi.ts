@@ -1442,7 +1442,7 @@ export const endpoints: Endpoint[] = [
     tag: "Search",
     summary: "Search players",
     description:
-      "The website's search over all rankings (or one with `game`): every name a player used (`in=names`, at least 2 characters; `alias` is the used name that matched when it is not the current one), or a Steam ID in any of its forms (`in=steamid`, exact match only). Active and inactive players are found, hidden and banned ones are not. At most 100 hits, best points first; `url` is null for bots without a profile.",
+      "The website's search over all rankings (or one with `game`): every name a player used (`in=names`, at least 3 characters; `alias` is the used name that matched when it is not the current one), or a Steam ID in any of its forms (`in=steamid`, exact match only). Active and inactive players are found, hidden and banned ones are not. At most 100 hits, best points first; `url` is null for bots without a profile.",
     params: [
       { name: "q", in: "query", required: true, description: "Text to search for", schema: str("", { minLength: 1, maxLength: 64 }), example: "Example" },
       { name: "in", in: "query", description: "names (default) or steamid", schema: str("", { enum: ["names", "steamid"], default: "names" }) },

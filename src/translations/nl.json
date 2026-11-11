@@ -103,7 +103,7 @@
   "searchSteam": "Steam ID",
   "searchClans": "Clantags en -namen",
   "searchAllRankings": "(Alle)",
-  "searchShort": "Voer minstens 2 tekens in.",
+  "searchShort": "Voer minstens {n} tekens in.",
   "searchSteamHint": "Voer de volledige Steam ID in, bv. STEAM_0:1:12345, [U:1:24691] of 76561197960290419.",
   "searchUsedName": "ook als",
   "searchMore": "Er worden maximaal {n} resultaten getoond.",

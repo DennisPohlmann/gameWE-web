@@ -103,7 +103,7 @@
   "searchSteam": "Steam ID",
   "searchClans": "Ознаке и имена кланова",
   "searchAllRankings": "(Све)",
-  "searchShort": "Унесите најмање 2 знака.",
+  "searchShort": "Унесите најмање {n} знака.",
   "searchSteamHint": "Унесите цео Steam ID, нпр. STEAM_0:1:12345, [U:1:24691] или 76561197960290419.",
   "searchUsedName": "и као",
   "searchMore": "Приказује се највише {n} резултата.",

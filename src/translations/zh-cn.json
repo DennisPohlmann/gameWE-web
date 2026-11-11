@@ -103,7 +103,7 @@
   "searchSteam": "Steam ID",
   "searchClans": "战队标签和名称",
   "searchAllRankings": "（全部）",
-  "searchShort": "请至少输入 2 个字符。",
+  "searchShort": "请至少输入 {n} 个字符。",
   "searchSteamHint": "请输入完整的 Steam ID，例如 STEAM_0:1:12345、[U:1:24691] 或 76561197960290419。",
   "searchUsedName": "曾用名",
   "searchMore": "最多显示 {n} 条结果。",

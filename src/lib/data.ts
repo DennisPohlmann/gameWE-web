@@ -2618,6 +2618,9 @@ export type SearchHit = {
 export type ClanHit = { game: string; clanId: number; tag: string; name: string; members: number; skill: number | null };
 
 const SEARCH_LIMIT = 100;
+// A name search scans every used name (active and inactive players): shorter
+// texts match nearly all of them and take seconds.
+export const NAME_SEARCH_MIN = 3;
 
 // Search across the visible rankings (game "" = all), as on gameME's search
 // page: all names a player used, a Steam ID in any of its forms (exact, so
@@ -2634,6 +2637,7 @@ export async function searchPlayers(q: string, by: "names" | "uniqueid", game: s
       [`${y}:${z}`, `STEAM_0:${y}:${z}`, `STEAM_1:${y}:${z}`, `[U:1:${acc}]`, `U:1:${acc}`, ids.steam64],
     ], game);
   }
+  if (q.trim().length < NAME_SEARCH_MIN) return [];
   const rows = await searchHits(`SELECT playerId, MIN(name) AS alias FROM hlstats_PlayerNames WHERE name ${likeOp()} ? GROUP BY playerId`, [like(q)], game);
   return rows.map((r) => ({ ...r, alias: r.alias && r.alias !== r.name ? r.alias : null }));
 }

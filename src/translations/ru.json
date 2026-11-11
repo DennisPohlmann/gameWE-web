@@ -103,7 +103,7 @@
   "searchSteam": "Steam ID",
   "searchClans": "Теги и названия кланов",
   "searchAllRankings": "(Все)",
-  "searchShort": "Введите не менее 2 символов.",
+  "searchShort": "Введите не менее {n} символов.",
   "searchSteamHint": "Введите Steam ID полностью, например STEAM_0:1:12345, [U:1:24691] или 76561197960290419.",
   "searchUsedName": "также как",
   "searchMore": "Показано не более {n} результатов.",

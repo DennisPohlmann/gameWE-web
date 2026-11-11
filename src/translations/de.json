@@ -103,7 +103,7 @@
   "searchSteam": "Steam-ID",
   "searchClans": "Clan-Tags und -Namen",
   "searchAllRankings": "(Alle)",
-  "searchShort": "Bitte mindestens 2 Zeichen eingeben.",
+  "searchShort": "Bitte mindestens {n} Zeichen eingeben.",
   "searchSteamHint": "Ganze Steam-ID eingeben, z. B. STEAM_0:1:12345, [U:1:24691] oder 76561197960290419.",
   "searchUsedName": "auch als",
   "searchMore": "Es werden höchstens {n} Treffer gezeigt.",

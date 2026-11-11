@@ -103,7 +103,7 @@
   "searchSteam": "Steam ID",
   "searchClans": "Tagi i nazwy klanów",
   "searchAllRankings": "(Wszystkie)",
-  "searchShort": "Wpisz co najmniej 2 znaki.",
+  "searchShort": "Wpisz co najmniej {n} znaki.",
   "searchSteamHint": "Wpisz pełne Steam ID, np. STEAM_0:1:12345, [U:1:24691] lub 76561197960290419.",
   "searchUsedName": "również jako",
   "searchMore": "Wyświetlanych jest najwyżej {n} wyników.",

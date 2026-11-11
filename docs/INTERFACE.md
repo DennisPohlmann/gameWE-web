@@ -111,7 +111,7 @@ website's # column) and `rank` (the place in the whole ranking by points);
 | `/api/v1/servers` | all servers |
 | `/api/v1/stats?days=30` | totals over all rankings, the start page's general statistics and the activity per day (with the clans active that day) |
 | `/api/v1/activity?days=30` | the start page's load chart and card lines: players online, servers with players, kills and headshots per 15 minutes |
-| `/api/v1/search/players?q=<text>` | the search over all rankings (`in=names\|steamid`, `game`); at most 100 hits, active and inactive players (`hlstats_PlayersInactive`), hidden and banned players are not found |
+| `/api/v1/search/players?q=<text>` | the search over all rankings (`in=names\|steamid`, `game`; a name at least 3 characters); at most 100 hits, active and inactive players (`hlstats_PlayersInactive`), hidden and banned players are not found |
 | `/api/v1/search/clans?q=<text>` | clan search by tag or name |
 | `/api/v1/points` | the help page's point rules and the bot settings per ranking |
 | `/api/v1/voice` | the voice server box (TeamSpeak or Discord) |
