@@ -23,6 +23,15 @@ import { resolveTemplate, themeStyle } from "@/lib/templates";
 import { previewSkinOf, SKIN_PREVIEW_COOKIE } from "@/lib/skin-preview";
 import { env } from "@/lib/env";
 import { Reveal } from "@/components/reveal";
+// Self-hosted fonts (OFL-1.1, no font CDN): Noto Sans for the classic designs,
+// Inter for the modern ones. Next bundles the files; the browser only loads
+// the weights and scripts a page uses (unicode-range).
+import "@fontsource/noto-sans/400.css";
+import "@fontsource/noto-sans/700.css";
+import "@fontsource/inter/400.css";
+import "@fontsource/inter/600.css";
+import "@fontsource/inter/700.css";
+import "@fontsource/inter/800.css";
 import "./globals.css";
 
 // Every page reads live data from the collector's database.

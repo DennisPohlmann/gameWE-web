@@ -130,7 +130,7 @@ body {
   color: var(--text);
   background-color: var(--page);
   background-image: var(--page-pattern);
-  font: 11px/1.4 Verdana, Arial, sans-serif;
+  font: 11px/1.4 "Noto Sans", Verdana, Arial, sans-serif;
 }
 
 a { color: var(--text); text-decoration: underline; }
@@ -581,7 +581,7 @@ a.player { color: var(--text); }
 .flag-blank { display: inline-block; width: 16px; height: 12px; }
 .mini-avatar { width: 20px; height: 20px; aspect-ratio: 1 / 1; object-fit: cover; vertical-align: middle; margin: -3px 5px -2px 0; border: 1px solid var(--border, #444); border-radius: 2px; }
 /* Headshot badge: a red pill with a crosshair, readable on every skin. */
-.hs { display: inline-flex; align-items: center; gap: 2px; margin-left: 5px; padding: 0 5px 0 3px; border-radius: 8px; background: #c62828; color: #fff; font: bold 9px/14px Verdana, sans-serif; letter-spacing: 0.3px; vertical-align: 1px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25); white-space: nowrap; }
+.hs { display: inline-flex; align-items: center; gap: 2px; margin-left: 5px; padding: 0 5px 0 3px; border-radius: 8px; background: #c62828; color: #fff; font: bold 9px/14px "Noto Sans", Verdana, sans-serif; letter-spacing: 0.3px; vertical-align: 1px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25); white-space: nowrap; }
 .hs::before { content: ""; width: 9px; height: 9px; background: no-repeat center / contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2'%3E%3Ccircle cx='8' cy='8' r='5'/%3E%3Cpath d='M8 0v5M8 11v5M0 8h5M11 8h5'/%3E%3C/svg%3E"); }
 
 .bar { display: inline-block; vertical-align: middle; width: 70px; height: 9px; background: var(--bar-bg); border: 1px solid var(--bar-border); overflow: hidden; margin-right: 6px; }
@@ -593,9 +593,9 @@ a.player { color: var(--text); }
 .pbar.good .pbar-fill { background: linear-gradient(#8fe28f, #2e9e2e); }
 .pbar.low .pbar-fill { background: linear-gradient(#ffe680, #d9b300); }
 .pbar.share .pbar-fill { background: linear-gradient(#7fb6ff, #2f6fc0); }
-.pbar-text { position: relative; display: block; font: bold 10px/14px Verdana, sans-serif; text-align: center; color: #fff; text-shadow: 0 0 2px #000, 0 0 1px #000; font-variant-numeric: tabular-nums; }
+.pbar-text { position: relative; display: block; font: bold 10px/14px "Noto Sans", Verdana, sans-serif; text-align: center; color: #fff; text-shadow: 0 0 2px #000, 0 0 1px #000; font-variant-numeric: tabular-nums; }
 /* CT/T round wins: blue left, red right, the percentages inside. */
-.winbar { display: inline-flex; vertical-align: middle; width: 100px; height: 14px; border: 1px solid var(--bar-border); border-radius: 2px; overflow: hidden; background: var(--bar-bg); font: bold 10px/14px Verdana, sans-serif; color: #fff; text-shadow: 0 0 2px #000, 0 0 1px #000; font-variant-numeric: tabular-nums; }
+.winbar { display: inline-flex; vertical-align: middle; width: 100px; height: 14px; border: 1px solid var(--bar-border); border-radius: 2px; overflow: hidden; background: var(--bar-bg); font: bold 10px/14px "Noto Sans", Verdana, sans-serif; color: #fff; text-shadow: 0 0 2px #000, 0 0 1px #000; font-variant-numeric: tabular-nums; }
 .winbar > span { display: block; text-align: center; white-space: nowrap; overflow: hidden; }
 .winbar-ct { background: linear-gradient(#7fb6ff, #2f6fc0); }
 .winbar-t { background: linear-gradient(#ff8a80, #c62828); }
@@ -928,7 +928,7 @@ img.sig { max-width: 100%; height: auto; }
 
 /* ---------------------------------------------------------------- forms */
 
-input, select, textarea, button { font: 11px Verdana, Arial, sans-serif; vertical-align: middle; }
+input, select, textarea, button { font: 11px "Noto Sans", Verdana, Arial, sans-serif; vertical-align: middle; }
 .search { display: flex; gap: 4px; }
 .search input, .search select { background: var(--input-bg); color: var(--input-text); border: 1px solid var(--input-border); padding: 2px 4px; width: 160px; }
 .place-select select { width: auto; max-width: 13rem; }
@@ -1271,7 +1271,7 @@ table.spaced { margin-top: 10px; }
 .swatch.gain { background: var(--chart-gain); }
 .swatch.loss { background: var(--chart-loss); }
 .load-chart svg { height: auto; max-width: 1100px; }
-.bot-tag { display: inline-block; width: 16px; height: 12px; margin-right: 2px; vertical-align: -1px; overflow: hidden; font: bold 7px/13px Verdana, sans-serif; letter-spacing: -0.4px; text-align: center; color: #fff; background: linear-gradient(#8a8f98, #5c616b); border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18), 0 1px 1px rgba(0, 0, 0, 0.25); }
+.bot-tag { display: inline-block; width: 16px; height: 12px; margin-right: 2px; vertical-align: -1px; overflow: hidden; font: bold 7px/13px "Noto Sans", Verdana, sans-serif; letter-spacing: -0.4px; text-align: center; color: #fff; background: linear-gradient(#8a8f98, #5c616b); border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18), 0 1px 1px rgba(0, 0, 0, 0.25); }
 /* Players online "1 (31 BOT) / 48" (components/player-count.tsx): on one line, the tag right before ")". */
 .player-count { white-space: nowrap; }
 .player-count .bot-tag { margin-right: 0; }
@@ -1298,7 +1298,7 @@ table.spaced { margin-top: 10px; }
 .map-avatar a { position: relative; display: block; width: 30px; height: 30px; text-decoration: none; }
 .map-avatar img,
 .map-avatar span { display: block; width: 30px; height: 30px; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px #555, 0 1px 3px rgba(0, 0, 0, 0.5); background: #666; }
-.map-avatar span { color: #fff; font: bold 13px/26px Verdana, sans-serif; text-align: center; }
+.map-avatar span { color: #fff; font: bold 13px/26px "Noto Sans", Verdana, sans-serif; text-align: center; }
 .map-avatar img { position: absolute; top: 0; left: 0; object-fit: cover; opacity: 0; transition: opacity 0.2s; }
 .map-avatar img.ok { opacity: 1; }
 .map-avatar:hover { z-index: 1000 !important; }
@@ -1370,7 +1370,7 @@ table.spaced { margin-top: 10px; }
 .srv-dot.on { background: #34c759; }
 .srv-list { margin: 4px 0 0; padding: 0; list-style: none; }
 .srv-list li { margin: 3px 0; white-space: nowrap; }
-.leaflet-tooltip { font: 11px/1.4 Verdana, Arial, sans-serif; }
+.leaflet-tooltip { font: 11px/1.4 "Noto Sans", Verdana, Arial, sans-serif; }
 /* A hover box pushed in from the map's side keeps its arrow on the marker. */
 .player-map .leaflet-tooltip-top::before,
 .player-map .leaflet-tooltip-bottom::before { margin-left: calc(-6px - var(--tip-shift, 0px)); }
@@ -1384,7 +1384,7 @@ table.spaced { margin-top: 10px; }
 /* Ban badges: solid yellow VAC, solid red SourceBans and server bans, with
    a darker edge so they stand out on every skin; a source that does not
    apply is an outline in the skin's muted colour (readable, clearly off). */
-.ban-type { display: inline-block; padding: 0 8px; border: 1px solid transparent; border-radius: 3px; font: bold 11px/18px Verdana, sans-serif; text-align: center; white-space: nowrap; color: #fff; background: #6b6b6b; }
+.ban-type { display: inline-block; padding: 0 8px; border: 1px solid transparent; border-radius: 3px; font: bold 11px/18px "Noto Sans", Verdana, sans-serif; text-align: center; white-space: nowrap; color: #fff; background: #6b6b6b; }
 .ban-vac { background: #f5c518; color: #1a1400; border-color: #a88600; }
 .ban-sourcebans, .ban-sourcemod, .ban-amx, .ban-engine { background: #c0392b; border-color: #7f1d14; }
 .ban-type.ban-lifted { background: #6b6b6b; color: #ddd; border-color: transparent; }
@@ -1398,7 +1398,7 @@ th.ban-type-col, td.ban-type-col { text-align: center; }
    flag: yellow for VAC, red for SourceBans and server bans, split diagonally
    (red top left, yellow bottom right, black "!") when both run. The reason shows on
    hover and on tap (focus), in every skin with fixed colours. */
-.ban-mark { position: relative; display: inline-block; width: 12px; height: 12px; margin-left: 4px; border-radius: 2px; font: bold 10px/12px Verdana, sans-serif; text-align: center; vertical-align: -1px; cursor: help; color: #fff; background: #b0281e; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35); }
+.ban-mark { position: relative; display: inline-block; width: 12px; height: 12px; margin-left: 4px; border-radius: 2px; font: bold 10px/12px "Noto Sans", Verdana, sans-serif; text-align: center; vertical-align: -1px; cursor: help; color: #fff; background: #b0281e; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35); }
 .ban-mark > span { position: absolute; inset: 0; }
 .ban-mark.ban-mark-vac { color: #2b2200; background: #f5c518; }
 .ban-mark.ban-mark-both { color: #000; background: linear-gradient(to bottom right, #b0281e 50%, #f5c518 50%); }
@@ -1425,9 +1425,9 @@ a.ban-type.ban-sourcebans:hover, a.ban-type.ban-sourcebans:focus { background: #
 .ban-type[data-tip]:focus-visible { outline: 2px solid #f5c518; outline-offset: 1px; }
 /* The details box (ban-tips.tsx): fixed to the viewport and kept inside it,
    so no table cuts it off; the mark lists every ban, one per line. */
-.ban-tip { position: fixed; z-index: 60; width: max-content; max-width: min(320px, calc(100vw - 16px)); padding: 4px 7px; border-radius: 3px; font: normal 11px/1.4 Verdana, sans-serif; text-align: left; white-space: pre-line; overflow-wrap: anywhere; color: #fff; background: #1e1e1e; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); pointer-events: none; }
+.ban-tip { position: fixed; z-index: 60; width: max-content; max-width: min(320px, calc(100vw - 16px)); padding: 4px 7px; border-radius: 3px; font: normal 11px/1.4 "Noto Sans", Verdana, sans-serif; text-align: left; white-space: pre-line; overflow-wrap: anywhere; color: #fff; background: #1e1e1e; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); pointer-events: none; }
 /* Without JavaScript: the same box in CSS below the badge. */
-html:not(.ban-tips-js) .ban-mark[data-tip]:hover::after, html:not(.ban-tips-js) .ban-mark[data-tip]:focus::after, html:not(.ban-tips-js) .ban-type[data-tip]:hover::after, html:not(.ban-tips-js) .ban-type[data-tip]:focus::after { content: attr(data-tip); position: absolute; z-index: 30; left: 0; top: calc(100% + 4px); width: max-content; max-width: min(320px, 80vw); padding: 4px 7px; border-radius: 3px; font: normal 11px/1.4 Verdana, sans-serif; text-align: left; white-space: normal; color: #fff; background: #1e1e1e; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); }
+html:not(.ban-tips-js) .ban-mark[data-tip]:hover::after, html:not(.ban-tips-js) .ban-mark[data-tip]:focus::after, html:not(.ban-tips-js) .ban-type[data-tip]:hover::after, html:not(.ban-tips-js) .ban-type[data-tip]:focus::after { content: attr(data-tip); position: absolute; z-index: 30; left: 0; top: calc(100% + 4px); width: max-content; max-width: min(320px, 80vw); padding: 4px 7px; border-radius: 3px; font: normal 11px/1.4 "Noto Sans", Verdana, sans-serif; text-align: left; white-space: normal; color: #fff; background: #1e1e1e; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); }
 html:not(.ban-tips-js) .ban-mark[data-tip]:hover::after, html:not(.ban-tips-js) .ban-mark[data-tip]:focus::after { white-space: pre-line; }
 html:not(.ban-tips-js) .ban-type[data-tip]:hover::after, html:not(.ban-tips-js) .ban-type[data-tip]:focus::after { left: auto; right: 0; max-width: min(260px, 62vw); }
 td.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9em; }
@@ -1537,7 +1537,7 @@ td.ribbon-wall a { display: inline-flex; flex-direction: column; align-items: ce
 /* Map page: the map picture (a "?" while there is none) beside its facts. */
 .map-details { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; padding: 10px; }
 .map-image-cell { display: flex; align-items: center; justify-content: flex-start; min-width: 0; }
-.map-image { width: 240px; max-width: 100%; aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; border: 1px solid var(--bar-border); background: var(--bar-bg); color: var(--muted); font: bold 56px/1 Verdana, sans-serif; box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.25); }
+.map-image { width: 240px; max-width: 100%; aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; border: 1px solid var(--bar-border); background: var(--bar-bg); color: var(--muted); font: bold 56px/1 "Noto Sans", Verdana, sans-serif; box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.25); }
 .map-facts { min-width: 0; }
 @media (max-width: 700px) { .map-details { grid-template-columns: minmax(0, 1fr); } .map-image-cell { justify-content: center; } .map-image { width: 200px; } }
 .map-facts h3 { margin: 0 0 6px; font-size: 16px; overflow-wrap: anywhere; }
@@ -1631,16 +1631,9 @@ td.ribbon-wall a { display: inline-flex; flex-direction: column; align-items: ce
 .lic-table th:nth-child(4) { width: 26%; }
 
 
-/* Windows and macOS (data-os set by the layout from the user agent): Verdana
-   at 9-11px renders poorly there, so use the system UI font (Segoe UI hints
-   well with ClearType) and lift the smallest sizes. Linux has no data-os and
-   keeps the rules above unchanged. */
-html[data-os] body,
-html[data-os] input, html[data-os] select, html[data-os] textarea, html[data-os] button,
-html[data-os] .leaflet-tooltip,
-html[data-os] .hs, html[data-os] .pbar-text, html[data-os] .winbar, html[data-os] .map-avatar span, html[data-os] .ban-type, html[data-os] .ban-tip {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Verdana, Arial, sans-serif;
-}
+/* Windows and macOS (data-os set by the layout from the user agent): small
+   text renders thinner there, so lift the smallest sizes. Linux has no
+   data-os and keeps the rules above unchanged. */
 html[data-os] body,
 html[data-os] input, html[data-os] select, html[data-os] textarea, html[data-os] button,
 html[data-os] .leaflet-tooltip { font-size: 12px; }

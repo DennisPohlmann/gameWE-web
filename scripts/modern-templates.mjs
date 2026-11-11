@@ -304,7 +304,7 @@ function themeCss(v) {
     "--m-width": "940px",
     "--m-gutter": "16px",
     "--m-radius": "5px",
-    "--m-font": '"Helvetica Neue", Helvetica, Arial, sans-serif',
+    "--m-font": 'Inter, "Helvetica Neue", Helvetica, Arial, sans-serif',
     "--m-on-accent": v.on,
     ...b.own,
     ...Object.fromEntries(Object.entries(v.vars ?? {}).filter(([k]) => k.startsWith("--m-"))),

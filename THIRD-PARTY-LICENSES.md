@@ -120,6 +120,18 @@ carry the same licenses as their linux-x64 counterparts.
 |---------|---------|---------|
 | caniuse-lite | 1.0.30001826 | https://github.com/browserslist/caniuse-lite (browser support data, used at build time) |
 
+### OFL-1.1
+
+Fonts, served by this site itself (no font CDN). They are separate files
+next to the program, not linked with its code, so the OFL fits a
+GPL-3.0-or-later program. The license text with the copyright line ships
+as `public/vendor/fonts/<name>-LICENSE.txt` (copied by `scripts/vendor.mjs`).
+
+| Package | Version | Project |
+|---------|---------|---------|
+| @fontsource/inter | 5.3.0 | https://github.com/rsms/inter (Inter, modern designs) |
+| @fontsource/noto-sans | 5.3.0 | https://github.com/notofonts/latin-greek-cyrillic (Noto Sans, classic designs) |
+
 ## Bundled inside Next.js
 
 `next/dist/compiled/@vercel/og` (used by `next/og` for the forum signatures

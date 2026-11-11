@@ -58,7 +58,7 @@ html[data-skin] {
   --m-width: 940px;
   --m-gutter: 16px;
   --m-radius: 5px;
-  --m-font: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --m-font: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
   --m-on-accent: #111111;
   --m-head: #232325;
   --m-bar: #09090a;

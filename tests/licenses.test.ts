@@ -15,8 +15,9 @@ test("the npm list matches package-lock.json", () => {
 });
 
 // Licenses usable in a GPL-3.0-or-later program (an expression with AND
-// needs every part).
-const OK = new Set(["MIT", "ISC", "0BSD", "BSD-2-Clause", "BSD-3-Clause", "Apache-2.0", "MPL-2.0", "LGPL-3.0-or-later", "CC-BY-4.0"]);
+// needs every part). OFL-1.1: font files shipped next to the program, which
+// the OFL allows (no linking with the GPL code).
+const OK = new Set(["MIT", "ISC", "0BSD", "BSD-2-Clause", "BSD-3-Clause", "Apache-2.0", "MPL-2.0", "LGPL-3.0-or-later", "CC-BY-4.0", "OFL-1.1"]);
 
 test("every npm license is known and compatible", () => {
   for (const r of list) {

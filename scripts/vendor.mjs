@@ -1,6 +1,7 @@
 // Runs before `next dev` and `next build`:
 // 1. copies the Scalar API reference (MIT, a devDependency) to
 //    public/vendor/scalar/, so /api serves it from this site, no CDN;
+//    and the license texts of the self-hosted fonts to public/vendor/fonts/;
 // 2. fails when a route under src/app/api/v1 has no entry in
 //    src/lib/openapi.ts, so the documentation on /api stays complete.
 import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
@@ -17,6 +18,14 @@ const bundle = readFileSync(join(scalar, "dist/browser/standalone.js"), "utf8").
 writeFileSync(join(out, "standalone.js"), bundle);
 // api-reference has no LICENSE file of its own; its @scalar packages carry the same MIT text.
 writeFileSync(join(out, "LICENSE.txt"), readFileSync(join(root, "node_modules/@scalar/components/LICENSE")));
+
+// The fonts (OFL-1.1) are bundled by Next into .next/static/media without
+// their license; the OFL wants it shipped with them.
+const fonts = join(root, "public/vendor/fonts");
+mkdirSync(fonts, { recursive: true });
+for (const name of ["inter", "noto-sans"]) {
+  writeFileSync(join(fonts, `${name}-LICENSE.txt`), readFileSync(join(root, `node_modules/@fontsource/${name}/LICENSE`)));
+}
 
 const v1 = join(root, "src/app/api/v1");
 const routes = [];
