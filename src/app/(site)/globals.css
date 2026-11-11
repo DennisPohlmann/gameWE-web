@@ -835,7 +835,7 @@ td.radar-cell { width: 1%; text-align: center; vertical-align: middle; }
 td.career { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 10px; }
 /* Career row: each badge a button with a detail box (rank-tips.tsx). The box
    takes the colours of the chart hover boxes, so it fits every template. */
-.rank-tips { display: contents; }
+.rank-tips, .rank-cell-tips { display: contents; }
 .rank-tip-btn { display: inline-flex; padding: 0; margin: 0; border: 0; border-radius: 4px; background: none; color: inherit; font: inherit; line-height: 0; cursor: help; }
 .rank-tip-btn:focus-visible, .rank-tip-btn.open { outline: 2px solid var(--accent-text); outline-offset: 2px; }
 .chart-tip.rank-tip { position: fixed; z-index: 50; transform: none; display: flex; flex-direction: column; gap: 1px; min-width: 150px; width: max-content; max-width: min(260px, calc(100vw - 16px)); white-space: normal; }

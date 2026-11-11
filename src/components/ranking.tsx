@@ -1,6 +1,7 @@
 import { Flag, PctBar, PlayerLink, SortTh, TableWrap } from "@/components/ui";
 import Link from "next/link";
 import { RankCell } from "@/components/rank-cell";
+import { RankCellTips } from "@/components/rank-cell-tips";
 import { getRanks } from "@/lib/awards";
 import { gameHasShots, unlinkedBots, type PlaceRow, type RankingRow } from "@/lib/data";
 import { activity, fmtDate, fmtDuration, fmtNum, fmtPct, kpd, ratio } from "@/lib/format";
@@ -84,7 +85,7 @@ export async function RankingTable({
         </td>
         {ranks.length ? (
           <td className="rankcell">
-            <RankCell kills={Number(r.careerKills)} ranks={ranks} t={t} lang={lang} />
+            <RankCell kills={Number(r.careerKills)} ranks={ranks} />
           </td>
         ) : null}
         {showGlobalRank ? <td className="num hide-sm">{fmtNum(Number(r.globalRank ?? 0), lang)}</td> : null}
@@ -148,6 +149,13 @@ export async function RankingTable({
           </tbody>
         ) : null}
       </table>
+      {ranks.length ? (
+        <RankCellTips
+          ranks={ranks}
+          lang={lang}
+          texts={{ noRankYet: t.noRankYet, currentRank: t.currentRank, kills: t.kills, nextRankName: t.nextRankName, killsNeeded: t.killsNeeded, topRank: t.topRank }}
+        />
+      ) : null}
     </TableWrap>
   );
 }
