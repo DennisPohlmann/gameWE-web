@@ -59,7 +59,7 @@ export default async function HallOfFameEditPage({ params, searchParams }: { par
         intro={t.intro}
         actions={
           <>
-            <Link className="button" href={`${back}#hall-of-fame`}>
+            <Link prefetch={false} className="button" href={`${back}#hall-of-fame`}>
               {t.settings}
             </Link>
             {periods.length ? (
@@ -116,7 +116,7 @@ export default async function HallOfFameEditPage({ params, searchParams }: { par
                       <td className="num">{place ? `${place}.` : "–"}</td>
                       <td className="main">
                         {e.currentName !== null ? (
-                          <Link className="name" href={`/admin/players/${e.playerId}`}>
+                          <Link prefetch={false} className="name" href={`/admin/players/${e.playerId}`}>
                             {e.currentName}
                           </Link>
                         ) : (

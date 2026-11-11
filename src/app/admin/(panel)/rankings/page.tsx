@@ -55,7 +55,7 @@ export default async function RankingsPage({ searchParams }: { searchParams: Pro
         intro={u.rankingsIntro}
         actions={
           isAdmin ? (
-            <Link className="button primary" href="/admin/games/new">
+            <Link prefetch={false} className="button primary" href="/admin/games/new">
               <Icon name="plus" />
               {u.newRanking}
             </Link>
@@ -64,11 +64,11 @@ export default async function RankingsPage({ searchParams }: { searchParams: Pro
       />
       <div className="view-switch">
         <span className="adm-seg" role="group" aria-label={u.viewChoose}>
-          <Link href="/admin/rankings" className={templates ? undefined : "on"} aria-current={templates ? undefined : "page"}>
+          <Link prefetch={false} href="/admin/rankings" className={templates ? undefined : "on"} aria-current={templates ? undefined : "page"}>
             <Icon name="server" />
             {u.viewRankings} <span className="n">{nf(active.length)}</span>
           </Link>
-          <Link href="/admin/rankings?view=templates" className={templates ? "on" : undefined} aria-current={templates ? "page" : undefined}>
+          <Link prefetch={false} href="/admin/rankings?view=templates" className={templates ? "on" : undefined} aria-current={templates ? "page" : undefined}>
             <Icon name="list" />
             {u.viewTemplates} <span className="n">{nf(spare.length)}</span>
           </Link>
@@ -95,7 +95,7 @@ export default async function RankingsPage({ searchParams }: { searchParams: Pro
                     {nf(r.order)}
                   </td>
                   <td className="main">
-                    <Link className="name" href={`/admin/rankings/${encodeURIComponent(r.code)}`}>
+                    <Link prefetch={false} className="name" href={`/admin/rankings/${encodeURIComponent(r.code)}`}>
                       {r.name}
                     </Link>{" "}
                     <span className="subt">{r.code}</span>
@@ -109,7 +109,7 @@ export default async function RankingsPage({ searchParams }: { searchParams: Pro
                   </td>
                   <td>{state(r)}</td>
                   <td className="end num">
-                    <Link className="button small" href={`/admin/rankings/${encodeURIComponent(r.code)}`}>
+                    <Link prefetch={false} className="button small" href={`/admin/rankings/${encodeURIComponent(r.code)}`}>
                       {u.manage}
                     </Link>
                   </td>

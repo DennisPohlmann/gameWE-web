@@ -24,7 +24,7 @@ export async function HallOfFameCard({ game, lang, status }: { game: string; lan
       <header>
         <h2>{t.title}</h2>
         <span className="hof-links">
-          <Link className="more" href={`/admin/rankings/${encodeURIComponent(game)}/hall-of-fame`}>
+          <Link prefetch={false} className="more" href={`/admin/rankings/${encodeURIComponent(game)}/hall-of-fame`}>
             {t.edit}
           </Link>
           {s.entries ? (
@@ -57,7 +57,7 @@ export async function HallOfFameCard({ game, lang, status }: { game: string; lan
               {v === "global" ? (
                 <small>
                   {f(t.globalNow, { s: s.global.schedule ? scheduleText(lang, s.global.schedule) : ht.units.off })}{" "}
-                  <Link href="/admin/reset#hall-of-fame">{t.globalEdit}</Link>
+                  <Link prefetch={false} href="/admin/reset#hall-of-fame">{t.globalEdit}</Link>
                 </small>
               ) : null}
             </label>

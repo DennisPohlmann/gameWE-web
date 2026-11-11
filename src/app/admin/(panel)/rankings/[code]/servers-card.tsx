@@ -64,10 +64,10 @@ export async function ServersCard({ id, code, lang, sp }: { id: number; code: st
         <h2>
           {u.serversHere} <span className="pill">{nf(mine.length)}</span>
         </h2>
-        <Link className="more" href={`/admin/servers?game=${encodeURIComponent(code)}`}>
+        <Link prefetch={false} className="more" href={`/admin/servers?game=${encodeURIComponent(code)}`}>
           {u.serverList}
         </Link>
-        <Link className="button small primary" href={newServerHref(code)}>
+        <Link prefetch={false} className="button small primary" href={newServerHref(code)}>
           <Icon name="plus" />
           {u.addServer}
         </Link>
@@ -96,7 +96,7 @@ export async function ServersCard({ id, code, lang, sp }: { id: number; code: st
                     {nf(Number(s.display_id ?? 0))}
                   </td>
                   <td className="main wrap-cell">
-                    <Link className="name" href={`/admin/servers/${s.serverId}?returnTo=${returnTo}`}>
+                    <Link prefetch={false} className="name" href={`/admin/servers/${s.serverId}?returnTo=${returnTo}`}>
                       <GameIcon realgame={base} />
                       {s.name || `${s.address}:${s.port}`}
                     </Link>
@@ -132,7 +132,7 @@ export async function ServersCard({ id, code, lang, sp }: { id: number; code: st
                     ) : null}
                   </td>
                   <td className="end num">
-                    <Link className="button small" href={`/admin/servers/${s.serverId}?returnTo=${returnTo}`}>
+                    <Link prefetch={false} className="button small" href={`/admin/servers/${s.serverId}?returnTo=${returnTo}`}>
                       {a.edit}
                     </Link>
                   </td>

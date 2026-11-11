@@ -112,7 +112,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
         ]}
         title={isNew ? `${tr(e.label, lang)}: ${a.new}` : title}
         actions={
-          <Link className="button" href={back}>
+          <Link prefetch={false} className="button" href={back}>
             ← {a.back}
           </Link>
         }
@@ -133,7 +133,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
           {dup ? (
             <>
               {" "}
-              <Link href={`/admin/servers/${dup}`}>{a.serverExistsOpen} →</Link>
+              <Link prefetch={false} href={`/admin/servers/${dup}`}>{a.serverExistsOpen} →</Link>
             </>
           ) : null}
         </p>

@@ -90,20 +90,20 @@ export default async function AdminIps({ searchParams }: { searchParams: Promise
                         {r.ip === "-" ? (
                           "-"
                         ) : (
-                          <Link href={`${base}?q=${encodeURIComponent(r.ip)}`} title={a.ipsSame}>
+                          <Link prefetch={false} href={`${base}?q=${encodeURIComponent(r.ip)}`} title={a.ipsSame}>
                             {r.ip}
                           </Link>
                         )}
                       </td>
                       <td>
                         {r.game ? (
-                          <Link href={`/${encodeURIComponent(r.game)}/players/${r.playerId}/ips`}>{r.name || `#${r.playerId}`}</Link>
+                          <Link prefetch={false} href={`/${encodeURIComponent(r.game)}/players/${r.playerId}/ips`}>{r.name || `#${r.playerId}`}</Link>
                         ) : (
                           r.name || `#${r.playerId}`
                         )}
                       </td>
                       <td className="hide-sm nowrap">
-                        {r.uniqueId ? <Link href={`${base}?q=${encodeURIComponent(r.uniqueId)}`}>{r.uniqueId}</Link> : "-"}
+                        {r.uniqueId ? <Link prefetch={false} href={`${base}?q=${encodeURIComponent(r.uniqueId)}`}>{r.uniqueId}</Link> : "-"}
                       </td>
                       <td className="hide-sm">{gameName.get(r.game) ?? r.game}</td>
                       <td className="num">{fmtNum(r.connects, lang)}</td>

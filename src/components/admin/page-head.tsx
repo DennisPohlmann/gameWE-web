@@ -28,7 +28,7 @@ export async function PageHead({
           <ol>
             {trail.map(([label, href], i) => (
               <li key={i} aria-current={i === trail.length - 1 ? "page" : undefined}>
-                {href && i < trail.length - 1 ? <Link href={href}>{label}</Link> : <span>{label}</span>}
+                {href && i < trail.length - 1 ? <Link prefetch={false} href={href}>{label}</Link> : <span>{label}</span>}
               </li>
             ))}
           </ol>

@@ -103,7 +103,7 @@ export function AreaTabs({ t, className }: { t: NavText; className: string }) {
   return (
     <nav className={className} aria-label={t.menu}>
       {AREAS.map(([key, href, icon, label]) => (
-        <Link
+        <Link prefetch={false}
           key={key}
           href={key === "rankings" && game ? `/admin/rankings/${encodeURIComponent(game)}` : href}
           className={area === key ? "on" : undefined}
@@ -125,7 +125,7 @@ export function AreaTabs({ t, className }: { t: NavText; className: string }) {
 
 function Item({ href, icon, label, on, count }: { href: string; icon: IconName; label: string; on: boolean; count?: number }) {
   return (
-    <Link href={href} className={on ? "on" : undefined} aria-current={on ? "page" : undefined}>
+    <Link prefetch={false} href={href} className={on ? "on" : undefined} aria-current={on ? "page" : undefined}>
       <Icon name={icon} />
       <span>{label}</span>
       {count !== undefined ? <span className="n">{count.toLocaleString()}</span> : null}
@@ -198,7 +198,7 @@ export function AdminSidebar({
       </div>
       <nav className="adm-side-areas" aria-label={t.areas}>
         {AREAS.map(([key, href, icon, label]) => (
-          <Link key={key} href={href} className={area === key ? "on" : undefined}>
+          <Link prefetch={false} key={key} href={href} className={area === key ? "on" : undefined}>
             <Icon name={icon} />
             {t[label]}
           </Link>
@@ -235,14 +235,14 @@ export function AdminSidebar({
               <Icon name="chevron" />
             </summary>
             <div className="adm-picker-list" role="list">
-              <Link href={pickHref("")} className={current ? undefined : "on"} onClick={closePicker}>
+              <Link prefetch={false} href={pickHref("")} className={current ? undefined : "on"} onClick={closePicker}>
                 <span className="adm-gtag">∗</span>
                 {t.noRanking}
               </Link>
               {/* No templates (seeded rankings without servers), except the
                   one whose definitions are open now. */}
               {rankings.filter((r) => !r.template || r.code === game).map((r) => (
-                <Link key={r.code} href={pickHref(r.code)} className={r.code === game ? "on" : undefined} onClick={closePicker}>
+                <Link prefetch={false} key={r.code} href={pickHref(r.code)} className={r.code === game ? "on" : undefined} onClick={closePicker}>
                   <span className="adm-gtag">{r.tag}</span>
                   <span>
                     {r.name}
@@ -344,7 +344,7 @@ export function AdminSidebar({
           typeof l === "string" ? (
             <span key={l}>{l}</span>
           ) : l.state ? (
-            <Link key={l.href} className={`adm-collector ${l.state}`} href={l.href}>
+            <Link prefetch={false} key={l.href} className={`adm-collector ${l.state}`} href={l.href}>
               <i aria-hidden="true" />
               {l.text}
             </Link>

@@ -72,7 +72,7 @@ export default async function CollectorPage() {
       ),
     ],
     [u.cSchema, schema ? `${fill(u.cSchemaVersion, { v: String(schema.version) })}${schema.at ? ` · ${schema.at.slice(0, 19)}` : ""}` : u.cSchemaUnknown],
-    [u.cJobs, <Link href="/admin/jobs">{open === null ? "–" : open ? fill(u.cJobsOpen, { n: String(open) }) : u.cJobsNone}</Link>],
+    [u.cJobs, <Link prefetch={false} href="/admin/jobs">{open === null ? "–" : open ? fill(u.cJobsOpen, { n: String(open) }) : u.cJobsNone}</Link>],
   ];
   return (
     <>

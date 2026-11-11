@@ -86,7 +86,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
         <label htmlFor="adm-nav" className="adm-icon-btn adm-burger" aria-label={u.menu}>
           <Icon name="menu" />
         </label>
-        <Link href="/admin" className="adm-brand">
+        <Link prefetch={false} href="/admin" className="adm-brand">
           <Logo />
           <span>
             game<b>WE</b>
@@ -120,7 +120,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
               <b>{user.username}</b>
               <small>{isAdmin ? "Admin (100)" : `${user.acclevel}`}</small>
             </p>
-            <Link href="/admin/account">
+            <Link prefetch={false} href="/admin/account">
               <Icon name="lock" />
               {u.myAccount}
             </Link>

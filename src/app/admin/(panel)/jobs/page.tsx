@@ -190,7 +190,7 @@ export default async function JobsPage() {
                   <td>{x.state}</td>
                   <td className="end num">
                     {x.link ? (
-                      <Link className="button small" href={x.link}>
+                      <Link prefetch={false} className="button small" href={x.link}>
                         {t.openRanking}
                       </Link>
                     ) : null}

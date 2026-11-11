@@ -175,7 +175,7 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
         <ul className="todo values">
           {LISTS.map(([key, icon], i) => (
             <li key={key}>
-              <Link className="todo-link" href={`/admin/${key}${q}`} title={shown[key]?.[2]}>
+              <Link prefetch={false} className="todo-link" href={`/admin/${key}${q}`} title={shown[key]?.[2]}>
                 <span className="ic">
                   <Icon name={icon} />
                 </span>
@@ -206,7 +206,7 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
             ) : (
               <div className="body maintenance">
                 <p>{u.maintenanceIntro}</p>
-                <Link className="button danger" href={`/admin/reset${q}`}>
+                <Link prefetch={false} className="button danger" href={`/admin/reset${q}`}>
                   <Icon name="reset" />
                   {u.resetRanking} …
                 </Link>

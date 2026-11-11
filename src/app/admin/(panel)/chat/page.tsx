@@ -59,7 +59,7 @@ export default async function AdminChat({ searchParams }: { searchParams: Promis
       >
         {player ? (
           <p>
-            {t.player} #{player} · <Link href={base}>{a.allChat}</Link>
+            {t.player} #{player} · <Link prefetch={false} href={base}>{a.allChat}</Link>
           </p>
         ) : null}
         {rows.length ? (
@@ -79,7 +79,7 @@ export default async function AdminChat({ searchParams }: { searchParams: Promis
                     <tr key={i}>
                       <td className="muted nowrap">{fmtDateTime(c.timestamp_id, lang)}</td>
                       <td>
-                        <Link href={`${base}?player=${c.playerId}`}>{c.name ?? `#${c.playerId}`}</Link>
+                        <Link prefetch={false} href={`${base}?player=${c.playerId}`}>{c.name ?? `#${c.playerId}`}</Link>
                       </td>
                       <td className="wrap-cell">
                         {c.message_mode === 2 ? <span className="muted">({t.sayTeam}) </span> : null}

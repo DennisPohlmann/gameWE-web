@@ -85,7 +85,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
         }
         actions={
           e.canCreate ? (
-            <Link className="button primary" href={editHref("new")}>
+            <Link prefetch={false} className="button primary" href={editHref("new")}>
               <Icon name="plus" />
               {a.new}
             </Link>
@@ -121,11 +121,11 @@ export default async function EntityList({ params, searchParams }: { params: Pro
             </Form>
             {e.statusFilter ? (
               <span className="adm-seg" role="group" aria-label={u.status}>
-                <Link href={listHref(e.key, { ...listParams, status: undefined, page: undefined })} className={status ? undefined : "on"}>
+                <Link prefetch={false} href={listHref(e.key, { ...listParams, status: undefined, page: undefined })} className={status ? undefined : "on"}>
                   {u.stAll} <span className="n">{nfmt(counts[""] ?? 0)}</span>
                 </Link>
                 {e.statusFilter.map((f) => (
-                  <Link key={f.value} href={listHref(e.key, { ...listParams, status: f.value, page: undefined })} className={status === f.value ? "on" : undefined}>
+                  <Link prefetch={false} key={f.value} href={listHref(e.key, { ...listParams, status: f.value, page: undefined })} className={status === f.value ? "on" : undefined}>
                     {tr(f.label, lang)} <span className="n">{nfmt(counts[f.value] ?? 0)}</span>
                   </Link>
                 ))}
@@ -155,7 +155,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
                           ) : f.name === e.statusColumn ? (
                             <StatusPill f={f} v={r[f.name]} filter={statusOf(r[f.name])} lang={lang} />
                           ) : f.name === mainCol ? (
-                            <Link className="name" href={editHref(String(r.__pk))}>
+                            <Link prefetch={false} className="name" href={editHref(String(r.__pk))}>
                               {e.key === "servers" ? <GameIcon realgame={baseOf(r.game)} /> : null}
                               {show(f, r[f.name], lang) || "–"}
                             </Link>
@@ -169,7 +169,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
                           {baseOf(e.key === "games" ? r.code : r.game) ? (
                             <GameTag realgame={baseOf(e.key === "games" ? r.code : r.game)} long />
                           ) : (
-                            <Link className="pill warn" href={e.key === "games" ? editHref(String(r.__pk)) : `/admin/rankings`}>
+                            <Link prefetch={false} className="pill warn" href={e.key === "games" ? editHref(String(r.__pk)) : `/admin/rankings`}>
                               {a.gameUnset}
                             </Link>
                           )}
@@ -187,7 +187,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
                         </td>
                       ) : null}
                       <td className="end num">
-                        <Link className="button small" href={editHref(String(r.__pk))}>
+                        <Link prefetch={false} className="button small" href={editHref(String(r.__pk))}>
                           {a.edit}
                         </Link>
                       </td>

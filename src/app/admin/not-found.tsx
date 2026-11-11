@@ -17,7 +17,7 @@ export default async function AdminNotFound() {
         </span>
         <h1>404</h1>
         <p>
-          <Link href="/admin">← {a.ui.areaHome}</Link>
+          <Link prefetch={false} href="/admin">← {a.ui.areaHome}</Link>
         </p>
       </div>
     </div>

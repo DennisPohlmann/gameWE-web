@@ -107,7 +107,7 @@ export default async function LoginPage({
             </form>
           )}
           <p className="code-switch">
-            <Link href={codeStepHref(mode === "backup" ? "totp" : "backup")} replace>
+            <Link prefetch={false} href={codeStepHref(mode === "backup" ? "totp" : "backup")} replace>
               {mode === "backup" ? a.totpUseApp : a.totpUseBackup}
             </Link>
           </p>

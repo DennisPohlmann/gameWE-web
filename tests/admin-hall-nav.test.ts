@@ -19,8 +19,8 @@ test("the ranking's menu has the hall of fame, for level 100 and rankings with s
 
 test("the card links to the page also without entries, the page stays level 100", () => {
   const card = readFileSync("src/app/admin/(panel)/rankings/[code]/hall-of-fame-card.tsx", "utf8");
-  assert.doesNotMatch(card, /\{s\.entries \? \(\s*\n\s*<Link className="more" href=\{`\/admin\/rankings\/\$\{encodeURIComponent\(game\)\}\/hall-of-fame`\}/);
-  assert.match(card, /<Link className="more" href=\{`\/admin\/rankings\/\$\{encodeURIComponent\(game\)\}\/hall-of-fame`\}>/);
+  assert.doesNotMatch(card, /\{s\.entries \? \(\s*\n\s*<Link prefetch=\{false\} className="more" href=\{`\/admin\/rankings\/\$\{encodeURIComponent\(game\)\}\/hall-of-fame`\}/);
+  assert.match(card, /<Link prefetch=\{false\} className="more" href=\{`\/admin\/rankings\/\$\{encodeURIComponent\(game\)\}\/hall-of-fame`\}>/);
   const page = readFileSync("src/app/admin/(panel)/rankings/[code]/hall-of-fame/page.tsx", "utf8");
   assert.match(page, /await requireAdmin\(LEVEL_ADMIN\);/);
   assert.match(page, /\{!periods\.length \? <p className="muted">\{t\.empty\}<\/p> : null\}/);

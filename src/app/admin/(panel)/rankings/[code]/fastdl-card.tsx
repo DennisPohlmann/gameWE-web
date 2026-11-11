@@ -56,7 +56,7 @@ export async function FastdlCard({ game, lang, status }: { game: string; lang: L
             <span>{t.help}</span>
             {!fastdlOn ? (
               <span className="warn-text">
-                {t.off} <Link href="/admin/settings/maps">{t.link} →</Link>
+                {t.off} <Link prefetch={false} href="/admin/settings/maps">{t.link} →</Link>
               </span>
             ) : null}
           </div>

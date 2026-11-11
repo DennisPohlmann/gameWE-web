@@ -120,7 +120,7 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
               key: j.id,
               values: [Number(j.id), j.game, modeName(j.mode), j.status, startedBy(j), Number(j.requested_at), null],
               cells: [
-                <Link key="id" href={`/admin/reset?job=${j.id}`}>
+                <Link prefetch={false} key="id" href={`/admin/reset?job=${j.id}`}>
                   {j.id}
                 </Link>,
                 j.game,

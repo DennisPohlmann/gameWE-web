@@ -119,7 +119,7 @@ export default async function AdminHome() {
         <section className="card">
           <header>
             <h2>{u.areaRankings}</h2>
-            <Link className="more" href="/admin/rankings">
+            <Link prefetch={false} className="more" href="/admin/rankings">
               {u.manageAll}
             </Link>
           </header>
@@ -166,7 +166,7 @@ export default async function AdminHome() {
                     )}
                   </td>
                   <td className="end num">
-                    <Link className="button small" href={`/admin/rankings/${encodeURIComponent(r.code)}`}>
+                    <Link prefetch={false} className="button small" href={`/admin/rankings/${encodeURIComponent(r.code)}`}>
                       {u.open}
                     </Link>
                   </td>
@@ -192,7 +192,7 @@ export default async function AdminHome() {
                     <span className="pill">{u.stTemplate}</span>
                   </td>
                   <td className="end num">
-                    <Link className="button small" href="/admin/rankings?view=templates">
+                    <Link prefetch={false} className="button small" href="/admin/rankings?view=templates">
                       {u.show}
                     </Link>
                   </td>
@@ -228,7 +228,7 @@ export default async function AdminHome() {
                           {body}
                         </a>
                       ) : (
-                        <Link className="todo-link" href={x.href}>
+                        <Link prefetch={false} className="todo-link" href={x.href}>
                           {body}
                         </Link>
                       )}
@@ -250,25 +250,25 @@ export default async function AdminHome() {
               <h2>{u.quick}</h2>
             </header>
             <div className="grid quick">
-              <Link href="/admin/players">
+              <Link prefetch={false} href="/admin/players">
                 <Icon name="search" />
                 {u.qPlayers}
               </Link>
               {isAdmin ? (
-                <Link href="/admin/servers/new">
+                <Link prefetch={false} href="/admin/servers/new">
                   <Icon name="plus" />
                   {u.qServer}
                 </Link>
               ) : null}
-              <Link href="/admin/settings/design">
+              <Link prefetch={false} href="/admin/settings/design">
                 <Icon name="palette" />
                 {u.qDesign}
               </Link>
-              <Link href="/admin/chat">
+              <Link prefetch={false} href="/admin/chat">
                 <Icon name="chat" />
                 {u.qChat}
               </Link>
-              <Link href="/admin/jobs">
+              <Link prefetch={false} href="/admin/jobs">
                 <Icon name="clock" />
                 {u.qJobs}
               </Link>

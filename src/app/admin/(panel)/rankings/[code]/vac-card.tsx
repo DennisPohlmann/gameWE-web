@@ -27,7 +27,7 @@ export function VacCard({ game, lang, on, keyStored, status }: { game: string; l
             <span>{t.blockHelp}</span>
             {!keyStored ? (
               <span className="warn-text">
-                {a.vacNoKey} <Link href="/admin/settings/steam">{a.vacNoKeyLink} →</Link>
+                {a.vacNoKey} <Link prefetch={false} href="/admin/settings/steam">{a.vacNoKeyLink} →</Link>
               </span>
             ) : null}
           </div>
