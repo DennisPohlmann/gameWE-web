@@ -151,7 +151,7 @@ html[data-skin] .nav-bar {
 }
 html[data-skin] .crumbs { flex: 1 1 320px; min-width: 0; font-weight: normal; color: var(--muted); }
 html[data-skin] .nav-bar .share-nav { margin-left: auto; }
-html[data-skin] .nav-bar .langs { flex-wrap: nowrap; gap: 4px; }
+html[data-skin] .nav-bar .lang-nav { margin-left: 0; }
 html[data-skin] .crumbs a { color: var(--muted); }
 html[data-skin] .crumbs a:hover { color: var(--accent-text); }
 html[data-skin] .crumbs strong, html[data-skin] .crumbs span:nth-child(2) a { color: var(--accent); font-weight: 700; }
@@ -495,17 +495,10 @@ html[data-skin] .heatmap svg { border-radius: 4px; }
   /* Share, language and menu in the header (globals.css): one group of
      outlined buttons in the accent colour. */
   html[data-skin] .header-tools .share-btn,
-  html[data-skin] .header-tools .lang-menu > summary,
   html[data-skin] .header-tools .header-menu > summary { height: 34px; padding: 0 9px; border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent); border-radius: var(--m-radius); background: none; color: var(--accent); font: 700 12px/1 var(--m-font); letter-spacing: 0.02em; text-transform: none; }
   html[data-skin] .header-tools .share-btn:hover,
-  html[data-skin] .header-tools .lang-menu[open] > summary,
+  html[data-skin] .header-tools .share-btn[aria-expanded="true"],
   html[data-skin] .header-tools .header-menu[open] > summary { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); }
-  /* The language button and its list (globals.css), like the share button. */
-  html[data-skin] .lang-menu > summary { padding: 3px 9px; border: 1px solid var(--accent); border-radius: 3px; background: none; color: var(--accent); font: 700 12px/1.4 var(--m-font); text-shadow: none; }
-  html[data-skin] .lang-menu[open] > summary { background: color-mix(in srgb, var(--accent) 12%, transparent); }
-  html[data-skin] .lang-menu-list { border: 1px solid var(--header-border); border-radius: var(--m-radius); background: var(--surface); }
-  html[data-skin] .lang-menu-list a { border-top-color: var(--border); color: var(--text); font: 600 14px/1.2 var(--m-font); text-shadow: none; }
-  html[data-skin] .lang-menu-list a:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent-text); }
   html[data-skin] .page { padding: 14px 10px 20px; }
   html[data-skin] .page > .block:has(> .sections-box) { margin-top: -14px; margin-bottom: 16px; }
   html[data-skin] ul.sections { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }

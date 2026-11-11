@@ -7,9 +7,7 @@ import { headerTabs } from "@/lib/header-links";
 import { getDict } from "@/lib/i18n";
 import { localeOf } from "@/lib/format";
 import { statsOrigin } from "@/lib/site-url";
-import { LANGUAGES } from "@/translations/languages";
 import { LangMenu } from "@/components/lang-menu";
-import { LangFlag } from "@/components/lang-flag";
 import { ShareMenu } from "@/components/share-menu";
 import { HeaderMenu } from "@/components/header-menu";
 import { basePath } from "@/lib/base-path";
@@ -156,11 +154,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             )}
           </nav>
           {/* Phones: share, language and menu as one group of buttons in
-              the header (globals.css); the share button and the flags of
+              the header (globals.css); the share and language buttons of
               the bar below are for wide screens. */}
           <div className="header-tools">
             <ShareMenu icon className="tool-share" labels={{ share: t.share, copy: t.shareCopy, copied: t.copied, email: t.shareEmail }} />
-            <LangMenu lang={lang} label={t.language} base={basePath} />
+            <LangMenu icon className="tool-lang" lang={lang} label={t.language} base={basePath} />
             <HeaderMenu tabs={tabs} label={t.menu} navLabel={siteName} />
           </div>
         </header>
@@ -173,13 +171,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             pages={{ search: t.searchTitle, help: t.help, licenses: t.licenses, privacy: t.privacy.title, api: t.api }}
           />
           <ShareMenu labels={{ share: t.share, copy: t.shareCopy, copied: t.copied, email: t.shareEmail }} />
-          <span className="langs" aria-label={t.language}>
-            {LANGUAGES.map((l) => (
-              <a key={l.code} href={`${basePath}/lang/${l.code}`} hrefLang={l.locale} title={l.name} aria-current={l.code === lang ? "true" : undefined}>
-                <LangFlag code={l.flag} title={l.name} />
-              </a>
-            ))}
-          </span>
+          <LangMenu lang={lang} label={t.language} base={basePath} />
         </div>
         {logoUrl ? (
           <div className="cust-logo">

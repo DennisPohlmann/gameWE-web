@@ -6,7 +6,8 @@ back to the English text, so a translation can be partial.
 
 `languages.ts` lists the languages: code (file name and cookie value), name in
 its own language, locale for numbers and dates, and the flag shown in the
-footer (drawn in `src/components/lang-flag.tsx`). `index.ts` imports the files.
+language menu (`src/components/lang-menu.tsx`, the flag from the sprite of
+`public/flags` via `lang-flag.tsx`). `index.ts` imports the files.
 
 To add a language:
 
@@ -14,7 +15,7 @@ To add a language:
    the `{placeholders}` and the `<b>` tags as they are.
 2. Add the language to `LANGUAGES` in `languages.ts` and import the file in
    `index.ts`.
-3. If it needs a new flag, add it to `lang-flag.tsx`.
+3. The flag is a country code of the flag sprite (`public/flags`, flag-icons).
 4. Translate the admin area: add `admin/<code>.ts` and import it in
    `admin/index.ts` (the build fails until it is there).
 

@@ -1,5 +1,5 @@
 // The languages of the public pages: one JSON file per language in this
-// folder, listed here in the order of the flags in the header.
+// folder, listed here in the order of the language menu.
 //
 // en.json is the reference with every text; a language file may leave texts
 // out, they are then shown in English. To add a language: copy en.json to

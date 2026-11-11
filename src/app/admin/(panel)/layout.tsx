@@ -20,7 +20,8 @@ import { releasePage } from "@/lib/update-version";
 import { updateStatus } from "@/lib/updates";
 import { webRuntime } from "@/lib/runtime";
 import { runtimeSuffix } from "@/lib/runtime-label";
-import { LANGUAGES } from "@/translations/languages";
+import { LangMenu } from "@/components/lang-menu";
+import { FLAG_SPRITE_URL } from "@/lib/flag-codes";
 
 // Frame of every admin page after the login: top bar with the three areas
 // and the user menu, the side menu of the area (a drawer on phones, opened
@@ -103,6 +104,9 @@ export default async function PanelLayout({ children }: { children: ReactNode })
           <Icon name="external" />
           <span className="adm-hide-m">{a.toSite}</span>
         </a>
+        {/* The language of the admin area and the public pages. */}
+        <style>{`.flag-svg{background-image:url(${basePath}${FLAG_SPRITE_URL})}`}</style>
+        <LangMenu icon className="adm-lang" lang={lang} label={u.language} base={basePath} />
         <details className="adm-user">
           <summary>
             <span className="adm-avatar" aria-hidden="true">
@@ -142,16 +146,6 @@ export default async function PanelLayout({ children }: { children: ReactNode })
                   </button>
                 ))}
               </form>
-            </div>
-            <div className="adm-menu-row adm-langs">
-              <span>{u.language}</span>
-              <span className="adm-seg">
-                {LANGUAGES.map((l) => (
-                  <a key={l.code} href={`${basePath}/lang/${l.code}`} className={lang === l.code ? "on" : undefined} hrefLang={l.code} lang={l.code} title={l.name}>
-                    {l.code.toUpperCase()}
-                  </a>
-                ))}
-              </span>
             </div>
             <form action={logoutAction}>
               <button type="submit" className="adm-menu-btn">

@@ -100,6 +100,16 @@ small, .small { font-size: 12.5px; }
 .adm-tool:hover { background: var(--top-2); color: var(--top-text); text-decoration: none; }
 .adm-icon-btn { display: none; color: inherit; padding: 6px; border-radius: 8px; cursor: pointer; }
 .adm-icon-btn:hover { background: var(--top-2); }
+/* Language button (components/lang-menu.tsx, the share menu of the public
+   pages): symbol and code in the top bar, every language with its flag. */
+.adm-lang { position: relative; }
+.adm-lang .share-btn { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: 0; border-radius: 8px; background: none; color: var(--top-soft); font: inherit; font-weight: 600; cursor: pointer; }
+.adm-lang .share-btn:hover, .adm-lang .share-btn[aria-expanded="true"] { background: var(--top-2); color: var(--top-text); }
+.adm-lang .share-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; min-width: 220px; max-height: min(520px, calc(100vh - 80px)); overflow-y: auto; padding: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25); }
+.adm-lang .share-menu a { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; color: var(--text); white-space: nowrap; }
+.adm-lang .share-menu a:hover, .adm-lang .share-menu a:focus-visible { background: var(--panel-2); text-decoration: none; }
+.adm-lang .share-menu a[aria-current] { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+.flag-svg { position: relative; display: block; flex: none; width: 18px; height: 13px; background: no-repeat; background-size: 1600% 1700%; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18); overflow: hidden; }
 .adm-user { position: relative; }
 .adm-user summary { list-style: none; display: flex; align-items: center; gap: 8px; padding: 4px 8px 4px 4px; border-radius: 999px; cursor: pointer; color: var(--top-text); font-weight: 600; }
 .adm-user summary::-webkit-details-marker { display: none; }
@@ -118,10 +128,6 @@ small, .small { font-size: 12.5px; }
 .adm-seg > a, .adm-seg > button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; color: var(--soft); font: inherit; font-size: 13px; font-weight: 600; background: none; border: 0; border-right: 1px solid var(--line-2); cursor: pointer; }
 .adm-seg > :last-child { border-right: 0; }
 .adm-seg > a:hover, .adm-seg > button:hover { background: var(--panel-2); text-decoration: none; }
-/* Every language of the public pages: a grid of codes under the label. */
-.adm-langs { flex-wrap: wrap; }
-.adm-langs .adm-seg { display: grid; grid-template-columns: repeat(5, 1fr); width: 100%; }
-.adm-langs .adm-seg > a { justify-content: center; padding: 6px 2px; border-right: 0; box-shadow: 1px 0 0 var(--line-2), 0 1px 0 var(--line-2); }
 .adm-seg > .on { background: var(--accent-soft); color: var(--accent-text); }
 .adm-seg .i { width: 16px; height: 16px; }
 
@@ -449,9 +455,10 @@ select { padding-right: 28px; }
   .adm-top { height: 52px; padding: 0 10px; gap: 8px; }
   .adm-icon-btn { display: inline-grid; place-items: center; }
   .adm-areas, .adm-hide-m, .adm-brand small { display: none; }
-  .adm-site { padding: 6px; }
+  .adm-site, .adm-lang .share-btn { padding: 6px; }
+  .adm-lang .lang-code { display: none; }
   .adm-shell { grid-template-columns: minmax(0, 1fr); min-height: calc(100vh - 52px); overflow-x: clip; }
-  .adm-brand { min-width: 0; }
+  .adm-brand { min-width: 0; overflow: hidden; }
   .adm-side { position: fixed; z-index: 40; top: 0; left: 0; bottom: 0; width: 86vw; max-width: 330px; height: auto; transform: translateX(-104%); transition: transform 0.2s ease; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45); padding-top: 10px; }
   .adm-side .adm-side-head { display: flex; align-items: center; justify-content: space-between; padding: 2px 6px 10px 10px; }
   .adm-side-head .adm-brand { color: var(--text); }
@@ -498,7 +505,7 @@ select { padding-right: 28px; }
   form.search { width: 100%; }
   form.search select, form.search input:not([type="hidden"]) { flex: 1 1 140px; min-width: 0; }
   .hide-sm { display: none; }
-  .adm-menu { position: fixed; right: 8px; left: 8px; top: 56px; width: auto; }
+  .adm-menu, .adm-lang .share-menu { position: fixed; right: 8px; left: 8px; top: 56px; width: auto; }
   /* Segmented choices (the players' states with their counts) wrap
      instead of running off the screen. */
   .adm-seg { display: flex; flex-wrap: wrap; max-width: 100%; }
