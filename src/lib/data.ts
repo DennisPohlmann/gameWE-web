@@ -863,7 +863,8 @@ export type PlayerDetail = {
   inactive: boolean; // In hlstats_PlayersInactive: no place in the ranking.
 };
 
-export async function getPlayer(id: number): Promise<PlayerDetail | undefined> {
+// cache(): metadata and page of a profile both ask, once per request.
+export const getPlayer = cache(async (id: number): Promise<PlayerDetail | undefined> => {
   // Players that went inactive are moved to hlstats_PlayersInactive.
   for (const table of ["hlstats_Players", "hlstats_PlayersInactive"]) {
     const row = await queryOne<Omit<PlayerDetail, "inactive">>(
@@ -885,20 +886,20 @@ export async function getPlayer(id: number): Promise<PlayerDetail | undefined> {
     if (row) return { ...row, inactive: table === "hlstats_PlayersInactive" };
   }
   return undefined;
-}
+});
 
 export async function getRankedCount(game: string) {
   const r = await queryOne<{ n: number }>(`SELECT COUNT(*) AS n FROM hlstats_Players WHERE game = ? AND hideranking = 0`, [game]);
   return Number(r?.n ?? 0);
 }
 
-export async function getPlayerPosition(game: string, skill: number) {
+export const getPlayerPosition = cache(async (game: string, skill: number) => {
   const r = await queryOne<{ n: number }>(
     `SELECT COUNT(*) + 1 AS n FROM hlstats_Players WHERE game = ? AND hideranking = 0 AND skill > ?`,
     [game, skill],
   );
   return r?.n ?? null;
-}
+});
 
 // Average of the profile radar (radar.ts): the game's ranked players active
 // in the last 14 days (rows in the daily history), their numerators and

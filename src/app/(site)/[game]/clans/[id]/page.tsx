@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
@@ -23,10 +24,11 @@ import { sortRows, sortState } from "@/lib/table-sort";
 
 type Props = { params: Promise<{ game: string; id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-async function load(raw: string) {
+// Once per request: metadata and page both need it.
+const load = cache(async (raw: string) => {
   const id = Number.parseInt(raw, 10);
   return Number.isSafeInteger(id) && id > 0 ? getClan(id) : undefined;
-}
+});
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const c = await load((await params).id);

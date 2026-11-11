@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { rankingGate, rankingShown } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import { SigCode } from "@/components/sig-code";
@@ -21,11 +22,12 @@ import { getSettings } from "@/lib/settings";
 
 type Props = { params: Promise<{ game: string; id: string }> };
 
-async function load(raw: string) {
+// Once per request: metadata and page both need it.
+const load = cache(async (raw: string) => {
   const id = Number.parseInt(raw, 10);
   const s = Number.isSafeInteger(id) && id > 0 ? await getServer(id) : undefined;
   return s && (await rankingShown(s.game)) ? s : undefined;
-}
+});
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const s = await load((await params).id);

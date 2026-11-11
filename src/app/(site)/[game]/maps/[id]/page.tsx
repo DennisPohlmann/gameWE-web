@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -28,10 +29,11 @@ type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-async function load(raw: string) {
+// Once per request: metadata and page both need it.
+const load = cache(async (raw: string) => {
   const id = Number.parseInt(raw, 10);
   return Number.isSafeInteger(id) && id > 0 ? getMap(id) : undefined;
-}
+});
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const m = await load((await params).id);
