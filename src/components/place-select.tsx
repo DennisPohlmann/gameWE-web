@@ -2,12 +2,14 @@
 
 import Form from "next/form";
 import type { ChangeEvent, ReactNode } from "react";
+import { useSubmitPending } from "@/components/pending";
 
 // Selects for the country, state and city rankings. A change loads the new
 // ranking at once; the button stays for browsers without JavaScript. A new
 // kind of ranking or a new country drops the chosen state or city, as it
 // would not fit.
 export function PlaceSelect({ action, children }: { action: string; children: ReactNode }) {
+  const [pending, start] = useSubmitPending();
   const onChange = (e: ChangeEvent<HTMLFormElement>) => {
     const form = e.currentTarget;
     const target = e.nativeEvent.target;
@@ -26,7 +28,7 @@ export function PlaceSelect({ action, children }: { action: string; children: Re
     form.requestSubmit();
   };
   return (
-    <Form className="search place-select" action={action} onChange={onChange}>
+    <Form className="search place-select" action={action} onChange={onChange} onSubmit={start} aria-busy={pending || undefined}>
       {children}
     </Form>
   );

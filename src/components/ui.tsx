@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AutoForm } from "@/components/auto-form";
+import { LinkPending } from "@/components/pending";
 import { noAutofill } from "@/lib/autofill";
 import { PAGE_SIZES } from "@/lib/page-size";
 import { FLAG_CODES, flagPos } from "@/lib/flag-codes";
@@ -330,6 +331,7 @@ export function Pager({
           {page > 1 ? (
             <Link prefetch={false} href={withParams(base, params, { page: undefined })} aria-label={labels.firstPage} title={labels.firstPage}>
               <PagerEdge last={false} />
+              <LinkPending />
             </Link>
           ) : (
             <span className="disabled" aria-hidden="true">
@@ -339,6 +341,7 @@ export function Pager({
           {page > 1 ? (
             <Link prefetch={false} href={withParams(base, params, { page: page - 1 > 1 ? page - 1 : undefined })} aria-label={labels.prev} title={labels.prev}>
               ◀
+              <LinkPending />
             </Link>
           ) : (
             <span className="disabled" aria-hidden="true">◀</span>
@@ -346,6 +349,7 @@ export function Pager({
           {next ? (
             <Link prefetch={false} href={withParams(base, params, { page: page + 1 })} aria-label={labels.next} title={labels.next}>
               ▶
+              <LinkPending />
             </Link>
           ) : (
             <span className="disabled" aria-hidden="true">▶</span>
@@ -353,6 +357,7 @@ export function Pager({
           {next ? (
             <Link prefetch={false} href={withParams(base, params, { page: pages })} aria-label={labels.lastPage} title={labels.lastPage}>
               <PagerEdge last />
+              <LinkPending />
             </Link>
           ) : (
             <span className="disabled" aria-hidden="true">
@@ -367,12 +372,12 @@ export function Pager({
   return (
     <nav className="pager" aria-label={labels.page}>
       {page > 1 ? (
-        <Link prefetch={false} href={withParams(base, params, { page: undefined })}>« {labels.firstPage}</Link>
+        <Link prefetch={false} href={withParams(base, params, { page: undefined })}>« {labels.firstPage}<LinkPending /></Link>
       ) : (
         <span className="disabled">« {labels.firstPage}</span>
       )}
       {page > 1 ? (
-        <Link prefetch={false} href={withParams(base, params, { page: page - 1 > 1 ? page - 1 : undefined })}>← {labels.prev}</Link>
+        <Link prefetch={false} href={withParams(base, params, { page: page - 1 > 1 ? page - 1 : undefined })}>← {labels.prev}<LinkPending /></Link>
       ) : (
         <span className="disabled">← {labels.prev}</span>
       )}
@@ -381,13 +386,13 @@ export function Pager({
         {pages !== undefined ? ` / ${pages}` : ""}
       </span>
       {next ? (
-        <Link prefetch={false} href={withParams(base, params, { page: page + 1 })}>{labels.next} →</Link>
+        <Link prefetch={false} href={withParams(base, params, { page: page + 1 })}>{labels.next} →<LinkPending /></Link>
       ) : (
         <span className="disabled">{labels.next} →</span>
       )}
       {pages !== undefined ? (
         next ? (
-          <Link prefetch={false} href={withParams(base, params, { page: pages })}>{labels.lastPage} »</Link>
+          <Link prefetch={false} href={withParams(base, params, { page: pages })}>{labels.lastPage} »<LinkPending /></Link>
         ) : (
           <span className="disabled">{labels.lastPage} »</span>
         )

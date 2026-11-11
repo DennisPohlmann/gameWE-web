@@ -365,6 +365,13 @@ tr.server-line .vac-mark.vac-insecure { color: color-mix(in srgb, #d32f2f 70%, v
 .skeleton-chart + .skeleton-chart { border-top: 0; }
 @keyframes skel-breathe { to { opacity: 0.45; } }
 @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+/* A select or pager link that is loading its page (pending.tsx): a small
+   spinning ring after the link, the form's fields dimmed with a busy cursor. */
+.link-pending { display: inline-block; width: 0.8em; height: 0.8em; margin-left: 4px; vertical-align: -0.1em; border: 2px solid color-mix(in srgb, var(--text) 30%, transparent); border-top-color: var(--text); border-radius: 50%; animation: pending-spin 0.7s linear infinite; }
+form[aria-busy="true"] { cursor: progress; }
+form[aria-busy="true"] select, form[aria-busy="true"] input { opacity: 0.55; cursor: progress; }
+@keyframes pending-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .link-pending { animation: none; border-top-color: color-mix(in srgb, var(--text) 30%, transparent); } }
 
 /* Content that is not a table sits in a dark box. */
 .box,
