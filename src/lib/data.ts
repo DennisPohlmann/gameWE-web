@@ -1475,10 +1475,10 @@ export function getClan(id: number) {
   );
 }
 
-export function getClanMembers(id: number) {
+export async function getClanMembers(id: number) {
   return query<RankingRow>(
     `SELECT p.playerId, d.lastName AS name, p.skill, p.last_event, d.first_connect, p.connection_time,
-            p.kills, p.deaths, p.headshots, p.shots, p.hits, l.flag, l.country
+            p.kills, ${await careerKills()} AS careerKills, p.deaths, p.headshots, p.shots, p.hits, l.flag, l.country
      FROM hlstats_Players p
      LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
      LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
@@ -1488,10 +1488,10 @@ export function getClanMembers(id: number) {
 }
 
 // The members the collector moved to hlstats_PlayersInactive, last seen first.
-export function getInactiveClanMembers(id: number) {
+export async function getInactiveClanMembers(id: number) {
   return query<RankingRow>(
     `SELECT p.playerId, d.lastName AS name, p.skill, p.last_event, d.first_connect, p.connection_time,
-            p.kills, p.deaths, p.headshots, p.shots, p.hits, l.flag, l.country
+            p.kills, ${await careerKills()} AS careerKills, p.deaths, p.headshots, p.shots, p.hits, l.flag, l.country
      FROM hlstats_PlayersInactive p
      LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
      LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
