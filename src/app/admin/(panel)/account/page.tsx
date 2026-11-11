@@ -3,7 +3,7 @@ import { PageHead } from "@/components/admin/page-head";
 import { RevealInput } from "@/components/admin/reveal-input";
 import { BackupCodesForm, type BackupCodesText } from "@/components/admin/backup-codes-form";
 import { ApiTokenForm } from "@/components/admin/api-token-form";
-import { QrCode } from "@/components/qr-code";
+import { TotpSetup } from "@/components/admin/totp-setup";
 import { Section } from "@/components/ui";
 import { adminDict } from "@/lib/admin-i18n";
 import { EXPIRY_DAYS } from "@/lib/api-token-core";
@@ -14,7 +14,7 @@ import { basePath } from "@/lib/base-path";
 import { fmtDateTime, nowUnix } from "@/lib/format";
 import { fill, getAdminLang } from "@/lib/i18n";
 import { apiEnabled, getSettings } from "@/lib/settings";
-import { BACKUP_CODES, countBackupCodes, otpauthUri, readSecret } from "@/lib/totp";
+import { BACKUP_CODES, countBackupCodes, readSecret } from "@/lib/totp";
 
 // The signed-in user's own account: password, optional TOTP with its backup
 // codes and API tokens (only a notice while the API is off).
@@ -99,34 +99,18 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 </button>
               </form>
             </>
-          ) : pending ? (
-            <>
-              <p>{a.totpQr}</p>
-              <QrCode text={otpauthUri(pending, user.username, issuer)} label={a.totpUri} />
-              <label>
-                {a.totpSecret}
-                <RevealInput {...noAutofill} show={a.valueShow} hide={a.valueHide} readOnly value={pending.replace(/(.{4})/g, "$1 ").trim()} className="mono" />
-              </label>
-              <label>
-                {a.totpUri}
-                <RevealInput {...noAutofill} show={a.valueShow} hide={a.valueHide} readOnly value={otpauthUri(pending, user.username, issuer)} className="mono" />
-              </label>
-              <BackupCodesForm action={totpConfirmAction} text={backupText(a.totpConfirmHint, a.totpConfirm)} user={user.username} site={issuer} />
-              <form action={totpCancelAction}>
-                <button type="submit" className="linkish">
-                  {a.totpCancel}
-                </button>
-              </form>
-            </>
           ) : (
-            <>
-              <p>{a.totpOff}</p>
-              <form action={totpStartAction}>
-                <button type="submit" className="button" disabled={!secret}>
-                  {a.totpStart}
-                </button>
-              </form>
-            </>
+            <TotpSetup
+              start={totpStartAction}
+              confirm={totpConfirmAction}
+              cancel={totpCancelAction}
+              started={pending !== null}
+              disabled={!secret}
+              text={{ off: a.totpOff, start: a.totpStart, restart: a.totpRestart, gone: a.totpQrGone, qr: a.totpQr, key: a.totpSecret, uri: a.totpUri, show: a.valueShow, hide: a.valueHide, cancel: a.totpCancel }}
+              backup={backupText(a.totpConfirmHint, a.totpConfirm)}
+              user={user.username}
+              site={issuer}
+            />
           )}
           <small>{a.totpReset}</small>
         </div>

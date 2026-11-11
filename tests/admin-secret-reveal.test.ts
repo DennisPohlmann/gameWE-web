@@ -21,7 +21,7 @@ test("no plain password input in the admin interface", () => {
 test("read-only secrets go through RevealInput", () => {
   for (const f of admin) assert.doesNotMatch(src(f), /<input [^>]*readOnly value=/, f);
   assert.match(src("src/components/admin/api-token-form.tsx"), /<RevealInput \{\.\.\.noAutofill\} show=\{text\.valueShow\}[^>]*readOnly value=\{shown/);
-  assert.match(src("src/app/admin/(panel)/account/page.tsx"), /<RevealInput \{\.\.\.noAutofill\} show=\{a\.valueShow\}[^>]*readOnly value=\{pending/);
+  assert.match(src("src/components/admin/totp-setup.tsx"), /<RevealInput \{\.\.\.noAutofill\} show=\{text\.show\}[^>]*readOnly value=\{\(shown\.key/);
 });
 
 test("the eye button is accessible and starts masked", () => {
@@ -39,4 +39,24 @@ test("a generated log token is shown via the eye button, not by changing the typ
   const t = src("src/components/admin/token-generate.tsx");
   assert.doesNotMatch(t, /\.type = "text"/);
   assert.match(t, /aria-controls="\$\{target\}"\]\[aria-pressed="false"\]/);
+});
+
+test("the TOTP key, link and QR code are shown once, never from a reload", () => {
+  const page = src("src/app/admin/(panel)/account/page.tsx");
+  // The page knows only that a setup was started, never the pending key.
+  assert.match(page, /started=\{pending !== null\}/);
+  assert.doesNotMatch(page, /otpauthUri|QrCode|qrData|value=\{pending/);
+  const actions = src("src/app/admin/actions.ts");
+  const startFn = actions.slice(actions.indexOf("export async function totpStartAction"), actions.indexOf("export async function totpCancelAction"));
+  // Every start makes a new key (no reuse of a pending one) and answers the form, no redirect.
+  assert.match(startFn, /const key = newSecret\(\);\n  await storeSecret\(user, key, secret, true\);/);
+  assert.doesNotMatch(startFn, /redirect\(|readSecret\(user, secret, true\)/);
+  const setup = src("src/components/admin/totp-setup.tsx");
+  assert.match(setup, /useActionState\(start, \{\}\)/);
+  assert.match(setup, /begun \? text\.gone : text\.off/);
+});
+
+test("secrets shown once are dropped when Back/Forward restores the page", () => {
+  assert.match(src("src/components/admin/forget-on-restore.ts"), /e\.persisted && forget\(\)/);
+  for (const f of ["api-token-form.tsx", "backup-codes-form.tsx", "totp-setup.tsx"]) assert.match(src(`src/components/admin/${f}`), /useForgetOnRestore\(/, f);
 });

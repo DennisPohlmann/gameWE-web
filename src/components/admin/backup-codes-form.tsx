@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
 import type { BackupCodesState } from "@/app/admin/actions";
+import { useForgetOnRestore } from "./forget-on-restore";
 
 // Turning TOTP on, or making new backup codes (Admin → My account → TOTP):
 // the current code from the app, then the ten backup codes come back from
@@ -42,6 +43,8 @@ export function BackupCodesForm({
   const dialog = useRef<HTMLDialogElement>(null);
   const form = useRef<HTMLFormElement>(null);
   const router = useRouter();
+
+  useForgetOnRestore(() => dialog.current?.close());
 
   useEffect(() => {
     if (!state.codes) return;

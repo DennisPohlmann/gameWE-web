@@ -13,11 +13,12 @@ import { createToken, purgeTokens, revokeToken } from "@/lib/api-tokens";
 import { LEVEL_ADMIN, adminSecret, brakedCode, confirmIdentity, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, requireAdmin } from "@/lib/auth";
 import { codeMode, codeStepHref } from "@/lib/login-code";
 import { resetMode } from "@/lib/reset";
-import { apiEnabled } from "@/lib/settings";
+import { apiEnabled, getSettings } from "@/lib/settings";
+import { qrData } from "@/components/qr-code";
 import { addParams, safeReturnTo, withReturnTo } from "@/lib/return-to";
 import { rankingPageHref, resettableRankings } from "@/lib/admin-rankings";
 import { presetRanking, rankingServersHref } from "@/lib/ranking-preset";
-import { checkCode, consumeStep, newBackupCodes, newSecret, readSecret, removeBackupCodes, removeSecret, secondFactor, storeBackupCodes, storeSecret } from "@/lib/totp";
+import { checkCode, consumeStep, newBackupCodes, newSecret, otpauthUri, readSecret, removeBackupCodes, removeSecret, secondFactor, storeBackupCodes, storeSecret } from "@/lib/totp";
 import { FASTDL_ACCESS } from "@/lib/fastdl-access";
 
 export async function loginAction(form: FormData) {
@@ -224,10 +225,17 @@ async function totpUser() {
   return { user: user.username, secret };
 }
 
-export async function totpStartAction() {
+// The key, its otpauth link and QR code answer the form (TotpSetup) once:
+// every start makes a new key, and the page never shows a pending one again.
+export type TotpStartState = { key?: string; uri?: string; qr?: { size: number; d: string } };
+
+export async function totpStartAction(): Promise<TotpStartState> {
   const { user, secret } = await totpUser();
-  if ((await readSecret(user, secret)) === null) await storeSecret(user, newSecret(), secret, true);
-  redirect("/admin/account");
+  if ((await readSecret(user, secret)) !== null) return {};
+  const key = newSecret();
+  await storeSecret(user, key, secret, true);
+  const uri = otpauthUri(key, user, (await getSettings()).siteName || "gameWE");
+  return { key, uri, qr: qrData(uri) };
 }
 
 export async function totpCancelAction() {

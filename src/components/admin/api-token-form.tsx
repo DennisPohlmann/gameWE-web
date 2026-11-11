@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import type { TokenFormState } from "@/app/admin/actions";
 import { noAutofill } from "@/lib/autofill";
+import { useForgetOnRestore } from "./forget-on-restore";
 import { RevealInput } from "./reveal-input";
 
 // Creating an API token (Admin → My account → API tokens): name, expiry and
@@ -47,6 +48,8 @@ export function ApiTokenForm({
   const [copied, setCopied] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
   const form = useRef<HTMLFormElement>(null);
+
+  useForgetOnRestore(() => dialog.current?.close());
 
   useEffect(() => {
     if (!state.token) return;
