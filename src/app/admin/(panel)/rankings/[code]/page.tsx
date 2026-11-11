@@ -6,7 +6,7 @@ import { PageHead } from "@/components/admin/page-head";
 import { PageNav } from "@/components/admin/page-nav";
 import { GameTag } from "@/components/ui";
 import { entities } from "@/lib/admin-entities";
-import { adminDict } from "@/lib/admin-i18n";
+import { adminDict, tr } from "@/lib/admin-i18n";
 import { countByRanking, rankingClans, rankingPlayers, rankingSummaries } from "@/lib/admin-rankings";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { basePath } from "@/lib/base-path";
@@ -86,9 +86,9 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
     players: [allPlayers, fill(u.valuesPlayersRows, { n: nf(counts[0]) }), u.valuesPlayersTip],
     clans: [clans, fill(u.valuesClansRows, { n: nf(counts[1]) }), u.valuesClansTip],
   };
-  const label = (key: string) => entities.find((e) => e.key === key)?.label[lang] ?? key;
+  const label = (key: string) => ((l) => (l ? tr(l, lang) : key))(entities.find((e) => e.key === key)?.label);
   const kind = gameKind(r.base);
-  const locale = lang === "de" ? "de-DE" : "en-GB";
+  const locale = localeOf(lang);
   const date = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString(locale, { timeZone: "UTC" });
   const state = r.hidden
     ? { pill: <span className="pill">{u.stHiddenRanking}</span>, sub: u.stHiddenSub }

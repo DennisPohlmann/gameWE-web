@@ -10,7 +10,7 @@ import { Section } from "@/components/ui";
 import { getRow, optionList, withColumns } from "@/lib/admin-data";
 import { RankBadge, rankName } from "@/components/badges";
 import { getEntity, type Field } from "@/lib/admin-entities";
-import { adminDict } from "@/lib/admin-i18n";
+import { adminDict, tr } from "@/lib/admin-i18n";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { GAME_KINDS, sameBaseGame, SUPPORTED_GAMES } from "@/lib/games";
 import { fill, getAdminLang } from "@/lib/i18n";
@@ -85,7 +85,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
       : sp.error === "field"
       ? sp.field === "inactive"
         ? a.inactiveNoRight
-        : fill(a.invalidField, { f: cs2 && sp.field === "log_secret" ? a.cs2LogToken : badField?.label[lang] ?? sp.field ?? "" })
+        : fill(a.invalidField, { f: cs2 && sp.field === "log_secret" ? a.cs2LogToken : (badField ? tr(badField.label, lang) : (sp.field ?? "")) })
       : sp.error === "db"
         ? fill(a.dbWriteError, { msg: sp.msg ?? "" })
         : sp.error === "self"
@@ -107,10 +107,10 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
       <PageHead
         crumbs={[
           [e.key === "users" ? a.ui.areaSettings : a.ui.areaRankings, e.key === "users" ? "/admin/settings" : "/admin/rankings"],
-          [preset ? (presetLabel ?? preset) : e.label[lang], back],
+          [preset ? (presetLabel ?? preset) : tr(e.label, lang), back],
           [isNew ? a.new : title],
         ]}
-        title={isNew ? `${e.label[lang]}: ${a.new}` : title}
+        title={isNew ? `${tr(e.label, lang)}: ${a.new}` : title}
         actions={
           <Link className="button" href={back}>
             ← {a.back}
@@ -150,11 +150,11 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
             const locked = f.readonly || (f.createOnly && !isNew);
             // The preset ranking is the only choice (the save sets it anyway).
             const opts = newRanking && f.name === "realgame"
-              ? SUPPORTED_GAMES.map((k): [string, string] => [k, `${GAME_KINDS[k].name} (${k})${GAME_KINDS[k].limited ? " – eingeschränkt / limited" : ""}`])
+              ? SUPPORTED_GAMES.map((k): [string, string] => [k, `${GAME_KINDS[k].name} (${k})${GAME_KINDS[k].limited ? ` – ${a.gameLimited}` : ""}`])
               : newRanking && f.name === "template"
                 ? templates.map(([c, l]): [string, string] => [c, l])
               : Array.isArray(f.options)
-              ? f.options.map(([v, l]): [string, string] => [v, typeof l === "string" ? l : l[lang]])
+              ? f.options.map(([v, l]): [string, string] => [v, typeof l === "string" ? l : tr(l, lang)])
               : preset && f.name === "game"
                 ? optionSets.games.filter(([c]) => c === preset)
                 : serverGames && f.name === "game"
@@ -166,7 +166,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
             const Wrap = f.type === "secret" ? "div" : "label";
             return (
               <Wrap key={f.name} className={f.type === "secret" ? "form-field" : undefined}>
-                {f.type === "secret" ? <label htmlFor={`f-${f.name}`}>{cs2 && f.name === "log_secret" ? a.cs2LogToken : f.label[lang]}</label> : f.label[lang]}
+                {f.type === "secret" ? <label htmlFor={`f-${f.name}`}>{cs2 && f.name === "log_secret" ? a.cs2LogToken : tr(f.label, lang)}</label> : tr(f.label, lang)}
                 <FieldControl
                   f={createField(f)}
                   id={newRanking ? `f-${f.name}` : undefined}
@@ -189,12 +189,12 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
                 ) : sourceSecret && f.name === "log_secret" ? (
                   <>
                     <TokenGenerate target={`f-${f.name}`} label={a.logSecretNew} copy={a.tokCopy} copied={a.tokCopied} numeric />
-                    {f.help ? <small className="muted">{f.help[lang]}</small> : null}
+                    {f.help ? <small className="muted">{tr(f.help, lang)}</small> : null}
                   </>
                 ) : newRanking && f.name === "name" ? (
                   <small className="muted">{a.nameFromGame}</small>
                 ) : f.help ? (
-                  <small className="muted">{f.help[lang]}</small>
+                  <small className="muted">{tr(f.help, lang)}</small>
                 ) : null}
               </Wrap>
             );

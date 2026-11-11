@@ -118,6 +118,10 @@ small, .small { font-size: 12.5px; }
 .adm-seg > a, .adm-seg > button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; color: var(--soft); font: inherit; font-size: 13px; font-weight: 600; background: none; border: 0; border-right: 1px solid var(--line-2); cursor: pointer; }
 .adm-seg > :last-child { border-right: 0; }
 .adm-seg > a:hover, .adm-seg > button:hover { background: var(--panel-2); text-decoration: none; }
+/* Every language of the public pages: a grid of codes under the label. */
+.adm-langs { flex-wrap: wrap; }
+.adm-langs .adm-seg { display: grid; grid-template-columns: repeat(5, 1fr); width: 100%; }
+.adm-langs .adm-seg > a { justify-content: center; padding: 6px 2px; border-right: 0; box-shadow: 1px 0 0 var(--line-2), 0 1px 0 var(--line-2); }
 .adm-seg > .on { background: var(--accent-soft); color: var(--accent-text); }
 .adm-seg .i { width: 16px; height: 16px; }
 

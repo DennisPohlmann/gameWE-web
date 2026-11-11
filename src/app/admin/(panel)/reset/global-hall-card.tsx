@@ -4,67 +4,21 @@ import { HallScheduleFields, hallT, scheduleText } from "@/components/admin/hall
 import { globalHall, inheritingRankings } from "@/lib/admin-hall";
 import { nextStart } from "@/lib/hall-period";
 import type { Lang } from "@/lib/i18n";
-
-const T = {
-  de: {
-    title: "Geplanter Reset für alle Rankings",
-    intro:
-      "Ein Zeitplan für alle Rankings, z. B. jedes Quartal. Jedes Ranking mit Servern folgt ihm, solange es auf „Wie für alle Rankings“ steht, Vorlagen (Rankings ohne Server) nie; in seinen Einstellungen lässt es sich mit einem eigenen Zeitplan oder „Aus“ überschreiben. Vor jedem Reset kommen die Besten der Periode in die Ruhmeshalle des Rankings.",
-    on: "An",
-    off: "Aus",
-    enabled: "Reset für alle Rankings",
-    enabledHelp: "Aus: Kein Ranking wird nach diesem Zeitplan zurückgesetzt. Der Zeitplan bleibt gespeichert und gilt wieder, sobald du ihn einschaltest.",
-    stateOn: "Aktiv: {s}, {m}.",
-    stateOff: "Ausgeschaltet. Gespeicherter Zeitplan: {s}, {m}.",
-    stateNone: "Ausgeschaltet. Noch kein Zeitplan eingerichtet.",
-    next: "Nächster Reset am {n}.",
-    waiting: "Der Collector beginnt die Periode beim nächsten Durchlauf (innerhalb einer Minute, sobald er läuft).",
-    follow: "Folgen diesem Zeitplan: {r}.",
-    none: "Kein Ranking folgt diesem Zeitplan, alle haben einen eigenen oder stehen auf „Aus“ (Vorlagen ohne Server zählen nicht).",
-    understood: "Mir ist klar, dass die Statistiken aller Rankings, die diesem Zeitplan folgen, am Ende jeder Periode unwiderruflich zurückgesetzt werden.",
-    save: "Speichern",
-    savedOn: "Gespeichert: Der Reset für alle Rankings ist eingeschaltet. Der Collector übernimmt ihn innerhalb einer Minute und beginnt mit der laufenden Periode, es wird also nicht sofort zurückgesetzt.",
-    savedOff: "Gespeichert: Der Reset für alle Rankings ist ausgeschaltet. Die Rankings, die ihm folgen, werden nicht mehr zurückgesetzt.",
-    errInput: "Nicht gespeichert: ungültige Eingabe.",
-    errConfirm: "Nicht gespeichert: Bitte bestätigen, dass die Rankings regelmäßig zurückgesetzt werden.",
-    cli: "Auf der Konsole: gamewe halloffame schedule -all [EVERY|off] -mode MODE",
-  },
-  en: {
-    title: "Scheduled reset for all rankings",
-    intro:
-      "One schedule for all rankings, e.g. every quarter. A ranking with servers follows it while it is set to “As for all rankings”, templates (rankings without servers) never do; its own settings can override it with an own schedule or “Off”. Before every reset the best of the period go into the ranking's hall of fame.",
-    on: "On",
-    off: "Off",
-    enabled: "Reset for all rankings",
-    enabledHelp: "Off: no ranking is reset on this schedule. The schedule stays stored and applies again as soon as you switch it on.",
-    stateOn: "Active: {s}, {m}.",
-    stateOff: "Switched off. Stored schedule: {s}, {m}.",
-    stateNone: "Switched off. No schedule set up yet.",
-    next: "Next reset on {n}.",
-    waiting: "The collector starts the period with its next run (within a minute while it runs).",
-    follow: "Following this schedule: {r}.",
-    none: "No ranking follows this schedule; all have their own or are off (templates without servers do not count).",
-    understood: "I understand that the statistics of all rankings following this schedule will be reset irreversibly at the end of every period.",
-    save: "Save",
-    savedOn: "Saved: the reset for all rankings is switched on. The collector takes it within a minute and starts with the period now running, so nothing is reset at once.",
-    savedOff: "Saved: the reset for all rankings is switched off. The rankings that follow it are no longer reset.",
-    errInput: "Not saved: invalid input.",
-    errConfirm: "Not saved: please confirm that the rankings will be reset regularly.",
-    cli: "From the console: gamewe halloffame schedule -all [EVERY|off] -mode MODE",
-  },
-};
+import { localeOf } from "@/lib/format";
+import { localized } from "@/lib/admin-i18n";
+import { GLOBAL_HALL_T } from "@/lib/admin-texts";
 
 // The reset schedule for all rankings (admins only), on the reset page next
 // to the manual reset; rankings: those with servers, templates are never
 // reset.
 export async function GlobalHallCard({ lang, status, rankings }: { lang: Lang; status?: string; rankings: { code: string; name: string }[] }) {
-  const t = T[lang === "de" ? "de" : "en"];
+  const t = localized(GLOBAL_HALL_T, lang);
   const ht = hallT(lang);
   const codes = rankings.map((r) => r.code);
   const [g, following] = await Promise.all([globalHall(codes), inheritingRankings(codes)]);
   const msg = { on: t.savedOn, off: t.savedOff, input: t.errInput, confirm: t.errConfirm }[status ?? ""];
   const names = rankings.filter((r) => following.includes(r.code));
-  const locale = lang === "de" ? "de-DE" : "en-GB";
+  const locale = localeOf(lang);
   const date = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString(locale, { timeZone: "UTC" });
   const what = g.schedule ? { s: scheduleText(lang, g.schedule), m: ht.modes[g.mode].replace(/^./, (c) => c.toLowerCase()) } : null;
   const fill = (v: string, m: Record<string, string>) => v.replace(/\{(\w)\}/g, (_, k) => m[k] ?? "");

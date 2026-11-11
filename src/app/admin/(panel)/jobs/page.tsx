@@ -4,136 +4,16 @@ import { AutoRefresh } from "@/components/auto-refresh";
 import { scheduleText } from "@/components/admin/hall-schedule";
 import { JobOriginLine } from "@/components/admin/job-origin";
 import { PageHead } from "@/components/admin/page-head";
-import { adminDict } from "@/lib/admin-i18n";
+import { adminDict, localized } from "@/lib/admin-i18n";
+import { JOBS_T } from "@/lib/admin-texts";
 import { jobsOverview, type Job, type ScheduledRanking } from "@/lib/admin-jobs";
 import { rankingSummaries } from "@/lib/admin-rankings";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
-import { fmtDateTime, fmtNum, nowUnix } from "@/lib/format";
+import { fmtDateTime, fmtNum, nowUnix, localeOf } from "@/lib/format";
 import { scheduleValue } from "@/lib/hall-period";
 import { fill, getAdminLang } from "@/lib/i18n";
 import { heartbeatFresh, jobType, shortDuration, type JobPlan, type JobType } from "@/lib/job-plan";
 import { jobModeName, type ResetMode } from "@/lib/reset-modes";
-
-const T = {
-  de: {
-    title: "Jobs",
-    intro: "Was der Collector als Nächstes erledigt, was gerade wartet oder läuft und was er zuletzt gemacht hat.",
-    collectorDown: "Der Collector läuft gerade nicht. Geplante und wartende Jobs laufen erst, wenn er wieder läuft.",
-    next: "Als Nächstes",
-    noPlan: "Der Collector meldet die Uhrzeiten seiner täglichen Jobs erst ab Version 0.27.0. Bis dahin fehlen hier die Zeiten der Awards und der inaktiven Spieler.",
-    nothingPlanned: "Nichts geplant: Die täglichen Jobs sind aus und kein Ranking hat einen geplanten Reset.",
-    colJob: "Job",
-    colWhen: "Nächster Lauf",
-    colPlan: "Zeitplan",
-    colState: "Status",
-    awards: "Tägliche Awards",
-    awardsSub: "Awards des Vortags für alle Rankings",
-    inactive: "Inaktive Spieler verschieben",
-    inactiveSub: "Spieler ohne Spiel seit „Inaktiv nach“ Tagen",
-    scheduled: "Geplanter Reset",
-    bansSteam: "Bans von Steam",
-    bansSteamSub: "VAC- und Spiel-Bans aller bekannten Spieler, 100 je Anfrage",
-    bansSb: "SourceBans-Liste",
-    bansSbSub: "die ganze öffentliche Ban-Liste; abgelaufene und aufgehobene Bans fallen weg",
-    bansStats: "{c} Konten geprüft, {b} gebannt, {d} fällig",
-    bansSbStats: "{n} laufende Bans",
-    everyN: "alle {d}",
-    perAccount: "je Spieler alle {d}",
-    noKey: "kein Steam-Web-API-Key (Einstellungen → Steam)",
-    noSb: "keine SourceBans-Adresse oder features.sourcebans aus",
-    lastError: "Letzter Fehler: {e}",
-    failing: "Fehler",
-    daily: "täglich {t}",
-    off: "Aus",
-    offHint: "aus in der config.yaml ({k})",
-    planned: "Geplant",
-    overdue: "Überfällig",
-    in: "in {d}",
-    ago: "vor {d}",
-    unknown: "unbekannt",
-    queue: "Warteschlange",
-    queueEmpty: "Nichts wartet, nichts läuft.",
-    queueHint: "Der Collector nimmt die Jobs nacheinander, den ältesten zuerst.",
-    history: "Verlauf",
-    historyHint: "Die letzten {n} erledigten Jobs; der Collector löscht sie nach 30 Tagen.",
-    historyEmpty: "Noch keine Jobs.",
-    noTable: "Die Tabelle hlstats_gamewe_jobs fehlt; die Datenbank braucht Collector 0.1.0 oder neuer.",
-    colNo: "Nr.",
-    colRanking: "Ranking",
-    colAt: "Angelegt",
-    colStarted: "Gestartet",
-    colTook: "Dauer",
-    colResult: "Ergebnis",
-    anAdmin: "ein anderer Admin",
-    status: { pending: "Wartet", running: "Läuft", done: "Erledigt", failed: "Fehlgeschlagen" } as Record<string, string>,
-    types: { "delete-player": "Spielerdaten löschen", reset: "Ranking zurücksetzen", "scheduled-reset": "Geplanter Reset", inactive: "Inaktive Spieler verschieben", awards: "Tägliche Awards" } as Record<JobType, string>,
-    modes: { "player-stats": "Nur Spielerstatistiken", "all-stats": "Alle Statistiken", all: "Alles, auch die Spieler" } as Record<ResetMode, string>,
-    forDay: "für den {d}",
-    allRankings: "alle Rankings",
-    openRanking: "Öffnen",
-    rankingsN: "{n} Rankings",
-    console: "Auf der Konsole: gamewe jobs (Liste), gamewe jobs -queue (Warteschlange).",
-  },
-  en: {
-    title: "Jobs",
-    intro: "What the collector does next, what is waiting or running right now and what it did last.",
-    collectorDown: "The collector is not running right now. Planned and waiting jobs only run once it runs again.",
-    next: "Next up",
-    noPlan: "The collector reports the times of its daily jobs from version 0.27.0. Until then the times of the awards and the inactive players are missing here.",
-    nothingPlanned: "Nothing planned: the daily jobs are off and no ranking has a scheduled reset.",
-    colJob: "Job",
-    colWhen: "Next run",
-    colPlan: "Schedule",
-    colState: "Status",
-    awards: "Daily awards",
-    awardsSub: "the previous day's awards of all rankings",
-    inactive: "Move inactive players",
-    inactiveSub: "players who have not played for the “inactive after” days",
-    scheduled: "Scheduled reset",
-    bansSteam: "Bans from Steam",
-    bansSteamSub: "VAC and game bans of all known players, 100 per request",
-    bansSb: "SourceBans list",
-    bansSbSub: "the whole public ban list; expired and lifted bans drop out",
-    bansStats: "{c} accounts checked, {b} banned, {d} due",
-    bansSbStats: "{n} running bans",
-    everyN: "every {d}",
-    perAccount: "each player every {d}",
-    noKey: "no Steam Web API key (Settings → Steam)",
-    noSb: "no SourceBans address, or features.sourcebans off",
-    lastError: "Last error: {e}",
-    failing: "Error",
-    daily: "daily {t}",
-    off: "Off",
-    offHint: "off in config.yaml ({k})",
-    planned: "Planned",
-    overdue: "Overdue",
-    in: "in {d}",
-    ago: "{d} ago",
-    unknown: "unknown",
-    queue: "Queue",
-    queueEmpty: "Nothing is waiting or running.",
-    queueHint: "The collector takes the jobs one after the other, the oldest first.",
-    history: "History",
-    historyHint: "The last {n} finished jobs; the collector deletes them after 30 days.",
-    historyEmpty: "No jobs yet.",
-    noTable: "The table hlstats_gamewe_jobs is missing; the database needs collector 0.1.0 or newer.",
-    colNo: "No.",
-    colRanking: "Ranking",
-    colAt: "Created",
-    colStarted: "Started",
-    colTook: "Took",
-    colResult: "Result",
-    anAdmin: "another admin",
-    status: { pending: "Waiting", running: "Running", done: "Done", failed: "Failed" } as Record<string, string>,
-    types: { "delete-player": "Delete player data", reset: "Reset ranking", "scheduled-reset": "Scheduled reset", inactive: "Move inactive players", awards: "Daily awards" } as Record<JobType, string>,
-    modes: { "player-stats": "Player statistics only", "all-stats": "All statistics", all: "Everything, players too" } as Record<ResetMode, string>,
-    forDay: "for {d}",
-    allRankings: "all rankings",
-    openRanking: "Open",
-    rankingsN: "{n} rankings",
-    console: "On the console: gamewe jobs (list), gamewe jobs -queue (queue).",
-  },
-};
 
 const TONE: Record<string, string> = { pending: "warn", running: "acc", done: "ok", failed: "bad" };
 
@@ -147,7 +27,7 @@ export default async function JobsPage() {
   // Who queued a job: names of other admins only for level 100 (as the user list).
   const isAdmin = user.acclevel >= LEVEL_ADMIN;
   const lang = await getAdminLang();
-  const t = T[lang];
+  const t = localized(JOBS_T, lang);
   const u = adminDict(lang).ui;
   const rankings = await rankingSummaries();
   const names = new Map(rankings.map((r) => [r.code, r.name]));
@@ -238,7 +118,7 @@ export default async function JobsPage() {
     return type ? t.types[type] : j.type;
   };
   const jobDetail = (j: Job) => {
-    if (j.type === "awards") return /^\d{4}-\d{2}-\d{2}$/.test(j.mode) ? fill(t.forDay, { d: new Date(`${j.mode}T12:00:00Z`).toLocaleDateString(lang === "de" ? "de-DE" : "en-GB", { timeZone: "UTC", dateStyle: "medium" }) }) : "";
+    if (j.type === "awards") return /^\d{4}-\d{2}-\d{2}$/.test(j.mode) ? fill(t.forDay, { d: new Date(`${j.mode}T12:00:00Z`).toLocaleDateString(localeOf(lang), { timeZone: "UTC", dateStyle: "medium" }) }) : "";
     if (j.type === "reset" || j.type === "scheduled-reset") {
       const m = jobModeName(j.mode);
       return m ? t.modes[m] : j.mode;

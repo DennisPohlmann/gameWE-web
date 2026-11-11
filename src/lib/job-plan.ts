@@ -5,7 +5,10 @@
 // gamewe_next_reset_<game> (Unix time the running period of the ranking's
 // reset schedule ends). No database access, so it can be tested.
 
+import { localized } from "./admin-i18n";
+import { DURATION_T } from "./admin-texts";
 import { parseSchedule, type Schedule } from "./hall-period";
+import type { Lang } from "../translations/languages";
 
 export const PLAN_KEYS = { awards: "gamewe_next_awards", inactive: "gamewe_next_inactive", resets: "gamewe_next_resets", bans: "gamewe_next_bans" } as const;
 export const NEXT_RESET_PREFIX = "gamewe_next_reset_";
@@ -105,15 +108,14 @@ export function jobType(v: string): JobType | null {
 }
 
 // Seconds -> "45 s", "12 min", "3 h 5 min", "2 d 4 h".
-export function shortDuration(seconds: number, lang: "de" | "en"): string {
+export function shortDuration(seconds: number, lang: Lang): string {
   const s = Math.max(0, Math.round(seconds));
   const d = Math.floor(s / 86400);
   const h = Math.floor((s % 86400) / 3600);
   const m = Math.floor((s % 3600) / 60);
-  const day = lang === "de" ? "T" : "d";
-  const hr = lang === "de" ? "Std." : "h";
-  if (d > 0) return h ? `${d} ${day} ${h} ${hr}` : `${d} ${day}`;
-  if (h > 0) return m ? `${h} ${hr} ${m} min` : `${h} ${hr}`;
-  if (m > 0) return `${m} min`;
-  return `${s} s`;
+  const u = localized(DURATION_T, lang);
+  if (d > 0) return h ? `${d} ${u.d} ${h} ${u.h}` : `${d} ${u.d}`;
+  if (h > 0) return m ? `${h} ${u.h} ${m} ${u.min}` : `${h} ${u.h}`;
+  if (m > 0) return `${m} ${u.min}`;
+  return `${s} ${u.s}`;
 }

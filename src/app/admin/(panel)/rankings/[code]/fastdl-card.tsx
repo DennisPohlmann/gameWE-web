@@ -7,52 +7,15 @@ import { accessKey } from "@/lib/fastdl-access";
 import { noAutofill } from "@/lib/autofill";
 import type { Lang } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
-
-const T = {
-  de: {
-    title: "FastDL",
-    label: "Eigene FastDL-Adresse",
-    help: "Der Ordner über maps/ (sv_downloadurl), nur für dieses Ranking. Leer: Es gilt die globale Adresse. Nur öffentliche Adressen (FASTDL_ALLOW_PRIVATE=1 erlaubt private), keine Weiterleitungen, höchstens 512 MB Download und 1 GB entpackt.",
-    accessHelp: "Was der Download zusätzlich sendet, nur für dieses Ranking. Ein leeres Feld nimmt den Wert aus Einstellungen → Karten & Ereignisse, der für alle Rankings gilt. Setzt dieses Ranking Token oder Benutzer, gilt nur seine Anmeldung; der Token gewinnt über den Benutzer. Über http:// gehen Token und Passwort unverschlüsselt durchs Netz.",
-    agent: "User-Agent",
-    referer: "Referer",
-    token: "Bearer-Token",
-    user: "Benutzer (Basic-Auth)",
-    password: "Passwort (Basic-Auth)",
-    header: "Weiterer Header („Name: Wert“)",
-    off: "Radarbilder per FastDL sind ausgeschaltet; die Adresse wirkt erst mit dem Schalter.",
-    link: "Zu den Einstellungen",
-    save: "Speichern",
-    saved: "Gespeichert.",
-    bad: "Keine gültige Adresse: nur http(s), ohne Benutzer und Passwort.",
-    badField: "Bitte prüfe das Feld „{f}“: keine Steuerzeichen, Benutzer ohne Doppelpunkt, Header als „Name: Wert“ (nicht Host, Authorization, User-Agent, Referer).",
-  },
-  en: {
-    title: "FastDL",
-    label: "Own FastDL address",
-    help: "The folder above maps/ (sv_downloadurl), for this ranking only. Empty: the global address applies. Public addresses only (FASTDL_ALLOW_PRIVATE=1 allows private ones), no redirects, at most 512 MB download and 1 GB unpacked.",
-    accessHelp: "What the download sends besides, for this ranking only. An empty field takes the value from Settings → Maps & events, which applies to all rankings. When this ranking sets a token or a user, only its own authentication applies; the token wins over the user. Over http:// token and password cross the network unencrypted.",
-    agent: "User-Agent",
-    referer: "Referer",
-    token: "Bearer token",
-    user: "User (basic auth)",
-    password: "Password (basic auth)",
-    header: "One more header (\"Name: value\")",
-    off: "Radar pictures by FastDL are switched off; the address works only with the switch on.",
-    link: "To the settings",
-    save: "Save",
-    saved: "Saved.",
-    bad: "Not a valid address: http(s) only, no user or password.",
-    badField: "Please check the field \"{f}\": no control characters, a user without a colon, the header as \"Name: value\" (not Host, Authorization, User-Agent, Referer).",
-  },
-};
+import { localized } from "@/lib/admin-i18n";
+import { FASTDL_T } from "@/lib/admin-texts";
 
 type Field = "agent" | "referer" | "token" | "user" | "password" | "header";
 
 // The FastDL address of one ranking and what its downloads send, overriding
 // the global settings (admins only). Secrets show only through their eye button.
 export async function FastdlCard({ game, lang, status }: { game: string; lang: Lang; status?: string }) {
-  const t = T[lang === "de" ? "de" : "en"];
+  const t = localized(FASTDL_T, lang);
   const [url, access, { fastdlOn, fastdlUrl }, globals] = await Promise.all([
     rankingFastdl(game),
     rankingFastdlAccess(game),

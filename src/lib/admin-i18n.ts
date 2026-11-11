@@ -1,4 +1,12 @@
-import type { Lang } from "./i18n";
+import type { L } from "./admin-entities";
+import { ADMIN_TEXTS } from "../translations/admin";
+import type { Lang } from "../translations/languages";
+
+// Texts of the admin area. German and English are written in the code (here,
+// in lib/admin-texts.ts and in the entity and setting definitions); every
+// other language of translations/languages.ts has a file in
+// translations/admin that maps each English text to its translation. A text
+// missing there is shown in English (tests/admin-languages.test.ts finds it).
 
 const de = {
   admin: "Administration",
@@ -87,6 +95,7 @@ const de = {
   vacBlockOn: "VAC-Sperre an",
   vacBlockNoKey: "VAC-Sperre an, aber kein Steam-Schlüssel",
   cs2LogToken: "Log-Token",
+  gameLimited: "eingeschränkt",
   cs2LogSecret: "Nötig für die Logs: der Token dieses Servers, 16 bis 64 Buchstaben, Ziffern, - oder _ („Token erzeugen“ oder openssl rand -hex 24), nicht sv_logsecret, jeder Server einen eigenen. Nach dem Speichern zeigt ihn das Auge am Feld wieder an. Mit RCON-Passwort trägt der Collector die URL selbst ein; alte URLs entfernt logaddress_delall_http auf dem Gameserver. Ohne Token nimmt der Collector keine Logs dieses Servers an. Leer lassen, um ihn nicht zu ändern; „Entfernen“ löscht ihn.",
   cs2LogTokenNew: "Token erzeugen",
   logSecretNew: "Secret erzeugen",
@@ -519,6 +528,7 @@ const en: AdminDict = {
   vacBlockOn: "VAC block on",
   vacBlockNoKey: "VAC block on, but no Steam key",
   cs2LogToken: "Log token",
+  gameLimited: "limited",
   cs2LogSecret: "Needed for the logs: this server's token, 16 to 64 letters, digits, - or _ (“Generate token” or openssl rand -hex 24), not sv_logsecret, one per server. After saving, the eye button at the field shows it again. With an RCON password the collector registers the URL itself; logaddress_delall_http on the game server removes old URLs. Without a token the collector takes no logs from this server. Leave empty to keep it; “Remove” clears it.",
   cs2LogTokenNew: "Generate token",
   logSecretNew: "Generate secret",
@@ -861,6 +871,31 @@ const en: AdminDict = {
   pager: { firstPage: "First page", prev: "Previous", next: "Next", lastPage: "Last page", page: "Pages", goTo: "Go to:", showRows: "Show rows:", entriesOnPages: "{n} entries on {p} pages" },
 };
 
+const both = { de, en };
 export function adminDict(lang: Lang): AdminDict {
-  return lang === "de" ? de : en;
+  return localized(both, lang);
+}
+
+// One { de, en } text in the given language.
+export function tr(l: L, lang: Lang): string {
+  if (lang === "de" || lang === "en") return l[lang];
+  return l.all?.[lang] ?? ADMIN_TEXTS[lang][l.en] ?? l.en;
+}
+
+// A { de, en } table of texts (nested objects and arrays allowed) in the
+// given language; built once per table and language.
+const built = new WeakMap<object, Map<Lang, unknown>>();
+export function localized<T>(t: { de: T; en: T }, lang: Lang): T {
+  if (lang === "de" || lang === "en") return t[lang];
+  let m = built.get(t);
+  if (!m) built.set(t, (m = new Map()));
+  if (!m.has(lang)) m.set(lang, translate(t.en, ADMIN_TEXTS[lang]));
+  return m.get(lang) as T;
+}
+
+function translate(v: unknown, texts: Record<string, string>): unknown {
+  if (typeof v === "string") return texts[v] ?? v;
+  if (Array.isArray(v)) return v.map((x) => translate(x, texts));
+  if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, translate(x, texts)]));
+  return v;
 }

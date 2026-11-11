@@ -5,7 +5,7 @@ import { Icon } from "@/components/admin/icons";
 import { IdleLogout } from "@/components/admin/idle-logout";
 import { AdminSidebar, AreaTabs, Logo, type NavText } from "@/components/admin/nav";
 import { entities } from "@/lib/admin-entities";
-import { adminDict } from "@/lib/admin-i18n";
+import { adminDict, tr } from "@/lib/admin-i18n";
 import { rankingSummaries } from "@/lib/admin-rankings";
 import { settingGroups } from "@/lib/admin-settings";
 import { ADMIN_THEMES, getAdminTheme } from "@/lib/admin-theme";
@@ -20,6 +20,7 @@ import { releasePage } from "@/lib/update-version";
 import { updateStatus } from "@/lib/updates";
 import { webRuntime } from "@/lib/runtime";
 import { runtimeSuffix } from "@/lib/runtime-label";
+import { LANGUAGES } from "@/translations/languages";
 
 // Frame of every admin page after the login: top bar with the three areas
 // and the user menu, the side menu of the area (a drawer on phones, opened
@@ -37,7 +38,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
   ]);
   const a = adminDict(lang);
   const u = a.ui;
-  const label = (key: string) => entities.find((e) => e.key === key)?.label[lang] ?? key;
+  const label = (key: string) => ((l) => (l ? tr(l, lang) : key))(entities.find((e) => e.key === key)?.label);
   const text: NavText = {
     ...Object.fromEntries(Object.entries(u).filter(([, v]) => typeof v === "string")),
     toSite: a.toSite,
@@ -142,12 +143,12 @@ export default async function PanelLayout({ children }: { children: ReactNode })
                 ))}
               </form>
             </div>
-            <div className="adm-menu-row">
+            <div className="adm-menu-row adm-langs">
               <span>{u.language}</span>
               <span className="adm-seg">
-                {(["de", "en"] as const).map((l) => (
-                  <a key={l} href={`${basePath}/lang/${l}`} className={lang === l ? "on" : undefined} hrefLang={l}>
-                    {l.toUpperCase()}
+                {LANGUAGES.map((l) => (
+                  <a key={l.code} href={`${basePath}/lang/${l.code}`} className={lang === l.code ? "on" : undefined} hrefLang={l.code} lang={l.code} title={l.name}>
+                    {l.code.toUpperCase()}
                   </a>
                 ))}
               </span>
@@ -169,7 +170,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
               isAdmin={isAdmin}
               footer={footer}
               rankings={rankings.map((r) => ({ code: r.code, name: r.name, servers: r.servers, hidden: r.hidden, tag: tagOf(r.base, r.code), template: r.template }))}
-              groups={settingGroups.map((g) => ({ id: g.id, area: g.area, title: g.title[lang] }))}
+              groups={settingGroups.map((g) => ({ id: g.id, area: g.area, title: tr(g.title, lang) }))}
             />
           </Suspense>
         </aside>

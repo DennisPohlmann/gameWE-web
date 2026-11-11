@@ -12,10 +12,10 @@ import { sortHeads, SortInputs } from "@/components/sort-head";
 import { sortState } from "@/lib/table-sort";
 import { allServers, rankingBaseGames } from "@/lib/admin-rankings";
 import { RankBadge, rankName } from "@/components/badges";
-import { getEntity, type Field } from "@/lib/admin-entities";
-import { adminDict } from "@/lib/admin-i18n";
+import { getEntity, type Field, type L } from "@/lib/admin-entities";
+import { adminDict, tr } from "@/lib/admin-i18n";
 import { requireAdmin } from "@/lib/auth";
-import { getAdminLang } from "@/lib/i18n";
+import { getAdminLang, type Lang } from "@/lib/i18n";
 import { listHref, withReturnTo } from "@/lib/return-to";
 import { isTemplateRanking } from "@/lib/ranking-template";
 
@@ -75,11 +75,11 @@ export default async function EntityList({ params, searchParams }: { params: Pro
   return (
     <>
       <PageHead
-        crumbs={[[area, e.key === "users" ? "/admin/settings" : "/admin/rankings"], ...(gameName && e.gameColumn ? ([[gameName, `/admin/rankings/${encodeURIComponent(game)}`]] as [string, string][]) : []), [e.label[lang]]]}
-        title={e.label[lang]}
+        crumbs={[[area, e.key === "users" ? "/admin/settings" : "/admin/rankings"], ...(gameName && e.gameColumn ? ([[gameName, `/admin/rankings/${encodeURIComponent(game)}`]] as [string, string][]) : []), [tr(e.label, lang)]]}
+        title={tr(e.label, lang)}
         intro={
           <>
-            {e.help ? e.help[lang] : null}
+            {e.help ? tr(e.help, lang) : null}
             {e.statusFilter ? <> {u.hiddenNote}</> : null}
           </>
         }
@@ -126,7 +126,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
                 </Link>
                 {e.statusFilter.map((f) => (
                   <Link key={f.value} href={listHref(e.key, { ...listParams, status: f.value, page: undefined })} className={status === f.value ? "on" : undefined}>
-                    {f.label[lang]} <span className="n">{nfmt(counts[f.value] ?? 0)}</span>
+                    {tr(f.label, lang)} <span className="n">{nfmt(counts[f.value] ?? 0)}</span>
                   </Link>
                 ))}
               </span>
@@ -139,7 +139,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
               <table className="cards">
                 <thead>
                   <tr>
-                    {cols.map((f) => (sortable[f.name] ? <Fragment key={f.name}>{th(f.label[lang], f.name, "")}</Fragment> : <th key={f.name}>{f.label[lang]}</th>))}
+                    {cols.map((f) => (sortable[f.name] ? <Fragment key={f.name}>{th(tr(f.label, lang), f.name, "")}</Fragment> : <th key={f.name}>{tr(f.label, lang)}</th>))}
                     {gameCol ? <th>{a.baseGame}</th> : null}
                     {e.key === "games" ? <th className="num">{a.serverCount}</th> : null}
                     <th />
@@ -149,7 +149,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
                   {rows.map((r) => (
                     <tr key={String(r.__pk)}>
                       {cols.map((f) => (
-                        <td key={f.name} className={f.name === mainCol ? "main" : undefined} data-l={f.name === mainCol || f.name === e.statusColumn ? undefined : `${f.label[lang]}:`}>
+                        <td key={f.name} className={f.name === mainCol ? "main" : undefined} data-l={f.name === mainCol || f.name === e.statusColumn ? undefined : `${tr(f.label, lang)}:`}>
                           {e.key === "ranks" && f.name === "name" ? (
                             <RankCell name={String(r.name ?? "")} />
                           ) : f.name === e.statusColumn ? (
@@ -222,10 +222,10 @@ function statusValue(v: unknown): string {
   return n === 0 ? "visible" : n === 2 ? "banned" : "hidden";
 }
 
-function StatusPill({ f, v, filter, lang }: { f: Field; v: string | number | null; filter?: { label: { de: string; en: string }; tone?: string }; lang: "de" | "en" }) {
+function StatusPill({ f, v, filter, lang }: { f: Field; v: string | number | null; filter?: { label: L; tone?: string }; lang: Lang }) {
   return (
     <span className={`pill ${filter?.tone ?? ""}`} title={show(f, v, lang)}>
-      {filter ? filter.label[lang] : show(f, v, lang)}
+      {filter ? tr(filter.label, lang) : show(f, v, lang)}
     </span>
   );
 }
@@ -242,11 +242,11 @@ function RankCell({ name }: { name: string }) {
   );
 }
 
-function show(f: Field, v: string | number | null, lang: "de" | "en") {
+function show(f: Field, v: string | number | null, lang: Lang) {
   if (v === null || v === undefined) return "";
   if (Array.isArray(f.options)) {
     const o = f.options.find(([k]) => k === String(v));
-    if (o) return typeof o[1] === "string" ? o[1] : o[1][lang];
+    if (o) return typeof o[1] === "string" ? o[1] : tr(o[1], lang);
   }
   return String(v);
 }

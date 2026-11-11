@@ -1,3 +1,4 @@
+import type { Lang } from "../translations/languages";
 import { GAME_KINDS, RETIRED_GAMES } from "./games";
 import { canonicalIp } from "./ip";
 import { isLogSecret, isLogToken } from "./log-secret";
@@ -6,7 +7,9 @@ import { isLogSecret, isLogToken } from "./log-secret";
 // edit and save code in app/admin works from these definitions only, so
 // table and column names never come from the request.
 
-export type L = { de: string; en: string };
+// A text in German and English (other languages: lib/admin-i18n.ts, tr()).
+// all: names that come with every language already (countries from Intl).
+export type L = { de: string; en: string; all?: Partial<Record<Lang, string>> };
 
 export type Field = {
   name: string;

@@ -3,7 +3,8 @@ import { FLAG_CODES } from "./flag-codes";
 import { LINK_SLOTS } from "./header-links";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZES } from "./page-size";
 import { IDLE_DEFAULT_MINUTES, IDLE_MAX_MINUTES, IDLE_MIN_MINUTES } from "./admin-idle";
-import { LANGUAGES } from "../translations/languages";
+import { LANGUAGES, type Lang } from "../translations/languages";
+import { tr } from "./admin-i18n";
 
 // Header links: validation and order live in lib/header-links.ts.
 export { homeValue, linkValue } from "./header-links";
@@ -72,7 +73,10 @@ function countryChoices(): [string, L][] {
   return [...FLAG_CODES]
     .filter((c) => /^[a-z]{2}$/.test(c))
     .map((c) => c.toUpperCase())
-    .map((c): [string, L] => [c, { de: `${name("de", c)} (${c})`, en: `${name("en", c)} (${c})` }])
+    .map((c): [string, L] => [
+      c,
+      { de: `${name("de", c)} (${c})`, en: `${name("en", c)} (${c})`, all: Object.fromEntries(LANGUAGES.map((l) => [l.code, `${name(l.locale, c)} (${c})`])) },
+    ])
     .filter(([c, l]) => l.en !== `${c} (${c})`)
     .sort((a, b) => a[1].de.localeCompare(b[1].de, "de"));
 }
@@ -861,8 +865,9 @@ export const RAW_PREFIX_HELP: [string, L][] = [
   ],
 ];
 
-export function rawOptionHelp(key: string, lang: "de" | "en"): string | undefined {
-  return (RAW_OPTION_HELP[key] ?? RAW_PREFIX_HELP.find(([p]) => key.startsWith(p))?.[1])?.[lang];
+export function rawOptionHelp(key: string, lang: Lang): string | undefined {
+  const l = RAW_OPTION_HELP[key] ?? RAW_PREFIX_HELP.find(([p]) => key.startsWith(p))?.[1];
+  return l && tr(l, lang);
 }
 
 const settingKeys = new Set(allSettings.map((s) => s.key.toLowerCase()));

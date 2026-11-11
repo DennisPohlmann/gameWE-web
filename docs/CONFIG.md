@@ -161,7 +161,8 @@ sr, zh-tw and zh-cn. The texts are in `src/translations/` (see its README);
 missing texts fall back to English. Visitors pick a language with the flags
 in the footer; without a choice the browser's language is used, then the
 default language (Admin → Settings → General, before that `DEFAULT_LANG`).
-The admin area is in German or English.
+The admin area has the same languages (the user menu top right switches
+it, the same `gamewe_lang` cookie as the footer flags).
 
 ## Search engines and sharing
 

@@ -7,7 +7,7 @@ import { HeaderLinksEditor, type EditorRow, type HeaderLinksText } from "@/compo
 import { headerOrder } from "@/lib/header-links";
 import { dicts } from "@/translations";
 import { rawOptions } from "@/lib/admin-data";
-import { adminDict } from "@/lib/admin-i18n";
+import { adminDict, tr } from "@/lib/admin-i18n";
 import { RAW_GROUP, adminOnlyOption, rawOptionHelp, READONLY_OPTIONS, allSettings, settingGroups, settingsReader, type Setting } from "@/lib/admin-settings";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { ENV_FALLBACK, envFormValues, valueSource } from "@/lib/config";
@@ -19,8 +19,8 @@ import { secretOptions } from "@/lib/secret-options";
 import { replacedTemplate } from "@/lib/skin-fallback";
 import { listTemplates } from "@/lib/templates";
 import { voiceType } from "@/lib/voice";
+import type { Lang } from "@/lib/i18n";
 
-type Lang = "de" | "en";
 
 // One page of the settings: the settings of one group (lib/admin-settings.ts)
 // or the raw hlstats_Options rows, in one form with its own save bar.
@@ -69,17 +69,17 @@ export default async function SettingsPage({
   const badRaw = sp.field?.startsWith("raw:") ? sp.field.slice(4) : sp.field === "raw_new" ? a.rawNewKey : null;
   const t = dicts[lang];
   const areaTitle = { website: u.navWebsite, services: u.navServices, collector: u.navCollector, admin: u.navAdmin, advanced: u.navAdvanced };
-  const title = group ? group.title[lang] : u.rawOptions;
+  const title = group ? tr(group.title, lang) : u.rawOptions;
 
   return (
     <>
       <PageHead
         crumbs={[[u.areaSettings, "/admin/settings"], [areaTitle[group?.area ?? "advanced"]], [title]]}
         title={title}
-        intro={group ? group.help?.[lang] : a.rawHelp}
+        intro={group ? group.help && tr(group.help, lang) : a.rawHelp}
       />
       {sp.saved ? <p className="notice">{a.saved}</p> : null}
-      {bad ? <p className="notice error">{fill(a.invalidField, { f: bad.label[lang] })}</p> : null}
+      {bad ? <p className="notice error">{fill(a.invalidField, { f: tr(bad.label, lang) })}</p> : null}
       {badRaw ? <p className="notice error">{fill(a.invalidField, { f: badRaw })}</p> : null}
       {css ? <style>{css}</style> : null}
       <form action={saveSettingsAction}>
@@ -175,7 +175,7 @@ function SettingField({
       <select {...noAutofill} id={id} name={s.key} defaultValue={v}>
         {s.choices?.map(([c, l]) => (
           <option key={c} value={c}>
-            {l[lang]}
+            {tr(l, lang)}
           </option>
         ))}
       </select>
@@ -188,7 +188,7 @@ function SettingField({
         {templates.some((t) => t.id === pick) ? null : <option value={pick}>{pick} (?)</option>}
         {templates.map((t) => (
           <option key={t.id} value={t.id}>
-            {t.name[lang]}
+            {tr(t.name, lang)}
           </option>
         ))}
       </select>
@@ -216,9 +216,9 @@ function SettingField({
     <div className="field" data-show={s.show ? `${s.show.key}=${s.show.value}` : undefined}>
       <div className="l">
         <b>
-          <label htmlFor={id}>{s.label[lang]}</label>
+          <label htmlFor={id}>{tr(s.label, lang)}</label>
         </b>
-        {s.help ? <span>{s.help[lang]}</span> : null}
+        {s.help ? <span>{tr(s.help, lang)}</span> : null}
         {fromEnv && s.type !== "secret" ? <span className="env-note">{fill(a.fromEnv, { v: fromEnv })}</span> : null}
         {readOnly ? <span className="env-note">{fill(a.levelOnly, { n: String(s.minLevel) })}</span> : null}
         <code>{s.key}</code>

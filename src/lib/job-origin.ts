@@ -8,6 +8,9 @@
 // can be tested.
 
 import { parseSchedule, type Schedule } from "./hall-period";
+import { localized } from "./admin-i18n";
+import { ORIGIN_T } from "./admin-texts";
+import { LANGUAGES, type Lang } from "../translations/languages";
 
 export const ORIGINS = ["scheduled_resets", "daily_awards", "inactive_players", "cli", "admin", "api"] as const;
 export type Origin = (typeof ORIGINS)[number];
@@ -84,49 +87,6 @@ export function webOriginDetail(token: string | undefined): string {
   return token ? JSON.stringify({ token: token.slice(0, 64) }) : "";
 }
 
-const T = {
-  de: {
-    sources: {
-      scheduled_resets: "Reset-Zeitplan (features.scheduled_resets)",
-      daily_awards: "Tägliche Awards (features.daily_awards)",
-      inactive_players: "Täglicher Lauf der inaktiven Spieler (features.inactive_players)",
-      cli: "Konsole",
-      admin: "Web-Admin",
-      api: "Admin-API",
-    } as Record<Origin, string>,
-    schedule: "Collector-Zeitplan",
-    period: "Periode {f} bis {t}",
-    own: "eigener Zeitplan des Rankings",
-    all: "Zeitplan für alle Rankings",
-    startup: "beim Start des Collectors angelegt",
-    ended: "angelegt, als die Periode endete",
-    dailyStartup: "beim Start des Collectors angelegt, der Tag hatte noch keine Awards",
-    daily: "zur täglichen Uhrzeit angelegt",
-    token: "Token „{n}“",
-    old: "keine Details: von einem älteren Collector angelegt",
-  },
-  en: {
-    sources: {
-      scheduled_resets: "Reset schedule (features.scheduled_resets)",
-      daily_awards: "Daily awards (features.daily_awards)",
-      inactive_players: "Daily move of inactive players (features.inactive_players)",
-      cli: "Console",
-      admin: "Web admin",
-      api: "Admin API",
-    } as Record<Origin, string>,
-    schedule: "Collector schedule",
-    period: "period {f} to {t}",
-    own: "the ranking's own schedule",
-    all: "schedule for all rankings",
-    startup: "queued at the collector's start",
-    ended: "queued when the period ended",
-    dailyStartup: "queued at the collector's start, the day had no awards yet",
-    daily: "queued at the daily time",
-    token: "token “{n}”",
-    old: "no details: queued by an older collector",
-  },
-};
-
 const fill = (s: string, v: Record<string, string>) => s.replace(/\{(\w)\}/g, (_, k: string) => v[k] ?? "");
 
 export type OriginText = { source: string; parts: string[] };
@@ -139,11 +99,11 @@ export function originText(
   o: JobOrigin,
   requestedBy: string,
   by: string,
-  lang: "de" | "en",
+  lang: Lang,
   scheduleText: (s: Schedule) => string,
 ): OriginText {
-  const t = T[lang];
-  const locale = lang === "de" ? "de-DE" : "en-GB";
+  const t = localized(ORIGIN_T, lang);
+  const locale = LANGUAGES.find((l) => l.code === lang)?.locale;
   const date = (unix: number) =>
     new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: o.zone || undefined }).format(unix * 1000);
   const parts: string[] = [];

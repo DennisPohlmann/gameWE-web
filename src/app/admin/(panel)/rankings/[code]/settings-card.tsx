@@ -2,13 +2,14 @@ import { saveAction } from "../../../actions";
 import { FieldControl } from "@/components/admin/field-control";
 import { getRow, optionList, withColumns } from "@/lib/admin-data";
 import { getEntity } from "@/lib/admin-entities";
-import { adminDict } from "@/lib/admin-i18n";
+import { adminDict, tr } from "@/lib/admin-i18n";
 import { fill } from "@/lib/i18n";
+import type { Lang } from "@/lib/i18n";
 
 // Name, game, visibility and order of one ranking (level 100, as the games
 // entity): the fields of /admin/games/<id>, saved by the same action, which
 // returns here.
-export async function SettingsCard({ id, lang, sp }: { id: number; lang: "de" | "en"; sp: Record<string, string | undefined> }) {
+export async function SettingsCard({ id, lang, sp }: { id: number; lang: Lang; sp: Record<string, string | undefined> }) {
   const e = await withColumns(getEntity("games")!);
   const row = await getRow(e, String(id));
   if (!row) return null;
@@ -19,7 +20,7 @@ export async function SettingsCard({ id, lang, sp }: { id: number; lang: "de" | 
   const bad = fields.find((f) => f.name === sp.field);
   const error =
     sp.error === "field"
-      ? fill(a.invalidField, { f: bad?.label[lang] ?? sp.field ?? "" })
+      ? fill(a.invalidField, { f: (bad ? tr(bad.label, lang) : (sp.field ?? "")) })
       : sp.error === "db"
         ? fill(a.dbWriteError, { msg: sp.msg ?? "" })
         : sp.error === "mismatch"
@@ -39,7 +40,7 @@ export async function SettingsCard({ id, lang, sp }: { id: number; lang: "de" | 
         <input type="hidden" name="__id" value={String(id)} />
         {fields.map((f) => {
           const opts = Array.isArray(f.options)
-            ? f.options.map(([v, l]): [string, string] => [v, typeof l === "string" ? l : l[lang]])
+            ? f.options.map(([v, l]): [string, string] => [v, typeof l === "string" ? l : tr(l, lang)])
             : f.options === "games"
               ? games
               : null;
@@ -47,9 +48,9 @@ export async function SettingsCard({ id, lang, sp }: { id: number; lang: "de" | 
             <div className="field" key={f.name}>
               <div className="l">
                 <b>
-                  <label htmlFor={`rk-${f.name}`}>{f.label[lang]}</label>
+                  <label htmlFor={`rk-${f.name}`}>{tr(f.label, lang)}</label>
                 </b>
-                {f.help ? <span>{f.help[lang]}</span> : null}
+                {f.help ? <span>{tr(f.help, lang)}</span> : null}
               </div>
               <div className="c">
                 <FieldControl

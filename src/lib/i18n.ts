@@ -39,10 +39,8 @@ export async function getDict(): Promise<{ lang: Lang; t: Dict }> {
   return { lang, t: dicts[lang] };
 }
 
-// The admin area is in German and English only.
-export async function getAdminLang(): Promise<"de" | "en"> {
-  return (await getLang()) === "de" ? "de" : "en";
-}
+// The admin area has the same languages as the public pages.
+export const getAdminLang = getLang;
 
 // fill("Tracking {n}", { n: 3 }) -> "Tracking 3"
 export function fill(s: string, vars: Record<string, string | number>): string {

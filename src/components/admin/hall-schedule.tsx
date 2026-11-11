@@ -2,48 +2,15 @@ import { noAutofill } from "@/lib/autofill";
 import { MAX_EVERY, type Schedule } from "@/lib/hall-period";
 import type { Lang } from "@/lib/i18n";
 import { RESET_MODES, type ResetMode } from "@/lib/reset-modes";
+import { localized } from "@/lib/admin-i18n";
+import { HALL_T } from "@/lib/admin-texts";
 
 // Texts and form fields shared by the hall of fame cards (schedule for all
 // rankings, schedule of one ranking). The start-day fields show only for
 // their unit (CSS :has, no script); hidden ones are sent too but ignored.
 
-export const HALL_T = {
-  de: {
-    every: "Reset",
-    everyHelp: "Alle N Tage, Wochen, Monate, Quartale oder Jahre, z. B. alle 2 Monate.",
-    units: { off: "Aus (kein geplanter Reset)", day: "Tage", week: "Wochen", month: "Monate", quarter: "Quartale", year: "Jahre" },
-    all: "alle",
-    mday: "Stichtag im Monat",
-    mdayHelp: "Die Periode beginnt an diesem Tag (1 bis 28), z. B. jeden 15. Beim Quartal ist es der Tag im ersten Monat des Quartals.",
-    wday: "Wochentag",
-    wdays: ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"],
-    ydate: "Stichtag im Jahr",
-    ydateHelp: "Tag (1 bis 28) und Monat, an dem das Jahr beginnt, z. B. 1. Juli für eine Saison.",
-    months: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
-    mode: "Was zurücksetzen?",
-    modes: { "player-stats": "Nur Spielerstatistiken", "all-stats": "Alle Statistiken", all: "Alles, auch die Spieler" } as Record<ResetMode, string>,
-    time: "Die Uhrzeit des Resets steht in der config.yaml des Collectors (features.scheduled_resets.time, Standard 00:00) und gilt in seiner Zeitzone.",
-  },
-  en: {
-    every: "Reset",
-    everyHelp: "Every N days, weeks, months, quarters or years, e.g. every 2 months.",
-    units: { off: "Off (no scheduled reset)", day: "days", week: "weeks", month: "months", quarter: "quarters", year: "years" },
-    all: "every",
-    mday: "Start day of the month",
-    mdayHelp: "The period starts on this day (1 to 28), e.g. every 15th. For quarters it is the day in the quarter's first month.",
-    wday: "Weekday",
-    wdays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-    ydate: "Start day of the year",
-    ydateHelp: "Day (1 to 28) and month the year starts on, e.g. 1 July for a season.",
-    months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-    mode: "What to reset?",
-    modes: { "player-stats": "Player statistics only", "all-stats": "All statistics", all: "Everything, players too" } as Record<ResetMode, string>,
-    time: "The time of the reset is set in the collector's config.yaml (features.scheduled_resets.time, default 00:00), in its time zone.",
-  },
-};
-
 export function hallT(lang: Lang) {
-  return HALL_T[lang === "de" ? "de" : "en"];
+  return localized(HALL_T, lang);
 }
 
 // Unit, every N, start day and mode.
@@ -120,16 +87,13 @@ export function scheduleText(lang: Lang, s: Schedule | null): string {
   if (!s) return t.units.off;
   const quarter = s.unit === "month" && s.every % 3 === 0;
   const n = quarter ? s.every / 3 : s.every;
-  const de = lang === "de";
-  const names = de
-    ? { day: ["täglich", "Tage"], week: ["wöchentlich", "Wochen"], month: ["monatlich", "Monate"], quarter: ["vierteljährlich", "Quartale"], year: ["jährlich", "Jahre"] }
-    : { day: ["daily", "days"], week: ["weekly", "weeks"], month: ["monthly", "months"], quarter: ["quarterly", "quarters"], year: ["yearly", "years"] };
-  const [one, many] = names[quarter ? "quarter" : s.unit];
-  let v = n === 1 ? one : `${de ? "alle" : "every"} ${n} ${many}`;
+  const unit = quarter ? "quarter" : s.unit;
+  const fill = (f: string, v: Record<string, string | number>) => f.replace(/\{(\w)\}/g, (_, k: string) => String(v[k]));
+  let v = n === 1 ? t.once[unit] : fill(t.everyN, { n, u: t.units[unit] });
   if ((s.unit === "month" && s.day !== 1) || (s.unit === "year" && (s.day !== 1 || s.month !== 1))) {
-    v += de ? ` ab dem ${s.day}.${s.unit === "year" ? ` ${t.months[s.month - 1]}` : ""}` : ` from the ${ordinal(s.day)}${s.unit === "year" ? ` of ${t.months[s.month - 1]}` : ""}`;
+    v += ` ${fill(s.unit === "year" ? t.fromDate : t.fromDay, { d: lang === "en" ? ordinal(s.day) : s.day, m: t.months[s.month - 1] })}`;
   } else if (s.unit === "week" && s.day !== 1) {
-    v += de ? ` ab ${t.wdays[s.day - 1]}` : ` from ${t.wdays[s.day - 1]}`;
+    v += ` ${fill(t.fromWday, { w: t.wdays[s.day - 1] })}`;
   }
   return v;
 }

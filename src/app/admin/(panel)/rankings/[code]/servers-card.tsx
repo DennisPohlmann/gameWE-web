@@ -5,7 +5,7 @@ import { MapLink } from "@/components/map-link";
 import { GameIcon } from "@/components/ui";
 import { optionList } from "@/lib/admin-data";
 import { entities } from "@/lib/admin-entities";
-import { adminDict } from "@/lib/admin-i18n";
+import { adminDict, tr } from "@/lib/admin-i18n";
 import { allServers, rankingBaseGames } from "@/lib/admin-rankings";
 import { noAutofill } from "@/lib/autofill";
 import { adminQuery } from "@/lib/db";
@@ -14,11 +14,12 @@ import { gameKind, sameBaseGame } from "@/lib/games";
 import { fill } from "@/lib/i18n";
 import { newServerHref } from "@/lib/ranking-preset";
 import { serverRankingOptions } from "@/lib/server-rankings";
+import type { Lang } from "@/lib/i18n";
 
 // The servers of one ranking (level 100, as the server list): live state,
 // edit, move into another ranking of the same game (not a template), and the
 // servers of other rankings to move in.
-export async function ServersCard({ id, code, lang, sp }: { id: number; code: string; lang: "de" | "en"; sp: Record<string, string | undefined> }) {
+export async function ServersCard({ id, code, lang, sp }: { id: number; code: string; lang: Lang; sp: Record<string, string | undefined> }) {
   const a = adminDict(lang);
   const u = a.ui;
   const nf = (n: number) => n.toLocaleString(localeOf(lang));
@@ -54,7 +55,7 @@ export async function ServersCard({ id, code, lang, sp }: { id: number; code: st
   const others = servers.filter((s) => s.game !== code && fits(s.game));
   const otherGames = servers.some((s) => s.game !== code && !fits(s.game));
   const sameGameHint = base ? fill(a.rankingSameGameOnly, { g: gameKind(base)?.name ?? base }) : a.rankingGameFirst;
-  const label = entities.find((e) => e.key === "servers")?.label[lang] ?? "Server";
+  const label = ((l) => (l ? tr(l, lang) : "Server"))(entities.find((e) => e.key === "servers")?.label);
   const returnTo = encodeURIComponent(`/admin/servers?game=${encodeURIComponent(code)}`);
   const error = sp.serr === "mismatch" ? a.gameMismatch : sp.serr === "db" ? fill(a.dbWriteError, { msg: sp.msg ?? "" }) : null;
   return (

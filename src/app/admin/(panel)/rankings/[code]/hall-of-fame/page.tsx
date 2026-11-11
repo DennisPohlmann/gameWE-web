@@ -3,78 +3,14 @@ import { notFound } from "next/navigation";
 import { hallEntryAction } from "../../../../actions";
 import { PageHead } from "@/components/admin/page-head";
 import { hallEntries, hallSettings } from "@/lib/admin-hall";
-import { adminDict } from "@/lib/admin-i18n";
+import { adminDict, localized } from "@/lib/admin-i18n";
+import { HALL_PAGE_T } from "@/lib/admin-texts";
 import { rankingSummaries } from "@/lib/admin-rankings";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { basePath } from "@/lib/base-path";
 import { localeOf } from "@/lib/format";
 import { periodLabel, podium, type HallUnit } from "@/lib/hall-period";
 import { getAdminLang } from "@/lib/i18n";
-
-const T = {
-  de: {
-    title: "Ruhmeshalle bearbeiten",
-    intro:
-      "Hier lassen sich Einträge aus der Ruhmeshalle nehmen, z. B. einen Cheater. Die Spieler darunter rücken nach, auf dem Podest stehen die ersten drei. Entfernte Einträge bleiben gespeichert und lassen sich zurückholen.",
-    old: "Der Collector ist noch nicht aktualisiert: Einträge lassen sich erst entfernen, wenn gamewe db migrate die Spalte removed angelegt hat (Collector-Migration 16).",
-    empty: "Noch keine Einträge: Die ersten kommen mit dem ersten geplanten Reset dieses Rankings (Knopf „Zeitplan“).",
-    stored: "Gespeichert",
-    shown: "Podest",
-    player: "Spieler",
-    then: "damals",
-    skill: "Punkte",
-    kills: "Kills",
-    status: "Status",
-    removedPill: "entfernt",
-    hiddenPill: "versteckt",
-    reserve: "Nachrücker",
-    remove: "Entfernen",
-    removeSure: "Ja, entfernen",
-    restore: "Zurückholen",
-    removeAll: "Ganze Periode entfernen",
-    removeAllSure: "Ja, alle Einträge dieser Periode entfernen",
-    restoreAll: "Ganze Periode zurückholen",
-    removed: "Entfernt. Die anderen sind nachgerückt.",
-    restored: "Zurückgeholt.",
-    errInput: "Ungültige Eingabe.",
-    errConfirm: "Bitte das Entfernen bestätigen.",
-    view: "Ruhmeshalle ansehen",
-    viewNone: "Die Ruhmeshalle gibt es erst, wenn der erste geplante Reset dieses Rankings gelaufen ist.",
-    settings: "Zeitplan",
-    week: "KW {n}",
-  },
-  en: {
-    title: "Edit hall of fame",
-    intro:
-      "Take entries out of the hall of fame here, e.g. a cheater. The players below move up, the podium shows the first three. Removed entries stay stored and can be brought back.",
-    old: "The collector is not updated yet: entries can be removed once gamewe db migrate has added the column removed (collector migration 16).",
-    empty: "No entries yet: the first come with this ranking's first scheduled reset (button \"Schedule\").",
-    stored: "Stored",
-    shown: "Podium",
-    player: "Player",
-    then: "then",
-    skill: "Points",
-    kills: "Kills",
-    status: "Status",
-    removedPill: "removed",
-    hiddenPill: "hidden",
-    reserve: "reserve",
-    remove: "Remove",
-    removeSure: "Yes, remove",
-    restore: "Bring back",
-    removeAll: "Remove whole period",
-    removeAllSure: "Yes, remove all entries of this period",
-    restoreAll: "Bring back whole period",
-    removed: "Removed. The others moved up.",
-    restored: "Brought back.",
-    errInput: "Invalid input.",
-    errConfirm: "Please confirm the removal.",
-    view: "View hall of fame",
-    viewNone: "The hall of fame only exists once this ranking's first scheduled reset has run.",
-    settings: "Schedule",
-    week: "Week {n}",
-  },
-};
 
 // All stored hall of fame entries of a ranking, to remove or bring back
 // (admins only).
@@ -86,7 +22,7 @@ export default async function HallOfFameEditPage({ params, searchParams }: { par
   if (!r) notFound();
   const lang = await getAdminLang();
   const u = adminDict(lang).ui;
-  const t = T[lang === "de" ? "de" : "en"];
+  const t = localized(HALL_PAGE_T, lang);
   const locale = localeOf(lang);
   const nf = (n: number) => n.toLocaleString(locale);
   const [s, periods] = await Promise.all([hallSettings(code), hallEntries(code).catch(() => [])]);

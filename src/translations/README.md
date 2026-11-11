@@ -15,7 +15,19 @@ To add a language:
 2. Add the language to `LANGUAGES` in `languages.ts` and import the file in
    `index.ts`.
 3. If it needs a new flag, add it to `lang-flag.tsx`.
+4. Translate the admin area: add `admin/<code>.ts` and import it in
+   `admin/index.ts` (the build fails until it is there).
 
 Ribbon class names (Bronze, Silver, Gold ...) are in
-`src/components/badges.tsx`. The admin area is only in German and English
-(`src/lib/admin-i18n.ts`).
+`src/components/badges.tsx`.
+
+## Admin area
+
+The admin texts are written in German and English in the code
+(`src/lib/admin-i18n.ts`, `src/lib/admin-texts.ts`, the entity and setting
+definitions in `src/lib/admin-entities.ts` and `src/lib/admin-settings.ts`).
+Every other language has a file `admin/<code>.ts` that maps each English
+text to its translation; a missing text is shown in English. Keep the
+`{placeholders}`. `tests/admin-languages.test.ts` fails when a language has
+no file or a file lacks a text or holds one that is no longer used, so a
+changed English text needs its new translation in every file.
