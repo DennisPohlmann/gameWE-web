@@ -36,10 +36,9 @@ export default async function MiscPage({ params }: { params: Promise<{ game: str
   return (
     <>
     <Section title={t.miscStats}>
-      <div className="cont-2">
-        {/* As high as the right column (weekdays and connect methods), the
-            countries' pie centred in it. */}
-        <div className="misc-countries">
+      {/* One row of equally high boxes, wrapping on narrow screens. */}
+      <div className="cont-2 misc-row">
+        <div>
           <table className="stats">
             <thead>
               <tr>
@@ -72,9 +71,11 @@ export default async function MiscPage({ params }: { params: Promise<{ game: str
               </tr>
             </tbody>
           </table>
-          {/* Only shown when the collector records a connect method. */}
-          {m.connectTypes.length ? (
-            <table className="stats spaced">
+        </div>
+        {/* Only shown when the collector records a connect method. */}
+        {m.connectTypes.length ? (
+          <div>
+            <table className="stats">
               <thead>
                 <tr>
                   <th>{t.connectMethods}</th>
@@ -88,8 +89,8 @@ export default async function MiscPage({ params }: { params: Promise<{ game: str
                 </tr>
               </tbody>
             </table>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
       </div>
     </Section>
     {/* Full width like the other trend charts; every day of the range, quiet days as 0. */}

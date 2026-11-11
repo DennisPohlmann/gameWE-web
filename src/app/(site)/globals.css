@@ -712,12 +712,13 @@ table.stats.psum td.psum-list { padding: 0; white-space: normal; vertical-align:
 table.stats th { font-weight: bold; }
 .cont-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 12px 2%; align-items: start; }
 .cont-2 > * { min-width: 0; }
-/* Misc page: the countries' box reaches down to the end of the right
-   column, its pie centred in the height. */
-.cont-2 > .misc-countries { align-self: stretch; display: flex; flex-direction: column; }
-.misc-countries > table.stats { flex: 1; height: 100%; }
-.misc-countries > table.stats > thead > tr { height: 1px; }
-.misc-countries > table.stats > tbody > tr > td { vertical-align: middle; }
+/* Misc page: countries, weekdays and connect methods side by side, all as
+   high as the tallest, their charts centred in the height. */
+.cont-2.misc-row { grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); align-items: stretch; }
+.misc-row > div { display: flex; flex-direction: column; }
+.misc-row > div > table.stats { flex: 1; height: 100%; }
+.misc-row > div > table.stats > thead > tr { height: 1px; }
+.misc-row > div > table.stats > tbody > tr > td { vertical-align: middle; }
 .section > .footnote { background: none; border: 0; padding: 4px 0 0; font-style: italic; text-align: right; }
 
 /* Server rows and live players, as on the server overview. */
