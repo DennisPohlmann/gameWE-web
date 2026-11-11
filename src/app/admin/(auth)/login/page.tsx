@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { loginAction, loginCancelAction, loginCodeAction } from "../../actions";
 import { Logo } from "@/components/admin/nav";
+import { RevealInput } from "@/components/admin/reveal-input";
 import { basePath } from "@/lib/base-path";
 import { adminSecret, currentAdmin, pendingLogin } from "@/lib/auth";
 import { adminDict } from "@/lib/admin-i18n";
@@ -129,9 +130,10 @@ export default async function LoginPage({
           </label>
           <label>
             {a.password}
-            <input
+            <RevealInput
+              show={a.secretShow}
+              hide={a.secretHide}
               name="password"
-              type="password"
               autoComplete="current-password"
               required
             />

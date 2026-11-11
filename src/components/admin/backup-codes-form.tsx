@@ -11,6 +11,8 @@ import type { BackupCodesState } from "@/app/admin/actions";
 // closed; closing it reloads the page (TOTP now on, the new count).
 export type BackupCodesText = {
   code: string;
+  show: string;
+  hide: string;
   hint: string;
   submit: string;
   title: string;
@@ -36,6 +38,7 @@ export function BackupCodesForm({
   const [state, run, pending] = useActionState(action, {});
   const [shown, setShown] = useState<string[] | null>(null);
   const [copied, setCopied] = useState(false);
+  const [visible, setVisible] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
   const form = useRef<HTMLFormElement>(null);
   const router = useRouter();
@@ -88,17 +91,22 @@ export function BackupCodesForm({
         onClose={() => {
           setShown(null);
           setCopied(false);
+          setVisible(false);
           router.refresh();
         }}
       >
         <h2 id="backup-codes-title">{text.title}</h2>
         <p>{text.once}</p>
-        <ol className="backup-codes mono">
+        {/* Masked until the eye button is pressed; copy and save always take the real codes. */}
+        <ol className="backup-codes mono" id="backup-codes-list">
           {(shown ?? []).map((c) => (
-            <li key={c}>{c}</li>
+            <li key={c}>{visible ? c : c.replace(/[^ -]/g, "•")}</li>
           ))}
         </ol>
         <div className="reset-dialog-buttons">
+          <button type="button" className="button" aria-pressed={visible} aria-controls="backup-codes-list" onClick={() => setVisible((v) => !v)}>
+            {visible ? text.hide : text.show}
+          </button>
           <button type="button" className="button" onClick={copy}>
             {copied ? text.copied : text.copy}
           </button>

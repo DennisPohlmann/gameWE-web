@@ -1,5 +1,6 @@
 import { changePasswordAction, createApiTokenAction, revokeApiTokenAction, totpBackupCodesAction, totpCancelAction, totpConfirmAction, totpDisableAction, totpStartAction } from "../../actions";
 import { PageHead } from "@/components/admin/page-head";
+import { RevealInput } from "@/components/admin/reveal-input";
 import { BackupCodesForm, type BackupCodesText } from "@/components/admin/backup-codes-form";
 import { ApiTokenForm } from "@/components/admin/api-token-form";
 import { QrCode } from "@/components/qr-code";
@@ -32,6 +33,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const issuer = (await getSettings()).siteName || "gameWE";
   const backupText = (hint: string, submit: string): BackupCodesText => ({
     code: a.totpCode,
+    show: a.valueShow,
+    hide: a.valueHide,
     hint,
     submit,
     title: a.totpBackupShownTitle,
@@ -54,16 +57,16 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <input type="text" name="username" value={user.username} autoComplete="username" readOnly hidden />
           <label>
             {a.pwCurrent}
-            <input type="password" name="current" autoComplete="current-password" required />
+            <RevealInput show={a.secretShow} hide={a.secretHide} name="current" autoComplete="current-password" required />
           </label>
           <label>
             {a.pwNew}
-            <input type="password" name="next" autoComplete="new-password" minLength={10} maxLength={200} required />
+            <RevealInput show={a.secretShow} hide={a.secretHide} name="next" autoComplete="new-password" minLength={10} maxLength={200} required />
             <small>{a.pwHint}</small>
           </label>
           <label>
             {a.pwRepeat}
-            <input type="password" name="repeat" autoComplete="new-password" minLength={10} maxLength={200} required />
+            <RevealInput show={a.secretShow} hide={a.secretHide} name="repeat" autoComplete="new-password" minLength={10} maxLength={200} required />
           </label>
           <button type="submit" className="button">
             {a.pwSave}
@@ -102,11 +105,11 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
               <QrCode text={otpauthUri(pending, user.username, issuer)} label={a.totpUri} />
               <label>
                 {a.totpSecret}
-                <input {...noAutofill} readOnly value={pending.replace(/(.{4})/g, "$1 ").trim()} className="mono" />
+                <RevealInput {...noAutofill} show={a.valueShow} hide={a.valueHide} readOnly value={pending.replace(/(.{4})/g, "$1 ").trim()} className="mono" />
               </label>
               <label>
                 {a.totpUri}
-                <input {...noAutofill} readOnly value={otpauthUri(pending, user.username, issuer)} className="mono" />
+                <RevealInput {...noAutofill} show={a.valueShow} hide={a.valueHide} readOnly value={otpauthUri(pending, user.username, issuer)} className="mono" />
               </label>
               <BackupCodesForm action={totpConfirmAction} text={backupText(a.totpConfirmHint, a.totpConfirm)} user={user.username} site={issuer} />
               <form action={totpCancelAction}>
@@ -195,6 +198,10 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 never: a.tokNever,
                 days: a.tokDays,
                 password: a.tokPassword,
+                show: a.secretShow,
+                hide: a.secretHide,
+                valueShow: a.valueShow,
+                valueHide: a.valueHide,
                 code: a.tokCode,
                 create: a.tokCreate,
                 shownTitle: a.tokShownTitle,

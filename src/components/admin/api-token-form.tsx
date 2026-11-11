@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import type { TokenFormState } from "@/app/admin/actions";
 import { noAutofill } from "@/lib/autofill";
+import { RevealInput } from "./reveal-input";
 
 // Creating an API token (Admin → My account → API tokens): name, expiry and
 // the password (and TOTP code) to confirm. The new token comes back from the
@@ -15,6 +16,10 @@ export type TokenFormText = {
   never: string;
   days: string;
   password: string;
+  show: string;
+  hide: string;
+  valueShow: string;
+  valueHide: string;
   code: string;
   create: string;
   shownTitle: string;
@@ -58,8 +63,9 @@ export function ApiTokenForm({
       setCopied(true);
     } catch {
       // No clipboard (e.g. plain http): the field is selected for Ctrl+C.
-      const input = dialog.current?.querySelector("input");
-      input?.select();
+      // A password field cannot be copied from: shown first (eye button).
+      dialog.current?.querySelector<HTMLButtonElement>('.reveal-btn[aria-pressed="false"]')?.click();
+      dialog.current?.querySelector("input")?.select();
     }
   };
 
@@ -84,7 +90,7 @@ export function ApiTokenForm({
         </label>
         <label>
           {text.password}
-          <input type="password" name="password" autoComplete="current-password" required />
+          <RevealInput show={text.show} hide={text.hide} name="password" autoComplete="current-password" required />
         </label>
         {totp ? (
           <label>
@@ -108,7 +114,7 @@ export function ApiTokenForm({
         <h2 id="token-dialog-title">{text.shownTitle}</h2>
         <p>{text.shownOnce}</p>
         <div className="token-shown">
-          <input {...noAutofill} readOnly value={shown ?? ""} className="mono" aria-label={text.shownTitle} onFocus={(e) => e.currentTarget.select()} />
+          <RevealInput {...noAutofill} show={text.valueShow} hide={text.valueHide} readOnly value={shown ?? ""} className="mono" aria-label={text.shownTitle} onFocus={(e) => e.currentTarget.select()} />
           <button type="button" className="button" onClick={copy}>
             {copied ? text.copied : text.copy}
           </button>

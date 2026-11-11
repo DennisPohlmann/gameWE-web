@@ -19,7 +19,9 @@ export function TokenGenerate({ target, label, copy, copied, numeric }: { target
     el.value = numeric
       ? String((crypto.getRandomValues(new Uint32Array(1))[0] % 2147483647) + 1)
       : Array.from(crypto.getRandomValues(new Uint8Array(24)), (b) => b.toString(16).padStart(2, "0")).join("");
-    el.type = "text";
+    // Shown through the field's eye button (RevealInput), so its state matches.
+    const eye = document.querySelector(`button[aria-controls="${target}"][aria-pressed="false"]`);
+    if (eye instanceof HTMLButtonElement) eye.click();
     el.select();
     setToken(el.value);
     setDone(false);

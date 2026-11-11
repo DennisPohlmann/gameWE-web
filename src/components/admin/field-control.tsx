@@ -1,6 +1,8 @@
 import type { Field } from "@/lib/admin-entities";
 import { noAutofill } from "@/lib/autofill";
 import type { Lang } from "@/lib/i18n";
+import { adminDict } from "@/lib/admin-i18n";
+import { RevealInput } from "./reveal-input";
 import { SecretControl } from "./secret-control";
 
 // The input of one entity field (select, password, secret, text or number),
@@ -40,7 +42,7 @@ export function FieldControl({
         ))}
       </select>
     );
-  if (f.type === "password") return <input {...noAutofill} id={id} name={f.name} type="password" minLength={10} required={isNew} />;
+  if (f.type === "password") return <RevealInput {...noAutofill} show={adminDict(lang).secretShow} hide={adminDict(lang).secretHide} id={id} name={f.name} minLength={10} required={isNew} />;
   // A read-only number: plain text, no input.
   if (f.readonly && f.type === "number") return <span className="field-value">{value === null || value === undefined ? "–" : String(value)}</span>;
   if (f.type === "secret") return <SecretControl id={id ?? `f-${f.name}`} name={f.name} maxLength={f.max} set={Boolean(secretSet)} isNew={isNew} lang={lang} />;
