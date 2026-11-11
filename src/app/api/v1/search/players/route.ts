@@ -4,8 +4,8 @@ import { searchArgs } from "@/lib/api-search";
 import { searchPlayers, unlinkedBots } from "@/lib/data";
 
 // The website's player search over all rankings (or one): every name a
-// player used, or a Steam ID in any of its forms (exact). Hidden and banned
-// players are not found; at most 100 hits, best points first.
+// player used, or a Steam ID in any of its forms (exact). Active and inactive
+// players are found, hidden and banned ones not; at most 100 hits, best points first.
 export function GET(req: Request) {
   return api(async () => {
     const q = new URL(req.url).searchParams;

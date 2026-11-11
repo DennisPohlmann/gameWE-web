@@ -2622,45 +2622,41 @@ const SEARCH_LIMIT = 100;
 // Search across the visible rankings (game "" = all), as on gameME's search
 // page: all names a player used, a Steam ID in any of its forms (exact, so
 // the IDs cannot be listed by a partial search), or clan tag and name.
-// Hidden and banned players are not found.
+// Active and inactive players are found; hidden and banned ones are not.
 export async function searchPlayers(q: string, by: "names" | "uniqueid", game: string): Promise<SearchHit[]> {
-  const where = [`p.hideranking = 0`, `g.hidden = '0'`];
-  const params: Param[] = [];
-  if (game) {
-    where.push(`p.game = ?`);
-    params.push(game);
-  }
-  let match: string;
   if (by === "uniqueid") {
     const ids = steamIds(q.trim());
     if (!ids) return [];
     const acc = BigInt(ids.steam64) - 76561197960265728n;
     const y = acc % 2n;
     const z = acc / 2n;
-    match = `p.playerId IN (SELECT u.playerId FROM hlstats_PlayerUniqueIds u WHERE u.uniqueId IN (?))`;
-    params.unshift([`${y}:${z}`, `STEAM_0:${y}:${z}`, `STEAM_1:${y}:${z}`, `[U:1:${acc}]`, `U:1:${acc}`, ids.steam64]);
-    return query<SearchHit>(
-      `SELECT TRIM(p.game) AS game, p.playerId, d.lastName AS name, NULL AS alias, l.flag, l.country, p.skill, p.kills, p.deaths, p.last_event
-       FROM hlstats_Players p JOIN hlstats_Games g ON g.code = p.game
-       LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
-       LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
-       WHERE ${match} AND ${where.join(" AND ")} ORDER BY p.skill DESC LIMIT ?`,
-      [...params, SEARCH_LIMIT],
-    );
+    return searchHits(`SELECT DISTINCT playerId, NULL AS alias FROM hlstats_PlayerUniqueIds WHERE uniqueId IN (?)`, [
+      [`${y}:${z}`, `STEAM_0:${y}:${z}`, `STEAM_1:${y}:${z}`, `[U:1:${acc}]`, `U:1:${acc}`, ids.steam64],
+    ], game);
   }
-  const rows = await query<SearchHit>(
-    `SELECT TRIM(p.game) AS game, p.playerId, d.lastName AS name, MIN(n.name) AS alias, l.flag, l.country, p.skill, p.kills, p.deaths, p.last_event
-     FROM hlstats_PlayerNames n
-     JOIN hlstats_Players p ON p.playerId = n.playerId
-     JOIN hlstats_Games g ON g.code = p.game
-     LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
-     LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
-     WHERE n.name ${likeOp()} ? AND ${where.join(" AND ")}
-     GROUP BY p.game, p.playerId, d.lastName, l.flag, l.country, p.skill, p.kills, p.deaths, p.last_event
-     ORDER BY p.skill DESC LIMIT ?`,
-    [like(q), ...params, SEARCH_LIMIT],
-  );
+  const rows = await searchHits(`SELECT playerId, MIN(name) AS alias FROM hlstats_PlayerNames WHERE name ${likeOp()} ? GROUP BY playerId`, [like(q)], game);
   return rows.map((r) => ({ ...r, alias: r.alias && r.alias !== r.name ? r.alias : null }));
+}
+
+// The visible players of the matches (playerId, alias), best first. A player's
+// row is in hlstats_Players or, moved there by the collector after a long
+// absence, in hlstats_PlayersInactive (after a crash in both: the active one).
+// The matches are read once, the players by their key.
+function searchHits(matches: string, params: Param[], game: string): Promise<SearchHit[]> {
+  const c = (col: string) => `COALESCE(a.${col}, i.${col})`;
+  return query<SearchHit>(
+    `SELECT TRIM(${c("game")}) AS game, n.playerId, d.lastName AS name, n.alias, l.flag, l.country,
+            ${c("skill")} AS skill, ${c("kills")} AS kills, ${c("deaths")} AS deaths, ${c("last_event")} AS last_event
+     FROM (${matches}) n
+     LEFT JOIN hlstats_Players a ON a.playerId = n.playerId
+     LEFT JOIN hlstats_PlayersInactive i ON i.playerId = n.playerId AND a.playerId IS NULL
+     JOIN hlstats_Games g ON g.code = ${c("game")} AND g.hidden = '0'
+     LEFT JOIN hlstats_Players_Data d ON d.playerId = n.playerId
+     LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
+     WHERE ${c("hideranking")} = 0${game ? ` AND ${c("game")} = ?` : ""}
+     ORDER BY skill DESC LIMIT ?`,
+    [...params, ...(game ? [game] : []), SEARCH_LIMIT],
+  );
 }
 
 export function searchClans(q: string, game: string): Promise<ClanHit[]> {
