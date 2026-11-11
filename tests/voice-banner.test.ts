@@ -20,13 +20,13 @@ test("online: live numbers and the share of the slots", () => {
 
 test("query failed: offline without numbers, name and address stay", () => {
   const d = voiceBannerData({ ...ts, clients: null, max: null, channels: null, uptime: null });
-  assert.deepEqual(d, { name: "Clan TS", type: "TeamSpeak 3", country: "de", address: "ts.example.org", online: false, clients: null, max: null, share: 0, channels: null, uptime: null });
+  assert.deepEqual(d, { name: "Clan TS", country: "de", address: "ts.example.org", online: false, clients: null, max: null, share: 0, channels: null, uptime: null });
 });
 
 test("the server password and query settings never reach the banner", () => {
   const box = { ...ts, password: "secret-pw", link: "ts3server://ts.example.org", queryUser: "serveradmin", queryPassword: "q-secret", queryPort: 10011 };
   const d = voiceBannerData(box);
-  assert.deepEqual(Object.keys(d).sort(), ["address", "channels", "clients", "country", "max", "name", "online", "share", "type", "uptime"]);
+  assert.deepEqual(Object.keys(d).sort(), ["address", "channels", "clients", "country", "max", "name", "online", "share", "uptime"]);
   const json = JSON.stringify(d);
   for (const s of ["secret-pw", "q-secret", "serveradmin", "10011"]) assert.ok(!json.includes(s), s);
 });

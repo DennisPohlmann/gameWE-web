@@ -2,7 +2,7 @@
 // Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { BACKGROUNDS, backgroundLayer, bannerChoices, bannerOptions, imageLang, optionsKey, tint } from "../src/lib/banners/options.ts";
+import { BACKGROUNDS, backgroundLayer, bannerChoices, bannerOptions, fitSize, imageLang, optionsKey, tint } from "../src/lib/banners/options.ts";
 
 const opts = (kind: "player" | "server" | "voice", path: string) => bannerOptions(kind, new URL(`http://x${path}`));
 
@@ -45,4 +45,12 @@ test("the code box lists every layout and background with its name", () => {
   assert.deepEqual(c.layouts.map((l) => l.id), ["a", "b", "c"]);
   assert.equal(c.backgrounds[1].name, "Dots");
   assert.equal(c.backgrounds[2].name, "grid");
+});
+
+test("fitSize: the TeamSpeak address keeps its size while it fits, else shrinks, never below 6", () => {
+  assert.equal(fitSize("ts.example.org", 250, 13), 13);
+  assert.equal(fitSize("ts.example-gaming-community.de:9987", 250, 13), 11.5);
+  const long = fitSize("teamspeak.example-gaming-community-network.de:9987", 250, 13);
+  assert.ok(long < 12 && long >= 6 && long * 0.6 * 50 <= 250, String(long));
+  assert.equal(fitSize("x".repeat(100), 250, 13), 6);
 });

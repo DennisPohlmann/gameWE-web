@@ -15,8 +15,8 @@ import { wideBanner } from "./wide-banner";
 // skin, "teamspeak-<template>.png" in that of a design template; o the
 // layout, background and language (lib/banners/options.ts). Only live data
 // from the ServerQuery (kept for a minute in src/lib/voice.ts): name with
-// flag, address, status, users online of the slots, channels, uptime and
-// server type. When the query fails the banner says Offline; 404 unless
+// flag, address (never shortened), status, users online of the slots,
+// channels and uptime. When the query fails the banner says Offline; 404 unless
 // TeamSpeak is the voice server.
 export function voiceBanner(file: string, o: BannerOptions) {
   return cachedBanner(`voice|${optionsKey(o)}`, file, () => render(file, o));
@@ -48,11 +48,10 @@ async function render(file: string, o: BannerOptions) {
       online: d.online,
       status,
       cells: [
-        { label: t.address, value: d.address },
+        { label: t.address, value: d.address, full: true },
         { label: t.onlineState, value: status, color: d.online ? th.good : th.bad, status: true },
         { label: t.channels, value: d.channels === null ? "-" : fmtNum(d.channels, lang) },
         { label: t.uptime, value: d.uptime === null ? "-" : fmtDuration(d.uptime) },
-        { label: t.server, value: d.type },
       ],
       graph: null,
       host: origin.replace(/^https?:\/\//, ""),

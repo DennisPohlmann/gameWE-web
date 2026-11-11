@@ -86,3 +86,11 @@ export function bannerChoices(kind: BannerKind, t: { bannerLayouts: Record<strin
     backgrounds: BACKGROUNDS.map((id) => ({ id, name: t.bannerBackgrounds[id] ?? id })),
   };
 }
+
+// Font size at which text fits into room px without being shortened (a Cell
+// with full, the TeamSpeak address): size while it fits, smaller in half
+// pixels down to 6. About 0.6 em per character of Inter bold.
+// shortcut: estimated, not measured; past about 70 characters the text clips, measure with Satori if that matters.
+export function fitSize(text: string, room: number, size: number): number {
+  return Math.max(6, Math.min(size, Math.floor((room / (text.length * 0.6)) * 2) / 2));
+}

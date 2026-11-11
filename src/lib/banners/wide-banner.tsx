@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 import type { ImageTheme } from "@/lib/image-theme";
 import { Backdrop } from "./backdrop";
 import { bannerFonts } from "./fonts";
-import type { BannerOptions } from "./options";
+import { fitSize, type BannerOptions } from "./options";
 
 // The 560x95 banners (server, TeamSpeak) in their three layouts. The
 // banner's own file (server-banner.tsx, voice-banner.tsx) reads the data and
@@ -11,8 +11,9 @@ import type { BannerOptions } from "./options";
 const W = 560;
 const H = 95;
 
-// status: the online state (layouts B and C show it beside the name).
-export type Cell = { label: string; value: string; color?: string; pie?: number; status?: boolean };
+// status: the online state (layouts B and C show it beside the name); full:
+// never shortened, the cell takes the room the others leave (TeamSpeak address).
+export type Cell = { label: string; value: string; color?: string; pie?: number; status?: boolean; full?: boolean };
 
 export type Wide = {
   th: ImageTheme;
@@ -24,7 +25,7 @@ export type Wide = {
   hero: { label: string; value: string; max: string; share: number; note: string };
   online: boolean;
   status: string;
-  // Five cells in the order of layout A's columns: top, bottom, top, bottom, top.
+  // Up to five cells in the order of layout A's columns: top, bottom, top, bottom, top.
   cells: Cell[];
   // Players of the last 24 hours (server only): points 0..1 and the scale.
   graph: { label: string; points: [number, number][]; ticks: number[]; top: number } | null;
@@ -123,7 +124,7 @@ function drawA(w: Wide) {
         {c.pie !== undefined ? <Pie share={c.pie} th={th} /> : null}
         <div style={{ display: "flex", flexDirection: "column", minWidth: 0, maxWidth, overflow: "hidden", marginLeft: c.pie !== undefined ? 5 : 0 }}>
           <div style={label}>{c.label}</div>
-          <div style={{ ...value, maxWidth, color: c.color ?? th.text }}>{c.value}</div>
+          <div style={{ ...value, maxWidth, color: c.color ?? th.text, ...(c.full ? { fontSize: fitSize(c.value, 250, 13) } : {}) }}>{c.value}</div>
         </div>
       </div>
     ) : null;
@@ -162,17 +163,17 @@ function drawA(w: Wide) {
           </div>
         </div>
         <div style={{ display: "flex", height: 54 }}>
-          <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", maxWidth: COL, marginRight: GAP }}>
-            {cell(c0, COL)}
+          <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", ...(c0?.full ? { flex: 1, minWidth: 0 } : { maxWidth: COL }), marginRight: GAP }}>
+            {cell(c0, c0?.full ? INFO : COL)}
             {cell(c1, COL)}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", maxWidth: COL, marginRight: GAP }}>
+          <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", flexShrink: 0, maxWidth: COL, marginRight: GAP }}>
             {cell(c2, COL)}
             {cell(c3, COL)}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", ...(c0?.full ? { flexShrink: 0 } : { flex: 1, minWidth: 0 }) }}>
             {cell(c4)}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", marginTop: "auto" }}>
               <Logo th={th} />
               <div style={{ display: "flex", fontSize: 8, color: th.muted, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>{w.host}</div>
             </div>
@@ -220,9 +221,9 @@ function drawB(w: Wide) {
       </div>
       <div style={{ display: "flex", alignItems: "center", height: 22, padding: "0 12px", background: th.side, borderTop: `1px solid ${th.border}`, fontSize: 9.5, color: th.sideText }}>
         {rest.map((c) => (
-          <span key={c.label} style={{ display: "flex", marginRight: 12, maxWidth: 150, overflow: "hidden", whiteSpace: "nowrap" }}>
+          <span key={c.label} style={{ display: "flex", marginRight: 12, ...(c.full ? { minWidth: 0 } : { maxWidth: 150 }), overflow: "hidden", whiteSpace: "nowrap" }}>
             <span style={{ opacity: 0.7, marginRight: 4 }}>{c.label}</span>
-            <b>{c.value}</b>
+            <b style={c.full ? { fontSize: fitSize(c.value, 190, 9.5) } : {}}>{c.value}</b>
           </span>
         ))}
         <span style={{ display: "flex", marginLeft: "auto", opacity: 0.7, marginRight: 8 }}>{w.host}</span>
@@ -258,9 +259,9 @@ function drawC(w: Wide) {
           </div>
           <div style={{ display: "flex", marginTop: 8 }}>
             {cells.map((c) => (
-              <div key={c.label} style={{ display: "flex", flexDirection: "column", marginRight: 16, maxWidth: 150, overflow: "hidden" }}>
+              <div key={c.label} style={{ display: "flex", flexDirection: "column", marginRight: 16, ...(c.full ? { minWidth: 0 } : { maxWidth: 150 }), overflow: "hidden" }}>
                 <div style={{ display: "flex", fontSize: 7.5, color: th.muted, textTransform: "uppercase", letterSpacing: 0.5 }}>{c.label}</div>
-                <div style={{ display: "block", fontSize: 12, fontWeight: 700, color: c.color ?? th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.value}</div>
+                <div style={{ display: "block", fontSize: c.full ? fitSize(c.value, 255, 12) : 12, fontWeight: 700, color: c.color ?? th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.value}</div>
               </div>
             ))}
           </div>

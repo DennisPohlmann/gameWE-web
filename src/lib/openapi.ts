@@ -1298,7 +1298,7 @@ export const endpoints: Endpoint[] = [
     tag: "Banners",
     summary: "TeamSpeak banner",
     description:
-      "The TeamSpeak banner (560×95 PNG) of the TeamSpeak page: name with flag, address, status, users online of the slots, channels, uptime and server type, live from the ServerQuery. The same picture as `/banner/teamspeak.png` (in a language `/banner/{lang}/teamspeak.png`) on the website; `style` picks a design template, `layout`, `bg` and `lang` as on the website.",
+      "The TeamSpeak banner (560×95 PNG) of the TeamSpeak page: name with flag, address, status, users online of the slots, channels and uptime, live from the ServerQuery. The same picture as `/banner/teamspeak.png` (in a language `/banner/{lang}/teamspeak.png`) on the website; `style` picks a design template, `layout`, `bg` and `lang` as on the website.",
     params: [styleQuery, ...bannerQuery("voice")],
     image: { width: 560, height: 95 },
     example: v1("/voice/teamspeak/banner"),

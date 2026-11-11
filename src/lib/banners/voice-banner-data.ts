@@ -5,7 +5,6 @@
 
 export type VoiceBannerInput = {
   name: string;
-  type: string;
   country: string | null;
   address: string;
   clients: number | null;
@@ -16,7 +15,6 @@ export type VoiceBannerInput = {
 
 export type VoiceBannerData = {
   name: string;
-  type: string;
   country: string | null;
   address: string;
   // false: the query could not be read (offline or unreachable).
@@ -34,7 +32,6 @@ export function voiceBannerData(ts: VoiceBannerInput): VoiceBannerData {
   const max = online ? ts.max : null;
   return {
     name: ts.name,
-    type: ts.type,
     country: ts.country,
     address: ts.address,
     online,
