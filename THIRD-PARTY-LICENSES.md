@@ -23,10 +23,10 @@ carry the same licenses as their linux-x64 counterparts.
 
 | Package | Version | Project |
 |---------|---------|---------|
-| next | 16.4.5 | https://github.com/vercel/next.js |
-| @next/env | 16.4.5 | https://github.com/vercel/next.js |
-| @next/swc-linux-x64-gnu | 16.4.5 | https://github.com/vercel/next.js |
-| @next/swc-linux-x64-musl | 16.4.5 | https://github.com/vercel/next.js |
+| next | 16.4.6 | https://github.com/vercel/next.js |
+| @next/env | 16.4.6 | https://github.com/vercel/next.js |
+| @next/swc-linux-x64-gnu | 16.4.6 | https://github.com/vercel/next.js |
+| @next/swc-linux-x64-musl | 16.4.6 | https://github.com/vercel/next.js |
 | react | 19.3.1 | https://github.com/facebook/react |
 | react-dom | 19.3.1 | https://github.com/facebook/react |
 | scheduler | 0.28.0 | https://github.com/facebook/react |
@@ -118,7 +118,7 @@ carry the same licenses as their linux-x64 counterparts.
 
 | Package | Version | Project |
 |---------|---------|---------|
-| caniuse-lite | 1.0.30001823 | https://github.com/browserslist/caniuse-lite (browser support data, used at build time) |
+| caniuse-lite | 1.0.30001826 | https://github.com/browserslist/caniuse-lite (browser support data, used at build time) |
 
 ## Bundled inside Next.js
 
@@ -140,7 +140,7 @@ the links above.
 
 The page `/api` renders the OpenAPI description of the public API with the
 self-hosted browser bundle of **Scalar API Reference**
-(`@scalar/api-reference` 1.77.0, devDependency, https://github.com/scalar/scalar,
+(`@scalar/api-reference` 1.78.0, devDependency, https://github.com/scalar/scalar,
 MIT). `npm run build` copies `dist/browser/standalone.js` to
 `public/vendor/scalar/standalone.js` together with Scalar's MIT license text
 (`public/vendor/scalar/LICENSE.txt`); nothing is loaded from Scalar's
