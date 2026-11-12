@@ -722,6 +722,7 @@
   },
   "bannerLayout": "Layout",
   "bannerBackground": "Background",
+  "bannerSize": "Size",
   "bannerLayouts": {
     "a": "Clear",
     "b": "Card",
@@ -735,6 +736,11 @@
     "stripes": "Stripes",
     "carbon": "Carbon",
     "glow": "Glow"
+  },
+  "bannerSizes": {
+    "normal": "Normal",
+    "small": "Small",
+    "tall": "Upright"
   },
   "offline": "Offline",
   "port": "Port",

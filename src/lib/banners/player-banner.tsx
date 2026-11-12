@@ -2,7 +2,7 @@ import "server-only";
 import { cachedBanner } from "./cache";
 import { bannerFonts } from "./fonts";
 import { Backdrop } from "./backdrop";
-import { onColor } from "./wide-banner";
+import { onColor, wideBanner } from "./wide-banner";
 import { imageLang, optionsKey, type BannerOptions } from "./options";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -90,6 +90,7 @@ async function render(file: string, game: string | null, o: BannerOptions) {
     trend: days.map((x) => x.points),
     change: days.reduce((sum, x) => sum + x.change, 0),
   };
+  if (o.size !== "normal") return wideBanner(asWide(d), o, 900);
   const draw = { a: drawA, b: drawB, c: drawC, d: drawD }[o.layout] ?? drawA;
   return new ImageResponse(
     <div style={{ display: "flex", position: "relative", width: "100%", height: "100%", background: th.bg }}>
@@ -349,6 +350,33 @@ function drawC(d: Data) {
       </div>
     </div>
   );
+}
+
+// The small and tall sizes share one design with the server and TeamSpeak
+// banners (wide-banner.tsx): the place is the big number, its bar the
+// progress to the next rank.
+function asWide(d: Data) {
+  const { th, t } = d;
+  return {
+    th,
+    kind: t.player,
+    name: d.name,
+    flag: d.flag,
+    hero: { label: t.position, value: positionText(d), max: d.n(d.total), share: clamp(d.rank?.progress ?? 0), note: `${d.n(d.points)} ${t.points}` },
+    online: true,
+    status: "",
+    cells: [
+      { label: t.kills, value: d.n(d.kills) },
+      { label: t.deaths, value: d.n(d.deaths) },
+      { label: t.kpd, value: d.n(d.kpd, 2), color: d.kpd >= 1 ? th.good : th.bad },
+      { label: t.hs, value: `${Math.round(d.hsPct * 100)}%` },
+      { label: t.activity, value: `${d.act}%`, color: activityColor(d.act / 100) },
+      { label: t.playTime, value: fmtDuration(d.time) },
+    ],
+    graph: null,
+    host: d.host,
+    badge: d.rank ? <RankBadge name={d.rank.name} size={40} plain /> : null,
+  };
 }
 
 // Avatar and flag are embedded so the image renders even if Steam or the flag

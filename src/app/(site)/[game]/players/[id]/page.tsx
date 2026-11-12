@@ -388,9 +388,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                             {...bannerChoices("player", t)}
                             link={`${origin}/${game}/players/${id}`}
                             alt={`${t.forumSignature}: ${p.name ?? id}`}
-                            width={400}
-                            height={100}
-                            labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgSkinDefault, layout: t.bannerLayout, background: t.bannerBackground, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
+                            labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgSkinDefault, size: t.bannerSize, layout: t.bannerLayout, background: t.bannerBackground, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
                           />
                         </td>
                       </tr>

@@ -663,6 +663,7 @@
   },
   "bannerLayout": "Mise en page",
   "bannerBackground": "Arrière-plan",
+  "bannerSize": "Taille",
   "bannerLayouts": {
     "a": "Clair",
     "b": "Carte",
@@ -676,6 +677,11 @@
     "stripes": "Rayures",
     "carbon": "Carbone",
     "glow": "Halo"
+  },
+  "bannerSizes": {
+    "normal": "Normale",
+    "small": "Étroite",
+    "tall": "Verticale"
   },
   "offline": "Hors ligne",
   "port": "Port",

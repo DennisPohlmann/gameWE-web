@@ -95,9 +95,7 @@ export default async function ServerPage({ params }: Props) {
               {...bannerChoices("server", t)}
               link={`${origin}/${game}/servers/${s.serverId}`}
               alt={`${t.serverBanner}: ${s.name}`}
-              width={560}
-              height={95}
-              labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgSkinDefault, layout: t.bannerLayout, background: t.bannerBackground, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
+              labels={{ format: t.sigFormat, style: t.imgStyle, standard: t.imgSkinDefault, size: t.bannerSize, layout: t.bannerLayout, background: t.bannerBackground, url: t.sigImageUrl, copy: t.copy, copied: t.copied }}
             />
           </div>
         </Section>

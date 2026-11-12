@@ -663,6 +663,7 @@
   },
   "bannerLayout": "Распоред",
   "bannerBackground": "Позадина",
+  "bannerSize": "Величина",
   "bannerLayouts": {
     "a": "Јасно",
     "b": "Картица",
@@ -676,6 +677,11 @@
     "stripes": "Пруге",
     "carbon": "Карбон",
     "glow": "Сјај"
+  },
+  "bannerSizes": {
+    "normal": "Нормална",
+    "small": "Уска",
+    "tall": "Усправна"
   },
   "offline": "Офлајн",
   "port": "Порт",

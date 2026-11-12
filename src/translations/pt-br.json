@@ -663,6 +663,7 @@
   },
   "bannerLayout": "Layout",
   "bannerBackground": "Fundo",
+  "bannerSize": "Tamanho",
   "bannerLayouts": {
     "a": "Claro",
     "b": "Cartão",
@@ -676,6 +677,11 @@
     "stripes": "Listras",
     "carbon": "Carbono",
     "glow": "Brilho"
+  },
+  "bannerSizes": {
+    "normal": "Normal",
+    "small": "Estreito",
+    "tall": "Vertical"
   },
   "offline": "Offline",
   "port": "Porta",

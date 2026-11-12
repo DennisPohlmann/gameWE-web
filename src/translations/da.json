@@ -663,6 +663,7 @@
   },
   "bannerLayout": "Layout",
   "bannerBackground": "Baggrund",
+  "bannerSize": "Størrelse",
   "bannerLayouts": {
     "a": "Klar",
     "b": "Kort",
@@ -676,6 +677,11 @@
     "stripes": "Striber",
     "carbon": "Kulfiber",
     "glow": "Glød"
+  },
+  "bannerSizes": {
+    "normal": "Normal",
+    "small": "Smal",
+    "tall": "Stående"
   },
   "offline": "Offline",
   "port": "Port",

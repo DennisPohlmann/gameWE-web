@@ -3,9 +3,10 @@ import { ImageResponse } from "next/og";
 import type { ImageTheme } from "@/lib/image-theme";
 import { Backdrop } from "./backdrop";
 import { bannerFonts } from "./fonts";
-import { fitSize, type BannerOptions } from "./options";
+import { fitSize, sizePx, type BannerOptions } from "./options";
 
-// The 560x95 banners (server, TeamSpeak) in their three layouts. The
+// The 560x95 banners (server, TeamSpeak) in their three layouts, and the
+// small (350x20) and tall (160x400) sizes of all three banners. The
 // banner's own file (server-banner.tsx, voice-banner.tsx) reads the data and
 // fills a Wide; this file only draws it.
 const W = 560;
@@ -30,16 +31,22 @@ export type Wide = {
   // Players of the last 24 hours (server only): points 0..1 and the scale.
   graph: { label: string; points: [number, number][]; ticks: number[]; top: number } | null;
   host: string;
+  // The player's rank insignia (player banner in the small and tall sizes).
+  badge?: React.ReactNode;
+  // The values of the small size, when not those of the tall one; label "" shows the value alone.
+  small?: Cell[];
 };
 
+// Also the small and tall sizes of all three kinds (o.size), the player's too.
 export async function wideBanner(w: Wide, o: BannerOptions, maxAge: number): Promise<Response> {
-  const draw = { a: drawA, b: drawB, c: drawC }[o.layout] ?? drawA;
+  const draw = o.size === "small" ? drawSmall : o.size === "tall" ? drawTall : ({ a: drawA, b: drawB, c: drawC }[o.layout] ?? drawA);
+  const [width, height] = o.size === "normal" ? [W, H] : sizePx("server", o.size);
   return new ImageResponse(
     <div style={{ display: "flex", position: "relative", width: "100%", height: "100%", background: w.th.bg }}>
       <Backdrop bg={o.bg} th={w.th} />
       {draw(w)}
     </div>,
-    { width: W, height: H, fonts: await bannerFonts(), headers: { "cache-control": `public, max-age=${maxAge}` } },
+    { width, height, fonts: await bannerFonts(), headers: { "cache-control": `public, max-age=${maxAge}` } },
   );
 }
 
@@ -273,6 +280,99 @@ function drawC(w: Wide) {
       </div>
       <div style={{ display: "flex", height: 3, background: th.barBg }}>
         <div style={{ display: "flex", width: `${Math.round(w.hero.share * 100)}%`, background: w.online ? th.good : th.bad }} />
+      </div>
+    </div>
+  );
+}
+
+// The values beside the big number: no pie (that is the big number) and no
+// status (the dot shows it).
+const extra = (w: Wide) => w.cells.filter((c) => c.pie === undefined && !c.status);
+
+// Small, 350x20: one line with status dot, flag, name, the big number and
+// as many values as fit; whatever does not fit wraps into the hidden second
+// line and drops out whole; a full value (the TeamSpeak address) stays and
+// the name gives way.
+function drawSmall(w: Wide) {
+  const { th } = w;
+  const cells = w.small ?? extra(w);
+  const item = (c: Cell) => (
+    <span key={c.label + c.value} style={{ display: "flex", flexShrink: 0, alignItems: "center", height: 18, marginLeft: 7, whiteSpace: "nowrap", color: th.muted }}>
+      {c.label ? <span style={{ marginRight: 3 }}>{c.label}</span> : null}
+      <b style={{ color: c.color ?? th.text }}>{c.value}</b>
+    </span>
+  );
+  return (
+    <div style={{ ...frame(th), borderTop: `1px solid ${th.frame}`, alignItems: "center", padding: "0 5px", fontSize: 9.5, color: th.text }}>
+      {w.status ? <StatusDot w={w} /> : null}
+      <Flag src={w.flag} h={9} />
+      <span style={{ display: "block", flexShrink: 1, minWidth: 30, maxWidth: 120, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{w.name}</span>
+      <span style={{ display: "flex", flexShrink: 0, marginLeft: 7, fontWeight: 700, color: th.accent, whiteSpace: "nowrap" }}>
+        {w.hero.value}
+        <span style={{ opacity: 0.75 }}>/{w.hero.max}</span>
+      </span>
+      {cells.filter((c) => c.full).map(item)}
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", flex: 1, minWidth: 0, height: 18, overflow: "hidden", marginLeft: 3 }}>
+        {cells.filter((c) => !c.full).map(item)}
+      </div>
+      <div style={{ display: "flex", flexShrink: 0, marginLeft: 6 }}>
+        <Logo th={th} size={9.5} />
+      </div>
+    </div>
+  );
+}
+
+// Tall, 160x400: name on top, the big number with its share of the slots
+// (or the rank insignia), the graph, the values as rows of label and value,
+// logo and site address at the bottom.
+function drawTall(w: Wide) {
+  const { th } = w;
+  const small = { display: "flex", fontSize: 8, color: th.muted, letterSpacing: 0.5, textTransform: "uppercase", whiteSpace: "nowrap" } as const;
+  return (
+    <div style={{ ...frame(th, true), padding: "8px 9px 7px" }}>
+      <div style={small}>{w.kind}</div>
+      <div style={{ display: "flex", alignItems: "center", marginTop: 2 }}>
+        <Flag src={w.flag} h={11} />
+        <span style={{ display: "block", fontSize: 13, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: w.flag ? 124 : 140 }}>{w.name}</span>
+      </div>
+      {w.status ? (
+        <div style={{ display: "flex", alignItems: "center", marginTop: 3, fontSize: 9.5, fontWeight: 700, color: w.online ? th.good : th.bad }}>
+          <StatusDot w={w} />
+          {w.status}
+        </div>
+      ) : null}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 10, padding: "8px 0", background: th.side, color: th.sideText, borderRadius: 3 }}>
+        {w.badge ? <div style={{ display: "flex", marginBottom: 4 }}>{w.badge}</div> : null}
+        <div style={{ ...small, color: th.sideText }}>{w.hero.label}</div>
+        <div style={{ display: "flex", alignItems: "flex-end", lineHeight: 1, marginTop: 2 }}>
+          <span style={{ fontSize: 30, fontWeight: 700 }}>{w.hero.value}</span>
+          <span style={{ fontSize: 13, fontWeight: 700, marginLeft: 2, marginBottom: 3, opacity: 0.75 }}>/{w.hero.max}</span>
+        </div>
+        <div style={{ display: "flex", width: 120, height: 5, marginTop: 6, borderRadius: 3, background: th.barBg, overflow: "hidden" }}>
+          <div style={{ display: "flex", width: `${Math.round(w.hero.share * 100)}%`, height: "100%", background: w.status && !w.online ? th.bad : w.status ? th.good : th.accent }} />
+        </div>
+        <div style={{ display: "flex", fontSize: 8, marginTop: 3, maxWidth: 136, overflow: "hidden", whiteSpace: "nowrap" }}>{w.hero.note}</div>
+      </div>
+      {w.graph ? (
+        <div style={{ display: "flex", flexDirection: "column", marginTop: 9 }}>
+          <div style={small}>{w.graph.label}</div>
+          <div style={{ display: "flex", marginTop: 3 }}>
+            <Graph g={w.graph} th={th} w={142} h={44} scale={false} />
+          </div>
+        </div>
+      ) : null}
+      <div style={{ display: "flex", flexDirection: "column", marginTop: 8 }}>
+        {/* A full value (the TeamSpeak address) under its label, over the whole width. */}
+        {extra(w).map((c) => (
+          <div key={c.label} style={{ display: "flex", flexDirection: c.full ? "column" : "row", justifyContent: "space-between", alignItems: c.full ? "flex-start" : "baseline", padding: "3px 0", borderBottom: `1px solid ${th.border}` }}>
+            <span style={{ display: "flex", flexShrink: 0, fontSize: 8, color: th.muted, textTransform: "uppercase", letterSpacing: 0.3, marginRight: 6 }}>{c.label}</span>
+            <span style={{ display: "block", fontSize: c.full ? fitSize(c.value, 140, 10.5) : 10.5, fontWeight: 700, color: c.color ?? th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: c.full ? 142 : 100 }}>{c.value}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: "auto" }}>
+        <Logo th={th} size={12} />
+        <div style={{ display: "flex", fontSize: fitSize(w.host, 140, 8), color: th.muted, whiteSpace: "nowrap" }}>{w.host}</div>
       </div>
     </div>
   );

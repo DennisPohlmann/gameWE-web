@@ -18,7 +18,17 @@ export const LAYOUTS: Record<BannerKind, readonly string[]> = {
 export const BACKGROUNDS = ["plain", "dots", "grid", "stripes", "carbon", "glow"] as const;
 export type Background = (typeof BACKGROUNDS)[number];
 
-export type BannerOptions = { lang: Lang; layout: string; bg: Background };
+// The size (?size=): "normal" is the banner of the layouts (player 400x100,
+// server and TeamSpeak 560x95); "small" one line, "tall" upright, each in
+// one design for all three kinds (wide-banner.tsx), the layout does not apply.
+export const SIZES = ["normal", "small", "tall"] as const;
+export type Size = (typeof SIZES)[number];
+
+export function sizePx(kind: BannerKind, size: Size): [number, number] {
+  return size === "small" ? [350, 20] : size === "tall" ? [160, 400] : kind === "player" ? [400, 100] : [560, 95];
+}
+
+export type BannerOptions = { lang: Lang; layout: string; bg: Background; size: Size };
 
 export function bannerOptions(kind: BannerKind, url: URL): BannerOptions {
   const q = url.searchParams;
@@ -27,10 +37,13 @@ export function bannerOptions(kind: BannerKind, url: URL): BannerOptions {
   const lang = isLang(folder) ? folder : (q.get("lang") ?? undefined);
   const layout = q.get("layout") ?? "";
   const bg = q.get("bg") ?? "";
+  const size = (SIZES as readonly string[]).includes(q.get("size") ?? "") ? (q.get("size") as Size) : "normal";
   return {
     lang: isLang(lang) ? lang : "en",
-    layout: LAYOUTS[kind].includes(layout) ? layout : "a",
+    // Only the normal size has layouts: one cache entry per small or tall picture.
+    layout: size === "normal" && LAYOUTS[kind].includes(layout) ? layout : "a",
     bg: (BACKGROUNDS as readonly string[]).includes(bg) ? (bg as Background) : "plain",
+    size,
   };
 }
 
@@ -40,7 +53,7 @@ export const imageLang = (lang: Lang): Lang => (lang === "zh-cn" || lang === "zh
 
 // Part of the cache key: one render per distinct picture.
 export function optionsKey(o: BannerOptions): string {
-  return `${o.lang}|${o.layout}|${o.bg}`;
+  return `${o.lang}|${o.layout}|${o.bg}|${o.size}`;
 }
 
 // A colour with transparency for the patterns: #rgb, #rrggbb and rgb()
@@ -80,8 +93,12 @@ export function backgroundLayer(bg: Background, text: string, accent: string): R
 }
 
 // The lists of the banner code box (components/sig-code.tsx) with their names.
-export function bannerChoices(kind: BannerKind, t: { bannerLayouts: Record<string, string>; bannerBackgrounds: Record<string, string> }) {
+export function bannerChoices(kind: BannerKind, t: { bannerLayouts: Record<string, string>; bannerBackgrounds: Record<string, string>; bannerSizes: Record<string, string> }) {
   return {
+    sizes: SIZES.map((id) => {
+      const [width, height] = sizePx(kind, id);
+      return { id, name: `${t.bannerSizes[id] ?? id} (${width}×${height})`, width, height };
+    }),
     layouts: LAYOUTS[kind].map((id) => ({ id, name: t.bannerLayouts[id] ?? id })),
     backgrounds: BACKGROUNDS.map((id) => ({ id, name: t.bannerBackgrounds[id] ?? id })),
   };

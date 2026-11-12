@@ -55,6 +55,7 @@ async function render(file: string, o: BannerOptions) {
       ],
       graph: null,
       host: origin.replace(/^https?:\/\//, ""),
+      small: [{ label: "", value: d.address, full: true }],
     },
     o,
     60,

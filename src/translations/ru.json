@@ -663,6 +663,7 @@
   },
   "bannerLayout": "Макет",
   "bannerBackground": "Фон",
+  "bannerSize": "Размер",
   "bannerLayouts": {
     "a": "Чистый",
     "b": "Карточка",
@@ -676,6 +677,11 @@
     "stripes": "Полосы",
     "carbon": "Карбон",
     "glow": "Свечение"
+  },
+  "bannerSizes": {
+    "normal": "Обычный",
+    "small": "Узкий",
+    "tall": "Вертикальный"
   },
   "offline": "Офлайн",
   "port": "Порт",

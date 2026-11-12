@@ -2,7 +2,7 @@
 // Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { BACKGROUNDS, backgroundLayer, bannerChoices, bannerOptions, fitSize, imageLang, optionsKey, tint } from "../src/lib/banners/options.ts";
+import { BACKGROUNDS, backgroundLayer, bannerChoices, bannerOptions, fitSize, imageLang, optionsKey, sizePx, tint } from "../src/lib/banners/options.ts";
 
 const opts = (kind: "player" | "server" | "voice", path: string) => bannerOptions(kind, new URL(`http://x${path}`));
 
@@ -17,11 +17,11 @@ test("the language is the folder right before the file, else ?lang=, else Englis
 });
 
 test("unknown layouts and backgrounds give the defaults; D only for players", () => {
-  assert.deepEqual(opts("player", "/sig/12.png?layout=d&bg=dots"), { lang: "en", layout: "d", bg: "dots" });
+  assert.deepEqual(opts("player", "/sig/12.png?layout=d&bg=dots"), { lang: "en", layout: "d", bg: "dots", size: "normal" });
   assert.equal(opts("server", "/banner/css/server/1.png?layout=d").layout, "a");
   assert.equal(opts("voice", "/banner/teamspeak.png?layout=c").layout, "c");
   assert.equal(opts("player", "/sig/12.png?bg=url(evil)").bg, "plain");
-  assert.equal(optionsKey(opts("player", "/sig/de/12.png?layout=b&bg=grid")), "de|b|grid");
+  assert.equal(optionsKey(opts("player", "/sig/de/12.png?layout=b&bg=grid")), "de|b|grid|normal");
 });
 
 test("Chinese gets the English texts (no CJK font)", () => {
@@ -40,11 +40,12 @@ test("patterns only use plain colours with transparency", () => {
 });
 
 test("the code box lists every layout and background with its name", () => {
-  const t = { bannerLayouts: { a: "Clear", b: "Card", c: "Badge", d: "Trend" }, bannerBackgrounds: { plain: "Plain", dots: "Dots" } };
+  const t = { bannerLayouts: { a: "Clear", b: "Card", c: "Badge", d: "Trend" }, bannerBackgrounds: { plain: "Plain", dots: "Dots" }, bannerSizes: { normal: "Normal", small: "Small" } };
   const c = bannerChoices("server", t);
   assert.deepEqual(c.layouts.map((l) => l.id), ["a", "b", "c"]);
   assert.equal(c.backgrounds[1].name, "Dots");
   assert.equal(c.backgrounds[2].name, "grid");
+  assert.deepEqual(c.sizes.map((x) => [x.name, x.width, x.height]), [["Normal (560×95)", 560, 95], ["Small (350×20)", 350, 20], ["tall (160×400)", 160, 400]]);
 });
 
 test("fitSize: the TeamSpeak address keeps its size while it fits, else shrinks, never below 6", () => {
@@ -53,4 +54,13 @@ test("fitSize: the TeamSpeak address keeps its size while it fits, else shrinks,
   const long = fitSize("teamspeak.example-gaming-community-network.de:9987", 250, 13);
   assert.ok(long < 12 && long >= 6 && long * 0.6 * 50 <= 250, String(long));
   assert.equal(fitSize("x".repeat(100), 250, 13), 6);
+});
+
+test("sizes: small and tall ignore the layout, unknown sizes are the normal one", () => {
+  assert.deepEqual(opts("server", "/banner/css/server/1.png?size=tall&layout=c"), { lang: "en", layout: "a", bg: "plain", size: "tall" });
+  assert.equal(opts("player", "/sig/12.png?size=huge").size, "normal");
+  assert.deepEqual(sizePx("player", "normal"), [400, 100]);
+  assert.deepEqual(sizePx("voice", "normal"), [560, 95]);
+  assert.deepEqual(sizePx("voice", "small"), [350, 20]);
+  assert.deepEqual(sizePx("player", "tall"), [160, 400]);
 });

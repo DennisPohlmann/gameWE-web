@@ -72,6 +72,7 @@ async function render(file: string, code: string | null, o: BannerOptions) {
         top,
       },
       host: origin.replace(/^https?:\/\//, ""),
+      small: [{ label: "", value: addr }, { label: t.map, value: s.act_map || "-" }],
     },
     o,
     300,

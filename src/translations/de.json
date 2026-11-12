@@ -722,6 +722,7 @@
   },
   "bannerLayout": "Aufbau",
   "bannerBackground": "Hintergrund",
+  "bannerSize": "Größe",
   "bannerLayouts": {
     "a": "Klar",
     "b": "Karte",
@@ -735,6 +736,11 @@
     "stripes": "Streifen",
     "carbon": "Carbon",
     "glow": "Leuchten"
+  },
+  "bannerSizes": {
+    "normal": "Normal",
+    "small": "Schmal",
+    "tall": "Hochkant"
   },
   "offline": "Offline",
   "port": "Port",

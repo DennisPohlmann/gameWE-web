@@ -103,7 +103,7 @@ list by points after all others) and is not counted in `rankedPlayers`;
 | `/api/v1/rankings/<game>/servers` | servers of a ranking (`players` online with bots, `bots` among them; `version`, `os` (`linux`, `windows`, `mac`) and `vac` (true / false), each null while unknown) with the players online (name, team, points, kills; bots without an id) |
 | `/api/v1/rankings/<game>/servers/<id>` | one server of that ranking (also suicides, CT/T wins, bombs planted and defused), with the players online (a hidden player with `id: null`, like a bot; HS/kill, accuracy, ping, points and their change, place) |
 | `/api/v1/rankings/<game>/servers/<id>/load?hours=24` | players on that server per 10 minutes (1-168 hours), with the uptime in seconds |
-| `/api/v1/rankings/<game>/servers/<id>/banner` | the server banner as PNG (`?style=<template>`, `?layout=`, `?bg=`, `?lang=`; an unknown value is `400`) |
+| `/api/v1/rankings/<game>/servers/<id>/banner` | the server banner as PNG (`?style=<template>`, `?size=`, `?layout=`, `?bg=`, `?lang=`; an unknown value is `400`) |
 | `/api/v1/rankings/<game>/load?hours=24` | the load of all servers of the ranking in one answer |
 | `/api/v1/rankings/<game>/activity?days=14` | players online, servers with players, kills and headshots per 15 minutes (`days` 1, 7, 14 or 30) |
 | `/api/v1/rankings/<game>/map/live` | the live map: players online and the servers at their GeoIP city point (404 while the live map is off) |
@@ -121,7 +121,7 @@ list by points after all others) and is not counted in `rankedPlayers`;
 | `/api/v1/points` | the help page's point rules and the bot settings per ranking |
 | `/api/v1/voice` | the voice server box (TeamSpeak or Discord) |
 | `/api/v1/voice/teamspeak` | the TeamSpeak page: server info, channel tree, people online (names only while shown); `passwordProtected`, and `password` only while "Allow showing the TeamSpeak password" is on (404 unless TeamSpeak is the voice server) |
-| `/api/v1/voice/teamspeak/banner` | the TeamSpeak banner as PNG (`?style=<template>`, `?layout=`, `?bg=`, `?lang=`; an unknown value is `400`) |
+| `/api/v1/voice/teamspeak/banner` | the TeamSpeak banner as PNG (`?style=<template>`, `?size=`, `?layout=`, `?bg=`, `?lang=`; an unknown value is `400`) |
 | `/api/v1/banners/styles` | the styles (design templates) the banners take |
 | `/api/v1/players/<id>` | the values of a player's profile: place (`rank`, null for a hidden, banned or inactive player and for one without a kill and a death), points and last change, kills, K:D, HS/kill, kills per minute, assists, accuracy, shots per kill, rounds, win ratio, survived, connections, ping, location, career rank, favourite weapon, hall of fame stars, `banned` and the running `bans` (source, reason, date, length, end) |
 | `/api/v1/rankings/<game>/bans` | the bans page: every banned player with the running bans (server logs; SourceBans and VAC/game bans from Steam as the collector stores them in `hlstats_Bans`), newest first, paged; `?view=inactive` the "Inactive players" tab |
@@ -137,7 +137,7 @@ list by points after all others) and is not counted in `rankedPlayers`;
 | `/api/v1/players/<id>/awards` | daily awards won (`sort=date\|award`) |
 | `/api/v1/players/<id>/events` | the player's events page (`type`, `order`), at most 10000 deep |
 | `/api/v1/players/<id>/radar` | the profile's radar: last 14 days against the average |
-| `/api/v1/players/<id>/banner` | the player banner as PNG (`?style=<template>`, `?layout=`, `?bg=`, `?lang=`; an unknown value is `400`) |
+| `/api/v1/players/<id>/banner` | the player banner as PNG (`?style=<template>`, `?size=`, `?layout=`, `?bg=`, `?lang=`; an unknown value is `400`) |
 | `/api/v1/players/<id>/ribbons` | rank by kills and ribbons per award |
 
 Unknown rankings, servers, players and other ids, and unknown paths under
@@ -218,8 +218,11 @@ language (`/banner/<game>/player/de/12.png`, `/sig/de/12.png`,
 English texts); without one they are English. `?layout=` picks the layout
 (`a` clear, the default, `b` card, `c` badge, the player banner also `d`
 with the points of the last 30 days) and `?bg=` a background pattern
-(`plain`, the default, `dots`, `grid`, `stripes`, `carbon`, `glow`);
-unknown values give the defaults. The codes on the profile, server, Misc
+(`plain`, the default, `dots`, `grid`, `stripes`, `carbon`, `glow`).
+`?size=` picks the size: `normal` (the default, the layouts above: player
+400x100, server and TeamSpeak 560x95), `small` (350x20, one line) or `tall`
+(160x400, upright); `small` and `tall` have one design for all three
+banners and ignore `?layout=`. Unknown values give the defaults. The codes on the profile, server, Misc
 and `/voice` pages use these URLs, in the page's language.
 
 | URL | Content |

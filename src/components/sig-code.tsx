@@ -5,10 +5,11 @@ import { noAutofill } from "@/lib/autofill";
 
 // A generated picture (forum signature, server banner) with its code: the
 // kind of code in a row of buttons (BBCode for forums, HTML, Discord, the
-// bare image URL; the forums that take each one as tooltip), and three
-// selects: the colours (one per design template, the site's own first), the
-// layout and the background pattern (?layout=, ?bg=, lib/banners/options.ts,
-// left out at their defaults, the first of each list); the preview and
+// bare image URL; the forums that take each one as tooltip), and four
+// selects: the size, the layout (only for the normal size), the colours (one
+// per design template, the site's own first) and the background pattern
+// (?size=, ?layout=, ?bg=, lib/banners/options.ts, left out at their
+// defaults, the first of each list); the preview and
 // the code follow, with a copy button. Discord shows no image inside a link
 // in a message, so its code is a masked link to the page with <> around the
 // URL (no preview card of the page) and the image URL on its own line, which
@@ -16,32 +17,34 @@ import { noAutofill } from "@/lib/autofill";
 export function SigCode({
   base,
   styles,
+  sizes,
   layouts,
   backgrounds,
   link,
   alt,
-  width,
-  height,
   labels,
 }: {
   // Absolute URL without ".png": <base>.png is the site's style, <base>-<style>.png another one.
   base: string;
   styles: { id: string; name: string }[];
+  sizes: { id: string; name: string; width: number; height: number }[];
   layouts: { id: string; name: string }[];
   backgrounds: { id: string; name: string }[];
   link: string;
   alt: string;
-  width: number;
-  height: number;
-  labels: { format: string; style: string; standard: string; layout: string; background: string; url: string; copy: string; copied: string };
+  labels: { format: string; style: string; standard: string; size: string; layout: string; background: string; url: string; copy: string; copied: string };
 }) {
   const [kind, setKind] = useState("bbcode");
   const [style, setStyle] = useState("");
+  const [size, setSize] = useState(sizes[0]?.id ?? "");
   const [layout, setLayout] = useState(layouts[0]?.id ?? "");
   const [bg, setBg] = useState(backgrounds[0]?.id ?? "");
   const [copied, setCopied] = useState(false);
+  const { width, height } = sizes.find((x) => x.id === size) ?? sizes[0];
+  const normal = size === sizes[0]?.id;
   const q = new URLSearchParams();
-  if (layout !== layouts[0]?.id) q.set("layout", layout);
+  if (!normal) q.set("size", size);
+  if (normal && layout !== layouts[0]?.id) q.set("layout", layout);
   if (bg !== backgrounds[0]?.id) q.set("bg", bg);
   const qs = q.toString();
   const img = `${style ? `${base}-${style}.png` : `${base}.png`}${qs ? `?${qs}` : ""}`;
@@ -78,7 +81,14 @@ export function SigCode({
       </div>
       <textarea {...noAutofill} className="sig-code" readOnly rows={3} value={code} onFocus={(e) => e.currentTarget.select()} />
       <div className="sig-codes-bar">
-        <select {...noAutofill} value={layout} onChange={(e) => setLayout(e.target.value)} aria-label={labels.layout} title={labels.layout}>
+        <select {...noAutofill} value={size} onChange={(e) => setSize(e.target.value)} aria-label={labels.size} title={labels.size}>
+          {sizes.map((x) => (
+            <option key={x.id} value={x.id}>
+              {x.name}
+            </option>
+          ))}
+        </select>
+        <select {...noAutofill} value={layout} onChange={(e) => setLayout(e.target.value)} disabled={!normal} aria-label={labels.layout} title={labels.layout}>
           {layouts.map((l) => (
             <option key={l.id} value={l.id}>
               {l.name}

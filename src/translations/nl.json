@@ -663,6 +663,7 @@
   },
   "bannerLayout": "Indeling",
   "bannerBackground": "Achtergrond",
+  "bannerSize": "Formaat",
   "bannerLayouts": {
     "a": "Helder",
     "b": "Kaart",
@@ -676,6 +677,11 @@
     "stripes": "Strepen",
     "carbon": "Carbon",
     "glow": "Gloed"
+  },
+  "bannerSizes": {
+    "normal": "Normaal",
+    "small": "Smal",
+    "tall": "Staand"
   },
   "offline": "Offline",
   "port": "Poort",

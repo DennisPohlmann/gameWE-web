@@ -663,6 +663,7 @@
   },
   "bannerLayout": "Układ",
   "bannerBackground": "Tło",
+  "bannerSize": "Rozmiar",
   "bannerLayouts": {
     "a": "Przejrzysty",
     "b": "Karta",
@@ -676,6 +677,11 @@
     "stripes": "Paski",
     "carbon": "Karbon",
     "glow": "Poświata"
+  },
+  "bannerSizes": {
+    "normal": "Normalny",
+    "small": "Wąski",
+    "tall": "Pionowy"
   },
   "offline": "Offline",
   "port": "Port",

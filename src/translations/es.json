@@ -663,6 +663,7 @@
   },
   "bannerLayout": "Diseño",
   "bannerBackground": "Fondo",
+  "bannerSize": "Tamaño",
   "bannerLayouts": {
     "a": "Claro",
     "b": "Tarjeta",
@@ -676,6 +677,11 @@
     "stripes": "Rayas",
     "carbon": "Carbono",
     "glow": "Brillo"
+  },
+  "bannerSizes": {
+    "normal": "Normal",
+    "small": "Estrecho",
+    "tall": "Vertical"
   },
   "offline": "Desconectado",
   "port": "Puerto",
