@@ -42,7 +42,7 @@ function like(s: string): string {
 // Place in the ranking (rank-order.ts) of each player, keyed by player id;
 // players without a kill or a death get none. With the index game_rank
 // (game, hideranking, skill DESC, kills DESC, deaths, playerId, collector
-// migration 30) the reads stay in the index: the placed players above the
+// migration 31) the reads stay in the index: the placed players above the
 // best of the players are counted, the players between the lowest and the
 // best points are counted per points value, and the players at exactly the
 // points of one of them are read to break the tie. A page of the ranking
