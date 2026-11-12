@@ -286,7 +286,7 @@ tr.server-line .vac-mark.vac-insecure { color: color-mix(in srgb, #d32f2f 70%, v
 .header-tools { display: contents; }
 .header-tools .tool-share, .header-tools .tool-lang { display: none; }
 @media (max-width: 700px) {
-  .header-tools { display: flex; align-items: stretch; gap: 6px; margin-left: auto; }
+  .header-tools { display: flex; align-items: stretch; gap: 4px; margin-left: auto; }
   .header-tools .tool-share, .header-tools .tool-lang { display: block; margin: 0; }
   .header-tools .share-btn,
   .header-tools .header-menu > summary {
@@ -296,8 +296,9 @@ tr.server-line .vac-mark.vac-insecure { color: color-mix(in srgb, #d32f2f 70%, v
     justify-content: center;
     padding: 0 9px;
     border: 1px solid var(--tab-border);
-    border-radius: 6px;
-    background: var(--tab-bg);
+    border-radius: 3px;
+    background: linear-gradient(rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 50%), var(--tab-bg);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
     color: var(--tab-text);
     font-size: 12px;
     font-weight: bold;
@@ -1555,12 +1556,12 @@ td.ribbon-wall a { display: inline-flex; flex-direction: column; align-items: ce
 .help-note { padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 0 4px 4px 0; margin: 0; }
 
 /* Share button in the breadcrumb bar */
-.share-nav { position: relative; margin-left: auto; margin-right: 10px; }
-.share-btn { display: inline-flex; align-items: center; gap: 5px; padding: 1px 8px; font-size: 11px; font-weight: bold; color: inherit; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(0, 0, 0, 0.3); border-radius: 10px; cursor: pointer; }
+.share-nav { position: relative; margin-left: auto; }
+/* Square buttons with a gloss like the flags (.flag-svg), close together in
+   the right corner: the bar's 12px gap shrinks to 4px between them. */
+.share-btn { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; font-size: 11px; font-weight: bold; line-height: 15px; color: var(--accent-on); background: linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.12) 50%, rgba(255, 255, 255, 0) 51%, rgba(0, 0, 0, 0.12)) var(--accent); border: 1px solid rgba(0, 0, 0, 0.35); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 1px 1px rgba(0, 0, 0, 0.25); cursor: pointer; }
 .share-btn svg { fill: currentColor; stroke: currentColor; stroke-width: 2; }
-.share-btn:hover { background: rgba(255, 255, 255, 0.18); }
-.share-btn { background: var(--accent); color: var(--accent-on); border-color: rgba(0, 0, 0, 0.35); }
-.share-btn:hover { background: var(--accent); text-decoration: underline; }
+.share-btn:hover, .share-btn[aria-expanded="true"] { filter: brightness(1.1); }
 .sig-codes > .sig { display: block; max-width: 100%; height: auto; margin: 0 auto 6px; }
 .help-games { margin: 6px 0 8px; }
 .share-menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 50; min-width: 170px; padding: 4px; background: var(--surface, #222); border: 1px solid var(--border); border-radius: 5px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); }
@@ -1568,7 +1569,8 @@ td.ribbon-wall a { display: inline-flex; flex-direction: column; align-items: ce
 .share-menu button:hover { background: var(--surface-2); }
 /* The language button (components/lang-menu.tsx): the share button's look,
    beside it; the items are links with the flag. */
-.share-nav.lang-nav { margin-left: 0; margin-right: 0; }
+.share-nav.lang-nav { margin-left: 0; }
+.nav-bar .share-nav.lang-nav { margin-left: -8px; }
 .share-btn .lang-icon { fill: none; stroke-width: 1.7; }
 /* No JavaScript (lang-menu.tsx): the <noscript> list replaces the button.
    Its content only becomes elements when scripting is off. */
