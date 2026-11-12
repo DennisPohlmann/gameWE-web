@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
-import { adminQuery, dialect, likeOp, query, queryOne, sinceDays, type Param } from "./db";
+import { adminQuery, dialect, likeOp, query, queryOne, sinceDays, tableName, type Param } from "./db";
+import { NAME_INDEX_MAX_EXAMINED, nameIndexPays } from "./name-order";
 import { BOT_POINTS_PREFIX, BOT_STATS_PREFIX, botSettingKeys, botSettingOn, botStatsOn, RANK_BOTS_PREFIX } from "./bot-settings";
 import { addDays, dayOf, siteDay } from "./day";
 import { ttlCache } from "./ttl-cache";
@@ -675,6 +676,16 @@ async function loadRanking(opts: {
   // needs the players table only.
   const countFrom = opts.search || local || opts.newDays ? from : `FROM ${table} p WHERE ${where.join(" AND ")}`;
   const countSql = `SELECT COUNT(*) AS n${split ? `, SUM(CASE WHEN p.kills > 0 OR p.deaths > 0 THEN 1 ELSE 0 END) AS placed` : ""} ${countFrom}`;
+  // Counting the inactive players of a large ranking takes a while; the
+  // number changes only when the collector moves players, so it is kept
+  // for a minute (not while searching).
+  const counted = opts.inactive && !opts.search ? inactiveCount(countSql, params) : queryOne<{ n: number; placed?: number }>(countSql, params);
+  // Sorted by name, with the index lastName (collector schema 30): read the
+  // names in order from hlstats_Players_Data and stop at the page, when that
+  // reads few rows (name-order.ts); otherwise sort every player as before.
+  // Only then the list waits for the count.
+  const names = rankingSorts[opts.sort] === "d.lastName" && !local && !opts.search ? await indexedNames() : 0;
+  const viaNames = names > 0 && nameIndexPays(opts.offset, opts.limit, Number((await counted)?.n ?? 0), names);
   const page = (w: string[], limit: number, offset: number) =>
     narrow
       ? query<RankingRow>(
@@ -686,12 +697,24 @@ async function loadRanking(opts: {
           [...params, limit, offset],
         )
       : query<RankingRow>(`${cols} ${fromWhere(w)} ORDER BY ${order} LIMIT ? OFFSET ?`, [...params, limit, offset]);
+  // Names that do not follow the ranking (all its players far down the
+  // alphabet) would still read the whole index: a page stops after
+  // NAME_INDEX_MAX_EXAMINED rows and is sorted the old way when it came back
+  // short, as on MySQL, which lacks ROWS EXAMINED.
+  const fromNames = async () => {
+    const want = Math.max(0, Math.min(opts.limit, Number((await counted)?.n ?? 0) - opts.offset));
+    const got = await query<RankingRow>(
+      `${cols}
+       FROM hlstats_Players_Data d STRAIGHT_JOIN ${table} p ON p.playerId = d.playerId
+       LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
+       WHERE ${where.join(" AND ")} ORDER BY ${order} LIMIT ? OFFSET ? ROWS EXAMINED ${NAME_INDEX_MAX_EXAMINED}`,
+      [...params, opts.limit, opts.offset],
+    ).catch(() => null);
+    return got && got.length >= want ? got : page(where, opts.limit, opts.offset);
+  };
   const [rows, count] = await Promise.all([
-    page(split ? [...where, "(p.kills > 0 OR p.deaths > 0)"] : where, opts.limit, opts.offset),
-    // Counting the inactive players of a large ranking takes a while; the
-    // number changes only when the collector moves players, so it is kept
-    // for a minute (not while searching).
-    opts.inactive && !opts.search ? inactiveCount(countSql, params) : queryOne<{ n: number; placed?: number }>(countSql, params),
+    viaNames ? fromNames() : page(split ? [...where, "(p.kills > 0 OR p.deaths > 0)"] : where, opts.limit, opts.offset),
+    counted,
   ]);
   if (split && rows.length < opts.limit) {
     const placed = Number((count as { placed?: number } | undefined)?.placed ?? 0);
@@ -702,6 +725,30 @@ async function loadRanking(opts: {
     for (const r of rows) r.globalRank = pos.get(Number(r.playerId));
   }
   return { rows, total: count?.n ?? 0 };
+}
+
+// Rows of hlstats_Players_Data (the estimate of information_schema) when it
+// has the index lastName (lastName, playerId) of collector schema 30, else 0;
+// looked up again every 10 minutes, so the update of the collector is picked
+// up without a restart. MariaDB only: PostgreSQL keeps the old query.
+let nameIndex: { at: number; rows: Promise<number> } | undefined;
+function indexedNames(): Promise<number> {
+  if (dialect() !== "mariadb") return Promise.resolve(0);
+  if (!nameIndex || Date.now() - nameIndex.at > 600_000) {
+    nameIndex = {
+      at: Date.now(),
+      rows: queryOne<{ n: number | string | null }>(
+        `SELECT t.TABLE_ROWS AS n FROM information_schema.TABLES t
+         WHERE t.TABLE_SCHEMA = DATABASE() AND t.TABLE_NAME = ? AND EXISTS (SELECT 1 FROM information_schema.STATISTICS s
+           WHERE s.TABLE_SCHEMA = t.TABLE_SCHEMA AND s.TABLE_NAME = t.TABLE_NAME AND s.INDEX_NAME = 'lastName' AND s.SEQ_IN_INDEX = 1 AND s.COLUMN_NAME = 'lastName')`,
+        [tableName("hlstats_Players_Data")],
+      ).then(
+        (r) => Number(r?.n ?? 0) || 0,
+        () => 0,
+      ),
+    };
+  }
+  return nameIndex.rows;
 }
 
 const inactiveCountCache = new Map<string, { at: number; value: Promise<{ n: number } | undefined> }>();

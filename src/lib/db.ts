@@ -1,7 +1,7 @@
 import "server-only";
 import { siteDay } from "./day";
 import { env } from "./env";
-import { DEFAULT_TABLE_PREFIX, normalizeTablePrefix, prefixSql } from "./table-prefix";
+import { DEFAULT_TABLE_PREFIX, normalizeTablePrefix, prefixSql, prefixTable } from "./table-prefix";
 import { readFileSync } from "node:fs";
 import mysql from "mysql2/promise";
 import pg from "pg";
@@ -202,6 +202,12 @@ function createDriver(user: string | undefined, password: string | undefined, li
   const prefix = normalizeTablePrefix(env("DB_TABLE_PREFIX"));
   if (prefix === DEFAULT_TABLE_PREFIX) return d;
   return { run: (sql, params) => d.run(prefixSql(prefix, sql), params) };
+}
+
+// The name a table of the queries has in the database, for names passed as
+// data (information_schema), which the rewrite leaves alone.
+export function tableName(name: string): string {
+  return prefixTable(normalizeTablePrefix(env("DB_TABLE_PREFIX")), name);
 }
 
 declare global {
