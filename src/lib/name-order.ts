@@ -19,3 +19,10 @@ export function nameIndexPays(offset: number, limit: number, matches: number, na
   if (!(matches > 0) || !(names > 0)) return false;
   return ((offset + limit) * names) / matches <= NAME_INDEX_MAX_ROWS;
 }
+
+// The admin's players list (both player tables) sorted by name walks the
+// index in each table only for the whole list (no filter) and up to this
+// offset: page 1 to offset 5,000 took 38 to 391 ms instead of 3.0 to 3.8 s on
+// 500,000 players, offset 50,000 still 1.7 s, the last page 5.7 to 6.3 s
+// instead of 3.2 to 3.7 s.
+export const ADMIN_NAME_INDEX_MAX_OFFSET = 10_000;

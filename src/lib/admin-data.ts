@@ -4,6 +4,8 @@ import { HIDDEN_OPTION_PREFIXES, allSettings } from "./admin-settings";
 import { hashPassword } from "./auth";
 import { GAME_HAS_DATA } from "./games";
 import { adminExec, adminInsert, adminQuery, likeOp, type Param } from "./db";
+import { indexedNames } from "./data";
+import { ADMIN_NAME_INDEX_MAX_OFFSET } from "./name-order";
 import { rankingBaseGames } from "./admin-rankings";
 import { isLogSecret, isLogToken } from "./log-secret";
 import { secretFormValue } from "./secret-field";
@@ -123,14 +125,41 @@ export async function listRows(e: Entity, opts: { game?: string; q?: string; sta
   }
   const where = parts.length ? `WHERE ${parts.join(" AND ")}` : "";
   const sortCol = opts.sort ? listSortColumn(e, opts.sort) : null;
+  const dir = opts.asc ? "ASC" : "DESC";
+  // The players by name: equal names in player id order, in the name's
+  // direction, so the index lastName (lastName, playerId, collector schema
+  // 30) serves the whole order.
+  const byName = !!e.alsoTable && sortCol === "d.lastName";
   // A chosen column first; the entity's order and the key break ties.
-  const order = [
-    ...(sortCol ? [`${sortCol} ${opts.asc ? "ASC" : "DESC"}`] : []),
-    ...e.order.split(",").map((s) => (s.trim().includes(".") ? s.trim() : `t.${s.trim()}`)),
-    // Without a chosen column the key runs the same way as the index of the order.
-    ...(sortCol ? [`t.${e.pk}`] : e.alsoTable ? [`t.${e.pk}${/ DESC$/i.test(e.order) ? " DESC" : ""}`] : []),
-  ].join(", ");
+  const order = byName
+    ? `d.lastName ${dir}, t.${e.pk} ${dir}`
+    : [
+        ...(sortCol ? [`${sortCol} ${dir}`] : []),
+        ...e.order.split(",").map((s) => (s.trim().includes(".") ? s.trim() : `t.${s.trim()}`)),
+        // Without a chosen column the key runs the same way as the index of the order.
+        ...(sortCol ? [`t.${e.pk}`] : e.alsoTable ? [`t.${e.pk}${/ DESC$/i.test(e.order) ? " DESC" : ""}`] : []),
+      ].join(", ");
   const offset = (opts.page - 1) * size;
+  // The whole list by name, with that index: each table walks it from the
+  // first name and stops after the page, instead of sorting every player
+  // (name-order.ts). A filter or a deep page sorts as before.
+  if (byName && !where && offset <= ADMIN_NAME_INDEX_MAX_OFFSET && (await indexedNames()) > 0) {
+    const cols = e.alsoColumns!.map((c) => `t.${c}`).join(", ");
+    const names = (table: string, inactive: 0 | 1, cond: string) =>
+      `(SELECT ${cols}, ${inactive} AS inactive FROM hlstats_Players_Data d STRAIGHT_JOIN ${table} t ON t.${e.pk} = d.playerId ${cond}
+        ORDER BY d.lastName ${dir}, t.${e.pk} ${dir} LIMIT ?)`;
+    const n = offset + size + 1;
+    const [rows, [count]] = await Promise.all([
+      adminQuery<Row>(
+        `SELECT ${selectCols(e)} FROM (${names(e.table, 0, "")}
+          UNION ALL ${names(e.alsoTable!, 1, `WHERE NOT EXISTS (SELECT 1 FROM ${e.table} m WHERE m.${e.pk} = t.${e.pk})`)}) t
+         ${e.join ?? ""} ORDER BY ${order} LIMIT ? OFFSET ?`,
+        [n, n, size + 1, offset],
+      ),
+      opts.noTotal ? [] : adminQuery<{ n: number | string }>(`SELECT COUNT(*) AS n FROM ${source(e)} t ${e.join ?? ""}`, params),
+    ]);
+    return { rows: rows.slice(0, size), hasNext: rows.length > size, total: Number(count?.n ?? 0) };
+  }
   // The state needs the union's own column (inactive); a search goes through
   // the entity's join in each table. Sorting by the joined name stays on the
   // union: without an index on the name neither way is faster (1.4 s).

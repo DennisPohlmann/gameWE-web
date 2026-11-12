@@ -13,8 +13,8 @@ test("players read both tables, each player once", () => {
   assert.equal(e.alsoTable, "hlstats_PlayersInactive");
   assert.ok(e.alsoColumns!.includes(e.pk));
   assert.match(data, /WHERE NOT EXISTS \(SELECT 1 FROM \$\{e\.table\} m WHERE m\.\$\{e\.pk\} = a\.\$\{e\.pk\}\)/);
-  // List, count and the row of the edit form.
-  assert.equal(data.match(/FROM \$\{source\(e\)\} t/g)?.length, 4);
+  // List, count, the count of the list by name and the row of the edit form.
+  assert.equal(data.match(/FROM \$\{source\(e\)\} t/g)?.length, 5);
 });
 
 test("a page without state, also a search, reads the best rows of each table", () => {

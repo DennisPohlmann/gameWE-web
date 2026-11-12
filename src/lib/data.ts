@@ -732,7 +732,7 @@ async function loadRanking(opts: {
 // looked up again every 10 minutes, so the update of the collector is picked
 // up without a restart. MariaDB only: PostgreSQL keeps the old query.
 let nameIndex: { at: number; rows: Promise<number> } | undefined;
-function indexedNames(): Promise<number> {
+export function indexedNames(): Promise<number> {
   if (dialect() !== "mariadb") return Promise.resolve(0);
   if (!nameIndex || Date.now() - nameIndex.at > 600_000) {
     nameIndex = {
