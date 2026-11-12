@@ -17,7 +17,7 @@ test("the language is the folder right before the file, else ?lang=, else Englis
 });
 
 test("unknown layouts and backgrounds give the defaults; D only for players", () => {
-  assert.deepEqual(opts("player", "/sig/12.png?layout=d&bg=dots"), { lang: "en", layout: "d", bg: "dots", size: "normal" });
+  assert.deepEqual(opts("player", "/sig/12.png?layout=d&bg=dots"), { lang: "en", layout: "d", bg: "dots", size: "normal", html: false });
   assert.equal(opts("server", "/banner/css/server/1.png?layout=d").layout, "a");
   assert.equal(opts("voice", "/banner/teamspeak.png?layout=c").layout, "c");
   assert.equal(opts("player", "/sig/12.png?bg=url(evil)").bg, "plain");
@@ -57,7 +57,9 @@ test("fitSize: the TeamSpeak address keeps its size while it fits, else shrinks,
 });
 
 test("sizes: small and tall ignore the layout, unknown sizes are the normal one", () => {
-  assert.deepEqual(opts("server", "/banner/css/server/1.png?size=tall&layout=c"), { lang: "en", layout: "a", bg: "plain", size: "tall" });
+  assert.deepEqual(opts("server", "/banner/css/server/1.png?size=tall&layout=c"), { lang: "en", layout: "a", bg: "plain", size: "tall", html: false });
+  assert.deepEqual(opts("player", "/banner/css/player/de/12-dark.html?size=small&layout=b"), { lang: "de", layout: "a", bg: "plain", size: "tall", html: true });
+  assert.equal(optionsKey(opts("voice", "/banner/teamspeak.html")), "en|a|plain|tall|html");
   assert.equal(opts("player", "/sig/12.png?size=huge").size, "normal");
   assert.deepEqual(sizePx("player", "normal"), [400, 100]);
   assert.deepEqual(sizePx("voice", "normal"), [560, 95]);

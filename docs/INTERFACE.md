@@ -222,7 +222,11 @@ with the points of the last 30 days) and `?bg=` a background pattern
 `?size=` picks the size: `normal` (the default, the layouts above: player
 400x100, server and TeamSpeak 560x95), `small` (350x20, one line) or `tall`
 (160x400, upright); `small` and `tall` have one design for all three
-banners and ignore `?layout=`. Unknown values give the defaults. The codes on the profile, server, Misc
+banners and ignore `?layout=`. Unknown values give the defaults. The same
+address with `.html` instead of `.png` (`/banner/<game>/player/12-dark.html`,
+`/banner/de/teamspeak.html`) is the tall size as a web page for an
+`<iframe>` (160x400, live text, one link to the profile, server or `/voice`
+page, reloads itself; `?bg=` applies), which any site may frame. The codes on the profile, server, Misc
 and `/voice` pages use these URLs, in the page's language.
 
 | URL | Content |

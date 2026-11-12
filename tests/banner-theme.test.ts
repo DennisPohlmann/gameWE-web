@@ -56,6 +56,9 @@ test("no style, classic and unknown styles mean the active skin", () => {
   assert.equal(chosenTemplate("modern-orange", builtIn), "modern-orange");
   assert.deepEqual(parseImageFile("12-classic.png"), { id: 12, style: "classic" });
   assert.deepEqual(parseImageFile("12.png"), { id: 12, style: null });
+  assert.deepEqual(parseImageFile("12-dark.html"), { id: 12, style: "dark" });
+  assert.deepEqual(parseVoiceBannerFile("teamspeak-light.html"), { style: "light" });
+  assert.equal(parseVoiceBannerFile("teamspeak.htm"), null);
   assert.equal(parseImageFile("12-../x.png"), null);
 });
 

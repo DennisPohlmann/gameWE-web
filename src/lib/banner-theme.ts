@@ -154,13 +154,13 @@ export function chosenTemplate(style: string | null, templates: string[]): strin
 // means the active skin. Any style name is accepted here ("12-classic" from
 // old posts included); one that is no template falls back to the skin.
 export function parseImageFile(file: string): { id: number; style: string | null } | null {
-  const m = /^(\d{1,10})(?:-([a-z0-9][a-z0-9_-]{0,31}))?(?:\.png)?$/.exec(file);
+  const m = /^(\d{1,10})(?:-([a-z0-9][a-z0-9_-]{0,31}))?(?:\.png|\.html)?$/.exec(file);
   return m ? { id: Number(m[1]), style: m[2] ?? null } : null;
 }
 
 // "teamspeak.png" or "teamspeak-dark.png": the TeamSpeak banner and its
 // style (null: the active skin), the same style rules as parseImageFile.
 export function parseVoiceBannerFile(file: string): { style: string | null } | null {
-  const m = /^teamspeak(?:-([a-z0-9][a-z0-9_-]{0,31}))?\.png$/.exec(file);
+  const m = /^teamspeak(?:-([a-z0-9][a-z0-9_-]{0,31}))?\.(?:png|html)$/.exec(file);
   return m ? { style: m[1] ?? null } : null;
 }

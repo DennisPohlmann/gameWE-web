@@ -86,6 +86,7 @@ async function render(file: string, game: string | null, o: BannerOptions) {
     act: activity(p.last_event, settings.activityDays),
     time: p.connection_time,
     host: origin.replace(/^https?:\/\//, ""),
+    link: `${origin}/${p.game}/players/${p.playerId}`,
     brand: settings.sigBrand,
     trend: days.map((x) => x.points),
     change: days.reduce((sum, x) => sum + x.change, 0),
@@ -122,6 +123,7 @@ type Data = {
   act: number;
   time: number;
   host: string;
+  link: string;
   brand: string;
   // Points per day, oldest first, and their change over the days (layout D only).
   trend: number[];
@@ -375,6 +377,7 @@ function asWide(d: Data) {
     ],
     graph: null,
     host: d.host,
+    link: d.link,
     badge: d.rank ? <RankBadge name={d.rank.name} size={40} plain /> : null,
   };
 }

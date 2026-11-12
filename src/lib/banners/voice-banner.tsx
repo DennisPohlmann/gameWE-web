@@ -55,6 +55,7 @@ async function render(file: string, o: BannerOptions) {
       ],
       graph: null,
       host: origin.replace(/^https?:\/\//, ""),
+      link: `${origin}/voice`,
       small: [{ label: "", value: d.address, full: true }],
     },
     o,

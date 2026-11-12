@@ -31,6 +31,8 @@ export type Wide = {
   // Players of the last 24 hours (server only): points 0..1 and the scale.
   graph: { label: string; points: [number, number][]; ticks: number[]; top: number } | null;
   host: string;
+  // The page of the player, server or TeamSpeak server (the HTML banner links to it).
+  link: string;
   // The player's rank insignia (player banner in the small and tall sizes).
   badge?: React.ReactNode;
   // The values of the small size, when not those of the tall one; label "" shows the value alone.
@@ -41,13 +43,33 @@ export type Wide = {
 export async function wideBanner(w: Wide, o: BannerOptions, maxAge: number): Promise<Response> {
   const draw = o.size === "small" ? drawSmall : o.size === "tall" ? drawTall : ({ a: drawA, b: drawB, c: drawC }[o.layout] ?? drawA);
   const [width, height] = o.size === "normal" ? [W, H] : sizePx("server", o.size);
-  return new ImageResponse(
+  const picture = (
     <div style={{ display: "flex", position: "relative", width: "100%", height: "100%", background: w.th.bg }}>
       <Backdrop bg={o.bg} th={w.th} />
       {draw(w)}
-    </div>,
-    { width, height, fonts: await bannerFonts(), headers: { "cache-control": `public, max-age=${maxAge}` } },
+    </div>
   );
+  if (o.html) return htmlBanner(w, picture, width, height, o.lang, maxAge);
+  return new ImageResponse(picture, { width, height, fonts: await bannerFonts(), headers: { "cache-control": `public, max-age=${maxAge}` } });
+}
+
+// The HTML banner (a file ending in .html): the same drawing as the picture,
+// since it only uses flex boxes with inline styles, as a page of its own for
+// an <iframe> on other sites (next.config.ts allows the framing for it and blocks everything else), one
+// link over all to the page, reloaded every maxAge seconds. The page loads
+// nothing: avatar and flags are data: URLs, the font is the reader's own.
+async function htmlBanner(w: Wide, picture: React.ReactElement, width: number, height: number, lang: string, maxAge: number): Promise<Response> {
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const body = renderToStaticMarkup(
+    <a href={w.link} target="_blank" rel="noopener" style={{ display: "flex", width, height, color: "inherit", textDecoration: "none" }}>
+      {picture}
+    </a>,
+  );
+  const page = `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta http-equiv="refresh" content="${maxAge}"><title>gameWE</title><style>html,body{margin:0;overflow:hidden;font-family:Inter,"Segoe UI",Roboto,Helvetica,Arial,system-ui,sans-serif}*{box-sizing:border-box}</style></head><body>${body}</body></html>`;
+  return new Response(page, {
+    // Its content-security-policy comes from next.config.ts.
+    headers: { "content-type": "text/html; charset=utf-8", "cache-control": `public, max-age=${maxAge}` },
+  });
 }
 
 const frame = (th: ImageTheme, column = false) =>

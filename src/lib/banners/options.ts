@@ -28,7 +28,9 @@ export function sizePx(kind: BannerKind, size: Size): [number, number] {
   return size === "small" ? [350, 20] : size === "tall" ? [160, 400] : kind === "player" ? [400, 100] : [560, 95];
 }
 
-export type BannerOptions = { lang: Lang; layout: string; bg: Background; size: Size };
+// html: a file ending in .html, the tall size as a web page for an <iframe>
+// (wide-banner.tsx), with live text and a link to the page.
+export type BannerOptions = { lang: Lang; layout: string; bg: Background; size: Size; html: boolean };
 
 export function bannerOptions(kind: BannerKind, url: URL): BannerOptions {
   const q = url.searchParams;
@@ -37,13 +39,15 @@ export function bannerOptions(kind: BannerKind, url: URL): BannerOptions {
   const lang = isLang(folder) ? folder : (q.get("lang") ?? undefined);
   const layout = q.get("layout") ?? "";
   const bg = q.get("bg") ?? "";
-  const size = (SIZES as readonly string[]).includes(q.get("size") ?? "") ? (q.get("size") as Size) : "normal";
+  const html = url.pathname.endsWith(".html");
+  const size = html ? "tall" : (SIZES as readonly string[]).includes(q.get("size") ?? "") ? (q.get("size") as Size) : "normal";
   return {
     lang: isLang(lang) ? lang : "en",
     // Only the normal size has layouts: one cache entry per small or tall picture.
     layout: size === "normal" && LAYOUTS[kind].includes(layout) ? layout : "a",
     bg: (BACKGROUNDS as readonly string[]).includes(bg) ? (bg as Background) : "plain",
     size,
+    html,
   };
 }
 
@@ -53,7 +57,7 @@ export const imageLang = (lang: Lang): Lang => (lang === "zh-cn" || lang === "zh
 
 // Part of the cache key: one render per distinct picture.
 export function optionsKey(o: BannerOptions): string {
-  return `${o.lang}|${o.layout}|${o.bg}|${o.size}`;
+  return `${o.lang}|${o.layout}|${o.bg}|${o.size}${o.html ? "|html" : ""}`;
 }
 
 // A colour with transparency for the patterns: #rgb, #rrggbb and rgb()
