@@ -4,6 +4,7 @@ import { RankCell } from "@/components/rank-cell";
 import { RankCellTips } from "@/components/rank-cell-tips";
 import { getRanks } from "@/lib/awards";
 import { gameHasShots, unlinkedBots, type PlaceRow, type RankingRow } from "@/lib/data";
+import { hasPlace } from "@/lib/rank-order";
 import { activity, fmtDate, fmtDuration, fmtNum, fmtPct, kpd, ratio } from "@/lib/format";
 import type { Dict, Lang } from "@/lib/i18n";
 import { placeHref, type PlaceKind } from "@/lib/places";
@@ -79,7 +80,8 @@ export async function RankingTable({
     const act = activity(r.last_event, activityDays);
     return (
       <tr key={r.playerId}>
-        {showRank ? <td className="rank">{rank === null ? "-" : fmtNum(rank, lang)}</td> : null}
+        {/* No kill and no death yet: no place (rank-order.ts). */}
+        {showRank ? <td className="rank">{rank === null || !hasPlace(r) ? "-" : fmtNum(rank, lang)}</td> : null}
         <td>
           <PlayerLink game={game} id={r.playerId} name={r.name} flag={{ flag: r.flag, country: r.country }} plain={bots.has(r.playerId)} />
         </td>
@@ -88,7 +90,7 @@ export async function RankingTable({
             <RankCell kills={Number(r.careerKills)} ranks={ranks} />
           </td>
         ) : null}
-        {showGlobalRank ? <td className="num hide-sm">{fmtNum(Number(r.globalRank ?? 0), lang)}</td> : null}
+        {showGlobalRank ? <td className="num hide-sm">{r.globalRank ? fmtNum(r.globalRank, lang) : "-"}</td> : null}
         <td className="num">{fmtNum(r.skill, lang)}</td>
         {showFirstConnect ? (
           <td className="num">{fmtDate(r.first_connect, lang)}</td>
