@@ -229,7 +229,7 @@
  },
  {
   "name": "@scalar/api-reference",
-  "version": "1.78.0",
+  "version": "1.78.1",
   "license": "MIT",
   "note": "browser bundle of /api (public/vendor/scalar)"
  },

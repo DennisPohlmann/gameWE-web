@@ -152,7 +152,7 @@ the links above.
 
 The page `/api` renders the OpenAPI description of the public API with the
 self-hosted browser bundle of **Scalar API Reference**
-(`@scalar/api-reference` 1.78.0, devDependency, https://github.com/scalar/scalar,
+(`@scalar/api-reference` 1.78.1, devDependency, https://github.com/scalar/scalar,
 MIT). `npm run build` copies `dist/browser/standalone.js` to
 `public/vendor/scalar/standalone.js` together with Scalar's MIT license text
 (`public/vendor/scalar/LICENSE.txt`); nothing is loaded from Scalar's
