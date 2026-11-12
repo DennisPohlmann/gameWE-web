@@ -163,6 +163,17 @@ function positionText(d: Data) {
   return d.position ? `#${d.n(d.position)}` : "–";
 }
 
+// A row of values left of the site address in a strip h px high: whatever
+// does not fit wraps into the hidden second line and drops out whole,
+// so values never overlap and the address never wraps.
+function Fits({ h, children }: { h: number; children: React.ReactNode }) {
+  return <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", flex: 1, minWidth: 0, height: h, overflow: "hidden" }}>{children}</div>;
+}
+
+function Host({ d, gap = 8 }: { d: Data; gap?: number }) {
+  return <span style={{ display: "flex", flexShrink: 0, marginLeft: gap, whiteSpace: "nowrap" }}>{d.host}</span>;
+}
+
 // A: "Klar" – Inter, side panel with insignia, stat cells with labels.
 function drawA(d: Data) {
   const { th, t } = d;
@@ -209,12 +220,18 @@ function drawA(d: Data) {
           {cell(`${Math.round(d.hsPct * 100)}%`, t.hs)}
         </div>
         <div style={{ display: "flex", alignItems: "center", marginTop: 5, fontSize: 9, color: th.muted }}>
-          <span style={{ marginRight: 4 }}>{t.activity}</span>
-          <Meter v={d.act / 100} w={36} fill={activityColor(d.act / 100)} d={d} />
-          <span style={{ marginLeft: 4, color: th.text }}>{d.act}%</span>
-          <span style={{ marginLeft: 9 }}>{t.playTime}</span>
-          <span style={{ marginLeft: 4, color: th.text }}>{fmtDuration(d.time)}</span>
-          <span style={{ marginLeft: "auto", color: th.muted }}>{d.host}</span>
+          <Fits h={12}>
+            <span style={{ display: "flex", alignItems: "center", height: 12, marginRight: 9, whiteSpace: "nowrap" }}>
+              <span style={{ marginRight: 4 }}>{t.activity}</span>
+              <Meter v={d.act / 100} w={28} fill={activityColor(d.act / 100)} d={d} />
+              <span style={{ marginLeft: 4, color: th.text }}>{d.act}%</span>
+            </span>
+            <span style={{ display: "flex", alignItems: "center", height: 12, whiteSpace: "nowrap" }}>
+              <span style={{ marginRight: 4 }}>{t.playTime}</span>
+              <span style={{ color: th.text }}>{fmtDuration(d.time)}</span>
+            </span>
+          </Fits>
+          <Host d={d} />
         </div>
       </div>
     </div>
@@ -226,7 +243,7 @@ function drawA(d: Data) {
 function drawB(d: Data) {
   const { th, t } = d;
   const stat = (value: string, label: string) => (
-    <span style={{ display: "flex", marginRight: 10, opacity: 0.85 }}>
+    <span style={{ display: "flex", alignItems: "center", height: 20, marginRight: 10, opacity: 0.85, whiteSpace: "nowrap" }}>
       <b style={{ marginRight: 3 }}>{value}</b>
       {label}
     </span>
@@ -263,16 +280,18 @@ function drawB(d: Data) {
           <div style={{ display: "flex", fontSize: 9, color: th.muted, textTransform: "uppercase", letterSpacing: 0.6 }}>{t.position}</div>
           <div style={{ display: "flex", fontSize: 26, fontWeight: 700, color: th.accent, lineHeight: 1 }}>{positionText(d)}</div>
           <div style={{ display: "flex", fontSize: 8.5, color: th.muted, marginTop: 1 }}>{d.position ? t.positionOf.replace("{n}", d.n(d.total)) : ""}</div>
+          {d.brand ? <div style={{ display: "flex", fontSize: 8, fontWeight: 700, color: th.muted, marginTop: 2, maxWidth: 120, overflow: "hidden", whiteSpace: "nowrap" }}>{d.brand}</div> : null}
         </div>
       </div>
       <div style={{ display: "flex", alignItems: "center", height: 20, marginTop: 6, padding: "0 9px", background: th.side, borderTop: th.stripe ? `2px solid ${th.stripe}` : `1px solid ${th.border}`, fontSize: 9, color: th.sideText }}>
-        {stat(d.n(d.kills), t.kills)}
-        {stat(d.n(d.deaths), t.deaths)}
-        {stat(d.n(d.kpd, 2), t.kpd)}
-        {stat(`${Math.round(d.hsPct * 100)}%`, t.hs)}
-        {stat(fmtDuration(d.time), "")}
-        <span style={{ display: "flex", marginLeft: "auto" }}>{d.host}</span>
-        {d.brand ? <span style={{ display: "flex", marginLeft: 6, fontWeight: 700 }}>{d.brand}</span> : null}
+        <Fits h={20}>
+          {stat(d.n(d.kills), t.kills)}
+          {stat(d.n(d.deaths), t.deaths)}
+          {stat(d.n(d.kpd, 2), t.kpd)}
+          {stat(`${Math.round(d.hsPct * 100)}%`, t.hs)}
+          {stat(fmtDuration(d.time), "")}
+        </Fits>
+        <Host d={d} gap={0} />
       </div>
     </div>
   );
@@ -362,7 +381,7 @@ function drawD(d: Data) {
   const change = d.change;
   const color = change > 0 ? th.good : change < 0 ? th.bad : th.muted;
   const stat = (value: string, label: string) => (
-    <span style={{ display: "flex", marginRight: 9 }}>
+    <span style={{ display: "flex", alignItems: "center", height: 19, marginRight: 9, whiteSpace: "nowrap" }}>
       <b style={{ marginRight: 3, color: th.sideText }}>{value}</b>
       {label}
     </span>
@@ -387,6 +406,7 @@ function drawD(d: Data) {
               {d.n(d.points)} {t.points}
             </span>
           </div>
+          {d.brand ? <div style={{ display: "flex", fontSize: 8, fontWeight: 700, color: th.muted, marginTop: 4, overflow: "hidden", whiteSpace: "nowrap" }}>{d.brand}</div> : null}
         </div>
         <div style={{ display: "flex", flexDirection: "column", flex: 1, marginLeft: 8 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
@@ -406,12 +426,13 @@ function drawD(d: Data) {
         </div>
       </div>
       <div style={{ display: "flex", alignItems: "center", height: 19, marginTop: 5, padding: "0 9px", background: th.side, fontSize: 8.5, color: th.sideText, opacity: 0.95 }}>
-        {stat(d.n(d.kills), t.kills)}
-        {stat(d.n(d.kpd, 2), t.kpd)}
-        {stat(`${Math.round(d.hsPct * 100)}%`, t.hs)}
-        {stat(`${d.act}%`, t.activity)}
-        <span style={{ display: "flex", marginLeft: "auto" }}>{d.host}</span>
-        {d.brand ? <span style={{ display: "flex", marginLeft: 6, fontWeight: 700 }}>{d.brand}</span> : null}
+        <Fits h={19}>
+          {stat(d.n(d.kills), t.kills)}
+          {stat(d.n(d.kpd, 2), t.kpd)}
+          {stat(`${Math.round(d.hsPct * 100)}%`, t.hs)}
+          {stat(`${d.act}%`, t.activity)}
+        </Fits>
+        <Host d={d} gap={0} />
       </div>
     </div>
   );
