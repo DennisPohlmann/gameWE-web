@@ -9,7 +9,7 @@ import { adminDict, localized, tr } from "../src/lib/admin-i18n.ts";
 import * as settings from "../src/lib/admin-settings.ts";
 import * as texts from "../src/lib/admin-texts.ts";
 import { ADMIN_TEXTS } from "../src/translations/admin/index.ts";
-import { LANGUAGES } from "../src/translations/languages.ts";
+import { LANGUAGES, baseLang } from "../src/translations/languages.ts";
 
 // Every English text: all strings of a { de, en } pair or table, found
 // anywhere in the definitions. Pairs with `all` bring every language along.
@@ -41,8 +41,9 @@ test("every public language is an admin language with all texts", () => {
   const en = englishTexts();
   assert.ok(en.size > 500, `only ${en.size} texts found`);
   for (const { code } of LANGUAGES) {
-    if (code === "de" || code === "en") continue;
-    const t = ADMIN_TEXTS[code];
+    // A dialect gets the admin area of its base language.
+    if (code === "de" || code === "en" || baseLang(code) !== code) continue;
+    const t = ADMIN_TEXTS[code as keyof typeof ADMIN_TEXTS];
     assert.ok(t, `no admin texts for ${code}`);
     const keys = new Set(Object.keys(t));
     assert.deepEqual([...en].filter((k) => !keys.has(k)), [], `${code}: texts missing`);
@@ -58,6 +59,7 @@ test("lookups use the translation and fall back to English", () => {
   const l = { de: "Speichern", en: "Save" };
   assert.equal(tr(l, "de"), "Speichern");
   assert.equal(tr(l, "en"), "Save");
+  assert.equal(tr(l, "bar"), "Speichern");
   assert.equal(tr(l, "pl"), ADMIN_TEXTS.pl.Save);
   assert.equal(tr({ de: "x", en: "not a known text" }, "pl"), "not a known text");
   assert.equal(tr({ de: "x", en: "y", all: { pl: "z" } }, "pl"), "z");

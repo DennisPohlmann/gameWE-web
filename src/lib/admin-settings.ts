@@ -113,7 +113,11 @@ const definitions: Omit<SettingGroup, "area">[] = [
         key: "gamewe_default_lang",
         label: { de: "Standardsprache", en: "Default language" },
         type: "choice",
-        choices: LANGUAGES.map((l): [string, L] => [l.code, { de: `${l.name} (${l.code})`, en: `${l.name} (${l.code})` }]),
+        // Each language in its own name, the same in every admin language (all).
+        choices: LANGUAGES.map((l): [string, L] => {
+          const name = `${l.name} (${l.code})`;
+          return [l.code, { de: name, en: name, all: Object.fromEntries(LANGUAGES.map((x) => [x.code, name])) }];
+        }),
         def: "de",
         help: {
           de: "Für Besucher ohne gewählte Sprache, wenn ihr Browser keine der Sprachen der Seite wünscht. Umschalten können sie unten auf der Seite.",

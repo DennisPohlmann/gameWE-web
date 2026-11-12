@@ -1,17 +1,28 @@
+import ar from "./ar.json";
+import bar from "./bar.json";
+import cs from "./cs.json";
 import da from "./da.json";
 import de from "./de.json";
 import en from "./en.json";
 import es from "./es.json";
 import fr from "./fr.json";
+import gsw from "./gsw.json";
+import it from "./it.json";
+import ja from "./ja.json";
+import ko from "./ko.json";
+import nds from "./nds.json";
 import nl from "./nl.json";
 import pl from "./pl.json";
 import ptBr from "./pt-br.json";
 import pt from "./pt.json";
 import ru from "./ru.json";
 import sr from "./sr.json";
+import sv from "./sv.json";
+import tr from "./tr.json";
+import uk from "./uk.json";
 import zhCn from "./zh-cn.json";
 import zhTw from "./zh-tw.json";
-import type { Lang } from "./languages";
+import { LANGUAGES, baseLang, type Lang } from "./languages";
 
 // connectTypes is looked up by the number the collector writes.
 export type Dict = Omit<typeof en, "connectTypes"> & { connectTypes: Record<number, string> };
@@ -30,6 +41,12 @@ function merge<T extends object>(base: T, over: DeepPartial<T>): T {
   return out as T;
 }
 
-const files: Record<Lang, DeepPartial<typeof en>> = { en, de, ru, es, fr, pt, nl, da, pl, "pt-br": ptBr, sr, "zh-tw": zhTw, "zh-cn": zhCn };
+const files: Record<Lang, DeepPartial<typeof en>> = { en, de, bar, gsw, nds, ru, es, fr, pt, nl, da, pl, "pt-br": ptBr, sr, "zh-tw": zhTw, "zh-cn": zhCn, ja, ko, ar, tr, it, uk, cs, sv };
 
-export const dicts = Object.fromEntries(Object.entries(files).map(([k, v]) => [k, merge(en, v)])) as unknown as Record<Lang, Dict>;
+// A dialect fills its gaps from its base language (German), the rest from English.
+const full = (code: Lang): Dict => {
+  const base = baseLang(code);
+  return merge(base !== code ? full(base) : (en as unknown as Dict), files[code] as DeepPartial<Dict>);
+};
+
+export const dicts = Object.fromEntries(LANGUAGES.map((l) => [l.code, full(l.code)])) as Record<Lang, Dict>;

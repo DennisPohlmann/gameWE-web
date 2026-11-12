@@ -22,7 +22,7 @@ on MariaDB/MySQL or PostgreSQL. It
   Scalar), forum signatures, server banners and a TeamSpeak banner,
 - offers an admin API (`/api/v1/admin`) with which scripts do everything the
   admin area does, with an admin's API token (Admin → My account → API tokens),
-- comes in 13 languages and with design templates, including your own.
+- comes in 24 languages (Arabic right to left, three German dialects) and with design templates, including your own.
 
 Built with Next.js 16 (App Router, server-rendered, almost no client
 JavaScript), React 19 and TypeScript 7, with `mysql2` and `pg`. Runs as a

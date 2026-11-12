@@ -413,7 +413,7 @@ const bannerQuery = (kind: BannerKind): Param[] => [
   { name: "size", in: "query", description: "Size: normal (the layouts), small (350×20, one line) or tall (160×400, upright); small and tall have one design and ignore layout", schema: str("", { enum: [...SIZES], default: "normal" }) },
   { name: "layout", in: "query", description: "Layout of the banner (a: clear, b: card, c: badge" + (kind === "player" ? ", d: points trend of the last 30 days" : "") + ")", schema: str("", { enum: [...LAYOUTS[kind]], default: "a" }) },
   { name: "bg", in: "query", description: "Background pattern over the design's background", schema: str("", { enum: [...BACKGROUNDS], default: "plain" }) },
-  { name: "lang", in: "query", description: "Language of the texts (Chinese gets English: the banner fonts have no Chinese glyphs)", schema: str("", { enum: LANGUAGES.map((l) => l.code), default: "en" }) },
+  { name: "lang", in: "query", description: "Language of the texts (Chinese, Japanese, Korean and Arabic get English: the banner fonts have no glyphs for them)", schema: str("", { enum: LANGUAGES.map((l) => l.code), default: "en" }) },
 ];
 const activityDays = (def: number): Param => ({ name: "days", in: "query", description: "Days back", schema: int("", { enum: [1, 7, 14, 30], default: def }) });
 const activityPoint = { time: 1767225600, players: 12.5, servers: 2, kills: 41, headshots: 13 };

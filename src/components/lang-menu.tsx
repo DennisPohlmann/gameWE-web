@@ -40,14 +40,15 @@ export function LangMenu({ lang, label, base, icon = false, className }: { lang:
   const face = (
     <>
       <LangIcon size={icon ? 16 : 13} />
-      {icon ? <span className="lang-code">{current.code.slice(0, 2).toUpperCase()}</span> : current.name}
+      {icon ? <span className="lang-code">{current.code.split("-")[0].toUpperCase()}</span> : current.name}
     </>
   );
   const links = (menu: boolean) =>
     LANGUAGES.map((l) => (
-      <a key={l.code} role={menu ? "menuitem" : undefined} href={`${base}/lang/${l.code}`} hrefLang={l.locale} lang={l.locale} aria-current={l.code === lang ? "true" : undefined}>
+      <a key={l.code} role={menu ? "menuitem" : undefined} href={`${base}/lang/${l.code}`} hrefLang={l.code} lang={l.code} aria-current={l.code === lang ? "true" : undefined}>
         <LangFlag code={l.flag} title="" />
         {l.name}
+        {"note" in l ? <small className="lang-note">{l.note}</small> : null}
       </a>
     ));
 

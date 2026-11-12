@@ -8,6 +8,7 @@ import { getDict } from "@/lib/i18n";
 import { localeOf } from "@/lib/format";
 import { statsOrigin } from "@/lib/site-url";
 import { LangMenu } from "@/components/lang-menu";
+import { langDir } from "@/translations/languages";
 import { ShareMenu } from "@/components/share-menu";
 import { HeaderMenu } from "@/components/header-menu";
 import { basePath } from "@/lib/base-path";
@@ -110,7 +111,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     { home: t.contents, search: t.searchTitle, help: t.help, licenses: t.licenses, privacy: t.privacy.title },
   );
   return (
-    <html lang={lang} data-skin={template?.id ?? "default"} data-os={os}>
+    <html lang={lang} dir={langDir(lang)} data-skin={template?.id ?? "default"} data-os={os}>
       <head>
         {/* The template's variables: in the page when small, else linked. */}
         {theme && "css" in theme ? <style>{theme.css}</style> : theme ? <link rel="stylesheet" href={theme.href} /> : null}

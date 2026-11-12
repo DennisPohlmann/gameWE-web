@@ -120,7 +120,7 @@ html[data-skin] .header {
   overflow: visible;
 }
 html[data-skin] .logo-word { font: 800 24px/1 var(--m-font); letter-spacing: 0; text-transform: none; }
-html[data-skin] .header .logo { flex: none; margin-right: 18px; }
+html[data-skin] .header .logo { flex: none; margin-inline-end: 18px; }
 /* The links take the rest of the row; with many own links they wrap into
    right-aligned rows of the same height instead of one link alone below. */
 html[data-skin] .tabs-top { flex: 1 1 auto; min-width: 0; gap: 0 2px; padding: 6px 0; align-items: center; }
@@ -150,8 +150,8 @@ html[data-skin] .nav-bar {
   color: var(--muted);
 }
 html[data-skin] .crumbs { flex: 1 1 320px; min-width: 0; font-weight: normal; color: var(--muted); }
-html[data-skin] .nav-bar .share-nav { margin-left: auto; }
-html[data-skin] .nav-bar .lang-nav { margin-left: -8px; }
+html[data-skin] .nav-bar .share-nav { margin-inline-start: auto; }
+html[data-skin] .nav-bar .lang-nav { margin-inline-start: -8px; }
 html[data-skin] .crumbs a { color: var(--muted); }
 html[data-skin] .crumbs a:hover { color: var(--accent-text); }
 html[data-skin] .crumbs strong, html[data-skin] .crumbs span:nth-child(2) a { color: var(--accent); font-weight: 700; }
@@ -181,7 +181,7 @@ html[data-skin] .footer {
   background: var(--m-bar);
   border-top: 1px solid var(--m-bar-border);
   color: var(--muted);
-  text-align: right;
+  text-align: end;
 }
 html[data-skin] .footer::before {
   content: "game" "WE";
@@ -329,7 +329,7 @@ html[data-skin] tr.ranking-line:hover td, html[data-skin] tr.server-line:hover t
 html[data-skin] tr.ranking-line a, html[data-skin] tr.server-line a { color: var(--text); }
 html[data-skin] a.rnk, html[data-skin] a.srv { color: var(--accent) !important; }
 html[data-skin] a.rnk:hover, html[data-skin] a.srv:hover { color: var(--accent-text) !important; text-decoration: none; }
-html[data-skin] tr.ranking-line td:first-child, html[data-skin] tr.server-line td:first-child { padding-left: 9px; }
+html[data-skin] tr.ranking-line td:first-child, html[data-skin] tr.server-line td:first-child { padding-inline-start: 9px; }
 /* Long server names stay on one line and end in "…" (the full name is the
    link's title). max-width: 0 lets the name column take only the room the
    other columns leave; the top player is cut the same way. */
@@ -359,7 +359,7 @@ html[data-skin] table.rankings a.rnk {
 }
 /* The game icon floats before the name, which is a box of its own (the
    two-line cut above): both lines start after the icon. */
-html[data-skin] table.rankings td.no-rb .game-icon { float: left; margin: 2px 6px 0 0; }
+html[data-skin] table.rankings td.no-rb .game-icon { float: inline-start; margin: 2px 6px 0 0; }
 /* The start page's 24 px icon sits in a flex row of its own (.rnk-cell):
    no float and no margin beside the gap, so names line up with rankings
    without an icon. */
@@ -425,7 +425,7 @@ html[data-skin] .search input:focus {
 }
 html[data-skin] .search { gap: 0; }
 html[data-skin] .search input { border-radius: 3px 0 0 3px; }
-html[data-skin] .search select { border-radius: 0; border-left: 0; }
+html[data-skin] .search select { border-radius: 0; border-inline-start: 0; }
 html[data-skin] .search button, html[data-skin] .button, html[data-skin] .sig-codes-bar button {
   padding: 5px 12px;
   background: var(--accent);
@@ -457,7 +457,7 @@ html[data-skin] .chart .area.s7, html[data-skin] .chart .area.s8 { fill: none; }
 html[data-skin] .load-chart .line-players { stroke-width: 1.5; }
 /* Legend top left, before the title's summary. */
 html[data-skin] .chart-head { justify-content: flex-start; }
-html[data-skin] .chart-head .legend { order: -1; margin-left: 0; margin-right: auto; font-size: 11px; }
+html[data-skin] .chart-head .legend { order: -1; margin-inline-start: 0; margin-inline-end: auto; font-size: 11px; }
 html[data-skin] .chart-title { font-size: 12px; }
 html[data-skin] .chart-tip { border-radius: 4px; font-size: 12px; }
 html[data-skin] .swatch { border-radius: 2px; }
@@ -532,7 +532,7 @@ html[data-skin] .heatmap svg { border-radius: 4px; }
   html[data-skin] table.rankings tr.ranking-line { background: var(--surface); }
   html[data-skin] table.rankings tr.ranking-line:nth-child(even) { background: var(--m-zebra); }
   html[data-skin] table.rankings tr.ranking-line > td, html[data-skin] table.rankings tr.ranking-line:hover > td { background: transparent; }
-  html[data-skin] table.rankings tr.ranking-line > td:first-child { padding-left: 8px; }
+  html[data-skin] table.rankings tr.ranking-line > td:first-child { padding-inline-start: 8px; }
   html[data-skin] table.rankings tr.ranking-line > td.rnk-clan { display: block; }
 }
 /* Server lists up to tablet width: the version column goes, so the name,

@@ -214,8 +214,8 @@ page (with `BASE_PATH=/stats`: `/stats/banner/...`). `<game>` is the ranking
 code (e.g. `css1`); `-<template>` before `.png` picks a design template's
 colours. A language folder right before the file gives the texts in that
 language (`/banner/<game>/player/de/12.png`, `/sig/de/12.png`,
-`/banner/de/teamspeak.png`; the codes of the site's languages, Chinese gets
-English texts); without one they are English. `?layout=` picks the layout
+`/banner/de/teamspeak.png`; the codes of the site's languages, Chinese,
+Japanese, Korean and Arabic get English texts); without one they are English. `?layout=` picks the layout
 (`a` clear, the default, `b` card, `c` badge, the player banner also `d`
 with the points of the last 30 days) and `?bg=` a background pattern
 (`plain`, the default, `dots`, `grid`, `stripes`, `carbon`, `glow`).

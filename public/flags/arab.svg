@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" id="flag-arab" viewBox="0 0 640 480">
+  <!-- Own simplified drawing (no flag in this copy of flag-icons): the flag of the Arab League, green with a white crescent in a ring, for the Arabic language. -->
+  <path fill="#006c35" d="M0 0h640v480H0z"/>
+  <circle cx="320" cy="240" r="125" fill="none" stroke="#fff" stroke-width="22"/>
+  <circle cx="305" cy="240" r="72" fill="#fff"/>
+  <circle cx="335" cy="228" r="62" fill="#006c35"/>
+</svg>

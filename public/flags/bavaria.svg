@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" id="flag-bavaria" viewBox="0 0 640 480">
+  <!-- Own drawing (no flag in flag-icons): the white and blue lozenges of Bavaria, for the Bavarian language. -->
+  <defs>
+    <pattern id="r" width="200" height="200" patternUnits="userSpaceOnUse" patternTransform="translate(0 -40) scale(1 1.25) rotate(45)">
+      <path fill="#fff" d="M0 0h200v200H0z"/>
+      <path fill="#0098d4" d="M0 0h100v100H0zM100 100h100v100H100z"/>
+    </pattern>
+  </defs>
+  <path fill="url(#r)" d="M0 0h640v480H0z"/>
+</svg>

@@ -144,7 +144,7 @@ img { border: 0; vertical-align: middle; }
 
 .small { font-size: 9px; }
 .center { text-align: center; }
-.right { text-align: right; }
+.right { text-align: end; }
 .muted { color: var(--muted); }
 .good { color: var(--good); }
 .bad { color: var(--bad); }
@@ -247,7 +247,7 @@ tr.server-line .vac-mark.vac-insecure { color: color-mix(in srgb, #d32f2f 70%, v
   .header-menu-list {
     position: absolute;
     top: calc(100% + 1px);
-    right: 6px;
+    inset-inline-end: 6px;
     width: min(250px, calc(100vw - 20px));
     max-height: calc(100vh - 80px);
     overflow-y: auto;
@@ -278,7 +278,7 @@ tr.server-line .vac-mark.vac-insecure { color: color-mix(in srgb, #d32f2f 70%, v
 .flag-svg { position: relative; display: inline-block; width: 16px; height: 12px; vertical-align: -1px; background: no-repeat; background-size: 1600% 1700%; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18), 0 1px 1px rgba(0, 0, 0, 0.25); overflow: hidden; }
 .flag-svg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0) 51%, rgba(255, 255, 255, 0.06)); }
 /* The game's icon before a server name (public/games/<code>/icon.png). */
-.game-icon { display: inline-block; width: 16px; height: 16px; margin-right: 3px; vertical-align: -3px; }
+.game-icon { display: inline-block; width: 16px; height: 16px; margin-inline-end: 3px; vertical-align: -3px; }
 .lang-flag { display: block; width: 18px; height: 13px; }
 
 /* Share, language and menu in the phone header: one group of buttons of the
@@ -286,7 +286,7 @@ tr.server-line .vac-mark.vac-insecure { color: color-mix(in srgb, #d32f2f 70%, v
 .header-tools { display: contents; }
 .header-tools .tool-share, .header-tools .tool-lang { display: none; }
 @media (max-width: 700px) {
-  .header-tools { display: flex; align-items: stretch; gap: 4px; margin-left: auto; }
+  .header-tools { display: flex; align-items: stretch; gap: 4px; margin-inline-start: auto; }
   .header-tools .tool-share, .header-tools .tool-lang { display: block; margin: 0; }
   .header-tools .share-btn,
   .header-tools .header-menu > summary {
@@ -327,7 +327,8 @@ tr.server-line .vac-mark.vac-insecure { color: color-mix(in srgb, #d32f2f 70%, v
 .block, .section { width: 95%; margin: 0 auto 15px; }
 .block > h3, .section-head h2 {
   display: block;
-  padding: 15px 0 10px 22px;
+  padding: 15px 0 10px;
+  padding-inline-start: 22px;
   margin-top: 5px;
   font-size: 11px;
   font-weight: bold;
@@ -336,7 +337,7 @@ tr.server-line .vac-mark.vac-insecure { color: color-mix(in srgb, #d32f2f 70%, v
 .block > h3::before, .section-head h2::before {
   content: "";
   position: absolute;
-  left: 5px;
+  inset-inline-start: 5px;
   top: 17px;
   width: 11px;
   height: 11px;
@@ -347,7 +348,7 @@ tr.server-line .vac-mark.vac-insecure { color: color-mix(in srgb, #d32f2f 70%, v
 .block > h3::after, .section-head h2::after {
   content: "";
   position: absolute;
-  left: 8px;
+  inset-inline-start: 8px;
   top: 21px;
   border: 3px solid transparent;
   border-top: 4px solid #fff;
@@ -368,7 +369,7 @@ tr.server-line .vac-mark.vac-insecure { color: color-mix(in srgb, #d32f2f 70%, v
 @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
 /* A select or pager link that is loading its page (pending.tsx): a small
    spinning ring after the link, the form's fields dimmed with a busy cursor. */
-.link-pending { display: inline-block; width: 0.8em; height: 0.8em; margin-left: 4px; vertical-align: -0.1em; border: 2px solid color-mix(in srgb, var(--text) 30%, transparent); border-top-color: var(--text); border-radius: 50%; animation: pending-spin 0.7s linear infinite; }
+.link-pending { display: inline-block; width: 0.8em; height: 0.8em; margin-inline-start: 4px; vertical-align: -0.1em; border: 2px solid color-mix(in srgb, var(--text) 30%, transparent); border-top-color: var(--text); border-radius: 50%; animation: pending-spin 0.7s linear infinite; }
 form[aria-busy="true"] { cursor: progress; }
 form[aria-busy="true"] select, form[aria-busy="true"] input { opacity: 0.55; cursor: progress; }
 @keyframes pending-spin { to { transform: rotate(360deg); } }
@@ -420,7 +421,7 @@ form[aria-busy="true"] select, form[aria-busy="true"] input { opacity: 0.55; cur
 .gs-hit rect { fill: transparent; pointer-events: all; }
 .gs-hit line { display: none; stroke: var(--stat-line, var(--good)); stroke-width: 1px; vector-effect: non-scaling-stroke; opacity: 0.8; }
 .gs-hit.tip-on line { display: inline; }
-.gs-label, .gs-value, .gs-sub { position: relative; display: block; pointer-events: none; padding-right: 18px; text-shadow: 0 0 2px var(--surface), 0 0 4px var(--surface), 0 0 6px var(--surface); }
+.gs-label, .gs-value, .gs-sub { position: relative; display: block; pointer-events: none; padding-inline-end: 18px; text-shadow: 0 0 2px var(--surface), 0 0 4px var(--surface), 0 0 6px var(--surface); }
 .gs-label { color: var(--muted); font-weight: bold; }
 .gs-value { margin: 2px 0; color: var(--text); font-size: 20px; font-weight: bold; line-height: 1.2; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .gs-sub { color: var(--soft); }
@@ -430,7 +431,7 @@ form[aria-busy="true"] select, form[aria-busy="true"] input { opacity: 0.55; cur
 .gs-info {
   position: absolute;
   top: 8px;
-  right: 8px;
+  inset-inline-end: 8px;
   z-index: 1;
   width: 16px;
   height: 16px;
@@ -454,7 +455,7 @@ form[aria-busy="true"] select, form[aria-busy="true"] input { opacity: 0.55; cur
 /* ---------------------------------------------------------------- tables */
 
 .table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; text-align: left; font-variant-numeric: tabular-nums; }
+table { width: 100%; border-collapse: collapse; text-align: start; font-variant-numeric: tabular-nums; }
 /* Daily awards: even winner and leader columns, long names wrap (award-board.tsx). */
 table.award-table { table-layout: fixed; }
 table.award-table col.award-col { width: 30%; }
@@ -466,15 +467,15 @@ th { color: var(--th-text); background: var(--th-bg); font-weight: bold; }
 td { color: var(--text); background: var(--surface); }
 th a { color: var(--th-text); }
 th a.th-link { text-decoration: underline; }
-th.num, td.num { text-align: right; }
-td.rank { color: var(--muted); width: 1%; text-align: right; }
+th.num, td.num { text-align: end; }
+td.rank { color: var(--muted); width: 1%; text-align: end; }
 /* One rule for all tables: text left, numbers right, bars and percentage
    pictures centred in a narrow column of their own. */
 th.barcell, td.barcell { text-align: center; width: 1%; }
 td.barcell .meter { justify-content: center; }
 /* Column only as wide as its content, same space left and right (game tag). */
-th.fit, td.fit { width: 1%; padding-left: 8px; padding-right: 8px; }
-td.fit .game-tag { margin-left: 0; }
+th.fit, td.fit { width: 1%; padding-inline-start: 8px; padding-inline-end: 8px; }
+td.fit .game-tag { margin-inline-start: 0; }
 td.wrap-cell, th.wrap-cell { white-space: normal; min-width: 120px; }
 /* Column widths of the server list. */
 th.w-60 { width: 60%; }
@@ -501,7 +502,7 @@ tr.ranking-line td { background: var(--line-bg); color: var(--line-text); }
 tr.ranking-line:hover td { background: #f2f2f2; }
 tr.ranking-line a { color: var(--line-text); }
 a.rnk { font-weight: bold; font-size: 14px; text-decoration: none; }
-tr.ranking-line td:first-child { padding-left: 7px; }
+tr.ranking-line td:first-child { padding-inline-start: 7px; }
 a.rnk:hover { text-decoration: underline; }
 /* Start page only: the rankings with the game's icon at 24 x 24, the name
    centred beside it; the rows grow a little to fit the icon. The whole row
@@ -511,16 +512,16 @@ a.rnk:hover { text-decoration: underline; }
 table.rankings a.rnk { line-height: 1.3; }
 table.rankings tr.ranking-line > td, table.rankings tr.ranking-line a.rnk { font-size: 14px; }
 table.rankings tr.ranking-line td { padding-top: 5px; padding-bottom: 5px; }
-td.no-rb { border-right: 0; white-space: normal; }
-td.no-lb { border-left: 0; padding-right: 10px; }
-th.no-rb { border-right: 0; }
-th.no-lb { border-left: 0; }
-.icon-link { margin-left: 12px; }
+td.no-rb { border-inline-end: 0; white-space: normal; }
+td.no-lb { border-inline-start: 0; padding-inline-end: 10px; }
+th.no-rb { border-inline-end: 0; }
+th.no-lb { border-inline-start: 0; }
+.icon-link { margin-inline-start: 12px; }
 .icon {
   display: inline-block;
   width: 21px;
   height: 21px;
-  margin-right: 3px;
+  margin-inline-end: 3px;
   border-radius: 50%;
   vertical-align: middle;
   background: radial-gradient(circle at 35% 30%, #e55, #a11);
@@ -537,19 +538,19 @@ th.no-lb { border-left: 0; }
 .srv-empty { color: #000; }
 
 a.player { color: var(--text); }
-.flag { margin-right: 2px; }
+.flag { margin-inline-end: 2px; }
 .flag-blank { display: inline-block; width: 16px; height: 12px; }
 .mini-avatar { width: 20px; height: 20px; aspect-ratio: 1 / 1; object-fit: cover; vertical-align: middle; margin: -3px 5px -2px 0; border: 1px solid var(--border, #444); border-radius: 2px; }
 /* Headshot badge: a red pill with a crosshair, readable on every skin. */
-.hs { display: inline-flex; align-items: center; gap: 2px; margin-left: 5px; padding: 0 5px 0 3px; border-radius: 8px; background: #c62828; color: #fff; font: bold 9px/14px "Noto Sans", Verdana, sans-serif; letter-spacing: 0.3px; vertical-align: 1px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25); white-space: nowrap; }
+.hs { display: inline-flex; align-items: center; gap: 2px; margin-inline-start: 5px; padding: 0 5px 0 3px; border-radius: 8px; background: #c62828; color: #fff; font: bold 9px/14px "Noto Sans", Verdana, sans-serif; letter-spacing: 0.3px; vertical-align: 1px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25); white-space: nowrap; }
 .hs::before { content: ""; width: 9px; height: 9px; background: no-repeat center / contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2'%3E%3Ccircle cx='8' cy='8' r='5'/%3E%3Cpath d='M8 0v5M8 11v5M0 8h5M11 8h5'/%3E%3C/svg%3E"); }
 
-.bar { display: inline-block; vertical-align: middle; width: 70px; height: 9px; background: var(--bar-bg); border: 1px solid var(--bar-border); overflow: hidden; margin-right: 6px; }
+.bar { display: inline-block; vertical-align: middle; width: 70px; height: 9px; background: var(--bar-bg); border: 1px solid var(--bar-border); overflow: hidden; margin-inline-end: 6px; }
 .bar > span { display: block; height: 100%; background: linear-gradient(#ffb066, #ff8000); }
 .bar.green > span { background: linear-gradient(#8fe28f, #2e9e2e); }
 .bar.wide { width: 140px; }
 .pbar { position: relative; display: inline-block; vertical-align: middle; width: 70px; height: 14px; background: var(--bar-bg); border: 1px solid var(--bar-border); border-radius: 2px; overflow: hidden; }
-.pbar-fill { position: absolute; inset: 0 auto 0 0; }
+.pbar-fill { position: absolute; inset-block: 0; inset-inline-start: 0; }
 .pbar.good .pbar-fill { background: linear-gradient(#8fe28f, #2e9e2e); }
 .pbar.low .pbar-fill { background: linear-gradient(#ffe680, #d9b300); }
 .pbar.share .pbar-fill { background: linear-gradient(#7fb6ff, #2f6fc0); }
@@ -561,7 +562,7 @@ a.player { color: var(--text); }
 .winbar-t { background: linear-gradient(#ff8a80, #c62828); }
 .meter { display: inline-flex; align-items: center; white-space: nowrap; }
 .meter .bar { flex: none; }
-.meter-val { min-width: 5.5ch; text-align: right; font-variant-numeric: tabular-nums; }
+.meter-val { min-width: 5.5ch; text-align: end; font-variant-numeric: tabular-nums; }
 
 /* ---------------------------------------------------------------- game pages */
 
@@ -669,7 +670,7 @@ table.stats.psum td.psum-list { padding: 0; white-space: normal; vertical-align:
    (last 14 days) share one line; on a narrow screen the note wraps below. */
 .summary-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin: 6px 0 10px; }
 .summary-box .summary-foot > .player-links { margin: 0; }
-.summary-foot > .footnote { margin: 0 0 0 auto; padding: 0 10px 0 0; background: none; border: 0; font-style: italic; text-align: right; }
+.summary-foot > .footnote { margin: 0; margin-inline-start: auto; padding: 0; padding-inline-end: 10px; background: none; border: 0; font-style: italic; text-align: end; }
 table.stats th { font-weight: bold; }
 .cont-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 12px 2%; align-items: start; }
 .cont-2 > * { min-width: 0; }
@@ -680,7 +681,7 @@ table.stats th { font-weight: bold; }
 .misc-row > div > table.stats { flex: 1; height: 100%; }
 .misc-row > div > table.stats > thead > tr { height: 1px; }
 .misc-row > div > table.stats > tbody > tr > td { vertical-align: middle; }
-.section > .footnote { background: none; border: 0; padding: 4px 0 0; font-style: italic; text-align: right; }
+.section > .footnote { background: none; border: 0; padding: 4px 0 0; font-style: italic; text-align: end; }
 
 /* Server rows and live players, as on the server overview. */
 tr.server-line td { background: var(--line-bg); color: var(--line-text); padding: 2px 4px; }
@@ -699,7 +700,7 @@ a.srv:hover { text-decoration: underline; }
    phones (the address column is hidden there). */
 .srv-where { display: none; margin-top: 2px; font-size: 11px; font-weight: normal; opacity: 0.75; white-space: nowrap; }
 /* The flag before the address in the server lists, with a little air. */
-tr.server-line .flag-svg { margin-right: 4px; }
+tr.server-line .flag-svg { margin-inline-end: 4px; }
 .server-margin { margin-top: 12px; }
 table.player-livestats { border: 1px solid var(--border); border-top: 0; }
 table.player-livestats th { border: 0; padding: 5px; font-size: 9px; }
@@ -802,8 +803,8 @@ td.radar-cell { width: 1%; text-align: center; vertical-align: middle; }
 .radar-tip { grid-template-columns: auto max-content auto; min-width: 0; width: max-content; }
 .radar-tip.up { transform: translate(-50%, -100%); }
 .radar-tip.down { transform: translate(-50%, 0); }
-.radar-tip .tip-name { overflow: visible; text-align: left; }
-.radar-tip .tip-scale { padding-left: 15px; color: var(--chart-legend); font-size: 10px; margin-top: -2px; }
+.radar-tip .tip-name { overflow: visible; text-align: start; }
+.radar-tip .tip-scale { padding-inline-start: 15px; color: var(--chart-legend); font-size: 10px; margin-top: -2px; }
 /* Swatches in the style of their series: the average hollow (in the legend
    a dashed line with a ring), the player filled (a solid line with a dot). */
 .swatch.rt { background: transparent; box-shadow: inset 0 0 0 2px var(--chart-radar-total); }
@@ -815,7 +816,7 @@ td.radar-cell { width: 1%; text-align: center; vertical-align: middle; }
 .radar-wrap .radar-legend { justify-content: center; flex-wrap: wrap; gap: 2px 12px; font-size: 10px; line-height: 1.3; margin-top: 2px; }
 .radar-legend > span { display: inline-flex; align-items: center; gap: 6px; }
 .radar-wrap .radar-note { font-size: 10px; line-height: 1.3; margin-top: 2px; }
-.radar-list { margin: 0; text-align: left; }
+.radar-list { margin: 0; text-align: start; }
 .radar-list > div { display: flex; justify-content: space-between; gap: 8px; }
 .radar-list dt { color: var(--muted); }
 .radar-list dd { margin: 0; }
@@ -867,7 +868,7 @@ img.sig { max-width: 100%; height: auto; }
 .hb-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 10px; }
 .hb-picker label { display: flex; align-items: center; gap: 8px; font-weight: bold; }
 .hb-picker select { background: var(--input-bg); color: var(--input-text); border: 1px solid var(--input-border); padding: 3px 6px; min-width: 160px; }
-.hb-total { margin-left: auto; color: var(--muted); }
+.hb-total { margin-inline-start: auto; color: var(--muted); }
 .hb-total b { color: var(--text, #fff); }
 .hb-legend { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); margin-top: 8px; }
 .hb-legend i { flex: 1; height: 7px; border-radius: 4px; border: 1px solid rgba(0, 0, 0, 0.5); }
@@ -993,7 +994,7 @@ a.button { display: inline-block; text-decoration: none; }
 .load-chart .chart-head { max-width: 1100px; }
 .chart-title { font-weight: 700; color: var(--chart-title); }
 .chart-note { font-size: 11px; color: var(--chart-title); }
-.chart-head .legend { flex-wrap: wrap; gap: 4px 14px; margin-left: auto; }
+.chart-head .legend { flex-wrap: wrap; gap: 4px 14px; margin-inline-start: auto; }
 .chart-head .legend > span { display: inline-flex; align-items: center; gap: 6px; }
 .swatch.line { position: relative; width: 18px; height: 2px; }
 .swatch.line::after { content: ""; position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: inherit; }
@@ -1041,7 +1042,7 @@ a.button { display: inline-block; text-decoration: none; }
      keeps its sort links in one line. */
   table.rankings, table.rankings thead, table.rankings tbody { display: block; }
   table.rankings thead tr { display: flex; flex-wrap: wrap; background: var(--th-bg); }
-  table.rankings thead th { flex: none; border: 0; padding-right: 12px; }
+  table.rankings thead th { flex: none; border: 0; padding-inline-end: 12px; }
   table.rankings thead th:empty { display: none; }
   table.rankings tr.ranking-line {
     display: grid;
@@ -1056,7 +1057,7 @@ a.button { display: inline-block; text-decoration: none; }
   table.rankings tr.ranking-line > td .rnk-cell a.rnk { display: block; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   table.rankings tr.ranking-line > td:nth-child(1) { grid-area: name; padding: 8px 8px 2px; }
   table.rankings tr.ranking-line > td:nth-child(2) { grid-area: links; white-space: nowrap; }
-  table.rankings tr.ranking-line > td:nth-child(3) { grid-area: count; text-align: left; white-space: nowrap; }
+  table.rankings tr.ranking-line > td:nth-child(3) { grid-area: count; text-align: start; white-space: nowrap; }
   table.rankings tr.ranking-line > td:nth-child(4),
   table.rankings tr.ranking-line > td.rnk-clan { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   table.rankings tr.ranking-line > td:nth-child(4) { grid-area: top; }
@@ -1183,7 +1184,7 @@ a.button { display: inline-block; text-decoration: none; }
 .pie .slice.pie7 { fill: var(--chart-pie-8); }
 .pie .slice.pie8 { fill: var(--chart-pie-9); }
 .pie-legend { list-style: none; margin: 0; padding: 0; font-size: 11px; line-height: 1.8; }
-.pie-legend .swatch { margin-right: 4px; }
+.pie-legend .swatch { margin-inline-end: 4px; }
 
 /* Player history */
 .player-links { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 10px; }
@@ -1194,18 +1195,18 @@ a.button { display: inline-block; text-decoration: none; }
 .history-back { margin: 4px 0; font-size: 11px; }
 /* Sessions page: "Back to Player information" right-aligned above each box,
    the two summary charts side by side, the change icon after the number. */
-.back-to { margin: 6px 0; font-size: 11px; text-align: right; }
+.back-to { margin: 6px 0; font-size: 11px; text-align: end; }
 .back-to a { text-decoration: underline; }
-.session-charts { text-align: left; }
+.session-charts { text-align: start; }
 /* Both charts of the sessions page share the player trend's 640-unit viewBox: the same
    width cap keeps them the same size, so axis labels and legends stay equal too. */
 .session-charts .chart svg, .session-charts .chart-head { max-width: 640px; }
-.change-arrow { display: inline-block; vertical-align: -2px; margin-left: 4px; }
+.change-arrow { display: inline-block; vertical-align: -2px; margin-inline-start: 4px; }
 .change-arrow rect { fill: currentColor; }
 .change-arrow path { fill: var(--panel); }
 .award-summary { display: flex; flex-wrap: wrap; gap: 8px 14px; padding: 6px; }
 .award-sum-cell { display: flex; align-items: center; gap: 6px; min-width: 210px; }
-.award-sum-cell b { min-width: 34px; text-align: right; }
+.award-sum-cell b { min-width: 34px; text-align: end; }
 .nowrap { white-space: nowrap; }
 table.spaced { margin-top: 10px; }
 .load-chart .band { fill: var(--chart-band); }
@@ -1231,10 +1232,10 @@ table.spaced { margin-top: 10px; }
 .swatch.gain { background: var(--chart-gain); }
 .swatch.loss { background: var(--chart-loss); }
 .load-chart svg { height: auto; max-width: 1100px; }
-.bot-tag { display: inline-block; width: 16px; height: 12px; margin-right: 2px; vertical-align: -1px; overflow: hidden; font: bold 7px/13px "Noto Sans", Verdana, sans-serif; letter-spacing: -0.4px; text-align: center; color: #fff; background: linear-gradient(#8a8f98, #5c616b); border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18), 0 1px 1px rgba(0, 0, 0, 0.25); }
+.bot-tag { display: inline-block; width: 16px; height: 12px; margin-inline-end: 2px; vertical-align: -1px; overflow: hidden; font: bold 7px/13px "Noto Sans", Verdana, sans-serif; letter-spacing: -0.4px; text-align: center; color: #fff; background: linear-gradient(#8a8f98, #5c616b); border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18), 0 1px 1px rgba(0, 0, 0, 0.25); }
 /* Players online "1 (31 BOT) / 48" (components/player-count.tsx): on one line, the tag right before ")". */
 .player-count { white-space: nowrap; }
-.player-count .bot-tag { margin-right: 0; }
+.player-count .bot-tag { margin-inline-end: 0; }
 
 .inline-form { display: inline-flex; gap: 4px; align-items: center; margin: 0; }
 .chart .dot { stroke: none; }
@@ -1331,17 +1332,17 @@ table.spaced { margin-top: 10px; }
 }
 /* Server list in the hover and click box, with a status dot per server. */
 .srv-row { margin-top: 5px; }
-.srv-dot { display: inline-block; width: 8px; height: 8px; margin-right: 4px; border-radius: 50%; background: #e0483e; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25); vertical-align: 0; }
+.srv-dot { display: inline-block; width: 8px; height: 8px; margin-inline-end: 4px; border-radius: 50%; background: #e0483e; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25); vertical-align: 0; }
 .srv-dot.on { background: #34c759; }
 .srv-list { margin: 4px 0 0; padding: 0; list-style: none; }
 .srv-list li { margin: 3px 0; white-space: nowrap; }
 .leaflet-tooltip { font: 11px/1.4 "Noto Sans", Verdana, Arial, sans-serif; }
 /* A hover box pushed in from the map's side keeps its arrow on the marker. */
 .player-map .leaflet-tooltip-top::before,
-.player-map .leaflet-tooltip-bottom::before { margin-left: calc(-6px - var(--tip-shift, 0px)); }
+.player-map .leaflet-tooltip-bottom::before { margin-inline-start: calc(-6px - var(--tip-shift, 0px)); }
 
 /* Base game of a ranking (CS:GO, TF2, CS 1.6 …), coloured by engine. */
-.game-tag { display: inline-block; margin-left: 6px; padding: 0 4px; border-radius: 2px; font-size: 9px; font-weight: bold; line-height: 14px; vertical-align: middle; color: #fff; background: #5a6b7c; white-space: nowrap; }
+.game-tag { display: inline-block; margin-inline-start: 6px; padding: 0 4px; border-radius: 2px; font-size: 9px; font-weight: bold; line-height: 14px; vertical-align: middle; color: #fff; background: #5a6b7c; white-space: nowrap; }
 .game-tag.goldsrc { background: #8a6d3b; }
 .game-tag.source { background: #3d6f99; }
 .game-tag.source2 { background: #2e7d6b; }
@@ -1363,7 +1364,7 @@ th.ban-type-col, td.ban-type-col { text-align: center; }
    flag: yellow for VAC, red for SourceBans and server bans, split diagonally
    (red top left, yellow bottom right, black "!") when both run. The reason shows on
    hover and on tap (focus), in every skin with fixed colours. */
-.ban-mark { position: relative; display: inline-block; width: 12px; height: 12px; margin-left: 4px; border-radius: 2px; font: bold 10px/12px "Noto Sans", Verdana, sans-serif; text-align: center; vertical-align: -1px; cursor: help; color: #fff; background: #b0281e; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35); }
+.ban-mark { position: relative; display: inline-block; width: 12px; height: 12px; margin-inline-start: 4px; border-radius: 2px; font: bold 10px/12px "Noto Sans", Verdana, sans-serif; text-align: center; vertical-align: -1px; cursor: help; color: #fff; background: #b0281e; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35); }
 .ban-mark > span { position: absolute; inset: 0; }
 .ban-mark.ban-mark-vac { color: #2b2200; background: #f5c518; }
 .ban-mark.ban-mark-both { color: #000; background: linear-gradient(to bottom right, #b0281e 50%, #f5c518 50%); }
@@ -1376,7 +1377,7 @@ table.bans-table td.ban-reason { white-space: normal; overflow-wrap: anywhere; m
    it. Name and ban date wrap (a long name anywhere), two badges stack and
    the cells keep 4px at the sides (also in the skins with wider cells). */
 @media (max-width: 600px) {
-  html table.bans-table th, html table.bans-table td { padding-left: 4px; padding-right: 4px; }
+  html table.bans-table th, html table.bans-table td { padding-inline-start: 4px; padding-inline-end: 4px; }
   table.bans-table td { white-space: normal; }
   table.bans-table td:nth-child(2) { min-width: 6em; overflow-wrap: anywhere; }
   table.bans-table .ban-badges { flex-wrap: wrap; }
@@ -1390,9 +1391,9 @@ a.ban-type.ban-sourcebans:hover, a.ban-type.ban-sourcebans:focus { background: #
 .ban-type[data-tip]:focus-visible { outline: 2px solid #f5c518; outline-offset: 1px; }
 /* The details box (ban-tips.tsx): fixed to the viewport and kept inside it,
    so no table cuts it off; the mark lists every ban, one per line. */
-.ban-tip { position: fixed; z-index: 60; width: max-content; max-width: min(320px, calc(100vw - 16px)); padding: 4px 7px; border-radius: 3px; font: normal 11px/1.4 "Noto Sans", Verdana, sans-serif; text-align: left; white-space: pre-line; overflow-wrap: anywhere; color: #fff; background: #1e1e1e; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); pointer-events: none; }
+.ban-tip { position: fixed; z-index: 60; width: max-content; max-width: min(320px, calc(100vw - 16px)); padding: 4px 7px; border-radius: 3px; font: normal 11px/1.4 "Noto Sans", Verdana, sans-serif; text-align: start; white-space: pre-line; overflow-wrap: anywhere; color: #fff; background: #1e1e1e; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); pointer-events: none; }
 /* Without JavaScript: the same box in CSS below the badge. */
-html:not(.ban-tips-js) .ban-mark[data-tip]:hover::after, html:not(.ban-tips-js) .ban-mark[data-tip]:focus::after, html:not(.ban-tips-js) .ban-type[data-tip]:hover::after, html:not(.ban-tips-js) .ban-type[data-tip]:focus::after { content: attr(data-tip); position: absolute; z-index: 30; left: 0; top: calc(100% + 4px); width: max-content; max-width: min(320px, 80vw); padding: 4px 7px; border-radius: 3px; font: normal 11px/1.4 "Noto Sans", Verdana, sans-serif; text-align: left; white-space: normal; color: #fff; background: #1e1e1e; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); }
+html:not(.ban-tips-js) .ban-mark[data-tip]:hover::after, html:not(.ban-tips-js) .ban-mark[data-tip]:focus::after, html:not(.ban-tips-js) .ban-type[data-tip]:hover::after, html:not(.ban-tips-js) .ban-type[data-tip]:focus::after { content: attr(data-tip); position: absolute; z-index: 30; left: 0; top: calc(100% + 4px); width: max-content; max-width: min(320px, 80vw); padding: 4px 7px; border-radius: 3px; font: normal 11px/1.4 "Noto Sans", Verdana, sans-serif; text-align: start; white-space: normal; color: #fff; background: #1e1e1e; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); }
 html:not(.ban-tips-js) .ban-mark[data-tip]:hover::after, html:not(.ban-tips-js) .ban-mark[data-tip]:focus::after { white-space: pre-line; }
 html:not(.ban-tips-js) .ban-type[data-tip]:hover::after, html:not(.ban-tips-js) .ban-type[data-tip]:focus::after { left: auto; right: 0; max-width: min(260px, 62vw); }
 td.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9em; }
@@ -1433,12 +1434,12 @@ td.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9e
 .chart-tip .tip-line { grid-column: 1 / -1; }
 .chart-tip .swatch { align-self: center; }
 .chart-tip .tip-name { overflow: hidden; text-overflow: ellipsis; }
-.chart-tip .tip-row b { padding-left: 8px; text-align: right; font-variant-numeric: tabular-nums; }
+.chart-tip .tip-row b { padding-inline-start: 8px; text-align: end; font-variant-numeric: tabular-nums; }
 
 /* ---------------------------------------------------------------- voice server box */
 
 .voice-box table { width: 100%; }
-.voice-icon { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 3px; }
+.voice-icon { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-inline-end: 3px; }
 .voice-icon.discord { background: #5865f2; border-radius: 50%; }
 .voice-box a.voice-name { color: var(--text); }
 /* TeamSpeak password: a lock; where allowed it opens to show the password. */
@@ -1459,12 +1460,12 @@ details.ts-lock[open] { flex-wrap: wrap; }
 .os-icon { vertical-align: -1px; }
 .voice-tree p { margin: 6px 0 0; }
 .voice-tree ul { list-style: none; margin: 0; padding: 0 0 0 16px; }
-.voice-tree > ul { padding-left: 0; }
+.voice-tree > ul { padding-inline-start: 0; }
 .voice-tree li { margin: 0; }
 .voice-channel, .voice-spacer, .voice-clients li { padding: 1px 0; line-height: 1.5; }
 .voice-spacer { overflow: hidden; white-space: nowrap; text-overflow: clip; color: var(--muted); }
 .voice-spacer.center { text-align: center; }
-.voice-spacer.right { text-align: right; }
+.voice-spacer.right { text-align: end; }
 .voice-ch-icon { display: inline-block; width: 10px; height: 10px; border: 2px solid var(--muted); border-radius: 50%; vertical-align: -1px; }
 .voice-user { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #3c3; vertical-align: 0; }
 .voice-user.muted { background: #d93; }
@@ -1542,21 +1543,21 @@ td.ribbon-wall a { display: inline-flex; flex-direction: column; align-items: ce
 .help-tile { display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; }
 .help-tile span { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
 .help-tile b { font-size: 18px; }
-.help-formula { margin: 12px 0; padding: 12px 14px; border-left: 3px solid var(--accent); background: var(--surface-2); border-radius: 0 4px 4px 0; }
+.help-formula { margin: 12px 0; padding: 12px 14px; border-inline-start: 3px solid var(--accent); background: var(--surface-2); border-radius: 0 4px 4px 0; }
 .help-formula-main { font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
 .help-formula-sides { display: flex; gap: 18px; margin-top: 6px; font-weight: bold; }
 .help-rules { list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 5px; }
-.help-rules li { position: relative; padding-left: 18px; }
+.help-rules li { position: relative; padding-inline-start: 18px; }
 .help-rules li::before { content: ""; position: absolute; left: 3px; top: 0.6em; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 .help-type { display: inline-block; margin: 0 4px 2px 0; padding: 0 6px; font-size: 10px; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); }
 .help-cmds { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
 .help-cmd { padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; }
 .help-cmd code { display: inline-block; margin: 0 5px 4px 0; padding: 1px 6px; background: var(--surface); border-radius: 3px; color: var(--accent-text); font-weight: bold; }
 .help-cmd p { margin: 4px 0 0; color: var(--muted); }
-.help-note { padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 0 4px 4px 0; margin: 0; }
+.help-note { padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--border); border-inline-start: 3px solid var(--accent); border-radius: 0 4px 4px 0; margin: 0; }
 
 /* Share button in the breadcrumb bar */
-.share-nav { position: relative; margin-left: auto; }
+.share-nav { position: relative; margin-inline-start: auto; }
 /* Square buttons with a gloss like the flags (.flag-svg), close together in
    the right corner: the bar's 12px gap shrinks to 4px between them. */
 .share-btn { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; font-size: 11px; font-weight: bold; line-height: 15px; color: var(--accent-on); background: linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.12) 50%, rgba(255, 255, 255, 0) 51%, rgba(0, 0, 0, 0.12)) var(--accent); border: 1px solid rgba(0, 0, 0, 0.35); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 1px 1px rgba(0, 0, 0, 0.25); cursor: pointer; }
@@ -1564,13 +1565,14 @@ td.ribbon-wall a { display: inline-flex; flex-direction: column; align-items: ce
 .share-btn:hover, .share-btn[aria-expanded="true"] { filter: brightness(1.1); }
 .sig-codes > .sig { display: block; max-width: 100%; height: auto; margin: 0 auto 6px; }
 .help-games { margin: 6px 0 8px; }
-.share-menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 50; min-width: 170px; padding: 4px; background: var(--surface, #222); border: 1px solid var(--border); border-radius: 5px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); }
-.share-menu button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 8px; font-size: 12px; color: var(--text); text-align: left; background: none; border: 0; border-radius: 3px; cursor: pointer; }
+.share-menu { position: absolute; inset-inline-end: 0; top: calc(100% + 4px); z-index: 50; min-width: 170px; padding: 4px; background: var(--surface, #222); border: 1px solid var(--border); border-radius: 5px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); }
+.share-menu button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 8px; font-size: 12px; color: var(--text); text-align: start; background: none; border: 0; border-radius: 3px; cursor: pointer; }
 .share-menu button:hover { background: var(--surface-2); }
 /* The language button (components/lang-menu.tsx): the share button's look,
    beside it; the items are links with the flag. */
-.share-nav.lang-nav { margin-left: 0; }
-.nav-bar .share-nav.lang-nav { margin-left: -8px; }
+.share-nav.lang-nav { margin-inline-start: 0; }
+.lang-list .lang-note { margin-inline-start: auto; padding-inline-start: 8px; font-size: 0.85em; opacity: 0.7; }
+.nav-bar .share-nav.lang-nav { margin-inline-start: -8px; }
 .share-btn .lang-icon { fill: none; stroke-width: 1.7; }
 /* No JavaScript (lang-menu.tsx): the <noscript> list replaces the button.
    Its content only becomes elements when scripting is off. */
@@ -1595,7 +1597,7 @@ td.ribbon-wall a { display: inline-flex; flex-direction: column; align-items: ce
 /* The kind of code above it: one joined row of buttons. */
 .sig-formats { display: inline-flex; margin: 6px 0 2px; }
 .sig-formats button { padding: 3px 10px; font-size: 11px; font-weight: bold; color: var(--input-text); background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 0; cursor: pointer; }
-.sig-formats button + button { margin-left: -1px; }
+.sig-formats button + button { margin-inline-start: -1px; }
 .sig-formats button:first-child { border-radius: 3px 0 0 3px; }
 .sig-formats button:last-child { border-radius: 0 3px 3px 0; }
 .sig-formats button[aria-pressed="true"] { position: relative; z-index: 1; }
@@ -1632,13 +1634,13 @@ html[data-os] .sig-code { font: 11px ui-monospace, "Cascadia Mono", Consolas, Me
    of three cards per reset period (place 1 in the middle and raised). */
 .hof-stars { display: inline-flex; gap: 3px; white-space: nowrap; letter-spacing: 1px; line-height: 1; vertical-align: middle; }
 .hof-star { font-size: 1.05em; }
-.hof-star small { font-size: 0.75em; margin-left: 1px; letter-spacing: 0; color: var(--text); }
+.hof-star small { font-size: 0.75em; margin-inline-start: 1px; letter-spacing: 0; color: var(--text); }
 .hof-gold { color: color-mix(in srgb, #f5c400 88%, var(--text)); text-shadow: 0 0 1px rgba(120, 80, 0, 0.9), 0 0 6px rgba(245, 196, 0, 0.45); }
 .hof-silver { color: color-mix(in srgb, #b8c1cc 80%, var(--text)); text-shadow: 0 0 1px rgba(60, 70, 80, 0.9), 0 0 5px rgba(196, 204, 214, 0.35); }
 .hof-bronze { color: #d4823c; text-shadow: 0 0 1px rgba(90, 40, 0, 0.9), 0 0 5px rgba(212, 130, 60, 0.35); }
 /* Hall of fame: when the running period ends, a small line at the end. */
 .hof-next { margin: 14px 4px 4px; font-size: 0.9em; text-align: center; }
-.hof-profile-stars { margin-left: 8px; text-decoration: none; }
+.hof-profile-stars { margin-inline-start: 8px; text-decoration: none; }
 .hof-stars-table td.num, .hof-stars-table th.num { width: 1%; text-align: center; white-space: nowrap; }
 .hof-stars-table tbody tr:nth-child(-n + 3) td:first-child { font-weight: bold; color: var(--accent-text); }
 
@@ -1774,7 +1776,7 @@ table.stats.clan-sum td { white-space: normal; }
 .map-avatar.faded img, .map-avatar.faded span { opacity: 0.45; filter: grayscale(0.7); }
 .map-avatar.faded img:not(.ok) { opacity: 0; }
 .map-avatar.faded:hover img.ok, .map-avatar.faded:hover span { opacity: 1; filter: none; }
-.clan-country .flag-svg, .clan-origin .flag-svg { margin-right: 3px; }
+.clan-country .flag-svg, .clan-origin .flag-svg { margin-inline-end: 3px; }
 .clan-origins { display: inline-flex; flex-wrap: wrap; gap: 4px 12px; }
 .clan-origin { white-space: nowrap; }
 
@@ -1787,7 +1789,7 @@ table.stats.clan-sum td { white-space: normal; }
   table.clan-members thead th.num:not(:first-child), table.clan-members td.num { text-align: center; }
   table.clan-members th.barcell { width: 92px; }
   /* Narrower cells, so all 13 columns fit the modern skins' width. */
-  html[data-skin] table.clan-members th, html[data-skin] table.clan-members td { padding-left: 5px; padding-right: 5px; }
+  html[data-skin] table.clan-members th, html[data-skin] table.clan-members td { padding-inline-start: 5px; padding-inline-end: 5px; }
 }
 
 /* Weapon targets (player and clan page), as on gameME: the figure in a
@@ -1836,13 +1838,13 @@ table.stats.clan-sum td { white-space: normal; }
 .p-chip { display: inline-block; padding: 1px 8px; border: 1px solid var(--border); border-radius: 999px; color: var(--accent-text); font-size: 12px; font-weight: bold; text-decoration: none; }
 .p-chip:hover { border-color: var(--accent); text-decoration: none; }
 .p-big { display: flex; flex: none; align-items: center; }
-.p-big > div { min-width: 96px; padding: 0 18px; border-left: 1px solid var(--border); }
-.p-big > div:first-child { border-left: 0; }
+.p-big > div { min-width: 96px; padding: 0 18px; border-inline-start: 1px solid var(--border); }
+.p-big > div:first-child { border-inline-start: 0; }
 /* The place in the ranking as its own tile, "of N" below it; places 1 to 3
    as a gold, silver or bronze plaque (colours of the hall of fame), and the
    head card's top edge and picture frame in the same colour. */
-.p-big > div.p-place { min-width: 150px; margin-right: 6px; padding: 10px 18px 11px; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border)); border-radius: 8px; background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
-.p-big > div.p-place + div { border-left: 0; }
+.p-big > div.p-place { min-width: 150px; margin-inline-end: 6px; padding: 10px 18px 11px; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border)); border-radius: 8px; background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+.p-big > div.p-place + div { border-inline-start: 0; }
 .p-head .p-big .p-place b { color: var(--accent-text); font-size: 38px; line-height: 1.05; }
 .p-place span { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; white-space: nowrap; }
 .p-medal { --medal: #c4ccd6; --medal-dark: #6b7480; border-top-color: var(--medal); background: linear-gradient(135deg, color-mix(in srgb, var(--medal) 16%, var(--surface)), var(--surface) 60%); }
@@ -1867,7 +1869,7 @@ table.stats.clan-sum td { white-space: normal; }
 .p-favs h3 { margin: 0 0 8px; padding: 0; background: none; border: 0; color: var(--text); font-size: 13px; }
 .p-favs h3::before, .p-favs h3::after { content: none; }
 .p-favs > div { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px 16px; }
-.p-favs > div > div { padding-left: 10px; border-left: 3px solid var(--accent); }
+.p-favs > div > div { padding-inline-start: 10px; border-inline-start: 3px solid var(--accent); }
 .p-favs a, .p-favs span { font-weight: bold; }
 .p-jump { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 14px; }
 .p-jump a { padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); font-size: 12px; font-weight: bold; text-decoration: none; }
@@ -1879,7 +1881,7 @@ table.stats.clan-sum td { white-space: normal; }
   .p-head { flex-wrap: wrap; }
   .p-big { width: 100%; padding-top: 12px; border-top: 1px solid var(--border); }
   .p-big > div { flex: 1; min-width: 0; padding: 0 12px; }
-  .p-big > div:first-child { padding-left: 0; }
+  .p-big > div:first-child { padding-inline-start: 0; }
   .p-big > div.p-place { flex: 1.4; padding: 8px 12px 9px; }
   .p-kpis { grid-template-columns: repeat(3, 1fr); }
 }

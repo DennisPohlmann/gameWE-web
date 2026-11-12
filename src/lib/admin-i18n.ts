@@ -1,12 +1,13 @@
 import type { L } from "./admin-entities";
 import { ADMIN_TEXTS } from "../translations/admin";
-import type { Lang } from "../translations/languages";
+import { baseLang, type Lang } from "../translations/languages";
 
 // Texts of the admin area. German and English are written in the code (here,
 // in lib/admin-texts.ts and in the entity and setting definitions); every
 // other language of translations/languages.ts has a file in
 // translations/admin that maps each English text to its translation. A text
 // missing there is shown in English (tests/admin-languages.test.ts finds it).
+// A dialect (base in languages.ts) gets the admin area of its base language.
 
 const de = {
   admin: "Administration",
@@ -878,6 +879,9 @@ export function adminDict(lang: Lang): AdminDict {
 
 // One { de, en } text in the given language.
 export function tr(l: L, lang: Lang): string {
+  const own = l.all?.[lang];
+  if (own) return own;
+  lang = baseLang(lang);
   if (lang === "de" || lang === "en") return l[lang];
   return l.all?.[lang] ?? ADMIN_TEXTS[lang][l.en] ?? l.en;
 }
@@ -886,6 +890,7 @@ export function tr(l: L, lang: Lang): string {
 // given language; built once per table and language.
 const built = new WeakMap<object, Map<Lang, unknown>>();
 export function localized<T>(t: { de: T; en: T }, lang: Lang): T {
+  lang = baseLang(lang);
   if (lang === "de" || lang === "en") return t[lang];
   let m = built.get(t);
   if (!m) built.set(t, (m = new Map()));

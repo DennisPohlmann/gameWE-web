@@ -156,9 +156,13 @@ returns to the section whose button was pressed.
 
 ## Languages
 
-The site comes in 13 languages: en, de, ru, es, fr, pt, pt-br, nl, da, pl,
-sr, zh-tw and zh-cn. The texts are in `src/translations/` (see its README);
-missing texts fall back to English. Visitors pick a language with the flags
+The site comes in 24 languages: en, de, ru, es, fr, pt, pt-br, nl, da, pl,
+sr, zh-tw, zh-cn, ja, ko, ar, tr, it, uk, cs and sv, plus the German dialects
+bar (Bavarian), gsw (Swiss German) and nds (Low German). The texts are in
+`src/translations/` (see its README); missing texts fall back to English, in
+the dialects to German. The dialects are machine translated and say so in the
+language menu; their privacy and license pages and their admin area are in
+German. Arabic turns the pages right to left. Visitors pick a language with the flags
 in the footer; without a choice the browser's language is used, then the
 default language (Admin → Settings → General, before that `DEFAULT_LANG`).
 The admin area has the same languages (the user menu top right switches

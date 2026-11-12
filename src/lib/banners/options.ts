@@ -51,9 +51,10 @@ export function bannerOptions(kind: BannerKind, url: URL): BannerOptions {
   };
 }
 
-// The language of the texts: the fonts have no Chinese glyphs, Chinese
-// pages get the English labels.
-export const imageLang = (lang: Lang): Lang => (lang === "zh-cn" || lang === "zh-tw" ? "en" : lang);
+// The language of the texts: the fonts have no Chinese, Japanese, Korean or
+// Arabic glyphs (and Satori draws no right-to-left text), those pages get the
+// English labels.
+export const imageLang = (lang: Lang): Lang => (["zh-cn", "zh-tw", "ja", "ko", "ar"].includes(lang) ? "en" : lang);
 
 // Part of the cache key: one render per distinct picture.
 export function optionsKey(o: BannerOptions): string {

@@ -6,10 +6,19 @@
 // <code>.json, translate the values (keep the {placeholders} and <b> tags),
 // add a line below and a flag in components/lang-flag.tsx.
 // See README.md in this folder.
+//
+// dir: "rtl" turns the page right to left. base: a dialect takes every text
+// it leaves out from this language instead of English, and its admin area is
+// in this language. note: shown small after the name in the language menu.
+// Korean uses the 24-hour clock (-u-hc-h23): Node and the
+// browsers name AM/PM differently, which breaks hydration of client charts.
 
 export const LANGUAGES = [
   { code: "en", name: "English", locale: "en-GB", flag: "gb" },
   { code: "de", name: "Deutsch", locale: "de-DE", flag: "de" },
+  { code: "bar", name: "Boarisch", note: "maschinell übersetzt", locale: "de-DE", flag: "bavaria", base: "de" },
+  { code: "gsw", name: "Schwiizerdütsch", note: "maschinell übersetzt", locale: "de-CH", flag: "ch", base: "de" },
+  { code: "nds", name: "Plattdüütsch", note: "maschinell übersetzt", locale: "de-DE", flag: "schleswig-holstein", base: "de" },
   { code: "ru", name: "Русский", locale: "ru-RU", flag: "ru" },
   { code: "es", name: "Español", locale: "es-ES", flag: "es" },
   { code: "fr", name: "Français", locale: "fr-FR", flag: "fr" },
@@ -21,10 +30,29 @@ export const LANGUAGES = [
   { code: "sr", name: "Српски", locale: "sr-RS", flag: "rs" },
   { code: "zh-tw", name: "繁體中文", locale: "zh-TW", flag: "tw" },
   { code: "zh-cn", name: "简体中文", locale: "zh-CN", flag: "cn" },
+  { code: "ja", name: "日本語", locale: "ja-JP", flag: "jp" },
+  { code: "ko", name: "한국어", locale: "ko-KR-u-hc-h23", flag: "kr" },
+  { code: "ar", name: "العربية", locale: "ar", flag: "arab", dir: "rtl" },
+  { code: "tr", name: "Türkçe", locale: "tr-TR", flag: "tr" },
+  { code: "it", name: "Italiano", locale: "it-IT", flag: "it" },
+  { code: "uk", name: "Українська", locale: "uk-UA", flag: "ua" },
+  { code: "cs", name: "Čeština", locale: "cs-CZ", flag: "cz" },
+  { code: "sv", name: "Svenska", locale: "sv-SE", flag: "se" },
 ] as const;
 
 export type Lang = (typeof LANGUAGES)[number]["code"];
 export type FlagCode = (typeof LANGUAGES)[number]["flag"];
+
+// A dialect (base set) or a full language.
+export type Dialect = Extract<(typeof LANGUAGES)[number], { base: string }>["code"];
+
+const info = (code: Lang) => LANGUAGES.find((l) => l.code === code) as { dir?: "rtl"; base?: Lang } | undefined;
+
+// The language the admin area and the banner texts use for this one.
+export const baseLang = (code: Lang): Exclude<Lang, Dialect> => (info(code)?.base ?? code) as Exclude<Lang, Dialect>;
+
+// "rtl" for Arabic, else "ltr": the dir of <html>.
+export const langDir = (code: Lang): "rtl" | "ltr" => info(code)?.dir ?? "ltr";
 
 export function isLang(v: string | undefined): v is Lang {
   return LANGUAGES.some((l) => l.code === v);
