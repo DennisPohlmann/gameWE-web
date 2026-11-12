@@ -4,7 +4,7 @@ import { PlayerKillsTrend, PlayerTrend } from "@/components/player-trend";
 import { BackToPlayer, HistoryFrame, historyRobots, loadHistoryPlayer } from "@/components/player-history";
 import { Empty, Pager, PctBar, ROW_OPTIONS, SortTh, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
 import { gameHasShots, getPlayerHistory, getPlayerSkillBefore } from "@/lib/data";
-import { fmtNum, kpd, ratio, localeOf } from "@/lib/format";
+import { fmtNum, kpd, localeOf, ratio } from "@/lib/format";
 import { getPlayerSessionDays } from "@/lib/history";
 import { getDict } from "@/lib/i18n";
 import { SESSION_SORT_DEFAULT, fmtSessionTime, sessionPage, sessionSortParam, sortSessions, type SessionSort } from "@/lib/sessions";

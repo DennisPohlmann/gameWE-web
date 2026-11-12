@@ -139,7 +139,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
         {stats.total ? (
           <div className="box events-charts">
             <LineChart
-              locale={lang}
+              locale={localeOf(lang)}
               width={640}
               height={200}
               title={t.eventsOverTime}

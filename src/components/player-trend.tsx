@@ -38,7 +38,7 @@ export function PlayerTrend({
       bars={{ values: trend.map((d) => d.change), up: { label: t.skillGained, className: "gain" }, down: { label: t.skillLost, className: "loss" } }}
       axisTitles={{ left: t.points, right: t.pointsPerDay }}
       ariaLabel={t.playerTrend}
-      locale={locale}
+      locale={localeOf(locale)}
       title={title ? t.playerTrend : undefined}
     />
   );
@@ -76,7 +76,7 @@ export function PlayerKillsTrend({
       width={640}
       title={t.trendKillsDeathsTitle}
       ariaLabel={t.trendKillsDeathsTitle}
-      locale={locale}
+      locale={localeOf(locale)}
     />
   );
 }

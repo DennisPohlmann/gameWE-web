@@ -58,7 +58,7 @@ import {
   getPlayerWeapons,
   gameHasShots,
 } from "@/lib/data";
-import { activity, fmtAge, fmtBanMinutes, fmtDate, fmtDateTime, fmtDuration, fmtNum, fmtPct, kpd, nowUnix, ratio, steamIds } from "@/lib/format";
+import { activity, fmtAge, fmtBanMinutes, fmtDate, fmtDateTime, fmtDuration, fmtNum, fmtPct, kpd, localeOf, nowUnix, ratio, steamIds } from "@/lib/format";
 import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
 
 type Props = { params: Promise<{ game: string; id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -735,7 +735,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
 
           {hitboxWeapons[0] && ZONES.some((z) => hitboxWeapons[0].hits[z] > 0) ? (
             <Section id="targets" title={t.weaponTargets}>
-              <WeaponTargets weapons={hitboxWeapons} locale={lang} labels={targetLabels(t)} initial={hwParam((await searchParams).hw, hitboxWeapons.length)} query="tab=weapons&" />
+              <WeaponTargets weapons={hitboxWeapons} locale={localeOf(lang)} labels={targetLabels(t)} initial={hwParam((await searchParams).hw, hitboxWeapons.length)} query="tab=weapons&" />
             </Section>
           ) : null}
 

@@ -14,7 +14,7 @@ import { LiveTable, NobodyOnline, ServerTable } from "@/components/live";
 import { PlayerCount } from "@/components/player-count";
 import { Empty, PlayerLink, Section, Stats, TableWrap } from "@/components/ui";
 import { getChat, getLivePlayers, getPlayerFlags, getServer, getServerLoad } from "@/lib/data";
-import { fmtDateTime, fmtDuration, fmtNum, fmtPct, nowUnix, ratio } from "@/lib/format";
+import { fmtDateTime, fmtDuration, fmtNum, fmtPct, localeOf, nowUnix, ratio } from "@/lib/format";
 import { playerCount } from "@/lib/player-count";
 import { fill, getDict } from "@/lib/i18n";
 import { shareMetadata } from "@/lib/share-meta";
@@ -61,7 +61,7 @@ export default async function ServerPage({ params }: Props) {
             <ServerLoadChart
               points={load24}
               slots={s.max_players}
-              locale={lang}
+              locale={localeOf(lang)}
               labels={{ players: t.players, uptime: t.uptime }}
               summary={<LoadSummary points={load24} now={now} t={t} lang={lang} />}
             />

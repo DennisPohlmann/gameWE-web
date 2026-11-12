@@ -7,6 +7,8 @@ import { PAGE_SIZES } from "@/lib/page-size";
 import { FLAG_CODES, flagPos } from "@/lib/flag-codes";
 import { gameIconSrc } from "@/lib/game-icons";
 import { gameKind } from "@/lib/games";
+import type { Lang } from "@/translations/languages";
+import { localeOf } from "@/lib/format";
 import { shareText, winBarSplit } from "@/lib/shares";
 
 // flag: the player's country (getPlayerFlags), shown before the name; without
@@ -129,13 +131,13 @@ export function activityColor(v: number): string {
   return `linear-gradient(rgba(255, 255, 255, 0.35), rgba(0, 0, 0, 0.15)), hsl(${h} 80% 45%)`;
 }
 
-export function PctBar({ value, lang, tone, fill }: { value: number | null; lang: string; tone?: "share" | "activity"; fill?: number }) {
+export function PctBar({ value, lang, tone, fill }: { value: number | null; lang: Lang; tone?: "share" | "activity"; fill?: number }) {
   // No basis (e.g. no kills, no shots): an empty bar at 0 %, not a blank cell.
   const n = value !== null && Number.isFinite(value) ? value : 0;
   const v = Math.max(0, Math.min(1, n));
   const w = fill !== undefined && Number.isFinite(fill) ? Math.max(0, Math.min(1, fill)) : v;
   const pct = n * 100;
-  const exact = tone === "share" ? shareText(n, lang) : `${pct.toLocaleString(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
+  const exact = tone === "share" ? shareText(n, localeOf(lang)) : `${pct.toLocaleString(localeOf(lang), { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
   return (
     <span className={`pbar${tone ? ` ${tone}` : v >= 0.3 ? " good" : v > 0 ? " low" : ""}`} title={exact}>
       <span className="pbar-fill" style={{ width: `${(w * 100).toFixed(1)}%`, background: tone === "activity" ? activityColor(v) : undefined }} />

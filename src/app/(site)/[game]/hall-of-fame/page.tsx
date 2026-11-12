@@ -100,7 +100,7 @@ export default async function HallOfFamePage({ params, searchParams }: { params:
           </Section>
           {old.length > 1 ? (
             <Section title={t.hofPointsChart}>
-              <LineChart locale={lang} ariaLabel={t.hofPointsChart} height={200} labels={old.map((r) => periodLabel(r, locale, t.hofWeek, true))} tips={old.map((r) => periodLabel(r, locale, t.hofWeek))} series={pointSeries} trimStart={false} fromZero={false} legend />
+              <LineChart locale={localeOf(lang)} ariaLabel={t.hofPointsChart} height={200} labels={old.map((r) => periodLabel(r, locale, t.hofWeek, true))} tips={old.map((r) => periodLabel(r, locale, t.hofWeek))} series={pointSeries} trimStart={false} fromZero={false} legend />
             </Section>
           ) : null}
           {shownRows.map((r) => (

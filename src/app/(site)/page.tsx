@@ -341,10 +341,10 @@ async function LoadSection({ t, lang }: { t: Dict; lang: Lang }) {
       <div className="container">
         <div className="box">
           {perHour ? (
-            <LineChart locale={lang} ariaLabel={loadCaption} labels={hourLabels} dates={hourDates} tips={hourTips} hourly legend series={[{ label: t.playersOnline, values: hourly.players, className: "s1" }]} />
+            <LineChart locale={localeOf(lang)} ariaLabel={loadCaption} labels={hourLabels} dates={hourDates} tips={hourTips} hourly legend series={[{ label: t.playersOnline, values: hourly.players, className: "s1" }]} />
           ) : (
             <LineChart
-              locale={lang}
+              locale={localeOf(lang)}
               ariaLabel={loadCaption}
               legend
               labels={activity.map((a) => dayLabel(a.day))}

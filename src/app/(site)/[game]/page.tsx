@@ -111,7 +111,7 @@ export default async function ServersPage({
             {liveMap}
             {combined ? (
               <div className="box">
-                <LineChart locale={lang} ariaLabel={t.players} height={220} title={newLine} labels={combined.labels} dates={combined.dates} series={combined.series} />
+                <LineChart locale={localeOf(lang)} ariaLabel={t.players} height={220} title={newLine} labels={combined.labels} dates={combined.dates} series={combined.series} />
               </div>
             ) : null}
           </>
@@ -124,7 +124,7 @@ export default async function ServersPage({
               <ServerTable game={game} servers={[s]} t={t} lang={lang} details />
               {loads[i].length > 1 ? (
                 <div className="box">
-                  <ServerLoadChart points={loads[i]} slots={s.max_players} locale={lang} labels={{ players: t.players, uptime: t.uptime }} summary={<LoadSummary points={loads[i]} now={since + 86400} t={t} lang={lang} />} />
+                  <ServerLoadChart points={loads[i]} slots={s.max_players} locale={localeOf(lang)} labels={{ players: t.players, uptime: t.uptime }} summary={<LoadSummary points={loads[i]} now={since + 86400} t={t} lang={lang} />} />
                 </div>
               ) : null}
               {players.length ? <LiveTable game={game} players={players} t={t} lang={lang} /> : <NobodyOnline t={t} />}
@@ -232,7 +232,7 @@ async function Trend({ game, totals, t, lang }: { game: string; totals: Totals; 
           {/* Per day, then the running totals per 15 minutes, each with a
               title and its legend; the labels mark midnight of each day. */}
           <BarChart
-            locale={lang}
+            locale={localeOf(lang)}
             ariaLabel={t.trendKillsTitle}
             title={t.trendKillsTitle}
             alignTo={trendMax}
@@ -244,7 +244,7 @@ async function Trend({ game, totals, t, lang }: { game: string; totals: Totals; 
           />
           {/* Running totals: today's totals minus what came after each point. */}
           <LineChart
-            locale={lang}
+            locale={localeOf(lang)}
             ariaLabel={t.trendTotals}
             title={t.trendTotals}
             labels={hourLabels}
@@ -262,13 +262,13 @@ async function Trend({ game, totals, t, lang }: { game: string; totals: Totals; 
       ) : (
         <>
           <LineChart
-            locale={lang}
+            locale={localeOf(lang)}
             ariaLabel={t.players}
             labels={activity.map((a) => dayLabel(a.day))}
             series={[{ label: t.players, values: activity.map((a) => (a.point ? Number(a.point.players) : null)), className: "s1" }]}
           />
           <LineChart
-            locale={lang}
+            locale={localeOf(lang)}
             ariaLabel={t.kills}
             labels={activity.map((a) => dayLabel(a.day))}
             series={[
@@ -290,7 +290,7 @@ function combinedLoad(
   servers: { name: string }[],
   loads: { timestamp: number; act_players: number }[][],
   since: number,
-  lang: string,
+  lang: Lang,
   total: string,
   frags: { start: number; step: number; kills: number[]; headshots: number[] } | null,
   fragLabels: { kills: string; headshots: string },
@@ -314,8 +314,8 @@ function combinedLoad(
     const vals = perServer.map((v) => v[i]).filter((x): x is number => x !== null);
     return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) * 10) / 10 : null;
   });
-  const timeFmt = dateFormat(lang, { hour: "2-digit", minute: "2-digit" });
-  const dayFmt = dateFormat(lang, { weekday: "short", day: "2-digit", month: "2-digit" });
+  const timeFmt = dateFormat(localeOf(lang), { hour: "2-digit", minute: "2-digit" });
+  const dayFmt = dateFormat(localeOf(lang), { weekday: "short", day: "2-digit", month: "2-digit" });
   const labels = Array.from({ length: n }, (_, i) => timeFmt.format((start + i * BUCKET) * 1000));
   const dates = Array.from({ length: n }, (_, i) => dayFmt.format((start + i * BUCKET) * 1000));
   // The frags on the same quarter hours; the last, still running quarter

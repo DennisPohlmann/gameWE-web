@@ -15,7 +15,7 @@ import { gameHasShots, getClan, getClanFlags, getClanMapPlayers, getClanMembers,
 import { siteDay } from "@/lib/day";
 import { FIXED_MAX, radarPoints, type PlayerRatios, type RadarKey } from "@/lib/radar";
 import { ZONES } from "@/lib/zones";
-import { countryName, fmtDate, fmtDuration, fmtNum, fmtPct, kpd, ratio } from "@/lib/format";
+import { countryName, fmtDate, fmtDuration, fmtNum, fmtPct, kpd, localeOf, ratio } from "@/lib/format";
 import { mapMarkers } from "@/lib/map-markers";
 import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
 import { shareMetadata } from "@/lib/share-meta";
@@ -183,7 +183,7 @@ export default async function ClanPage({ params, searchParams }: Props) {
 
       {hitboxWeapons[0] && ZONES.some((z) => hitboxWeapons[0].hits[z] > 0) ? (
         <Section id="targets" title={t.weaponTargets}>
-          <WeaponTargets weapons={hitboxWeapons} locale={lang} labels={targetLabels(t)} initial={hwParam(sp.hw, hitboxWeapons.length)} />
+          <WeaponTargets weapons={hitboxWeapons} locale={localeOf(lang)} labels={targetLabels(t)} initial={hwParam(sp.hw, hitboxWeapons.length)} />
         </Section>
       ) : null}
 

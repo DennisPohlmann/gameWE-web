@@ -47,7 +47,7 @@ export default async function MiscPage({ params }: { params: Promise<{ game: str
             </thead>
             <tbody>
               <tr>
-                <td>{slices.length ? <Pie slices={slices} locale={lang} /> : empty}</td>
+                <td>{slices.length ? <Pie slices={slices} locale={localeOf(lang)} /> : empty}</td>
               </tr>
             </tbody>
           </table>
@@ -63,7 +63,7 @@ export default async function MiscPage({ params }: { params: Promise<{ game: str
               <tr>
                 <td>
                   {m.weekdays.some((d) => d.connects || d.seconds) ? (
-                    <WeekdayBars days={m.weekdays} locale={lang} labels={{ days: t.weekdayNames.split(","), connects: t.connects, time: t.playTime }} />
+                    <WeekdayBars days={m.weekdays} locale={localeOf(lang)} labels={{ days: t.weekdayNames.split(","), connects: t.connects, time: t.playTime }} />
                   ) : (
                     empty
                   )}
@@ -84,7 +84,7 @@ export default async function MiscPage({ params }: { params: Promise<{ game: str
               <tbody>
                 <tr>
                   <td>
-                    <Pie slices={m.connectTypes.map((c) => ({ label: t.connectTypes[c.type] ?? fill(t.connectType, { n: c.type }), value: c.n }))} locale={lang} />
+                    <Pie slices={m.connectTypes.map((c) => ({ label: t.connectTypes[c.type] ?? fill(t.connectType, { n: c.type }), value: c.n }))} locale={localeOf(lang)} />
                   </td>
                 </tr>
               </tbody>
@@ -97,7 +97,7 @@ export default async function MiscPage({ params }: { params: Promise<{ game: str
     <Section title={t.connects}>
       {m.connectsPerDay.some((d) => d.n) ? (
         <LineChart
-          locale={lang}
+          locale={localeOf(lang)}
           ariaLabel={t.connectsCaption}
           title={t.connectsCaption}
           trimStart={false}
