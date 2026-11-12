@@ -5,6 +5,7 @@ import { apiEnabled } from "./settings";
 import { basePath } from "./base-path";
 import { clientIp } from "./client-ip";
 import { activity } from "./format";
+import { hasPlace } from "./rank-order";
 import { getGame, getGames, getPlayer, getPlayerFlags, noProfile, type ClanRow, type HistoryDay, type LivePlayer, type MapPlayer, type MapRow, type MapServer, type PlayerWeapon, type RankingRow, type Server } from "./data";
 import type { GameEvent } from "./history";
 import { eventDetail } from "./api-events";
@@ -205,12 +206,13 @@ export function apiLivePlayer(p: LivePlayer) {
 
 // A row of the website's player ranking (RankingTable). position: the row's
 // number in this list (the # column); rank: the place in the whole ranking
-// by points (1 + players with more points, as on the profile).
-// Inactive players (ranked = false) have no place in the ranking: rank null.
+// in the order of the ranking (rank-order.ts, as on the profile).
+// Inactive players (ranked = false) and players without a kill or a death
+// have no place in the ranking: rank null.
 export function apiRankingRow(r: RankingRow, position: number, activityDays: number, ranked = true) {
   return {
     position,
-    rank: ranked ? (r.globalRank ?? position) : null,
+    rank: ranked && hasPlace(r) ? (r.globalRank ?? position) : null,
     id: r.playerId,
     name: r.name,
     country: r.flag ? { code: r.flag.trim().toUpperCase(), name: r.country } : null,

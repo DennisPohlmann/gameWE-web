@@ -75,7 +75,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const [{ lang, t }, { siteName }, position, image] = await Promise.all([
     getDict(),
     getSettings(),
-    p.hideranking || p.inactive ? Promise.resolve(null) : getPlayerPosition(p.game, p.skill),
+    p.hideranking || p.inactive ? Promise.resolve(null) : getPlayerPosition(p),
     bannerUrl(p.game, "player", p.playerId),
   ]);
   const name = p.name ?? `#${id}`;
@@ -104,7 +104,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   const ids = steamIds(p.uniqueId);
   const [position, history, names, weapons, maps, teams, actions, victims, killers, killStats, awards, ranks, chat, ribbons, allAwards, classes, sigUrl, origin, skillBefore] =
     await Promise.all([
-      p.hideranking || p.inactive ? Promise.resolve(null) : getPlayerPosition(game, p.skill),
+      p.hideranking || p.inactive ? Promise.resolve(null) : getPlayerPosition(p),
       getPlayerHistory(id, 30),
       getPlayerNames(id),
       getPlayerWeapons(id),

@@ -16,6 +16,7 @@ import { RADAR_KEYS, RADAR_SQL, type RadarAverage } from "./radar";
 import { winsByMap } from "./shares";
 import type { PlaceKind } from "./places";
 import { placeSorts, rankingSorts, type PlaceSort, type RankingSort } from "./sorts";
+import { hasPlace, PLACED, placesFrom, rankOrderSql, type RankKey } from "./rank-order";
 
 // All reads of the HLstatsX/gameME tables the collector fills.
 // Times are Unix seconds unless a field says otherwise.
@@ -38,45 +39,38 @@ function like(s: string): string {
   return `%${s.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 }
 
-// Place in the ranking (1 + players with more points) for each game and skill,
-// keyed "game|skill". With the index game_skill (game, hideranking, skill,
-// playerId, collector migration 18) both reads stay in the index: the players
-// above the best of the skills are counted, and the players between the
-// lowest and the best skill are read per skill. A page of the ranking spans
-// a narrow band of points, so that is a few hundred index entries instead of
-// a pass over every player of the ranking.
-async function rankPositions(players: { game: string; skill: number }[]): Promise<Map<string, number>> {
-  const out = new Map<string, number>();
-  const byGame = new Map<string, Set<number>>();
+// Place in the ranking (rank-order.ts) of each player, keyed by player id;
+// players without a kill or a death get none. With the index game_rank
+// (game, hideranking, skill DESC, kills DESC, deaths, playerId, collector
+// migration 30) the reads stay in the index: the placed players above the
+// best of the players are counted, the players between the lowest and the
+// best points are counted per points value, and the players at exactly the
+// points of one of them are read to break the tie. A page of the ranking
+// spans a narrow band of points, so that is a few hundred index entries
+// instead of a pass over every player of the ranking.
+async function rankPositions(players: (RankKey & { game: string })[]): Promise<Map<number, number>> {
+  const out = new Map<number, number>();
+  const byGame = new Map<string, RankKey[]>();
   for (const p of players) {
-    const skills = byGame.get(p.game) ?? new Set<number>();
-    skills.add(Number(p.skill));
-    byGame.set(p.game, skills);
+    if (!hasPlace(p)) continue;
+    const list = byGame.get(p.game) ?? [];
+    list.push({ playerId: Number(p.playerId), skill: Number(p.skill), kills: Number(p.kills), deaths: Number(p.deaths) });
+    byGame.set(p.game, list);
   }
   await Promise.all(
-    [...byGame].map(async ([game, set]) => {
-      const skills = [...set].sort((a, b) => b - a);
+    [...byGame].map(async ([game, list]) => {
+      const skills = [...new Set(list.map((p) => p.skill))].sort((a, b) => b - a);
       const top = skills[0];
       const low = skills[skills.length - 1];
-      const [above, band] = await Promise.all([
-        queryOne<{ n: number }>(`SELECT COUNT(*) AS n FROM hlstats_Players WHERE game = ? AND hideranking = 0 AND skill > ?`, [game, top]),
-        top > low
-          ? query<{ skill: number; n: number }>(
-              `SELECT skill, COUNT(*) AS n FROM hlstats_Players
-               WHERE game = ? AND hideranking = 0 AND skill > ? AND skill <= ? GROUP BY skill`,
-              [game, low, top],
-            )
-          : [],
+      const ranked = `FROM hlstats_Players WHERE game = ? AND hideranking = 0 AND ${PLACED}`;
+      const [above, band, same] = await Promise.all([
+        queryOne<{ n: number }>(`SELECT COUNT(*) AS n ${ranked} AND skill > ?`, [game, top]),
+        top > low ? query<{ skill: number; n: number }>(`SELECT skill, COUNT(*) AS n ${ranked} AND skill > ? AND skill <= ? GROUP BY skill`, [game, low, top]) : [],
+        query<RankKey>(`SELECT playerId, skill, kills, deaths ${ranked} AND skill IN (${skills.map(() => "?").join(", ")})`, [game, ...skills]),
       ]);
-      // Players per skill in the band, best first; a skill's place is 1 +
-      // everyone above it.
-      const counts = band.map((r) => ({ skill: Number(r.skill), n: Number(r.n) })).sort((a, b) => b.skill - a.skill);
-      let higher = Number(above?.n ?? 0);
-      let i = 0;
-      for (const skill of skills) {
-        while (i < counts.length && counts[i].skill > skill) higher += counts[i++].n;
-        out.set(`${game}|${skill}`, higher + 1);
-      }
+      const num = (r: RankKey) => ({ playerId: Number(r.playerId), skill: Number(r.skill), kills: Number(r.kills), deaths: Number(r.deaths) });
+      const pos = placesFrom(list, Number(above?.n ?? 0), band.map((r) => ({ skill: Number(r.skill), n: Number(r.n) })), same.map(num));
+      for (const [id, n] of pos) out.set(id, n);
     }),
   );
   return out;
@@ -322,12 +316,12 @@ export type LivePlayer = {
 // Position is the player's place in the ranking (null for hidden players).
 export async function getLivePlayers(game: string, serverId?: number): Promise<LivePlayer[]> {
   const where = serverId ? `l.server_id = ?` : `s.game = ?`;
-  type Row = Omit<LivePlayer, "position"> & { rankHidden: number | null; rankGame: string | null; rankSkill: number | null };
+  type Row = Omit<LivePlayer, "position"> & { rankHidden: number | null; rankGame: string | null; rankSkill: number | null; rankKills: number | null; rankDeaths: number | null };
   const rows = await query<Row>(
     `SELECT l.server_id, l.player_id, l.name, l.team, l.kills, l.deaths, l.headshots, l.shots, l.hits,
             l.rounds, l.ping, l.connected, l.skill, l.skill_change, l.is_dead,
             CASE WHEN l.unique_id LIKE 'BOT%' THEN 1 ELSE 0 END AS is_bot, loc.flag, loc.country,
-            p.hideranking AS rankHidden, p.game AS rankGame, p.skill AS rankSkill
+            p.hideranking AS rankHidden, p.game AS rankGame, p.skill AS rankSkill, p.kills AS rankKills, p.deaths AS rankDeaths
      FROM hlstats_Livestats l
      JOIN hlstats_Servers s ON s.serverId = l.server_id
      LEFT JOIN hlstats_Players p ON p.playerId = l.player_id
@@ -337,11 +331,13 @@ export async function getLivePlayers(game: string, serverId?: number): Promise<L
     [serverId ?? game],
   );
   const ranked = (r: Row) => r.rankGame !== null && r.rankSkill !== null && Number(r.rankHidden) === 0;
-  const pos = await rankPositions(rows.filter(ranked).map((r) => ({ game: r.rankGame as string, skill: Number(r.rankSkill) })));
+  const pos = await rankPositions(
+    rows.filter(ranked).map((r) => ({ game: r.rankGame as string, playerId: r.player_id, skill: Number(r.rankSkill), kills: Number(r.rankKills), deaths: Number(r.rankDeaths) })),
+  );
   // A player hidden from the ranking (e.g. by !hide) is still on the server:
   // listed with in-game name and live values, but without id or link.
-  return rows.map(({ rankHidden, rankGame, rankSkill, ...r }) =>
-    liveEntry({ ...r, position: ranked({ rankHidden, rankGame, rankSkill, ...r }) ? (pos.get(`${rankGame}|${Number(rankSkill)}`) ?? null) : null }, rankHidden),
+  return rows.map(({ rankHidden, rankGame, rankSkill, rankKills, rankDeaths, ...r }) =>
+    liveEntry({ ...r, position: ranked({ rankHidden, rankGame, rankSkill, rankKills, rankDeaths, ...r }) ? (pos.get(Number(r.player_id)) ?? null) : null }, rankHidden),
   );
 }
 
@@ -656,43 +652,54 @@ async function loadRanking(opts: {
   const local = !!(opts.country || opts.state || opts.city);
   const joins = `LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
     LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id`;
-  const from = `FROM ${local ? placeJoins(table) : `${table} p
+  const fromWhere = (w: string[]) => `FROM ${local ? placeJoins(table) : `${table} p
     ${joins}`}
-    WHERE ${where.join(" AND ")}`;
+    WHERE ${w.join(" AND ")}`;
+  const from = fromWhere(where);
   const dir = opts.asc ? "ASC" : "DESC";
   // A ranking can have hundreds of thousands of players (an imported
   // HLstatsX database): the tie-breaker runs in the sort's direction, so the
-  // indexes game_skill (game, hideranking, skill, playerId) and game_activity
-  // (game, hideranking, last_event, playerId) serve the default orders, and a
-  // page of inactive players sorted by a column of the players table is
-  // picked by playerId first and only its rows are joined.
-  const order = `${rankingSorts[opts.sort]} ${dir}, p.playerId ${dir}`;
+  // indexes game_rank (game, hideranking, skill DESC, kills DESC, deaths,
+  // playerId) and game_activity (game, hideranking, last_event, playerId)
+  // serve the default orders, and a page of inactive players sorted by a
+  // column of the players table is picked by playerId first and only its rows
+  // are joined. By points: the order of the ranking (rank-order.ts), the
+  // players without a place (no kill, no death) after all others, read as a
+  // second part so both stay in the index order.
+  const order = opts.sort === "skill" ? rankOrderSql("p.", !opts.asc) : `${rankingSorts[opts.sort]} ${dir}, p.playerId ${dir}`;
+  const split = opts.sort === "skill" && !opts.inactive;
   const narrow = opts.inactive && !opts.search && !local && !opts.newDays && rankingSorts[opts.sort].startsWith("p.");
   const cols = `SELECT p.playerId, d.lastName AS name, p.skill, p.last_event, d.first_connect, p.connection_time,
               p.kills, ${await careerKills()} AS careerKills, p.deaths, p.headshots, p.shots, p.hits, l.flag, l.country`;
   // Both joins match at most one row, so without a filter on them the count
   // needs the players table only.
   const countFrom = opts.search || local || opts.newDays ? from : `FROM ${table} p WHERE ${where.join(" AND ")}`;
-  const countSql = `SELECT COUNT(*) AS n ${countFrom}`;
-  const [rows, count] = await Promise.all([
+  const countSql = `SELECT COUNT(*) AS n${split ? `, SUM(CASE WHEN p.kills > 0 OR p.deaths > 0 THEN 1 ELSE 0 END) AS placed` : ""} ${countFrom}`;
+  const page = (w: string[], limit: number, offset: number) =>
     narrow
       ? query<RankingRow>(
           `${cols}
-           FROM (SELECT p.playerId FROM ${table} p WHERE ${where.join(" AND ")} ORDER BY ${order} LIMIT ? OFFSET ?) x
+           FROM (SELECT p.playerId FROM ${table} p WHERE ${w.join(" AND ")} ORDER BY ${order} LIMIT ? OFFSET ?) x
            JOIN ${table} p ON p.playerId = x.playerId
            ${joins}
            ORDER BY ${order}`,
-          [...params, opts.limit, opts.offset],
+          [...params, limit, offset],
         )
-      : query<RankingRow>(`${cols} ${from} ORDER BY ${order} LIMIT ? OFFSET ?`, [...params, opts.limit, opts.offset]),
+      : query<RankingRow>(`${cols} ${fromWhere(w)} ORDER BY ${order} LIMIT ? OFFSET ?`, [...params, limit, offset]);
+  const [rows, count] = await Promise.all([
+    page(split ? [...where, "(p.kills > 0 OR p.deaths > 0)"] : where, opts.limit, opts.offset),
     // Counting the inactive players of a large ranking takes a while; the
     // number changes only when the collector moves players, so it is kept
     // for a minute (not while searching).
-    opts.inactive && !opts.search ? inactiveCount(countSql, params) : queryOne<{ n: number }>(countSql, params),
+    opts.inactive && !opts.search ? inactiveCount(countSql, params) : queryOne<{ n: number; placed?: number }>(countSql, params),
   ]);
+  if (split && rows.length < opts.limit) {
+    const placed = Number((count as { placed?: number } | undefined)?.placed ?? 0);
+    rows.push(...(await page([...where, "p.kills = 0 AND p.deaths = 0"], opts.limit - rows.length, Math.max(0, opts.offset - placed))));
+  }
   if ((local || opts.withRank) && !opts.inactive) {
-    const pos = await rankPositions(rows.map((r) => ({ game: opts.game, skill: r.skill })));
-    for (const r of rows) r.globalRank = pos.get(`${opts.game}|${Number(r.skill)}`);
+    const pos = await rankPositions(rows.map((r) => ({ ...r, game: opts.game })));
+    for (const r of rows) r.globalRank = pos.get(Number(r.playerId));
   }
   return { rows, total: count?.n ?? 0 };
 }
@@ -737,7 +744,7 @@ export async function getCityOptions(game: string, country: string): Promise<Pla
 // by primary key (STRAIGHT_JOIN): about half the time of the other way round.
 const placesCache = ttlCache<PlaceCount[]>(600_000, 86_400_000);
 
-// From the ranking's players (index game_skill) to their data row, not the
+// From the ranking's players (index game_rank) to their data row, not the
 // other way round: a reload read all 400,000 data rows before (458 ms,
 // now 12 ms on the same database).
 function playerPlaces(game: string): Promise<PlaceCount[]> {
@@ -894,17 +901,28 @@ export const getPlayer = cache(async (id: number): Promise<PlayerDetail | undefi
   return undefined;
 });
 
+// The players with a place in the ranking (the N of "place x of N").
 export async function getRankedCount(game: string) {
-  const r = await queryOne<{ n: number }>(`SELECT COUNT(*) AS n FROM hlstats_Players WHERE game = ? AND hideranking = 0`, [game]);
+  const r = await queryOne<{ n: number }>(`SELECT COUNT(*) AS n FROM hlstats_Players WHERE game = ? AND hideranking = 0 AND ${PLACED}`, [game]);
   return Number(r?.n ?? 0);
 }
 
-export const getPlayerPosition = cache(async (game: string, skill: number) => {
+// The player's place: 1 + the placed players before them in the order of the
+// ranking (rank-order.ts); null without a kill or a death. Callers skip
+// hidden and inactive players. p is the cached row of getPlayer, so the
+// profile's metadata and page share one count.
+export const getPlayerPosition = cache(async (p: { game: string; playerId: number; skill: number; kills: number; deaths: number }) => {
+  if (!hasPlace(p)) return null;
+  const [s, k, d] = [Number(p.skill), Number(p.kills), Number(p.deaths)];
+  // Two counts, each a plain range of the index game_rank (one OR over both
+  // made PostgreSQL read the table rows).
+  const ranked = `FROM hlstats_Players WHERE game = ? AND hideranking = 0 AND ${PLACED}`;
   const r = await queryOne<{ n: number }>(
-    `SELECT COUNT(*) + 1 AS n FROM hlstats_Players WHERE game = ? AND hideranking = 0 AND skill > ?`,
-    [game, skill],
+    `SELECT (SELECT COUNT(*) ${ranked} AND skill > ?)
+          + (SELECT COUNT(*) ${ranked} AND skill = ? AND (kills > ? OR kills = ? AND (deaths < ? OR deaths = ? AND playerId < ?))) + 1 AS n`,
+    [p.game, s, p.game, s, k, k, d, d, Number(p.playerId)],
   );
-  return r?.n ?? null;
+  return r ? Number(r.n) : null;
 });
 
 // Average of the profile radar (radar.ts): the game's ranked players active
@@ -1188,7 +1206,7 @@ export type Opponent = { playerId: number; name: string | null; kills: number; h
 // has hundreds of thousands of frags, so the three lists are kept together
 // for five minutes per player (ttl-cache.ts); the positions in the ranking
 // are looked up live.
-type OpponentSums = { victims: Opponent[]; killers: Opponent[]; kills: (Omit<KillStat, "position"> & { skill: number; game: string })[] };
+type OpponentSums = { victims: Opponent[]; killers: Opponent[]; kills: (Omit<KillStat, "position"> & { game: string; career: Omit<RankKey, "playerId"> })[] };
 const opponentsCache = ttlCache<OpponentSums>(300_000, 3_600_000, 1000);
 
 // Rows shown: the ten most frequent on each side, the kill statistics with
@@ -1208,8 +1226,8 @@ async function loadOpponentSums(id: number, bots: number[]): Promise<OpponentSum
   // Summed per opponent first, then joined: the names and the ranking rows
   // once per opponent, not per frag. A hidden player stays hidden when moved
   // to the inactive table; only a deleted one is not hidden.
-  const rows = await query<{ playerId: number; name: string | null; kills: number; deaths: number; kHs: number; dHs: number; hidden: number; hideranking: number | null; skill: number | null; game: string | null }>(
-    `SELECT o.playerId, d.lastName AS name, o.kills, o.deaths, o.kHs, o.dHs, p.hideranking, p.skill, TRIM(p.game) AS game,
+  const rows = await query<{ playerId: number; name: string | null; kills: number; deaths: number; kHs: number; dHs: number; hidden: number; hideranking: number | null; skill: number | null; pKills: number | null; pDeaths: number | null; game: string | null }>(
+    `SELECT o.playerId, d.lastName AS name, o.kills, o.deaths, o.kHs, o.dHs, p.hideranking, p.skill, p.kills AS pKills, p.deaths AS pDeaths, TRIM(p.game) AS game,
             CASE WHEN ${hiddenSql("o.playerId")} THEN 1 ELSE 0 END AS hidden
      FROM (SELECT u.playerId, SUM(u.k) AS kills, SUM(u.d) AS deaths, SUM(u.khs) AS kHs, SUM(u.dhs) AS dHs
            FROM (SELECT victimId AS playerId, 1 AS k, 0 AS d, CASE WHEN headshot > 0 THEN 1 ELSE 0 END AS khs, 0 AS dhs
@@ -1232,7 +1250,8 @@ async function loadOpponentSums(id: number, bots: number[]): Promise<OpponentSum
     hidden: Number(r.hidden) === 1,
     ranked: r.hideranking !== null,
     hideranking: Number(r.hideranking ?? 0),
-    skill: Number(r.skill ?? 0),
+    // The opponent's own totals, for the place in the ranking.
+    career: { skill: Number(r.skill ?? 0), kills: Number(r.pKills ?? 0), deaths: Number(r.pDeaths ?? 0) },
     game: r.game ?? "",
   }));
   // Most frequent first, ties by lowest id, like the single queries before.
@@ -1250,7 +1269,7 @@ async function loadOpponentSums(id: number, bots: number[]): Promise<OpponentSum
       .filter((o) => o.ranked && o.kills >= KILL_STATS_MIN)
       .sort((a, b) => b.kills - a.kills || a.playerId - b.playerId)
       .slice(0, KILL_STATS)
-      .map((o) => ({ playerId: o.playerId, name: o.name, kills: o.kills, deaths: o.deaths, headshots: o.kHs, hideranking: o.hideranking, skill: o.skill, game: o.game })),
+      .map((o) => ({ playerId: o.playerId, name: o.name, kills: o.kills, deaths: o.deaths, headshots: o.kHs, hideranking: o.hideranking, career: o.career, game: o.game })),
   };
 }
 
@@ -1269,10 +1288,10 @@ export type KillStat = { playerId: number; name: string | null; kills: number; d
 export async function getPlayerKillStats(game: string, id: number): Promise<KillStat[]> {
   const rows = (await opponentSums(game, id)).kills;
   // The positions (rankPositions) only for the rows shown, and live.
-  const pos = await rankPositions(rows.filter((r) => r.hideranking === 0));
-  return rows.map(({ skill, game, ...r }) => ({
+  const pos = await rankPositions(rows.filter((r) => r.hideranking === 0).map((r) => ({ game: r.game, playerId: r.playerId, ...r.career })));
+  return rows.map(({ game, career, ...r }) => ({
     ...r,
-    position: r.hideranking === 0 ? (pos.get(`${game}|${skill}`) ?? null) : null,
+    position: r.hideranking === 0 ? (pos.get(r.playerId) ?? null) : null,
   }));
 }
 
@@ -1494,7 +1513,7 @@ export async function getClanMembers(id: number) {
      FROM hlstats_Players p
      LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
      LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
-     WHERE p.clan = ? AND p.hideranking = 0 ORDER BY p.skill DESC`,
+     WHERE p.clan = ? AND p.hideranking = 0 ORDER BY ${rankOrderSql("p.")}`,
     [id],
   );
 }
@@ -1709,28 +1728,40 @@ const mapPlayerFrom = (bots: number[]) => `FROM (SELECT killerId AS playerId, 1 
 // A page of the map's players sums every frag on the map: kept for two
 // minutes per map, order and page (ttl-cache.ts); the places in the ranking
 // (rankPositions) are looked up live.
-const mapTableCache = ttlCache<MapPlayerRow[]>(120_000, 600_000, 500);
+const mapTableCache = ttlCache<(MapPlayerRow & { careerKills: number; careerDeaths: number })[]>(120_000, 600_000, 500);
 const mapKillersCache = ttlCache<{ players: number; hiddenKills: number }>(120_000, 600_000, 500);
 
 // rank: the player's place in the whole ranking (rankPositions).
 export async function getMapPlayerTable(game: string, mapId: number, sort: MapSort, desc: boolean, limit: number, offset: number) {
   const expr = MAP_PLAYER_SORTS[Object.hasOwn(MAP_PLAYER_SORTS, sort) ? sort : "kills"];
   const dir = desc ? "DESC" : "ASC";
+  // By position: the order of the ranking (rank-order.ts) on the players' totals.
+  const order = expr === MAP_PLAYER_SORTS.position ? rankOrderSql("p.", desc) : `${expr} ${dir}, x.playerId`;
   const bots = await botFragIds(game);
-  const rows = await mapTableCache(`${mapId}|${expr}|${dir}|${limit}|${offset}|${bots.join(",")}`, async () =>
+  const rows = await mapTableCache(`${mapId}|${order}|${limit}|${offset}|${bots.join(",")}`, async () =>
     (
-      await query<MapPlayerRow>(
-        `SELECT x.playerId, d.lastName AS name, p.skill, SUM(x.k) AS kills, SUM(x.dd) AS deaths, SUM(x.hs) AS headshots
+      await query<MapPlayerRow & { careerKills: number; careerDeaths: number }>(
+        `SELECT x.playerId, d.lastName AS name, p.skill, p.kills AS careerKills, p.deaths AS careerDeaths,
+                SUM(x.k) AS kills, SUM(x.dd) AS deaths, SUM(x.hs) AS headshots
          ${mapPlayerFrom(bots)}
          LEFT JOIN hlstats_Players_Data d ON d.playerId = x.playerId
-         GROUP BY x.playerId, d.lastName, p.skill HAVING SUM(x.k) > 0
-         ORDER BY ${expr} ${dir}, x.playerId LIMIT ? OFFSET ?`,
+         GROUP BY x.playerId, d.lastName, p.skill, p.kills, p.deaths HAVING SUM(x.k) > 0
+         ORDER BY ${order} LIMIT ? OFFSET ?`,
         [mapId, ...ids(bots), mapId, ...ids(bots), limit, offset],
       )
-    ).map((r) => ({ ...r, playerId: Number(r.playerId), skill: Number(r.skill), kills: Number(r.kills), deaths: Number(r.deaths), headshots: Number(r.headshots) })),
+    ).map((r) => ({
+      ...r,
+      playerId: Number(r.playerId),
+      skill: Number(r.skill),
+      careerKills: Number(r.careerKills),
+      careerDeaths: Number(r.careerDeaths),
+      kills: Number(r.kills),
+      deaths: Number(r.deaths),
+      headshots: Number(r.headshots),
+    })),
   );
-  const pos = await rankPositions(rows.map((r) => ({ game, skill: r.skill })));
-  return rows.map((r) => ({ ...r, rank: pos.get(`${game}|${r.skill}`) }));
+  const pos = await rankPositions(rows.map((r) => ({ game, playerId: r.playerId, skill: r.skill, kills: r.careerKills, deaths: r.careerDeaths })));
+  return rows.map(({ careerKills, careerDeaths, ...r }) => ({ ...r, rank: pos.get(r.playerId) }));
 }
 
 // Kills on one map by visible players (rows of getMapPlayerTable, for
@@ -1922,15 +1953,16 @@ export async function getRankingOverview(): Promise<RankingOverview[]> {
 
 async function loadOverviewTops(): Promise<OverviewTops> {
   const [tops, clans] = await Promise.all([
-    // Best player per ranking: highest skill, ties by lowest id.
+    // Best player per ranking: place 1 (rank-order.ts); the first row of a
+    // game is taken.
     query<OverviewTops["tops"][number]>(
       `SELECT TRIM(p.game) AS game, p.playerId, d.lastName AS name, l.flag, l.country
        FROM hlstats_Players p
-       JOIN (SELECT game, MAX(skill) AS m FROM hlstats_Players WHERE hideranking = 0 GROUP BY game) x
+       JOIN (SELECT game, MAX(skill) AS m FROM hlstats_Players WHERE hideranking = 0 AND ${PLACED} GROUP BY game) x
          ON x.game = p.game AND x.m = p.skill
        LEFT JOIN hlstats_Players_Data d ON d.playerId = p.playerId
        LEFT JOIN hlstats_Players_Locations l ON l.id = d.location_id
-       WHERE p.hideranking = 0 ORDER BY p.playerId`,
+       WHERE p.hideranking = 0 AND (p.kills > 0 OR p.deaths > 0) ORDER BY ${rankOrderSql("p.")}`,
     ),
     // Best clan per ranking: highest average skill with at least two members.
     query<OverviewTops["clans"][number]>(
@@ -2349,8 +2381,8 @@ async function loadMapPlayers(
      FROM ${where ? placeJoins("hlstats_Players") : `hlstats_Players p
      JOIN hlstats_Players_Data d ON d.playerId = p.playerId
      JOIN hlstats_Players_Locations l ON l.id = d.location_id`}
-     WHERE p.game = ? AND p.hideranking = 0 AND l.lat <> '' AND l.lng <> ''${where}
-     ORDER BY ${order === "skill" ? "p.skill DESC" : "p.last_event DESC"}, p.playerId DESC LIMIT ?`, // index game_skill / game_activity
+     WHERE p.game = ? AND p.hideranking = 0 AND l.lat <> '' AND l.lng <> ''${where}${order === "skill" ? " AND (p.kills > 0 OR p.deaths > 0)" : ""}
+     ORDER BY ${order === "skill" ? rankOrderSql("p.") : "p.last_event DESC, p.playerId DESC"} LIMIT ?`, // index game_rank / game_activity
     [...params, limit],
   );
   return withRanks(game, rows.map(mapRow).filter(onMap));
@@ -2369,7 +2401,7 @@ export async function getClanMapPlayers(game: string, clanId: number): Promise<(
   const rows = await query<Omit<MapPlayer, "lat" | "lng"> & { lat: string; lng: string; active: number | string }>(
     `SELECT ${cols}, 1 AS active FROM hlstats_Players p ${from}
      UNION ALL SELECT ${cols}, 0 AS active FROM hlstats_PlayersInactive p ${from}
-     ORDER BY skill DESC, playerId`,
+     ORDER BY ${rankOrderSql("")}`,
     [clanId, clanId],
   );
   const all = rows.map((r) => ({ ...mapRow(r), inactive: Number(r.active) === 0 })).filter(onMap);
@@ -2391,7 +2423,7 @@ export async function getLiveMapPlayers(game: string): Promise<(MapPlayer & { se
      JOIN hlstats_Players_Locations l ON l.id = CASE WHEN lv.cli_location_id > 0 THEN lv.cli_location_id ELSE d.location_id END
      WHERE s.game = ? AND lv.player_hidden = 0 AND p.hideranking = 0 AND lv.unique_id NOT LIKE 'BOT%'
        AND l.lat <> '' AND l.lng <> ''
-     ORDER BY p.skill DESC, p.playerId`,
+     ORDER BY ${rankOrderSql("p.")}`,
     [game],
   );
   return withRanks(game, rows.map((r) => ({ ...mapRow(r), serverId: Number(r.serverId) })).filter(onMap));
@@ -2400,8 +2432,8 @@ export async function getLiveMapPlayers(game: string): Promise<(MapPlayer & { se
 // Ranking position of each map player (rankPositions: 1 + ranked players
 // with more points, hidden players not counted).
 async function withRanks<R extends MapPlayer>(game: string, rows: R[]): Promise<R[]> {
-  const pos = await rankPositions(rows.map((r) => ({ game, skill: r.skill })));
-  return rows.map((r) => ({ ...r, rank: pos.get(`${game}|${r.skill}`) }));
+  const pos = await rankPositions(rows.map((r) => ({ ...r, game })));
+  return rows.map((r) => ({ ...r, rank: pos.get(Number(r.playerId)) }));
 }
 
 export type MapServer = {
@@ -2748,7 +2780,7 @@ export async function getPointSettings() {
 // Best players of a ranking for the sitemap (visible ones only).
 export function getSitemapPlayers(game: string, limit: number) {
   return query<{ playerId: number; last_event: number }>(
-    `SELECT playerId, last_event FROM hlstats_Players WHERE game = ? AND hideranking = 0 ORDER BY skill DESC, playerId DESC LIMIT ?`,
+    `SELECT playerId, last_event FROM hlstats_Players WHERE game = ? AND hideranking = 0 ORDER BY ${rankOrderSql("")} LIMIT ?`,
     [game, limit],
   );
 }

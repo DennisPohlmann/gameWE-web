@@ -45,7 +45,7 @@ async function render(file: string, game: string | null, o: BannerOptions) {
   const ids = steamIds(p.uniqueId);
   const trend = o.layout === "d";
   const [position, total, ranks, settings, origin, steam, fonts, history, before] = await Promise.all([
-    p.hideranking || p.inactive ? Promise.resolve(null) : getPlayerPosition(p.game, p.skill),
+    p.hideranking || p.inactive ? Promise.resolve(null) : getPlayerPosition(p),
     getRankedCount(p.game),
     getRanks(p.game),
     getSettings(),
