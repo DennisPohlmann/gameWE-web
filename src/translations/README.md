@@ -19,7 +19,7 @@ To add a language:
    the `{placeholders}` and the `<b>` tags as they are.
 2. Add the language to `LANGUAGES` in `languages.ts` and import the file in
    `index.ts`.
-3. The flag is a code of the flag sprite (`public/flags`, flag-icons; `arab`, `bavaria` and `schleswig-holstein` are own drawings). After adding an SVG there run `npm run flags`.
+3. The flag is a code of the flag sprite (`public/flags`, flag-icons; `arab`, `bavaria`, `baden-wuerttemberg` and `schleswig-holstein` are own drawings). After adding an SVG there run `npm run flags`.
 4. Translate the admin area: add `admin/<code>.ts` and import it in
    `admin/index.ts` (the build fails until it is there).
 

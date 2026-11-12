@@ -156,9 +156,9 @@ returns to the section whose button was pressed.
 
 ## Languages
 
-The site comes in 24 languages: en, de, ru, es, fr, pt, pt-br, nl, da, pl,
+The site comes in 25 languages: en, de, ru, es, fr, pt, pt-br, nl, da, pl,
 sr, zh-tw, zh-cn, ja, ko, ar, tr, it, uk, cs and sv, plus the German dialects
-bar (Bavarian), gsw (Swiss German) and nds (Low German). The texts are in
+bar (Bavarian), gsw (Swiss German), swg (Swabian) and nds (Low German). The texts are in
 `src/translations/` (see its README); missing texts fall back to English, in
 the dialects to German. The dialects are machine translated and say so in the
 language menu; their privacy and license pages and their admin area are in

@@ -18,6 +18,7 @@ export const LANGUAGES = [
   { code: "de", name: "Deutsch", locale: "de-DE", flag: "de" },
   { code: "bar", name: "Boarisch", note: "maschinell übersetzt", locale: "de-DE", flag: "bavaria", base: "de" },
   { code: "gsw", name: "Schwiizerdütsch", note: "maschinell übersetzt", locale: "de-CH", flag: "ch", base: "de" },
+  { code: "swg", name: "Schwäbisch", note: "maschinell übersetzt", locale: "de-DE", flag: "baden-wuerttemberg", base: "de" },
   { code: "nds", name: "Plattdüütsch", note: "maschinell übersetzt", locale: "de-DE", flag: "schleswig-holstein", base: "de" },
   { code: "ru", name: "Русский", locale: "ru-RU", flag: "ru" },
   { code: "es", name: "Español", locale: "es-ES", flag: "es" },

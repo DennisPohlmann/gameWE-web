@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" id="flag-baden-wuerttemberg" viewBox="0 0 640 480">
+  <!-- Own drawing (no flag in flag-icons): the black and gold flag of Baden-Württemberg, for Swabian. -->
+  <path fill="#000" d="M0 0h640v240H0z"/>
+  <path fill="#fc0" d="M0 240h640v240H0z"/>
+</svg>

@@ -18,6 +18,7 @@ import pt from "./pt.json";
 import ru from "./ru.json";
 import sr from "./sr.json";
 import sv from "./sv.json";
+import swg from "./swg.json";
 import tr from "./tr.json";
 import uk from "./uk.json";
 import zhCn from "./zh-cn.json";
@@ -41,7 +42,7 @@ function merge<T extends object>(base: T, over: DeepPartial<T>): T {
   return out as T;
 }
 
-const files: Record<Lang, DeepPartial<typeof en>> = { en, de, bar, gsw, nds, ru, es, fr, pt, nl, da, pl, "pt-br": ptBr, sr, "zh-tw": zhTw, "zh-cn": zhCn, ja, ko, ar, tr, it, uk, cs, sv };
+const files: Record<Lang, DeepPartial<typeof en>> = { en, de, bar, gsw, swg, nds, ru, es, fr, pt, nl, da, pl, "pt-br": ptBr, sr, "zh-tw": zhTw, "zh-cn": zhCn, ja, ko, ar, tr, it, uk, cs, sv };
 
 // A dialect fills its gaps from its base language (German), the rest from English.
 const full = (code: Lang): Dict => {
