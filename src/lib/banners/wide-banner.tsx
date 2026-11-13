@@ -182,7 +182,7 @@ function drawA(w: Wide, side?: React.ReactNode) {
   return (
     <div style={frame(th)}>
       {side ? (
-        <div style={{ display: "flex", width: SIDE, flexShrink: 0, background: th.side }}>{side}</div>
+        <div style={{ display: "flex", flexDirection: "column", width: SIDE, padding: "4px 6px", background: th.side }}>{side}</div>
       ) : w.graph ? (
         <div style={{ display: "flex", flexDirection: "column", width: SIDE, padding: "4px 6px", background: th.side }}>
           <div style={sideLabel}>{w.graph.label}</div>
@@ -236,9 +236,24 @@ function drawA(w: Wide, side?: React.ReactNode) {
 }
 
 // F: "Kartenbild" – layout A with the map picture (or the "no map image"
-// box) in the side panel instead of the graph (server).
+// box) in the side panel instead of the graph (server): the same label line
+// and the same box as the graph, framed like it.
+export const MAP_PANEL_W = SIDE - 12;
+export const MAP_PANEL_H = 66;
 function drawF(w: Wide) {
-  return drawA(w, w.mapImage ? <MapBox th={w.th} m={w.mapImage} w={SIDE} h={H - 4} flush /> : undefined);
+  const { th } = w;
+  const label = w.cells.find((c) => c.map)?.label ?? "";
+  return drawA(
+    w,
+    w.mapImage ? (
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", fontSize: 8, fontWeight: 700, color: th.sideText, letterSpacing: 0.3, textTransform: "uppercase", whiteSpace: "nowrap" }}>{label}</div>
+        <div style={{ display: "flex", marginTop: 3, flexShrink: 0 }}>
+          <MapBox th={th} m={w.mapImage} w={MAP_PANEL_W} h={MAP_PANEL_H} framed />
+        </div>
+      </div>
+    ) : undefined,
+  );
 }
 
 // B: "Karte" – name with status, the graph and the big number on the right,
@@ -543,15 +558,15 @@ function drawTallStrip(w: Wide) {
 
 // The map picture, or a quiet box of the same size with a picture sign and
 // "no map picture".
-// flush: fills a panel (layout F), no gap or rounded corners.
-function MapBox({ th, m, w, h, flush = false }: { th: ImageTheme; m: { src: string | null; none: string }; w: number; h: number; flush?: boolean }) {
-  const place = flush ? { marginTop: 0, borderRadius: 0 } : { marginTop: 2, borderRadius: 2 };
+// framed: in the graph's place (layout F), with the graph's frame.
+function MapBox({ th, m, w, h, framed = false }: { th: ImageTheme; m: { src: string | null; none: string }; w: number; h: number; framed?: boolean }) {
+  const place = framed ? { marginTop: 0, borderRadius: 0, flexShrink: 0 } : { marginTop: 2, borderRadius: 2 };
   if (m.src) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={m.src} width={w} height={h} style={{ ...place, objectFit: "cover", background: th.barBg }} alt="" />;
+    return <img src={m.src} width={w} height={h} style={{ ...place, objectFit: "cover", background: th.barBg, ...(framed ? { border: `1px solid ${th.barBorder}` } : {}) }} alt="" />;
   }
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: w, height: h, ...place, background: th.barBg, border: flush ? "none" : `1px dashed ${th.barBorder}`, color: th.muted }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: w, height: h, ...place, background: th.barBg, border: `1px ${framed ? "solid" : "dashed"} ${th.barBorder}`, color: th.muted }}>
       <svg width="18" height="14" viewBox="0 0 18 14">
         <rect x="0.75" y="0.75" width="16.5" height="12.5" rx="1.5" fill="none" stroke={th.muted} strokeWidth="1.5" />
         <circle cx="5.5" cy="4.5" r="1.6" fill={th.muted} />

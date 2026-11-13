@@ -10,7 +10,7 @@ import { fmtNum, nowUnix } from "@/lib/format";
 import { imageTheme, parseImageFile } from "@/lib/image-theme";
 import { dicts } from "@/translations";
 import { imageLang, optionsKey, type BannerOptions } from "./options";
-import { wideBanner } from "./wide-banner";
+import { MAP_PANEL_H, MAP_PANEL_W, wideBanner } from "./wide-banner";
 
 // Server banner, 560x95: file "<serverId>.png" in the banner of the active
 // skin, "<serverId>-<template>.png" in that of a design template; o the
@@ -50,7 +50,7 @@ async function render(file: string, code: string | null, o: BannerOptions) {
   const strip = o.size === "tall" && o.layout === "e";
   const mapPanel = o.size === "normal" && o.layout === "f";
   const [mapImage, best] = await Promise.all([
-    strip ? mapThumb(s.game, game.realgame, s.act_map ?? "") : mapPanel ? mapThumb(s.game, game.realgame, s.act_map ?? "", 256, 182) : null,
+    strip ? mapThumb(s.game, game.realgame, s.act_map ?? "") : mapPanel ? mapThumb(s.game, game.realgame, s.act_map ?? "", MAP_PANEL_W * 2, MAP_PANEL_H * 2) : null,
     strip ? getRanking({ game: s.game, sort: "skill", asc: false, search: "", limit: 5, offset: 0, withRank: true }) : null,
   ]);
 
