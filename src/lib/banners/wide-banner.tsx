@@ -36,9 +36,10 @@ export type Wide = {
   link: string;
   // Only in the HTML banner: the name is a link to link.
   href?: string;
-  // Only for the tall side strip layout (server): the map's radar picture
-  // as a data: URL and the best players of the ranking.
-  mapImage?: string | null;
+  // Only for the tall side strip layout (server): the map picture as a data:
+  // URL (src null: none, the box shows the text none) and the best players
+  // of the ranking.
+  mapImage?: { src: string | null; none: string };
   top?: { label: string; players: { name: string; link: string }[] };
   // The player's rank insignia (player banner in the small and tall sizes).
   badge?: React.ReactNode;
@@ -501,10 +502,7 @@ function drawTallStrip(w: Wide) {
             c.label,
             <div style={{ display: "flex", flexDirection: "column" }}>
               {line(c.value, c.color, c.full ? fitSize(c.value, TCW - 8, 10.5) : 10.5)}
-              {c.map && w.mapImage ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={w.mapImage} width={TCW - 8} height={46} style={{ marginTop: 2, objectFit: "cover", borderRadius: 2, background: th.barBg }} alt="" />
-              ) : null}
+              {c.map && w.mapImage ? <MapBox th={th} m={w.mapImage} w={TCW - 8} h={46} /> : null}
             </div>,
             c.label,
           ),
@@ -531,6 +529,25 @@ function drawTallStrip(w: Wide) {
         </div>
       </div>
     </SideStrip>
+  );
+}
+
+// The map picture, or a quiet box of the same size with a picture sign and
+// "no map picture".
+function MapBox({ th, m, w, h }: { th: ImageTheme; m: { src: string | null; none: string }; w: number; h: number }) {
+  if (m.src) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={m.src} width={w} height={h} style={{ marginTop: 2, objectFit: "cover", borderRadius: 2, background: th.barBg }} alt="" />;
+  }
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: w, height: h, marginTop: 2, borderRadius: 2, background: th.barBg, border: `1px dashed ${th.barBorder}`, color: th.muted }}>
+      <svg width="18" height="14" viewBox="0 0 18 14">
+        <rect x="0.75" y="0.75" width="16.5" height="12.5" rx="1.5" fill="none" stroke={th.muted} strokeWidth="1.5" />
+        <circle cx="5.5" cy="4.5" r="1.6" fill={th.muted} />
+        <polyline points="1.5,12 7,7 10,10 12.5,8 16.5,12" fill="none" stroke={th.muted} strokeWidth="1.5" strokeLinejoin="round" />
+      </svg>
+      <div style={{ display: "flex", fontSize: 7.5, fontWeight: 700, marginTop: 3, letterSpacing: 0.3 }}>{m.none}</div>
+    </div>
   );
 }
 

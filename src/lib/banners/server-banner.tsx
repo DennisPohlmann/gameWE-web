@@ -71,7 +71,7 @@ async function render(file: string, code: string | null, o: BannerOptions) {
         { label: t.onlineState, value: status, color: online ? th.good : th.bad, status: true },
         { label: t.map, value: s.act_map || "-", map: true },
       ],
-      mapImage,
+      mapImage: strip ? { src: mapImage, none: t.noMapImage } : undefined,
       top: best ? { label: t.topPlayers, players: best.rows.map((r) => ({ name: r.name ?? `#${r.playerId}`, link: `${origin}/${s.game}/players/${r.playerId}` })) } : undefined,
       graph: {
         label: t.players24h,
