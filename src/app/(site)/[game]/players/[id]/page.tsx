@@ -664,7 +664,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                     rows={names.map((n) => ({
                       key: n.name,
                       values: [n.name, n.connection_time, n.kills, n.lastuse || null],
-                      cells: [n.name, fmtDuration(n.connection_time), fmtNum(n.kills, lang), n.lastuse ? `${n.lastuse.slice(0, 16)} UTC` : "-"],
+                      cells: [n.name, fmtDuration(n.connection_time), fmtNum(n.kills, lang), n.lastuse ? fmtDateTime(Date.parse(`${n.lastuse.slice(0, 19).replace(" ", "T")}Z`) / 1000, lang) : "-"],
                     }))}
                   />
                 </TableWrap>

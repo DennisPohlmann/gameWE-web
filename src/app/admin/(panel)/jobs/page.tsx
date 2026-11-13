@@ -9,7 +9,7 @@ import { JOBS_T } from "@/lib/admin-texts";
 import { jobsOverview, type Job, type ScheduledRanking } from "@/lib/admin-jobs";
 import { rankingSummaries } from "@/lib/admin-rankings";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
-import { fmtDateTime, fmtNum, nowUnix, localeOf } from "@/lib/format";
+import { dateFormat, fmtDateTime, fmtNum, nowUnix, localeOf } from "@/lib/format";
 import { scheduleValue } from "@/lib/hall-period";
 import { fill, getAdminLang } from "@/lib/i18n";
 import { heartbeatFresh, jobType, shortDuration, type JobPlan, type JobType } from "@/lib/job-plan";
@@ -118,7 +118,7 @@ export default async function JobsPage() {
     return type ? t.types[type] : j.type;
   };
   const jobDetail = (j: Job) => {
-    if (j.type === "awards") return /^\d{4}-\d{2}-\d{2}$/.test(j.mode) ? fill(t.forDay, { d: new Date(`${j.mode}T12:00:00Z`).toLocaleDateString(localeOf(lang), { timeZone: "UTC", dateStyle: "medium" }) }) : "";
+    if (j.type === "awards") return /^\d{4}-\d{2}-\d{2}$/.test(j.mode) ? fill(t.forDay, { d: dateFormat(localeOf(lang), { timeZone: "UTC", dateStyle: "medium" }).format(Date.parse(`${j.mode}T12:00:00Z`)) }) : "";
     if (j.type === "reset" || j.type === "scheduled-reset") {
       const m = jobModeName(j.mode);
       return m ? t.modes[m] : j.mode;

@@ -71,7 +71,7 @@ export default async function CollectorPage() {
         u.cUpdateNone
       ),
     ],
-    [u.cSchema, schema ? `${fill(u.cSchemaVersion, { v: String(schema.version) })}${schema.at ? ` · ${schema.at.slice(0, 19)}` : ""}` : u.cSchemaUnknown],
+    [u.cSchema, schema ? `${fill(u.cSchemaVersion, { v: String(schema.version) })}${schema.at ? ` · ${fmtDateTime(Number(schema.at), lang)}` : ""}` : u.cSchemaUnknown],
     [u.cJobs, <Link prefetch={false} href="/admin/jobs">{open === null ? "–" : open ? fill(u.cJobsOpen, { n: String(open) }) : u.cJobsNone}</Link>],
   ];
   return (

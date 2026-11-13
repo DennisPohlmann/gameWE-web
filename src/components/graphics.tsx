@@ -3,6 +3,7 @@ import { ChartHead } from "./chart-head";
 import { HoverTip } from "./hover-tip";
 import { tipText } from "./tip-text";
 import { steadyFps } from "@/lib/fps";
+import { dateFormat } from "@/lib/format";
 
 // Server-rendered SVG graphics: spark pills of the player profile, pies,
 // weekday bars and the server load. Hovering shows the values (HoverTip box,
@@ -231,7 +232,7 @@ export function ServerLoadChart({
     else if (run.length) (fpsRuns.push(run.join(" ")), (run = []));
   }
   if (run.length) fpsRuns.push(run.join(" "));
-  const hhmm = (ts: number) => new Date(ts * 1000).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+  const hhmm = (ts: number) => dateFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(ts * 1000);
   const upText = (m: number) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}h`;
 
   // Consecutive points with the same map form one band.
@@ -250,7 +251,7 @@ export function ServerLoadChart({
   for (let h = Math.ceil(t0 / hourStep) * hourStep; h <= t1; h += hourStep) hours.push(h);
   // Local midnights: a line with the new day's date below; the first day's
   // date sits at the left edge.
-  const ddmm = (ts: number) => new Date(ts * 1000).toLocaleDateString(locale, { weekday: "short", day: "2-digit", month: "2-digit" });
+  const ddmm = (ts: number) => dateFormat(locale, { weekday: "short", day: "2-digit", month: "2-digit" }).format(ts * 1000);
   const midnights: number[] = [];
   for (const d = new Date(t0 * 1000); ; ) {
     d.setHours(24, 0, 0, 0);

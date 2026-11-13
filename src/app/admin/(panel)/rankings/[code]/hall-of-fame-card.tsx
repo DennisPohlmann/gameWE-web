@@ -6,7 +6,7 @@ import { basePath } from "@/lib/base-path";
 import { hallSettings } from "@/lib/admin-hall";
 import { nextStart } from "@/lib/hall-period";
 import type { Lang } from "@/lib/i18n";
-import { localeOf } from "@/lib/format";
+import { dateFormat, localeOf } from "@/lib/format";
 import { localized } from "@/lib/admin-i18n";
 import { HALL_CARD_T } from "@/lib/admin-texts";
 
@@ -16,7 +16,7 @@ export async function HallOfFameCard({ game, lang, status }: { game: string; lan
   const ht = hallT(lang);
   const locale = localeOf(lang);
   const s = await hallSettings(game);
-  const date = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString(locale, { timeZone: "UTC" });
+  const date = (d: string) => dateFormat(locale, { timeZone: "UTC" }).format(Date.parse(`${d}T00:00:00Z`));
   const f = (v: string, m: Record<string, string>) => v.replace(/\{(\w)\}/g, (_, k) => m[k] ?? "");
   const msg = { saved: t.saved, input: t.errInput, confirm: t.errConfirm, table: t.errTable }[status ?? ""];
   return (

@@ -4,7 +4,7 @@ import { HallScheduleFields, hallT, scheduleText } from "@/components/admin/hall
 import { globalHall, inheritingRankings } from "@/lib/admin-hall";
 import { nextStart } from "@/lib/hall-period";
 import type { Lang } from "@/lib/i18n";
-import { localeOf } from "@/lib/format";
+import { dateFormat, localeOf } from "@/lib/format";
 import { localized } from "@/lib/admin-i18n";
 import { GLOBAL_HALL_T } from "@/lib/admin-texts";
 
@@ -19,7 +19,7 @@ export async function GlobalHallCard({ lang, status, rankings }: { lang: Lang; s
   const msg = { on: t.savedOn, off: t.savedOff, input: t.errInput, confirm: t.errConfirm }[status ?? ""];
   const names = rankings.filter((r) => following.includes(r.code));
   const locale = localeOf(lang);
-  const date = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString(locale, { timeZone: "UTC" });
+  const date = (d: string) => dateFormat(locale, { timeZone: "UTC" }).format(Date.parse(`${d}T00:00:00Z`));
   const what = g.schedule ? { s: scheduleText(lang, g.schedule), m: ht.modes[g.mode].replace(/^./, (c) => c.toLowerCase()) } : null;
   const fill = (v: string, m: Record<string, string>) => v.replace(/\{(\w)\}/g, (_, k) => m[k] ?? "");
   let state = what ? fill(g.enabled ? t.stateOn : t.stateOff, what) : t.stateNone;

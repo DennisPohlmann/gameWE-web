@@ -10,6 +10,7 @@
 import { parseSchedule, type Schedule } from "./hall-period";
 import { localized } from "./admin-i18n";
 import { ORIGIN_T } from "./admin-texts";
+import { ltrDate } from "./format";
 import { LANGUAGES, type Lang } from "../translations/languages";
 
 export const ORIGINS = ["scheduled_resets", "daily_awards", "inactive_players", "cli", "admin", "api"] as const;
@@ -105,7 +106,7 @@ export function originText(
   const t = localized(ORIGIN_T, lang);
   const locale = LANGUAGES.find((l) => l.code === lang)?.locale;
   const date = (unix: number) =>
-    new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: o.zone || undefined }).format(unix * 1000);
+    ltrDate(locale, new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: o.zone || undefined }).format(unix * 1000));
   const parts: string[] = [];
   switch (o.feature) {
     case "scheduled_resets":

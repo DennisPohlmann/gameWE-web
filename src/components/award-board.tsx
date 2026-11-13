@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Empty, PlayerLink, Section, TableWrap } from "@/components/ui";
 import { sortHeads } from "@/components/sort-head";
 import { awardValue, getAwardBoard, getAwardDay, type AwardBoardRow } from "@/lib/awards";
-import { fmtDuration, fmtNum, localeOf } from "@/lib/format";
+import { dateFormat, fmtDuration, fmtNum, localeOf } from "@/lib/format";
 import { fill, type Dict, type Lang } from "@/lib/i18n";
 import { sortRows, sortState } from "@/lib/table-sort";
 
@@ -102,7 +102,7 @@ export async function AwardDayTable({ game, day, t, lang, sort }: { game: string
   const sorted = sort ? sortHeads(order, sort.base, { ...sort.params, ...order.keep }) : null;
   const th = (label: string, key: keyof typeof awardValues) => (sorted ? sorted(label, key, "") : <th>{label}</th>);
   const val = (a: (typeof rows)[number], v: number) => awardValue(a, v, (n) => fmtNum(n, lang), fmtDuration);
-  const title = new Date(`${day}T00:00:00Z`).toLocaleDateString(localeOf(lang), { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+  const title = dateFormat(localeOf(lang), { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(Date.parse(`${day}T00:00:00Z`));
   return (
     <Section title={fill(t.awardsOfDay, { day: title })}>
       {rows.some((a) => a.winner) ? (

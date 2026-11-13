@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Dict } from "@/lib/i18n";
+import { dateFormat } from "@/lib/format";
 
 // Month calendar of the daily awards, as on gameME: week numbers, one link
 // per day up to `last` (the last day with awards); later days, today among
@@ -39,7 +40,7 @@ export function AwardCalendar({
     return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
   };
   const next = shift(1);
-  const title = first.toLocaleDateString(locale, { month: "long", year: "numeric", timeZone: "UTC" });
+  const title = dateFormat(locale, { month: "long", year: "numeric", timeZone: "UTC" }).format(first);
   return (
     <table className="award-cal" aria-label={t.awardsCalendar}>
       <caption>

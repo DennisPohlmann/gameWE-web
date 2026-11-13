@@ -12,14 +12,14 @@ import { Section, TableWrap } from "@/components/ui";
 import { rankingSummaries, resettableRankings } from "@/lib/admin-rankings";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { getAdminLang } from "@/lib/i18n";
-import { localeOf } from "@/lib/format";
+import { dateFormat, localeOf } from "@/lib/format";
 import { originText } from "@/lib/job-origin";
 import { shortDuration } from "@/lib/job-plan";
 import { GlobalHallCard } from "./global-hall-card";
 import { RESET_MODES, collectorRunning, getJob, jobModeName, jobsAvailable, recentJobs, resetOrigin, type ResetJob, type ResetMode } from "@/lib/reset";
 
 function when(ts: number | null, locale: string) {
-  return ts ? new Date(ts * 1000).toLocaleString(locale) : "";
+  return ts ? dateFormat(locale, { year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric" }).format(ts * 1000) : "";
 }
 
 export default async function ResetPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {

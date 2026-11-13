@@ -10,7 +10,7 @@ import { adminDict, tr } from "@/lib/admin-i18n";
 import { countByRanking, rankingClans, rankingPlayers, rankingSummaries } from "@/lib/admin-rankings";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { basePath } from "@/lib/base-path";
-import { localeOf } from "@/lib/format";
+import { dateFormat, localeOf } from "@/lib/format";
 import { gameKind } from "@/lib/games";
 import { getAdminLang } from "@/lib/i18n";
 import { rankingBlockVac, rankingBots } from "@/lib/admin-ranking-bots";
@@ -89,7 +89,7 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
   const label = (key: string) => ((l) => (l ? tr(l, lang) : key))(entities.find((e) => e.key === key)?.label);
   const kind = gameKind(r.base);
   const locale = localeOf(lang);
-  const date = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString(locale, { timeZone: "UTC" });
+  const date = (d: string) => dateFormat(locale, { timeZone: "UTC" }).format(Date.parse(`${d}T00:00:00Z`));
   const state = r.hidden
     ? { pill: <span className="pill">{u.stHiddenRanking}</span>, sub: u.stHiddenSub }
     : template

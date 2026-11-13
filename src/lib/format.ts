@@ -1,16 +1,31 @@
-import { LANGUAGES, type Lang } from "@/translations/languages";
+import { LANGUAGES, langDir, type Lang } from "../translations/languages";
 
 const locales = Object.fromEntries(LANGUAGES.map((l) => [l.code, l.locale])) as Record<Lang, string>;
 
 // toLocaleString builds a new formatter on every call, which costs about
 // 0.3 ms; the charts format thousands of times per page. These keep one
 // formatter per locale and options.
-const formatters = new Map<string, Intl.DateTimeFormat | Intl.NumberFormat>();
+type DateFormat = { format(d: number | Date): string };
+const formatters = new Map<string, DateFormat | Intl.NumberFormat>();
 
-export function dateFormat(locale: string, opts: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+// Right-to-left pages (Arabic): the locale puts right-to-left marks between
+// the parts of a date, so the page showed "2026/11/13" with the time before
+// the date. Dates read left to right instead, as one isolated run (U+2066 ...
+// U+2069, which also works in title attributes and SVG text).
+const rtlLocales = new Set<string>(LANGUAGES.filter((l) => langDir(l.code) === "rtl").map((l) => l.locale));
+export function ltrDate(locale: string | undefined, s: string): string {
+  return locale && rtlLocales.has(locale) ? `\u2066${s.replace(/[\u200e\u200f\u061c]/g, "")}\u2069` : s;
+}
+
+// Every date and time shown on the site goes through this (or fmtDate,
+// fmtDateTime), so right-to-left pages get ltrDate.
+export function dateFormat(locale: string, opts: Intl.DateTimeFormatOptions): DateFormat {
   const key = `d|${locale}|${JSON.stringify(opts)}`;
-  let f = formatters.get(key) as Intl.DateTimeFormat | undefined;
-  if (!f) formatters.set(key, (f = new Intl.DateTimeFormat(locale, opts)));
+  let f = formatters.get(key) as DateFormat | undefined;
+  if (!f) {
+    const intl = new Intl.DateTimeFormat(locale, opts);
+    formatters.set(key, (f = rtlLocales.has(locale) ? { format: (d) => ltrDate(locale, intl.format(d)) } : intl));
+  }
   return f;
 }
 

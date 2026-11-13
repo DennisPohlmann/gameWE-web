@@ -6,7 +6,7 @@ import { LineChart } from "@/components/chart";
 import { Empty, Flag, Pager, PlayerLink, Section, TableWrap, pageParam } from "@/components/ui";
 import { RankBadge, rankName } from "@/components/badges";
 import { HallStars } from "@/components/hall-stars";
-import { fmtDate, fmtDateTime, fmtDuration, fmtNum, fmtPct, localeOf } from "@/lib/format";
+import { dateFormat, fmtDate, fmtDateTime, fmtDuration, fmtNum, fmtPct, localeOf } from "@/lib/format";
 import { getHallOfFame, hallOfFameShown, hallSteam, nextHallReset, periodLabel, starTable, type HallEntry, type HallRow, type HallSteam } from "@/lib/hall-of-fame";
 import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
 import { externalImage } from "@/lib/consent";
@@ -130,7 +130,7 @@ export default async function HallOfFamePage({ params, searchParams }: { params:
 }
 
 function Period({ game, row, steam, t, lang, locale }: { game: string; row: HallRow; steam: Map<number, HallSteam>; t: Dict; lang: Lang; locale: string }) {
-  const date = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString(locale, { timeZone: "UTC" });
+  const date = (d: string) => dateFormat(locale, { timeZone: "UTC" }).format(Date.parse(`${d}T00:00:00Z`));
   const range = row.end > row.start ? `${date(row.start)} – ${date(row.end)}` : date(row.start);
   return (
     <Section

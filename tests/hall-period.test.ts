@@ -39,6 +39,9 @@ test("period names", () => {
   assert.equal(de(p("year", 2, "2026-01-01", "2027-12-31")), "2026–2027");
   assert.equal(de(p("month", 1, "2026-10-15", "2026-11-14")), "15. Okt. – 14. Nov. 2026");
   assert.equal(de(p("week", 1, "2026-10-21", "2026-10-27")), "21.–27. Okt. 2026");
+  // Arabic: labels built here are left-to-right isolates too, else they read "2026 Q3" / "44–43".
+  assert.equal(periodLabel(p("month", 3, "2026-07-01", "2026-09-30"), "ar", "W {n}"), "\u2066Q3 2026\u2069");
+  assert.equal(periodLabel(p("week", 2, "2026-10-19", "2026-11-01"), "ar", "W {n}"), "W \u206643–44\u2069 2026");
 });
 
 test("next reset from the start of the running period", () => {

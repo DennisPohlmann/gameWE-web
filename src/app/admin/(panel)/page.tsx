@@ -6,7 +6,7 @@ import { adminDict } from "@/lib/admin-i18n";
 import { adminPlayerTotals, playersByRanking, rankingSummaries } from "@/lib/admin-rankings";
 import { LEVEL_ADMIN, adminSecret, requireAdmin } from "@/lib/auth";
 import { adminQuery } from "@/lib/db";
-import { localeOf } from "@/lib/format";
+import { dateFormat, localeOf } from "@/lib/format";
 import { fill, getAdminLang } from "@/lib/i18n";
 import { heartbeatFresh } from "@/lib/job-plan";
 import { countBackupCodes, readSecret } from "@/lib/totp";
@@ -42,7 +42,7 @@ export default async function AdminHome() {
   const beatAt = Number(beat[0]?.value ?? 0);
   const now = Math.floor(Date.now() / 1000);
   const beatOk = heartbeatFresh(beatAt, now);
-  const since = beatAt > 0 ? new Date(beatAt * 1000).toLocaleString(localeOf(lang), { dateStyle: "short", timeStyle: "short" }) : "?";
+  const since = beatAt > 0 ? dateFormat(localeOf(lang), { dateStyle: "short", timeStyle: "short" }).format(beatAt * 1000) : "?";
   const noGame = active.filter((r) => !r.base);
 
   // external: href is a page outside the admin area (a GitHub release).

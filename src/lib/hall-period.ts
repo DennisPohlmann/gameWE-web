@@ -4,6 +4,8 @@
 
 // A stored period: unit and every N of it (a quarter is 3 months), its first
 // and its last day (YYYY-MM-DD).
+import { ltrDate } from "./format";
+
 export type HallUnit = "day" | "week" | "month" | "year";
 export type HallPeriod = { unit: HallUnit; every: number; start: string; end: string };
 
@@ -21,7 +23,7 @@ export function periodLabel(r: HallPeriod, locale: string, week: string, short =
   const d = Number(r.start.slice(8, 10));
   const range = (o: Intl.DateTimeFormatOptions) => {
     const f = new Intl.DateTimeFormat(locale, { ...o, timeZone: "UTC" });
-    return last > from ? f.formatRange(from, last) : f.format(from);
+    return ltrDate(locale, last > from ? f.formatRange(from, last) : f.format(from));
   };
   const days = () => range(short ? { day: "numeric", month: "numeric" } : { day: "numeric", month: "short", year: "numeric" });
   if ((r.unit === "month" && d !== 1) || (r.unit === "week" && from.getUTCDay() !== 1)) return days();
@@ -29,12 +31,12 @@ export function periodLabel(r: HallPeriod, locale: string, week: string, short =
     case "year":
       return range({ year: "numeric" });
     case "month":
-      if (r.every === 3 && (m - 1) % 3 === 0) return `Q${(m - 1) / 3 + 1} ${yy}`;
+      if (r.every === 3 && (m - 1) % 3 === 0) return ltrDate(locale, `Q${(m - 1) / 3 + 1} ${yy}`);
       return range({ month: short || r.every > 1 ? "short" : "long", year: short ? "2-digit" : "numeric" });
     case "week": {
       const [wy, w] = isoWeek(from);
       const [, wl] = isoWeek(last);
-      const n = r.every > 1 ? `${w}–${wl}` : String(w);
+      const n = r.every > 1 ? ltrDate(locale, `${w}–${wl}`) : String(w);
       return `${week.replace("{n}", n)} ${short ? String(wy).slice(2) : wy}`;
     }
     default:
