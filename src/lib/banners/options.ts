@@ -6,6 +6,7 @@
 // shows a picture. Pure functions without file access, so tests can run them.
 
 import { isLang, type Lang } from "../../translations/languages.ts";
+import { textWidth } from "./text-width.ts";
 
 export type BannerKind = "player" | "server" | "voice";
 
@@ -122,8 +123,7 @@ export function bannerChoices(kind: BannerKind, t: { bannerLayouts: Record<strin
 
 // Font size at which text fits into room px without being shortened (a Cell
 // with full, the TeamSpeak address): size while it fits, smaller in half
-// pixels down to 6. About 0.6 em per character of Inter bold.
-// shortcut: estimated, not measured; past about 70 characters the text clips, measure with Satori if that matters.
+// pixels down to 6, measured with Inter bold's widths (text-width.ts).
 export function fitSize(text: string, room: number, size: number): number {
-  return Math.max(6, Math.min(size, Math.floor((room / (text.length * 0.6)) * 2) / 2));
+  return Math.max(6, Math.min(size, Math.floor((room / textWidth(text, 1)) * 2) / 2));
 }
