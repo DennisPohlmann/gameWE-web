@@ -10,6 +10,8 @@ radar picture of the heatmap.
   pictures, property of Valve Corporation; see `css/LICENSE.txt`.
 - `dods/`: the 9 stock maps of Day of Defeat: Source, the same kind of
   pictures, property of Valve Corporation; see `dods/LICENSE.txt`.
+- `hl2mp/`: the 7 stock maps of Half-Life 2 Deathmatch, the same kind of
+  pictures, property of Valve Corporation; see `hl2mp/LICENSE.txt`.
 
 Made with `npm run map-thumbs` from a game installation
 ([scripts/overviews/README.md](../scripts/overviews/README.md)).
