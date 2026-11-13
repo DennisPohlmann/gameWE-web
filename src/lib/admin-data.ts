@@ -356,16 +356,17 @@ export async function otherServerAt(address: string, port: number, exceptId: str
 }
 
 // A write the database user has no right to (MySQL/MariaDB table or column
-// access denied, PostgreSQL 42501).
+// access denied, PostgreSQL 42501, SQL Server 229 / 230).
 function isDenied(err: unknown): boolean {
-  const code = (err as { code?: unknown } | null)?.code;
-  return code === "ER_TABLEACCESS_DENIED_ERROR" || code === "ER_COLUMNACCESS_DENIED_ERROR" || code === "42501";
+  const { code, number } = (err as { code?: unknown; number?: unknown } | null) ?? {};
+  return code === "ER_TABLEACCESS_DENIED_ERROR" || code === "ER_COLUMNACCESS_DENIED_ERROR" || code === "42501" || number === 229 || number === 230;
 }
 
-// A write that broke a unique key (MySQL/MariaDB ER_DUP_ENTRY, PostgreSQL 23505).
+// A write that broke a unique key (MySQL/MariaDB ER_DUP_ENTRY, PostgreSQL 23505,
+// SQL Server 2601 unique index / 2627 primary key).
 export function isDuplicateKey(err: unknown): boolean {
-  const code = (err as { code?: unknown } | null)?.code;
-  return code === "ER_DUP_ENTRY" || code === "23505";
+  const { code, number } = (err as { code?: unknown; number?: unknown } | null) ?? {};
+  return code === "ER_DUP_ENTRY" || code === "23505" || number === 2601 || number === 2627;
 }
 
 // The form's plain fields of a new row, to fill the form again after an
