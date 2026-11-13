@@ -223,7 +223,7 @@ banner also `f` map image, layout `a` with the map's thumbnail instead of
 the players graph, same pictures as below, else a "no map image" box) and `?bg=` a background pattern
 (`plain`, the default, `dots`, `grid`, `stripes`, `carbon`, `glow`).
 `?size=` picks the size: `normal` (the default, the layouts above: player
-400x100, server and TeamSpeak 560x95), `small` (350x20, one line) or `tall`
+400x100, server and TeamSpeak 560x95), `small` (350x20, two lines) or `tall`
 (160x400, upright); `small` and `tall` have one design for all three
 banners; `tall` also takes `?layout=e`: the name from top to bottom in a
 strip on the left, beside it labelled sections (status, the big number,

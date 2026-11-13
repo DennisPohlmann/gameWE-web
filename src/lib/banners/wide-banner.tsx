@@ -165,8 +165,8 @@ function Logo({ th, size = 13, color }: { th: ImageTheme; size?: number; color?:
   );
 }
 
-function StatusDot({ w }: { w: Wide }) {
-  return <div style={{ display: "flex", width: 7, height: 7, borderRadius: 4, background: w.online ? w.th.good : w.th.bad, marginRight: 5 }} />;
+function StatusDot({ w, size = 7 }: { w: Wide; size?: number }) {
+  return <div style={{ display: "flex", flexShrink: 0, width: size, height: size, borderRadius: size, background: w.online ? w.th.good : w.th.bad, marginRight: size < 7 ? 3 : 5 }} />;
 }
 
 const SIDE = 128;
@@ -459,46 +459,56 @@ export function SideStrip({ th, label, href, height, big = false, icon, children
 // status (the dot shows it).
 const extra = (w: Wide) => w.cells.filter((c) => c.pie === undefined && !c.status);
 
-// Small, 350x20: one line with status dot, flag, name, the big number and
-// as many values as fit; whatever does not fit wraps into the hidden second
-// line and drops out whole; a full value (the TeamSpeak address) stays and
-// the name gives way.
+// Small, 350x20, two lines like the classic server banners: the name over the
+// whole width on top; below the first small value (server or TeamSpeak
+// address), the big number and as many further values as fit (whatever does
+// not fit wraps into a hidden line and drops out whole). Game icon in front,
+// logo at the end, both over the two lines.
 // trend: layout d (server), the players graph before the logo instead of
-// address and map; the name gets the rest of the line.
+// address and map below the name.
 function drawSmall(w: Wide, trend = false) {
   const { th } = w;
   const graph = trend ? w.graph : null;
-  const rest = 350 - 12 - (w.game?.icon ? 17 : 0) - (w.status ? 12 : 0) - (w.flag ? 17 : 0) - textWidth(`${w.hero.value}/${w.hero.max}`, 9.5) - 7 - 66 - textWidth("gameWE", 9.5) - 6;
-  const small = fitText(w.name, graph ? rest : w.game?.icon ? 105 : 120, 9.5, 8);
+  // 340 px inside the frame less the logo (44), icon, status dot, flag and graph.
+  const name = fitText(w.name, 296 - (w.game?.icon ? 18 : 0) - (w.status ? 8 : 0) - (w.flag ? 14 : 0) - (graph ? 66 : 0), 8.5, 7);
   const cells = graph ? [] : (w.small ?? extra(w));
-  const item = (c: Cell) => (
-    <span key={c.label + c.value} style={{ display: "flex", flexShrink: 0, alignItems: "center", height: 18, marginLeft: 7, whiteSpace: "nowrap", color: th.muted }}>
+  const [lead, rest] = w.small ? [cells.slice(0, 1), cells.slice(1)] : [[], cells];
+  const line = { display: "flex", alignItems: "center", height: 9, lineHeight: 1, whiteSpace: "nowrap" } as const;
+  const item = (c: Cell, i: number) => (
+    <span key={c.label + c.value} style={{ ...line, flexShrink: 0, marginLeft: i ? 7 : 0, color: th.muted }}>
       {c.label ? <span style={{ marginRight: 3 }}>{c.label}</span> : null}
       <b style={{ color: c.color ?? th.text }}>{c.value}</b>
     </span>
   );
+  const hero = (
+    <span key="hero" style={{ ...line, flexShrink: 0, marginLeft: lead.length ? 7 : 0, fontWeight: 700, color: th.accent }}>
+      {w.hero.value}
+      <span style={{ opacity: 0.75 }}>/{w.hero.max}</span>
+    </span>
+  );
   return (
-    <div style={{ ...frame(th), borderTop: `1px solid ${th.frame}`, alignItems: "center", padding: "0 5px", fontSize: 9.5, color: th.text }}>
+    <div style={{ ...frame(th), borderTop: `1px solid ${th.frame}`, alignItems: "center", padding: "0 4px", color: th.text }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      {w.game?.icon ? <img src={w.game.icon} width={12} height={12} style={{ marginRight: 5, borderRadius: 2 }} alt="" /> : null}
-      {w.status ? <StatusDot w={w} /> : null}
-      <Flag src={w.flag} h={9} />
-      <span style={{ display: "flex", flexShrink: 0, fontSize: small.size, fontWeight: 700, whiteSpace: "nowrap" }}><Linked href={w.href}>{small.text}</Linked></span>
-      <span style={{ display: "flex", flexShrink: 0, marginLeft: 7, fontWeight: 700, color: th.accent, whiteSpace: "nowrap" }}>
-        {w.hero.value}
-        <span style={{ opacity: 0.75 }}>/{w.hero.max}</span>
-      </span>
-      {cells.filter((c) => c.full).map(item)}
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", flex: 1, minWidth: 0, height: 18, overflow: "hidden", marginLeft: 3 }}>
-        {cells.filter((c) => !c.full).map(item)}
+      {w.game?.icon ? <img src={w.game.icon} width={14} height={14} style={{ marginRight: 4, borderRadius: 2 }} alt="" /> : null}
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
+        <div style={{ ...line, fontSize: 8.5, fontWeight: 700 }}>
+          {w.status ? <StatusDot w={w} size={5} /> : null}
+          <Flag src={w.flag} h={7} />
+          <span style={{ display: "flex", flexShrink: 0, fontSize: name.size }}><Linked href={w.href}>{name.text}</Linked></span>
+        </div>
+        <div style={{ ...line, flexWrap: "wrap", overflow: "hidden", fontSize: 8 }}>
+          {lead.map(item)}
+          {hero}
+          {rest.map((c) => item(c, 1))}
+        </div>
       </div>
       {graph ? (
         <div style={{ display: "flex", flexShrink: 0, marginLeft: 6 }}>
           <Graph g={graph} th={th} w={60} h={14} scale={false} />
         </div>
       ) : null}
-      <div style={{ display: "flex", flexShrink: 0, marginLeft: 6 }}>
-        <Logo th={th} size={9.5} />
+      <div style={{ display: "flex", flexShrink: 0, marginLeft: 5 }}>
+        <Logo th={th} size={9} />
       </div>
     </div>
   );

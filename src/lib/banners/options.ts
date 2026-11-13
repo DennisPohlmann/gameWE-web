@@ -36,7 +36,7 @@ export const BACKGROUNDS = ["plain", "dots", "grid", "stripes", "carbon", "glow"
 export type Background = (typeof BACKGROUNDS)[number];
 
 // The size (?size=): "normal" is the banner of the layouts (player 400x100,
-// server and TeamSpeak 560x95); "small" one line, "tall" upright, each in
+// server and TeamSpeak 560x95); "small" two lines, "tall" upright, each in
 // one design for all three kinds (wide-banner.tsx); the tall one also has
 // layout e (side strip with the name), the other layouts do not apply.
 export const SIZES = ["normal", "small", "tall"] as const;
