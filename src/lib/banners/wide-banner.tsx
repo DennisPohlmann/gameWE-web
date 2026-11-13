@@ -409,8 +409,8 @@ export function SideStrip({ th, label, href, height, big = false, icon, children
   const top = icon ? strip : 0;
   const len = height - top;
   // Shortened by hand: Satori draws no ellipsis in the turned box.
-  // shortcut: about 0.75 em per upper-case letter plus the spacing, estimated; measure with Satori if names clip.
-  const room = Math.floor((len - 16) / (size * 0.75 + (big ? 1 : 2)));
+  // shortcut: about 0.65 em per upper-case letter of Inter bold plus the spacing (the average, W and M are wider), estimated; measure with Satori if names of wide letters clip.
+  const room = Math.floor((len - 16) / (size * 0.65 + (big ? 1 : 2)));
   const text = label.length > room ? `${label.slice(0, room - 1).trimEnd()}…` : label;
   const block = th.stripe ?? th.accent;
   return (
