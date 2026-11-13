@@ -11,7 +11,7 @@ imagePullSecrets: []
 
 # Settings without secrets (docs/CONFIG.md), as environment variables.
 env:
-  DB_TYPE: mariadb # or postgres
+  DB_TYPE: mariadb # or postgres, mssql
   DB_HOST: gamewe-db
   DB_PORT: "3306"
   DB_NAME: gamewe

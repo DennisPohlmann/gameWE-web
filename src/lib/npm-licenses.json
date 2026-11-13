@@ -1,5 +1,90 @@
 [
  {
+  "name": "@azure-rest/core-client",
+  "version": "2.9.0",
+  "license": "MIT"
+ },
+ {
+  "name": "@azure/abort-controller",
+  "version": "2.2.0",
+  "license": "MIT"
+ },
+ {
+  "name": "@azure/core-auth",
+  "version": "1.11.0",
+  "license": "MIT"
+ },
+ {
+  "name": "@azure/core-client",
+  "version": "1.11.2",
+  "license": "MIT"
+ },
+ {
+  "name": "@azure/core-lro",
+  "version": "2.7.2",
+  "license": "MIT"
+ },
+ {
+  "name": "@azure/core-paging",
+  "version": "1.7.0",
+  "license": "MIT"
+ },
+ {
+  "name": "@azure/core-process",
+  "version": "1.0.0",
+  "license": "MIT"
+ },
+ {
+  "name": "@azure/core-rest-pipeline",
+  "version": "1.25.1",
+  "license": "MIT"
+ },
+ {
+  "name": "@azure/core-tracing",
+  "version": "1.4.0",
+  "license": "MIT"
+ },
+ {
+  "name": "@azure/core-util",
+  "version": "1.14.0",
+  "license": "MIT"
+ },
+ {
+  "name": "@azure/identity",
+  "version": "4.14.1",
+  "license": "MIT"
+ },
+ {
+  "name": "@azure/keyvault-common",
+  "version": "2.1.1",
+  "license": "MIT"
+ },
+ {
+  "name": "@azure/keyvault-keys",
+  "version": "4.10.2",
+  "license": "MIT"
+ },
+ {
+  "name": "@azure/logger",
+  "version": "1.4.0",
+  "license": "MIT"
+ },
+ {
+  "name": "@azure/msal-browser",
+  "version": "5.29.1",
+  "license": "MIT"
+ },
+ {
+  "name": "@azure/msal-common",
+  "version": "16.16.2",
+  "license": "MIT"
+ },
+ {
+  "name": "@azure/msal-node",
+  "version": "7.2.2",
+  "license": "MIT"
+ },
+ {
   "name": "@emnapi/runtime",
   "version": "1.11.3",
   "license": "MIT"
@@ -175,6 +260,11 @@
   "platform": true
  },
  {
+  "name": "@js-joda/core",
+  "version": "6.3.2",
+  "license": "BSD-3-Clause"
+ },
+ {
   "name": "@next/env",
   "version": "16.4.6",
   "license": "MIT"
@@ -239,8 +329,23 @@
   "license": "Apache-2.0"
  },
  {
+  "name": "@tediousjs/connection-string",
+  "version": "1.1.0",
+  "license": "MIT"
+ },
+ {
   "name": "@types/node",
   "version": "26.6.6",
+  "license": "MIT"
+ },
+ {
+  "name": "@types/readable-stream",
+  "version": "4.0.25",
+  "license": "MIT"
+ },
+ {
+  "name": "@typespec/ts-http-runtime",
+  "version": "0.3.10",
   "license": "MIT"
  },
  {
@@ -250,14 +355,49 @@
   "note": "bundled in next (next/og)"
  },
  {
+  "name": "abort-controller",
+  "version": "3.0.0",
+  "license": "MIT"
+ },
+ {
+  "name": "agent-base",
+  "version": "9.0.0",
+  "license": "MIT"
+ },
+ {
   "name": "aws-ssl-profiles",
   "version": "1.1.2",
+  "license": "MIT"
+ },
+ {
+  "name": "base64-js",
+  "version": "1.5.1",
   "license": "MIT"
  },
  {
   "name": "baseline-browser-mapping",
   "version": "2.11.35",
   "license": "Apache-2.0"
+ },
+ {
+  "name": "bl",
+  "version": "6.1.6",
+  "license": "MIT"
+ },
+ {
+  "name": "buffer",
+  "version": "6.0.3",
+  "license": "MIT"
+ },
+ {
+  "name": "buffer-equal-constant-time",
+  "version": "1.0.1",
+  "license": "BSD-3-Clause"
+ },
+ {
+  "name": "bundle-name",
+  "version": "4.1.1",
+  "license": "MIT"
  },
  {
   "name": "caniuse-lite",
@@ -270,13 +410,63 @@
   "license": "MIT"
  },
  {
+  "name": "commander",
+  "version": "11.1.0",
+  "license": "MIT"
+ },
+ {
+  "name": "debug",
+  "version": "4.4.3",
+  "license": "MIT"
+ },
+ {
+  "name": "default-browser",
+  "version": "5.5.1",
+  "license": "MIT"
+ },
+ {
+  "name": "default-browser-id",
+  "version": "5.0.1",
+  "license": "MIT"
+ },
+ {
+  "name": "define-lazy-prop",
+  "version": "3.0.0",
+  "license": "MIT"
+ },
+ {
   "name": "detect-libc",
   "version": "2.1.2",
   "license": "Apache-2.0"
  },
  {
+  "name": "ecdsa-sig-formatter",
+  "version": "1.0.11",
+  "license": "Apache-2.0"
+ },
+ {
+  "name": "event-target-shim",
+  "version": "5.0.1",
+  "license": "MIT"
+ },
+ {
+  "name": "events",
+  "version": "3.3.0",
+  "license": "MIT"
+ },
+ {
   "name": "generate-function",
   "version": "2.3.1",
+  "license": "MIT"
+ },
+ {
+  "name": "http-proxy-agent",
+  "version": "9.1.0",
+  "license": "MIT"
+ },
+ {
+  "name": "https-proxy-agent",
+  "version": "9.1.0",
   "license": "MIT"
  },
  {
@@ -285,14 +475,99 @@
   "license": "MIT"
  },
  {
+  "name": "ieee754",
+  "version": "1.2.1",
+  "license": "BSD-3-Clause"
+ },
+ {
+  "name": "inherits",
+  "version": "2.0.4",
+  "license": "ISC"
+ },
+ {
+  "name": "is-docker",
+  "version": "3.0.0",
+  "license": "MIT"
+ },
+ {
+  "name": "is-in-ssh",
+  "version": "1.0.0",
+  "license": "MIT"
+ },
+ {
+  "name": "is-inside-container",
+  "version": "1.0.0",
+  "license": "MIT"
+ },
+ {
   "name": "is-property",
   "version": "1.0.2",
+  "license": "MIT"
+ },
+ {
+  "name": "is-wsl",
+  "version": "3.1.1",
+  "license": "MIT"
+ },
+ {
+  "name": "js-md4",
+  "version": "0.3.2",
+  "license": "MIT"
+ },
+ {
+  "name": "jsonwebtoken",
+  "version": "9.0.3",
+  "license": "MIT"
+ },
+ {
+  "name": "jwa",
+  "version": "2.0.1",
+  "license": "MIT"
+ },
+ {
+  "name": "jws",
+  "version": "4.0.1",
   "license": "MIT"
  },
  {
   "name": "leaflet",
   "version": "1.9.4",
   "license": "BSD-2-Clause"
+ },
+ {
+  "name": "lodash.includes",
+  "version": "4.3.0",
+  "license": "MIT"
+ },
+ {
+  "name": "lodash.isboolean",
+  "version": "3.0.3",
+  "license": "MIT"
+ },
+ {
+  "name": "lodash.isinteger",
+  "version": "4.0.4",
+  "license": "MIT"
+ },
+ {
+  "name": "lodash.isnumber",
+  "version": "3.0.3",
+  "license": "MIT"
+ },
+ {
+  "name": "lodash.isplainobject",
+  "version": "4.0.6",
+  "license": "MIT"
+ },
+ {
+  "name": "lodash.isstring",
+  "version": "4.0.1",
+  "license": "MIT"
+ },
+ {
+  "name": "lodash.once",
+  "version": "4.1.1",
+  "license": "MIT"
  },
  {
   "name": "long",
@@ -302,6 +577,16 @@
  {
   "name": "lru.min",
   "version": "1.1.5",
+  "license": "MIT"
+ },
+ {
+  "name": "ms",
+  "version": "2.1.3",
+  "license": "MIT"
+ },
+ {
+  "name": "mssql",
+  "version": "12.7.14",
   "license": "MIT"
  },
  {
@@ -320,8 +605,18 @@
   "license": "MIT"
  },
  {
+  "name": "native-duplexpair",
+  "version": "1.0.0",
+  "license": "MIT"
+ },
+ {
   "name": "next",
   "version": "16.4.6",
+  "license": "MIT"
+ },
+ {
+  "name": "open",
+  "version": "11.0.4",
   "license": "MIT"
  },
  {
@@ -395,6 +690,21 @@
   "license": "MIT"
  },
  {
+  "name": "powershell-utils",
+  "version": "0.2.1",
+  "license": "MIT"
+ },
+ {
+  "name": "process",
+  "version": "0.11.10",
+  "license": "MIT"
+ },
+ {
+  "name": "proxy-agent-negotiate",
+  "version": "1.1.0",
+  "license": "MIT"
+ },
+ {
   "name": "react",
   "version": "19.3.1",
   "license": "MIT"
@@ -402,6 +712,21 @@
  {
   "name": "react-dom",
   "version": "19.3.1",
+  "license": "MIT"
+ },
+ {
+  "name": "readable-stream",
+  "version": "4.8.0",
+  "license": "MIT"
+ },
+ {
+  "name": "run-applescript",
+  "version": "7.1.0",
+  "license": "MIT"
+ },
+ {
+  "name": "safe-buffer",
+  "version": "5.2.1",
   "license": "MIT"
  },
  {
@@ -445,8 +770,23 @@
   "license": "MIT"
  },
  {
+  "name": "string_decoder",
+  "version": "1.3.0",
+  "license": "MIT"
+ },
+ {
   "name": "styled-jsx",
   "version": "5.1.6",
+  "license": "MIT"
+ },
+ {
+  "name": "tarn",
+  "version": "3.1.2",
+  "license": "MIT"
+ },
+ {
+  "name": "tedious",
+  "version": "20.3.9",
   "license": "MIT"
  },
  {
@@ -462,6 +802,11 @@
  {
   "name": "uqr",
   "version": "0.1.3",
+  "license": "MIT"
+ },
+ {
+  "name": "wsl-utils",
+  "version": "1.0.1",
   "license": "MIT"
  },
  {

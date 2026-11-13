@@ -17,7 +17,7 @@ machine, and the tar.gz if you prefer a plain service next to the collector.
 | What | Notes |
 |------|-------|
 | The gameWE collector | Installed, with its database set up (section 1.2). Its full guide: [collector INSTALLATION.md](https://github.com/DennisPohlmann/gameWE-collector/blob/main/docs/INSTALLATION.md). |
-| Database | **MariaDB 11.4 or 12.3**, or **PostgreSQL 17 or 18** (tested on every release). MySQL 8 is not supported by the collector's schema scripts. |
+| Database | **MariaDB 11.4 or 12.3**, **PostgreSQL 17 or 18** or **Microsoft SQL Server 2022** (tested on every release). MySQL 8 is not supported by the collector's schema scripts. |
 | Node.js 22 or newer | Only for the tar.gz (Node.js 26 LTS recommended). The container brings its own Node.js 26. |
 | Reverse proxy with TLS | nginx, Caddy, Apache or similar in front of port 3000 (see [section 6](#6-reverse-proxy)). |
 | A secret | At least 32 characters for the admin session: `openssl rand -hex 32`. |
@@ -82,6 +82,14 @@ cd schema/postgres/init
 COLLECTOR_PASSWORD='...' WEB_PASSWORD='...' WEB_ADMIN_PASSWORD='...' ./init-db.sh -U postgres
 ```
 
+**SQL Server** (`schema/mssql/init/`, run with `sqlcmd` as sysadmin; the sa
+password in `SQLCMDPASSWORD`; then `gamewe db init` creates the tables):
+
+```bash
+cd schema/mssql/init
+COLLECTOR_PASSWORD='...' WEB_PASSWORD='...' WEB_ADMIN_PASSWORD='...' ./init-db.sh -S db.example.org -U sa
+```
+
 The script stops if the database already has tables, so it never overwrites
 data. There are no migration scripts: the init script is the only way to
 create the database, and an older database (also an old HLstatsX one) is
@@ -98,7 +106,7 @@ users:
 
 | User | Used by | Rights |
 |------|---------|--------|
-| `gamewe` | collector | `SELECT, INSERT, UPDATE, DELETE` on all tables (PostgreSQL also the sequences) |
+| `gamewe` | collector | `SELECT, INSERT, UPDATE, DELETE` on all tables (PostgreSQL also the sequences; SQL Server: `db_owner` of the database) |
 | `gamewe_web` | website `DB_USER` | `SELECT` on all tables except `hlstats_Users`, `hlstats_Events_Rcon` and `hlstats_Events_Chat`; on `hlstats_Servers` without `rcon_password`, `log_secret` and `log_secret_changed` and on `hlstats_Events_Connects` without `ipAddress` (column rights, so `SELECT *` fails there); `SELECT` on `hlstats_gamewe_jobs` |
 | `gamewe_web_admin` | website `DB_ADMIN_USER` | `SELECT` on all tables; `INSERT, UPDATE, DELETE` on Options, Games, Servers, Clans, Weapons, Actions, Teams, Roles, Awards, Definition_Ranks_Ribbons, Definition_Ribbons_Classes (collector 1.5.2 or newer; older ones cannot copy the ribbon classes of a template into a new ranking) and Users; on Players only `UPDATE` of `skill`, `hideranking` and `clan`; `INSERT` on `hlstats_gamewe_jobs` |
 
@@ -123,10 +131,10 @@ database address differs.
 # /etc/gamewe/web/web.env - gameWE web, tar.gz / systemd
 
 # ---- Database: the one the gameWE collector writes ----
-# mariadb (also for MySQL) or postgres
+# mariadb (also for MySQL), postgres or mssql
 DB_TYPE=mariadb
 DB_HOST=127.0.0.1
-# 3306 for mariadb, 5432 for postgres
+# 3306 for mariadb, 5432 for postgres, 1433 for mssql
 DB_PORT=3306
 DB_NAME=gamewe
 # Only if the tables have another prefix than hlstats_ (the collector's
@@ -374,8 +382,8 @@ The chart `charts/gamewe-web` runs the same image; every release publishes
 it in the same version as the web (semantic-release sets `version` and
 `appVersion` of `Chart.yaml`), as `oci://ghcr.io/dennispohlmann/charts/gamewe-web`
 and as a `.tgz` in the GitHub release. The collector has its own chart in
-gameWE-collector; the database is yours (or any chart for MariaDB or
-PostgreSQL), with the users of [section 1.3](#13-database-users).
+gameWE-collector; the database is yours (or any chart for MariaDB,
+PostgreSQL or SQL Server), with the users of [section 1.3](#13-database-users).
 
 ```bash
 kubectl create namespace gamewe

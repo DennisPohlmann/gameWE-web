@@ -5,7 +5,7 @@ GoldSrc game servers, in the style of gameME / HLstatsX. **gameWE web** is
 its website: statistics pages in the style of gameME plus an admin area. It
 reads the database that the
 [gameWE collector](https://github.com/DennisPohlmann/gameWE-collector) fills,
-on MariaDB/MySQL or PostgreSQL. It
+on MariaDB/MySQL, PostgreSQL or Microsoft SQL Server. It
 
 - shows rankings, servers with live view and load graphs, player profiles
   (hitbox, weapons, maps, history), clans, daily awards, ribbons and ranks,
@@ -111,7 +111,7 @@ The admin area has its own look (light or dark); pictures of it are in
 ## Requirements
 
 - The [gameWE collector](https://github.com/DennisPohlmann/gameWE-collector)
-  with its database: MariaDB 11.4 or 12.3, or PostgreSQL 17 or 18
+  with its database: MariaDB 11.4 or 12.3, PostgreSQL 17 or 18, or SQL Server 2022
 - Docker (the image brings Node.js 26 LTS on Alpine Linux), or Node.js 22 or
   newer for the tar.gz (Node.js 26 LTS recommended)
 - A reverse proxy with TLS (nginx, Caddy, Apache) in front of port 3000

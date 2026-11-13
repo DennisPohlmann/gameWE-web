@@ -95,7 +95,7 @@ function selectCols(e: Entity) {
   );
   const cols = [`t.${e.pk} AS __pk`, ...own.map((f) => `t.${f.name}`)];
   // Secrets are never read back, only whether one is set.
-  for (const f of e.fields) if (f.type === "secret") cols.push(`CHAR_LENGTH(t.${f.name}) > 0 AS ${f.name}__set`);
+  for (const f of e.fields) if (f.type === "secret") cols.push(`CASE WHEN CHAR_LENGTH(t.${f.name}) > 0 THEN 1 ELSE 0 END AS ${f.name}__set`);
   if (e.joinCols) cols.push(e.joinCols);
   return cols.join(", ");
 }

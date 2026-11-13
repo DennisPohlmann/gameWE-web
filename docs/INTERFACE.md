@@ -7,7 +7,7 @@ admin area does.
 
 ## Database
 
-The website reads the HLstatsX/gameME schema on MariaDB/MySQL or PostgreSQL
+The website reads the HLstatsX/gameME schema on MariaDB/MySQL, PostgreSQL or SQL Server
 that the collector creates (`schema/` in the collector repository). What the
 collector writes into which table is in the collector's
 [DB-SEMANTICS.md](https://github.com/DennisPohlmann/gameWE-collector/blob/main/docs/DB-SEMANTICS.md).

@@ -483,14 +483,17 @@ export function getGameEventCounts(game: string, from: number, step: number): Pr
     async () => {
       const id = await gameIdOf(game);
       if (id === undefined) return [];
+      // from and step are numbers in the text: GROUP BY repeats the
+      // expression (SQL Server has no GROUP BY 2, and two placeholders differ).
+      const b = `FLOOR((e.timestamp_id - ${Math.trunc(Number(from))}) / ${Math.trunc(Number(step))})`;
       const parts = GAME_EVENT_KINDS.map(
         (k) =>
-          `SELECT '${k}' AS kind, FLOOR((e.timestamp_id - ?) / ?) AS b, COUNT(*) AS n FROM ${EVENT_TABLE[k]} e
-           WHERE e.game_id = ? AND e.timestamp_id >= ? AND ${shownSides(k)} GROUP BY 2`,
+          `SELECT '${k}' AS kind, ${b} AS b, COUNT(*) AS n FROM ${EVENT_TABLE[k]} e
+           WHERE e.game_id = ? AND e.timestamp_id >= ? AND ${shownSides(k)} GROUP BY ${b}`,
       );
       const rows = await query<{ kind: string; b: number | string; n: number | string }>(
         parts.join(" UNION ALL "),
-        GAME_EVENT_KINDS.flatMap(() => [from, step, id, from]),
+        GAME_EVENT_KINDS.flatMap(() => [id, from]),
       );
       return rows.map((r) => ({ kind: r.kind, b: Number(r.b), n: Number(r.n) }));
     },

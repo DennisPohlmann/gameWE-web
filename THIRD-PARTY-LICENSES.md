@@ -61,6 +61,70 @@ carry the same licenses as their linux-x64 counterparts.
 | @img/colour | 1.1.0 | https://github.com/lovell/colour |
 | @types/node | 26.6.6 | https://github.com/DefinitelyTyped/DefinitelyTyped (type definitions only, peer dependency) |
 | undici-types | 8.9.0 | https://github.com/nodejs/undici (type definitions only) |
+| @azure-rest/core-client | 2.9.0 | https://github.com/Azure/azure-sdk-for-js |
+| @azure/abort-controller | 2.2.0 | https://github.com/Azure/azure-sdk-for-js |
+| @azure/core-auth | 1.11.0 | https://github.com/Azure/azure-sdk-for-js |
+| @azure/core-client | 1.11.2 | https://github.com/Azure/azure-sdk-for-js |
+| @azure/core-lro | 2.7.2 | https://github.com/Azure/azure-sdk-for-js |
+| @azure/core-paging | 1.7.0 | https://github.com/Azure/azure-sdk-for-js |
+| @azure/core-process | 1.0.0 | https://github.com/Azure/azure-sdk-for-js |
+| @azure/core-rest-pipeline | 1.25.1 | https://github.com/Azure/azure-sdk-for-js |
+| @azure/core-tracing | 1.4.0 | https://github.com/Azure/azure-sdk-for-js |
+| @azure/core-util | 1.14.0 | https://github.com/Azure/azure-sdk-for-js |
+| @azure/identity | 4.14.1 | https://github.com/Azure/azure-sdk-for-js |
+| @azure/keyvault-common | 2.1.1 | https://github.com/Azure/azure-sdk-for-js |
+| @azure/keyvault-keys | 4.10.2 | https://github.com/Azure/azure-sdk-for-js |
+| @azure/logger | 1.4.0 | https://github.com/Azure/azure-sdk-for-js |
+| @azure/msal-browser | 5.29.1 | https://github.com/AzureAD/microsoft-authentication-library-for-js |
+| @azure/msal-common | 16.16.2 | https://github.com/AzureAD/microsoft-authentication-library-for-js |
+| @azure/msal-node | 7.2.2 | https://github.com/AzureAD/microsoft-authentication-library-for-js |
+| @tediousjs/connection-string | 1.1.0 | https://github.com/tediousjs/connection-string |
+| @types/readable-stream | 4.0.25 | https://github.com/DefinitelyTyped/DefinitelyTyped |
+| @typespec/ts-http-runtime | 0.3.10 | https://github.com/Azure/azure-sdk-for-js |
+| abort-controller | 3.0.0 | https://github.com/mysticatea/abort-controller |
+| agent-base | 9.0.0 | https://github.com/TooTallNate/proxy-agents |
+| base64-js | 1.5.1 | https://github.com/beatgammit/base64-js |
+| bl | 6.1.6 | https://github.com/rvagg/bl |
+| buffer | 6.0.3 | https://github.com/feross/buffer |
+| bundle-name | 4.1.1 | https://github.com/sindresorhus/bundle-name |
+| commander | 11.1.0 | https://github.com/tj/commander.js |
+| debug | 4.4.3 | https://github.com/debug-js/debug |
+| default-browser | 5.5.1 | https://github.com/sindresorhus/default-browser |
+| default-browser-id | 5.0.1 | https://github.com/sindresorhus/default-browser-id |
+| define-lazy-prop | 3.0.0 | https://github.com/sindresorhus/define-lazy-prop |
+| event-target-shim | 5.0.1 | https://github.com/mysticatea/event-target-shim |
+| events | 3.3.0 | https://github.com/Gozala/events |
+| http-proxy-agent | 9.1.0 | https://github.com/TooTallNate/proxy-agents |
+| https-proxy-agent | 9.1.0 | https://github.com/TooTallNate/proxy-agents |
+| is-docker | 3.0.0 | https://github.com/sindresorhus/is-docker |
+| is-in-ssh | 1.0.0 | https://github.com/sindresorhus/is-in-ssh |
+| is-inside-container | 1.0.0 | https://github.com/sindresorhus/is-inside-container |
+| is-wsl | 3.1.1 | https://github.com/sindresorhus/is-wsl |
+| js-md4 | 0.3.2 | https://github.com/emn178/js-md4 |
+| jsonwebtoken | 9.0.3 | https://github.com/auth0/node-jsonwebtoken |
+| jwa | 2.0.1 | https://github.com/brianloveswords/node-jwa |
+| jws | 4.0.1 | https://github.com/brianloveswords/node-jws |
+| lodash.includes | 4.3.0 | https://github.com/lodash/lodash |
+| lodash.isboolean | 3.0.3 | https://github.com/lodash/lodash |
+| lodash.isinteger | 4.0.4 | https://github.com/lodash/lodash |
+| lodash.isnumber | 3.0.3 | https://github.com/lodash/lodash |
+| lodash.isplainobject | 4.0.6 | https://github.com/lodash/lodash |
+| lodash.isstring | 4.0.1 | https://github.com/lodash/lodash |
+| lodash.once | 4.1.1 | https://github.com/lodash/lodash |
+| ms | 2.1.3 | https://github.com/vercel/ms |
+| mssql | 12.7.14 | https://github.com/tediousjs/node-mssql |
+| native-duplexpair | 1.0.0 | https://github.com/tediousjs/native-duplexpair |
+| open | 11.0.4 | https://github.com/sindresorhus/open |
+| powershell-utils | 0.2.1 | https://github.com/sindresorhus/powershell-utils |
+| process | 0.11.10 | https://github.com/shtylman/node-process |
+| proxy-agent-negotiate | 1.1.0 | https://github.com/TooTallNate/proxy-agents |
+| readable-stream | 4.8.0 | https://github.com/nodejs/readable-stream |
+| run-applescript | 7.1.0 | https://github.com/sindresorhus/run-applescript |
+| safe-buffer | 5.2.1 | https://github.com/feross/safe-buffer |
+| string_decoder | 1.3.0 | https://github.com/nodejs/string_decoder |
+| tarn | 3.1.2 | https://github.com/knex/tarn.js |
+| tedious | 20.3.9 | https://github.com/tediousjs/tedious |
+| wsl-utils | 1.0.1 | https://github.com/sindresorhus/wsl-utils |
 
 ### Apache-2.0
 
@@ -73,6 +137,7 @@ carry the same licenses as their linux-x64 counterparts.
 | detect-libc | 2.1.2 | https://github.com/lovell/detect-libc |
 | baseline-browser-mapping | 2.11.35 | https://github.com/web-platform-dx/baseline-browser-mapping |
 | long | 5.3.2 | https://github.com/dcodeIO/long.js |
+| ecdsa-sig-formatter | 1.0.11 | https://github.com/Brightspace/node-ecdsa-sig-formatter |
 
 ### LGPL-3.0-or-later
 
@@ -98,6 +163,9 @@ carry the same licenses as their linux-x64 counterparts.
 | Package | Version | Project |
 |---------|---------|---------|
 | source-map-js | 1.2.2 | https://github.com/7rulnik/source-map-js |
+| @js-joda/core | 6.3.2 | https://github.com/js-joda/js-joda |
+| buffer-equal-constant-time | 1.0.1 | git@github.com:goinstant/buffer-equal-constant-time |
+| ieee754 | 1.2.1 | https://github.com/feross/ieee754 |
 
 ### ISC
 
@@ -107,6 +175,7 @@ carry the same licenses as their linux-x64 counterparts.
 | split2 | 4.2.0 | https://github.com/mcollina/split2 |
 | semver | 7.8.6 | https://github.com/npm/node-semver |
 | picocolors | 1.1.1 | https://github.com/alexeyraspopov/picocolors |
+| inherits | 2.0.4 | https://github.com/isaacs/inherits |
 
 ### 0BSD
 

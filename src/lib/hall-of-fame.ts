@@ -262,7 +262,7 @@ export async function nextHallReset(game: string): Promise<NextHallReset> {
     const keys = [`gamewe_reset_schedule_${game}`, "gamewe_reset_schedule", nextResetKey(game), `gamewe_reset_last_${game}`];
     const [rows, servers] = await Promise.all([
       query<{ keyname: string; value: string | null }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [keys]),
-      query<{ n: number | string }>(`SELECT COUNT(*) AS n FROM hlstats_Servers WHERE game = ?`, [game]),
+      query<{ n: number | string }>(`SELECT COUNT(serverId) AS n FROM hlstats_Servers WHERE game = ?`, [game]),
     ]);
     if (!Number(servers[0]?.n ?? 0)) return null;
     const o = new Map(rows.map((r) => [r.keyname, (r.value ?? "").trim()]));

@@ -8,7 +8,7 @@
 // The TOTP key is stored encrypted with ADMIN_SECRET and the backup codes as
 // HMACs keyed with it, in the same format as src/lib/totp.ts.
 //
-// Reads the database settings (MariaDB or PostgreSQL, DB_TYPE) from the
+// Reads the database settings (MariaDB, PostgreSQL or SQL Server, DB_TYPE) from the
 // environment, .env.local or .env.
 
 import { createCipheriv, createHash, createHmac, randomBytes, randomInt, scryptSync } from "node:crypto";
@@ -87,6 +87,7 @@ const hash = `scrypt$${salt.toString("base64")}$${scryptSync(password, salt, 32,
 const e = process.env;
 const type = (e.DB_TYPE ?? "mariadb").toLowerCase();
 const pg = ["postgres", "postgresql", "pg"].includes(type);
+const ms = ["mssql", "sqlserver"].includes(type);
 const tlsMode = (e.DB_TLS ?? "off").toLowerCase();
 const tls = ["", "off", "disable", "disabled", "false", "0"].includes(tlsMode)
   ? undefined
@@ -105,7 +106,7 @@ const users = `${prefix}_Users`;
 const options = `${prefix}_Options`;
 const conn = {
   host: e.DB_HOST ?? "127.0.0.1",
-  port: Number(e.DB_PORT ?? (pg ? 5432 : 3306)),
+  port: Number(e.DB_PORT ?? (pg ? 5432 : ms ? 1433 : 3306)),
   user: e.DB_ADMIN_USER || e.DB_USER,
   password: e.DB_ADMIN_USER ? e.DB_ADMIN_PASSWORD : e.DB_PASSWORD,
   database: e.DB_NAME ?? "gamewe",
@@ -115,7 +116,31 @@ const conn = {
 const ownerLike = `${JSON.stringify({ v: 1, u: name }).slice(0, -1).replace(/[\\%_]/g, "\\$&")},%`;
 
 let issuer;
-if (pg) {
+if (ms) {
+  const { default: mssql } = await import("mssql");
+  const db = await new mssql.ConnectionPool({
+    server: conn.host, port: conn.port, user: conn.user, password: conn.password, database: conn.database,
+    options: { encrypt: !!tls, trustServerCertificate: !tls || !tls.rejectUnauthorized, ...(tls?.ca ? { cryptoCredentialsDetails: { ca: tls.ca } } : {}) },
+  }).connect();
+  const q = (sql, ...args) => {
+    const r = db.request();
+    args.forEach((a, i) => r.input(`p${i + 1}`, a));
+    return r.query(sql);
+  };
+  const upsert = (table, moreCols, keyCol, valCol, extra = "") => `MERGE INTO ${table} WITH (HOLDLOCK) USING (VALUES (@p1, @p2)) AS v (${keyCol}, ${valCol})
+     ON ${table}.${keyCol} = v.${keyCol} WHEN MATCHED THEN UPDATE SET ${valCol} = v.${valCol}${extra}
+     WHEN NOT MATCHED THEN INSERT (${keyCol}, ${valCol}${moreCols}) VALUES (v.${keyCol}, v.${valCol}${moreCols ? ", 100, 0" : ""});`;
+  await q(upsert(users, ", acclevel, playerId", "username", "password", ", acclevel = 100"), name, hash);
+  await q(upsert(options, "", "keyname", "value"), epochKey, String(Date.now()));
+  // API tokens of this user end too: this is the recovery of a lost account.
+  await q(`DELETE FROM ${options} WHERE keyname LIKE 'gamewe\\_apitoken\\_%' ESCAPE '\\' AND value LIKE @p1 ESCAPE '\\'`, ownerLike);
+  const keys = [totpKey, pendingKey, ...backupKeys];
+  if (totp) await q(`DELETE FROM ${options} WHERE keyname IN (${keys.map((_, i) => `@p${i + 1}`).join(", ")})`, ...keys);
+  if (totpSecret) await q(`INSERT INTO ${options} (keyname, value) VALUES (@p1, @p2)`, totpKey, seal(totpSecret));
+  for (const [i, c] of backupCodes.entries()) await q(`INSERT INTO ${options} (keyname, value) VALUES (@p1, @p2)`, backupKeys[i], backupHash(c));
+  issuer = (await q(`SELECT value FROM ${options} WHERE keyname = 'sitename'`)).recordset[0]?.value;
+  await db.close();
+} else if (pg) {
   const { default: postgres } = await import("pg");
   const db = new postgres.Client({ ...conn, ssl: tls ?? false });
   await db.connect();

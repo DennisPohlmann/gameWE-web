@@ -19,9 +19,9 @@ test("place joins let the planner choose the order", () => {
   assert.match(s, /JOIN hlstats_Players_Data d ON d\.location_id = l\.id/);
 });
 
-test("a place value is compared without LOWER on MariaDB only", () => {
+test("a place value is compared without LOWER except on PostgreSQL", () => {
   const s = body("placeIs");
-  assert.match(s, /dialect\(\) === "mariadb" \? `\$\{col\} = \?` : `LOWER\(\$\{col\}\) = \?`/);
+  assert.match(s, /dialect\(\) !== "postgres" \? `\$\{col\} = \?` : `LOWER\(\$\{col\}\) = \?`/);
 });
 
 test("no filter of the ranking, the place ranking or the map wraps a place column in LOWER", () => {

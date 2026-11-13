@@ -20,7 +20,7 @@ body:
     id: environment
     attributes:
       label: "Browser and setup"
-      placeholder: "e.g. Firefox 140 on Android, skin \"modern-dark\", Docker quick start or the tar.gz package, MariaDB / PostgreSQL"
+      placeholder: "e.g. Firefox 140 on Android, skin \"modern-dark\", Docker quick start or the tar.gz package, MariaDB / PostgreSQL / SQL Server"
     validations:
       required: true
   - type: input

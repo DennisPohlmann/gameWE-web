@@ -3,28 +3,33 @@ import { siteDay } from "./day";
 import { env } from "./env";
 import { DEFAULT_TABLE_PREFIX, normalizeTablePrefix, prefixSql, prefixTable } from "./table-prefix";
 import { readFileSync } from "node:fs";
+import mssql from "mssql";
 import mysql from "mysql2/promise";
 import pg from "pg";
+import { toMssql } from "./mssql-sql";
 
-// Access to the collector's HLstatsX/gameME database, on MariaDB/MySQL or
-// PostgreSQL (DB_TYPE). Queries are written once, in the subset both
-// understand, with ? placeholders; the few differences go through the helpers
-// below (sinceDays, likeOp, upsert, adminInsert).
+// Access to the collector's HLstatsX/gameME database, on MariaDB/MySQL,
+// PostgreSQL or Microsoft SQL Server (DB_TYPE). Queries are written once, in
+// the subset MariaDB and PostgreSQL both understand, with ? placeholders; the
+// few differences go through the helpers below (sinceDays, likeOp, upsert,
+// adminInsert), and on SQL Server mssql-sql.ts translates the rest (LIMIT).
 //
 // Timestamps in the schema are Unix seconds (integer columns); the few DATE
 // and DATETIME columns are read as plain strings so no time zone is applied
 // twice.
 
-export type Dialect = "mariadb" | "postgres";
+export type Dialect = "mariadb" | "postgres" | "mssql";
 
 export function dialect(): Dialect {
   const t = (env("DB_TYPE") ?? "mariadb").toLowerCase();
   if (t === "postgres" || t === "postgresql" || t === "pg") return "postgres";
   if (t === "mariadb" || t === "mysql" || t === "") return "mariadb";
-  throw new Error(`DB_TYPE must be mariadb or postgres, not "${t}"`);
+  if (t === "mssql" || t === "sqlserver") return "mssql";
+  throw new Error(`DB_TYPE must be mariadb, postgres or mssql, not "${t}"`);
 }
 
 const isPg = () => dialect() === "postgres";
+const isMs = () => dialect() === "mssql";
 
 // ---------------------------------------------------------------- SQL helpers
 
@@ -32,18 +37,26 @@ const isPg = () => dialect() === "postgres";
 // site's day (TZ, see day.ts), not the database's.
 export function sinceDays(column: string): string {
   const today = siteDay();
+  if (isMs()) return `${column} >= DATEADD(day, -CAST(? AS int), CAST('${today}' AS date))`;
   return isPg()
     ? `${column} >= DATE '${today}' - CAST(? AS integer)`
     : `${column} >= DATE '${today}' - INTERVAL ? DAY`;
 }
 
-// Case-insensitive LIKE. MariaDB's collations already ignore case.
+// Case-insensitive LIKE. MariaDB's and SQL Server's collations already ignore case.
 export function likeOp(): string {
   return isPg() ? "ILIKE" : "LIKE";
 }
 
 // INSERT that updates `update` when a row with the same `key` exists.
 export function upsert(table: string, cols: string[], key: string[], update: string[]): string {
+  if (isMs()) {
+    // HOLDLOCK: two sessions cannot both insert the key.
+    return `MERGE INTO ${table} WITH (HOLDLOCK) USING (VALUES (${cols.map(() => "?").join(", ")})) AS v (${cols.join(", ")})
+      ON ${key.map((k) => `${table}.${k} = v.${k}`).join(" AND ")}
+      WHEN MATCHED THEN UPDATE SET ${update.map((c) => `${c} = v.${c}`).join(", ")}
+      WHEN NOT MATCHED THEN INSERT (${cols.join(", ")}) VALUES (${cols.map((c) => `v.${c}`).join(", ")});`;
+  }
   const head = `INSERT INTO ${table} (${cols.join(", ")}) VALUES (${cols.map(() => "?").join(", ")})`;
   return isPg()
     ? `${head} ON CONFLICT (${key.join(", ")}) DO UPDATE SET ${update.map((c) => `${c} = EXCLUDED.${c}`).join(", ")}`
@@ -195,10 +208,70 @@ function postgresDriver(user: string | undefined, password: string | undefined, 
   };
 }
 
+// Numbers come back as numbers (bigint is a string in tedious), DATE and
+// DATETIME2 as the plain strings MariaDB gives (YYYY-MM-DD [HH:MM:SS], UTC).
+function mssqlValue(v: unknown, type: unknown): unknown {
+  if (v === null || v === undefined) return v;
+  if (type === mssql.BigInt || type === mssql.Decimal || type === mssql.Numeric) return Number(v);
+  if (v instanceof Date) {
+    const s = v.toISOString();
+    return type === mssql.Date ? s.slice(0, 10) : s.slice(0, 19).replace("T", " ");
+  }
+  return v;
+}
+
+function mssqlDriver(user: string | undefined, password: string | undefined, limit: number, statementSeconds: number): Driver {
+  const t = tls();
+  const pool = new mssql.ConnectionPool({
+    server: env("DB_HOST") ?? "127.0.0.1",
+    port: Number(env("DB_PORT") ?? 1433),
+    user,
+    password,
+    database: env("DB_NAME") ?? "gamewe",
+    pool: { max: limit, min: 0 },
+    requestTimeout: statementSeconds ? statementSeconds * 1000 : 0,
+    options: {
+      appName: "gamewe-web",
+      // Without DB_TLS only the login is encrypted (the certificate is not checked then).
+      encrypt: !!t,
+      trustServerCertificate: !t || !t.rejectUnauthorized,
+      ...(t?.ca ? { cryptoCredentialsDetails: { ca: t.ca } } : {}),
+    },
+  });
+  // An idle connection losing its server must not take the process down.
+  pool.on("error", (err: Error) => console.error("mssql:", err.message));
+  // A failed connect (database not up yet) is tried again by the next query.
+  let ready: Promise<unknown> | undefined;
+  return {
+    async run(sql, params) {
+      await (ready ??= pool.connect().catch((err: unknown) => {
+        ready = undefined;
+        throw err;
+      }));
+      const { text, values } = toMssql(sql, params);
+      const req = pool.request();
+      values.forEach((v, i) => req.input(`p${i + 1}`, v));
+      const res = await req.query(text);
+      const cols = (res.recordset?.columns ?? {}) as Record<string, { type?: unknown }>;
+      const rows = (res.recordset ?? []).map((r: Record<string, unknown>) => {
+        const out: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(r)) out[k] = mssqlValue(v, cols[k]?.type);
+        return out;
+      });
+      const id = rows[0] ? Number(Object.values(rows[0])[0]) : 0;
+      return { rows, affectedRows: (res.rowsAffected ?? []).reduce((a: number, b: number) => a + b, 0), insertId: Number.isFinite(id) ? id : 0 };
+    },
+  };
+}
+
 // The queries name the tables hlstats_*; with DB_TABLE_PREFIX (the
 // collector's database.table_prefix) the driver rewrites them (table-prefix.ts).
 function createDriver(user: string | undefined, password: string | undefined, limit: number, statementSeconds = 0): Driver {
-  const d = isPg() ? postgresDriver(user, password, limit, statementSeconds) : mariadbDriver(user, password, limit, statementSeconds);
+  const d = isPg()
+    ? postgresDriver(user, password, limit, statementSeconds)
+    : isMs()
+      ? mssqlDriver(user, password, limit, statementSeconds)
+      : mariadbDriver(user, password, limit, statementSeconds);
   const prefix = normalizeTablePrefix(env("DB_TABLE_PREFIX"));
   if (prefix === DEFAULT_TABLE_PREFIX) return d;
   return { run: (sql, params) => d.run(prefixSql(prefix, sql), params) };
@@ -248,7 +321,9 @@ export async function adminExec(sql: string, params: Param[] = []): Promise<{ af
 // INSERT that returns the new row's generated key (`pk`).
 export async function adminInsert(table: string, values: Record<string, Param>, pk: string): Promise<number> {
   const cols = Object.keys(values);
-  const sql = `INSERT INTO ${table} (${cols.join(", ")}) VALUES (${cols.map(() => "?").join(", ")})`;
+  const sql = isMs()
+    ? `INSERT INTO ${table} (${cols.join(", ")}) OUTPUT INSERTED.${pk} VALUES (${cols.map(() => "?").join(", ")})`
+    : `INSERT INTO ${table} (${cols.join(", ")}) VALUES (${cols.map(() => "?").join(", ")})`;
   const res = await adminDb().run(isPg() ? `${sql} RETURNING ${pk}` : sql, cols.map((c) => values[c]));
   return res.insertId;
 }

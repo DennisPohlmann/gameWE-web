@@ -88,10 +88,11 @@ function placeJoins(table: string) {
 }
 
 // "<column> = ?" for a lower-case place value. MariaDB's collations of these
-// columns ignore case, so the plain column keeps its index usable (LOWER()
-// turned a one-player country into a 164 ms scan); PostgreSQL compares case.
+// columns ignore case (SQL Server's too), so the plain column keeps its index
+// usable (LOWER() turned a one-player country into a 164 ms scan); PostgreSQL
+// compares case.
 function placeIs(col: "l.flag" | "l.state" | "l.city") {
-  return dialect() === "mariadb" ? `${col} = ?` : `LOWER(${col}) = ?`;
+  return dialect() !== "postgres" ? `${col} = ?` : `LOWER(${col}) = ?`;
 }
 
 // ---------------------------------------------------------------- games
@@ -279,7 +280,7 @@ async function loadTotals(game: string): Promise<Totals> {
        WHERE d.first_connect >= ? AND p.game = ? AND p.hideranking = 0`,
       [nowUnix() - NEW_PLAYER_DAYS * 86400, game],
     ),
-    queryOne<{ servers: number }>(`SELECT COUNT(*) AS servers FROM hlstats_Servers WHERE game = ?`, [game]),
+    queryOne<{ servers: number }>(`SELECT COUNT(serverId) AS servers FROM hlstats_Servers WHERE game = ?`, [game]),
   ]);
   return {
     players: Math.max(0, Number(p?.n ?? 0)),
@@ -445,20 +446,22 @@ async function loadHourlyActivity(game: string | null, days: number): Promise<Ho
   const n = Math.floor((now - start) / step) + 1;
   const [frags, load] = await Promise.all([
     fragBuckets(`${game ?? "*"}|${days}`, start, now, (from) =>
+      // The step is a constant in the text: GROUP BY repeats the expression
+      // (SQL Server has no GROUP BY 1, and two placeholders differ).
       query<BucketRow>(
-        `SELECT FLOOR(f.timestamp_id / ?) AS h, COUNT(*) AS a, SUM(f.headshot) AS b
+        `SELECT FLOOR(f.timestamp_id / ${step}) AS h, COUNT(*) AS a, SUM(f.headshot) AS b
          FROM hlstats_Events_Frags f
          WHERE ${game === null ? "" : "f.game_id = (SELECT id FROM hlstats_Games WHERE code = ?) AND "}f.timestamp_id >= ?
-         GROUP BY 1`,
-        game === null ? [step, from] : [step, game, from],
+         GROUP BY FLOOR(f.timestamp_id / ${step})`,
+        game === null ? [from] : [game, from],
       ),
     ),
     query<{ server_id: number; h: number; p: number }>(
-      `SELECT l.server_id, FLOOR(l.timestamp / ?) AS h, AVG(${capped("l.")}) AS p
+      `SELECT l.server_id, FLOOR(l.timestamp / ${step}) AS h, AVG(${capped("l.")}) AS p
        FROM hlstats_server_load l
        WHERE ${game === null ? "" : "l.server_id IN (SELECT serverId FROM hlstats_Servers WHERE game = ?) AND "}l.timestamp >= ?
-       GROUP BY 1, 2`,
-      game === null ? [step, start] : [step, game, start],
+       GROUP BY l.server_id, FLOOR(l.timestamp / ${step})`,
+      game === null ? [start] : [game, start],
     ),
   ]);
   const first = start / step;
@@ -2028,8 +2031,8 @@ export async function getSiteTotals(): Promise<SiteTotals> {
   const r = await queryOne<SiteTotals>(
     `SELECT (SELECT COUNT(*) FROM hlstats_Players) AS players,
             (SELECT COUNT(*) FROM hlstats_Clans) AS clans,
-            (SELECT COUNT(*) FROM hlstats_Games g WHERE g.hidden = '0' AND EXISTS (SELECT 1 FROM hlstats_Servers s WHERE s.game = g.code)) AS games,
-            (SELECT COUNT(*) FROM hlstats_Servers) AS servers`,
+            (SELECT COUNT(*) FROM hlstats_Games g WHERE g.hidden = '0' AND EXISTS (SELECT s.serverId FROM hlstats_Servers s WHERE s.game = g.code)) AS games,
+            (SELECT COUNT(serverId) FROM hlstats_Servers) AS servers`,
   );
   // Kills, deaths and headshots of the visible rankings.
   const k = await queryOne<{ kills: number | string | null; deaths: number | string | null; headshots: number | string | null }>(
@@ -2181,7 +2184,9 @@ export function getMiscStats(game: string, days: number): Promise<MiscStats> {
 type MiscYear = { cut: number; cutDay: string; hours: Map<number, number>; days: Map<string, number> };
 const miscYearCache = ttlCache<MiscYear>(6 * 3_600_000, 86_400_000);
 
-const MISC_CONNECTS = `SELECT FLOOR(c.timestamp_id / 3600) AS h, COUNT(*) AS n
+// The public DB user has rights on some columns of the connects only: SQL
+// Server refuses COUNT(*) then, so a column is counted (never NULL).
+const MISC_CONNECTS = `SELECT FLOOR(c.timestamp_id / 3600) AS h, COUNT(c.timestamp_id) AS n
        FROM hlstats_Events_Connects c
        WHERE c.game_id = (SELECT id FROM hlstats_Games WHERE code = ?) AND c.timestamp_id >= ?`;
 const MISC_HISTORY = `SELECT eventTime AS day, SUM(connection_time) AS secs

@@ -57,7 +57,9 @@ export function baseGameOf(code: string | null | undefined, realgame: string | n
 // SQL condition on hlstats_Games: the ranking has a server or a player. The
 // seeded rankings (cstrike, csgo, dod …) without either are left out of the
 // ranking choices.
-export const GAME_HAS_DATA = `(EXISTS (SELECT 1 FROM hlstats_Servers s WHERE s.game = hlstats_Games.code)
+// hlstats_Servers: a column, not SELECT 1 (SQL Server refuses that with the
+// public user's column rights).
+export const GAME_HAS_DATA = `(EXISTS (SELECT s.serverId FROM hlstats_Servers s WHERE s.game = hlstats_Games.code)
   OR EXISTS (SELECT 1 FROM hlstats_Players p WHERE p.game = hlstats_Games.code))`;
 
 // Servers of different base games must not share a ranking (different log

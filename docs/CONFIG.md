@@ -48,9 +48,15 @@ are no longer read; still set, the site logs a warning once after the start
 that names the folder to move or mount.
 
 `DB_TYPE` selects the database: `mariadb` (default,
-also for MySQL) or `postgres`. `DB_PORT`
-defaults to 3306 or 5432 accordingly. Both use the same table and column
-names; on PostgreSQL they are unquoted, so they are stored in lower case.
+also for MySQL), `postgres` or `mssql` (Microsoft SQL Server 2022 or newer;
+also `sqlserver`). `DB_PORT` defaults to 3306, 5432 or 1433 accordingly. All
+use the same table and column names; on PostgreSQL they are unquoted, so they
+are stored in lower case. On SQL Server the website writes its queries as
+T-SQL on the fly (`src/lib/mssql-sql.ts`: `LIMIT` becomes `OFFSET ... FETCH`,
+an upsert a `MERGE`); a query of your own on `hlstats_Servers` or
+`hlstats_Events_Connects` as `DB_USER` must name its columns (SQL Server also
+refuses `COUNT(*)` and `SELECT 1` there, because `DB_USER` may read only some
+of their columns).
 `DB_TABLE_PREFIX` is the prefix of the table names (default `hlstats`:
 `hlstats_Players`; `gw` or `gw_`: `gw_Players`), for a database created
 with another prefix (HLstatsX:CE `DB_PREFIX`) or several installations in
@@ -73,7 +79,11 @@ the rights and how to create them by hand are in
 [INSTALLATION.md](INSTALLATION.md#13-database-users).
 
 On MariaDB the connection uses `utf8mb4`; a PostgreSQL database should be
-created with `ENCODING 'UTF8'`.
+created with `ENCODING 'UTF8'`. On SQL Server the text columns are
+`nvarchar` (Unicode); the collector's init script creates the database with
+a case-insensitive collation. With `DB_TLS=off` the SQL Server connection
+encrypts only the login (the certificate is not checked then); use
+`required` for a database on another host.
 
 TLS to the database is off by default (`DB_TLS=off`, `disable` works too).
 With `DB_TLS=required` the server certificate is verified (CA file in
