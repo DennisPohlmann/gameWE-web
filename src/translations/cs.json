@@ -726,7 +726,8 @@
     "a": "Průhledné",
     "b": "Karta",
     "c": "Odznak",
-    "d": "Trend"
+    "d": "Trend",
+    "e": "Boční pruh"
   },
   "bannerBackgrounds": {
     "plain": "Prosté",

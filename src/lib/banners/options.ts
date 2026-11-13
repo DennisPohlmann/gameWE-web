@@ -11,8 +11,8 @@ export type BannerKind = "player" | "server" | "voice";
 
 export const LAYOUTS: Record<BannerKind, readonly string[]> = {
   player: ["a", "b", "c", "d"],
-  server: ["a", "b", "c"],
-  voice: ["a", "b", "c"],
+  server: ["a", "b", "c", "e"],
+  voice: ["a", "b", "c", "e"],
 };
 
 export const BACKGROUNDS = ["plain", "dots", "grid", "stripes", "carbon", "glow"] as const;

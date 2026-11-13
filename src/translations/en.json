@@ -727,7 +727,8 @@
     "a": "Clear",
     "b": "Card",
     "c": "Badge",
-    "d": "Trend"
+    "d": "Trend",
+    "e": "Side strip"
   },
   "bannerBackgrounds": {
     "plain": "Plain",

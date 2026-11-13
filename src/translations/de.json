@@ -727,7 +727,8 @@
     "a": "Klar",
     "b": "Karte",
     "c": "Plakette",
-    "d": "Verlauf"
+    "d": "Verlauf",
+    "e": "Seitenband"
   },
   "bannerBackgrounds": {
     "plain": "Schlicht",

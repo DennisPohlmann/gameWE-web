@@ -668,7 +668,8 @@
     "a": "Claro",
     "b": "Cartão",
     "c": "Placa",
-    "d": "Tendência"
+    "d": "Tendência",
+    "e": "Faixa lateral"
   },
   "bannerBackgrounds": {
     "plain": "Simples",

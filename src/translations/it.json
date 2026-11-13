@@ -726,7 +726,8 @@
     "a": "Trasparente",
     "b": "Scheda",
     "c": "Distintivo",
-    "d": "Andamento"
+    "d": "Andamento",
+    "e": "Banda laterale"
   },
   "bannerBackgrounds": {
     "plain": "Semplice",

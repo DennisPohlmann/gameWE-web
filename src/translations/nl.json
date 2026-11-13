@@ -668,7 +668,8 @@
     "a": "Helder",
     "b": "Kaart",
     "c": "Plaquette",
-    "d": "Verloop"
+    "d": "Verloop",
+    "e": "Zijband"
   },
   "bannerBackgrounds": {
     "plain": "Effen",

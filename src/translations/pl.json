@@ -668,7 +668,8 @@
     "a": "Przejrzysty",
     "b": "Karta",
     "c": "Plakietka",
-    "d": "Trend"
+    "d": "Trend",
+    "e": "Pasek boczny"
   },
   "bannerBackgrounds": {
     "plain": "Gładkie",

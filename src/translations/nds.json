@@ -534,7 +534,8 @@
     "a": "Kloor",
     "b": "Koort",
     "c": "Plakett",
-    "d": "Verloop"
+    "d": "Verloop",
+    "e": "Sietband"
   },
   "bannerBackgrounds": {
     "plain": "Slicht",

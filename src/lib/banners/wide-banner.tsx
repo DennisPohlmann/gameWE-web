@@ -5,7 +5,7 @@ import { Backdrop } from "./backdrop";
 import { bannerFonts } from "./fonts";
 import { fitSize, sizePx, type BannerOptions } from "./options";
 
-// The 560x95 banners (server, TeamSpeak) in their three layouts, and the
+// The 560x95 banners (server, TeamSpeak) in their four layouts, and the
 // small (350x20) and tall (160x400) sizes of all three banners. The
 // banner's own file (server-banner.tsx, voice-banner.tsx) reads the data and
 // fills a Wide; this file only draws it.
@@ -44,7 +44,7 @@ export type Wide = {
 // Also the small and tall sizes of all three kinds (o.size), the player's too.
 export async function wideBanner(w: Wide, o: BannerOptions, maxAge: number): Promise<Response> {
   if (o.html) w = { ...w, href: w.link };
-  const draw = o.size === "small" ? drawSmall : o.size === "tall" ? drawTall : ({ a: drawA, b: drawB, c: drawC }[o.layout] ?? drawA);
+  const draw = o.size === "small" ? drawSmall : o.size === "tall" ? drawTall : ({ a: drawA, b: drawB, c: drawC, e: drawE }[o.layout] ?? drawA);
   const [width, height] = o.size === "normal" ? [W, H] : sizePx("server", o.size);
   const picture = (
     <div style={{ display: "flex", position: "relative", width: "100%", height: "100%", background: w.th.bg }}>
@@ -236,7 +236,7 @@ function drawB(w: Wide) {
     <div style={frame(th, true)}>
       <div style={{ display: "flex", flex: 1, alignItems: "center", padding: "0 12px" }}>
         <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
-          <div style={small}>{w.kind}</div>
+          {w.kind ? <div style={small}>{w.kind}</div> : null}
           <div style={{ display: "flex", alignItems: "center", marginTop: 1 }}>
             <Flag src={w.flag} h={13} />
             <span style={{ display: "block", fontSize: 17, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: w.graph ? 250 : 370 }}><Linked href={w.href}>{w.name}</Linked></span>
@@ -316,6 +316,26 @@ function drawC(w: Wide) {
       <div style={{ display: "flex", height: 3, background: th.barBg }}>
         <div style={{ display: "flex", width: `${Math.round(w.hero.share * 100)}%`, background: w.online ? th.good : th.bad }} />
       </div>
+    </div>
+  );
+}
+
+// E: "Seitenband" – layout B with an accent strip on the left whose label
+// (Server, TeamSpeak) runs from top to bottom.
+const STRIP = 22;
+function drawE(w: Wide) {
+  const { th } = w;
+  const block = th.stripe ?? th.accent;
+  return (
+    <div style={{ display: "flex", width: "100%", height: "100%" }}>
+      <div style={{ display: "flex", position: "relative", width: STRIP, flexShrink: 0, background: block, overflow: "hidden" }}>
+        {/* A box as long as the banner is high, turned clockwise into the strip. */}
+        <div style={{ display: "flex", position: "absolute", width: H, height: STRIP, left: (STRIP - H) / 2, top: (H - STRIP) / 2, transform: "rotate(90deg)", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", whiteSpace: "nowrap", color: onColor(block) }}>
+          {w.kind}
+        </div>
+      </div>
+      {/* The strip already says what it is. */}
+      <div style={{ display: "flex", flex: 1, minWidth: 0 }}>{drawB({ ...w, kind: "" })}</div>
     </div>
   );
 }

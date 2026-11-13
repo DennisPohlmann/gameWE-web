@@ -668,7 +668,8 @@
     "a": "Klar",
     "b": "Kort",
     "c": "Plakette",
-    "d": "Udvikling"
+    "d": "Udvikling",
+    "e": "Sidebånd"
   },
   "bannerBackgrounds": {
     "plain": "Enkel",

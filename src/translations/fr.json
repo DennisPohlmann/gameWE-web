@@ -668,7 +668,8 @@
     "a": "Clair",
     "b": "Carte",
     "c": "Plaque",
-    "d": "Tendance"
+    "d": "Tendance",
+    "e": "Bande latérale"
   },
   "bannerBackgrounds": {
     "plain": "Uni",

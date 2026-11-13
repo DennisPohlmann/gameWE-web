@@ -726,7 +726,8 @@
     "a": "Genomskinlig",
     "b": "Kort",
     "c": "Märke",
-    "d": "Trend"
+    "d": "Trend",
+    "e": "Sidoband"
   },
   "bannerBackgrounds": {
     "plain": "Enkel",

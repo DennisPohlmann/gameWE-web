@@ -668,7 +668,8 @@
     "a": "Claro",
     "b": "Tarjeta",
     "c": "Placa",
-    "d": "Tendencia"
+    "d": "Tendencia",
+    "e": "Franja lateral"
   },
   "bannerBackgrounds": {
     "plain": "Liso",

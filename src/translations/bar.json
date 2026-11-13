@@ -510,7 +510,8 @@
     "a": "Klar",
     "b": "Kartn",
     "c": "Plakettn",
-    "d": "Verlauf"
+    "d": "Verlauf",
+    "e": "Seitnband"
   },
   "bannerBackgrounds": {
     "plain": "Schlicht",
