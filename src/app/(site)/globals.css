@@ -478,6 +478,8 @@ td.barcell .meter { justify-content: center; }
 th.fit, td.fit { width: 1%; padding-inline-start: 8px; padding-inline-end: 8px; }
 td.fit .game-tag { margin-inline-start: 0; }
 td.wrap-cell, th.wrap-cell { white-space: normal; min-width: 120px; }
+/* Chat on a phone: the time with seconds and the player leave the message the rest. */
+@media (max-width: 700px) { table.chat td.wrap-cell { min-width: 0; overflow-wrap: anywhere; } }
 /* Column widths of the server list. */
 th.w-60 { width: 60%; }
 th.w-48 { width: 48%; }

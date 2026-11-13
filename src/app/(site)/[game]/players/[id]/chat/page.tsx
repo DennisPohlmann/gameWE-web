@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { HistoryFrame, historyRobots, loadHistoryPlayer } from "@/components/player-history";
 import { Empty, Pager, ROW_OPTIONS, TableWrap, pageParam, rowsParam } from "@/components/ui";
 import { countChat, getChat } from "@/lib/data";
-import { fmtDateTime, localeOf } from "@/lib/format";
+import { fmtEventTime, localeOf } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import { sortHeads } from "@/components/sort-head";
@@ -35,7 +35,7 @@ export default async function PlayerChatPage({ params, searchParams }: Props) {
       {rows.length ? (
         <>
           <TableWrap>
-            <table>
+            <table className="chat">
               <thead>
                 <tr>
                   {th(t.time, "date", "")}
@@ -46,7 +46,7 @@ export default async function PlayerChatPage({ params, searchParams }: Props) {
               <tbody>
                 {rows.slice(0, limit).map((c, i) => (
                   <tr key={i}>
-                    <td className="muted nowrap">{fmtDateTime(c.timestamp_id, lang)}</td>
+                    <td className="muted nowrap">{fmtEventTime(c.timestamp_id, lang)}</td>
                     <td className="wrap-cell">
                       {c.message_mode === 2 ? <span className="muted">({t.sayTeam}) </span> : null}
                       {c.message}

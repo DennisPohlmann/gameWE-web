@@ -68,9 +68,14 @@ export function fmtDuration(seconds: number | null | undefined): string {
 // `timeZone`: a client component passes the server's zone (siteTimeZone),
 // so that it renders the same text as the server and React does not throw
 // the server's table away for a visitor in another zone.
-export function fmtDateTime(unix: number | null | undefined, lang: Lang, timeZone?: string): string {
+export function fmtDateTime(unix: number | null | undefined, lang: Lang, timeZone?: string, timeStyle: "short" | "medium" = "short"): string {
   if (!unix) return "-";
-  return dateFormat(locales[lang], timeZone ? { dateStyle: "medium", timeStyle: "short", timeZone } : { dateStyle: "medium", timeStyle: "short" }).format(unix * 1000);
+  return dateFormat(locales[lang], timeZone ? { dateStyle: "medium", timeStyle, timeZone } : { dateStyle: "medium", timeStyle }).format(unix * 1000);
+}
+
+// Events and chat lines: the time with seconds, to see when exactly it happened.
+export function fmtEventTime(unix: number | null | undefined, lang: Lang, timeZone?: string): string {
+  return fmtDateTime(unix, lang, timeZone, "medium");
 }
 
 // The time zone the server renders dates in (TZ of the environment, else

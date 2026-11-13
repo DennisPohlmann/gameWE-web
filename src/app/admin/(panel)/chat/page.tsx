@@ -8,7 +8,7 @@ import { optionList } from "@/lib/admin-data";
 import { adminDict } from "@/lib/admin-i18n";
 import { requireAdmin } from "@/lib/auth";
 import { countChat, getChat } from "@/lib/data";
-import { fmtDateTime } from "@/lib/format";
+import { fmtEventTime } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
 import { sortHeads, SortInputs } from "@/components/sort-head";
 import { sortState, timeSorts } from "@/lib/table-sort";
@@ -65,7 +65,7 @@ export default async function AdminChat({ searchParams }: { searchParams: Promis
         {rows.length ? (
           <>
             <TableWrap>
-              <table>
+              <table className="chat">
                 <thead>
                   <tr>
                     {th(t.date, "date", "")}
@@ -77,7 +77,7 @@ export default async function AdminChat({ searchParams }: { searchParams: Promis
                 <tbody>
                   {rows.slice(0, limit).map((c, i) => (
                     <tr key={i}>
-                      <td className="muted nowrap">{fmtDateTime(c.timestamp_id, lang)}</td>
+                      <td className="muted nowrap">{fmtEventTime(c.timestamp_id, lang)}</td>
                       <td>
                         <Link prefetch={false} href={`${base}?player=${c.playerId}`}>{c.name ?? `#${c.playerId}`}</Link>
                       </td>

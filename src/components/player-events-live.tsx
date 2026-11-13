@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { LiveSwitch, useLiveRows, useLiveSwitch, type Flags } from "@/components/game-events-live";
 import { PlayerLink, TableWrap } from "@/components/ui";
-import { fmtDateTime } from "@/lib/format";
+import { fmtEventTime } from "@/lib/format";
 import type { PlayerEventRow } from "@/lib/history";
 import type { Lang } from "@/translations/languages";
 import { MapLink } from "./map-link";
@@ -79,7 +79,7 @@ export function PlayerEventsLive({
             <tbody>
               {rows.map((e) => (
                 <tr key={e.id} className={`ev-${e.kind}${e.id === fresh ? " ev-new" : ""}`}>
-                  <td className="muted nowrap">{fmtDateTime(e.ts, lang, timeZone)}</td>
+                  <td className="muted nowrap">{fmtEventTime(e.ts, lang, timeZone)}</td>
                   <td>{labels.evKind[e.kind]}</td>
                   <td className="wrap-cell">{text(e)}</td>
                   <td className="hide-sm muted">

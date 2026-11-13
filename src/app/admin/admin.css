@@ -511,6 +511,8 @@ select { padding-inline-end: 28px; }
   form.search { width: 100%; }
   form.search select, form.search input:not([type="hidden"]) { flex: 1 1 140px; min-width: 0; }
   .hide-sm { display: none; }
+  /* Chat: the time with seconds, player and message fit a phone without scrolling. */
+  table.chat th, table.chat td { padding-inline: 8px; }
   .adm-menu, .adm-lang .share-menu { position: fixed; right: 8px; left: 8px; top: 56px; width: auto; }
   /* Segmented choices (the players' states with their counts) wrap
      instead of running off the screen. */

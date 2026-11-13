@@ -58,7 +58,7 @@ import {
   getPlayerWeapons,
   gameHasShots,
 } from "@/lib/data";
-import { activity, fmtAge, fmtBanMinutes, fmtDate, fmtDateTime, fmtDuration, fmtNum, fmtPct, kpd, localeOf, nowUnix, ratio, steamIds } from "@/lib/format";
+import { activity, fmtAge, fmtBanMinutes, fmtDate, fmtDateTime, fmtDuration, fmtEventTime, fmtNum, fmtPct, kpd, localeOf, nowUnix, ratio, steamIds } from "@/lib/format";
 import { fill, getDict, type Dict, type Lang } from "@/lib/i18n";
 
 type Props = { params: Promise<{ game: string; id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -694,11 +694,11 @@ export default async function PlayerPage({ params, searchParams }: Props) {
             {chat.length ? (
               <Section title={t.chat}>
                 <TableWrap>
-                  <table>
+                  <table className="chat">
                     <tbody>
                       {chat.map((c, i) => (
                         <tr key={i}>
-                          <td className="muted nowrap">{fmtDateTime(c.timestamp_id, lang)}</td>
+                          <td className="muted nowrap">{fmtEventTime(c.timestamp_id, lang)}</td>
                           <td className="wrap-cell">
                             {c.message_mode === 2 ? <span className="muted">({t.sayTeam}) </span> : null}
                             {c.message}

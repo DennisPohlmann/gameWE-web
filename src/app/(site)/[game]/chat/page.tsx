@@ -6,7 +6,7 @@ import { Empty, Pager, PlayerLink, ROW_OPTIONS, Section, TableWrap, pageParam, r
 import { noAutofill } from "@/lib/autofill";
 import { getSettings } from "@/lib/settings";
 import { countChat, getChat, getPlayerFlags } from "@/lib/data";
-import { fmtDateTime, localeOf } from "@/lib/format";
+import { fmtEventTime, localeOf } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
 import { sortHeads, SortInputs } from "@/components/sort-head";
 import { sortState, timeSorts } from "@/lib/table-sort";
@@ -51,7 +51,7 @@ export default async function ChatPage({
       {rows.length ? (
         <>
           <TableWrap>
-            <table>
+            <table className="chat">
               <thead>
                 <tr>
                   {th(t.date, "date", "")}
@@ -63,7 +63,7 @@ export default async function ChatPage({
               <tbody>
                 {rows.slice(0, limit).map((c, i) => (
                   <tr key={i}>
-                    <td className="muted nowrap">{fmtDateTime(c.timestamp_id, lang)}</td>
+                    <td className="muted nowrap">{fmtEventTime(c.timestamp_id, lang)}</td>
                     <td>
                       <PlayerLink game={game} id={c.playerId} name={c.name} flag={flags.get(c.playerId)} />
                     </td>

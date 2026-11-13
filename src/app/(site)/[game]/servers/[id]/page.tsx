@@ -14,7 +14,7 @@ import { LiveTable, NobodyOnline, ServerTable } from "@/components/live";
 import { PlayerCount } from "@/components/player-count";
 import { Empty, PlayerLink, Section, Stats, TableWrap } from "@/components/ui";
 import { getChat, getLivePlayers, getPlayerFlags, getServer, getServerLoad } from "@/lib/data";
-import { fmtDateTime, fmtDuration, fmtNum, fmtPct, localeOf, nowUnix, ratio } from "@/lib/format";
+import { fmtDateTime, fmtDuration, fmtEventTime, fmtNum, fmtPct, localeOf, nowUnix, ratio } from "@/lib/format";
 import { playerCount } from "@/lib/player-count";
 import { fill, getDict } from "@/lib/i18n";
 import { shareMetadata } from "@/lib/share-meta";
@@ -104,11 +104,11 @@ export default async function ServerPage({ params }: Props) {
       {chat.length ? (
         <Section title={t.chat}>
           <TableWrap>
-            <table>
+            <table className="chat">
               <tbody>
                 {chat.map((c, i) => (
                   <tr key={i}>
-                    <td className="muted nowrap">{fmtDateTime(c.timestamp_id, lang)}</td>
+                    <td className="muted nowrap">{fmtEventTime(c.timestamp_id, lang)}</td>
                     <td>
                       <PlayerLink game={game} id={c.playerId} name={c.name} flag={flags.get(c.playerId)} />
                     </td>

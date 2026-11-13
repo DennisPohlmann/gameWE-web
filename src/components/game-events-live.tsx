@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { PlayerLink, Section, TableWrap } from "@/components/ui";
 import { basePath } from "@/lib/base-path";
-import { fmtDateTime } from "@/lib/format";
+import { fmtEventTime } from "@/lib/format";
 import { newerWith, newestOf } from "@/lib/live-feed";
 import type { GameEvent } from "@/lib/history";
 import type { Lang } from "@/translations/languages";
@@ -224,7 +224,7 @@ export function GameEventsLive({
             <tbody>
               {rows.map((e) => (
                 <tr key={e.id} className={`ev-${e.kind}${e.id === fresh ? " ev-new" : ""}`}>
-                  <td className="muted nowrap ev-time">{fmtDateTime(e.ts, lang, timeZone)}</td>
+                  <td className="muted nowrap ev-time">{fmtEventTime(e.ts, lang, timeZone)}</td>
                   <td className="wrap-cell">{text(e)}</td>
                   {withServer ? (
                     <td className="hide-sm muted ev-name">{e.server ?? "-"}</td>
