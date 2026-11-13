@@ -64,19 +64,24 @@ export async function getJob(id: number): Promise<ResetJob | undefined> {
   return rows[0];
 }
 
-// Reset jobs requested in [from, to) (Unix seconds), newest first, one page.
-export async function recentJobs(from: number, to: number, limit: number, offset: number): Promise<ResetJob[]> {
-  return adminQuery<ResetJob>(
-    `SELECT ${await jobCols()} FROM hlstats_gamewe_jobs WHERE job_type IN ('reset', 'scheduled-reset') AND requested_at >= ? AND requested_at < ? ORDER BY id DESC LIMIT ? OFFSET ?`,
-    [from, to, limit, offset],
-  );
+// Reset jobs requested in [start, end) (Unix seconds, each optional: no
+// limit on that side), newest first, one page.
+function jobWhere(start?: number, end?: number): { sql: string; params: number[] } {
+  let sql = "job_type IN ('reset', 'scheduled-reset')";
+  const params: number[] = [];
+  if (start !== undefined) (sql += " AND requested_at >= ?"), params.push(start);
+  if (end !== undefined) (sql += " AND requested_at < ?"), params.push(end);
+  return { sql, params };
 }
 
-export async function countJobs(from: number, to: number): Promise<number> {
-  const rows = await adminQuery<{ n: number | string }>(
-    `SELECT COUNT(*) AS n FROM hlstats_gamewe_jobs WHERE job_type IN ('reset', 'scheduled-reset') AND requested_at >= ? AND requested_at < ?`,
-    [from, to],
-  );
+export async function recentJobs(start: number | undefined, end: number | undefined, limit: number, offset: number): Promise<ResetJob[]> {
+  const w = jobWhere(start, end);
+  return adminQuery<ResetJob>(`SELECT ${await jobCols()} FROM hlstats_gamewe_jobs WHERE ${w.sql} ORDER BY id DESC LIMIT ? OFFSET ?`, [...w.params, limit, offset]);
+}
+
+export async function countJobs(start?: number, end?: number): Promise<number> {
+  const w = jobWhere(start, end);
+  const rows = await adminQuery<{ n: number | string }>(`SELECT COUNT(*) AS n FROM hlstats_gamewe_jobs WHERE ${w.sql}`, w.params);
   return Number(rows[0]?.n ?? 0);
 }
 

@@ -916,11 +916,11 @@ const texts: Record<string, string> = {
   "The period starts on this day (1 to 28), e.g. every 15th: each month then runs from the 15th to the 14th of the next one. For quarters it is the day in the quarter's first month. Only months and quarters have a start day of the month; weeks start on the weekday, years on the start day of the year, days have none.": "تبدأ الفترة في هذا اليوم (من 1 إلى 28)، مثل يوم 15 من كل شهر: يمتد كل شهر عندها من يوم 15 حتى يوم 14 من الشهر التالي. للأرباع هو اليوم في الشهر الأول من الربع. يوم البداية في الشهر للأشهر والأرباع فقط؛ تبدأ الأسابيع في يوم الأسبوع، والسنوات في يوم بداية السنة، وليس للأيام يوم بداية.",
   "The weeks start on this day at the reset time, Monday by default.": "تبدأ الأسابيع في هذا اليوم في وقت إعادة الضبط، يوم الاثنين افتراضيًا.",
   "What is deleted at the end of every period, as with a manual reset. It cannot be undone. Games, servers, definitions and settings always stay, and the best of the period go into the hall of fame first.": "ما يُحذف في نهاية كل فترة، كما في إعادة الضبط اليدوية. لا يمكن التراجع عن ذلك. تبقى الألعاب والخوادم والتعريفات والإعدادات دائمًا، ويدخل الأفضل في الفترة أولًا إلى قاعة المشاهير.",
-  "Reset jobs requested from {f} to {t}, the last 14 days by default. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay.": "مهام إعادة الضبط المُنشأة من {f} إلى {t}، افتراضيًا آخر 14 يومًا. يحذف المُجمِّع المهام المنتهية والفاشلة بعد 30 يومًا؛ وتبقى المهام المنتظرة والجارية.",
+  "All reset jobs still stored, newest first. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay. From and To narrow the list down (both optional, both days included).": "كل مهام إعادة الضبط التي ما زالت مخزّنة، الأحدث أولًا. يحذف المُجمِّع المهام المنتهية والفاشلة بعد 30 يومًا؛ وتبقى المهام المنتظرة والجارية. يضيّق «من» و«إلى» القائمة (كلاهما اختياري، ويشمل اليومين).",
   "From": "من",
   "To": "إلى",
   "No reset jobs in this period.": "لا توجد مهام إعادة ضبط في هذه الفترة.",
-  "Invalid period (dates as YYYY-MM-DD, from not after to, at most 366 days); showing the last 14 days.": "فترة غير صالحة (التواريخ بصيغة YYYY-MM-DD، والبداية ليست بعد النهاية، و366 يومًا على الأكثر)؛ تُعرض آخر 14 يومًا.",
+  "Invalid period (dates as YYYY-MM-DD, from not after to); showing all jobs.": "فترة غير صالحة (التواريخ بصيغة YYYY-MM-DD، والبداية ليست بعد النهاية)؛ تُعرض كل المهام.",
 };
 
 export default texts;

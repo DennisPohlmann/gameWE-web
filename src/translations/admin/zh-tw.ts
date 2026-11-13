@@ -916,11 +916,11 @@ const texts: Record<string, string> = {
   "The period starts on this day (1 to 28), e.g. every 15th: each month then runs from the 15th to the 14th of the next one. For quarters it is the day in the quarter's first month. Only months and quarters have a start day of the month; weeks start on the weekday, years on the start day of the year, days have none.": "期間從這一天開始（1 到 28），例如每月 15 日：每個月就從 15 日持續到下個月 14 日。對於季，是該季第一個月中的這一天。只有月和季有月內起始日；週從星期幾開始，年從年度起始日開始，天沒有起始日。",
   "The weeks start on this day at the reset time, Monday by default.": "每週從這一天的重設時間開始，預設是星期一。",
   "What is deleted at the end of every period, as with a manual reset. It cannot be undone. Games, servers, definitions and settings always stay, and the best of the period go into the hall of fame first.": "每個期間結束時刪除的內容，與手動重設相同。無法復原。遊戲、伺服器、定義和設定一律保留，期間內的前幾名會先進入名人堂。",
-  "Reset jobs requested from {f} to {t}, the last 14 days by default. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay.": "從 {f} 到 {t} 建立的重設工作，預設是最近 14 天。收集器會在 30 天後刪除已完成和失敗的工作；等待中和執行中的工作會保留。",
+  "All reset jobs still stored, newest first. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay. From and To narrow the list down (both optional, both days included).": "仍保存的全部重設工作，最新的在前。收集器會在 30 天後刪除已完成和失敗的工作；等待中和執行中的工作會保留。可用「從」和「至」縮小清單（皆為選填，包含這兩天）。",
   "From": "從",
   "To": "至",
   "No reset jobs in this period.": "此期間沒有重設工作。",
-  "Invalid period (dates as YYYY-MM-DD, from not after to, at most 366 days); showing the last 14 days.": "期間無效（日期格式為 YYYY-MM-DD，開始不晚於結束，最多 366 天）；顯示最近 14 天。",
+  "Invalid period (dates as YYYY-MM-DD, from not after to); showing all jobs.": "期間無效（日期格式為 YYYY-MM-DD，開始不晚於結束）；顯示全部工作。",
 };
 
 export default texts;

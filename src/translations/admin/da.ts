@@ -916,11 +916,11 @@ const texts: Record<string, string> = {
   "The period starts on this day (1 to 28), e.g. every 15th: each month then runs from the 15th to the 14th of the next one. For quarters it is the day in the quarter's first month. Only months and quarters have a start day of the month; weeks start on the weekday, years on the start day of the year, days have none.": "Perioden starter på denne dag (1 til 28), f.eks. den 15.: hver måned løber så fra den 15. til den 14. i den næste. For kvartaler er det dagen i kvartalets første måned. Kun måneder og kvartaler har en startdag i måneden; uger starter på ugedagen, år på årets startdag, dage har ingen.",
   "The weeks start on this day at the reset time, Monday by default.": "Ugerne starter på denne dag på tidspunktet for nulstillingen, som standard mandag.",
   "What is deleted at the end of every period, as with a manual reset. It cannot be undone. Games, servers, definitions and settings always stay, and the best of the period go into the hall of fame first.": "Det, der slettes ved slutningen af hver periode, som ved en manuel nulstilling. Det kan ikke fortrydes. Spil, servere, definitioner og indstillinger bliver altid, og periodens bedste kommer først i hall of fame.",
-  "Reset jobs requested from {f} to {t}, the last 14 days by default. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay.": "Nulstillingsjobs oprettet fra {f} til {t}, som standard de seneste 14 dage. Collectoren sletter færdige og mislykkede jobs efter 30 dage; ventende og kørende bliver.",
+  "All reset jobs still stored, newest first. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay. From and To narrow the list down (both optional, both days included).": "Alle nulstillingsjobs, der stadig er gemt, de nyeste først. Collectoren sletter færdige og mislykkede jobs efter 30 dage; ventende og kørende bliver. Fra og Til afgrænser listen (begge valgfrie, begge dage medregnet).",
   "From": "Fra",
   "To": "Til",
   "No reset jobs in this period.": "Ingen nulstillingsjobs i denne periode.",
-  "Invalid period (dates as YYYY-MM-DD, from not after to, at most 366 days); showing the last 14 days.": "Ugyldig periode (datoer som ÅÅÅÅ-MM-DD, fra ikke efter til, højst 366 dage); viser de seneste 14 dage.",
+  "Invalid period (dates as YYYY-MM-DD, from not after to); showing all jobs.": "Ugyldig periode (datoer som ÅÅÅÅ-MM-DD, fra ikke efter til); viser alle jobs.",
 };
 
 export default texts;

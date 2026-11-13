@@ -916,11 +916,11 @@ const texts: Record<string, string> = {
   "The period starts on this day (1 to 28), e.g. every 15th: each month then runs from the 15th to the 14th of the next one. For quarters it is the day in the quarter's first month. Only months and quarters have a start day of the month; weeks start on the weekday, years on the start day of the year, days have none.": "周期从这一天开始（1 到 28），例如每月 15 日：每个月就从 15 日持续到下个月 14 日。对于季度，是季度第一个月中的这一天。只有月和季度有月内起始日；周从星期几开始，年从年度起始日开始，天没有起始日。",
   "The weeks start on this day at the reset time, Monday by default.": "每周从这一天的重置时间开始，默认是星期一。",
   "What is deleted at the end of every period, as with a manual reset. It cannot be undone. Games, servers, definitions and settings always stay, and the best of the period go into the hall of fame first.": "每个周期结束时删除的内容，与手动重置相同。无法撤销。游戏、服务器、定义和设置始终保留，周期内的前几名会先进入名人堂。",
-  "Reset jobs requested from {f} to {t}, the last 14 days by default. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay.": "从 {f} 到 {t} 创建的重置任务，默认是最近 14 天。收集器会在 30 天后删除已完成和失败的任务；等待中和运行中的任务会保留。",
+  "All reset jobs still stored, newest first. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay. From and To narrow the list down (both optional, both days included).": "仍保存的全部重置任务，最新的在前。收集器会在 30 天后删除已完成和失败的任务；等待中和运行中的任务会保留。可用“从”和“至”缩小列表（均为可选，包含这两天）。",
   "From": "从",
   "To": "至",
   "No reset jobs in this period.": "此期间没有重置任务。",
-  "Invalid period (dates as YYYY-MM-DD, from not after to, at most 366 days); showing the last 14 days.": "期间无效（日期格式为 YYYY-MM-DD，开始不晚于结束，最多 366 天）；显示最近 14 天。",
+  "Invalid period (dates as YYYY-MM-DD, from not after to); showing all jobs.": "期间无效（日期格式为 YYYY-MM-DD，开始不晚于结束）；显示全部任务。",
 };
 
 export default texts;

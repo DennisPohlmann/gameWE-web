@@ -916,11 +916,11 @@ const texts: Record<string, string> = {
   "The period starts on this day (1 to 28), e.g. every 15th: each month then runs from the 15th to the 14th of the next one. For quarters it is the day in the quarter's first month. Only months and quarters have a start day of the month; weeks start on the weekday, years on the start day of the year, days have none.": "기간은 이 날 (1~28)에 시작합니다, 예: 매월 15일이면 각 달은 15일부터 다음 달 14일까지입니다. 분기의 경우 분기 첫 달의 날짜입니다. 월의 시작일은 월과 분기에만 있습니다. 주는 요일에, 년은 연도 시작일에 시작하며, 일에는 시작일이 없습니다.",
   "The weeks start on this day at the reset time, Monday by default.": "주는 이 요일의 초기화 시각에 시작합니다. 기본값은 월요일입니다.",
   "What is deleted at the end of every period, as with a manual reset. It cannot be undone. Games, servers, definitions and settings always stay, and the best of the period go into the hall of fame first.": "각 기간이 끝날 때 삭제되는 것으로, 수동 초기화와 같습니다. 되돌릴 수 없습니다. 게임, 서버, 정의와 설정은 항상 남고, 기간의 상위 플레이어는 먼저 명예의 전당에 기록됩니다.",
-  "Reset jobs requested from {f} to {t}, the last 14 days by default. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay.": "{f}부터 {t}까지 생성된 초기화 작업, 기본은 최근 14일입니다. 콜렉터는 완료되거나 실패한 작업을 30일 후에 삭제하며, 대기 중이거나 실행 중인 작업은 남습니다.",
+  "All reset jobs still stored, newest first. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay. From and To narrow the list down (both optional, both days included).": "아직 저장된 모든 초기화 작업, 최신순. 콜렉터는 완료되거나 실패한 작업을 30일 후에 삭제하며, 대기 중이거나 실행 중인 작업은 남습니다. 시작과 끝으로 목록을 좁힐 수 있습니다 (둘 다 선택 사항, 두 날짜 모두 포함).",
   "From": "시작",
   "To": "끝",
   "No reset jobs in this period.": "이 기간에 초기화 작업이 없습니다.",
-  "Invalid period (dates as YYYY-MM-DD, from not after to, at most 366 days); showing the last 14 days.": "잘못된 기간입니다 (날짜는 YYYY-MM-DD, 시작은 끝보다 늦지 않게, 최대 366일). 최근 14일을 표시합니다.",
+  "Invalid period (dates as YYYY-MM-DD, from not after to); showing all jobs.": "잘못된 기간입니다 (날짜는 YYYY-MM-DD, 시작은 끝보다 늦지 않게). 모든 작업을 표시합니다.",
 };
 
 export default texts;

@@ -916,11 +916,11 @@ const texts: Record<string, string> = {
   "The period starts on this day (1 to 28), e.g. every 15th: each month then runs from the 15th to the 14th of the next one. For quarters it is the day in the quarter's first month. Only months and quarters have a start day of the month; weeks start on the weekday, years on the start day of the year, days have none.": "La période commence ce jour (1 à 28), p. ex. chaque 15 : chaque mois va alors du 15 au 14 du mois suivant. Pour les trimestres, c’est le jour du premier mois du trimestre. Seuls les mois et les trimestres ont un jour de début dans le mois ; les semaines commencent le jour de la semaine, les années au jour de début de l’année, les jours n’en ont pas.",
   "The weeks start on this day at the reset time, Monday by default.": "Les semaines commencent ce jour à l’heure de la réinitialisation, le lundi par défaut.",
   "What is deleted at the end of every period, as with a manual reset. It cannot be undone. Games, servers, definitions and settings always stay, and the best of the period go into the hall of fame first.": "Ce qui est supprimé à la fin de chaque période, comme pour une réinitialisation manuelle. C’est irréversible. Les jeux, serveurs, définitions et paramètres restent toujours, et les meilleurs de la période entrent d’abord au Panthéon.",
-  "Reset jobs requested from {f} to {t}, the last 14 days by default. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay.": "Tâches de réinitialisation créées du {f} au {t}, par défaut les 14 derniers jours. Le collector supprime les tâches terminées et échouées après 30 jours ; celles en attente ou en cours restent.",
+  "All reset jobs still stored, newest first. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay. From and To narrow the list down (both optional, both days included).": "Toutes les tâches de réinitialisation encore stockées, les plus récentes d’abord. Le collector supprime les tâches terminées et échouées après 30 jours ; celles en attente ou en cours restent. Du et Au restreignent la liste (tous deux facultatifs, les deux jours inclus).",
   "From": "Du",
   "To": "Au",
   "No reset jobs in this period.": "Aucune tâche de réinitialisation dans cette période.",
-  "Invalid period (dates as YYYY-MM-DD, from not after to, at most 366 days); showing the last 14 days.": "Période invalide (dates au format AAAA-MM-JJ, début pas après la fin, 366 jours au plus) ; affichage des 14 derniers jours.",
+  "Invalid period (dates as YYYY-MM-DD, from not after to); showing all jobs.": "Période invalide (dates au format AAAA-MM-JJ, début pas après la fin) ; affichage de toutes les tâches.",
 };
 
 export default texts;

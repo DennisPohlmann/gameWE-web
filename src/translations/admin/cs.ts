@@ -916,11 +916,11 @@ const texts: Record<string, string> = {
   "The period starts on this day (1 to 28), e.g. every 15th: each month then runs from the 15th to the 14th of the next one. For quarters it is the day in the quarter's first month. Only months and quarters have a start day of the month; weeks start on the weekday, years on the start day of the year, days have none.": "Období začíná tímto dnem (1 až 28), např. každého 15.: každý měsíc pak trvá od 15. do 14. dne následujícího. Pro čtvrtletí je to den v prvním měsíci čtvrtletí. Počáteční den v měsíci mají jen měsíce a čtvrtletí; týdny začínají dnem v týdnu, roky počátečním dnem roku, dny žádný nemají.",
   "The weeks start on this day at the reset time, Monday by default.": "Týdny začínají tímto dnem v čase resetu, výchozí je pondělí.",
   "What is deleted at the end of every period, as with a manual reset. It cannot be undone. Games, servers, definitions and settings always stay, and the best of the period go into the hall of fame first.": "Co se na konci každého období smaže, stejně jako při ručním resetu. Nelze to vrátit zpět. Hry, servery, definice a nastavení vždy zůstanou a nejlepší z období se nejprve zapíšou do síně slávy.",
-  "Reset jobs requested from {f} to {t}, the last 14 days by default. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay.": "Úlohy resetu vytvořené od {f} do {t}, ve výchozím stavu za posledních 14 dní. Kolektor maže dokončené a neúspěšné úlohy po 30 dnech; čekající a běžící zůstávají.",
+  "All reset jobs still stored, newest first. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay. From and To narrow the list down (both optional, both days included).": "Všechny úlohy resetu, které jsou ještě uložené, nejnovější první. Kolektor maže dokončené a neúspěšné úlohy po 30 dnech; čekající a běžící zůstávají. Od a Do seznam zúží (obojí volitelné, oba dny včetně).",
   "From": "Od",
   "To": "Do",
   "No reset jobs in this period.": "V tomto období nejsou žádné úlohy resetu.",
-  "Invalid period (dates as YYYY-MM-DD, from not after to, at most 366 days); showing the last 14 days.": "Neplatné období (data jako RRRR-MM-DD, od ne později než do, nejvýše 366 dní); zobrazuje se posledních 14 dní.",
+  "Invalid period (dates as YYYY-MM-DD, from not after to); showing all jobs.": "Neplatné období (data jako RRRR-MM-DD, od ne později než do); zobrazují se všechny úlohy.",
 };
 
 export default texts;

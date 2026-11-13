@@ -916,11 +916,11 @@ const texts: Record<string, string> = {
   "The period starts on this day (1 to 28), e.g. every 15th: each month then runs from the 15th to the 14th of the next one. For quarters it is the day in the quarter's first month. Only months and quarters have a start day of the month; weeks start on the weekday, years on the start day of the year, days have none.": "Dönem bu günde başlar (1 ila 28), ör. her ayın 15'i: her ay o zaman 15'inden bir sonraki ayın 14'üne kadar sürer. Çeyrekler için çeyreğin ilk ayındaki gündür. Ayın başlangıç günü yalnızca aylar ve çeyreklerde vardır; haftalar haftanın gününde, yıllar yılın başlangıç gününde başlar, günlerde yoktur.",
   "The weeks start on this day at the reset time, Monday by default.": "Haftalar bu günde sıfırlama saatinde başlar, varsayılan olarak pazartesi.",
   "What is deleted at the end of every period, as with a manual reset. It cannot be undone. Games, servers, definitions and settings always stay, and the best of the period go into the hall of fame first.": "Her dönemin sonunda, elle sıfırlamada olduğu gibi silinenler. Geri alınamaz. Oyunlar, sunucular, tanımlar ve ayarlar her zaman kalır ve dönemin en iyileri önce Şöhretler Salonu'na girer.",
-  "Reset jobs requested from {f} to {t}, the last 14 days by default. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay.": "{f} ile {t} arasında oluşturulan sıfırlama işleri, varsayılan olarak son 14 gün. Toplayıcı tamamlanan ve başarısız işleri 30 gün sonra siler; bekleyen ve çalışan işler kalır.",
+  "All reset jobs still stored, newest first. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay. From and To narrow the list down (both optional, both days included).": "Hâlâ saklanan tüm sıfırlama işleri, en yeniler önce. Toplayıcı tamamlanan ve başarısız işleri 30 gün sonra siler; bekleyen ve çalışan işler kalır. Başlangıç ve Bitiş listeyi daraltır (ikisi de isteğe bağlı, iki gün de dahil).",
   "From": "Başlangıç",
   "To": "Bitiş",
   "No reset jobs in this period.": "Bu dönemde sıfırlama işi yok.",
-  "Invalid period (dates as YYYY-MM-DD, from not after to, at most 366 days); showing the last 14 days.": "Geçersiz dönem (tarihler YYYY-AA-GG biçiminde, başlangıç bitişten sonra değil, en fazla 366 gün); son 14 gün gösteriliyor.",
+  "Invalid period (dates as YYYY-MM-DD, from not after to); showing all jobs.": "Geçersiz dönem (tarihler YYYY-AA-GG biçiminde, başlangıç bitişten sonra değil); tüm işler gösteriliyor.",
 };
 
 export default texts;

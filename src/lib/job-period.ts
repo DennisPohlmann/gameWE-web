@@ -1,12 +1,10 @@
 // The period of the reset page's job list: ?from= and ?to= as YYYY-MM-DD in
 // the web server's time zone (as the list prints its times), both days
-// included; by default the last JOB_DAYS days up to today. Anything invalid
-// (format, a date that does not exist, from after to, more than MAX_DAYS)
-// gives the default and invalid: true.
-export const JOB_DAYS = 14;
-export const MAX_DAYS = 366;
-
-export type JobPeriod = { from: string; to: string; start: number; end: number; invalid: boolean };
+// included, each optional. Without them the list has no time limit: it shows
+// every job still stored (the collector deletes finished ones after a while).
+// Anything invalid (format, a date that does not exist, from after to) gives
+// no limit and invalid: true.
+export type JobPeriod = { from: string; to: string; start?: number; end?: number; invalid: boolean };
 
 const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
@@ -17,20 +15,15 @@ function day(v: string): Date | null {
   return iso(d) === v ? d : null; // 2026-02-30 rolls over and is refused
 }
 
-export function jobPeriod(from: string, to: string, now = new Date()): JobPeriod {
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const back = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() - n);
-  const make = (f: Date, t: Date, invalid: boolean): JobPeriod => ({
-    from: iso(f),
-    to: iso(t),
-    start: Math.floor(f.getTime() / 1000),
-    end: Math.floor(back(t, -1).getTime() / 1000),
-    invalid,
-  });
-  const fallback = (invalid: boolean) => make(back(today, JOB_DAYS - 1), today, invalid);
-  if (!from && !to) return fallback(false);
-  const t = to ? day(to) : today;
-  const f = from ? day(from) : t && back(t, JOB_DAYS - 1);
-  if (!f || !t || f > t || back(t, MAX_DAYS - 1) > f) return fallback(true);
-  return make(f, t, false);
+export function jobPeriod(from: string, to: string): JobPeriod {
+  const f = from ? day(from) : undefined;
+  const t = to ? day(to) : undefined;
+  if (f === null || t === null || (f && t && f > t)) return { from: "", to: "", invalid: true };
+  return {
+    from: from,
+    to: to,
+    start: f ? Math.floor(f.getTime() / 1000) : undefined,
+    end: t ? Math.floor(new Date(t.getFullYear(), t.getMonth(), t.getDate() + 1).getTime() / 1000) : undefined,
+    invalid: false,
+  };
 }

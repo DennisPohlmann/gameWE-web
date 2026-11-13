@@ -916,11 +916,11 @@ const texts: Record<string, string> = {
   "The period starts on this day (1 to 28), e.g. every 15th: each month then runs from the 15th to the 14th of the next one. For quarters it is the day in the quarter's first month. Only months and quarters have a start day of the month; weeks start on the weekday, years on the start day of the year, days have none.": "Perioden börjar den här dagen (1 till 28), t.ex. den 15:e: varje månad går då från den 15:e till den 14:e i nästa. För kvartal är det dagen i kvartalets första månad. Bara månader och kvartal har en startdag i månaden; veckor börjar på veckodagen, år på årets startdag, dagar har ingen.",
   "The weeks start on this day at the reset time, Monday by default.": "Veckorna börjar den här dagen vid tidpunkten för återställningen, som standard på måndag.",
   "What is deleted at the end of every period, as with a manual reset. It cannot be undone. Games, servers, definitions and settings always stay, and the best of the period go into the hall of fame first.": "Det som raderas i slutet av varje period, som vid en manuell återställning. Det går inte att ångra. Spel, servrar, definitioner och inställningar finns alltid kvar, och periodens bästa kommer först in i Hall of Fame.",
-  "Reset jobs requested from {f} to {t}, the last 14 days by default. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay.": "Återställningsjobb skapade från {f} till {t}, som standard de senaste 14 dagarna. Insamlaren raderar klara och misslyckade jobb efter 30 dagar; väntande och pågående finns kvar.",
+  "All reset jobs still stored, newest first. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay. From and To narrow the list down (both optional, both days included).": "Alla återställningsjobb som fortfarande finns sparade, de nyaste först. Insamlaren raderar klara och misslyckade jobb efter 30 dagar; väntande och pågående finns kvar. Från och Till begränsar listan (båda valfria, båda dagarna inräknade).",
   "From": "Från",
   "To": "Till",
   "No reset jobs in this period.": "Inga återställningsjobb under den här perioden.",
-  "Invalid period (dates as YYYY-MM-DD, from not after to, at most 366 days); showing the last 14 days.": "Ogiltig period (datum som ÅÅÅÅ-MM-DD, från inte efter till, högst 366 dagar); visar de senaste 14 dagarna.",
+  "Invalid period (dates as YYYY-MM-DD, from not after to); showing all jobs.": "Ogiltig period (datum som ÅÅÅÅ-MM-DD, från inte efter till); visar alla jobb.",
 };
 
 export default texts;

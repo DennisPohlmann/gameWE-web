@@ -916,11 +916,11 @@ const texts: Record<string, string> = {
   "The period starts on this day (1 to 28), e.g. every 15th: each month then runs from the 15th to the 14th of the next one. For quarters it is the day in the quarter's first month. Only months and quarters have a start day of the month; weeks start on the weekday, years on the start day of the year, days have none.": "O período começa neste dia (1 a 28), por exemplo, todo dia 15: cada mês vai então do dia 15 ao dia 14 do mês seguinte. Nos trimestres, é o dia no primeiro mês do trimestre. Só meses e trimestres têm um dia de início no mês; as semanas começam no dia da semana, os anos no dia de início do ano, os dias não têm.",
   "The weeks start on this day at the reset time, Monday by default.": "As semanas começam neste dia no horário da redefinição, na segunda-feira por padrão.",
   "What is deleted at the end of every period, as with a manual reset. It cannot be undone. Games, servers, definitions and settings always stay, and the best of the period go into the hall of fame first.": "O que é apagado no fim de cada período, como em uma redefinição manual. Não pode ser desfeito. Jogos, servidores, definições e configurações sempre ficam, e os melhores do período entram antes no hall da fama.",
-  "Reset jobs requested from {f} to {t}, the last 14 days by default. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay.": "Tarefas de redefinição criadas de {f} a {t}, por padrão os últimos 14 dias. O collector apaga as tarefas concluídas e com falha após 30 dias; as pendentes e em andamento ficam.",
+  "All reset jobs still stored, newest first. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay. From and To narrow the list down (both optional, both days included).": "Todas as tarefas de redefinição ainda salvas, as mais recentes primeiro. O collector apaga as tarefas concluídas e com falha após 30 dias; as pendentes e em andamento ficam. De e Até restringem a lista (ambos opcionais, ambos os dias incluídos).",
   "From": "De",
   "To": "Até",
   "No reset jobs in this period.": "Nenhuma tarefa de redefinição neste período.",
-  "Invalid period (dates as YYYY-MM-DD, from not after to, at most 366 days); showing the last 14 days.": "Período inválido (datas como AAAA-MM-DD, início não depois do fim, no máximo 366 dias); mostrando os últimos 14 dias.",
+  "Invalid period (dates as YYYY-MM-DD, from not after to); showing all jobs.": "Período inválido (datas como AAAA-MM-DD, início não depois do fim); mostrando todas as tarefas.",
 };
 
 export default texts;

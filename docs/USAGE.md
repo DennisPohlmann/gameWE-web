@@ -663,17 +663,17 @@ What the admin area edits:
   database first. The admin database user needs `SELECT` and `INSERT` on
   `hlstats_gamewe_jobs` (the init script grants it). From the console:
   `gamewe reset CODE -mode player-stats|all-stats|all`. The job list
-  ("Recent jobs", also the scheduled resets, by `schedule`) shows the reset
-  jobs requested in a period, by default the last 14 days up to today; "From"
-  and "To" (dates, both days included, in the web server's time zone like the
-  times in the list) choose another one, at most 366 days. The list is paged
-  (25 rows by default, "Show rows" 10 to 250, "Go to" a page), and period,
-  page and rows stay in the address (`?from=YYYY-MM-DD&to=YYYY-MM-DD&page=N&rows=N`).
-  The server checks them: a date that is not `YYYY-MM-DD` or does not exist,
-  from after to or more than 366 days gives the last 14 days with a notice;
-  a page past the end shows the last one. The collector deletes finished and
-  failed jobs after 30 days (every hour, and `gamewe db purge` too), waiting
-  and running ones stay, so older periods are empty.
+  ("Recent jobs", also the scheduled resets, by `schedule`) shows every reset
+  job still stored, newest first. "From" and "To" (dates, both optional, both
+  days included, in the web server's time zone like the times in the list)
+  narrow it down. The list is paged (25 rows by default, "Show rows" 10 to
+  250, "Go to" a page), and period, page and rows stay in the address
+  (`?from=YYYY-MM-DD&to=YYYY-MM-DD&page=N&rows=N`). The server checks them: a
+  date that is not `YYYY-MM-DD` or does not exist, or from after to, shows all
+  jobs with a notice; a page past the end shows the last one. The collector
+  deletes finished and failed jobs after 30 days (every hour, and `gamewe db
+  purge` too), waiting and running ones stay, so the list reaches back about
+  30 days.
 - **Hall of fame & scheduled reset** (level 100, on the ranking's overview
   `/admin/rankings/<code>`, needs a collector with the table
   `hlstats_gamewe_hall_of_fame`): resets the ranking every N days, weeks,

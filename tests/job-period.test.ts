@@ -3,34 +3,29 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { jobPeriod } from "../src/lib/job-period.ts";
 
-const now = new Date(2026, 10, 13, 21, 30);
+test("without dates there is no time limit", () => {
+  assert.deepEqual(jobPeriod("", ""), { from: "", to: "", start: undefined, end: undefined, invalid: false });
+});
 
-test("the default is the last 14 days up to today", () => {
-  const p = jobPeriod("", "", now);
-  assert.deepEqual([p.from, p.to, p.invalid], ["2026-10-31", "2026-11-13", false]);
-  assert.equal(p.start, new Date(2026, 9, 31).getTime() / 1000);
+test("from and to are taken, each on its own too", () => {
+  const p = jobPeriod("2026-11-01", "2026-11-13");
+  assert.deepEqual([p.from, p.to, p.invalid], ["2026-11-01", "2026-11-13", false]);
+  assert.equal(p.start, new Date(2026, 10, 1).getTime() / 1000);
   assert.equal(p.end, new Date(2026, 10, 14).getTime() / 1000);
+  assert.equal(jobPeriod("2026-11-13", "2026-11-13").end! - jobPeriod("2026-11-13", "2026-11-13").start!, 86400);
+  assert.deepEqual([jobPeriod("2026-11-01", "")].map((x) => [x.start !== undefined, x.end]), [[true, undefined]]);
+  assert.deepEqual([jobPeriod("", "2026-11-13")].map((x) => [x.start, x.end !== undefined]), [[undefined, true]]);
 });
 
-test("from and to are taken, a missing one is filled in", () => {
-  assert.deepEqual([jobPeriod("2026-01-01", "2026-01-31", now)].map((p) => [p.from, p.to, p.invalid]), [["2026-01-01", "2026-01-31", false]]);
-  assert.deepEqual([jobPeriod("", "2026-03-14", now)].map((p) => [p.from, p.to]), [["2026-03-01", "2026-03-14"]]);
-  assert.deepEqual([jobPeriod("2026-11-01", "", now)].map((p) => [p.from, p.to]), [["2026-11-01", "2026-11-13"]]);
-  assert.equal(jobPeriod("2026-11-13", "2026-11-13", now).end - jobPeriod("2026-11-13", "2026-11-13", now).start, 86400);
-});
-
-test("invalid input gives the default", () => {
+test("invalid input gives no limit", () => {
   for (const [f, t] of [
     ["2026-02-30", ""],
     ["13.11.2026", ""],
     ["2026-11-10", "2026-11-01"],
-    ["2024-01-01", "2026-01-01"],
     ["2026-1-1", ""],
+    ["", "x"],
     ["' OR 1=1", ""],
   ]) {
-    const p = jobPeriod(f, t, now);
-    assert.deepEqual([p.from, p.to, p.invalid], ["2026-10-31", "2026-11-13", true], `${f} ${t}`);
+    assert.deepEqual(jobPeriod(f, t), { from: "", to: "", invalid: true }, `${f} ${t}`);
   }
-  assert.equal(jobPeriod("2025-11-14", "2026-11-13", now).invalid, false); // 365 days
-  assert.equal(jobPeriod("2025-11-12", "2026-11-13", now).invalid, true); // 367 days
 });

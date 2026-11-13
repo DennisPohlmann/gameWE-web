@@ -916,11 +916,11 @@ const texts: Record<string, string> = {
   "The period starts on this day (1 to 28), e.g. every 15th: each month then runs from the 15th to the 14th of the next one. For quarters it is the day in the quarter's first month. Only months and quarters have a start day of the month; weeks start on the weekday, years on the start day of the year, days have none.": "期間はこの日に始まります (1〜28)。例: 毎月15日なら、各月は15日から翌月14日までです。四半期の場合は、四半期の最初の月の日です。月の開始日があるのは月と四半期だけです。週は曜日に、年は年の開始日に始まり、日には開始日がありません。",
   "The weeks start on this day at the reset time, Monday by default.": "週はこの曜日のリセット時刻に始まります。既定は月曜日です。",
   "What is deleted at the end of every period, as with a manual reset. It cannot be undone. Games, servers, definitions and settings always stay, and the best of the period go into the hall of fame first.": "各期間の終わりに削除されるもので、手動リセットと同じです。元に戻せません。ゲーム、サーバー、定義、設定は常に残り、期間の上位者は先に殿堂に記録されます。",
-  "Reset jobs requested from {f} to {t}, the last 14 days by default. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay.": "{f} から {t} までに作成されたリセットジョブ。既定は直近 14 日間です。コレクターは完了したジョブと失敗したジョブを 30 日後に削除します。待機中と実行中のジョブは残ります。",
+  "All reset jobs still stored, newest first. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay. From and To narrow the list down (both optional, both days included).": "まだ保存されているすべてのリセットジョブ (新しい順)。コレクターは完了したジョブと失敗したジョブを 30 日後に削除します。待機中と実行中のジョブは残ります。開始と終了で一覧を絞り込めます (どちらも任意、両日を含む)。",
   "From": "開始",
   "To": "終了",
   "No reset jobs in this period.": "この期間のリセットジョブはありません。",
-  "Invalid period (dates as YYYY-MM-DD, from not after to, at most 366 days); showing the last 14 days.": "無効な期間です (日付は YYYY-MM-DD、開始は終了より後にしない、最大 366 日)。直近 14 日間を表示しています。",
+  "Invalid period (dates as YYYY-MM-DD, from not after to); showing all jobs.": "無効な期間です (日付は YYYY-MM-DD、開始は終了より後にしない)。すべてのジョブを表示しています。",
 };
 
 export default texts;

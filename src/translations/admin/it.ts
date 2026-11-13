@@ -916,11 +916,11 @@ const texts: Record<string, string> = {
   "The period starts on this day (1 to 28), e.g. every 15th: each month then runs from the 15th to the 14th of the next one. For quarters it is the day in the quarter's first month. Only months and quarters have a start day of the month; weeks start on the weekday, years on the start day of the year, days have none.": "Il periodo inizia in questo giorno (da 1 a 28), ad es. ogni 15: ogni mese va allora dal 15 al 14 del mese successivo. Per i trimestri è il giorno nel primo mese del trimestre. Solo mesi e trimestri hanno un giorno di inizio nel mese; le settimane iniziano nel giorno della settimana, gli anni nel giorno di inizio dell'anno, i giorni non ne hanno.",
   "The weeks start on this day at the reset time, Monday by default.": "Le settimane iniziano in questo giorno all'ora dell'azzeramento, di lunedì per impostazione predefinita.",
   "What is deleted at the end of every period, as with a manual reset. It cannot be undone. Games, servers, definitions and settings always stay, and the best of the period go into the hall of fame first.": "Cosa viene eliminato alla fine di ogni periodo, come in un azzeramento manuale. Non si può annullare. Giochi, server, definizioni e impostazioni restano sempre, e i migliori del periodo entrano prima nell'albo d'oro.",
-  "Reset jobs requested from {f} to {t}, the last 14 days by default. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay.": "Job di azzeramento creati dal {f} al {t}, per impostazione predefinita gli ultimi 14 giorni. Il collector elimina i job completati e falliti dopo 30 giorni; quelli in attesa e in corso restano.",
+  "All reset jobs still stored, newest first. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay. From and To narrow the list down (both optional, both days included).": "Tutti i job di azzeramento ancora salvati, i più recenti per primi. Il collector elimina i job completati e falliti dopo 30 giorni; quelli in attesa e in corso restano. Dal e Al restringono l'elenco (entrambi facoltativi, entrambi i giorni inclusi).",
   "From": "Dal",
   "To": "Al",
   "No reset jobs in this period.": "Nessun job di azzeramento in questo periodo.",
-  "Invalid period (dates as YYYY-MM-DD, from not after to, at most 366 days); showing the last 14 days.": "Periodo non valido (date come AAAA-MM-GG, inizio non dopo la fine, al massimo 366 giorni); vengono mostrati gli ultimi 14 giorni.",
+  "Invalid period (dates as YYYY-MM-DD, from not after to); showing all jobs.": "Periodo non valido (date come AAAA-MM-GG, inizio non dopo la fine); vengono mostrati tutti i job.",
 };
 
 export default texts;

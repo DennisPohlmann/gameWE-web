@@ -916,11 +916,11 @@ const texts: Record<string, string> = {
   "The period starts on this day (1 to 28), e.g. every 15th: each month then runs from the 15th to the 14th of the next one. For quarters it is the day in the quarter's first month. Only months and quarters have a start day of the month; weeks start on the weekday, years on the start day of the year, days have none.": "De periode begint op deze dag (1 tot 28), bijv. elke 15e: elke maand loopt dan van de 15e tot de 14e van de volgende. Bij kwartalen is het de dag in de eerste maand van het kwartaal. Alleen maanden en kwartalen hebben een startdag in de maand; weken beginnen op de weekdag, jaren op de startdag van het jaar, dagen hebben er geen.",
   "The weeks start on this day at the reset time, Monday by default.": "De weken beginnen op deze dag op het tijdstip van de reset, standaard op maandag.",
   "What is deleted at the end of every period, as with a manual reset. It cannot be undone. Games, servers, definitions and settings always stay, and the best of the period go into the hall of fame first.": "Wat aan het einde van elke periode wordt verwijderd, net als bij een handmatige reset. Dit kan niet ongedaan worden gemaakt. Games, servers, definities en instellingen blijven altijd, en de besten van de periode komen eerst in de hall of fame.",
-  "Reset jobs requested from {f} to {t}, the last 14 days by default. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay.": "Resettaken aangemaakt van {f} tot {t}, standaard de laatste 14 dagen. De collector verwijdert voltooide en mislukte taken na 30 dagen; wachtende en lopende blijven.",
+  "All reset jobs still stored, newest first. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay. From and To narrow the list down (both optional, both days included).": "Alle resettaken die nog bewaard zijn, de nieuwste eerst. De collector verwijdert voltooide en mislukte taken na 30 dagen; wachtende en lopende blijven. Van en Tot beperken de lijst (beide optioneel, beide dagen inbegrepen).",
   "From": "Van",
   "To": "Tot",
   "No reset jobs in this period.": "Geen resettaken in deze periode.",
-  "Invalid period (dates as YYYY-MM-DD, from not after to, at most 366 days); showing the last 14 days.": "Ongeldige periode (data als JJJJ-MM-DD, van niet na tot, hoogstens 366 dagen); de laatste 14 dagen worden getoond.",
+  "Invalid period (dates as YYYY-MM-DD, from not after to); showing all jobs.": "Ongeldige periode (data als JJJJ-MM-DD, van niet na tot); alle taken worden getoond.",
 };
 
 export default texts;

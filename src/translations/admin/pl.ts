@@ -916,11 +916,11 @@ const texts: Record<string, string> = {
   "The period starts on this day (1 to 28), e.g. every 15th: each month then runs from the 15th to the 14th of the next one. For quarters it is the day in the quarter's first month. Only months and quarters have a start day of the month; weeks start on the weekday, years on the start day of the year, days have none.": "Okres zaczyna się tego dnia (od 1 do 28), np. 15. dnia: każdy miesiąc trwa wtedy od 15. do 14. dnia następnego. Przy kwartałach jest to dzień w pierwszym miesiącu kwartału. Tylko miesiące i kwartały mają dzień początkowy miesiąca; tygodnie zaczynają się w dniu tygodnia, lata w dniu początkowym roku, dni nie mają żadnego.",
   "The weeks start on this day at the reset time, Monday by default.": "Tygodnie zaczynają się tego dnia o godzinie resetu, domyślnie w poniedziałek.",
   "What is deleted at the end of every period, as with a manual reset. It cannot be undone. Games, servers, definitions and settings always stay, and the best of the period go into the hall of fame first.": "Co jest usuwane na końcu każdego okresu, tak jak przy ręcznym resecie. Tego nie da się cofnąć. Gry, serwery, definicje i ustawienia zawsze zostają, a najlepsi z okresu trafiają najpierw do galerii sław.",
-  "Reset jobs requested from {f} to {t}, the last 14 days by default. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay.": "Zadania resetu utworzone od {f} do {t}, domyślnie z ostatnich 14 dni. Collector usuwa zakończone i nieudane zadania po 30 dniach; oczekujące i trwające zostają.",
+  "All reset jobs still stored, newest first. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay. From and To narrow the list down (both optional, both days included).": "Wszystkie zadania resetu, które są jeszcze zapisane, najnowsze najpierw. Collector usuwa zakończone i nieudane zadania po 30 dniach; oczekujące i trwające zostają. Od i Do zawężają listę (oba opcjonalne, oba dni włącznie).",
   "From": "Od",
   "To": "Do",
   "No reset jobs in this period.": "Brak zadań resetu w tym okresie.",
-  "Invalid period (dates as YYYY-MM-DD, from not after to, at most 366 days); showing the last 14 days.": "Nieprawidłowy okres (daty jako RRRR-MM-DD, od nie później niż do, najwyżej 366 dni); pokazywane są ostatnie 14 dni.",
+  "Invalid period (dates as YYYY-MM-DD, from not after to); showing all jobs.": "Nieprawidłowy okres (daty jako RRRR-MM-DD, od nie później niż do); pokazywane są wszystkie zadania.",
 };
 
 export default texts;

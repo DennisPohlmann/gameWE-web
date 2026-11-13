@@ -916,11 +916,11 @@ const texts: Record<string, string> = {
   "The period starts on this day (1 to 28), e.g. every 15th: each month then runs from the 15th to the 14th of the next one. For quarters it is the day in the quarter's first month. Only months and quarters have a start day of the month; weeks start on the weekday, years on the start day of the year, days have none.": "Період починається цього дня (від 1 до 28), напр. кожного 15-го: кожен місяць тоді триває з 15-го до 14-го числа наступного. Для кварталів це день у першому місяці кварталу. День початку в місяці мають лише місяці й квартали; тижні починаються в день тижня, роки — в день початку року, дні його не мають.",
   "The weeks start on this day at the reset time, Monday by default.": "Тижні починаються цього дня в час скидання, типово в понеділок.",
   "What is deleted at the end of every period, as with a manual reset. It cannot be undone. Games, servers, definitions and settings always stay, and the best of the period go into the hall of fame first.": "Що видаляється наприкінці кожного періоду, як під час ручного скидання. Це неможливо скасувати. Ігри, сервери, визначення та налаштування завжди залишаються, а найкращі за період спершу потрапляють до зали слави.",
-  "Reset jobs requested from {f} to {t}, the last 14 days by default. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay.": "Завдання скидання, створені з {f} по {t}, типово за останні 14 днів. Колектор видаляє виконані й невдалі завдання через 30 днів; ті, що очікують або виконуються, залишаються.",
+  "All reset jobs still stored, newest first. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay. From and To narrow the list down (both optional, both days included).": "Усі завдання скидання, які ще зберігаються, найновіші спершу. Колектор видаляє виконані й невдалі завдання через 30 днів; ті, що очікують або виконуються, залишаються. З і По звужують список (обидва необов’язкові, обидва дні включно).",
   "From": "З",
   "To": "По",
   "No reset jobs in this period.": "Немає завдань скидання за цей період.",
-  "Invalid period (dates as YYYY-MM-DD, from not after to, at most 366 days); showing the last 14 days.": "Неправильний період (дати у форматі РРРР-ММ-ДД, початок не пізніше кінця, не більше 366 днів); показано останні 14 днів.",
+  "Invalid period (dates as YYYY-MM-DD, from not after to); showing all jobs.": "Неправильний період (дати у форматі РРРР-ММ-ДД, початок не пізніше кінця); показано всі завдання.",
 };
 
 export default texts;

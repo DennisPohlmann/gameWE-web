@@ -61,7 +61,7 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
   const jobId = Number(sp.job);
   const job: ResetJob | undefined = Number.isInteger(jobId) && jobId > 0 ? await getJob(jobId) : undefined;
   const open = job && (job.status === "pending" || job.status === "running");
-  // The job list: the period from ?from= / ?to= (last 14 days by default)
+  // The job list: the period from ?from= / ?to= (all stored jobs by default)
   // and one page of it; the page is clamped to the pages there are.
   const period = jobPeriod(strParam(sp.from), strParam(sp.to));
   const limit = rowsParam(sp.rows, 25);
@@ -69,8 +69,7 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
   const pages = Math.max(1, Math.ceil(total / limit));
   const page = Math.min(pageParam(sp.page), pages);
   const jobs = await recentJobs(period.start, period.end, limit, (page - 1) * limit);
-  const keep = { from: period.from, to: period.to, rows: limit !== 25 ? limit : undefined };
-  const day = (d: string) => dateFormat(locale, { year: "numeric", month: "numeric", day: "numeric" }).format(new Date(`${d}T00:00:00`));
+  const keep = { from: period.from || undefined, to: period.to || undefined, rows: limit !== 25 ? limit : undefined };
   const a = adminDict(lang);
   // Only level 100 sees this page, so the names of all admins.
   const startedBy = (j: ResetJob) => {
@@ -121,10 +120,10 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
         aside={
           <Form className="search" action="/admin/reset">
             <label>
-              {t.from} <input {...noAutofill} type="date" name="from" defaultValue={period.from} required />
+              {t.from} <input {...noAutofill} type="date" name="from" defaultValue={period.from} />
             </label>
             <label>
-              {t.to} <input {...noAutofill} type="date" name="to" defaultValue={period.to} required />
+              {t.to} <input {...noAutofill} type="date" name="to" defaultValue={period.to} />
             </label>
             {keep.rows ? <input type="hidden" name="rows" value={keep.rows} /> : null}
             <button type="submit">{a.filter}</button>
@@ -132,7 +131,7 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
         }
       >
         {period.invalid ? <p className="notice error">{t.errRange}</p> : null}
-        <p className="settings-help">{f(t.recentHelp, { f: day(period.from), t: day(period.to) })}</p>
+        <p className="settings-help">{t.recentHelp}</p>
         {jobs.length ? (
           <>
           <TableWrap>

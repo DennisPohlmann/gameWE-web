@@ -916,11 +916,11 @@ const texts: Record<string, string> = {
   "The period starts on this day (1 to 28), e.g. every 15th: each month then runs from the 15th to the 14th of the next one. For quarters it is the day in the quarter's first month. Only months and quarters have a start day of the month; weeks start on the weekday, years on the start day of the year, days have none.": "El periodo empieza este día (del 1 al 28), p. ej., cada día 15: cada mes va entonces del 15 al 14 del mes siguiente. En los trimestres es el día del primer mes del trimestre. Solo los meses y los trimestres tienen día de inicio del mes; las semanas empiezan en el día de la semana, los años en el día de inicio del año, los días no tienen.",
   "The weeks start on this day at the reset time, Monday by default.": "Las semanas empiezan este día a la hora del reinicio, el lunes de forma predeterminada.",
   "What is deleted at the end of every period, as with a manual reset. It cannot be undone. Games, servers, definitions and settings always stay, and the best of the period go into the hall of fame first.": "Lo que se borra al final de cada periodo, como en un reinicio manual. No se puede deshacer. Los juegos, servidores, definiciones y ajustes siempre se conservan, y los mejores del periodo pasan antes al salón de la fama.",
-  "Reset jobs requested from {f} to {t}, the last 14 days by default. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay.": "Tareas de reinicio creadas del {f} al {t}, de forma predeterminada los últimos 14 días. El collector borra las tareas terminadas y fallidas tras 30 días; las pendientes y en curso se conservan.",
+  "All reset jobs still stored, newest first. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay. From and To narrow the list down (both optional, both days included).": "Todas las tareas de reinicio que siguen guardadas, las más recientes primero. El collector borra las tareas terminadas y fallidas tras 30 días; las pendientes y en curso se conservan. Desde y Hasta acotan la lista (ambos opcionales, ambos días incluidos).",
   "From": "Desde",
   "To": "Hasta",
   "No reset jobs in this period.": "No hay tareas de reinicio en este periodo.",
-  "Invalid period (dates as YYYY-MM-DD, from not after to, at most 366 days); showing the last 14 days.": "Periodo no válido (fechas como AAAA-MM-DD, desde no posterior a hasta, como máximo 366 días); se muestran los últimos 14 días.",
+  "Invalid period (dates as YYYY-MM-DD, from not after to); showing all jobs.": "Periodo no válido (fechas como AAAA-MM-DD, desde no posterior a hasta); se muestran todas las tareas.",
 };
 
 export default texts;

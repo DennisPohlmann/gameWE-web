@@ -916,11 +916,11 @@ const texts: Record<string, string> = {
   "The period starts on this day (1 to 28), e.g. every 15th: each month then runs from the 15th to the 14th of the next one. For quarters it is the day in the quarter's first month. Only months and quarters have a start day of the month; weeks start on the weekday, years on the start day of the year, days have none.": "Период почиње тог дана (од 1 до 28), нпр. сваког 15.: сваки месец тада траје од 15. до 14. следећег. За квартале то је дан у првом месецу квартала. Почетни дан у месецу имају само месеци и квартали; недеље почињу на дан у недељи, године на почетни дан године, дани га немају.",
   "The weeks start on this day at the reset time, Monday by default.": "Недеље почињу тог дана у време ресета, подразумевано у понедељак.",
   "What is deleted at the end of every period, as with a manual reset. It cannot be undone. Games, servers, definitions and settings always stay, and the best of the period go into the hall of fame first.": "Шта се брише на крају сваког периода, као код ручног ресета. То се не може опозвати. Игре, сервери, дефиниције и подешавања увек остају, а најбољи из периода прво улазе у Кућу славних.",
-  "Reset jobs requested from {f} to {t}, the last 14 days by default. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay.": "Послови ресета направљени од {f} до {t}, подразумевано последњих 14 дана. Колектор брише завршене и неуспеле послове после 30 дана; они који чекају или се извршавају остају.",
+  "All reset jobs still stored, newest first. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay. From and To narrow the list down (both optional, both days included).": "Сви послови ресета који су још сачувани, најновији први. Колектор брише завршене и неуспеле послове после 30 дана; они који чекају или се извршавају остају. Од и До сужавају листу (оба необавезна, оба дана укључена).",
   "From": "Од",
   "To": "До",
   "No reset jobs in this period.": "Нема послова ресета у овом периоду.",
-  "Invalid period (dates as YYYY-MM-DD, from not after to, at most 366 days); showing the last 14 days.": "Неисправан период (датуми као ГГГГ-ММ-ДД, од не после до, највише 366 дана); приказују се последњих 14 дана.",
+  "Invalid period (dates as YYYY-MM-DD, from not after to); showing all jobs.": "Неисправан период (датуми као ГГГГ-ММ-ДД, од не после до); приказују се сви послови.",
 };
 
 export default texts;

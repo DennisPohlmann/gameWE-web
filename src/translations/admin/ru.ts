@@ -916,11 +916,11 @@ const texts: Record<string, string> = {
   "The period starts on this day (1 to 28), e.g. every 15th: each month then runs from the 15th to the 14th of the next one. For quarters it is the day in the quarter's first month. Only months and quarters have a start day of the month; weeks start on the weekday, years on the start day of the year, days have none.": "Период начинается в этот день (от 1 до 28), например 15-го числа: каждый месяц тогда длится с 15-го по 14-е число следующего. Для кварталов это день в первом месяце квартала. День начала в месяце есть только у месяцев и кварталов; недели начинаются в день недели, годы — в день начала года, у дней его нет.",
   "The weeks start on this day at the reset time, Monday by default.": "Недели начинаются в этот день во время сброса, по умолчанию в понедельник.",
   "What is deleted at the end of every period, as with a manual reset. It cannot be undone. Games, servers, definitions and settings always stay, and the best of the period go into the hall of fame first.": "Что удаляется в конце каждого периода, как при ручном сбросе. Это нельзя отменить. Игры, серверы, определения и настройки всегда остаются, а лучшие за период сначала попадают в зал славы.",
-  "Reset jobs requested from {f} to {t}, the last 14 days by default. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay.": "Задания сброса, созданные с {f} по {t}, по умолчанию за последние 14 дней. Коллектор удаляет выполненные и неудавшиеся задания через 30 дней; ожидающие и выполняющиеся остаются.",
+  "All reset jobs still stored, newest first. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay. From and To narrow the list down (both optional, both days included).": "Все задания сброса, которые ещё хранятся, новые сверху. Коллектор удаляет выполненные и неудавшиеся задания через 30 дней; ожидающие и выполняющиеся остаются. С и По сужают список (оба необязательны, оба дня включительно).",
   "From": "С",
   "To": "По",
   "No reset jobs in this period.": "Нет заданий сброса за этот период.",
-  "Invalid period (dates as YYYY-MM-DD, from not after to, at most 366 days); showing the last 14 days.": "Неверный период (даты в формате ГГГГ-ММ-ДД, начало не позже конца, не более 366 дней); показаны последние 14 дней.",
+  "Invalid period (dates as YYYY-MM-DD, from not after to); showing all jobs.": "Неверный период (даты в формате ГГГГ-ММ-ДД, начало не позже конца); показаны все задания.",
 };
 
 export default texts;
