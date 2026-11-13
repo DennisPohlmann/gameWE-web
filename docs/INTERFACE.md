@@ -225,8 +225,8 @@ with the points of the last 30 days) and `?bg=` a background pattern
 banners and ignore `?layout=`. Unknown values give the defaults. The same
 address with `.html` instead of `.png` (`/banner/<game>/player/12-dark.html`,
 `/banner/de/teamspeak.html`) is the banner as a web page for an
-`<iframe>` (live text, one link to the profile, server or `/voice`
-page, reloads itself; `?size=`, `?layout=` and `?bg=` apply, without
+`<iframe>` (real text that can be selected and copied, the name links to
+the profile, server or `/voice` page, reloads itself; `?size=`, `?layout=` and `?bg=` apply, without
 `?size=` it is the tall one, 160x400), which any site may frame. The codes on the profile, server, Misc
 and `/voice` pages use these URLs, in the page's language.
 

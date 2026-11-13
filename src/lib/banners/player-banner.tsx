@@ -2,7 +2,7 @@ import "server-only";
 import { cachedBanner } from "./cache";
 import { bannerFonts } from "./fonts";
 import { Backdrop } from "./backdrop";
-import { htmlBanner, onColor, wideBanner } from "./wide-banner";
+import { htmlBanner, Linked, onColor, wideBanner } from "./wide-banner";
 import { imageLang, optionsKey, type BannerOptions } from "./options";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -87,6 +87,7 @@ async function render(file: string, game: string | null, o: BannerOptions) {
     time: p.connection_time,
     host: origin.replace(/^https?:\/\//, ""),
     link: `${origin}/${p.game}/players/${p.playerId}`,
+    href: o.html ? `${origin}/${p.game}/players/${p.playerId}` : undefined,
     brand: settings.sigBrand,
     trend: days.map((x) => x.points),
     change: days.reduce((sum, x) => sum + x.change, 0),
@@ -99,7 +100,7 @@ async function render(file: string, game: string | null, o: BannerOptions) {
       {draw(d)}
     </div>
   );
-  if (o.html) return htmlBanner(d.link, picture, 400, 100, o.lang, 900);
+  if (o.html) return htmlBanner(picture, 400, 100, o.lang, 900);
   return new ImageResponse(picture, { width: 400, height: 100, fonts, headers: { "cache-control": "public, max-age=900" } });
 }
 
@@ -125,6 +126,8 @@ type Data = {
   time: number;
   host: string;
   link: string;
+  // Only in the HTML banner: the name is a link to link.
+  href?: string;
   brand: string;
   // Points per day, oldest first, and their change over the days (layout D only).
   trend: number[];
@@ -205,7 +208,7 @@ function drawA(d: Data) {
           <div style={{ display: "flex", flexDirection: "column", flex: 1, marginLeft: 7, overflow: "hidden" }}>
             <div style={{ display: "flex", alignItems: "center" }}>
               <Flag d={d} />
-              <span style={{ fontSize: 14, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 190 }}>{d.name}</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 190 }}><Linked href={d.href}>{d.name}</Linked></span>
             </div>
             <div style={{ display: "flex", fontSize: 9, color: th.muted, marginTop: 1 }}>
               {d.position ? `${t.positionOf.replace("{n}", d.n(d.total))} · ` : ""}
@@ -266,7 +269,7 @@ function drawB(d: Data) {
         <div style={{ display: "flex", flexDirection: "column", flex: 1, marginLeft: 14, overflow: "hidden" }}>
           <div style={{ display: "flex", alignItems: "center" }}>
             <Flag d={d} h={12} />
-            <span style={{ fontSize: 15, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 200 }}>{d.name}</span>
+            <span style={{ fontSize: 15, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 200 }}><Linked href={d.href}>{d.name}</Linked></span>
           </div>
           <div style={{ display: "flex", fontSize: 9.5, color: th.muted, marginTop: 1 }}>
             {d.rank ? `${d.rank.title} · ` : ""}
@@ -325,7 +328,7 @@ function drawC(d: Data) {
             <div style={{ display: "flex", flexDirection: "column", marginLeft: d.rank ? 6 : 0, flex: 1, overflow: "hidden" }}>
               <div style={{ display: "flex", alignItems: "center" }}>
                 <Flag d={d} />
-                <span style={{ fontSize: 14, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 210 }}>{d.name}</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 210 }}><Linked href={d.href}>{d.name}</Linked></span>
               </div>
               <div style={{ display: "flex", fontSize: 8.5, color: th.muted }}>
                 {d.rank ? `${d.rank.title} · ` : ""}
@@ -427,7 +430,7 @@ function drawD(d: Data) {
             <div style={{ display: "flex", flexDirection: "column", marginLeft: 6, overflow: "hidden" }}>
               <div style={{ display: "flex", alignItems: "center" }}>
                 <Flag d={d} />
-                <span style={{ fontSize: 13, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 120 }}>{d.name}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 120 }}><Linked href={d.href}>{d.name}</Linked></span>
               </div>
               <div style={{ display: "flex", fontSize: 8, color: th.muted, whiteSpace: "nowrap" }}>{d.rank?.title ?? ""}</div>
             </div>

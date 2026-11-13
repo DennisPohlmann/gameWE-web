@@ -33,6 +33,8 @@ export type Wide = {
   host: string;
   // The page of the player, server or TeamSpeak server (the HTML banner links to it).
   link: string;
+  // Only in the HTML banner: the name is a link to link.
+  href?: string;
   // The player's rank insignia (player banner in the small and tall sizes).
   badge?: React.ReactNode;
   // The values of the small size, when not those of the tall one; label "" shows the value alone.
@@ -41,6 +43,7 @@ export type Wide = {
 
 // Also the small and tall sizes of all three kinds (o.size), the player's too.
 export async function wideBanner(w: Wide, o: BannerOptions, maxAge: number): Promise<Response> {
+  if (o.html) w = { ...w, href: w.link };
   const draw = o.size === "small" ? drawSmall : o.size === "tall" ? drawTall : ({ a: drawA, b: drawB, c: drawC }[o.layout] ?? drawA);
   const [width, height] = o.size === "normal" ? [W, H] : sizePx("server", o.size);
   const picture = (
@@ -49,27 +52,37 @@ export async function wideBanner(w: Wide, o: BannerOptions, maxAge: number): Pro
       {draw(w)}
     </div>
   );
-  if (o.html) return htmlBanner(w.link, picture, width, height, o.lang, maxAge);
+  if (o.html) return htmlBanner(picture, width, height, o.lang, maxAge);
   return new ImageResponse(picture, { width, height, fonts: await bannerFonts(), headers: { "cache-control": `public, max-age=${maxAge}` } });
 }
 
 // The HTML banner (a file ending in .html): the same drawing as the picture,
 // since it only uses flex boxes with inline styles, as a page of its own for
-// an <iframe> on other sites (next.config.ts allows the framing for it and blocks everything else), one
-// link over all to the page, reloaded every maxAge seconds. The page loads
-// nothing: avatar and flags are data: URLs, the font is the reader's own.
-export async function htmlBanner(link: string, picture: React.ReactElement, width: number, height: number, lang: string, maxAge: number): Promise<Response> {
+// an <iframe> on other sites (next.config.ts allows the framing for it and
+// blocks everything else), reloaded every maxAge seconds. Real text that can
+// be selected and copied; the name is the link to the page (Linked), so the
+// rest is not one big link. The page loads nothing: avatar and flags are
+// data: URLs, the font is the reader's own (the inline "Inter" of the
+// drawing would fall back to a serif font without it).
+export async function htmlBanner(picture: React.ReactElement, width: number, height: number, lang: string, maxAge: number): Promise<Response> {
   const { renderToStaticMarkup } = await import("react-dom/server");
-  const body = renderToStaticMarkup(
-    <a href={link} target="_blank" rel="noopener" style={{ display: "flex", width, height, color: "inherit", textDecoration: "none" }}>
-      {picture}
-    </a>,
-  );
-  const page = `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta http-equiv="refresh" content="${maxAge}"><title>gameWE</title><style>html,body{margin:0;overflow:hidden;font-family:Inter,"Segoe UI",Roboto,Helvetica,Arial,system-ui,sans-serif}*{box-sizing:border-box}</style></head><body>${body}</body></html>`;
+  const body = renderToStaticMarkup(<div style={{ display: "flex", width, height }}>{picture}</div>);
+  const page = `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta http-equiv="refresh" content="${maxAge}"><title>gameWE</title><style>html,body{margin:0;overflow:hidden}*{box-sizing:border-box;font-family:Inter,"Segoe UI",Roboto,Helvetica,Arial,system-ui,sans-serif!important}a:hover{text-decoration:underline!important}</style></head><body>${body}</body></html>`;
   return new Response(page, {
     // Its content-security-policy comes from next.config.ts.
     headers: { "content-type": "text/html; charset=utf-8", "cache-control": `public, max-age=${maxAge}` },
   });
+}
+
+// The name as a link in the HTML banner (href set), plain text in the picture.
+export function Linked({ href, children }: { href?: string; children: React.ReactNode }) {
+  return href ? (
+    <a href={href} target="_blank" rel="noopener" style={{ color: "inherit", textDecoration: "none" }}>
+      {children}
+    </a>
+  ) : (
+    <>{children}</>
+  );
 }
 
 const frame = (th: ImageTheme, column = false) =>
@@ -188,7 +201,7 @@ function drawA(w: Wide) {
           <div style={label}>{w.kind}</div>
           <div style={{ display: "flex", alignItems: "center", width: INFO }}>
             <Flag src={w.flag} />
-            <span style={{ ...value, color: th.text, width: w.flag ? INFO - 21 : INFO }}>{w.name}</span>
+            <span style={{ ...value, color: th.text, width: w.flag ? INFO - 21 : INFO }}><Linked href={w.href}>{w.name}</Linked></span>
           </div>
         </div>
         <div style={{ display: "flex", height: 54 }}>
@@ -226,7 +239,7 @@ function drawB(w: Wide) {
           <div style={small}>{w.kind}</div>
           <div style={{ display: "flex", alignItems: "center", marginTop: 1 }}>
             <Flag src={w.flag} h={13} />
-            <span style={{ display: "block", fontSize: 17, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: w.graph ? 250 : 370 }}>{w.name}</span>
+            <span style={{ display: "block", fontSize: 17, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: w.graph ? 250 : 370 }}><Linked href={w.href}>{w.name}</Linked></span>
           </div>
           <div style={{ display: "flex", alignItems: "center", marginTop: 4, fontSize: 10 }}>
             <StatusDot w={w} />
@@ -280,7 +293,7 @@ function drawC(w: Wide) {
         <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, padding: "7px 12px 0" }}>
           <div style={{ display: "flex", alignItems: "center" }}>
             <Flag src={w.flag} h={12} />
-            <span style={{ display: "block", fontSize: 15, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 340 }}>{w.name}</span>
+            <span style={{ display: "block", fontSize: 15, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 340 }}><Linked href={w.href}>{w.name}</Linked></span>
             <div style={{ display: "flex", marginLeft: "auto", alignItems: "center", fontSize: 9, fontWeight: 700, color: w.online ? th.good : th.bad }}>
               <StatusDot w={w} />
               {w.status}
@@ -328,7 +341,7 @@ function drawSmall(w: Wide) {
     <div style={{ ...frame(th), borderTop: `1px solid ${th.frame}`, alignItems: "center", padding: "0 5px", fontSize: 9.5, color: th.text }}>
       {w.status ? <StatusDot w={w} /> : null}
       <Flag src={w.flag} h={9} />
-      <span style={{ display: "block", flexShrink: 1, minWidth: 30, maxWidth: 120, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{w.name}</span>
+      <span style={{ display: "block", flexShrink: 1, minWidth: 30, maxWidth: 120, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}><Linked href={w.href}>{w.name}</Linked></span>
       <span style={{ display: "flex", flexShrink: 0, marginLeft: 7, fontWeight: 700, color: th.accent, whiteSpace: "nowrap" }}>
         {w.hero.value}
         <span style={{ opacity: 0.75 }}>/{w.hero.max}</span>
@@ -355,7 +368,7 @@ function drawTall(w: Wide) {
       <div style={small}>{w.kind}</div>
       <div style={{ display: "flex", alignItems: "center", marginTop: 2 }}>
         <Flag src={w.flag} h={11} />
-        <span style={{ display: "block", fontSize: 13, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: w.flag ? 124 : 140 }}>{w.name}</span>
+        <span style={{ display: "block", fontSize: 13, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: w.flag ? 124 : 140 }}><Linked href={w.href}>{w.name}</Linked></span>
       </div>
       {w.status ? (
         <div style={{ display: "flex", alignItems: "center", marginTop: 3, fontSize: 9.5, fontWeight: 700, color: w.online ? th.good : th.bad }}>
