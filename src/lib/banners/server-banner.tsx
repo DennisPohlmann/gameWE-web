@@ -68,8 +68,7 @@ async function render(file: string, code: string | null, o: BannerOptions) {
       kind: t.server,
       name: s.name || addr,
       flag,
-      // The banner's short names as said ("CSS", "DODS"): games.ts's without colon, in capitals.
-      game: kind ? { short: kind.short.replace(":", "").toUpperCase(), icon } : undefined,
+      game: kind ? { short: kind.short, icon } : undefined,
       hero: { label: t.players, value: fmtNum(act, lang), max: fmtNum(max, lang), share, note: t.slotsShare.replace("{n}", `${Math.round(share * 100)} %`) },
       online,
       status,

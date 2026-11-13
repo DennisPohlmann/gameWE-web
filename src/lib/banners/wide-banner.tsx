@@ -23,7 +23,7 @@ export type Wide = {
   kind: string;
   name: string;
   flag: string | null;
-  // The server's game: its short name ("CSS") and icon as a data: URL.
+  // The server's game: its short name (games.ts, "CS:S") and icon as a data: URL.
   game?: { short: string; icon: string | null };
   // The big number: players or users online of the slots.
   hero: { label: string; value: string; max: string; share: number; note: string };
@@ -109,7 +109,7 @@ function Flag({ src, h = 12 }: { src: string | null; h?: number }) {
   return src ? <img src={src} width={Math.round((h * 4) / 3)} height={h} style={{ marginRight: 5, borderRadius: 1 }} alt="" /> : null;
 }
 
-// The game's icon and short name (server banners), e.g. "CSS"; h the icon's size.
+// The game's icon and short name (server banners), e.g. "CS:S"; h the icon's size.
 function GameValue({ g, h, size, color }: { g: NonNullable<Wide["game"]>; h: number; size: number; color: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", flexShrink: 0, fontSize: size, fontWeight: 700, lineHeight: 1, color, whiteSpace: "nowrap" }}>
@@ -120,30 +120,8 @@ function GameValue({ g, h, size, color }: { g: NonNullable<Wide["game"]>; h: num
   );
 }
 
-// The game at the front left of the wide server banners (layouts B, C, E):
-// a column with the icon over the short name; accent: in the accent colour (E).
-const GAME_COL = 62;
-function GameColumn({ w, accent = false }: { w: Wide; accent?: boolean }) {
-  if (!w.game) return null;
-  const bg = accent ? (w.th.stripe ?? w.th.accent) : w.th.side;
-  const fg = accent ? onColor(bg) : w.th.sideText;
-  return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: GAME_COL, flexShrink: 0, background: bg, color: fg }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      {w.game.icon ? <img src={w.game.icon} width={28} height={28} style={{ borderRadius: 3 }} alt="" /> : null}
-      <div style={{ display: "flex", marginTop: 5, fontSize: fitSize(w.game.short, GAME_COL - 8, 15), fontWeight: 700, lineHeight: 1, whiteSpace: "nowrap" }}>{w.game.short}</div>
-    </div>
-  );
-}
-
-// The game at the bottom of the side panel (layouts A and F), like a logo under the picture.
-function GameBand({ w }: { w: Wide }) {
-  return w.game ? (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: 24, flexShrink: 0 }}>
-      <GameValue g={w.game} h={22} size={19} color={w.th.sideText} />
-    </div>
-  ) : null;
-}
+// Room for the game (GameValue at 18 px) in the top right corner of the wide server banners.
+const GAME_W = 82;
 
 function Pie({ share, th, size = 24 }: { share: number; th: ImageTheme; size?: number }) {
   const r = 9;
@@ -163,8 +141,7 @@ function Graph({ g, th, w, h, scale }: { g: NonNullable<Wide["graph"]>; th: Imag
     <div style={{ display: "flex" }}>
       {scale ? (
         <div style={{ display: "flex", position: "relative", width: 18, height: h }}>
-          {/* A low graph (beside the game band) labels only its ends, the steps would overlap. */}
-          {(h < 50 ? [0, g.top] : g.ticks).map((v) => (
+          {g.ticks.map((v) => (
             <div key={v} style={{ display: "flex", position: "absolute", right: 3, top: Math.min(h - 9, Math.max(0, h - (v / g.top) * h - 5)), fontSize: 8, lineHeight: 1, color: th.sideText }}>
               {v}
             </div>
@@ -217,20 +194,19 @@ function drawA(w: Wide, side?: React.ReactNode) {
       </div>
     ) : null;
   const [c0, c1, c2, c3, c4] = w.cells;
+  // The game in the top right corner, the name ends before it.
+  const nameW = w.game ? INFO - GAME_W : INFO;
   const sideLabel = { display: "flex", fontSize: 8, fontWeight: 700, color: th.sideText, letterSpacing: 0.3, textTransform: "uppercase", whiteSpace: "nowrap" } as const;
   return (
     <div style={frame(th)}>
       {side ? (
         <div style={{ display: "flex", flexDirection: "column", width: SIDE, padding: "4px 6px", background: th.side }}>{side}</div>
       ) : w.graph ? (
-        <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", width: SIDE, padding: "4px 6px", background: th.side }}>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={sideLabel}>{w.graph.label}</div>
-            <div style={{ display: "flex", marginTop: 3 }}>
-              <Graph g={w.graph} th={th} w={SIDE - 12 - 18} h={w.game ? 42 : 66} scale />
-            </div>
+        <div style={{ display: "flex", flexDirection: "column", width: SIDE, padding: "4px 6px", background: th.side }}>
+          <div style={sideLabel}>{w.graph.label}</div>
+          <div style={{ display: "flex", marginTop: 3 }}>
+            <Graph g={w.graph} th={th} w={SIDE - 12 - 18} h={66} scale />
           </div>
-          <GameBand w={w} />
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", width: SIDE, padding: "4px 6px 6px", background: th.side }}>
@@ -249,10 +225,15 @@ function drawA(w: Wide, side?: React.ReactNode) {
       )}
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1, padding: "5px 8px" }}>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={label}>{w.kind}</div>
-          <div style={{ display: "flex", alignItems: "center", width: INFO }}>
-            <Flag src={w.flag} />
-            <span style={{ ...value, color: th.text, width: w.flag ? INFO - 21 : INFO }}><Linked href={w.href}>{w.name}</Linked></span>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", flexDirection: "column", width: nameW }}>
+              <div style={label}>{w.kind}</div>
+              <div style={{ display: "flex", alignItems: "center", width: nameW }}>
+                <Flag src={w.flag} />
+                <span style={{ ...value, color: th.text, width: w.flag ? nameW - 21 : nameW }}><Linked href={w.href}>{w.name}</Linked></span>
+              </div>
+            </div>
+            {w.game ? <GameValue g={w.game} h={18} size={16} color={th.text} /> : null}
           </div>
         </div>
         <div style={{ display: "flex", height: 54 }}>
@@ -281,17 +262,18 @@ function drawA(w: Wide, side?: React.ReactNode) {
 // box) in the side panel instead of the graph (server): the same label line
 // and the same box as the graph, framed like it.
 export const MAP_PANEL_W = SIDE - 12;
-export const MAP_PANEL_H = 55;
+export const MAP_PANEL_H = 66;
 function drawF(w: Wide) {
   const { th } = w;
+  const label = w.cells.find((c) => c.map)?.label ?? "";
   return drawA(
     w,
     w.mapImage ? (
-      <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", flexShrink: 0 }}>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", fontSize: 8, fontWeight: 700, color: th.sideText, letterSpacing: 0.3, textTransform: "uppercase", whiteSpace: "nowrap" }}>{label}</div>
+        <div style={{ display: "flex", marginTop: 3, flexShrink: 0 }}>
           <MapBox th={th} m={w.mapImage} w={MAP_PANEL_W} h={MAP_PANEL_H} framed />
         </div>
-        <GameBand w={w} />
       </div>
     ) : undefined,
   );
@@ -305,14 +287,14 @@ function drawB(w: Wide, accent = false) {
   const small = { display: "flex", fontSize: 8.5, color: th.muted, letterSpacing: 0.6, textTransform: "uppercase" } as const;
   return (
     <div style={frame(th)}>
-      <GameColumn w={w} accent={accent} />
+      {accent ? <div style={{ display: "flex", width: 8, flexShrink: 0, background: th.stripe ?? th.accent }} /> : null}
       <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
       <div style={{ display: "flex", flex: 1, alignItems: "center", padding: "0 12px" }}>
         <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
           {w.kind ? <div style={small}>{w.kind}</div> : null}
           <div style={{ display: "flex", alignItems: "center", marginTop: 1 }}>
             <Flag src={w.flag} h={13} />
-            <span style={{ display: "block", fontSize: 17, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: (w.graph ? 250 : 370) - (w.game ? GAME_COL - 30 : 0) }}><Linked href={w.href}>{w.name}</Linked></span>
+            <span style={{ display: "block", fontSize: 17, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: w.graph ? 250 : 370 }}><Linked href={w.href}>{w.name}</Linked></span>
           </div>
           <div style={{ display: "flex", alignItems: "center", marginTop: 4, fontSize: 10 }}>
             <StatusDot w={w} />
@@ -322,10 +304,15 @@ function drawB(w: Wide, accent = false) {
         {w.graph ? (
           <div style={{ display: "flex", flexDirection: "column", marginRight: 14 }}>
             <div style={{ ...small, fontSize: 7.5, letterSpacing: 0.4, marginBottom: 2 }}>{w.graph.label}</div>
-            <Graph g={w.graph} th={th} w={w.game ? 80 : 110} h={36} scale={false} />
+            <Graph g={w.graph} th={th} w={110} h={36} scale={false} />
           </div>
         ) : null}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+          {w.game ? (
+            <div style={{ display: "flex", marginBottom: 3 }}>
+              <GameValue g={w.game} h={16} size={14} color={th.text} />
+            </div>
+          ) : null}
           <div style={small}>{w.hero.label}</div>
           <div style={{ display: "flex", alignItems: "flex-end", color: th.accent, lineHeight: 1 }}>
             <span style={{ fontSize: 28, fontWeight: 700 }}>{w.hero.value}</span>
@@ -359,7 +346,6 @@ function drawC(w: Wide) {
   return (
     <div style={{ ...frame(th, true), borderTop: `1px solid ${th.frame}` }}>
       <div style={{ display: "flex", flex: 1 }}>
-        <GameColumn w={w} />
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: 100, background: block, color: fg }}>
           <div style={{ display: "flex", fontSize: 8, textTransform: "uppercase", letterSpacing: 0.8, opacity: 0.85, maxWidth: 92, overflow: "hidden", whiteSpace: "nowrap" }}>{w.hero.label}</div>
           <div style={{ display: "flex", fontSize: 30, fontWeight: 700, lineHeight: 1.05 }}>{w.hero.value}</div>
@@ -368,11 +354,16 @@ function drawC(w: Wide) {
         <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, padding: "7px 12px 0" }}>
           <div style={{ display: "flex", alignItems: "center" }}>
             <Flag src={w.flag} h={12} />
-            <span style={{ display: "block", fontSize: 15, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 340 - (w.game ? GAME_COL : 0) }}><Linked href={w.href}>{w.name}</Linked></span>
+            <span style={{ display: "block", fontSize: 15, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: w.game ? 340 - GAME_W - 50 : 340 }}><Linked href={w.href}>{w.name}</Linked></span>
             <div style={{ display: "flex", marginLeft: "auto", alignItems: "center", fontSize: 9, fontWeight: 700, color: w.online ? th.good : th.bad }}>
               <StatusDot w={w} />
               {w.status}
             </div>
+            {w.game ? (
+              <div style={{ display: "flex", marginLeft: 10 }}>
+                <GameValue g={w.game} h={18} size={16} color={th.text} />
+              </div>
+            ) : null}
           </div>
           <div style={{ display: "flex", marginTop: 8 }}>
             {cells.map((c) => (
@@ -399,7 +390,7 @@ function drawC(w: Wide) {
 // (Server, TeamSpeak) runs from top to bottom; the strip already says what
 // it is, so B leaves out its label.
 function drawE(w: Wide) {
-  // Server: no turned strip, the game in the accent colour at the front instead.
+  // Server: no turned strip (the game stands top right), a plain accent bar instead.
   if (w.game) return drawB(w, true);
   return (
     <SideStrip th={w.th} label={w.kind} height={H}>
@@ -487,7 +478,10 @@ function drawTall(w: Wide) {
   const small = { display: "flex", fontSize: 8, color: th.muted, letterSpacing: 0.5, textTransform: "uppercase", whiteSpace: "nowrap" } as const;
   return (
     <div style={{ ...frame(th, true), padding: "8px 9px 7px" }}>
-      <div style={small}>{w.kind}</div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={small}>{w.kind}</div>
+        {w.game ? <GameValue g={w.game} h={14} size={12} color={th.text} /> : null}
+      </div>
       <div style={{ display: "flex", alignItems: "center", marginTop: 2 }}>
         <Flag src={w.flag} h={11} />
         <span style={{ display: "block", fontSize: 13, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: w.flag ? 124 : 140 }}><Linked href={w.href}>{w.name}</Linked></span>
