@@ -2,7 +2,7 @@ import "server-only";
 import { cachedBanner } from "./cache";
 import { bannerFonts } from "./fonts";
 import { Backdrop } from "./backdrop";
-import { htmlBanner, Linked, onColor, wideBanner } from "./wide-banner";
+import { htmlBanner, Linked, onColor, SideStrip, wideBanner } from "./wide-banner";
 import { imageLang, optionsKey, type BannerOptions } from "./options";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -93,7 +93,7 @@ async function render(file: string, game: string | null, o: BannerOptions) {
     change: days.reduce((sum, x) => sum + x.change, 0),
   };
   if (o.size !== "normal") return wideBanner(asWide(d), o, 900);
-  const draw = { a: drawA, b: drawB, c: drawC, d: drawD }[o.layout] ?? drawA;
+  const draw = { a: drawA, b: drawB, c: drawC, d: drawD, e: drawE }[o.layout] ?? drawA;
   const picture = (
     <div style={{ display: "flex", position: "relative", width: "100%", height: "100%", background: th.bg }}>
       <Backdrop bg={o.bg} th={th} />
@@ -247,7 +247,8 @@ function drawA(d: Data) {
 
 // B: "Karte" – Noto Sans, large avatar with flag, place as hero on the
 // right, key numbers in a bottom strip.
-function drawB(d: Data) {
+// narrow: 22px less room (layout E), so the two meters are shorter.
+function drawB(d: Data, narrow = false) {
   const { th, t } = d;
   const stat = (value: string, label: string) => (
     <span style={{ display: "flex", alignItems: "center", height: 20, marginRight: 10, opacity: 0.85, whiteSpace: "nowrap" }}>
@@ -276,10 +277,10 @@ function drawB(d: Data) {
             {d.n(d.points)} {t.points}
           </div>
           <div style={{ display: "flex", alignItems: "center", marginTop: 4, fontSize: 8.5, color: th.muted }}>
-            <Meter v={d.rank?.progress ?? 0} w={70} h={5} fill={th.accent} d={d} />
+            <Meter v={d.rank?.progress ?? 0} w={narrow ? 40 : 70} h={5} fill={th.accent} d={d} />
             <span style={{ marginLeft: 5 }}>{d.rank ? pct(d.rank.progress) : ""}</span>
-            <span style={{ marginLeft: 10, marginRight: 4 }}>{t.activity}</span>
-            <Meter v={d.act / 100} w={40} h={5} fill={activityColor(d.act / 100)} d={d} />
+            <span style={{ marginLeft: narrow ? 7 : 10, marginRight: 4 }}>{t.activity}</span>
+            <Meter v={d.act / 100} w={narrow ? 24 : 40} h={5} fill={activityColor(d.act / 100)} d={d} />
             <span style={{ marginLeft: 4 }}>{d.act}%</span>
           </div>
         </div>
@@ -301,6 +302,16 @@ function drawB(d: Data) {
         <Host d={d} gap={0} />
       </div>
     </div>
+  );
+}
+
+// E: "Seitenband" – card B with the accent strip of the server banner on
+// the left, "Spieler" from top to bottom.
+function drawE(d: Data) {
+  return (
+    <SideStrip th={d.th} label={d.t.player} height={100}>
+      {drawB(d, true)}
+    </SideStrip>
   );
 }
 

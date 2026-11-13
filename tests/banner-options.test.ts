@@ -43,7 +43,7 @@ test("the code box lists every layout and background with its name", () => {
   const t = { bannerLayouts: { a: "Clear", b: "Card", c: "Badge", d: "Trend" }, bannerBackgrounds: { plain: "Plain", dots: "Dots" }, bannerSizes: { normal: "Normal", small: "Small" } };
   const c = bannerChoices("server", t);
   assert.deepEqual(c.layouts.map((l) => l.id), ["a", "b", "c", "e"]);
-  assert.deepEqual(bannerChoices("player", t).layouts.map((l) => l.id), ["a", "b", "c", "d"]);
+  assert.deepEqual(bannerChoices("player", t).layouts.map((l) => l.id), ["a", "b", "c", "d", "e"]);
   assert.equal(c.backgrounds[1].name, "Dots");
   assert.equal(c.backgrounds[2].name, "grid");
   assert.deepEqual(c.sizes.map((x) => [x.name, x.width, x.height]), [["Normal (560×95)", 560, 95], ["Small (350×20)", 350, 20], ["tall (160×400)", 160, 400]]);

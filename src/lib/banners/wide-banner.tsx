@@ -321,21 +321,30 @@ function drawC(w: Wide) {
 }
 
 // E: "Seitenband" – layout B with an accent strip on the left whose label
-// (Server, TeamSpeak) runs from top to bottom.
-const STRIP = 22;
+// (Server, TeamSpeak) runs from top to bottom; the strip already says what
+// it is, so B leaves out its label.
 function drawE(w: Wide) {
-  const { th } = w;
+  return (
+    <SideStrip th={w.th} label={w.kind} height={H}>
+      {drawB({ ...w, kind: "" })}
+    </SideStrip>
+  );
+}
+
+// The accent strip of layout E (also the player banner's) left of the
+// banner's drawing, its label from top to bottom.
+export function SideStrip({ th, label, height, children }: { th: ImageTheme; label: string; height: number; children: React.ReactNode }) {
+  const strip = 22;
   const block = th.stripe ?? th.accent;
   return (
     <div style={{ display: "flex", width: "100%", height: "100%" }}>
-      <div style={{ display: "flex", position: "relative", width: STRIP, flexShrink: 0, background: block, overflow: "hidden" }}>
+      <div style={{ display: "flex", position: "relative", width: strip, flexShrink: 0, background: block, overflow: "hidden" }}>
         {/* A box as long as the banner is high, turned clockwise into the strip. */}
-        <div style={{ display: "flex", position: "absolute", width: H, height: STRIP, left: (STRIP - H) / 2, top: (H - STRIP) / 2, transform: "rotate(90deg)", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", whiteSpace: "nowrap", color: onColor(block) }}>
-          {w.kind}
+        <div style={{ display: "flex", position: "absolute", width: height, height: strip, left: (strip - height) / 2, top: (height - strip) / 2, transform: "rotate(90deg)", alignItems: "center", justifyContent: "center", fontFamily: "Inter", fontSize: 9, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", whiteSpace: "nowrap", color: onColor(block) }}>
+          {label}
         </div>
       </div>
-      {/* The strip already says what it is. */}
-      <div style={{ display: "flex", flex: 1, minWidth: 0 }}>{drawB({ ...w, kind: "" })}</div>
+      <div style={{ display: "flex", flex: 1, minWidth: 0 }}>{children}</div>
     </div>
   );
 }

@@ -10,7 +10,7 @@ import { isLang, type Lang } from "../../translations/languages.ts";
 export type BannerKind = "player" | "server" | "voice";
 
 export const LAYOUTS: Record<BannerKind, readonly string[]> = {
-  player: ["a", "b", "c", "d"],
+  player: ["a", "b", "c", "d", "e"],
   server: ["a", "b", "c", "e"],
   voice: ["a", "b", "c", "e"],
 };
