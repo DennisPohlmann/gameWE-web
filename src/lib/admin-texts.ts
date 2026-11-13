@@ -14,7 +14,8 @@ export const GLOBAL_HALL_T = {
     on: "An",
     off: "Aus",
     enabled: "Reset für alle Rankings",
-    enabledHelp: "Aus: Kein Ranking wird nach diesem Zeitplan zurückgesetzt. Der Zeitplan bleibt gespeichert und gilt wieder, sobald du ihn einschaltest.",
+    enabledHelp:
+      "An: Jedes Ranking, das diesem Zeitplan folgt, wird am Ende jeder Periode in der unten gewählten Art zurückgesetzt. Aus: Kein Ranking wird nach diesem Zeitplan zurückgesetzt. Der Zeitplan bleibt gespeichert und gilt wieder, sobald du ihn einschaltest; er beginnt dann mit der laufenden Periode, für die Zeit, in der er aus war, wird nichts nachgeholt.",
     stateOn: "Aktiv: {s}, {m}.",
     stateOff: "Ausgeschaltet. Gespeicherter Zeitplan: {s}, {m}.",
     stateNone: "Ausgeschaltet. Noch kein Zeitplan eingerichtet.",
@@ -37,7 +38,8 @@ export const GLOBAL_HALL_T = {
     on: "On",
     off: "Off",
     enabled: "Reset for all rankings",
-    enabledHelp: "Off: no ranking is reset on this schedule. The schedule stays stored and applies again as soon as you switch it on.",
+    enabledHelp:
+      "On: every ranking that follows this schedule is reset at the end of each period, in the kind chosen below. Off: no ranking is reset on this schedule. The schedule stays stored and applies again as soon as you switch it on; it then starts with the period now running, nothing is made up for the time it was off.",
     stateOn: "Active: {s}, {m}.",
     stateOff: "Switched off. Stored schedule: {s}, {m}.",
     stateNone: "Switched off. No schedule set up yet.",
@@ -155,6 +157,12 @@ export const RESET_T = {
     errInput: "Nicht zurückgesetzt: Rangliste oder Art fehlt.",
     errDb: "Der Auftrag konnte nicht angelegt werden. Details stehen im Log der Webseite.",
     recent: "Letzte Aufträge",
+    recentHelp:
+      "Reset-Aufträge, angelegt vom {f} bis {t}, standardmäßig die letzten 14 Tage. Der Collector löscht erledigte und fehlgeschlagene Aufträge nach 30 Tagen, wartende und laufende bleiben.",
+    from: "Von",
+    to: "Bis",
+    noJobs: "Keine Reset-Aufträge in diesem Zeitraum.",
+    errRange: "Ungültiger Zeitraum (Datum als JJJJ-MM-TT, Von nicht nach Bis, höchstens 366 Tage); gezeigt werden die letzten 14 Tage.",
     colId: "Nr.",
     colGame: "Rangliste",
     colMode: "Art",
@@ -217,6 +225,12 @@ export const RESET_T = {
     errInput: "Not reset: ranking or kind missing.",
     errDb: "The job could not be created. See the website log for details.",
     recent: "Recent jobs",
+    recentHelp:
+      "Reset jobs requested from {f} to {t}, the last 14 days by default. The collector deletes finished and failed jobs after 30 days; waiting and running ones stay.",
+    from: "From",
+    to: "To",
+    noJobs: "No reset jobs in this period.",
+    errRange: "Invalid period (dates as YYYY-MM-DD, from not after to, at most 366 days); showing the last 14 days.",
     colId: "No.",
     colGame: "Ranking",
     colMode: "Kind",
@@ -537,17 +551,22 @@ export const HALL_PAGE_T = {
 export const HALL_T = {
   de: {
     every: "Reset",
-    everyHelp: "Alle N Tage, Wochen, Monate, Quartale oder Jahre, z. B. alle 2 Monate.",
+    everyHelp:
+      "Alle N Tage, Wochen, Monate, Quartale oder Jahre, z. B. alle 2 Monate. Die Perioden folgen festen Kalenderdaten, nicht dem Tag des Speicherns: Alle 2 Monate heißt Januar–Februar, März–April usw., Quartale beginnen im Januar, April, Juli und Oktober, alle 2 Jahre in geraden Jahren; Tage und Wochen werden ab festen Daten seit 1970 gezählt. Jede Periode endet und die nächste beginnt zur Reset-Uhrzeit.",
     units: { off: "Aus (kein geplanter Reset)", day: "Tage", week: "Wochen", month: "Monate", quarter: "Quartale", year: "Jahre" },
     all: "alle",
     mday: "Stichtag im Monat",
-    mdayHelp: "Die Periode beginnt an diesem Tag (1 bis 28), z. B. jeden 15. Beim Quartal ist es der Tag im ersten Monat des Quartals.",
+    mdayHelp:
+      "Die Periode beginnt an diesem Tag (1 bis 28), z. B. jeden 15.: Ein Monat läuft dann vom 15. bis zum 14. des nächsten. Beim Quartal ist es der Tag im ersten Monat des Quartals. Nur Monate und Quartale haben einen Stichtag im Monat; Wochen beginnen am Wochentag, Jahre am Stichtag im Jahr, Tage haben keinen.",
     wday: "Wochentag",
+    wdayHelp: "Die Wochen beginnen an diesem Tag zur Reset-Uhrzeit, standardmäßig am Montag.",
     wdays: ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"],
     ydate: "Stichtag im Jahr",
     ydateHelp: "Tag (1 bis 28) und Monat, an dem das Jahr beginnt, z. B. 1. Juli für eine Saison.",
     months: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
     mode: "Was zurücksetzen?",
+    modeHelp:
+      "Was am Ende jeder Periode gelöscht wird, wie beim manuellen Zurücksetzen. Das lässt sich nicht rückgängig machen. Spiele, Server, Definitionen und Einstellungen bleiben immer, und die Besten der Periode kommen vorher in die Ruhmeshalle.",
     modes: { "player-stats": "Nur Spielerstatistiken", "all-stats": "Alle Statistiken", all: "Alles, auch die Spieler" } as Record<ResetMode, string>,
     once: { day: "täglich", week: "wöchentlich", month: "monatlich", quarter: "vierteljährlich", year: "jährlich" },
     everyN: "alle {n} {u}",
@@ -558,17 +577,22 @@ export const HALL_T = {
   },
   en: {
     every: "Reset",
-    everyHelp: "Every N days, weeks, months, quarters or years, e.g. every 2 months.",
+    everyHelp:
+      "Every N days, weeks, months, quarters or years, e.g. every 2 months. The periods follow fixed calendar dates, not the day you save: every 2 months runs January–February, March–April and so on, quarters start in January, April, July and October, every 2 years in even years; days and weeks are counted from fixed dates since 1970. Each period ends and the next one begins at the reset time.",
     units: { off: "Off (no scheduled reset)", day: "days", week: "weeks", month: "months", quarter: "quarters", year: "years" },
     all: "every",
     mday: "Start day of the month",
-    mdayHelp: "The period starts on this day (1 to 28), e.g. every 15th. For quarters it is the day in the quarter's first month.",
+    mdayHelp:
+      "The period starts on this day (1 to 28), e.g. every 15th: each month then runs from the 15th to the 14th of the next one. For quarters it is the day in the quarter's first month. Only months and quarters have a start day of the month; weeks start on the weekday, years on the start day of the year, days have none.",
     wday: "Weekday",
+    wdayHelp: "The weeks start on this day at the reset time, Monday by default.",
     wdays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
     ydate: "Start day of the year",
     ydateHelp: "Day (1 to 28) and month the year starts on, e.g. 1 July for a season.",
     months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
     mode: "What to reset?",
+    modeHelp:
+      "What is deleted at the end of every period, as with a manual reset. It cannot be undone. Games, servers, definitions and settings always stay, and the best of the period go into the hall of fame first.",
     modes: { "player-stats": "Player statistics only", "all-stats": "All statistics", all: "Everything, players too" } as Record<ResetMode, string>,
     once: { day: "daily", week: "weekly", month: "monthly", quarter: "quarterly", year: "yearly" },
     everyN: "every {n} {u}",

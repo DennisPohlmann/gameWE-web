@@ -64,8 +64,20 @@ export async function getJob(id: number): Promise<ResetJob | undefined> {
   return rows[0];
 }
 
-export async function recentJobs(limit = 10): Promise<ResetJob[]> {
-  return adminQuery<ResetJob>(`SELECT ${await jobCols()} FROM hlstats_gamewe_jobs WHERE job_type IN ('reset', 'scheduled-reset') ORDER BY id DESC LIMIT ${Math.max(1, Math.floor(limit))}`);
+// Reset jobs requested in [from, to) (Unix seconds), newest first, one page.
+export async function recentJobs(from: number, to: number, limit: number, offset: number): Promise<ResetJob[]> {
+  return adminQuery<ResetJob>(
+    `SELECT ${await jobCols()} FROM hlstats_gamewe_jobs WHERE job_type IN ('reset', 'scheduled-reset') AND requested_at >= ? AND requested_at < ? ORDER BY id DESC LIMIT ? OFFSET ?`,
+    [from, to, limit, offset],
+  );
+}
+
+export async function countJobs(from: number, to: number): Promise<number> {
+  const rows = await adminQuery<{ n: number | string }>(
+    `SELECT COUNT(*) AS n FROM hlstats_gamewe_jobs WHERE job_type IN ('reset', 'scheduled-reset') AND requested_at >= ? AND requested_at < ?`,
+    [from, to],
+  );
+  return Number(rows[0]?.n ?? 0);
 }
 
 // Returns the new job id, or the id of the job already queued for that game.

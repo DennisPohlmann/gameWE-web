@@ -1,3 +1,4 @@
+import Form from "next/form";
 import Link from "next/link";
 import { resetRankingAction } from "../../actions";
 import { AutoRefresh } from "@/components/auto-refresh";
@@ -8,7 +9,9 @@ import { scheduleText } from "@/components/admin/hall-schedule";
 import { JobOriginLine } from "@/components/admin/job-origin";
 import { ResetForm } from "@/components/reset-form";
 import { SortableTable } from "@/components/sortable-table";
-import { Section, TableWrap } from "@/components/ui";
+import { Empty, Pager, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
+import { noAutofill } from "@/lib/autofill";
+import { jobPeriod } from "@/lib/job-period";
 import { rankingSummaries, resettableRankings } from "@/lib/admin-rankings";
 import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
 import { getAdminLang } from "@/lib/i18n";
@@ -16,18 +19,18 @@ import { dateFormat, localeOf } from "@/lib/format";
 import { originText } from "@/lib/job-origin";
 import { shortDuration } from "@/lib/job-plan";
 import { GlobalHallCard } from "./global-hall-card";
-import { RESET_MODES, collectorRunning, getJob, jobModeName, jobsAvailable, recentJobs, resetOrigin, type ResetJob, type ResetMode } from "@/lib/reset";
+import { RESET_MODES, collectorRunning, countJobs, getJob, jobModeName, jobsAvailable, recentJobs, resetOrigin, type ResetJob, type ResetMode } from "@/lib/reset";
 
 function when(ts: number | null, locale: string) {
   return ts ? dateFormat(locale, { year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric" }).format(ts * 1000) : "";
 }
 
-export default async function ResetPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+export default async function ResetPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   await requireAdmin(LEVEL_ADMIN);
   const lang = await getAdminLang();
   const t = localized(RESET_T, lang);
   const locale = localeOf(lang);
-  const sp = await searchParams;
+  const sp = Object.fromEntries(Object.entries(await searchParams).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v]));
   const f = (s: string, v: Record<string, string>) => s.replace(/\{(\w)\}/g, (_, k) => v[k] ?? "");
   const modeName = (m: string) => {
     const k = jobModeName(m);
@@ -58,7 +61,17 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
   const jobId = Number(sp.job);
   const job: ResetJob | undefined = Number.isInteger(jobId) && jobId > 0 ? await getJob(jobId) : undefined;
   const open = job && (job.status === "pending" || job.status === "running");
-  const jobs = await recentJobs(10);
+  // The job list: the period from ?from= / ?to= (last 14 days by default)
+  // and one page of it; the page is clamped to the pages there are.
+  const period = jobPeriod(strParam(sp.from), strParam(sp.to));
+  const limit = rowsParam(sp.rows, 25);
+  const total = await countJobs(period.start, period.end);
+  const pages = Math.max(1, Math.ceil(total / limit));
+  const page = Math.min(pageParam(sp.page), pages);
+  const jobs = await recentJobs(period.start, period.end, limit, (page - 1) * limit);
+  const keep = { from: period.from, to: period.to, rows: limit !== 25 ? limit : undefined };
+  const day = (d: string) => dateFormat(locale, { year: "numeric", month: "numeric", day: "numeric" }).format(new Date(`${d}T00:00:00`));
+  const a = adminDict(lang);
   // Only level 100 sees this page, so the names of all admins.
   const startedBy = (j: ResetJob) => {
     const o = originText(resetOrigin(j), j.requested_by, j.requested_by, lang, (s) => scheduleText(lang, s));
@@ -102,8 +115,26 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
         </ResetForm>
       </Section>
       {scheduled}
-      {jobs.length ? (
-        <Section title={t.recent}>
+      <Section
+        id="jobs"
+        title={t.recent}
+        aside={
+          <Form className="search" action="/admin/reset">
+            <label>
+              {t.from} <input {...noAutofill} type="date" name="from" defaultValue={period.from} required />
+            </label>
+            <label>
+              {t.to} <input {...noAutofill} type="date" name="to" defaultValue={period.to} required />
+            </label>
+            {keep.rows ? <input type="hidden" name="rows" value={keep.rows} /> : null}
+            <button type="submit">{a.filter}</button>
+          </Form>
+        }
+      >
+        {period.invalid ? <p className="notice error">{t.errRange}</p> : null}
+        <p className="settings-help">{f(t.recentHelp, { f: day(period.from), t: day(period.to) })}</p>
+        {jobs.length ? (
+          <>
           <TableWrap>
           <SortableTable
             initial={0}
@@ -133,8 +164,12 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
             }))}
           />
           </TableWrap>
-        </Section>
-      ) : null}
+          <Pager base="/admin/reset" params={keep} page={page} pages={pages} total={total} rows={{ value: limit, options: ROW_OPTIONS }} locale={locale} labels={a.pager} />
+          </>
+        ) : (
+          <Empty>{t.noJobs}</Empty>
+        )}
+      </Section>
     </>
   );
 }

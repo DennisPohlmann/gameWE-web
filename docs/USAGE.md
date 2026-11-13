@@ -662,8 +662,18 @@ What the admin area edits:
   irreversibly" and confirming there. It cannot be undone, so back up the
   database first. The admin database user needs `SELECT` and `INSERT` on
   `hlstats_gamewe_jobs` (the init script grants it). From the console:
-  `gamewe reset CODE -mode player-stats|all-stats|all`. The job list also
-  shows the scheduled resets (by `schedule`).
+  `gamewe reset CODE -mode player-stats|all-stats|all`. The job list
+  ("Recent jobs", also the scheduled resets, by `schedule`) shows the reset
+  jobs requested in a period, by default the last 14 days up to today; "From"
+  and "To" (dates, both days included, in the web server's time zone like the
+  times in the list) choose another one, at most 366 days. The list is paged
+  (25 rows by default, "Show rows" 10 to 250, "Go to" a page), and period,
+  page and rows stay in the address (`?from=YYYY-MM-DD&to=YYYY-MM-DD&page=N&rows=N`).
+  The server checks them: a date that is not `YYYY-MM-DD` or does not exist,
+  from after to or more than 366 days gives the last 14 days with a notice;
+  a page past the end shows the last one. The collector deletes finished and
+  failed jobs after 30 days (every hour, and `gamewe db purge` too), waiting
+  and running ones stay, so older periods are empty.
 - **Hall of fame & scheduled reset** (level 100, on the ranking's overview
   `/admin/rankings/<code>`, needs a collector with the table
   `hlstats_gamewe_hall_of_fame`): resets the ranking every N days, weeks,
@@ -702,7 +712,32 @@ What the admin area edits:
   following ranking with the period now running, none is reset at once, not
   even for the time it was off. Stored as `gamewe_reset_schedule` and
   `gamewe_reset_mode`; from the console `gamewe halloffame schedule -all
-  [EVERY|off] -mode MODE`.
+  [EVERY|off] -mode MODE`. Each field has its explanation below it on the
+  card (the same on a ranking's own schedule):
+  - "Reset for all rankings" (On / Off): on, every ranking that follows the
+    schedule is reset at the end of each period, in the kind chosen below;
+    off, none is, the schedule stays stored and applies again when switched
+    on, starting with the period then running (nothing is made up).
+  - "Reset every N days / weeks / months / quarters / years" (N 1 to 120): the
+    periods follow fixed calendar dates, not the day of saving: every 2 months
+    is January–February, March–April, ..., quarters start in January, April,
+    July and October, every 2 years in even years; days and weeks count from
+    fixed dates since 1970 (weeks from Monday 5 January 1970). Each period
+    ends and the next one begins at the reset time.
+  - "Start day of the month" (1 to 28, only for months and quarters): e.g.
+    the 15th, each month then runs from the 15th to the 14th of the next one;
+    for quarters it is the day in the quarter's first month. Weeks have a
+    "Weekday" instead (Monday by default), years a "Start day of the year"
+    (day and month, e.g. 1 July), days none.
+  - "What to reset?": the three kinds of the manual reset above, each
+    explained below the field with what it deletes and what stays ("Player
+    statistics only", "All statistics", "Everything, players too"). It cannot
+    be undone; games, servers, definitions and settings always stay, and the
+    best of the period go into the hall of fame first.
+
+  Below the list of following rankings the card names the reset time
+  (`features.scheduled_resets.time` in the collector's config.yaml, default
+  00:00, in its time zone) and the console command.
 - **Edit the hall of fame** (level 100, `/admin/rankings/<code>/hall-of-fame`,
   "Hall of fame" in the menu of a ranking with servers and "Edit entries" on
   the card, both also before the first reset, when the page says that the

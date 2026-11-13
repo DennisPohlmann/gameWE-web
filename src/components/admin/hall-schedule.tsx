@@ -3,7 +3,7 @@ import { MAX_EVERY, type Schedule } from "@/lib/hall-period";
 import type { Lang } from "@/lib/i18n";
 import { RESET_MODES, type ResetMode } from "@/lib/reset-modes";
 import { localized } from "@/lib/admin-i18n";
-import { HALL_T } from "@/lib/admin-texts";
+import { HALL_T, RESET_T } from "@/lib/admin-texts";
 
 // Texts and form fields shared by the hall of fame cards (schedule for all
 // rankings, schedule of one ranking). The start-day fields show only for
@@ -16,6 +16,7 @@ export function hallT(lang: Lang) {
 // Unit, every N, start day and mode.
 export function HallScheduleFields({ lang, schedule, mode }: { lang: Lang; schedule: Schedule | null; mode: ResetMode }) {
   const t = hallT(lang);
+  const rt = localized(RESET_T, lang);
   // A schedule of every 3 (6, ...) months is offered as quarters.
   const unit = !schedule ? "month" : schedule.unit === "month" && schedule.every % 3 === 0 ? "quarter" : schedule.unit;
   const every = !schedule ? 1 : unit === "quarter" ? schedule.every / 3 : schedule.every;
@@ -52,6 +53,7 @@ export function HallScheduleFields({ lang, schedule, mode }: { lang: Lang; sched
             </option>
           ))}
         </select>
+        <small>{t.wdayHelp}</small>
       </label>
       <label className="hof-anchor hof-ydate">
         {t.ydate}
@@ -76,6 +78,13 @@ export function HallScheduleFields({ lang, schedule, mode }: { lang: Lang; sched
             </option>
           ))}
         </select>
+        <small>{t.modeHelp}</small>
+        {/* The same explanation as the manual reset (RESET_T), one line per kind. */}
+        {RESET_MODES.map((m) => (
+          <small key={m}>
+            <b>{t.modes[m]}:</b> {rt.modes[m].deletes} {rt.modes[m].keeps}
+          </small>
+        ))}
       </label>
     </>
   );
