@@ -9,8 +9,7 @@ its own language, locale for numbers and dates, and the flag shown in the
 language menu. `dir: "rtl"` turns the pages right to left (Arabic; the CSS
 uses logical properties such as `margin-inline-start`, keep it that way).
 A dialect has `base: "de"`: its file may leave texts out, they come from
-German, and its admin area is the German one; `note` is shown after its name
-in the menu (machine translated). The menu is `src/components/lang-menu.tsx`, the flag comes from the sprite of
+German, and its admin area is the German one. The menu is `src/components/lang-menu.tsx`, the flag comes from the sprite of
 `public/flags` via `lang-flag.tsx`. `index.ts` imports the files.
 
 To add a language:

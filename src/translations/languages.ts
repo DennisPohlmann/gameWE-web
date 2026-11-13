@@ -9,17 +9,17 @@
 //
 // dir: "rtl" turns the page right to left. base: a dialect takes every text
 // it leaves out from this language instead of English, and its admin area is
-// in this language. note: shown small after the name in the language menu.
+// in this language.
 // Korean uses the 24-hour clock (-u-hc-h23): Node and the
 // browsers name AM/PM differently, which breaks hydration of client charts.
 
 export const LANGUAGES = [
   { code: "en", name: "English", locale: "en-GB", flag: "gb" },
   { code: "de", name: "Deutsch", locale: "de-DE", flag: "de" },
-  { code: "bar", name: "Boarisch", note: "maschinell übersetzt", locale: "de-DE", flag: "bavaria", base: "de" },
-  { code: "gsw", name: "Schwiizerdütsch", note: "maschinell übersetzt", locale: "de-CH", flag: "ch", base: "de" },
-  { code: "swg", name: "Schwäbisch", note: "maschinell übersetzt", locale: "de-DE", flag: "baden-wuerttemberg", base: "de" },
-  { code: "nds", name: "Plattdüütsch", note: "maschinell übersetzt", locale: "de-DE", flag: "schleswig-holstein", base: "de" },
+  { code: "bar", name: "Boarisch", locale: "de-DE", flag: "bavaria", base: "de" },
+  { code: "gsw", name: "Schwiizerdütsch", locale: "de-CH", flag: "ch", base: "de" },
+  { code: "swg", name: "Schwäbisch", locale: "de-DE", flag: "baden-wuerttemberg", base: "de" },
+  { code: "nds", name: "Plattdüütsch", locale: "de-DE", flag: "schleswig-holstein", base: "de" },
   { code: "ru", name: "Русский", locale: "ru-RU", flag: "ru" },
   { code: "es", name: "Español", locale: "es-ES", flag: "es" },
   { code: "fr", name: "Français", locale: "fr-FR", flag: "fr" },

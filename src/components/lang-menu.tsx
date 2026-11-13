@@ -48,7 +48,6 @@ export function LangMenu({ lang, label, base, icon = false, className }: { lang:
       <a key={l.code} role={menu ? "menuitem" : undefined} href={`${base}/lang/${l.code}`} hrefLang={l.code} lang={l.code} aria-current={l.code === lang ? "true" : undefined}>
         <LangFlag code={l.flag} title="" />
         {l.name}
-        {"note" in l ? <small className="lang-note">{l.note}</small> : null}
       </a>
     ));
 

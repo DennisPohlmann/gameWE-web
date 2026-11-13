@@ -1572,7 +1572,6 @@ td.ribbon-wall a { display: inline-flex; flex-direction: column; align-items: ce
 /* The language button (components/lang-menu.tsx): the share button's look,
    beside it; the items are links with the flag. */
 .share-nav.lang-nav { margin-inline-start: 0; }
-.lang-list .lang-note { margin-inline-start: auto; padding-inline-start: 8px; font-size: 0.85em; opacity: 0.7; }
 .nav-bar .share-nav.lang-nav { margin-inline-start: -8px; }
 .share-btn .lang-icon { fill: none; stroke-width: 1.7; }
 /* No JavaScript (lang-menu.tsx): the <noscript> list replaces the button.
