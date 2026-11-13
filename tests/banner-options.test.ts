@@ -20,6 +20,9 @@ test("the language is the folder right before the file, else ?lang=, else Englis
 test("unknown layouts and backgrounds give the defaults; D only for players", () => {
   assert.deepEqual(opts("player", "/sig/12.png?layout=d&bg=dots"), { lang: "en", layout: "d", bg: "dots", size: "normal", html: false });
   assert.equal(opts("server", "/banner/css/server/1.png?layout=d").layout, "a");
+  // The wide server banner has no side strip any more: old e addresses show b.
+  assert.equal(opts("server", "/banner/css/server/1.png?layout=e").layout, "b");
+  assert.equal(opts("voice", "/banner/teamspeak.png?layout=e").layout, "e");
   assert.equal(opts("voice", "/banner/teamspeak.png?layout=c").layout, "c");
   assert.equal(opts("player", "/sig/12.png?bg=url(evil)").bg, "plain");
   assert.equal(optionsKey(opts("player", "/sig/de/12.png?layout=b&bg=grid")), "de|b|grid|normal");
@@ -44,7 +47,7 @@ test("the code box lists every layout and background with its name", () => {
   const t = { bannerLayouts: { a: "Clear", b: "Card", c: "Badge", d: "Trend" }, bannerBackgrounds: { plain: "Plain", dots: "Dots" }, bannerSizes: { normal: "Normal", small: "Small" } };
   const c = bannerChoices("server", t);
   assert.deepEqual(c.layouts.map((l) => l.id), ["a", "b", "c", "e", "f"]);
-  assert.deepEqual(c.normalLayouts, ["a", "b", "c", "e", "f"]);
+  assert.deepEqual(c.normalLayouts, ["a", "b", "c", "f"]);
   assert.deepEqual(bannerChoices("voice", t).layouts.map((l) => l.id), ["a", "b", "c", "e"]);
   assert.deepEqual(bannerChoices("player", t).layouts.map((l) => l.id), ["a", "b", "c", "d", "e"]);
   assert.deepEqual(c.tallLayouts, ["e"]);

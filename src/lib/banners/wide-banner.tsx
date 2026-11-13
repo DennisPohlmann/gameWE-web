@@ -289,11 +289,11 @@ function drawF(w: Wide) {
 
 // B: "Karte" – name with status, the graph and the big number on the right,
 // the other values in a bottom strip.
-function drawB(w: Wide, accent = false) {
+function drawB(w: Wide) {
   const { th } = w;
   const rest = w.cells.filter((c) => c.pie === undefined && !c.status);
   const small = { display: "flex", fontSize: 8.5, color: th.muted, letterSpacing: 0.6, textTransform: "uppercase" } as const;
-  const inner = W - 2 - 24 - (accent ? 8 : 0);
+  const inner = W - 2 - 24;
   // The name gets what the graph and the big number leave.
   const heroW = Math.max(textWidth(w.hero.value, 28) + textWidth(`/${w.hero.max}`, 13) + 2, textWidth(w.hero.note, 8.5), textWidth(w.hero.label, 8.5, 0.6));
   const name = fitText(w.name, inner - (w.graph ? 124 : 0) - heroW - 12 - (w.flag ? 18 : 0), 17, 11);
@@ -307,7 +307,6 @@ function drawB(w: Wide, accent = false) {
   });
   return (
     <div style={frame(th)}>
-      {accent ? <div style={{ display: "flex", width: 8, flexShrink: 0, background: th.stripe ?? th.accent }} /> : null}
       <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
       <div style={{ display: "flex", flex: 1, alignItems: "center", padding: "0 12px" }}>
         <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
@@ -424,8 +423,6 @@ function drawC(w: Wide) {
 // (Server, TeamSpeak) runs from top to bottom; the strip already says what
 // it is, so B leaves out its label.
 function drawE(w: Wide) {
-  // Server: no turned strip (the game stands top right), a plain accent bar instead.
-  if (w.game) return drawB(w, true);
   return (
     <SideStrip th={w.th} label={w.kind} height={H}>
       {drawB({ ...w, kind: "" })}

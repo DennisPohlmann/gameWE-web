@@ -12,7 +12,8 @@ export type BannerKind = "player" | "server" | "voice";
 
 export const LAYOUTS: Record<BannerKind, readonly string[]> = {
   player: ["a", "b", "c", "d", "e"],
-  server: ["a", "b", "c", "e", "f"],
+  // No side strip on the wide server banner: old ?layout=e addresses show b.
+  server: ["a", "b", "c", "f"],
   voice: ["a", "b", "c", "e"],
 };
 
@@ -63,7 +64,7 @@ export function bannerOptions(kind: BannerKind, url: URL): BannerOptions {
   return {
     lang: isLang(lang) ? lang : "en",
     // The normal size has layouts, the tall one also e (side strip); one cache entry per small picture.
-    layout: size === "tall" ? (TALL_LAYOUTS[kind].includes(layout) ? layout : TALL_LAYOUTS[kind][0]) : size === "small" ? (SMALL_LAYOUTS[kind].includes(layout) ? layout : "a") : LAYOUTS[kind].includes(layout) ? layout : "a",
+    layout: size === "tall" ? (TALL_LAYOUTS[kind].includes(layout) ? layout : TALL_LAYOUTS[kind][0]) : size === "small" ? (SMALL_LAYOUTS[kind].includes(layout) ? layout : "a") : LAYOUTS[kind].includes(layout) ? layout : kind === "server" && layout === "e" ? "b" : "a",
     bg: (BACKGROUNDS as readonly string[]).includes(bg) ? (bg as Background) : "plain",
     size,
     html,
