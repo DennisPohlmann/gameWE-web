@@ -27,6 +27,7 @@ package: build
 	cp -r scripts dist/root/opt/gamewe/web/scripts
 	cp -r templates dist/root/opt/gamewe/web/templates
 	cp -r overviews dist/root/opt/gamewe/web/overviews
+	cp -r map-images dist/root/opt/gamewe/web/map-images
 	cp LICENSE THIRD-PARTY-LICENSES.md dist/root/opt/gamewe/web/
 	rm -f dist/root/opt/gamewe/web/.env dist/root/opt/gamewe/web/.env.local
 	cp packaging/gamewe-web.service dist/root/etc/systemd/system/

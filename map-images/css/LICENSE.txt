@@ -1,0 +1,19 @@
+Map thumbnails: Counter-Strike: Source (css)
+
+Files:   <map>.png for the 18 stock maps (cs_assault, cs_compound, cs_havana,
+         cs_italy, cs_militia, cs_office, de_aztec, de_cbble, de_chateau,
+         de_dust, de_dust2, de_inferno, de_nuke, de_piranesi, de_port,
+         de_prodigy, de_tides, de_train), 128 x 96
+Source:  the game's own menu pictures
+         (materials/vgui/maps/menu_thumb_<map>.vtf in cstrike_pak_dir.vpk),
+         converted to PNG with scripts/overviews/thumbs.ts on 2026-11-13
+         (npm run map-thumbs), the empty rows at the bottom cut off
+Owner:   Valve Corporation. Counter-Strike, Counter-Strike: Source and these
+         pictures are the property of Valve Corporation.
+License: not covered by gameWE's license (GPL-3.0-or-later) and not licensed
+         by Valve to gameWE; included only so the banners can show which map
+         is running. They are removed on request of the rights holder.
+         Operators can delete this folder or put their own pictures in
+         /var/lib/gamewe/web/map-images, which are used first.
+
+gameWE is not affiliated with or endorsed by Valve Corporation.

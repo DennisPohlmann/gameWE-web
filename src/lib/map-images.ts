@@ -5,9 +5,9 @@ import { OWN_MAP_IMAGES } from "./content-dirs";
 import { mapImageNames } from "./overview-format";
 
 // The map picture of the banners (a thumbnail of the map, not the radar
-// picture of the heatmap): from /var/lib/gamewe/web/map-images
-// (<game>/<map>.png|webp|jpg, the ranking's code before the base game; filled
-// by hand). Made small
+// picture of the heatmap): yours from /var/lib/gamewe/web/map-images, else
+// the built-in one from map-images/ next to the server (<game>/<map>.png|webp|jpg,
+// the ranking's code before the base game). Made small
 // (THUMB_W x THUMB_H, cut to fill) as a PNG data URL; null without one, then
 // the banner shows its "no map picture" box.
 export const THUMB_W = 248;
@@ -27,12 +27,14 @@ export async function mapThumb(code: string, realgame: string | null | undefined
   return value;
 }
 
-// Only plain files (lstat: no symlinks) up to MAX_IMAGE.
+// Only plain files (lstat: no symlinks) up to MAX_IMAGE; your folder first.
 async function ownFile(code: string, realgame: string | null | undefined, map: string) {
-  for (const rel of mapImageNames(code, realgame, map) ?? []) {
-    const file = path.join(OWN_MAP_IMAGES, rel);
-    const st = await lstat(file).catch(() => null);
-    if (st?.isFile() && st.size > 0 && st.size <= MAX_IMAGE) return { file, mtime: Math.floor(st.mtimeMs) };
+  for (const root of [OWN_MAP_IMAGES, path.join(process.cwd(), "map-images")]) {
+    for (const rel of mapImageNames(code, realgame, map) ?? []) {
+      const file = path.join(root, rel);
+      const st = await lstat(file).catch(() => null);
+      if (st?.isFile() && st.size > 0 && st.size <= MAX_IMAGE) return { file, mtime: Math.floor(st.mtimeMs) };
+    }
   }
   return null;
 }

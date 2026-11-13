@@ -1,8 +1,8 @@
 // Map thumbnails for the banners from a Source game's own files: the menu
 // pictures materials/vgui/maps/menu_thumb_<map>.vtf, from the game's VPK
 // archives and loose files, as <out>/<game>/<map>.png for the website's
-// map-images folder (src/lib/map-images.ts). Each operator makes them from
-// their own game installation; gameWE ships none of them. See README.md.
+// map-images folder (src/lib/map-images.ts), made from the operator's own
+// game installation; the built-in map-images/css came from it. See README.md.
 //
 //   npm run map-thumbs -- <game folder, e.g. .../Counter-Strike Source/cstrike> <game code, e.g. css> [<out folder>]
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, writeFileSync } from "node:fs";
