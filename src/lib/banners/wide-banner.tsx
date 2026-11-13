@@ -25,7 +25,7 @@ export type Wide = {
   name: string;
   flag: string | null;
   // The server's game: its short name (games.ts, "CS:S") and icon as a data: URL.
-  game?: { short: string; icon: string | null };
+  game?: { short: string; icon: string | null; label: string };
   // The big number: players or users online of the slots.
   hero: { label: string; value: string; max: string; share: number; note: string };
   online: boolean;
@@ -246,16 +246,18 @@ function drawA(w: Wide, side?: React.ReactNode) {
           </div>
           <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", ...(c0?.full ? { flexShrink: 0 } : { flex: 1, minWidth: 0 }) }}>
             {cell(c4, c0?.full ? INFO : lastW)}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", marginTop: "auto" }}>
-              <div style={{ display: "flex", alignItems: "center" }}>
-                {w.game ? (
-                  <div style={{ display: "flex", marginRight: 8 }}>
-                    <GameValue g={w.game} h={14} size={12} color={th.text} />
-                  </div>
-                ) : null}
+            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginTop: "auto" }}>
+              {/* The game as a field right of the status. */}
+              {w.game ? (
+                <div style={{ display: "flex", flexDirection: "column", flexShrink: 0, marginRight: 8 }}>
+                  <div style={label}>{w.game.label}</div>
+                  <GameValue g={w.game} h={14} size={13} color={th.text} />
+                </div>
+              ) : null}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", minWidth: 0, marginLeft: "auto" }}>
                 <Logo th={th} />
+                <div style={{ display: "flex", fontSize: 8, color: th.muted, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>{w.host}</div>
               </div>
-              <div style={{ display: "flex", fontSize: 8, color: th.muted, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>{w.host}</div>
             </div>
           </div>
         </div>
@@ -296,7 +298,7 @@ function drawB(w: Wide, accent = false) {
   const heroW = Math.max(textWidth(w.hero.value, 28) + textWidth(`/${w.hero.max}`, 13) + 2, textWidth(w.hero.note, 8.5), textWidth(w.hero.label, 8.5, 0.6));
   const name = fitText(w.name, inner - (w.graph ? 124 : 0) - heroW - 12 - (w.flag ? 18 : 0), 17, 11);
   // The bottom strip: the values from the left in what host, game and logo leave, the last one shortened.
-  let left = inner - textWidth(w.host, 9.5) - 8 - textWidth("gameWE", 10) - (w.game ? (w.game.icon ? 15 : 0) + textWidth(w.game.short, 10) + 12 : 0) - 12;
+  let left = inner - textWidth(w.host, 9.5) - 8 - textWidth("gameWE", 10) - 12;
   const strip = rest.map((c) => {
     const labelW = textWidth(c.label, 9.5) + 4;
     const f = fitText(c.value, Math.max(0, Math.min(c.full ? 190 : 150, left - labelW)), 9.5, 8);
@@ -317,6 +319,13 @@ function drawB(w: Wide, accent = false) {
           <div style={{ display: "flex", alignItems: "center", marginTop: 4, fontSize: 10 }}>
             <StatusDot w={w} />
             <span style={{ color: w.online ? th.good : th.bad, fontWeight: 700 }}>{w.status}</span>
+            {/* The game as a field right of the status. */}
+            {w.game ? (
+              <div style={{ display: "flex", alignItems: "center", marginLeft: 14 }}>
+                <div style={{ ...small, fontSize: 7.5, marginRight: 5 }}>{w.game.label}</div>
+                <GameValue g={w.game} h={13} size={11} color={th.text} />
+              </div>
+            ) : null}
           </div>
         </div>
         {w.graph ? (
@@ -341,10 +350,7 @@ function drawB(w: Wide, accent = false) {
             <b style={{ fontSize: f.size }}>{f.text}</b>
           </span>
         ))}
-        <div style={{ display: "flex", marginLeft: "auto" }}>
-          {w.game ? <GameValue g={w.game} h={12} size={10} color={th.sideText} /> : null}
-        </div>
-        <span style={{ display: "flex", marginLeft: 12, opacity: 0.7, marginRight: 8, flexShrink: 0 }}>{w.host}</span>
+        <span style={{ display: "flex", marginLeft: "auto", opacity: 0.7, marginRight: 8, flexShrink: 0 }}>{w.host}</span>
         <Logo th={th} size={10} color={th.sideText} />
       </div>
       </div>
@@ -362,7 +368,7 @@ function drawC(w: Wide) {
   const inner = W - 2 - 100 - 24;
   // The name has the whole line; the values share theirs with the online state.
   const name = fitText(w.name, inner - (w.flag ? 17 : 0), 15, 11);
-  let left = inner - (w.status ? textWidth(w.status, 9) + 12 + 10 : 0);
+  let left = inner - (w.status ? textWidth(w.status, 9) + 12 + 10 : 0) - (w.game ? (w.game.icon ? 16 : 0) + textWidth(w.game.short, 12) + 14 : 0);
   const values = cells.map((c) => {
     const f = fitText(c.value, Math.max(0, Math.min(c.full ? 255 : 150, left)), 12, 9);
     left -= Math.max(textWidth(f.text, f.size), textWidth(c.label, 7.5, 0.5)) + 16;
@@ -394,17 +400,16 @@ function drawC(w: Wide) {
                 {w.status}
               </div>
             ) : null}
+            {w.game ? (
+              <div style={{ display: "flex", flexDirection: "column", flexShrink: 0, marginLeft: w.status ? 14 : "auto" }}>
+                <div style={{ display: "flex", fontSize: 7.5, color: th.muted, textTransform: "uppercase", letterSpacing: 0.5 }}>{w.game.label}</div>
+                <GameValue g={w.game} h={13} size={12} color={th.text} />
+              </div>
+            ) : null}
           </div>
           <div style={{ display: "flex", marginTop: "auto", marginBottom: 4, fontSize: 8, color: th.muted, justifyContent: "space-between", alignItems: "flex-end" }}>
             <span>{w.host}</span>
-            <div style={{ display: "flex", alignItems: "center" }}>
-              {w.game ? (
-                <div style={{ display: "flex", marginRight: 8 }}>
-                  <GameValue g={w.game} h={13} size={11} color={th.text} />
-                </div>
-              ) : null}
-              <Logo th={th} size={10} />
-            </div>
+            <Logo th={th} size={10} />
           </div>
         </div>
       </div>

@@ -68,7 +68,7 @@ async function render(file: string, code: string | null, o: BannerOptions) {
       kind: t.server,
       name: s.name || addr,
       flag,
-      game: kind ? { short: kind.short, icon } : undefined,
+      game: kind ? { short: kind.short, icon, label: t.baseGame } : undefined,
       hero: { label: t.players, value: fmtNum(act, lang), max: fmtNum(max, lang), share, note: t.slotsShare.replace("{n}", `${Math.round(share * 100)} %`) },
       online,
       status,
