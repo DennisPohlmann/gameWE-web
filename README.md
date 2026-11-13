@@ -25,7 +25,7 @@ on MariaDB/MySQL, PostgreSQL or Microsoft SQL Server. It
 - comes in 25 languages (Arabic right to left, four German dialects) and with design templates, including your own.
 
 Built with Next.js 16 (App Router, server-rendered, almost no client
-JavaScript), React 19 and TypeScript 7, with `mysql2` and `pg`. Runs as a
+JavaScript), React 19 and TypeScript 7, with `mysql2`, `pg` and `mssql`. Runs as a
 Docker container, on Kubernetes with its Helm chart (`charts/gamewe-web`) or
 as a systemd service from a tar.gz.
 

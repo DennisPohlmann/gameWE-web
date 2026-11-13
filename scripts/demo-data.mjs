@@ -8,7 +8,7 @@
 //
 // Load it into an empty test database with the collector:
 //   gamewe db init -f && gamewe simulate -file demo.log -f
-//   psql ... < demo.sql      (or mariadb ... < demo.sql)
+//   psql ... < demo.sql      (or mariadb ... < demo.sql, sqlcmd ... -i demo.sql)
 // Everything is invented: names, Steam IDs (STEAM_1:x:19990000nn, account
 // numbers far above the ones Steam has handed out so far), addresses
 // from the documentation ranges (RFC 5737) and rounded city coordinates.
@@ -117,8 +117,8 @@ function log() {
 }
 
 // The collector finds places with GeoIP, which knows nothing of the
-// documentation addresses; this sets them by Steam ID (works on MariaDB and
-// PostgreSQL, default table prefix hlstats).
+// documentation addresses; this sets them by Steam ID (works on MariaDB,
+// PostgreSQL and SQL Server, default table prefix hlstats).
 function sql() {
   const out = ["-- gameWE demo data: places of the demo players (scripts/demo-data.mjs)"];
   for (const [city, state, country, flag, lat, lng] of PLACES) {

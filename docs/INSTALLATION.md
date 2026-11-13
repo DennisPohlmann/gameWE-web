@@ -17,7 +17,7 @@ machine, and the tar.gz if you prefer a plain service next to the collector.
 | What | Notes |
 |------|-------|
 | The gameWE collector | Installed, with its database set up (section 1.2). Its full guide: [collector INSTALLATION.md](https://github.com/DennisPohlmann/gameWE-collector/blob/main/docs/INSTALLATION.md). |
-| Database | **MariaDB 11.4 or 12.3**, **PostgreSQL 17 or 18** or **Microsoft SQL Server 2022** (tested on every release). MySQL 8 is not supported by the collector's schema scripts. |
+| Database | **MariaDB 11.4 or 12.3**, **PostgreSQL 17 or 18** or **Microsoft SQL Server 2022** (tested on every release; SQL Server notes: [collector DATABASE.md](https://github.com/DennisPohlmann/gameWE-collector/blob/main/docs/DATABASE.md#sql-server)). MySQL 8 is not supported by the collector's schema scripts. |
 | Node.js 22 or newer | Only for the tar.gz (Node.js 26 LTS recommended). The container brings its own Node.js 26. |
 | Reverse proxy with TLS | nginx, Caddy, Apache or similar in front of port 3000 (see [section 6](#6-reverse-proxy)). |
 | A secret | At least 32 characters for the admin session: `openssl rand -hex 32`. |
@@ -112,7 +112,10 @@ users:
 
 So the public pages can never read passwords, chat or IP addresses; chat and
 IPs in the admin area are read with `gamewe_web_admin`. The exact statements
-are in `03_grants.sql` (MariaDB) and `schema/postgres/init/03_grants.sql`.
+are in `03_grants.sql` (MariaDB) and `schema/postgres/init/03_grants.sql`;
+the collector prints them with `gamewe db grants -print` (also for SQL Server,
+where `DB_USER` must name columns on `hlstats_Servers` and
+`hlstats_Events_Connects`: `COUNT(*)` and `SELECT *` are refused there).
 
 ## 2. The settings file
 

@@ -37,10 +37,10 @@ node scripts/demo-data.mjs sql > demo.sql
 gamewe db init -f
 gamewe simulate -file demo.log -f
 gamewe simulate -file demo.log -server 127.0.0.1:27016 -f   # a second server
-psql ... < demo.sql            # or mariadb ... < demo.sql: places of the players
+psql ... < demo.sql            # or mariadb ... < demo.sql, sqlcmd ... -i demo.sql: places of the players
 ```
 
-Keep a dump of that database (`pg_dump` / `mariadb-dump`) and load it for the
+Keep a dump of that database (`pg_dump` / `mariadb-dump` / `BACKUP DATABASE`) and load it for the
 next check instead of seeding again.
 
 Screenshots: start the site with `SKIN_PREVIEW=on` (`SKIN_PREVIEW=on npm start`

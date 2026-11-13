@@ -1,6 +1,6 @@
 [Unit]
 Description=gameWE web frontend
-After=network-online.target mariadb.service mysql.service
+After=network-online.target mariadb.service mysql.service postgresql.service mssql-server.service
 Wants=network-online.target
 
 [Service]
