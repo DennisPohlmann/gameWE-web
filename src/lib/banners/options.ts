@@ -24,6 +24,14 @@ export const TALL_LAYOUTS: Record<BannerKind, readonly string[]> = {
   voice: ["a", "e"],
 };
 
+// The layouts of the small size, the first the default: the server banner
+// also as d ("Trend"), with the players graph instead of address and map.
+export const SMALL_LAYOUTS: Record<BannerKind, readonly string[]> = {
+  player: ["a"],
+  server: ["a", "d"],
+  voice: ["a"],
+};
+
 export const BACKGROUNDS = ["plain", "dots", "grid", "stripes", "carbon", "glow"] as const;
 export type Background = (typeof BACKGROUNDS)[number];
 
@@ -55,7 +63,7 @@ export function bannerOptions(kind: BannerKind, url: URL): BannerOptions {
   return {
     lang: isLang(lang) ? lang : "en",
     // The normal size has layouts, the tall one also e (side strip); one cache entry per small picture.
-    layout: size === "tall" ? (TALL_LAYOUTS[kind].includes(layout) ? layout : TALL_LAYOUTS[kind][0]) : size === "normal" && LAYOUTS[kind].includes(layout) ? layout : "a",
+    layout: size === "tall" ? (TALL_LAYOUTS[kind].includes(layout) ? layout : TALL_LAYOUTS[kind][0]) : size === "small" ? (SMALL_LAYOUTS[kind].includes(layout) ? layout : "a") : LAYOUTS[kind].includes(layout) ? layout : "a",
     bg: (BACKGROUNDS as readonly string[]).includes(bg) ? (bg as Background) : "plain",
     size,
     html,
@@ -115,8 +123,11 @@ export function bannerChoices(kind: BannerKind, t: { bannerLayouts: Record<strin
       const [width, height] = sizePx(kind, id);
       return { id, name: `${t.bannerSizes[id] ?? id} (${width}×${height})`, width, height };
     }),
-    layouts: LAYOUTS[kind].map((id) => ({ id, name: t.bannerLayouts[id] ?? id })),
+    // Every layout of any size with its name; each size's own ids below.
+    layouts: [...new Set([...LAYOUTS[kind], ...TALL_LAYOUTS[kind], ...SMALL_LAYOUTS[kind]])].sort().map((id) => ({ id, name: t.bannerLayouts[id] ?? id })),
+    normalLayouts: LAYOUTS[kind],
     tallLayouts: TALL_LAYOUTS[kind],
+    smallLayouts: SMALL_LAYOUTS[kind],
     backgrounds: BACKGROUNDS.map((id) => ({ id, name: t.bannerBackgrounds[id] ?? id })),
   };
 }

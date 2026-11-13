@@ -43,10 +43,13 @@ test("patterns only use plain colours with transparency", () => {
 test("the code box lists every layout and background with its name", () => {
   const t = { bannerLayouts: { a: "Clear", b: "Card", c: "Badge", d: "Trend" }, bannerBackgrounds: { plain: "Plain", dots: "Dots" }, bannerSizes: { normal: "Normal", small: "Small" } };
   const c = bannerChoices("server", t);
-  assert.deepEqual(c.layouts.map((l) => l.id), ["a", "b", "c", "e", "f"]);
+  assert.deepEqual(c.layouts.map((l) => l.id), ["a", "b", "c", "d", "e", "f"]);
+  assert.deepEqual(c.normalLayouts, ["a", "b", "c", "e", "f"]);
   assert.deepEqual(bannerChoices("voice", t).layouts.map((l) => l.id), ["a", "b", "c", "e"]);
   assert.deepEqual(bannerChoices("player", t).layouts.map((l) => l.id), ["a", "b", "c", "d", "e"]);
   assert.deepEqual(c.tallLayouts, ["e"]);
+  assert.deepEqual(c.smallLayouts, ["a", "d"]);
+  assert.deepEqual(bannerChoices("player", t).smallLayouts, ["a"]);
   assert.deepEqual(bannerChoices("voice", t).tallLayouts, ["a", "e"]);
   assert.equal(c.backgrounds[1].name, "Dots");
   assert.equal(c.backgrounds[2].name, "grid");
@@ -69,6 +72,10 @@ test("sizes: small and tall ignore the layout, unknown sizes are the normal one"
   // The tall size has layout e (side strip) besides the default.
   assert.deepEqual(opts("player", "/banner/css/player/12.html?layout=e"), { lang: "en", layout: "e", bg: "plain", size: "tall", html: true });
   assert.equal(opts("voice", "/banner/teamspeak.png?size=small&layout=e").layout, "a");
+  // The small server banner also as d (with the players graph); others and other layouts give the default.
+  assert.equal(opts("server", "/banner/css/server/1.png?size=small&layout=d").layout, "d");
+  assert.equal(opts("server", "/banner/css/server/1.png?size=small&layout=b").layout, "a");
+  assert.equal(opts("player", "/banner/css/player/1.png?size=small&layout=d").layout, "a");
   assert.deepEqual(opts("player", "/banner/css/player/de/12-dark.html?size=small&layout=b"), { lang: "de", layout: "a", bg: "plain", size: "small", html: true });
   assert.deepEqual(opts("player", "/banner/css/player/de/12-dark.html?layout=b"), { lang: "de", layout: "a", bg: "plain", size: "tall", html: true });
   assert.deepEqual(opts("server", "/banner/css/server/1.html?size=normal&layout=c"), { lang: "en", layout: "c", bg: "plain", size: "normal", html: true });

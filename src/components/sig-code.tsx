@@ -20,7 +20,9 @@ export function SigCode({
   styles,
   sizes,
   layouts,
+  normalLayouts,
   tallLayouts,
+  smallLayouts,
   backgrounds,
   link,
   alt,
@@ -32,7 +34,9 @@ export function SigCode({
   sizes: { id: string; name: string; width: number; height: number }[];
   layouts: { id: string; name: string }[];
   // The layouts the tall size offers, the first its default (lib/banners/options.ts).
+  normalLayouts: readonly string[];
   tallLayouts: readonly string[];
+  smallLayouts: readonly string[];
   backgrounds: { id: string; name: string }[];
   link: string;
   alt: string;
@@ -47,12 +51,14 @@ export function SigCode({
   const { width, height } = sizes.find((x) => x.id === size) ?? sizes[0];
   const normal = size === sizes[0]?.id;
   const tall = size === "tall";
-  const layoutOk = (id: string) => normal || (tall && tallLayouts.includes(id));
-  // The chosen layout, or the tall size's default when it does not have it.
-  const shown = tall && !layoutOk(layout) ? tallLayouts[0] : layout;
+  // The layouts of the chosen size (all for the normal one).
+  const own = normal ? normalLayouts : tall ? tallLayouts : smallLayouts;
+  const layoutOk = (id: string) => own.includes(id);
+  // The chosen layout, or the size's default when it does not have it.
+  const shown = layoutOk(layout) ? layout : own[0];
   const q = new URLSearchParams();
   if (!normal) q.set("size", size);
-  if (layoutOk(shown) && shown !== (tall ? tallLayouts[0] : layouts[0]?.id)) q.set("layout", shown);
+  if (shown !== own[0]) q.set("layout", shown);
   if (bg !== backgrounds[0]?.id) q.set("bg", bg);
   const qs = q.toString();
   const img = `${style ? `${base}-${style}.png` : `${base}.png`}${qs ? `?${qs}` : ""}`;
@@ -109,7 +115,7 @@ export function SigCode({
             </option>
           ))}
         </select>
-        <select {...noAutofill} value={shown} onChange={(e) => setLayout(e.target.value)} disabled={!normal && !(tall && tallLayouts.length > 1)} aria-label={labels.layout} title={labels.layout}>
+        <select {...noAutofill} value={shown} onChange={(e) => setLayout(e.target.value)} disabled={own.length < 2} aria-label={labels.layout} title={labels.layout}>
           {layouts.map((l) => (
             <option key={l.id} value={l.id} disabled={!layoutOk(l.id)}>
               {l.name}

@@ -53,7 +53,7 @@ export type Wide = {
 // Also the small and tall sizes of all three kinds (o.size), the player's too.
 export async function wideBanner(w: Wide, o: BannerOptions, maxAge: number): Promise<Response> {
   if (o.html) w = { ...w, href: w.link };
-  const draw = o.size === "small" ? drawSmall : o.size === "tall" ? (o.layout === "e" ? drawTallStrip : drawTall) : ({ a: drawA, b: drawB, c: drawC, e: drawE, f: drawF }[o.layout] ?? drawA);
+  const draw = o.size === "small" ? (o.layout === "d" ? (x: Wide) => drawSmall(x, true) : drawSmall) : o.size === "tall" ? (o.layout === "e" ? drawTallStrip : drawTall) : ({ a: drawA, b: drawB, c: drawC, e: drawE, f: drawF }[o.layout] ?? drawA);
   const [width, height] = o.size === "normal" ? [W, H] : sizePx("server", o.size);
   const picture = (
     <div style={{ display: "flex", position: "relative", width: "100%", height: "100%", background: w.th.bg }}>
@@ -463,10 +463,14 @@ const extra = (w: Wide) => w.cells.filter((c) => c.pie === undefined && !c.statu
 // as many values as fit; whatever does not fit wraps into the hidden second
 // line and drops out whole; a full value (the TeamSpeak address) stays and
 // the name gives way.
-function drawSmall(w: Wide) {
+// trend: layout d (server), the players graph before the logo instead of
+// address and map; the name gets the rest of the line.
+function drawSmall(w: Wide, trend = false) {
   const { th } = w;
-  const small = fitText(w.name, w.game?.icon ? 105 : 120, 9.5, 8);
-  const cells = w.small ?? extra(w);
+  const graph = trend ? w.graph : null;
+  const rest = 350 - 12 - (w.game?.icon ? 17 : 0) - (w.status ? 12 : 0) - (w.flag ? 17 : 0) - textWidth(`${w.hero.value}/${w.hero.max}`, 9.5) - 7 - 66 - textWidth("gameWE", 9.5) - 6;
+  const small = fitText(w.name, graph ? rest : w.game?.icon ? 105 : 120, 9.5, 8);
+  const cells = graph ? [] : (w.small ?? extra(w));
   const item = (c: Cell) => (
     <span key={c.label + c.value} style={{ display: "flex", flexShrink: 0, alignItems: "center", height: 18, marginLeft: 7, whiteSpace: "nowrap", color: th.muted }}>
       {c.label ? <span style={{ marginRight: 3 }}>{c.label}</span> : null}
@@ -488,6 +492,11 @@ function drawSmall(w: Wide) {
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", flex: 1, minWidth: 0, height: 18, overflow: "hidden", marginLeft: 3 }}>
         {cells.filter((c) => !c.full).map(item)}
       </div>
+      {graph ? (
+        <div style={{ display: "flex", flexShrink: 0, marginLeft: 6 }}>
+          <Graph g={graph} th={th} w={60} h={14} scale={false} />
+        </div>
+      ) : null}
       <div style={{ display: "flex", flexShrink: 0, marginLeft: 6 }}>
         <Logo th={th} size={9.5} />
       </div>
