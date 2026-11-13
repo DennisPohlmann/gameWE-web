@@ -3,7 +3,7 @@ import { cachedBanner } from "./cache";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { getGame, getRanking, getServer, getServerLoad } from "@/lib/data";
-import { getOverview, overviewImage } from "@/lib/overviews";
+import { mapThumb } from "@/lib/map-images";
 import { statsOrigin } from "@/lib/site-url";
 import { FLAG_CODES } from "@/lib/flag-codes";
 import { fmtNum, nowUnix } from "@/lib/format";
@@ -47,7 +47,7 @@ async function render(file: string, code: string | null, o: BannerOptions) {
   // The tall side strip layout also shows the map's radar picture and the best players.
   const strip = o.size === "tall" && o.layout === "e";
   const [mapImage, best] = strip
-    ? await Promise.all([mapPicture(s.game, game.realgame, s.act_map ?? "", o.html), getRanking({ game: s.game, sort: "skill", asc: false, search: "", limit: 5, offset: 0, withRank: true })])
+    ? await Promise.all([mapThumb(s.game, game.realgame, s.act_map ?? ""), getRanking({ game: s.game, sort: "skill", asc: false, search: "", limit: 5, offset: 0, withRank: true })])
     : [null, null];
 
   // The graph's scale: at most four steps of 1, 2, 5, 10, 20, 25, 50 or 100 players.
@@ -86,18 +86,6 @@ async function render(file: string, code: string | null, o: BannerOptions) {
     o,
     300,
   );
-}
-
-// The map's radar picture (lib/overviews.ts); null without one. The HTML
-// banner loads it from this site (its address, next.config.ts allows 'self'
-// for pictures); the picture gets it as a data URL.
-async function mapPicture(code: string, realgame: string | null, map: string, html: boolean): Promise<string | null> {
-  const ov = map ? await getOverview(code, realgame, map) : null;
-  if (!ov || html) return ov?.href ?? null;
-  // href is <basePath>/overview/<dir>/<map>?v=...
-  const m = /\/overview\/([^/]+)\/([^/?]+)\?/.exec(ov.href);
-  const img = m ? await overviewImage(m[1], m[2]) : null;
-  return img ? `data:${img.type};base64,${Buffer.from(img.body).toString("base64")}` : null;
 }
 
 // Flag from public/flags as a data URL (cc is checked against FLAG_CODES).

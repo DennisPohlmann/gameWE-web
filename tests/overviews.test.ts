@@ -6,7 +6,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
 import { LEVEL_SPLITS } from "../src/lib/map-levels.ts";
-import { imageInfo, insideShare, overviewFile, overviewFrame, parseCalibration, parseKeyValues, shiftFrame } from "../src/lib/overview-format.ts";
+import { imageInfo, insideShare, mapImageNames, overviewFile, overviewFrame, parseCalibration, parseKeyValues, shiftFrame } from "../src/lib/overview-format.ts";
 
 const NUKE = `// HLTV overview description file for de_nuke.bsp
 
@@ -148,4 +148,11 @@ test("built-in calibrations: valid JSON per map, CS2 levels as in map-levels.ts,
   }
   const dust2 = parseCalibration(readFileSync(path.join(root, "cs2", "de_dust2.json"), "utf8"), "json");
   assert.deepEqual(dust2, { posX: -2470, posY: 3250.6, scale: 4.4, ref: 1024, lowerSplit: null, lowerShift: null });
+});
+
+test("map pictures of your own: ranking code, then base game; map names from the logs never leave the folder", () => {
+  assert.deepEqual(mapImageNames("css2", "css", "De_Dust2 "), ["css2/de_dust2.png", "css2/de_dust2.webp", "css2/de_dust2.jpg", "css2/de_dust2.jpeg", "css/de_dust2.png", "css/de_dust2.webp", "css/de_dust2.jpg", "css/de_dust2.jpeg"]);
+  assert.deepEqual(mapImageNames("css", "css", "cs_italy"), ["css/cs_italy.png", "css/cs_italy.webp", "css/cs_italy.jpg", "css/cs_italy.jpeg"]);
+  for (const bad of ["../etc/passwd", "..", "de_dust2/../../x", "/abs", "", "a\\b"]) assert.equal(mapImageNames("css", null, bad), null, bad);
+  assert.deepEqual(mapImageNames("../x", "Css", "de_nuke"), ["css/de_nuke.png", "css/de_nuke.webp", "css/de_nuke.jpg", "css/de_nuke.jpeg"]);
 });

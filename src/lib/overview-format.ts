@@ -236,6 +236,18 @@ export function fastdlBase(v: string | undefined): string {
 export const FASTDL_URL_PREFIX = "gamewe_fastdl_url_";
 export const fastdlOf = (own: string | undefined, global: string) => fastdlBase(own) || global;
 
+// A map picture of your own for the banners (lib/map-images.ts):
+// <dir>/<map>.<ext> below the folder, the ranking's code first, then the
+// base game; null for a map or game name that is not a plain file name (map
+// names come from the game logs, so never "..", "/" or the like).
+export const MAP_IMAGE_EXT = ["png", "webp", "jpg", "jpeg"] as const;
+export function mapImageNames(code: string, realgame: string | null | undefined, map: string): string[] | null {
+  const name = map.trim().toLowerCase();
+  if (!MAP_NAME.test(name)) return null;
+  const dirs = [...new Set([code, realgame ?? ""].map((d) => d.trim().toLowerCase()).filter((d) => /^[a-z0-9][a-z0-9_-]{0,31}$/.test(d)))];
+  return dirs.flatMap((d) => MAP_IMAGE_EXT.map((ext) => `${d}/${name}.${ext}`));
+}
+
 const PICTURE = /^([a-z0-9][a-z0-9_.+-]{0,63}?)(_lower)?(?:_radar(?:_psd)?)?\.(png|webp|jpe?g)$/;
 const CALIBRATION = /^([a-z0-9][a-z0-9_.+-]{0,63})\.(json|txt)$/;
 

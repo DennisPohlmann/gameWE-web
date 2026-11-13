@@ -66,8 +66,8 @@ export async function wideBanner(w: Wide, o: BannerOptions, maxAge: number): Pro
 // an <iframe> on other sites (next.config.ts allows the framing for it and
 // blocks everything else), reloaded every maxAge seconds. Real text that can
 // be selected and copied; the name is the link to the page (Linked), so the
-// rest is not one big link. The page loads nothing but the map's radar
-// picture from this site: avatar and flags are data: URLs, the font is the reader's own (the inline "Inter" of the
+// rest is not one big link. The page loads nothing: avatar, flags and the
+// map picture are data: URLs, the font is the reader's own (the inline "Inter" of the
 // drawing would fall back to a serif font without it).
 export async function htmlBanner(picture: React.ReactElement, width: number, height: number, lang: string, maxAge: number): Promise<Response> {
   const { renderToStaticMarkup } = await import("react-dom/server");

@@ -4,6 +4,8 @@
 // gameWE-web-content unpack straight into them.
 export const OWN_TEMPLATES = "/var/lib/gamewe/web/templates";
 export const OWN_OVERVIEWS = "/var/lib/gamewe/web/overviews";
+// Map pictures for the banners (lib/map-images.ts), <game>/<map>.png|webp|jpg.
+export const OWN_MAP_IMAGES = "/var/lib/gamewe/web/map-images";
 
 // TEMPLATES_DIR and OVERVIEWS_DIR named these folders up to v0.35. Still set,
 // they are ignored; the warning says where the folder belongs now.

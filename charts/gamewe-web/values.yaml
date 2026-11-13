@@ -55,8 +55,9 @@ ingress:
   #  - secretName: stats-example-org-tls
   #    hosts: [stats.example.org]
 
-# Own design templates and map overviews: /var/lib/gamewe/web/templates and
-# /var/lib/gamewe/web/overviews (docs/INSTALLATION.md). Off: only the
+# Own design templates, map overviews and banner map pictures:
+# /var/lib/gamewe/web/templates, /var/lib/gamewe/web/overviews and
+# /var/lib/gamewe/web/map-images (docs/INSTALLATION.md). Off: only the
 # built-in ones.
 persistence:
   enabled: false

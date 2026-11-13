@@ -29,8 +29,8 @@ Everything else is set in the admin area (Admin → Settings) and stored in
 The environment variables are listed in `.env.example`. `TZ` (e.g.
 `Europe/Berlin`) sets the time zone of all times on the site and when a day
 starts (awards, daily charts); without it the Docker image uses UTC. Set the
-collector to the same zone. Your own design templates and map overviews
-come from two fixed folders, in addition to the built-in `templates/` and
+collector to the same zone. Your own design templates, map overviews and banner map pictures
+come from three fixed folders, in addition to the built-in `templates/` and
 `overviews/` (a name in both: yours wins); in the container they are mount
 points:
 
@@ -38,6 +38,7 @@ points:
 |---|---|
 | `/var/lib/gamewe/web/templates` | own design templates, one subfolder each ([templates/README.md](../templates/README.md)); a template's optional `chart.json` sets the colours of its charts (section "Charts" there) |
 | `/var/lib/gamewe/web/overviews` | own map overviews: radar pictures with their calibration, which the heatmap of a map draws its dots on ([overviews/README.md](../overviews/README.md)); also where pictures fetched by FastDL go, into the folder of the game, e.g. `overviews/css/` (off by default, then the folder must be writable) |
+| `/var/lib/gamewe/web/map-images` | own map pictures for the banners, `<game>/<map>.png`, `.webp` or `.jpg` (e.g. `css/de_dust2.png`); without one the banner uses the map's radar picture ([INSTALLATION.md](INSTALLATION.md#5-own-templates-and-map-pictures)) |
 
 The release archives of
 [gameWE-web-content](https://github.com/DennisPohlmann/gameWE-web-content)

@@ -225,8 +225,8 @@ accent strip on the left whose label runs from top to bottom) and `?bg=` a backg
 (160x400, upright); `small` and `tall` have one design for all three
 banners; `tall` also takes `?layout=e`: the name from top to bottom in a
 strip on the left, beside it labelled sections (status, the big number,
-the values; the server banner also the map with its radar picture where
-the site has one, the players of the last 24 hours and the 5 best players
+the values; the server banner also the map with its picture where the
+site has one, from `/var/lib/gamewe/web/map-images` or the radar picture, the players of the last 24 hours and the 5 best players
 of the ranking). Unknown values give the defaults. The same
 address with `.html` instead of `.png` (`/banner/<game>/player/12-dark.html`,
 `/banner/de/teamspeak.html`) is the banner as a web page for an

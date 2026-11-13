@@ -44,9 +44,8 @@ const nextConfig: NextConfig = {
       { source: "/flags/:path*", headers: [{ key: "cache-control", value: day }] },
       // The HTML banners (lib/banners/wide-banner.tsx) are made for an
       // <iframe> on other sites: frame-ancestors * (it overrides
-      // x-frame-options in browsers); the page loads nothing but pictures of
-      // this site (the map's radar picture).
-      { source: "/banner/:path(.*\\.html)", headers: [{ key: "content-security-policy", value: "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; frame-ancestors *" }] },
+      // x-frame-options in browsers); the page loads nothing from anywhere.
+      { source: "/banner/:path(.*\\.html)", headers: [{ key: "content-security-policy", value: "default-src 'none'; img-src data:; style-src 'unsafe-inline'; frame-ancestors *" }] },
       // After the rule above: the later rule wins for the same header.
       { source: "/flags/sprite.png", headers: [{ key: "cache-control", value: "public, max-age=31536000, immutable" }] },
       { source: "/:file(icon\\.svg|icon-32\\.png|icon-192\\.png|icon-512\\.png|apple-touch-icon\\.png|avatar-unknown\\.svg)", headers: [{ key: "cache-control", value: day }] },

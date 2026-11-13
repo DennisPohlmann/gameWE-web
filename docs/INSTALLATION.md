@@ -43,6 +43,7 @@ Layout of a complete installation (collector and website on one machine):
 | `/etc/gamewe/web/web.env` | root:gamewe 0640 | website settings file (section 2) |
 | `/var/lib/gamewe/web/templates/` | root:gamewe 0750 | optional own designs ([section 5](#5-own-templates-and-map-pictures)) |
 | `/var/lib/gamewe/web/overviews/` | root:gamewe 0750 | optional map pictures for the heatmap ([section 5](#5-own-templates-and-map-pictures)) |
+| `/var/lib/gamewe/web/map-images/` | root:gamewe 0750 | optional map pictures for the banners ([section 5](#5-own-templates-and-map-pictures)) |
 | `/opt/gamewe/web/` | root | website program (tar.gz) |
 | `/etc/systemd/system/gamewe-collector.service`, `gamewe-web.service` | root 0644 | systemd units |
 
@@ -259,6 +260,7 @@ docker run -d --name gamewe-web --restart unless-stopped \
   --env-file /etc/gamewe/web/web.env \
   -v /var/lib/gamewe/web/templates:/var/lib/gamewe/web/templates:ro \
   -v /var/lib/gamewe/web/overviews:/var/lib/gamewe/web/overviews:ro \
+  -v /var/lib/gamewe/web/map-images:/var/lib/gamewe/web/map-images:ro \
   ghcr.io/dennispohlmann/gamewe-web:latest
 ```
 
@@ -293,6 +295,7 @@ services:
     # volumes:
     #   - /var/lib/gamewe/web/templates:/var/lib/gamewe/web/templates:ro
     #   - /var/lib/gamewe/web/overviews:/var/lib/gamewe/web/overviews:ro
+    #   - /var/lib/gamewe/web/map-images:/var/lib/gamewe/web/map-images:ro
 ```
 
 ```bash
@@ -487,7 +490,7 @@ Update together with the collector 1.7: stop both, update the collector first
 
 ## 5. Own templates and map pictures
 
-Next to the built-in design templates and map pictures the site reads two
+Next to the built-in design templates and map pictures the site reads three
 folders of your own. They have fixed paths, the same for the tar.gz and in
 the container; there is no setting for them:
 
@@ -495,8 +498,9 @@ the container; there is no setting for them:
 |---|---|---|
 | `/var/lib/gamewe/web/templates/` | own design templates, one subfolder each ([templates/README.md](../templates/README.md)) | mount point, e.g. `-v /var/lib/gamewe/web/templates:/var/lib/gamewe/web/templates:ro` |
 | `/var/lib/gamewe/web/overviews/` | own map pictures for the heatmap, one subfolder per game, named by its short form such as `css` or `cs2` (table in [overviews/README.md](../overviews/README.md#layout)) | mount point, e.g. `-v /var/lib/gamewe/web/overviews:/var/lib/gamewe/web/overviews:ro` |
+| `/var/lib/gamewe/web/map-images/` | own map pictures for the banners (the map box of the upright side strip banner): `<game>/<map>.png` (or `.webp`, `.jpg`), the game by the ranking's code such as `css2` or its base game such as `css`, the map name in lower case as in the logs (`css/de_dust2.png`); any size up to 8 MB, the banner cuts it to 248x92 (wide pictures fit best). Without one the banner takes the map's radar picture (built in for the stock maps of CS2, CS:GO, CS:S, DoD:S, TF2, HL2DM, NMRiH, FoF and ZPS, or yours from `overviews/`); without that it shows the map name alone | mount point, e.g. `-v /var/lib/gamewe/web/map-images:/var/lib/gamewe/web/map-images:ro` |
 
-Both add to the built-in `templates/` and `overviews/`, which stay as they
+They add to the built-in `templates/` and `overviews/`, which stay as they
 are. A name in both (a template folder, a map picture or calibration file)
 uses yours. New or changed files show up within a minute, without a
 restart; updates of the website never touch these folders. A folder that is

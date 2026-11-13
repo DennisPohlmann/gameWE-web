@@ -150,18 +150,33 @@ export type Overview = {
 // The overview of a map: game folders first (the game code, then the base
 // game), then the common files. Null without a picture or a usable
 // calibration.
-export async function getOverview(code: string, realgame: string | null | undefined, map: string): Promise<Overview | null> {
+async function finder(code: string, realgame: string | null | undefined, map: string) {
   const name = map.trim().toLowerCase();
   if (!MAP_NAME.test(name)) return null;
   const dirs = [...new Set([code, realgame ?? ""].map((d) => d.trim().toLowerCase()).filter((d) => DIR.test(d))), ALL];
   const idx = await index();
-  const find = (kind: string) => {
-    for (const d of dirs) {
-      const e = idx.get(`${d}/${name}/${kind}`);
-      if (e) return { dir: d, e };
-    }
-    return null;
+  return {
+    name,
+    find: (kind: string) => {
+      for (const d of dirs) {
+        const e = idx.get(`${d}/${name}/${kind}`);
+        if (e) return { dir: d, e };
+      }
+      return null;
+    },
   };
+}
+
+// The radar picture of a map alone, without a calibration (lib/map-images.ts).
+export async function overviewPictureFile(code: string, realgame: string | null | undefined, map: string): Promise<{ file: string; mtime: number } | null> {
+  const e = (await finder(code, realgame, map))?.find("image")?.e;
+  return e ? { file: e.file, mtime: e.mtime } : null;
+}
+
+export async function getOverview(code: string, realgame: string | null | undefined, map: string): Promise<Overview | null> {
+  const f = await finder(code, realgame, map);
+  if (!f) return null;
+  const { name, find } = f;
   const img = find("image");
   const cal = find("json");
   if (!img || !cal) return null;
