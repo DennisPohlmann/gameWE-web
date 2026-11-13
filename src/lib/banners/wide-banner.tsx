@@ -14,7 +14,8 @@ const H = 95;
 
 // status: the online state (layouts B and C show it beside the name); full:
 // never shortened, the cell takes the room the others leave (TeamSpeak address).
-export type Cell = { label: string; value: string; color?: string; pie?: number; status?: boolean; full?: boolean };
+// map: the current map (the tall side strip layout shows mapImage under it).
+export type Cell = { label: string; value: string; color?: string; pie?: number; status?: boolean; full?: boolean; map?: boolean };
 
 export type Wide = {
   th: ImageTheme;
@@ -35,6 +36,10 @@ export type Wide = {
   link: string;
   // Only in the HTML banner: the name is a link to link.
   href?: string;
+  // Only for the tall side strip layout (server): the map's radar picture
+  // as a data: URL and the best players of the ranking.
+  mapImage?: string | null;
+  top?: { label: string; players: { name: string; link: string }[] };
   // The player's rank insignia (player banner in the small and tall sizes).
   badge?: React.ReactNode;
   // The values of the small size, when not those of the tall one; label "" shows the value alone.
@@ -44,7 +49,7 @@ export type Wide = {
 // Also the small and tall sizes of all three kinds (o.size), the player's too.
 export async function wideBanner(w: Wide, o: BannerOptions, maxAge: number): Promise<Response> {
   if (o.html) w = { ...w, href: w.link };
-  const draw = o.size === "small" ? drawSmall : o.size === "tall" ? drawTall : ({ a: drawA, b: drawB, c: drawC, e: drawE }[o.layout] ?? drawA);
+  const draw = o.size === "small" ? drawSmall : o.size === "tall" ? (o.layout === "e" ? drawTallStrip : drawTall) : ({ a: drawA, b: drawB, c: drawC, e: drawE }[o.layout] ?? drawA);
   const [width, height] = o.size === "normal" ? [W, H] : sizePx("server", o.size);
   const picture = (
     <div style={{ display: "flex", position: "relative", width: "100%", height: "100%", background: w.th.bg }}>
@@ -61,8 +66,8 @@ export async function wideBanner(w: Wide, o: BannerOptions, maxAge: number): Pro
 // an <iframe> on other sites (next.config.ts allows the framing for it and
 // blocks everything else), reloaded every maxAge seconds. Real text that can
 // be selected and copied; the name is the link to the page (Linked), so the
-// rest is not one big link. The page loads nothing: avatar and flags are
-// data: URLs, the font is the reader's own (the inline "Inter" of the
+// rest is not one big link. The page loads nothing but the map's radar
+// picture from this site: avatar and flags are data: URLs, the font is the reader's own (the inline "Inter" of the
 // drawing would fall back to a serif font without it).
 export async function htmlBanner(picture: React.ReactElement, width: number, height: number, lang: string, maxAge: number): Promise<Response> {
   const { renderToStaticMarkup } = await import("react-dom/server");
@@ -333,15 +338,22 @@ function drawE(w: Wide) {
 
 // The accent strip of layout E (also the player banner's) left of the
 // banner's drawing, its label from top to bottom.
-export function SideStrip({ th, label, height, children }: { th: ImageTheme; label: string; height: number; children: React.ReactNode }) {
-  const strip = 22;
+// big: the tall banner's strip, the name in larger letters; href: the label
+// is a link (HTML banner).
+export function SideStrip({ th, label, href, height, big = false, children }: { th: ImageTheme; label: string; href?: string; height: number; big?: boolean; children: React.ReactNode }) {
+  const strip = big ? 24 : 22;
+  const size = big ? 12 : 9;
+  // Shortened by hand: Satori draws no ellipsis in the turned box.
+  // shortcut: about 0.75 em per upper-case letter plus the spacing, estimated; measure with Satori if names clip.
+  const room = Math.floor((height - 16) / (size * 0.75 + (big ? 1 : 2)));
+  const text = label.length > room ? `${label.slice(0, room - 1).trimEnd()}…` : label;
   const block = th.stripe ?? th.accent;
   return (
     <div style={{ display: "flex", width: "100%", height: "100%" }}>
       <div style={{ display: "flex", position: "relative", width: strip, flexShrink: 0, background: block, overflow: "hidden" }}>
         {/* A box as long as the banner is high, turned clockwise into the strip. */}
-        <div style={{ display: "flex", position: "absolute", width: height, height: strip, left: (strip - height) / 2, top: (height - strip) / 2, transform: "rotate(90deg)", alignItems: "center", justifyContent: "center", fontFamily: "Inter", fontSize: 9, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", whiteSpace: "nowrap", color: onColor(block) }}>
-          {label}
+        <div style={{ display: "flex", position: "absolute", width: height, height: strip, left: (strip - height) / 2, top: (height - strip) / 2, transform: "rotate(90deg)", alignItems: "center", justifyContent: big ? "flex-start" : "center", padding: "0 8px", fontFamily: "Inter", fontSize: size, fontWeight: 700, letterSpacing: big ? 1 : 2, textTransform: "uppercase", whiteSpace: "nowrap", color: onColor(block) }}>
+          <Linked href={href}>{text}</Linked>
         </div>
       </div>
       <div style={{ display: "flex", flex: 1, minWidth: 0 }}>{children}</div>
@@ -439,6 +451,86 @@ function drawTall(w: Wide) {
         <div style={{ display: "flex", fontSize: fitSize(w.host, 140, 8), color: th.muted, whiteSpace: "nowrap" }}>{w.host}</div>
       </div>
     </div>
+  );
+}
+
+// Tall with layout e: the name from top to bottom in the side strip, beside
+// it stacked sections, each a small label bar over its value: what it is
+// (flag, status), the big number, the values, the map with its radar picture,
+// the players of the last 24 hours and the best players (server).
+const TCW = 160 - 24 - 12 - 2;
+function drawTallStrip(w: Wide) {
+  const { th } = w;
+  const sec = (label: string, body: React.ReactNode, key?: string) => (
+    <div key={key} style={{ display: "flex", flexDirection: "column", marginBottom: 4 }}>
+      <div style={{ display: "flex", fontSize: 7, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", color: th.sideText, background: th.side, padding: "2px 4px", borderRadius: 2 }}>{label}</div>
+      <div style={{ display: "flex", flexDirection: "column", padding: "2px 4px 0", fontSize: 10.5, fontWeight: 700, color: th.text }}>{body}</div>
+    </div>
+  );
+  const line = (text: string, color?: string, size = 10.5) => (
+    <span style={{ display: "block", maxWidth: TCW - 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color, fontSize: size }}>{text}</span>
+  );
+  return (
+    <SideStrip th={th} label={w.name} href={w.href} height={400} big>
+      <div style={{ ...frame(th, true), padding: "6px 6px 5px" }}>
+        {sec(
+          w.kind,
+          <div style={{ display: "flex", alignItems: "center", fontSize: 9.5 }}>
+            <Flag src={w.flag} h={10} />
+            {w.status ? <StatusDot w={w} /> : null}
+            {line(w.status || w.hero.note, w.status ? (w.online ? th.good : th.bad) : th.muted, 9.5)}
+          </div>,
+        )}
+        {sec(
+          w.hero.label,
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "flex-end", lineHeight: 1 }}>
+                <span style={{ fontSize: 20, fontWeight: 700 }}>{w.hero.value}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, marginLeft: 2, marginBottom: 2, opacity: 0.75 }}>/{w.hero.max}</span>
+              </div>
+              {w.badge ? <div style={{ display: "flex", width: 30, height: 30 }}>{w.badge}</div> : null}
+            </div>
+            <div style={{ display: "flex", width: TCW - 8, height: 5, marginTop: 3, borderRadius: 3, background: th.barBg, overflow: "hidden" }}>
+              <div style={{ display: "flex", width: `${Math.round(w.hero.share * 100)}%`, height: "100%", background: w.status && !w.online ? th.bad : w.status ? th.good : th.accent }} />
+            </div>
+          </div>,
+        )}
+        {extra(w).map((c) =>
+          sec(
+            c.label,
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {line(c.value, c.color, c.full ? fitSize(c.value, TCW - 8, 10.5) : 10.5)}
+              {c.map && w.mapImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={w.mapImage} width={TCW - 8} height={46} style={{ marginTop: 2, objectFit: "cover", borderRadius: 2, background: th.barBg }} alt="" />
+              ) : null}
+            </div>,
+            c.label,
+          ),
+        )}
+        {w.graph ? sec(w.graph.label, <Graph g={w.graph} th={th} w={TCW - 8} h={28} scale={false} />) : null}
+        {w.top && w.top.players.length
+          ? sec(
+              w.top.label,
+              <div style={{ display: "flex", flexDirection: "column", fontSize: 9 }}>
+                {w.top.players.map((p, i) => (
+                  <div key={i} style={{ display: "flex" }}>
+                    <span style={{ display: "flex", width: 12, color: th.muted }}>{i + 1}.</span>
+                    <span style={{ display: "block", maxWidth: TCW - 20, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <Linked href={w.href ? p.link : undefined}>{p.name}</Linked>
+                    </span>
+                  </div>
+                ))}
+              </div>,
+            )
+          : null}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: "auto" }}>
+          <Logo th={th} size={11} />
+          <div style={{ display: "flex", fontSize: fitSize(w.host, TCW, 7.5), color: th.muted, whiteSpace: "nowrap" }}>{w.host}</div>
+        </div>
+      </div>
+    </SideStrip>
   );
 }
 

@@ -43,9 +43,12 @@ export function SigCode({
   const [copied, setCopied] = useState(false);
   const { width, height } = sizes.find((x) => x.id === size) ?? sizes[0];
   const normal = size === sizes[0]?.id;
+  // The tall size has only the first layout and e (side strip, lib/banners/options.ts).
+  const tall = size === "tall";
+  const layoutOk = (id: string) => normal || (tall && (id === "e" || id === layouts[0]?.id));
   const q = new URLSearchParams();
   if (!normal) q.set("size", size);
-  if (normal && layout !== layouts[0]?.id) q.set("layout", layout);
+  if (layoutOk(layout) && layout !== layouts[0]?.id) q.set("layout", layout);
   if (bg !== backgrounds[0]?.id) q.set("bg", bg);
   const qs = q.toString();
   const img = `${style ? `${base}-${style}.png` : `${base}.png`}${qs ? `?${qs}` : ""}`;
@@ -102,9 +105,9 @@ export function SigCode({
             </option>
           ))}
         </select>
-        <select {...noAutofill} value={layout} onChange={(e) => setLayout(e.target.value)} disabled={!normal} aria-label={labels.layout} title={labels.layout}>
+        <select {...noAutofill} value={layout} onChange={(e) => setLayout(e.target.value)} disabled={!normal && !tall} aria-label={labels.layout} title={labels.layout}>
           {layouts.map((l) => (
-            <option key={l.id} value={l.id}>
+            <option key={l.id} value={l.id} disabled={!layoutOk(l.id)}>
               {l.name}
             </option>
           ))}

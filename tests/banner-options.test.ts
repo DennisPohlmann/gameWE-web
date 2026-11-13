@@ -59,6 +59,9 @@ test("fitSize: the TeamSpeak address keeps its size while it fits, else shrinks,
 
 test("sizes: small and tall ignore the layout, unknown sizes are the normal one", () => {
   assert.deepEqual(opts("server", "/banner/css/server/1.png?size=tall&layout=c"), { lang: "en", layout: "a", bg: "plain", size: "tall", html: false });
+  // The tall size has layout e (side strip) besides the default.
+  assert.deepEqual(opts("player", "/banner/css/player/12.html?layout=e"), { lang: "en", layout: "e", bg: "plain", size: "tall", html: true });
+  assert.equal(opts("voice", "/banner/teamspeak.png?size=small&layout=e").layout, "a");
   assert.deepEqual(opts("player", "/banner/css/player/de/12-dark.html?size=small&layout=b"), { lang: "de", layout: "a", bg: "plain", size: "small", html: true });
   assert.deepEqual(opts("player", "/banner/css/player/de/12-dark.html?layout=b"), { lang: "de", layout: "a", bg: "plain", size: "tall", html: true });
   assert.deepEqual(opts("server", "/banner/css/server/1.html?size=normal&layout=c"), { lang: "en", layout: "c", bg: "plain", size: "normal", html: true });

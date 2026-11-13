@@ -20,7 +20,8 @@ export type Background = (typeof BACKGROUNDS)[number];
 
 // The size (?size=): "normal" is the banner of the layouts (player 400x100,
 // server and TeamSpeak 560x95); "small" one line, "tall" upright, each in
-// one design for all three kinds (wide-banner.tsx), the layout does not apply.
+// one design for all three kinds (wide-banner.tsx); the tall one also has
+// layout e (side strip with the name), the other layouts do not apply.
 export const SIZES = ["normal", "small", "tall"] as const;
 export type Size = (typeof SIZES)[number];
 
@@ -44,8 +45,8 @@ export function bannerOptions(kind: BannerKind, url: URL): BannerOptions {
   const size = (SIZES as readonly string[]).includes(q.get("size") ?? "") ? (q.get("size") as Size) : html ? "tall" : "normal";
   return {
     lang: isLang(lang) ? lang : "en",
-    // Only the normal size has layouts: one cache entry per small or tall picture.
-    layout: size === "normal" && LAYOUTS[kind].includes(layout) ? layout : "a",
+    // The normal size has layouts, the tall one also e (side strip); one cache entry per small picture.
+    layout: (size === "normal" && LAYOUTS[kind].includes(layout)) || (size === "tall" && layout === "e") ? layout : "a",
     bg: (BACKGROUNDS as readonly string[]).includes(bg) ? (bg as Background) : "plain",
     size,
     html,

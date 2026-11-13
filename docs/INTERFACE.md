@@ -223,7 +223,11 @@ accent strip on the left whose label runs from top to bottom) and `?bg=` a backg
 `?size=` picks the size: `normal` (the default, the layouts above: player
 400x100, server and TeamSpeak 560x95), `small` (350x20, one line) or `tall`
 (160x400, upright); `small` and `tall` have one design for all three
-banners and ignore `?layout=`. Unknown values give the defaults. The same
+banners; `tall` also takes `?layout=e`: the name from top to bottom in a
+strip on the left, beside it labelled sections (status, the big number,
+the values; the server banner also the map with its radar picture where
+the site has one, the players of the last 24 hours and the 5 best players
+of the ranking). Unknown values give the defaults. The same
 address with `.html` instead of `.png` (`/banner/<game>/player/12-dark.html`,
 `/banner/de/teamspeak.html`) is the banner as a web page for an
 `<iframe>` (real text that can be selected and copied, the name links to
