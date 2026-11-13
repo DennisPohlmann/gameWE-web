@@ -15,7 +15,8 @@
     "flags": "node scripts/flags-sprite.mjs",
     "game-icons": "node scripts/game-icons.mjs",
     "radar": "tsc -p tsconfig.radar.json && node scripts/overviews/build/radar.js",
-    "radar:all": "tsc -p tsconfig.radar.json && node scripts/overviews/build/run_all.js"
+    "radar:all": "tsc -p tsconfig.radar.json && node scripts/overviews/build/run_all.js",
+    "map-thumbs": "tsc -p tsconfig.radar.json && node scripts/overviews/build/thumbs.js"
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",

@@ -498,7 +498,7 @@ the container; there is no setting for them:
 |---|---|---|
 | `/var/lib/gamewe/web/templates/` | own design templates, one subfolder each ([templates/README.md](../templates/README.md)) | mount point, e.g. `-v /var/lib/gamewe/web/templates:/var/lib/gamewe/web/templates:ro` |
 | `/var/lib/gamewe/web/overviews/` | own map pictures for the heatmap, one subfolder per game, named by its short form such as `css` or `cs2` (table in [overviews/README.md](../overviews/README.md#layout)) | mount point, e.g. `-v /var/lib/gamewe/web/overviews:/var/lib/gamewe/web/overviews:ro` |
-| `/var/lib/gamewe/web/map-images/` | own map pictures for the banners (the map box of the upright side strip banner): `<game>/<map>.png` (or `.webp`, `.jpg`), the game by the ranking's code such as `css2` or its base game such as `css`, the map name in lower case as in the logs (`css/de_dust2.png`); any size up to 8 MB, the banner cuts it to 248x92 (wide pictures fit best). Without one the banner shows a "no map image" box (never the radar picture of the heatmap) | mount point, e.g. `-v /var/lib/gamewe/web/map-images:/var/lib/gamewe/web/map-images:ro` |
+| `/var/lib/gamewe/web/map-images/` | own map pictures for the banners (the map box of the upright side strip banner): `<game>/<map>.png` (or `.webp`, `.jpg`), the game by the ranking's code such as `css2` or its base game such as `css`, the map name in lower case as in the logs (`css/de_dust2.png`); any size up to 8 MB, the banner cuts it to 248x92 (wide pictures fit best). Without one the banner shows a "no map image" box (never the radar picture of the heatmap). The game's own map thumbnails can be put there with a script, see below | mount point, e.g. `-v /var/lib/gamewe/web/map-images:/var/lib/gamewe/web/map-images:ro` |
 
 They add to the built-in `templates/` and `overviews/`, which stay as they
 are. A name in both (a template folder, a map picture or calibration file)
@@ -538,6 +538,27 @@ in the container is a different uid on the host, so a plain `chown 1000` does
 not help: run `podman unshare chown -R 1000:1000 /var/lib/gamewe/web/overviews`
 once, or mount the folder with the option `:U`
 (`-v /var/lib/gamewe/web/overviews:/var/lib/gamewe/web/overviews:U`).
+
+**Map thumbnails from your game installation.** Source games keep a small
+menu picture of each stock map (`materials/vgui/maps/menu_thumb_<map>.vtf`,
+in CS:S for its 18 maps). gameWE ships none of them (they belong to the
+game), but makes them from your own installation into the map-images folder,
+as `<game>/<map>.png`; pictures already there stay:
+
+```bash
+# tar.gz: the game folder (the one with the *_dir.vpk files) and the ranking's game code
+cd /opt/gamewe/web && node scripts/overviews/build/thumbs.js "/path/to/Counter-Strike Source/cstrike" css
+# container: game folder read-only in, map-images folder writable (as root for
+# this one run, the folder belongs to root:gamewe)
+docker run --rm --user 0 --entrypoint node \
+  -v "/path/to/Counter-Strike Source/cstrike:/game:ro" \
+  -v /var/lib/gamewe/web/map-images:/var/lib/gamewe/web/map-images \
+  ghcr.io/dennispohlmann/gamewe-web:latest scripts/overviews/build/thumbs.js /game css
+```
+
+A third argument writes somewhere else than `/var/lib/gamewe/web/map-images`.
+Maps of other games or custom maps without such a menu picture: put your own
+picture there (e.g. a screenshot, any size; wide ones fit best).
 
 **Coming from v0.35 or older:** the environment variables `TEMPLATES_DIR` and
 `OVERVIEWS_DIR` are no longer read. Move the folders to the paths above (the

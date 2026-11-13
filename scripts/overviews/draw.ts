@@ -729,13 +729,13 @@ export function draw(canvas: Canvas, floors: Poly[], navpolys: Poly[]): Uint8Arr
   return img;
 }
 
-/** The picture as PNG, each row with the PNG filter that suits it best. */
-export function encodePng(rgba: Uint8Array): Buffer {
-  const row = SIZE * 4;
-  const raw = Buffer.alloc((row + 1) * SIZE);
+/** The picture as PNG, each row with the PNG filter that suits it best (also the map thumbnails, thumbs.ts). */
+export function encodePng(rgba: Uint8Array, width = SIZE, height = SIZE): Buffer {
+  const row = width * 4;
+  const raw = Buffer.alloc((row + 1) * height);
   const best = new Uint8Array(row);
   const line = new Uint8Array(row);
-  for (let y = 0; y < SIZE; y++) {
+  for (let y = 0; y < height; y++) {
     let bestSum = Infinity;
     let bestType = 0;
     const o = y * row;
@@ -775,8 +775,8 @@ export function encodePng(rgba: Uint8Array): Buffer {
     return out;
   };
   const head = Buffer.alloc(13);
-  head.writeUInt32BE(SIZE, 0);
-  head.writeUInt32BE(SIZE, 4);
+  head.writeUInt32BE(width, 0);
+  head.writeUInt32BE(height, 4);
   head[8] = 8; // bits per channel
   head[9] = 6; // RGBA
   return Buffer.concat([Buffer.from("\x89PNG\r\n\x1a\n", "latin1"), chunk("IHDR", head), chunk("IDAT", deflateSync(raw, { level: 9 })), chunk("IEND", Buffer.alloc(0))]);

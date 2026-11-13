@@ -61,3 +61,19 @@ pictures with a dark floor, 45 for the CS:GO pictures).
 "Fetching maps by FastDL" in [overviews/README.md](../../overviews/README.md).
 `npm run build` compiles it to `build/`, which ships with the site. There is no
 `.nav` on FastDL, so these pictures take the walkable floor from the spawn points.
+
+## Map thumbnails for the banners
+
+`thumbs.ts` takes the menu pictures of the maps out of a Source game
+(`materials/vgui/maps/menu_thumb_<map>.vtf`, from the `*_dir.vpk` archives
+and loose files) and writes them as PNG to the website's map-images folder
+(`<out>/<game>/<map>.png`, default `/var/lib/gamewe/web/map-images`, see
+[INSTALLATION.md](../../docs/INSTALLATION.md#5-own-templates-and-map-pictures)).
+It reads DXT1/3/5 and the plain RGB(A) formats, cuts the empty rows at the
+bottom (CS:S keeps its 128x96 pictures in 128x128 textures) and keeps
+pictures that are already there. The pictures belong to the game, so gameWE
+does not ship them; each operator makes them from their own installation.
+
+```
+npm run map-thumbs -- "<game folder, e.g. .../Counter-Strike Source/cstrike>" <game code, e.g. css> [<out folder>]
+```
