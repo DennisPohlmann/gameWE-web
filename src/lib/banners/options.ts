@@ -24,11 +24,11 @@ export const TALL_LAYOUTS: Record<BannerKind, readonly string[]> = {
   voice: ["a", "e"],
 };
 
-// The layouts of the small size, the first the default: the server banner
-// also as d ("Trend"), with the players graph instead of address and map.
+// The layouts of the small size: one, the server banner with its players
+// graph (old ?layout=d URLs, the former "Trend", give it too).
 export const SMALL_LAYOUTS: Record<BannerKind, readonly string[]> = {
   player: ["a"],
-  server: ["a", "d"],
+  server: ["a"],
   voice: ["a"],
 };
 

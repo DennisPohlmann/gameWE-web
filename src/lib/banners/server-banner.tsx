@@ -89,7 +89,7 @@ async function render(file: string, code: string | null, o: BannerOptions) {
       },
       host: origin.replace(/^https?:\/\//, ""),
       link: `${origin}/${s.game}/servers/${s.serverId}`,
-      small: [{ label: "", value: addr }, { label: t.map, value: s.act_map || "-" }],
+      small: [{ label: "", value: addr }, { label: "", value: s.act_map || "-" }],
     },
     o,
     300,
