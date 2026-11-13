@@ -9,6 +9,7 @@ import { FLAG_CODES } from "@/lib/flag-codes";
 import { fmtNum, nowUnix } from "@/lib/format";
 import { imageTheme, parseImageFile } from "@/lib/image-theme";
 import { dicts } from "@/translations";
+import { gameKind, SUPPORTED_GAMES } from "@/lib/games";
 import { imageLang, optionsKey, type BannerOptions } from "./options";
 import { MAP_PANEL_H, MAP_PANEL_W, wideBanner } from "./wide-banner";
 
@@ -34,6 +35,7 @@ async function render(file: string, code: string | null, o: BannerOptions) {
   const t = dicts[lang];
   const cc = (s.country_code ?? "").trim().toLowerCase();
   const flag = FLAG_CODES.has(cc) ? await flagDataUrl(cc) : null;
+  const kind = gameKind(game.realgame);
   const addr = s.publicaddress || `${s.address}:${s.port}`;
   const cut = addr.lastIndexOf(":");
   const ip = cut > 0 ? addr.slice(0, cut) : addr;
@@ -49,9 +51,10 @@ async function render(file: string, code: string | null, o: BannerOptions) {
   // side panel, 2x for sharpness).
   const strip = o.size === "tall" && o.layout === "e";
   const mapPanel = o.size === "normal" && o.layout === "f";
-  const [mapImage, best] = await Promise.all([
+  const [mapImage, best, icon] = await Promise.all([
     strip ? mapThumb(s.game, game.realgame, s.act_map ?? "") : mapPanel ? mapThumb(s.game, game.realgame, s.act_map ?? "", MAP_PANEL_W * 2, MAP_PANEL_H * 2) : null,
     strip ? getRanking({ game: s.game, sort: "skill", asc: false, search: "", limit: 5, offset: 0, withRank: true }) : null,
+    gameIconDataUrl(game.realgame),
   ]);
 
   // The graph's scale: at most four steps of 1, 2, 5, 10, 20, 25, 50 or 100 players.
@@ -65,6 +68,7 @@ async function render(file: string, code: string | null, o: BannerOptions) {
       kind: t.server,
       name: s.name || addr,
       flag,
+      game: kind ? { short: kind.short, icon } : undefined,
       hero: { label: t.players, value: fmtNum(act, lang), max: fmtNum(max, lang), share, note: t.slotsShare.replace("{n}", `${Math.round(share * 100)} %`) },
       online,
       status,
@@ -90,6 +94,18 @@ async function render(file: string, code: string | null, o: BannerOptions) {
     o,
     300,
   );
+}
+
+// The game's icon from public/games (as gameIconSrc: supported games only) as a data URL.
+async function gameIconDataUrl(realgame: string | null): Promise<string | null> {
+  const g = (realgame ?? "").trim().toLowerCase();
+  if (!SUPPORTED_GAMES.includes(g)) return null;
+  try {
+    const png = await readFile(path.join(process.cwd(), "public", "games", g, "icon.png"));
+    return `data:image/png;base64,${png.toString("base64")}`;
+  } catch {
+    return null;
+  }
 }
 
 // Flag from public/flags as a data URL (cc is checked against FLAG_CODES).

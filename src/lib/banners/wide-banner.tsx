@@ -23,6 +23,8 @@ export type Wide = {
   kind: string;
   name: string;
   flag: string | null;
+  // The server's game: its short name (games.ts) and icon as a data: URL.
+  game?: { short: string; icon: string | null };
   // The big number: players or users online of the slots.
   hero: { label: string; value: string; max: string; share: number; note: string };
   online: boolean;
@@ -105,6 +107,18 @@ const frame = (th: ImageTheme, column = false) =>
 function Flag({ src, h = 12 }: { src: string | null; h?: number }) {
   // eslint-disable-next-line @next/next/no-img-element
   return src ? <img src={src} width={Math.round((h * 4) / 3)} height={h} style={{ marginRight: 5, borderRadius: 1 }} alt="" /> : null;
+}
+
+// The game's icon and short name (server banners), e.g. "CS:S".
+function GameChip({ w, h = 11, size = 9, gap = 0 }: { w: Wide; h?: number; size?: number; gap?: number }) {
+  if (!w.game) return null;
+  return (
+    <div style={{ display: "flex", alignItems: "center", flexShrink: 0, marginLeft: gap, marginRight: 5, fontSize: size, fontWeight: 700, lineHeight: 1, letterSpacing: 0, textTransform: "none", color: w.th.text, whiteSpace: "nowrap" }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {w.game.icon ? <img src={w.game.icon} width={h} height={h} style={{ marginRight: 3, borderRadius: 2 }} alt="" /> : null}
+      {w.game.short}
+    </div>
+  );
 }
 
 function Pie({ share, th, size = 24 }: { share: number; th: ImageTheme; size?: number }) {
@@ -207,7 +221,10 @@ function drawA(w: Wide, side?: React.ReactNode) {
       )}
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1, padding: "5px 8px" }}>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={label}>{w.kind}</div>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <div style={label}>{w.kind}</div>
+            <GameChip w={w} gap={6} />
+          </div>
           <div style={{ display: "flex", alignItems: "center", width: INFO }}>
             <Flag src={w.flag} />
             <span style={{ ...value, color: th.text, width: w.flag ? INFO - 21 : INFO }}><Linked href={w.href}>{w.name}</Linked></span>
@@ -266,7 +283,12 @@ function drawB(w: Wide) {
     <div style={frame(th, true)}>
       <div style={{ display: "flex", flex: 1, alignItems: "center", padding: "0 12px" }}>
         <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
-          {w.kind ? <div style={small}>{w.kind}</div> : null}
+          {w.kind || w.game ? (
+            <div style={{ display: "flex", alignItems: "center" }}>
+              {w.kind ? <div style={{ ...small, marginRight: 6 }}>{w.kind}</div> : null}
+              <GameChip w={w} />
+            </div>
+          ) : null}
           <div style={{ display: "flex", alignItems: "center", marginTop: 1 }}>
             <Flag src={w.flag} h={13} />
             <span style={{ display: "block", fontSize: 17, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: w.graph ? 250 : 370 }}><Linked href={w.href}>{w.name}</Linked></span>
@@ -322,8 +344,9 @@ function drawC(w: Wide) {
         </div>
         <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, padding: "7px 12px 0" }}>
           <div style={{ display: "flex", alignItems: "center" }}>
+            <GameChip w={w} h={12} size={10} />
             <Flag src={w.flag} h={12} />
-            <span style={{ display: "block", fontSize: 15, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 340 }}><Linked href={w.href}>{w.name}</Linked></span>
+            <span style={{ display: "block", fontSize: 15, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: w.game ? 280 : 340 }}><Linked href={w.href}>{w.name}</Linked></span>
             <div style={{ display: "flex", marginLeft: "auto", alignItems: "center", fontSize: 9, fontWeight: 700, color: w.online ? th.good : th.bad }}>
               <StatusDot w={w} />
               {w.status}
@@ -406,8 +429,9 @@ function drawSmall(w: Wide) {
   return (
     <div style={{ ...frame(th), borderTop: `1px solid ${th.frame}`, alignItems: "center", padding: "0 5px", fontSize: 9.5, color: th.text }}>
       {w.status ? <StatusDot w={w} /> : null}
+      <GameChip w={w} h={10} size={9} />
       <Flag src={w.flag} h={9} />
-      <span style={{ display: "block", flexShrink: 1, minWidth: 30, maxWidth: 120, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}><Linked href={w.href}>{w.name}</Linked></span>
+      <span style={{ display: "block", flexShrink: 1, minWidth: 30, maxWidth: w.game ? 80 : 120, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}><Linked href={w.href}>{w.name}</Linked></span>
       <span style={{ display: "flex", flexShrink: 0, marginLeft: 7, fontWeight: 700, color: th.accent, whiteSpace: "nowrap" }}>
         {w.hero.value}
         <span style={{ opacity: 0.75 }}>/{w.hero.max}</span>
@@ -431,7 +455,10 @@ function drawTall(w: Wide) {
   const small = { display: "flex", fontSize: 8, color: th.muted, letterSpacing: 0.5, textTransform: "uppercase", whiteSpace: "nowrap" } as const;
   return (
     <div style={{ ...frame(th, true), padding: "8px 9px 7px" }}>
-      <div style={small}>{w.kind}</div>
+      <div style={{ display: "flex", alignItems: "center" }}>
+        <div style={small}>{w.kind}</div>
+        <GameChip w={w} gap={6} />
+      </div>
       <div style={{ display: "flex", alignItems: "center", marginTop: 2 }}>
         <Flag src={w.flag} h={11} />
         <span style={{ display: "block", fontSize: 13, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: w.flag ? 124 : 140 }}><Linked href={w.href}>{w.name}</Linked></span>
@@ -502,6 +529,7 @@ function drawTallStrip(w: Wide) {
           w.kind,
           <div style={{ display: "flex", alignItems: "center", fontSize: 9.5 }}>
             <Flag src={w.flag} h={10} />
+            <GameChip w={w} h={10} size={9.5} />
             {w.status ? <StatusDot w={w} /> : null}
             {line(w.status || w.hero.note, w.status ? (w.online ? th.good : th.bad) : th.muted, 9.5)}
           </div>,
