@@ -670,7 +670,8 @@
     "b": "Kaart",
     "c": "Plaquette",
     "d": "Verloop",
-    "e": "Zijband"
+    "e": "Zijband",
+    "f": "Kaartafbeelding"
   },
   "bannerBackgrounds": {
     "plain": "Effen",

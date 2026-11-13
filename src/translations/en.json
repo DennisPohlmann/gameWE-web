@@ -729,7 +729,8 @@
     "b": "Card",
     "c": "Badge",
     "d": "Trend",
-    "e": "Side strip"
+    "e": "Side strip",
+    "f": "Map image"
   },
   "bannerBackgrounds": {
     "plain": "Plain",

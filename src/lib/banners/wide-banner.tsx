@@ -5,7 +5,7 @@ import { Backdrop } from "./backdrop";
 import { bannerFonts } from "./fonts";
 import { fitSize, sizePx, type BannerOptions } from "./options";
 
-// The 560x95 banners (server, TeamSpeak) in their four layouts, and the
+// The 560x95 banners (server, TeamSpeak) in their layouts (f only the server), and the
 // small (350x20) and tall (160x400) sizes of all three banners. The
 // banner's own file (server-banner.tsx, voice-banner.tsx) reads the data and
 // fills a Wide; this file only draws it.
@@ -50,7 +50,7 @@ export type Wide = {
 // Also the small and tall sizes of all three kinds (o.size), the player's too.
 export async function wideBanner(w: Wide, o: BannerOptions, maxAge: number): Promise<Response> {
   if (o.html) w = { ...w, href: w.link };
-  const draw = o.size === "small" ? drawSmall : o.size === "tall" ? (o.layout === "e" ? drawTallStrip : drawTall) : ({ a: drawA, b: drawB, c: drawC, e: drawE }[o.layout] ?? drawA);
+  const draw = o.size === "small" ? drawSmall : o.size === "tall" ? (o.layout === "e" ? drawTallStrip : drawTall) : ({ a: drawA, b: drawB, c: drawC, e: drawE, f: drawF }[o.layout] ?? drawA);
   const [width, height] = o.size === "normal" ? [W, H] : sizePx("server", o.size);
   const picture = (
     <div style={{ display: "flex", position: "relative", width: "100%", height: "100%", background: w.th.bg }}>
@@ -160,9 +160,10 @@ const INFO = W - 2 - SIDE - 16;
 const GAP = 12;
 const COL = 160;
 
-// A: "Klar" – side panel (the graph, or the big number), name over three
-// columns of label and value, the logo in the bottom right corner.
-function drawA(w: Wide) {
+// A: "Klar" – side panel (the graph, or the big number; side: something
+// else there), name over three columns of label and value, the logo in the
+// bottom right corner.
+function drawA(w: Wide, side?: React.ReactNode) {
   const { th } = w;
   const label = { display: "flex", fontSize: 8.5, fontWeight: 700, color: th.accent, letterSpacing: 0.4, textTransform: "uppercase" } as const;
   const value = { display: "block", fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } as const;
@@ -180,7 +181,9 @@ function drawA(w: Wide) {
   const sideLabel = { display: "flex", fontSize: 8, fontWeight: 700, color: th.sideText, letterSpacing: 0.3, textTransform: "uppercase", whiteSpace: "nowrap" } as const;
   return (
     <div style={frame(th)}>
-      {w.graph ? (
+      {side ? (
+        <div style={{ display: "flex", width: SIDE, flexShrink: 0, background: th.side }}>{side}</div>
+      ) : w.graph ? (
         <div style={{ display: "flex", flexDirection: "column", width: SIDE, padding: "4px 6px", background: th.side }}>
           <div style={sideLabel}>{w.graph.label}</div>
           <div style={{ display: "flex", marginTop: 3 }}>
@@ -230,6 +233,12 @@ function drawA(w: Wide) {
       </div>
     </div>
   );
+}
+
+// F: "Kartenbild" – layout A with the map picture (or the "no map image"
+// box) in the side panel instead of the graph (server).
+function drawF(w: Wide) {
+  return drawA(w, w.mapImage ? <MapBox th={w.th} m={w.mapImage} w={SIDE} h={H - 4} flush /> : undefined);
 }
 
 // B: "Karte" – name with status, the graph and the big number on the right,
@@ -534,13 +543,15 @@ function drawTallStrip(w: Wide) {
 
 // The map picture, or a quiet box of the same size with a picture sign and
 // "no map picture".
-function MapBox({ th, m, w, h }: { th: ImageTheme; m: { src: string | null; none: string }; w: number; h: number }) {
+// flush: fills a panel (layout F), no gap or rounded corners.
+function MapBox({ th, m, w, h, flush = false }: { th: ImageTheme; m: { src: string | null; none: string }; w: number; h: number; flush?: boolean }) {
+  const place = flush ? { marginTop: 0, borderRadius: 0 } : { marginTop: 2, borderRadius: 2 };
   if (m.src) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={m.src} width={w} height={h} style={{ marginTop: 2, objectFit: "cover", borderRadius: 2, background: th.barBg }} alt="" />;
+    return <img src={m.src} width={w} height={h} style={{ ...place, objectFit: "cover", background: th.barBg }} alt="" />;
   }
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: w, height: h, marginTop: 2, borderRadius: 2, background: th.barBg, border: `1px dashed ${th.barBorder}`, color: th.muted }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: w, height: h, ...place, background: th.barBg, border: flush ? "none" : `1px dashed ${th.barBorder}`, color: th.muted }}>
       <svg width="18" height="14" viewBox="0 0 18 14">
         <rect x="0.75" y="0.75" width="16.5" height="12.5" rx="1.5" fill="none" stroke={th.muted} strokeWidth="1.5" />
         <circle cx="5.5" cy="4.5" r="1.6" fill={th.muted} />

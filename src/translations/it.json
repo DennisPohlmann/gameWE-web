@@ -728,7 +728,8 @@
     "b": "Scheda",
     "c": "Distintivo",
     "d": "Andamento",
-    "e": "Banda laterale"
+    "e": "Banda laterale",
+    "f": "Immagine mappa"
   },
   "bannerBackgrounds": {
     "plain": "Semplice",

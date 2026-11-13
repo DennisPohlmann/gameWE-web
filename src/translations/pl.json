@@ -670,7 +670,8 @@
     "b": "Karta",
     "c": "Plakietka",
     "d": "Trend",
-    "e": "Pasek boczny"
+    "e": "Pasek boczny",
+    "f": "Obraz mapy"
   },
   "bannerBackgrounds": {
     "plain": "Gładkie",

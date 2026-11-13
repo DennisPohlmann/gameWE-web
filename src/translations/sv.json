@@ -728,7 +728,8 @@
     "b": "Kort",
     "c": "Märke",
     "d": "Trend",
-    "e": "Sidoband"
+    "e": "Sidoband",
+    "f": "Kartbild"
   },
   "bannerBackgrounds": {
     "plain": "Enkel",

@@ -512,7 +512,8 @@
     "b": "Kartn",
     "c": "Plakettn",
     "d": "Verlauf",
-    "e": "Seitnband"
+    "e": "Seitnband",
+    "f": "Kartnbuidl"
   },
   "bannerBackgrounds": {
     "plain": "Schlicht",

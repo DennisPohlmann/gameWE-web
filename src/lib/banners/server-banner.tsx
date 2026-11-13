@@ -44,11 +44,15 @@ async function render(file: string, code: string | null, o: BannerOptions) {
   const max = Number(s.max_players) || 0;
   const share = max ? Math.min(1, act / max) : 0;
   const status = online ? t.online : t.offline;
-  // The tall side strip layout also shows the map's radar picture and the best players.
+  // The tall side strip layout also shows the map picture and the best
+  // players, the wide layout f the map picture instead of the graph (its
+  // side panel, 2x for sharpness).
   const strip = o.size === "tall" && o.layout === "e";
-  const [mapImage, best] = strip
-    ? await Promise.all([mapThumb(s.game, game.realgame, s.act_map ?? ""), getRanking({ game: s.game, sort: "skill", asc: false, search: "", limit: 5, offset: 0, withRank: true })])
-    : [null, null];
+  const mapPanel = o.size === "normal" && o.layout === "f";
+  const [mapImage, best] = await Promise.all([
+    strip ? mapThumb(s.game, game.realgame, s.act_map ?? "") : mapPanel ? mapThumb(s.game, game.realgame, s.act_map ?? "", 256, 182) : null,
+    strip ? getRanking({ game: s.game, sort: "skill", asc: false, search: "", limit: 5, offset: 0, withRank: true }) : null,
+  ]);
 
   // The graph's scale: at most four steps of 1, 2, 5, 10, 20, 25, 50 or 100 players.
   const peak = Math.max(1, max, ...load.map((l) => l.act_players));
@@ -71,7 +75,7 @@ async function render(file: string, code: string | null, o: BannerOptions) {
         { label: t.onlineState, value: status, color: online ? th.good : th.bad, status: true },
         { label: t.map, value: s.act_map || "-", map: true },
       ],
-      mapImage: strip ? { src: mapImage, none: t.noMapImage } : undefined,
+      mapImage: strip || mapPanel ? { src: mapImage, none: t.noMapImage } : undefined,
       top: best ? { label: t.topPlayers, players: best.rows.map((r) => ({ name: r.name ?? `#${r.playerId}`, link: `${origin}/${s.game}/players/${r.playerId}` })) } : undefined,
       graph: {
         label: t.players24h,

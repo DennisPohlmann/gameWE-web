@@ -411,7 +411,7 @@ const periodQuery: Param = { name: "period", in: "query", description: "The last
 const styleQuery: Param = { name: "style", in: "query", description: "Design template of the banner (an id of /banners/styles); without it, or with an unknown one, the active skin", schema: str("", { pattern: "^[a-z0-9][a-z0-9_-]{0,31}$" }) };
 const bannerQuery = (kind: BannerKind): Param[] => [
   { name: "size", in: "query", description: "Size: normal (the layouts), small (350×20, one line) or tall (160×400, upright); small and tall have one design and ignore layout", schema: str("", { enum: [...SIZES], default: "normal" }) },
-  { name: "layout", in: "query", description: "Layout of the banner (a: clear, b: card, c: badge" + (kind === "player" ? ", d: points trend of the last 30 days" : "") + ", e: side strip, the label runs from top to bottom)", schema: str("", { enum: [...LAYOUTS[kind]], default: "a" }) },
+  { name: "layout", in: "query", description: "Layout of the banner (a: clear, b: card, c: badge" + (kind === "player" ? ", d: points trend of the last 30 days" : "") + ", e: side strip, the label runs from top to bottom" + (kind === "server" ? ", f: the map picture instead of the players graph" : "") + ")", schema: str("", { enum: [...LAYOUTS[kind]], default: "a" }) },
   { name: "bg", in: "query", description: "Background pattern over the design's background", schema: str("", { enum: [...BACKGROUNDS], default: "plain" }) },
   { name: "lang", in: "query", description: "Language of the texts (Chinese, Japanese, Korean and Arabic get English: the banner fonts have no glyphs for them)", schema: str("", { enum: LANGUAGES.map((l) => l.code), default: "en" }) },
 ];

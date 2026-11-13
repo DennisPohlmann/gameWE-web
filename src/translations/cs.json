@@ -728,7 +728,8 @@
     "b": "Karta",
     "c": "Odznak",
     "d": "Trend",
-    "e": "Boční pruh"
+    "e": "Boční pruh",
+    "f": "Obrázek mapy"
   },
   "bannerBackgrounds": {
     "plain": "Prosté",

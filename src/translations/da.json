@@ -670,7 +670,8 @@
     "b": "Kort",
     "c": "Plakette",
     "d": "Udvikling",
-    "e": "Sidebånd"
+    "e": "Sidebånd",
+    "f": "Kortbillede"
   },
   "bannerBackgrounds": {
     "plain": "Enkel",

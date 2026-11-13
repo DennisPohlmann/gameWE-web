@@ -670,7 +670,8 @@
     "b": "Carte",
     "c": "Plaque",
     "d": "Tendance",
-    "e": "Bande latérale"
+    "e": "Bande latérale",
+    "f": "Image de carte"
   },
   "bannerBackgrounds": {
     "plain": "Uni",

@@ -670,7 +670,8 @@
     "b": "Cartão",
     "c": "Placa",
     "d": "Tendência",
-    "e": "Faixa lateral"
+    "e": "Faixa lateral",
+    "f": "Imagem do mapa"
   },
   "bannerBackgrounds": {
     "plain": "Simples",

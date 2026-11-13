@@ -11,7 +11,7 @@ export type BannerKind = "player" | "server" | "voice";
 
 export const LAYOUTS: Record<BannerKind, readonly string[]> = {
   player: ["a", "b", "c", "d", "e"],
-  server: ["a", "b", "c", "e"],
+  server: ["a", "b", "c", "e", "f"],
   voice: ["a", "b", "c", "e"],
 };
 

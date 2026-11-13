@@ -729,7 +729,8 @@
     "b": "Karte",
     "c": "Plakette",
     "d": "Verlauf",
-    "e": "Seitenband"
+    "e": "Seitenband",
+    "f": "Kartenbild"
   },
   "bannerBackgrounds": {
     "plain": "Schlicht",

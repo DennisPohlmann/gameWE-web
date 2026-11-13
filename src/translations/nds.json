@@ -536,7 +536,8 @@
     "b": "Koort",
     "c": "Plakett",
     "d": "Verloop",
-    "e": "Sietband"
+    "e": "Sietband",
+    "f": "Kortenbild"
   },
   "bannerBackgrounds": {
     "plain": "Slicht",

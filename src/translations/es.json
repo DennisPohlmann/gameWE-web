@@ -670,7 +670,8 @@
     "b": "Tarjeta",
     "c": "Placa",
     "d": "Tendencia",
-    "e": "Franja lateral"
+    "e": "Franja lateral",
+    "f": "Imagen del mapa"
   },
   "bannerBackgrounds": {
     "plain": "Liso",

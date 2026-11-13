@@ -218,7 +218,9 @@ language (`/banner/<game>/player/de/12.png`, `/sig/de/12.png`,
 Japanese, Korean and Arabic get English texts); without one they are English. `?layout=` picks the layout
 (`a` clear, the default, `b` card, `c` badge, the player banner also `d`
 with the points of the last 30 days, and `e` side strip, the card with an
-accent strip on the left whose label runs from top to bottom) and `?bg=` a background pattern
+accent strip on the left whose label runs from top to bottom; the server
+banner also `f` map image, layout `a` with the map's thumbnail instead of
+the players graph, same pictures as below, else a "no map image" box) and `?bg=` a background pattern
 (`plain`, the default, `dots`, `grid`, `stripes`, `carbon`, `glow`).
 `?size=` picks the size: `normal` (the default, the layouts above: player
 400x100, server and TeamSpeak 560x95), `small` (350x20, one line) or `tall`
