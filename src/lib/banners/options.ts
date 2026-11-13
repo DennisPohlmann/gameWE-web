@@ -15,6 +15,14 @@ export const LAYOUTS: Record<BannerKind, readonly string[]> = {
   voice: ["a", "b", "c", "e"],
 };
 
+// The layouts of the tall size, the first the default: the server banner is
+// only the side strip (old ?layout=a URLs show it too).
+export const TALL_LAYOUTS: Record<BannerKind, readonly string[]> = {
+  player: ["a", "e"],
+  server: ["e"],
+  voice: ["a", "e"],
+};
+
 export const BACKGROUNDS = ["plain", "dots", "grid", "stripes", "carbon", "glow"] as const;
 export type Background = (typeof BACKGROUNDS)[number];
 
@@ -46,7 +54,7 @@ export function bannerOptions(kind: BannerKind, url: URL): BannerOptions {
   return {
     lang: isLang(lang) ? lang : "en",
     // The normal size has layouts, the tall one also e (side strip); one cache entry per small picture.
-    layout: (size === "normal" && LAYOUTS[kind].includes(layout)) || (size === "tall" && layout === "e") ? layout : "a",
+    layout: size === "tall" ? (TALL_LAYOUTS[kind].includes(layout) ? layout : TALL_LAYOUTS[kind][0]) : size === "normal" && LAYOUTS[kind].includes(layout) ? layout : "a",
     bg: (BACKGROUNDS as readonly string[]).includes(bg) ? (bg as Background) : "plain",
     size,
     html,
@@ -107,6 +115,7 @@ export function bannerChoices(kind: BannerKind, t: { bannerLayouts: Record<strin
       return { id, name: `${t.bannerSizes[id] ?? id} (${width}×${height})`, width, height };
     }),
     layouts: LAYOUTS[kind].map((id) => ({ id, name: t.bannerLayouts[id] ?? id })),
+    tallLayouts: TALL_LAYOUTS[kind],
     backgrounds: BACKGROUNDS.map((id) => ({ id, name: t.bannerBackgrounds[id] ?? id })),
   };
 }

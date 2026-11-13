@@ -45,6 +45,8 @@ test("the code box lists every layout and background with its name", () => {
   assert.deepEqual(c.layouts.map((l) => l.id), ["a", "b", "c", "e", "f"]);
   assert.deepEqual(bannerChoices("voice", t).layouts.map((l) => l.id), ["a", "b", "c", "e"]);
   assert.deepEqual(bannerChoices("player", t).layouts.map((l) => l.id), ["a", "b", "c", "d", "e"]);
+  assert.deepEqual(c.tallLayouts, ["e"]);
+  assert.deepEqual(bannerChoices("voice", t).tallLayouts, ["a", "e"]);
   assert.equal(c.backgrounds[1].name, "Dots");
   assert.equal(c.backgrounds[2].name, "grid");
   assert.deepEqual(c.sizes.map((x) => [x.name, x.width, x.height]), [["Normal (560×95)", 560, 95], ["Small (350×20)", 350, 20], ["tall (160×400)", 160, 400]]);
@@ -59,7 +61,10 @@ test("fitSize: the TeamSpeak address keeps its size while it fits, else shrinks,
 });
 
 test("sizes: small and tall ignore the layout, unknown sizes are the normal one", () => {
-  assert.deepEqual(opts("server", "/banner/css/server/1.png?size=tall&layout=c"), { lang: "en", layout: "a", bg: "plain", size: "tall", html: false });
+  // The tall server banner is only the side strip, also for old ?layout=a URLs.
+  assert.deepEqual(opts("server", "/banner/css/server/1.png?size=tall&layout=a"), { lang: "en", layout: "e", bg: "plain", size: "tall", html: false });
+  assert.equal(opts("server", "/banner/css/server/1.html").layout, "e");
+  assert.equal(opts("player", "/banner/css/player/1.png?size=tall&layout=c").layout, "a");
   // The tall size has layout e (side strip) besides the default.
   assert.deepEqual(opts("player", "/banner/css/player/12.html?layout=e"), { lang: "en", layout: "e", bg: "plain", size: "tall", html: true });
   assert.equal(opts("voice", "/banner/teamspeak.png?size=small&layout=e").layout, "a");
