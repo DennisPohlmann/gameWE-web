@@ -72,7 +72,8 @@ and loose files) and writes them as PNG to the website's map-images folder
 It reads DXT1/3/5 and the plain RGB(A) formats, cuts the empty rows at the
 bottom (CS:S keeps its 128x96 pictures in 128x128 textures) and keeps
 pictures that are already there. The pictures belong to the game's maker;
-gameWE comes with those of CS:S (`map-images/css/`, see its `LICENSE.txt`),
+gameWE comes with those of CS:S and DoD:S (`map-images/css/`, `dods/`, see
+their `LICENSE.txt`),
 for other games each operator makes them from their own installation.
 
 ```

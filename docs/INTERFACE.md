@@ -228,7 +228,7 @@ the players graph, same pictures as below, else a "no map image" box) and `?bg=`
 banners; `tall` also takes `?layout=e`: the name from top to bottom in a
 strip on the left, beside it labelled sections (status, the big number,
 the values; the server banner also the map with its thumbnail from
-`/var/lib/gamewe/web/map-images` or the built-in one (CS:S stock maps), else a "no map image" box, the players of the last 24 hours and the 5 best players
+`/var/lib/gamewe/web/map-images` or the built-in one (CS:S and DoD:S stock maps), else a "no map image" box, the players of the last 24 hours and the 5 best players
 of the ranking). Unknown values give the defaults. The same
 address with `.html` instead of `.png` (`/banner/<game>/player/12-dark.html`,
 `/banner/de/teamspeak.html`) is the banner as a web page for an

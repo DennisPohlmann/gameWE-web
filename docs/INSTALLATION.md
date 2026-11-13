@@ -498,7 +498,7 @@ the container; there is no setting for them:
 |---|---|---|
 | `/var/lib/gamewe/web/templates/` | own design templates, one subfolder each ([templates/README.md](../templates/README.md)) | mount point, e.g. `-v /var/lib/gamewe/web/templates:/var/lib/gamewe/web/templates:ro` |
 | `/var/lib/gamewe/web/overviews/` | own map pictures for the heatmap, one subfolder per game, named by its short form such as `css` or `cs2` (table in [overviews/README.md](../overviews/README.md#layout)) | mount point, e.g. `-v /var/lib/gamewe/web/overviews:/var/lib/gamewe/web/overviews:ro` |
-| `/var/lib/gamewe/web/map-images/` | own map pictures for the banners (the map box of the upright side strip banner): `<game>/<map>.png` (or `.webp`, `.jpg`), the game by the ranking's code such as `css2` or its base game such as `css`, the map name in lower case as in the logs (`css/de_dust2.png`); any size up to 8 MB, the banner cuts it to 248x92 (wide pictures fit best). Without one the banner takes the built-in thumbnail (the 18 stock maps of CS:S, `map-images/` next to the server), else it shows a "no map image" box (never the radar picture of the heatmap). The game's own map thumbnails can be put there with a script, see below | mount point, e.g. `-v /var/lib/gamewe/web/map-images:/var/lib/gamewe/web/map-images:ro` |
+| `/var/lib/gamewe/web/map-images/` | own map pictures for the banners (the map box of the upright side strip banner): `<game>/<map>.png` (or `.webp`, `.jpg`), the game by the ranking's code such as `css2` or its base game such as `css`, the map name in lower case as in the logs (`css/de_dust2.png`); any size up to 8 MB, the banner cuts it to 248x92 (wide pictures fit best). Without one the banner takes the built-in thumbnail (the stock maps of CS:S and DoD:S, `map-images/` next to the server), else it shows a "no map image" box (never the radar picture of the heatmap). The game's own map thumbnails can be put there with a script, see below | mount point, e.g. `-v /var/lib/gamewe/web/map-images:/var/lib/gamewe/web/map-images:ro` |
 
 They add to the built-in `templates/` and `overviews/`, which stay as they
 are. A name in both (a template folder, a map picture or calibration file)
@@ -541,8 +541,9 @@ once, or mount the folder with the option `:U`
 
 **Map thumbnails from your game installation.** Source games keep a small
 menu picture of each stock map (`materials/vgui/maps/menu_thumb_<map>.vtf`,
-in CS:S for its 18 maps). gameWE comes with those of CS:S (`map-images/css/`,
-property of Valve, see `map-images/css/LICENSE.txt`); for other games, or
+in CS:S for its 18 maps). gameWE comes with those of CS:S and DoD:S
+(`map-images/css/`, `map-images/dods/`, property of Valve, see the
+`LICENSE.txt` in each); for other games, or
 to make them yourself, the script below writes them from your own
 installation into the map-images folder as `<game>/<map>.png`; pictures
 already there stay:
