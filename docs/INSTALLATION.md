@@ -560,9 +560,15 @@ The website sets `X-Frame-Options: SAMEORIGIN`, `Content-Security-Policy:
 frame-ancestors 'self'` (no framing by other sites), `X-Content-Type-Options:
 nosniff` and `Referrer-Policy: strict-origin-when-cross-origin` itself. Only
 the HTML banners (`/banner/...html`) may be framed by any site
-(`frame-ancestors *`); a proxy that adds its own `X-Frame-Options` or
-`Content-Security-Policy` must leave them out for those, else their
-`<iframe>` code stays empty on other sites. HSTS
+(`frame-ancestors *` in their `Content-Security-Policy`). Browsers ignore
+`X-Frame-Options` when that header has `frame-ancestors`, so the
+`SAMEORIGIN` the website and a proxy's `add_header X-Frame-Options` send
+there do no harm. A proxy must not replace or hide the website's
+`Content-Security-Policy` for these addresses (its own
+`Content-Security-Policy`, `proxy_hide_header`), else their `<iframe>` code
+stays empty on other sites. Check it with
+`curl -sI https://<site>/banner/<game>/player/<id>.html`: the answer must
+contain `frame-ancestors *`. HSTS
 belongs to the proxy that terminates TLS (`add_header Strict-Transport-Security`
 in the example below).
 
