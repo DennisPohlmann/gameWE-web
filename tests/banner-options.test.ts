@@ -59,7 +59,9 @@ test("fitSize: the TeamSpeak address keeps its size while it fits, else shrinks,
 });
 
 test("sizes: small and tall ignore the layout, unknown sizes are the normal one", () => {
-  assert.deepEqual(opts("server", "/banner/css/server/1.png?size=tall&layout=c"), { lang: "en", layout: "a", bg: "plain", size: "tall", html: false });
+  assert.deepEqual(opts("player", "/banner/css/player/1.png?size=tall&layout=c"), { lang: "en", layout: "a", bg: "plain", size: "tall", html: false });
+  // The tall server banner is always the side strip.
+  assert.equal(opts("server", "/banner/css/server/1.png?size=tall&layout=c").layout, "e");
   // The tall size has layout e (side strip) besides the default.
   assert.deepEqual(opts("player", "/banner/css/player/12.html?layout=e"), { lang: "en", layout: "e", bg: "plain", size: "tall", html: true });
   assert.equal(opts("voice", "/banner/teamspeak.png?size=small&layout=e").layout, "a");

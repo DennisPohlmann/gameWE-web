@@ -23,7 +23,7 @@ export type Wide = {
   kind: string;
   name: string;
   flag: string | null;
-  // The server's game: its short name (games.ts) and icon as a data: URL.
+  // The server's game: its short name ("CSS") and icon as a data: URL.
   game?: { short: string; icon: string | null };
   // The big number: players or users online of the slots.
   hero: { label: string; value: string; max: string; share: number; note: string };
@@ -109,16 +109,40 @@ function Flag({ src, h = 12 }: { src: string | null; h?: number }) {
   return src ? <img src={src} width={Math.round((h * 4) / 3)} height={h} style={{ marginRight: 5, borderRadius: 1 }} alt="" /> : null;
 }
 
-// The game's icon and short name (server banners), e.g. "CS:S".
-function GameChip({ w, h = 11, size = 9, gap = 0 }: { w: Wide; h?: number; size?: number; gap?: number }) {
-  if (!w.game) return null;
+// The game's icon and short name (server banners), e.g. "CSS"; h the icon's size.
+function GameValue({ g, h, size, color }: { g: NonNullable<Wide["game"]>; h: number; size: number; color: string }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", flexShrink: 0, marginLeft: gap, marginRight: 5, fontSize: size, fontWeight: 700, lineHeight: 1, letterSpacing: 0, textTransform: "none", color: w.th.text, whiteSpace: "nowrap" }}>
+    <div style={{ display: "flex", alignItems: "center", flexShrink: 0, fontSize: size, fontWeight: 700, lineHeight: 1, color, whiteSpace: "nowrap" }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      {w.game.icon ? <img src={w.game.icon} width={h} height={h} style={{ marginRight: 3, borderRadius: 2 }} alt="" /> : null}
-      {w.game.short}
+      {g.icon ? <img src={g.icon} width={h} height={h} style={{ marginRight: Math.round(h / 4), borderRadius: 2 }} alt="" /> : null}
+      {g.short}
     </div>
   );
+}
+
+// The game at the front left of the wide server banners (layouts B, C, E):
+// a column with the icon over the short name; accent: in the accent colour (E).
+const GAME_COL = 62;
+function GameColumn({ w, accent = false }: { w: Wide; accent?: boolean }) {
+  if (!w.game) return null;
+  const bg = accent ? (w.th.stripe ?? w.th.accent) : w.th.side;
+  const fg = accent ? onColor(bg) : w.th.sideText;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: GAME_COL, flexShrink: 0, background: bg, color: fg }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {w.game.icon ? <img src={w.game.icon} width={28} height={28} style={{ borderRadius: 3 }} alt="" /> : null}
+      <div style={{ display: "flex", marginTop: 5, fontSize: fitSize(w.game.short, GAME_COL - 8, 15), fontWeight: 700, lineHeight: 1, whiteSpace: "nowrap" }}>{w.game.short}</div>
+    </div>
+  );
+}
+
+// The game at the bottom of the side panel (layouts A and F), like a logo under the picture.
+function GameBand({ w }: { w: Wide }) {
+  return w.game ? (
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: 24, flexShrink: 0 }}>
+      <GameValue g={w.game} h={22} size={19} color={w.th.sideText} />
+    </div>
+  ) : null;
 }
 
 function Pie({ share, th, size = 24 }: { share: number; th: ImageTheme; size?: number }) {
@@ -139,7 +163,8 @@ function Graph({ g, th, w, h, scale }: { g: NonNullable<Wide["graph"]>; th: Imag
     <div style={{ display: "flex" }}>
       {scale ? (
         <div style={{ display: "flex", position: "relative", width: 18, height: h }}>
-          {g.ticks.map((v) => (
+          {/* A low graph (beside the game band) labels only its ends, the steps would overlap. */}
+          {(h < 50 ? [0, g.top] : g.ticks).map((v) => (
             <div key={v} style={{ display: "flex", position: "absolute", right: 3, top: Math.min(h - 9, Math.max(0, h - (v / g.top) * h - 5)), fontSize: 8, lineHeight: 1, color: th.sideText }}>
               {v}
             </div>
@@ -198,11 +223,14 @@ function drawA(w: Wide, side?: React.ReactNode) {
       {side ? (
         <div style={{ display: "flex", flexDirection: "column", width: SIDE, padding: "4px 6px", background: th.side }}>{side}</div>
       ) : w.graph ? (
-        <div style={{ display: "flex", flexDirection: "column", width: SIDE, padding: "4px 6px", background: th.side }}>
-          <div style={sideLabel}>{w.graph.label}</div>
-          <div style={{ display: "flex", marginTop: 3 }}>
-            <Graph g={w.graph} th={th} w={SIDE - 12 - 18} h={66} scale />
+        <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", width: SIDE, padding: "4px 6px", background: th.side }}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={sideLabel}>{w.graph.label}</div>
+            <div style={{ display: "flex", marginTop: 3 }}>
+              <Graph g={w.graph} th={th} w={SIDE - 12 - 18} h={w.game ? 42 : 66} scale />
+            </div>
           </div>
+          <GameBand w={w} />
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", width: SIDE, padding: "4px 6px 6px", background: th.side }}>
@@ -221,10 +249,7 @@ function drawA(w: Wide, side?: React.ReactNode) {
       )}
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1, padding: "5px 8px" }}>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <div style={label}>{w.kind}</div>
-            <GameChip w={w} gap={6} />
-          </div>
+          <div style={label}>{w.kind}</div>
           <div style={{ display: "flex", alignItems: "center", width: INFO }}>
             <Flag src={w.flag} />
             <span style={{ ...value, color: th.text, width: w.flag ? INFO - 21 : INFO }}><Linked href={w.href}>{w.name}</Linked></span>
@@ -256,18 +281,17 @@ function drawA(w: Wide, side?: React.ReactNode) {
 // box) in the side panel instead of the graph (server): the same label line
 // and the same box as the graph, framed like it.
 export const MAP_PANEL_W = SIDE - 12;
-export const MAP_PANEL_H = 66;
+export const MAP_PANEL_H = 55;
 function drawF(w: Wide) {
   const { th } = w;
-  const label = w.cells.find((c) => c.map)?.label ?? "";
   return drawA(
     w,
     w.mapImage ? (
-      <div style={{ display: "flex", flexDirection: "column" }}>
-        <div style={{ display: "flex", fontSize: 8, fontWeight: 700, color: th.sideText, letterSpacing: 0.3, textTransform: "uppercase", whiteSpace: "nowrap" }}>{label}</div>
-        <div style={{ display: "flex", marginTop: 3, flexShrink: 0 }}>
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", flexShrink: 0 }}>
           <MapBox th={th} m={w.mapImage} w={MAP_PANEL_W} h={MAP_PANEL_H} framed />
         </div>
+        <GameBand w={w} />
       </div>
     ) : undefined,
   );
@@ -275,23 +299,20 @@ function drawF(w: Wide) {
 
 // B: "Karte" – name with status, the graph and the big number on the right,
 // the other values in a bottom strip.
-function drawB(w: Wide) {
+function drawB(w: Wide, accent = false) {
   const { th } = w;
   const rest = w.cells.filter((c) => c.pie === undefined && !c.status);
   const small = { display: "flex", fontSize: 8.5, color: th.muted, letterSpacing: 0.6, textTransform: "uppercase" } as const;
   return (
-    <div style={frame(th, true)}>
+    <div style={frame(th)}>
+      <GameColumn w={w} accent={accent} />
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
       <div style={{ display: "flex", flex: 1, alignItems: "center", padding: "0 12px" }}>
         <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
-          {w.kind || w.game ? (
-            <div style={{ display: "flex", alignItems: "center" }}>
-              {w.kind ? <div style={{ ...small, marginRight: 6 }}>{w.kind}</div> : null}
-              <GameChip w={w} />
-            </div>
-          ) : null}
+          {w.kind ? <div style={small}>{w.kind}</div> : null}
           <div style={{ display: "flex", alignItems: "center", marginTop: 1 }}>
             <Flag src={w.flag} h={13} />
-            <span style={{ display: "block", fontSize: 17, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: w.graph ? 250 : 370 }}><Linked href={w.href}>{w.name}</Linked></span>
+            <span style={{ display: "block", fontSize: 17, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: (w.graph ? 250 : 370) - (w.game ? GAME_COL - 30 : 0) }}><Linked href={w.href}>{w.name}</Linked></span>
           </div>
           <div style={{ display: "flex", alignItems: "center", marginTop: 4, fontSize: 10 }}>
             <StatusDot w={w} />
@@ -301,7 +322,7 @@ function drawB(w: Wide) {
         {w.graph ? (
           <div style={{ display: "flex", flexDirection: "column", marginRight: 14 }}>
             <div style={{ ...small, fontSize: 7.5, letterSpacing: 0.4, marginBottom: 2 }}>{w.graph.label}</div>
-            <Graph g={w.graph} th={th} w={110} h={36} scale={false} />
+            <Graph g={w.graph} th={th} w={w.game ? 80 : 110} h={36} scale={false} />
           </div>
         ) : null}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
@@ -323,6 +344,7 @@ function drawB(w: Wide) {
         <span style={{ display: "flex", marginLeft: "auto", opacity: 0.7, marginRight: 8 }}>{w.host}</span>
         <Logo th={th} size={10} color={th.sideText} />
       </div>
+      </div>
     </div>
   );
 }
@@ -337,6 +359,7 @@ function drawC(w: Wide) {
   return (
     <div style={{ ...frame(th, true), borderTop: `1px solid ${th.frame}` }}>
       <div style={{ display: "flex", flex: 1 }}>
+        <GameColumn w={w} />
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: 100, background: block, color: fg }}>
           <div style={{ display: "flex", fontSize: 8, textTransform: "uppercase", letterSpacing: 0.8, opacity: 0.85, maxWidth: 92, overflow: "hidden", whiteSpace: "nowrap" }}>{w.hero.label}</div>
           <div style={{ display: "flex", fontSize: 30, fontWeight: 700, lineHeight: 1.05 }}>{w.hero.value}</div>
@@ -344,9 +367,8 @@ function drawC(w: Wide) {
         </div>
         <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, padding: "7px 12px 0" }}>
           <div style={{ display: "flex", alignItems: "center" }}>
-            <GameChip w={w} h={12} size={10} />
             <Flag src={w.flag} h={12} />
-            <span style={{ display: "block", fontSize: 15, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: w.game ? 280 : 340 }}><Linked href={w.href}>{w.name}</Linked></span>
+            <span style={{ display: "block", fontSize: 15, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 340 - (w.game ? GAME_COL : 0) }}><Linked href={w.href}>{w.name}</Linked></span>
             <div style={{ display: "flex", marginLeft: "auto", alignItems: "center", fontSize: 9, fontWeight: 700, color: w.online ? th.good : th.bad }}>
               <StatusDot w={w} />
               {w.status}
@@ -377,6 +399,8 @@ function drawC(w: Wide) {
 // (Server, TeamSpeak) runs from top to bottom; the strip already says what
 // it is, so B leaves out its label.
 function drawE(w: Wide) {
+  // Server: no turned strip, the game in the accent colour at the front instead.
+  if (w.game) return drawB(w, true);
   return (
     <SideStrip th={w.th} label={w.kind} height={H}>
       {drawB({ ...w, kind: "" })}
@@ -387,20 +411,24 @@ function drawE(w: Wide) {
 // The accent strip of layout E (also the player banner's) left of the
 // banner's drawing, its label from top to bottom.
 // big: the tall banner's strip, the name in larger letters; href: the label
-// is a link (HTML banner).
-export function SideStrip({ th, label, href, height, big = false, children }: { th: ImageTheme; label: string; href?: string; height: number; big?: boolean; children: React.ReactNode }) {
+// is a link (HTML banner); icon: a picture at the top, the label below it.
+export function SideStrip({ th, label, href, height, big = false, icon, children }: { th: ImageTheme; label: string; href?: string; height: number; big?: boolean; icon?: string | null; children: React.ReactNode }) {
   const strip = big ? 24 : 22;
   const size = big ? 12 : 9;
+  const top = icon ? strip : 0;
+  const len = height - top;
   // Shortened by hand: Satori draws no ellipsis in the turned box.
   // shortcut: about 0.75 em per upper-case letter plus the spacing, estimated; measure with Satori if names clip.
-  const room = Math.floor((height - 16) / (size * 0.75 + (big ? 1 : 2)));
+  const room = Math.floor((len - 16) / (size * 0.75 + (big ? 1 : 2)));
   const text = label.length > room ? `${label.slice(0, room - 1).trimEnd()}…` : label;
   const block = th.stripe ?? th.accent;
   return (
     <div style={{ display: "flex", width: "100%", height: "100%" }}>
       <div style={{ display: "flex", position: "relative", width: strip, flexShrink: 0, background: block, overflow: "hidden" }}>
-        {/* A box as long as the banner is high, turned clockwise into the strip. */}
-        <div style={{ display: "flex", position: "absolute", width: height, height: strip, left: (strip - height) / 2, top: (height - strip) / 2, transform: "rotate(90deg)", alignItems: "center", justifyContent: big ? "flex-start" : "center", padding: "0 8px", fontFamily: "Inter", fontSize: size, fontWeight: 700, letterSpacing: big ? 1 : 2, textTransform: "uppercase", whiteSpace: "nowrap", color: onColor(block) }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {icon ? <img src={icon} width={strip - 6} height={strip - 6} style={{ position: "absolute", left: 3, top: 4, borderRadius: 2 }} alt="" /> : null}
+        {/* A box as long as the strip below the icon, turned clockwise into the strip. */}
+        <div style={{ display: "flex", position: "absolute", width: len, height: strip, left: (strip - len) / 2, top: top + (len - strip) / 2, transform: "rotate(90deg)", alignItems: "center", justifyContent: big ? "flex-start" : "center", padding: "0 8px", fontFamily: "Inter", fontSize: size, fontWeight: 700, letterSpacing: big ? 1 : 2, textTransform: "uppercase", whiteSpace: "nowrap", color: onColor(block) }}>
           <Linked href={href}>{text}</Linked>
         </div>
       </div>
@@ -428,8 +456,12 @@ function drawSmall(w: Wide) {
   );
   return (
     <div style={{ ...frame(th), borderTop: `1px solid ${th.frame}`, alignItems: "center", padding: "0 5px", fontSize: 9.5, color: th.text }}>
+      {w.game ? (
+        <div style={{ display: "flex", marginRight: 6 }}>
+          <GameValue g={w.game} h={12} size={9.5} color={th.text} />
+        </div>
+      ) : null}
       {w.status ? <StatusDot w={w} /> : null}
-      <GameChip w={w} h={10} size={9} />
       <Flag src={w.flag} h={9} />
       <span style={{ display: "block", flexShrink: 1, minWidth: 30, maxWidth: w.game ? 80 : 120, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}><Linked href={w.href}>{w.name}</Linked></span>
       <span style={{ display: "flex", flexShrink: 0, marginLeft: 7, fontWeight: 700, color: th.accent, whiteSpace: "nowrap" }}>
@@ -455,10 +487,7 @@ function drawTall(w: Wide) {
   const small = { display: "flex", fontSize: 8, color: th.muted, letterSpacing: 0.5, textTransform: "uppercase", whiteSpace: "nowrap" } as const;
   return (
     <div style={{ ...frame(th, true), padding: "8px 9px 7px" }}>
-      <div style={{ display: "flex", alignItems: "center" }}>
-        <div style={small}>{w.kind}</div>
-        <GameChip w={w} gap={6} />
-      </div>
+      <div style={small}>{w.kind}</div>
       <div style={{ display: "flex", alignItems: "center", marginTop: 2 }}>
         <Flag src={w.flag} h={11} />
         <span style={{ display: "block", fontSize: 13, fontWeight: 700, color: th.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: w.flag ? 124 : 140 }}><Linked href={w.href}>{w.name}</Linked></span>
@@ -523,13 +552,12 @@ function drawTallStrip(w: Wide) {
     <span style={{ display: "block", maxWidth: TCW - 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color, fontSize: size }}>{text}</span>
   );
   return (
-    <SideStrip th={th} label={w.name} href={w.href} height={400} big>
+    <SideStrip th={th} label={w.game ? `${w.game.short} · ${w.name}` : w.name} href={w.href} height={400} big icon={w.game?.icon}>
       <div style={{ ...frame(th, true), padding: "6px 6px 5px" }}>
         {sec(
           w.kind,
           <div style={{ display: "flex", alignItems: "center", fontSize: 9.5 }}>
             <Flag src={w.flag} h={10} />
-            <GameChip w={w} h={10} size={9.5} />
             {w.status ? <StatusDot w={w} /> : null}
             {line(w.status || w.hero.note, w.status ? (w.online ? th.good : th.bad) : th.muted, 9.5)}
           </div>,

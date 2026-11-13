@@ -46,7 +46,8 @@ export function bannerOptions(kind: BannerKind, url: URL): BannerOptions {
   return {
     lang: isLang(lang) ? lang : "en",
     // The normal size has layouts, the tall one also e (side strip); one cache entry per small picture.
-    layout: (size === "normal" && LAYOUTS[kind].includes(layout)) || (size === "tall" && layout === "e") ? layout : "a",
+    // The tall server banner is always the side strip (the game's icon on top of it).
+    layout: size === "tall" && kind === "server" ? "e" : (size === "normal" && LAYOUTS[kind].includes(layout)) || (size === "tall" && layout === "e") ? layout : "a",
     bg: (BACKGROUNDS as readonly string[]).includes(bg) ? (bg as Background) : "plain",
     size,
     html,
