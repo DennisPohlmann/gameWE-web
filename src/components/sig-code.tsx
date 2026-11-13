@@ -5,7 +5,7 @@ import { noAutofill } from "@/lib/autofill";
 
 // A generated picture (forum signature, server banner) with its code: the
 // kind of code in a row of buttons (BBCode for forums, HTML, Discord, the
-// bare image URL, an <iframe> of the HTML banner, always the tall size; the
+// bare image URL, an <iframe> of the HTML banner in the chosen size; the
 // forums that take each one as tooltip), and four
 // selects: the size, the layout (only for the normal size), the colours (one
 // per design template, the site's own first) and the background pattern
@@ -54,16 +54,18 @@ export function SigCode({
   // text), without the brackets of the link syntax.
   const linkText = (alt.includes(": ") ? alt.slice(alt.indexOf(": ") + 2) : alt).replace(/[[\]\\]/g, "");
   const html = `<a href="${attr(link)}"><img src="${attr(img)}" alt="${attr(alt)}" width="${width}" height="${height}"></a>`;
-  // The HTML banner (lib/banners/wide-banner.tsx): only the colours and the background apply.
-  const page = `${style ? `${base}-${style}.html` : `${base}.html`}${bg !== backgrounds[0]?.id ? `?bg=${bg}` : ""}`;
-  const iframe = `<iframe src="${attr(page)}" title="${attr(alt)}" width="160" height="400" style="border:0" scrolling="no"></iframe>`;
+  // The HTML banner (lib/banners/wide-banner.tsx) with the same choices; without ?size= it is the tall one.
+  const hq = new URLSearchParams(q);
+  if (normal) hq.set("size", size);
+  const page = `${style ? `${base}-${style}.html` : `${base}.html`}?${hq}`;
+  const iframe = `<iframe src="${attr(page)}" title="${attr(alt)}" width="${width}" height="${height}" style="border:0" scrolling="no"></iframe>`;
   // [label, code, tooltip]
   const codes: Record<string, [string, string, string]> = {
     bbcode: ["BBCode", `[url=${link}][img]${img}[/img][/url]`, "phpBB, SMF, MyBB, XenForo, vBulletin, Invision"],
     html: ["HTML", html, "Websites, Invision"],
     discord: ["Discord", `[${linkText}](<${link}>)\n${img}`, "Discord"],
     url: [labels.url, img, labels.url],
-    iframe: ["iframe", iframe, "Websites (160×400, live)"],
+    iframe: ["iframe", iframe, "Websites (live)"],
   };
   const code = codes[kind][1];
   const copy = async () => {
@@ -76,7 +78,7 @@ export function SigCode({
   return (
     <div className="sig-codes">
       {kind === "iframe" ? (
-        <iframe className="sig" src={page} title={alt} width={160} height={400} style={{ border: 0 }} />
+        <iframe className="sig" src={page} title={alt} width={width} height={height} style={{ border: 0 }} />
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
         <img className="sig" src={img} alt={alt} width={width} height={height} />

@@ -28,8 +28,9 @@ export function sizePx(kind: BannerKind, size: Size): [number, number] {
   return size === "small" ? [350, 20] : size === "tall" ? [160, 400] : kind === "player" ? [400, 100] : [560, 95];
 }
 
-// html: a file ending in .html, the tall size as a web page for an <iframe>
-// (wide-banner.tsx), with live text and a link to the page.
+// html: a file ending in .html, the banner as a web page for an <iframe>
+// (wide-banner.tsx), with live text and a link to the page; any size, the
+// tall one when ?size= is missing (the first .html banners were only tall).
 export type BannerOptions = { lang: Lang; layout: string; bg: Background; size: Size; html: boolean };
 
 export function bannerOptions(kind: BannerKind, url: URL): BannerOptions {
@@ -40,7 +41,7 @@ export function bannerOptions(kind: BannerKind, url: URL): BannerOptions {
   const layout = q.get("layout") ?? "";
   const bg = q.get("bg") ?? "";
   const html = url.pathname.endsWith(".html");
-  const size = html ? "tall" : (SIZES as readonly string[]).includes(q.get("size") ?? "") ? (q.get("size") as Size) : "normal";
+  const size = (SIZES as readonly string[]).includes(q.get("size") ?? "") ? (q.get("size") as Size) : html ? "tall" : "normal";
   return {
     lang: isLang(lang) ? lang : "en",
     // Only the normal size has layouts: one cache entry per small or tall picture.

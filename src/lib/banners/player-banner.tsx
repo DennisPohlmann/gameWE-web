@@ -2,7 +2,7 @@ import "server-only";
 import { cachedBanner } from "./cache";
 import { bannerFonts } from "./fonts";
 import { Backdrop } from "./backdrop";
-import { onColor, wideBanner } from "./wide-banner";
+import { htmlBanner, onColor, wideBanner } from "./wide-banner";
 import { imageLang, optionsKey, type BannerOptions } from "./options";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -93,13 +93,14 @@ async function render(file: string, game: string | null, o: BannerOptions) {
   };
   if (o.size !== "normal") return wideBanner(asWide(d), o, 900);
   const draw = { a: drawA, b: drawB, c: drawC, d: drawD }[o.layout] ?? drawA;
-  return new ImageResponse(
+  const picture = (
     <div style={{ display: "flex", position: "relative", width: "100%", height: "100%", background: th.bg }}>
       <Backdrop bg={o.bg} th={th} />
       {draw(d)}
-    </div>,
-    { width: 400, height: 100, fonts, headers: { "cache-control": "public, max-age=900" } },
+    </div>
   );
+  if (o.html) return htmlBanner(d.link, picture, 400, 100, o.lang, 900);
+  return new ImageResponse(picture, { width: 400, height: 100, fonts, headers: { "cache-control": "public, max-age=900" } });
 }
 
 type Data = {

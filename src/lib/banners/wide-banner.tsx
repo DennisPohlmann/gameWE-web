@@ -49,7 +49,7 @@ export async function wideBanner(w: Wide, o: BannerOptions, maxAge: number): Pro
       {draw(w)}
     </div>
   );
-  if (o.html) return htmlBanner(w, picture, width, height, o.lang, maxAge);
+  if (o.html) return htmlBanner(w.link, picture, width, height, o.lang, maxAge);
   return new ImageResponse(picture, { width, height, fonts: await bannerFonts(), headers: { "cache-control": `public, max-age=${maxAge}` } });
 }
 
@@ -58,10 +58,10 @@ export async function wideBanner(w: Wide, o: BannerOptions, maxAge: number): Pro
 // an <iframe> on other sites (next.config.ts allows the framing for it and blocks everything else), one
 // link over all to the page, reloaded every maxAge seconds. The page loads
 // nothing: avatar and flags are data: URLs, the font is the reader's own.
-async function htmlBanner(w: Wide, picture: React.ReactElement, width: number, height: number, lang: string, maxAge: number): Promise<Response> {
+export async function htmlBanner(link: string, picture: React.ReactElement, width: number, height: number, lang: string, maxAge: number): Promise<Response> {
   const { renderToStaticMarkup } = await import("react-dom/server");
   const body = renderToStaticMarkup(
-    <a href={w.link} target="_blank" rel="noopener" style={{ display: "flex", width, height, color: "inherit", textDecoration: "none" }}>
+    <a href={link} target="_blank" rel="noopener" style={{ display: "flex", width, height, color: "inherit", textDecoration: "none" }}>
       {picture}
     </a>,
   );
