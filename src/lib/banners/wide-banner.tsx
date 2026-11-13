@@ -447,14 +447,11 @@ function drawSmall(w: Wide) {
   );
   return (
     <div style={{ ...frame(th), borderTop: `1px solid ${th.frame}`, alignItems: "center", padding: "0 5px", fontSize: 9.5, color: th.text }}>
-      {w.game ? (
-        <div style={{ display: "flex", marginRight: 6 }}>
-          <GameValue g={w.game} h={12} size={9.5} color={th.text} />
-        </div>
-      ) : null}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {w.game?.icon ? <img src={w.game.icon} width={12} height={12} style={{ marginRight: 5, borderRadius: 2 }} alt="" /> : null}
       {w.status ? <StatusDot w={w} /> : null}
       <Flag src={w.flag} h={9} />
-      <span style={{ display: "block", flexShrink: 1, minWidth: 30, maxWidth: w.game ? 80 : 120, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}><Linked href={w.href}>{w.name}</Linked></span>
+      <span style={{ display: "block", flexShrink: 1, minWidth: 30, maxWidth: w.game?.icon ? 105 : 120, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}><Linked href={w.href}>{w.name}</Linked></span>
       <span style={{ display: "flex", flexShrink: 0, marginLeft: 7, fontWeight: 700, color: th.accent, whiteSpace: "nowrap" }}>
         {w.hero.value}
         <span style={{ opacity: 0.75 }}>/{w.hero.max}</span>
