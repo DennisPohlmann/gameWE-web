@@ -1564,7 +1564,9 @@ td.ribbon-wall a { display: inline-flex; flex-direction: column; align-items: ce
 .share-btn { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; font-size: 11px; font-weight: bold; line-height: 15px; color: var(--accent-on); background: linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.12) 50%, rgba(255, 255, 255, 0) 51%, rgba(0, 0, 0, 0.12)) var(--accent); border: 1px solid rgba(0, 0, 0, 0.35); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 1px 1px rgba(0, 0, 0, 0.25); cursor: pointer; }
 .share-btn svg { fill: currentColor; stroke: currentColor; stroke-width: 2; }
 .share-btn:hover, .share-btn[aria-expanded="true"] { filter: brightness(1.1); }
-.sig-codes > .sig { display: block; max-width: 100%; height: auto; margin: 0 auto 6px; }
+/* height: auto only for the picture: an <iframe> would fall back to 150px and cut the banner. */
+.sig-codes > .sig { display: block; max-width: 100%; margin: 0 auto 6px; }
+.sig-codes > img.sig { height: auto; }
 .help-games { margin: 6px 0 8px; }
 .share-menu { position: absolute; inset-inline-end: 0; top: calc(100% + 4px); z-index: 50; min-width: 170px; padding: 4px; background: var(--surface, #222); border: 1px solid var(--border); border-radius: 5px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); }
 .share-menu button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 8px; font-size: 12px; color: var(--text); text-align: start; background: none; border: 0; border-radius: 3px; cursor: pointer; }
