@@ -78,7 +78,10 @@ export function SigCode({
   return (
     <div className="sig-codes">
       {kind === "iframe" ? (
-        <iframe className="sig" src={page} title={alt} width={width} height={height} style={{ border: 0 }} />
+        // An iframe cannot shrink its page like a picture: wider than the box (phone), it scrolls.
+        <div className="sig sig-frame">
+          <iframe src={page} title={alt} width={width} height={height} style={{ border: 0, display: "block", margin: "0 auto" }} />
+        </div>
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
         <img className="sig" src={img} alt={alt} width={width} height={height} />
