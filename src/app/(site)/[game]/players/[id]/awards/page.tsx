@@ -82,7 +82,7 @@ export default async function PlayerAwardsPage({ params, searchParams }: Props) 
                   <tr key={i}>
                     <td className="nowrap">{String(a.date).slice(0, 10)}</td>
                     <td><bdi>{a.name}</bdi></td>
-                    <td>{awardValue(a, Number(a.winner_count), (n) => fmtNum(n, lang), fmtDuration)}</td>
+                    <td><bdi>{awardValue(a, Number(a.winner_count), (n) => fmtNum(n, lang), fmtDuration)}</bdi></td>
                   </tr>
                 ))}
               </tbody>

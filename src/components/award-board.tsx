@@ -35,6 +35,9 @@ export async function AwardBoard({ game, t, lang, sort }: { game: string; t: Dic
   const rows = sortRows(loaded, awardValues, order.sort, order.asc);
   const sorted = sort ? sortHeads(order, sort.base, { ...sort.params, ...order.keep }, BOARD) : null;
   const th = (label: string, key: keyof typeof awardValues) => (sorted ? sorted(label, key, "") : <th>{label}</th>);
+  // The value with the award's English verb from the database ("95 kills with
+  // ak47") is one isolated run with its brackets: on right-to-left pages it
+  // showed as "kills with 95) Bad-Boy (ak47".
   const val = (a: (typeof rows)[number], v: number) => awardValue(a, v, (n) => fmtNum(n, lang), fmtDuration);
   return (
     <Section title={t.dailyAwards}>
@@ -59,13 +62,13 @@ export async function AwardBoard({ game, t, lang, sort }: { game: string; t: Dic
               {rows.map((a) => (
                 <tr key={a.awardId}>
                   <td>
-                    <Link prefetch={false} href={`/${game}/awards?view=ribbons&award=${a.awardId}`}>{a.name}</Link>
+                    <Link prefetch={false} href={`/${game}/awards?view=ribbons&award=${a.awardId}`}><bdi>{a.name}</bdi></Link>
                   </td>
                   <td>
                     {a.winner ? (
                       <>
                         <PlayerLink game={game} id={a.winner.playerId} name={a.winner.name} flag={flags.get(a.winner.playerId)} />{" "}
-                        <span className="muted">({val(a, a.winner.value)})</span>
+                        <bdi className="muted">({val(a, a.winner.value)})</bdi>
                       </>
                     ) : (
                       <span className="muted">{t.notAwarded}</span>
@@ -75,7 +78,7 @@ export async function AwardBoard({ game, t, lang, sort }: { game: string; t: Dic
                     {a.leader ? (
                       <>
                         <PlayerLink game={game} id={a.leader.playerId} name={a.leader.name} flag={flags.get(a.leader.playerId)} />{" "}
-                        <span className="muted">({val(a, a.leader.value)})</span>
+                        <bdi className="muted">({val(a, a.leader.value)})</bdi>
                       </>
                     ) : (
                       <span className="muted">-</span>
@@ -120,13 +123,13 @@ export async function AwardDayTable({ game, day, t, lang, sort }: { game: string
                 return (
                   <tr key={a.awardId}>
                     <td>
-                      <Link prefetch={false} href={`/${game}/awards?view=ribbons&award=${a.awardId}`}>{a.name}</Link>
+                      <Link prefetch={false} href={`/${game}/awards?view=ribbons&award=${a.awardId}`}><bdi>{a.name}</bdi></Link>
                     </td>
                     <td>
                       {a.winner ? (
                         <>
                           <PlayerLink game={game} id={a.winner.playerId} name={a.winner.name} flag={f} />{" "}
-                          <span className="muted">({val(a, a.winner.value)})</span>
+                          <bdi className="muted">({val(a, a.winner.value)})</bdi>
                         </>
                       ) : (
                         <span className="muted">{t.notAwarded}</span>

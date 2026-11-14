@@ -681,7 +681,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                           <td className="muted">{a.date}</td>
                           <td><bdi>{a.name}</bdi></td>
                           <td className="num">
-                            {awardValue(a, a.winner_count, (n) => fmtNum(n, lang), fmtDuration)}
+                            <bdi>{awardValue(a, a.winner_count, (n) => fmtNum(n, lang), fmtDuration)}</bdi>
                           </td>
                         </tr>
                       ))}
