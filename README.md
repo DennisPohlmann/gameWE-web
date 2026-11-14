@@ -22,6 +22,8 @@ on MariaDB/MySQL, PostgreSQL or Microsoft SQL Server. It
   Scalar), forum signatures, server banners and a TeamSpeak banner,
 - offers an admin API (`/api/v1/admin`) with which scripts do everything the
   admin area does, with an admin's API token (Admin → My account → API tokens),
+  limited per token to read, change and an MCP server for AI clients (every
+  change confirmed first),
 - comes in 25 languages (Arabic right to left, four German dialects) and with design templates, including your own.
 
 Built with Next.js 16 (App Router, server-rendered, almost no client

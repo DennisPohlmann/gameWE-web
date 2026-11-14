@@ -1,0 +1,143 @@
+// Token scopes (read, write, mcp) and the MCP server of the admin API
+// (/api/v1/admin/mcp): the scopes a form may choose, tokens from before
+// scopes, which methods need which scope, the JSON-RPC messages, the tools
+// (read operations only, by admin level) and their arguments. Run with
+// `npm test`.
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { test } from "node:test";
+import { CONFIRM_SECONDS, MCP_VERSIONS, RpcError, canonical, confirmCode, confirmOk, initializeResult, originOk, rpcMessage, toolCall, tools } from "../src/lib/admin-mcp.ts";
+import { decodeRecord, encodeRecord, scopeFor, tokenScopes } from "../src/lib/api-token-core.ts";
+import { adminOps } from "../src/lib/openapi-admin.ts";
+
+const rpcCode = (f: () => unknown) => {
+  try {
+    f();
+  } catch (e) {
+    assert.ok(e instanceof RpcError);
+    return e.code;
+  }
+  assert.fail("no error");
+};
+
+test("scopes: read or write needed (also with mcp), nothing unknown", () => {
+  assert.deepEqual(tokenScopes(["read"]), ["read"]);
+  assert.deepEqual(tokenScopes(["mcp", "read"]), ["read", "mcp"], "in a fixed order");
+  assert.deepEqual(tokenScopes(["write", "mcp"]), ["write", "mcp"]);
+  assert.deepEqual(tokenScopes(["write", "read", "mcp"]), ["read", "write", "mcp"]);
+  assert.deepEqual(tokenScopes(["write"]), ["write"]);
+  for (const bad of [[], ["mcp"], ["admin"], ["read", "mcp_write"], ["read", "READ"], ["read", 1]]) assert.equal(tokenScopes(bad), null, JSON.stringify(bad));
+});
+
+test("scopes: GET reads, every other method writes", () => {
+  assert.equal(scopeFor("GET"), "read");
+  for (const m of ["POST", "PUT", "PATCH", "DELETE"]) assert.equal(scopeFor(m), "write");
+});
+
+test("scopes: stored with the token; a token from before scopes keeps read and write, no mcp", () => {
+  const r = { owner: "admin", name: "ci", scopes: tokenScopes(["read", "mcp"])!, prefix: "gwe_abcdefgh", created: 1, expires: 0, lastUsed: 0 };
+  assert.deepEqual(decodeRecord(encodeRecord(r)), r);
+  const old = JSON.stringify({ v: 1, u: "admin", n: "ci", p: "gwe_abcdefgh", c: 1, e: 0, l: 0 });
+  assert.deepEqual(decodeRecord(old)?.scopes, ["read", "write"]);
+  assert.match(encodeRecord(r)!, /^\{"v":2,/, "a web from before scopes (v 1 only) refuses it");
+  for (const s of ["", "mcp", "root", 3, undefined]) assert.equal(decodeRecord(JSON.stringify({ v: 2, u: "a", n: "", s, p: "", c: 0, e: 0, l: 0 })), null, String(s));
+});
+
+test("the API checks the scope before the level, and MCP needs mcp", () => {
+  const api = readFileSync("src/lib/admin-api.ts", "utf8");
+  assert.ok(api.indexOf("insufficient_scope") < api.indexOf("needs admin level"), "scope checked first");
+  assert.match(api, /if \(!token\.scopes\.includes\("mcp"\)\) return error\(403, "insufficient_scope"/);
+  // A writing tool runs only with a valid confirmation, and is logged.
+  const call = api.slice(api.indexOf('case "tools/call"'), api.indexOf("default:", api.indexOf('case "tools/call"')));
+  assert.ok(call.indexOf("confirmOk(") > 0 && call.indexOf("confirmOk(") < call.indexOf("handlers[call.op.handler]"));
+  assert.match(call, /if \(call\.confirmation === undefined\) \{\s*return out\(false/);
+  assert.match(call, /admin MCP \$\{what\}/);
+  // MCP only after the token was authenticated and the rate limit counted.
+  assert.ok(api.indexOf("return mcp(") > api.indexOf('overLimit("admin-api"'));
+});
+
+test("mcp: one JSON-RPC 2.0 message, no batches", () => {
+  assert.deepEqual(rpcMessage({ jsonrpc: "2.0", id: 1, method: "ping" }), { id: 1, method: "ping", params: undefined });
+  assert.equal(rpcMessage({ jsonrpc: "2.0", method: "notifications/initialized" }).id, undefined);
+  assert.equal(rpcCode(() => rpcMessage([{ jsonrpc: "2.0", id: 1, method: "ping" }])), -32600);
+  assert.equal(rpcCode(() => rpcMessage({ id: 1, method: "ping" })), -32600);
+  assert.equal(rpcCode(() => rpcMessage({ jsonrpc: "2.0", id: 1.5, method: "ping" })), -32600);
+  assert.equal(rpcCode(() => rpcMessage({ jsonrpc: "2.0", id: 1, method: "ping", params: [1] })), -32602);
+  assert.equal(rpcCode(() => rpcMessage(null)), -32600);
+});
+
+test("mcp: initialize answers the client's version if known, else the newest", () => {
+  assert.equal(initializeResult("2025-06-18", "1").protocolVersion, "2025-06-18");
+  assert.equal(initializeResult("1999-01-01", "1").protocolVersion, MCP_VERSIONS[0]);
+  assert.deepEqual(initializeResult(undefined, "1.2.3").capabilities, { tools: { listChanged: false } });
+});
+
+const R = ["read", "mcp"];
+const W = ["write", "mcp"];
+const RW = ["read", "write", "mcp"];
+
+test("mcp: one tool per operation, GET with read, the others with write, by level", () => {
+  const ids = (ops: typeof adminOps) => ops.map((o) => o.operationId).sort();
+  const names = (s: string[], level = 100) => tools(level, s).map((t) => t.name).sort();
+  assert.deepEqual(names(R), ids(adminOps.filter((o) => o.method === "GET")));
+  assert.deepEqual(names(W), ids(adminOps.filter((o) => o.method !== "GET")));
+  assert.deepEqual(names(RW), ids(adminOps));
+  const all = tools(100, RW);
+  assert.ok(all.every((t) => /^[A-Za-z0-9_.-]{1,128}$/.test(t.name)));
+  for (const t of all) {
+    const w = adminOps.find((o) => o.operationId === t.name)!.method !== "GET";
+    assert.equal(t.annotations.readOnlyHint, !w, t.name);
+    assert.equal("confirmation" in t.inputSchema.properties, w, t.name);
+    if (w) assert.equal(t.annotations.destructiveHint, true, t.name);
+  }
+  const restricted = names(RW, 80);
+  assert.ok(restricted.length < all.length, "level 80 sees fewer tools");
+  for (const op of adminOps.filter((o) => o.level === 100)) assert.ok(!restricted.includes(op.operationId), op.operationId);
+  assert.deepEqual(all.find((t) => t.name === "adminGetRanking")!.inputSchema.required, ["code"]);
+  assert.deepEqual(all.find((t) => t.name === "adminUpdateServer")!.inputSchema.required, ["id", "body"]);
+});
+
+test("mcp: a call goes through the router with the REST checks", () => {
+  const c = toolCall("adminGetRanking", { code: "css" }, 100, R);
+  assert.equal(c.op.operationId, "adminGetRanking");
+  assert.deepEqual(c.params, { code: "css" });
+  const list = toolCall("adminListServers", { page: 2, q: "de" }, 100, R);
+  assert.equal(list.query.get("page"), "2");
+  assert.equal(list.query.get("q"), "de");
+  const u = toolCall("adminUpdateServer", { id: 3, body: { name: "x" }, confirmation: "1.a" }, 100, W);
+  assert.deepEqual([u.params, u.body, u.args, u.confirmation], [{ id: "3" }, { name: "x" }, { id: 3, body: { name: "x" } }, "1.a"]);
+  assert.equal(rpcCode(() => toolCall("adminGetRanking", { code: "../x" }, 100, R)), -32602, "path shape checked");
+  assert.equal(rpcCode(() => toolCall("adminGetRanking", {}, 100, R)), -32602, "missing argument");
+  assert.equal(rpcCode(() => toolCall("adminGetRanking", { code: "css", x: 1 }, 100, R)), -32602, "unknown argument");
+  assert.equal(rpcCode(() => toolCall("adminGetRanking", { code: "css", body: {} }, 100, RW)), -32602, "no body on a read");
+  assert.equal(rpcCode(() => toolCall("adminGetRanking", { code: "css", confirmation: "x" }, 100, RW)), -32602, "no confirmation on a read");
+  assert.equal(rpcCode(() => toolCall("adminGetRanking", { code: { a: 1 } }, 100, R)), -32602);
+  assert.equal(rpcCode(() => toolCall("adminDeleteRanking", { code: "css" }, 100, R)), -32602, "no writing tools without write");
+  assert.equal(rpcCode(() => toolCall("adminGetRanking", { code: "css" }, 100, W)), -32602, "no reading tools without read");
+  assert.equal(rpcCode(() => toolCall("adminGetRanking", { code: "css" }, 80, RW)), -32602, "level 80 cannot see rankings");
+});
+
+test("mcp: a confirmation fits only its token, tool and arguments, for 5 minutes", () => {
+  const secret = "0123456789abcdef0123456789abcdef-test-only";
+  const args = { id: 3, body: { name: "x", port: 27015 } };
+  const code = confirmCode(secret, "tok1", "adminUpdateServer", args, 1000);
+  assert.ok(confirmOk(code, secret, "tok1", "adminUpdateServer", { body: { port: 27015, name: "x" }, id: 3 }, 1000), "key order does not count");
+  assert.ok(confirmOk(code, secret, "tok1", "adminUpdateServer", args, 1000 + CONFIRM_SECONDS));
+  assert.equal(confirmOk(code, secret, "tok1", "adminUpdateServer", args, 1001 + CONFIRM_SECONDS), false, "expired");
+  assert.equal(confirmOk(code, secret, "tok2", "adminUpdateServer", args, 1000), false, "other token");
+  assert.equal(confirmOk(code, secret, "tok1", "adminDeleteServer", args, 1000), false, "other tool");
+  assert.equal(confirmOk(code, secret, "tok1", "adminUpdateServer", { id: 3, body: { name: "y", port: 27015 } }, 1000), false, "other arguments");
+  assert.equal(confirmOk(code, `${secret}x`, "tok1", "adminUpdateServer", args, 1000), false, "other ADMIN_SECRET");
+  const [exp, mac] = code.split(".");
+  assert.equal(confirmOk(`${Number(exp) + 3600}.${mac}`, secret, "tok1", "adminUpdateServer", args, 1000), false, "expiry is signed");
+  for (const bad of ["", "x", `${exp}.`, `${exp}.${mac}x`, `-1.${mac}`]) assert.equal(confirmOk(bad, secret, "tok1", "adminUpdateServer", args, 1000), false, bad);
+  assert.equal(canonical({ b: [1, { d: 1, c: 2 }], a: null }), '{"a":null,"b":[1,{"c":2,"d":1}]}');
+});
+
+test("mcp: requests from another site's page are refused", () => {
+  assert.ok(originOk(null, ["stats.example.org"]), "no Origin: not a browser");
+  assert.ok(originOk("https://stats.example.org", ["stats.example.org", null]));
+  assert.ok(originOk("https://stats.example.org", ["gamewe:3000", "stats.example.org"]), "behind a proxy");
+  assert.equal(originOk("https://evil.example", ["stats.example.org"]), false);
+  assert.equal(originOk("null", ["stats.example.org"]), false);
+});

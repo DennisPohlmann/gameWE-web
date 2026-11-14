@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import type { TokenFormState } from "@/app/admin/actions";
+import { SCOPES, type Scope } from "@/lib/api-token-core";
 import { noAutofill } from "@/lib/autofill";
 import { useForgetOnRestore } from "./forget-on-restore";
 import { RevealInput } from "./reveal-input";
@@ -13,6 +14,8 @@ import { RevealInput } from "./reveal-input";
 export type TokenFormText = {
   name: string;
   nameHint: string;
+  scopes: string;
+  scope: Record<Scope, string>;
   expiry: string;
   never: string;
   days: string;
@@ -81,6 +84,15 @@ export function ApiTokenForm({
           <input {...noAutofill} name="name" dir="auto" maxLength={40} required />
           <small>{text.nameHint}</small>
         </label>
+        <fieldset className="token-scopes">
+          <legend>{text.scopes}</legend>
+          {SCOPES.map((s) => (
+            <label key={s} className="check">
+              <input type="checkbox" name="scope" value={s} defaultChecked={s === "read"} />
+              {text.scope[s]}
+            </label>
+          ))}
+        </fieldset>
         <label>
           {text.expiry}
           <select {...noAutofill} name="expiry" defaultValue="90">

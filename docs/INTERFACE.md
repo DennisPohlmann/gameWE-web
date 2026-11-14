@@ -173,6 +173,34 @@ are listed once in `src/lib/openapi-admin.ts`, and the router
   characters, created, last used (updated at most every 5 minutes) and
   expiry. Up to 20 tokens per admin. Revoking works at once; a new
   `ADMIN_SECRET` makes all tokens unusable.
+- **Scopes:** chosen when the token is made, shown in the list, at least
+  one of `read` (`GET`) and `write` (`POST`, `PUT`, `PATCH`, `DELETE`), plus
+  optionally `mcp` (the MCP server below, with the tools of the other two). A
+  request outside the token's scopes gets `403 insufficient_scope`, checked
+  before the admin level; the level stays the limit. Tokens made before
+  scopes existed have `read` and `write`, no `mcp`. `GET /admin/me` returns
+  the scopes.
+- **MCP server:** `POST /api/v1/admin/mcp` speaks the Model Context
+  Protocol (Streamable HTTP, stateless: one JSON-RPC message per request,
+  the answer as JSON, no sessions and no event stream, so `GET` gets `405`;
+  protocol versions 2025-11-25, 2025-06-18 and 2025-03-26) for AI clients.
+  Only tokens with `mcp`; authentication, rate limit and errors are those
+  of the admin API. The tools are the operations of the admin API, one per
+  operation with its `operationId` as name, its parameters as arguments and
+  its JSON body as `body`: the `GET` operations with `read`, the others with
+  `write`, each up to the token's admin level (`tools/list` shows only
+  those). A call runs the same code and returns the same JSON as text
+  (`isError` with the API's `{ error, message }`). **A changing tool never
+  acts on its first call:** it answers `confirmationRequired` with the
+  operation, its arguments and a `confirmation` code, valid 5 minutes for
+  exactly this token, tool and arguments (an HMAC under `ADMIN_SECRET`, no
+  stored state); only the same call again with that code makes the change,
+  which is logged (`gameWE: admin MCP PATCH /api/v1/admin/servers/3 -> 200
+  by <admin> via token "<name>"`). Changing tools are marked
+  `destructiveHint`, so clients ask before each call as well. A request with an `Origin` header of another site gets `403
+  forbidden_origin` (DNS rebinding). Example client configuration:
+  `{"type": "http", "url": "https://stats.example.org/api/v1/admin/mcp",
+  "headers": {"Authorization": "Bearer gwe_..."}}`.
 - **Authentication:** only `Authorization: Bearer gwe_...`. Cookies and
   query parameters are never read, so there is no CSRF; answers have
   `Cache-Control: no-store` and no CORS header. A missing, wrong, expired or

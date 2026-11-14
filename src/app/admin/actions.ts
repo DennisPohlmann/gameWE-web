@@ -8,7 +8,7 @@ import { getRow, keptValues, optionList, withColumns } from "@/lib/admin-data";
 import { OpError, assignServersTo, deleteEntity, deletePlayer, moveServer, resetRanking, saveEntity, savePrivacy, saveSettings, setGlobalHall, setHallEntry, setRankingBots, setRankingFastdl, setRankingFastdlAccess, setRankingHall, setRankingVac } from "@/lib/admin-ops";
 import { ADMIN_THEME_COOKIE, isAdminTheme } from "@/lib/admin-theme";
 import { basePath } from "@/lib/base-path";
-import { expiryDays, tokenName } from "@/lib/api-token-core";
+import { expiryDays, tokenName, tokenScopes } from "@/lib/api-token-core";
 import { createToken, purgeTokens, revokeToken } from "@/lib/api-tokens";
 import { LEVEL_ADMIN, LEVEL_MIN, adminSecret, brakedCode, confirmIdentity, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, requireAdmin } from "@/lib/auth";
 import { codeMode, codeStepHref } from "@/lib/login-code";
@@ -308,7 +308,7 @@ export async function changePasswordAction(form: FormData) {
 // one needs the password and, with TOTP, the current code. The plain token
 // goes back to the form once (never into a URL, cookie or log). With
 // the API off both actions refuse, like the hidden section.
-export type TokenFormState = { token?: string; name?: string; error?: "name" | "expiry" | "wrong" | "code" | "blocked" | "nosecret" | "limit" | "long" | "disabled"; at?: number };
+export type TokenFormState = { token?: string; name?: string; error?: "name" | "scope" | "expiry" | "wrong" | "code" | "blocked" | "nosecret" | "limit" | "long" | "disabled"; at?: number };
 
 export async function createApiTokenAction(_prev: TokenFormState, form: FormData): Promise<TokenFormState> {
   const user = await requireAdmin();
@@ -316,13 +316,15 @@ export async function createApiTokenAction(_prev: TokenFormState, form: FormData
   if (!(await apiEnabled())) return { error: "disabled", at };
   const name = tokenName(form.get("name"));
   if (!name) return { error: "name", at };
+  const scopes = tokenScopes(form.getAll("scope"));
+  if (!scopes) return { error: "scope", at };
   const days = expiryDays(form.get("expiry"));
   if (days === null) return { error: "expiry", at };
   const ok = await confirmIdentity(user.username, String(form.get("password") ?? ""), String(form.get("code") ?? ""));
   if (ok !== "ok") return { error: ok, at };
-  const res = await createToken(user.username, name, days);
+  const res = await createToken(user.username, name, scopes, days);
   if ("error" in res) return { error: res.error, at };
-  console.info(`gameWE: API token "${name}" created by ${user.username}${days ? `, expires in ${days} days` : ""}`);
+  console.info(`gameWE: API token "${name}" (${scopes.join(", ")}) created by ${user.username}${days ? `, expires in ${days} days` : ""}`);
   revalidatePath("/admin/account");
   return { token: res.token, name, at };
 }

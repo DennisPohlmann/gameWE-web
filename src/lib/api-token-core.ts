@@ -26,9 +26,18 @@ export const TOUCH_EVERY = 300;
 // hlstats_Options.value is varchar(255).
 const VALUE_MAX = 255;
 
+// What a token may do, chosen when it is made: read = GET on the admin API,
+// write = every other method, mcp = the MCP server (/api/v1/admin/mcp) with
+// the tools of read and/or write. The owner's level stays the limit.
+export const SCOPES = ["read", "write", "mcp"] as const;
+export type Scope = (typeof SCOPES)[number];
+// Tokens made before scopes existed could do everything but MCP.
+const OLD_SCOPES: Scope[] = ["read", "write"];
+
 export type TokenRecord = {
   owner: string; // hlstats_Users.username
   name: string;
+  scopes: Scope[];
   prefix: string; // first characters of the token, for the list
   created: number; // Unix seconds
   expires: number; // Unix seconds, 0 = never
@@ -82,8 +91,22 @@ export function expiryDays(v: unknown): number | null {
   return typeof v === "string" && /^\d{1,3}$/.test(v) && (EXPIRY_DAYS as readonly number[]).includes(n) ? n : null;
 }
 
+// The scopes from the form's checkboxes: known ones only, at least read or
+// write (also with mcp); null otherwise.
+export function tokenScopes(v: unknown[]): Scope[] | null {
+  if (v.some((x) => typeof x !== "string" || !(SCOPES as readonly string[]).includes(x))) return null;
+  const s = SCOPES.filter((x) => v.includes(x));
+  if (!s.includes("read") && !s.includes("write")) return null;
+  return s;
+}
+
+// GET (and HEAD) reads, everything else writes.
+export const scopeFor = (method: string): Scope => (method === "GET" || method === "HEAD" ? "read" : "write");
+
 export function encodeRecord(r: TokenRecord): string | null {
-  const s = JSON.stringify({ v: 1, u: r.owner, n: r.name, p: r.prefix, c: r.created, e: r.expires, l: r.lastUsed });
+  // v 2: with scopes; a web from before scopes refuses it rather than
+  // taking a read-only token for one that may do everything.
+  const s = JSON.stringify({ v: 2, u: r.owner, n: r.name, s: r.scopes.join(" "), p: r.prefix, c: r.created, e: r.expires, l: r.lastUsed });
   return s.length <= VALUE_MAX ? s : null;
 }
 
@@ -91,10 +114,12 @@ export function decodeRecord(value: string | null | undefined): TokenRecord | nu
   try {
     const d = JSON.parse(value ?? "") as Record<string, unknown>;
     const nums = [d.c, d.e, d.l];
-    if (d.v !== 1 || typeof d.u !== "string" || !d.u || typeof d.n !== "string" || typeof d.p !== "string" || nums.some((x) => typeof x !== "number" || !Number.isInteger(x) || x < 0)) {
+    if ((d.v !== 1 && d.v !== 2) || typeof d.u !== "string" || !d.u || typeof d.n !== "string" || typeof d.p !== "string" || nums.some((x) => typeof x !== "number" || !Number.isInteger(x) || x < 0)) {
       return null;
     }
-    return { owner: d.u, name: d.n, prefix: d.p, created: d.c as number, expires: d.e as number, lastUsed: d.l as number };
+    const scopes = d.v === 1 ? OLD_SCOPES : typeof d.s === "string" ? tokenScopes(d.s.split(" ")) : null;
+    if (!scopes) return null;
+    return { owner: d.u, name: d.n, scopes, prefix: d.p, created: d.c as number, expires: d.e as number, lastUsed: d.l as number };
   } catch {
     return null;
   }

@@ -401,8 +401,17 @@ out users with TOTP until they are reset this way.
 API tokens let scripts use the admin API (`/api/v1/admin`, documented on
 `/api`, see [INTERFACE.md](INTERFACE.md#admin-api)) with the rights of their
 admin. Each user creates and revokes their own under My account → API
-tokens (name, expiry; confirmed with the password and the TOTP code). The
-token is shown only once. With a token, the own password, TOTP, level and
+tokens (name, what it may do, expiry; confirmed with the password and the
+TOTP code). The token is shown only once. "May" offers read (`GET`), change
+(everything else) and the MCP server: with MCP, an AI client (e.g. Claude
+Code: `claude mcp add --transport http gamewe
+https://<site>/api/v1/admin/mcp --header "Authorization: Bearer gwe_..."`)
+uses the admin area through `/api/v1/admin/mcp`, with the reading tools if
+read is ticked and the changing ones if change is ticked. Before every
+change the server answers only what it would do and a confirmation code;
+the AI client must ask you and call again with the code (valid 5 minutes).
+A request the token may not make gets `403 insufficient_scope`; tokens from
+before this choice can read and change, but not use MCP. With a token, the own password, TOTP, level and
 account cannot be changed, and tokens cannot be managed; deleting a user or
 lowering them below level 80 stops their tokens at once. A new password,
 removing TOTP and `create-admin` delete the user's tokens too, so scripts need

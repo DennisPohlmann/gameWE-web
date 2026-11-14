@@ -138,6 +138,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                   <tr>
                     <th>{a.tokName}</th>
                     <th>{a.tokPrefix}</th>
+                    <th>{a.tokScopes}</th>
                     <th>{a.tokCreated}</th>
                     <th>{a.tokLastUsed}</th>
                     <th>{a.tokExpires}</th>
@@ -151,6 +152,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                       <td data-l={`${a.tokPrefix}:`}>
                         <code>{t.prefix}…</code>
                       </td>
+                      <td data-l={`${a.tokScopes}:`}>{t.scopes.join(", ")}</td>
                       <td data-l={`${a.tokCreated}:`}>{fmtDateTime(t.created, lang)}</td>
                       <td data-l={`${a.tokLastUsed}:`}>{t.lastUsed ? fmtDateTime(t.lastUsed, lang) : a.tokNotUsed}</td>
                       <td data-l={`${a.tokExpires}:`}>
@@ -178,6 +180,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
               text={{
                 name: a.tokName,
                 nameHint: a.tokNameHint,
+                scopes: a.tokScopes,
+                scope: { read: a.tokScopeRead, write: a.tokScopeWrite, mcp: a.tokScopeMcp },
                 expiry: a.tokExpiry,
                 never: a.tokNever,
                 days: a.tokDays,
@@ -196,6 +200,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 done: a.tokDone,
                 errors: {
                   name: a.tokErrName,
+                  scope: a.tokErrScope,
                   expiry: a.tokErrExpiry,
                   wrong: a.tokErrWrong,
                   code: a.tokErrCode,

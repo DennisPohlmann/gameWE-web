@@ -47,9 +47,10 @@ import { RAW_GROUP, READONLY_OPTIONS, settingGroups } from "./admin-settings";
 import { overLimit } from "./api";
 import { apiDisabledResponse } from "./api-switch";
 import { apiEnabled } from "./settings";
-import { bearerToken, sameOwner } from "./api-token-core";
+import { bearerToken, sameOwner, scopeFor } from "./api-token-core";
+import { CONFIRM_SECONDS, MCP_VERSIONS, RpcError, confirmCode, confirmOk, initializeResult, originOk, rpcError, rpcMessage, rpcResult, toolCall, tools } from "./admin-mcp";
 import { authenticate } from "./api-tokens";
-import { LEVEL_ADMIN } from "./auth";
+import { LEVEL_ADMIN, adminSecret } from "./auth";
 import { clientIp } from "./client-ip";
 import { countChat, getChat } from "./data";
 import { adminQuery } from "./db";
@@ -112,7 +113,7 @@ const error = (status: number, code: string, message: string, extra: Record<stri
 
 // ---------------------------------------------------------------- routing
 
-type Ctx = { actor: Actor; token: { name: string; prefix: string }; op: AdminOp; params: Record<string, string>; query: URLSearchParams; body: unknown };
+type Ctx = { actor: Actor; token: { id: string; name: string; scopes: string[]; prefix: string }; op: AdminOp; params: Record<string, string>; query: URLSearchParams; body: unknown };
 type Result = { status?: number; body?: unknown };
 type Handler = (c: Ctx) => Promise<Result>;
 
@@ -133,6 +134,7 @@ export async function adminApi(req: Request, segments: string[]): Promise<Respon
   if (busy) return error(429, "rate_limited", `more than ${RATE} requests per minute`, {}, { "retry-after": String(busy) });
 
   const actor: Actor = { user: auth.user, via: auth.token.name };
+  if (segments.length === 1 && segments[0] === "mcp") return mcp(req, method, actor, auth.token);
   const path = `/admin/${segments.map(encodeURIComponent).join("/")}`;
   let status = 500;
   try {
@@ -141,6 +143,8 @@ export async function adminApi(req: Request, segments: string[]): Promise<Respon
     if ("allow" in m) {
       return error(405, "method_not_allowed", `use ${m.allow.join(", ")}`, {}, { allow: m.allow.join(", ") });
     }
+    const need = scopeFor(method);
+    if (!auth.token.scopes.includes(need)) throw new ApiFail(403, "insufficient_scope", `this token lacks the scope ${need}`);
     if (auth.user.acclevel < m.op.level) throw new ApiFail(403, "forbidden", `needs admin level ${m.op.level}`);
     const body = m.op.body ? await readBody(req) : undefined;
     const query = new URL(req.url).searchParams;
@@ -155,6 +159,80 @@ export async function adminApi(req: Request, segments: string[]): Promise<Respon
     return r;
   } finally {
     if (method !== "GET") console.info(`gameWE: admin API ${method} ${path} -> ${status} by ${auth.user.username} via token "${auth.token.name}" (${auth.token.prefix})`);
+  }
+}
+
+// The MCP server (lib/admin-mcp.ts): POST only, one JSON-RPC message, the
+// answer as JSON. Authentication, rate limit and failures are the API's.
+async function mcp(req: Request, method: string, actor: Actor, token: Ctx["token"]): Promise<Response> {
+  if (!token.scopes.includes("mcp")) return error(403, "insufficient_scope", "this token lacks the scope mcp");
+  if (!originOk(req.headers.get("origin"), [req.headers.get("host"), req.headers.get("x-forwarded-host")])) return error(403, "forbidden_origin", "requests from other sites are refused");
+  if (method !== "POST") return error(405, "method_not_allowed", "use POST (stateless, no event stream)", {}, { allow: "POST" });
+  const version = req.headers.get("mcp-protocol-version");
+  if (version !== null && !MCP_VERSIONS.includes(version)) return error(400, "unsupported_protocol_version", `supported: ${MCP_VERSIONS.join(", ")}`);
+  let id: string | number | null = null;
+  try {
+    const msg = rpcMessage(await readBody(req).catch((err) => {
+      if (err instanceof ApiFail && err.code === "invalid_json") throw new RpcError(-32700, "parse error");
+      throw err;
+    }));
+    // A notification (e.g. notifications/initialized) gets no answer.
+    if (msg.id === undefined) return new Response(null, { status: 202, headers: { "cache-control": "no-store" } });
+    id = msg.id;
+    const p = msg.params ?? {};
+    switch (msg.method) {
+      case "initialize":
+        return json(200, rpcResult(id, initializeResult(p.protocolVersion, process.env.APP_VERSION || "0")));
+      case "ping":
+        return json(200, rpcResult(id, {}));
+      case "tools/list":
+        return json(200, rpcResult(id, { tools: tools(actor.user.acclevel, token.scopes) }));
+      case "tools/call": {
+        const call = toolCall(p.name, p.arguments, actor.user.acclevel, token.scopes);
+        const out = (isError: boolean, body: unknown) => json(200, rpcResult(id, { content: [{ type: "text", text: JSON.stringify(body) }], isError }));
+        const what = `${call.op.method} /api/v1${call.op.path.replace(/\{(\w+)\}/g, (_, k: string) => call.params[k])}${call.query.size ? `?${call.query}` : ""}`;
+        const writing = call.op.method !== "GET";
+        if (writing) {
+          // Never on the first call: what would happen, and a code for the second.
+          const secret = adminSecret();
+          if (!secret) throw new ApiFail(503, "not_available", "ADMIN_SECRET is not set");
+          const now = Math.floor(Date.now() / 1000);
+          if (call.confirmation === undefined) {
+            return out(false, {
+              confirmationRequired: true,
+              tool: call.op.operationId,
+              operation: what,
+              summary: call.op.summary,
+              arguments: call.args,
+              confirmation: confirmCode(secret, token.id, call.op.operationId, call.args, now),
+              expiresInSeconds: CONFIRM_SECONDS,
+              next: "Nothing has changed yet. Show the user this operation and its arguments and ask whether to do it. Only if they agree, call the same tool again with the same arguments and this confirmation.",
+            });
+          }
+          if (!confirmOk(call.confirmation, secret, token.id, call.op.operationId, call.args, now)) {
+            return out(true, { error: "confirmation_invalid", message: "the confirmation is wrong, expired or for other arguments: call the tool without confirmation to get a new one, and ask the user again" });
+          }
+        }
+        let status = 500;
+        try {
+          const r = await handlers[call.op.handler]({ actor, token, op: call.op, params: call.params, query: call.query, body: call.body });
+          status = r.status ?? call.op.status;
+          return out(false, r.body ?? null);
+        } catch (err) {
+          // The REST error ({ error, message, field? }) for the model to read.
+          const f = failure(err);
+          status = f.status;
+          return out(true, await f.json());
+        } finally {
+          if (writing) console.info(`gameWE: admin MCP ${what} -> ${status} by ${actor.user.username} via token "${token.name}" (${token.prefix})`);
+        }
+      }
+      default:
+        throw new RpcError(-32601, `unknown method ${msg.method}`);
+    }
+  } catch (err) {
+    if (err instanceof RpcError) return json(200, rpcError(id, err.code, err.message));
+    return failure(err);
   }
 }
 
@@ -341,7 +419,7 @@ async function settingsOut(groupId: string, level: number) {
 
 const handlers: Record<string, Handler> = {
   async me(c) {
-    return { body: { username: c.actor.user.username, level: c.actor.user.acclevel, token: { name: c.token.name, prefix: c.token.prefix } } };
+    return { body: { username: c.actor.user.username, level: c.actor.user.acclevel, token: { name: c.token.name, scopes: c.token.scopes, prefix: c.token.prefix } } };
   },
 
   // Rows of the admin entities (rankings, servers, players, clans, ...).

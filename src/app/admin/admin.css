@@ -551,8 +551,8 @@ select { padding-inline-end: 28px; }
 .hof-every > span { flex: none; }
 .hof-every select { min-width: 0; flex: 1 1 12em; max-width: max-content; }
 .hof-form .hof-num { width: 80px; }
-.hof-form fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
-.hof-form legend { font-weight: 600; margin-bottom: 4px; }
+.hof-form fieldset, .token-scopes { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
+.hof-form legend, .token-scopes legend { font-weight: 600; margin-bottom: 4px; }
 .hof-source label.check { flex-wrap: wrap; }
 .hof-source label.check small { flex-basis: 100%; padding-inline-start: 24px; }
 .hof-own { display: grid; gap: 14px; padding-inline-start: 14px; border-inline-start: 2px solid var(--line-2); }

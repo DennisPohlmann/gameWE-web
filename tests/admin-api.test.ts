@@ -78,7 +78,7 @@ test("token names and expiries are checked", () => {
 });
 
 test("the stored record round-trips, refuses junk and knows expiry and last use", () => {
-  const r = { owner: "admin", name: "ci", prefix: "gwe_abcdefgh", created: 1000, expires: 2000, lastUsed: 0 };
+  const r = { owner: "admin", name: "ci", scopes: ["read" as const, "mcp" as const], prefix: "gwe_abcdefgh", created: 1000, expires: 2000, lastUsed: 0 };
   const v = encodeRecord(r)!;
   assert.ok(v.length <= 255);
   assert.deepEqual(decodeRecord(v), r);

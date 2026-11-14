@@ -16,6 +16,7 @@ import {
   tokenId,
   tokenKey,
   tokenShapeOk,
+  type Scope,
   type TokenRecord,
 } from "./api-token-core";
 
@@ -24,8 +25,8 @@ import {
 // admin database user like the TOTP secrets. Created and revoked only on the
 // signed-in user's own account page; the API itself cannot manage tokens.
 
-export type TokenInfo = { id: string; name: string; prefix: string; created: number; expires: number; lastUsed: number };
-export type TokenAuth = { user: AdminUser; token: { id: string; name: string; prefix: string } };
+export type TokenInfo = { id: string; name: string; scopes: Scope[]; prefix: string; created: number; expires: number; lastUsed: number };
+export type TokenAuth = { user: AdminUser; token: { id: string; name: string; scopes: Scope[]; prefix: string } };
 
 const now = () => Math.floor(Date.now() / 1000);
 const set = (key: string, value: string) => adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [key, value]);
@@ -42,18 +43,18 @@ async function allRows(): Promise<{ key: string; rec: TokenRecord | null }[]> {
 export async function listTokens(owner: string): Promise<TokenInfo[]> {
   return (await allRows())
     .filter((r): r is { key: string; rec: TokenRecord } => !!r.rec && r.rec.owner === owner)
-    .map(({ key, rec }) => ({ id: tokenId(key), name: rec.name, prefix: rec.prefix, created: rec.created, expires: rec.expires, lastUsed: rec.lastUsed }))
+    .map(({ key, rec }) => ({ id: tokenId(key), name: rec.name, scopes: rec.scopes, prefix: rec.prefix, created: rec.created, expires: rec.expires, lastUsed: rec.lastUsed }))
     .sort((a, b) => b.created - a.created || a.id.localeCompare(b.id));
 }
 
 // A new token for `owner`; the plain token is returned once and never stored.
-export async function createToken(owner: string, name: string, days: number): Promise<{ token: string } | { error: "nosecret" | "limit" | "long" }> {
+export async function createToken(owner: string, name: string, scopes: Scope[], days: number): Promise<{ token: string } | { error: "nosecret" | "limit" | "long" }> {
   const secret = adminSecret();
   if (!secret) return { error: "nosecret" };
   if ((await listTokens(owner)).length >= MAX_TOKENS_PER_USER) return { error: "limit" };
   const token = newToken();
   const t = now();
-  const value = encodeRecord({ owner, name, prefix: displayPrefix(token), created: t, expires: days ? t + days * 86400 : 0, lastUsed: 0 });
+  const value = encodeRecord({ owner, name, scopes, prefix: displayPrefix(token), created: t, expires: days ? t + days * 86400 : 0, lastUsed: 0 });
   if (!value) return { error: "long" };
   await set(tokenKey(token, secret), value);
   return { token };
@@ -97,5 +98,5 @@ export async function authenticate(token: string): Promise<TokenAuth | null> {
     // Only while the token still exists (a revoke in between wins).
     if (value) await adminExec(`UPDATE hlstats_Options SET value = ? WHERE keyname = ?`, [value, key]).catch(() => undefined);
   }
-  return { user: { username: user.username, acclevel: Number(user.acclevel) }, token: { id: tokenId(key), name: rec.name, prefix: rec.prefix } };
+  return { user: { username: user.username, acclevel: Number(user.acclevel) }, token: { id: tokenId(key), name: rec.name, scopes: rec.scopes, prefix: rec.prefix } };
 }
