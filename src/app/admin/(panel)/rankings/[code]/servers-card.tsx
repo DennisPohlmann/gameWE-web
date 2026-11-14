@@ -106,7 +106,7 @@ export async function ServersCard({ id, code, lang, sp }: { id: number; code: st
                     <MapLink game={code} id={s.act_map_id} name={s.act_map} />
                   </td>
                   <td className="num">
-                    <span className={s.act_players > 0 ? "pill ok" : "pill"}>
+                    <span className={s.act_players > 0 ? "pill ok" : "pill"} dir="ltr">
                       {nf(s.act_players)} / {nf(s.max_players)}
                     </span>
                   </td>

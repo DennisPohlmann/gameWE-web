@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LineChart } from "@/components/chart";
-import { Empty, Flag, Pager, PlayerLink, Section, TableWrap, pageParam } from "@/components/ui";
+import { Empty, Flag, Pager, PlayerLink, Section, TableWrap, ltrNumbers, pageParam } from "@/components/ui";
 import { RankBadge, rankName } from "@/components/badges";
 import { HallStars } from "@/components/hall-stars";
 import { dateFormat, fmtDate, fmtDateTime, fmtDuration, fmtNum, fmtPct, localeOf } from "@/lib/format";
@@ -217,7 +217,7 @@ function Card({ game, place, e, steam, t, lang }: { game: string; place: number;
         {stats.map(([k, v]) => (
           <div key={k}>
             <dt>{k}</dt>
-            <dd>{v}</dd>
+            <dd>{ltrNumbers(v)}</dd>
           </div>
         ))}
       </dl>

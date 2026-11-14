@@ -9,7 +9,7 @@ import { WeaponTargets } from "@/components/weapon-targets";
 import { MapGate } from "@/components/map-gate";
 import { Radar, type RadarAxis } from "@/components/radar";
 import { RankingTable, rankingValues } from "@/components/ranking";
-import { Bar, Flag, Section, Stats } from "@/components/ui";
+import { Bar, Flag, Section, Stats, ltrNumbers } from "@/components/ui";
 import { mapGateProps } from "@/lib/consent-server";
 import { gameHasShots, getClan, getClanFlags, getClanMapPlayers, getClanMembers, getInactiveClanMembers, getMembersHistory, getMembersMaps, getMembersWeapons, getRadarAverage } from "@/lib/data";
 import { siteDay } from "@/lib/day";
@@ -275,7 +275,7 @@ function clanSummary({
   const row = (k: string, v: React.ReactNode) => (
     <>
       <td className="stats-key">{k}:</td>
-      <td>{v}</td>
+      <td>{ltrNumbers(v)}</td>
     </>
   );
   // The split of the player page: members and average points over the
@@ -334,7 +334,7 @@ function Row4({ k, v }: { k: string; v: React.ReactNode }) {
       <td colSpan={4} className="stats-key">
         {k}:
       </td>
-      <td colSpan={2}>{v}</td>
+      <td colSpan={2}>{ltrNumbers(v)}</td>
     </tr>
   );
 }

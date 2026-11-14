@@ -29,6 +29,12 @@ export function dateFormat(locale: string, opts: Intl.DateTimeFormatOptions): Da
   return f;
 }
 
+// Numbers only, no letters ("5,081 (27 %)", "827 / 829"): such a value reads
+// left to right also on right-to-left pages (ltrNumbers in components/ui).
+export function numbersOnly(v: unknown): v is string {
+  return typeof v === "string" && /\d/.test(v) && !/\p{L}/u.test(v);
+}
+
 export function numberFormat(locale: string, opts: Intl.NumberFormatOptions = {}): Intl.NumberFormat {
   const key = `n|${locale}|${JSON.stringify(opts)}`;
   let f = formatters.get(key) as Intl.NumberFormat | undefined;

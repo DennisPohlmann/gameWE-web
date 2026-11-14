@@ -8,7 +8,7 @@ import { FLAG_CODES, flagPos } from "@/lib/flag-codes";
 import { gameIconSrc } from "@/lib/game-icons";
 import { gameKind } from "@/lib/games";
 import type { Lang } from "@/translations/languages";
-import { localeOf } from "@/lib/format";
+import { localeOf, numbersOnly } from "@/lib/format";
 import { shareText, winBarSplit } from "@/lib/shares";
 
 // flag: the player's country (getPlayerFlags), shown before the name; without
@@ -197,6 +197,12 @@ export function Empty({ children }: { children: ReactNode }) {
   return <p className="empty">{children}</p>;
 }
 
+// A value of numbers only reads left to right, also on right-to-left pages
+// (else "5,081 (27 %)" showed as "(% 27) 5,081"). Text keeps the page's direction.
+export function ltrNumbers(v: ReactNode): ReactNode {
+  return numbersOnly(v) ? <bdi dir="ltr">{v}</bdi> : v;
+}
+
 // Label/value table as on gameME's info pages, with an optional title row.
 export function Stats({ items, title }: { items: [ReactNode, ReactNode][]; title?: ReactNode }) {
   return (
@@ -212,7 +218,7 @@ export function Stats({ items, title }: { items: [ReactNode, ReactNode][]; title
         {items.map(([k, v], i) => (
           <tr key={i}>
             <td className="stats-key">{k}{k ? ":" : ""}</td>
-            <td>{v}</td>
+            <td>{ltrNumbers(v)}</td>
           </tr>
         ))}
       </tbody>

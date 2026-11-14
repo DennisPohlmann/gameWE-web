@@ -5,7 +5,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { BanBadges, NameBanMark, sourcebansSearchUrl } from "@/components/ban-badges";
 import { MapLink } from "@/components/map-link";
-import { Bar, Empty, Flag, PctBar, PlayerLink, Section, TableWrap } from "@/components/ui";
+import { Bar, Empty, Flag, PctBar, PlayerLink, Section, TableWrap, ltrNumbers } from "@/components/ui";
 import { LinkPending } from "@/components/pending";
 import { profileTab, profileTabHref } from "@/lib/profile-tabs";
 import { SortableTable } from "@/components/sortable-table";
@@ -971,7 +971,7 @@ function Row({ k, v }: { k: string; v: React.ReactNode }) {
   return (
     <tr>
       <td className="stats-key">{k}:</td>
-      <td>{v}</td>
+      <td>{ltrNumbers(v)}</td>
     </tr>
   );
 }
@@ -980,7 +980,7 @@ function SumRow({ k, v }: { k: string; v: React.ReactNode }) {
   return (
     <div className="psum-row">
       <dt>{k}:</dt>
-      <dd>{v}</dd>
+      <dd>{ltrNumbers(v)}</dd>
     </div>
   );
 }
