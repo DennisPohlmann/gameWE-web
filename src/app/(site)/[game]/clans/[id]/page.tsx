@@ -102,7 +102,7 @@ export default async function ClanPage({ params, searchParams }: Props) {
   const details = (
     <Stats
       items={[
-        [t.name, <b key="n">{c.name || c.tag}</b>],
+        [t.name, <b key="n"><bdi>{c.name || c.tag}</bdi></b>],
         ...(flag?.flag ? ([[t.placeCountry, <span key="c" className="clan-country"><Flag code={flag.flag} title={country} /> {country}</span>]] as [string, React.ReactNode][]) : []),
         ...(countries.length > 1
           ? ([[t.location, <span key="o" className="clan-origins">{countries.map(([code, n]) => <span key={code} className="clan-origin"><Flag code={code} title={countryName(code, lang) || code.toUpperCase()} /> {fmtNum(n, lang)}</span>)}</span>]] as [string, React.ReactNode][])
@@ -123,8 +123,8 @@ export default async function ClanPage({ params, searchParams }: Props) {
       {/* The flag lies in the top left corner, the name stands on it in white. */}
       {flag?.flag ? <span className="clan-hero-bg"><Flag code={flag.flag} title={country || undefined} /></span> : null}
       <div className="clan-hero-text">
-        <h1>{c.tag}</h1>
-        {c.name && c.name !== c.tag ? <p>{c.name}</p> : null}
+        <h1><bdi>{c.tag}</bdi></h1>
+        {c.name && c.name !== c.tag ? <p><bdi>{c.name}</bdi></p> : null}
       </div>
       <ul className="clan-hero-facts">
         <li><b>{fmtNum(stats.members, lang)}</b> {t.members}</li>

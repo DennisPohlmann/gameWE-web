@@ -25,15 +25,15 @@ export function Crumbs({
   const items = [
     site.url ? (
       <a key="site" href={site.url}>
-        {site.name}
+        <bdi>{site.name}</bdi>
       </a>
     ) : (
       <Link prefetch={false} key="site" href="/">
-        {site.name}
+        <bdi>{site.name}</bdi>
       </Link>
     ),
   ];
-  if (game) items.push(<Link prefetch={false} key="game" href={`/${code}`}>{game}</Link>);
+  if (game) items.push(<Link prefetch={false} key="game" href={`/${code}`}><bdi>{game}</bdi></Link>);
   const last = game ? sections[section ?? ""] : code && Object.hasOwn(pages, code) ? pages[code] : undefined;
   const lastHref = game && section ? `/${code}/${section}` : `/${code ?? ""}`;
   return (

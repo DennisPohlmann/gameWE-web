@@ -172,7 +172,9 @@ sr, zh-tw, zh-cn, ja, ko, ar, tr, it, uk, cs and sv, plus the German dialects
 bar (Bavarian), gsw (Swiss German), swg (Swabian) and nds (Low German). The texts are in
 `src/translations/` (see its README); missing texts fall back to English, in
 the dialects to German. The dialects' privacy and license pages and their
-admin area are in German. Arabic turns the pages right to left. Visitors pick a language with the flags
+admin area are in German. Arabic turns the pages right to left; names from the game
+(players, clans, servers, maps, weapons, chat) keep their own direction and show
+exactly as typed. Visitors pick a language with the flags
 in the footer; without a choice the browser's language is used, then the
 default language (Admin → Settings → General, before that `DEFAULT_LANG`).
 The admin area has the same languages (the user menu top right switches

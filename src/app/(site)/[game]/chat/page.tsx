@@ -43,7 +43,7 @@ export default async function ChatPage({
       aside={
         <Form className="search" action={base} role="search">
           <SortInputs keep={order.keep} />
-          <input {...noAutofill} type="search" name="q" defaultValue={q} placeholder={t.search} aria-label={t.search} />
+          <input {...noAutofill} type="search" name="q" dir="auto" defaultValue={q} placeholder={t.search} aria-label={t.search} />
           <button type="submit">{t.search}</button>
         </Form>
       }
@@ -69,9 +69,9 @@ export default async function ChatPage({
                     </td>
                     <td className="wrap-cell">
                       {c.message_mode === 2 ? <span className="muted">({t.sayTeam}) </span> : null}
-                      {c.message}
+                      <bdi>{c.message}</bdi>
                     </td>
-                    <td className="hide-sm muted">{c.server || "-"}</td>
+                    <td className="hide-sm muted"><bdi>{c.server || "-"}</bdi></td>
                   </tr>
                 ))}
               </tbody>

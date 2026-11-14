@@ -80,9 +80,9 @@ export default async function ClansPage({
                     <td>
                       <Flag code={flags.get(c.clanId)?.flag} title={flags.get(c.clanId)?.country} />{" "}
                       <Link prefetch={false} className="player" href={`/${game}/clans/${c.clanId}`}>
-                        {c.tag}
+                        <bdi>{c.tag}</bdi>
                       </Link>{" "}
-                      <span className="muted">{c.name !== c.tag ? c.name : ""}</span>
+                      <span className="muted"><bdi>{c.name !== c.tag ? c.name : ""}</bdi></span>
                     </td>
                     <td className="num">{fmtNum(c.members, lang)}</td>
                     <td className={narrow}>{fmtNum(c.skill, lang)}</td>

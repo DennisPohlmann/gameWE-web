@@ -153,10 +153,10 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   // City, state and country link to the ranking of that place.
   const code = /^[a-z]{2}$/i.test(p.flag ?? "") ? (p.flag as string) : "";
   const location = [
-    p.city ? (code ? <Link prefetch={false} key="c" href={placeHref(game, code, p.city)}>{p.city}</Link> : p.city) : null,
+    p.city ? (code ? <Link prefetch={false} key="c" href={placeHref(game, code, p.city)}><bdi>{p.city}</bdi></Link> : <bdi key="c">{p.city}</bdi>) : null,
     // A legacy HLstatsX region code ("02") has no state ranking.
-    p.state ? (code && p.state.length > 3 ? <Link prefetch={false} key="s" href={placeHref(game, code, "", p.state)}>{p.state}</Link> : p.state) : null,
-    p.country ? (code ? <Link prefetch={false} key="l" href={placeHref(game, code)}>{p.country}</Link> : p.country) : null,
+    p.state ? (code && p.state.length > 3 ? <Link prefetch={false} key="s" href={placeHref(game, code, "", p.state)}><bdi>{p.state}</bdi></Link> : <bdi key="s">{p.state}</bdi>) : null,
+    p.country ? (code ? <Link prefetch={false} key="l" href={placeHref(game, code)}><bdi>{p.country}</bdi></Link> : <bdi key="l">{p.country}</bdi>) : null,
   ]
     .filter(Boolean)
     .flatMap((x, i) => (i ? [", ", x] : [x]));
@@ -251,10 +251,10 @@ export default async function PlayerPage({ params, searchParams }: Props) {
           <div className="p-who">
             <div className="p-name">
               <Flag code={p.flag} title={p.country} />
-              <span>{p.name ?? `#${id}`}</span>
+              <span><bdi>{p.name ?? `#${id}`}</bdi></span>
               {p.clanTag ? (
                 <Link prefetch={false} className="p-chip" href={`/${game}/clans/${p.clan}`}>
-                  {p.clanTag}
+                  <bdi>{p.clanTag}</bdi>
                 </Link>
               ) : null}
               {stars && stars.gold + stars.silver + stars.bronze ? (
@@ -336,14 +336,14 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                 <div>
                   <small>{t.favWeapon}</small>
                   <Link prefetch={false} href={`/${game}/weapons/${encodeURIComponent(fav.code)}`}>
-                    {fav.name}
+                    <bdi>{fav.name}</bdi>
                   </Link>
                 </div>
               ) : null}
               {favTeam ? (
                 <div>
                   <small>{t.favTeam}</small>
-                  <span>{favTeam.name}</span>
+                  <span><bdi>{favTeam.name}</bdi></span>
                 </div>
               ) : null}
             </div>
@@ -624,7 +624,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                       rows={teams.map((x) => ({
                         key: x.id,
                         values: [x.name, x.joined, null],
-                        cells: [x.name, fmtNum(x.joined, lang), <PctBar key="s" value={ratio(x.joined, totalTeamJoins)} lang={lang} tone="share" />],
+                        cells: [<bdi key="n">{x.name}</bdi>, fmtNum(x.joined, lang), <PctBar key="s" value={ratio(x.joined, totalTeamJoins)} lang={lang} tone="share" />],
                       }))}
                     />
                   </TableWrap>
@@ -639,7 +639,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                         values: [a.description, a.count, a.points],
                         cells: [
                           <Link prefetch={false} key="a" href={`/${game}/actions/${a.id}`}>
-                            {a.description}
+                            <bdi>{a.description}</bdi>
                           </Link>,
                           fmtNum(a.count, lang),
                           fmtNum(a.points, lang),
@@ -664,7 +664,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                     rows={names.map((n) => ({
                       key: n.name,
                       values: [n.name, n.connection_time, n.kills, n.lastuse || null],
-                      cells: [n.name, fmtDuration(n.connection_time), fmtNum(n.kills, lang), n.lastuse ? fmtDateTime(Date.parse(`${n.lastuse.slice(0, 19).replace(" ", "T")}Z`) / 1000, lang) : "-"],
+                      cells: [<bdi key="n">{n.name}</bdi>, fmtDuration(n.connection_time), fmtNum(n.kills, lang), n.lastuse ? fmtDateTime(Date.parse(`${n.lastuse.slice(0, 19).replace(" ", "T")}Z`) / 1000, lang) : "-"],
                     }))}
                   />
                 </TableWrap>
@@ -679,7 +679,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                       {awards.map((a, i) => (
                         <tr key={i}>
                           <td className="muted">{a.date}</td>
-                          <td>{a.name}</td>
+                          <td><bdi>{a.name}</bdi></td>
                           <td className="num">
                             {awardValue(a, a.winner_count, (n) => fmtNum(n, lang), fmtDuration)}
                           </td>
@@ -701,7 +701,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                           <td className="muted nowrap">{fmtEventTime(c.timestamp_id, lang)}</td>
                           <td className="wrap-cell">
                             {c.message_mode === 2 ? <span className="muted">({t.sayTeam}) </span> : null}
-                            {c.message}
+                            <bdi>{c.message}</bdi>
                           </td>
                         </tr>
                       ))}
@@ -927,8 +927,8 @@ function ProfileTable({ steam, steamBan, pending = false, game, id, p, ids, isBo
       </thead>
       <tbody>
         <Row k={t.playerId} v={fmtNum(id, lang)} />
-        <Row k={t.steamId} v={isBot ? t.bot : (ids?.steam2 ?? p.uniqueId ?? "-")} />
-        <Row k="Steam ID3" v={ids?.steam3 ?? "-"} />
+        <Row k={t.steamId} v={isBot ? t.bot : <bdi>{ids?.steam2 ?? p.uniqueId ?? "-"}</bdi>} />
+        <Row k="Steam ID3" v={<bdi>{ids?.steam3 ?? "-"}</bdi>} />
         <Row
           k={t.steamProfile}
           v={
@@ -941,7 +941,7 @@ function ProfileTable({ steam, steamBan, pending = false, game, id, p, ids, isBo
             )
           }
         />
-        <Row k={t.steamName} v={steam?.name ?? <i>{pending ? "…" : t.notSpecified}</i>} />
+        <Row k={t.steamName} v={steam?.name ? <bdi>{steam.name}</bdi> : <i>{pending ? "…" : t.notSpecified}</i>} />
         {steam?.memberSince ? <Row k={t.memberSince} v={memberDate(steam.memberSince, lang)} /> : null}
         {bans.length || steam ? (
           <Row

@@ -121,7 +121,7 @@ export default async function BansPage({ params, searchParams }: { params: Promi
                     <BanBadges bans={r.bans} always={always} links={{ sourcebans: sourcebansSearchUrl(sourcebansUrl, steamIds(r.player.uniqueId)?.steam2) }} t={t} lang={lang} />
                   </td>
                   {/* Long reasons wrap, so the table keeps the page's width. */}
-                  <td className="ban-reason hide-sm">{r.reason}</td>
+                  <td className="ban-reason hide-sm"><bdi>{r.reason}</bdi></td>
                   <td>{rowWhen(r, lang)}</td>
                   {inactive ? <td className="num hide-sm">{fmtDate(Number(r.player.last_event), lang)}</td> : null}
                   <td className="num hide-sm">{fmtNum(kpd(Number(r.player.kills), Number(r.player.deaths)), lang, 2)}</td>

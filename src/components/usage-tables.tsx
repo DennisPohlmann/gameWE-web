@@ -76,7 +76,7 @@ export function WeaponUsage({ weapons, game, t, lang, members }: { weapons: Weap
             values: [w.name, k, ...(per ? [members ? k / members : 0] : []), null, Number(w.deaths), null, Number(w.headshots), null, ratio(Number(w.headshots), k)],
             cells: [
               <Link prefetch={false} key="n" href={`/${game}/weapons/${encodeURIComponent(w.code)}`}>
-                {w.name}
+                <bdi>{w.name}</bdi>
               </Link>,
               fmtNum(k, lang),
               ...(per ? [fmtNum(members ? k / members : 0, lang, 1)] : []),
@@ -154,7 +154,7 @@ export function WeaponStats({ weapons, game, shots, t, lang }: { weapons: Weapon
             values: keep([w.name, sh, hi, dmg, k, d, kpd(k, d), hs, hpk, acc, dph, spk]),
             cells: keep([
               <Link prefetch={false} key="n" href={`/${game}/weapons/${encodeURIComponent(w.code)}`}>
-                {w.name}
+                <bdi>{w.name}</bdi>
               </Link>,
               fmtNum(sh, lang),
               fmtNum(hi, lang),

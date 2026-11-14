@@ -254,6 +254,7 @@ export default async function PlayersPage({
               {...noAutofill}
               type="search"
               name="q"
+              dir="auto"
               defaultValue={q}
               placeholder={t.searchPlayer}
               aria-label={t.searchPlayer}

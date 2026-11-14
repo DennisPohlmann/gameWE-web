@@ -199,7 +199,7 @@ function Card({ game, place, e, steam, t, lang }: { game: string; place: number;
           <PlayerLink game={game} id={e.playerId} name={name} flag={{ flag: e.flag, country: e.country }} />
         ) : (
           <>
-            <Flag code={e.flag} title={e.country} /> <span className="player">{e.name}</span>
+            <Flag code={e.flag} title={e.country} /> <span className="player"><bdi>{e.name}</bdi></span>
           </>
         )}
       </div>

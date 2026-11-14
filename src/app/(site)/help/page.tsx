@@ -50,7 +50,7 @@ export default async function HelpPage({ searchParams }: { searchParams: SP }) {
       <AutoForm action={`/help#${anchor}`} className="search help-games">
         <select {...noAutofill} name="game" defaultValue={game} aria-label={t.ranking}>
           {games.map((g) => (
-            <option key={g.code} value={g.code}>
+            <option key={g.code} value={g.code} dir="auto">
               {g.name}
             </option>
           ))}
@@ -89,7 +89,7 @@ export default async function HelpPage({ searchParams }: { searchParams: SP }) {
           <Form action="/help" className="search">
             <select {...noAutofill} name="game" defaultValue={game} aria-label={t.ranking}>
               {games.map((g) => (
-                <option key={g.code} value={g.code}>
+                <option key={g.code} value={g.code} dir="auto">
                   {g.name}
                 </option>
               ))}
@@ -154,7 +154,7 @@ export default async function HelpPage({ searchParams }: { searchParams: SP }) {
                   key: `${a.game}-${a.code}`,
                   values: [a.description || a.code, null, Number(a.reward_player), Number(a.reward_team) || null],
                   cells: [
-                    a.description || a.code,
+                    <bdi key="n">{a.description || a.code}</bdi>,
                     types(a).map(([, label]) => (
                       <span key={label} className="help-type">
                         {label}
@@ -163,7 +163,7 @@ export default async function HelpPage({ searchParams }: { searchParams: SP }) {
                     reward(Number(a.reward_player)),
                     Number(a.reward_team) ? (
                       <>
-                        {a.teamName || a.team ? <span className="muted">{a.teamName || a.team} </span> : null}
+                        {a.teamName || a.team ? <span className="muted"><bdi>{a.teamName || a.team}</bdi> </span> : null}
                         {reward(Number(a.reward_team))}
                       </>
                     ) : null,
@@ -189,7 +189,7 @@ export default async function HelpPage({ searchParams }: { searchParams: SP }) {
                 rows={weapons.map((w) => ({
                   key: `${w.game}-${w.code}`,
                   values: [w.name, w.code, Number(w.modifier)],
-                  cells: [w.name, <code key="c">{w.code}</code>, <Bar key="m" value={Number(w.modifier) / maxMod} label={fmtNum(Number(w.modifier), lang, 2)} />],
+                  cells: [<bdi key="n">{w.name}</bdi>, <code key="c">{w.code}</code>, <Bar key="m" value={Number(w.modifier) / maxMod} label={fmtNum(Number(w.modifier), lang, 2)} />],
                 }))}
               />
             </TableWrap>

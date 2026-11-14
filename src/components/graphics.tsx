@@ -124,7 +124,7 @@ export function Pie({ slices, locale }: { slices: { label: string; value: number
         {slices.map((s, i) => (
           <li key={i}>
             <i className={`swatch pie${i % PIES}`} />
-            {s.icon} {s.label} <span className="muted">{pct(s.value)}</span>
+            {s.icon} <bdi>{s.label}</bdi> <span className="muted">{pct(s.value)}</span>
           </li>
         ))}
       </ul>
@@ -369,6 +369,7 @@ export function ServerLoadChart({
                 <text
                   key={`m${i}`}
                   className="band-label"
+                  unicodeBidi="plaintext"
                   transform={`translate(${x(b.from) + 10},${H - pad.b - 4}) rotate(-90)`}
                   data-tip={`${tipText(b.map, [])}\n${hhmm(b.from)} – ${hhmm(b.to)}`}
                 >

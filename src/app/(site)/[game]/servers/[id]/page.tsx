@@ -114,7 +114,7 @@ export default async function ServerPage({ params }: Props) {
                     </td>
                     <td className="wrap-cell">
                       {c.message_mode === 2 ? <span className="muted">({t.sayTeam}) </span> : null}
-                      {c.message}
+                      <bdi>{c.message}</bdi>
                     </td>
                   </tr>
                 ))}

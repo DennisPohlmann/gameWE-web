@@ -517,7 +517,7 @@ function ChartTip({
       {series.map((s) => (
         <span key={s.label} className="tip-row">
           <i className={`swatch ${s.className}`} />
-          <span className="tip-name">{s.label}</span>
+          <span className="tip-name"><bdi>{s.label}</bdi></span>
           <b>{Math.round(s.values[i]!).toLocaleString(locale)}</b>
         </span>
       ))}

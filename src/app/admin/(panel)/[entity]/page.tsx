@@ -100,14 +100,14 @@ export default async function EntityList({ params, searchParams }: { params: Pro
               {e.search ? (
                 <label className="searchbox">
                   <Icon name="search" />
-                  <input {...noAutofill} type="search" name="q" defaultValue={q} placeholder={u.search} aria-label={a.filter} />
+                  <input {...noAutofill} type="search" name="q" dir="auto" defaultValue={q} placeholder={u.search} aria-label={a.filter} />
                 </label>
               ) : null}
               {e.gameColumn ? (
                 <select {...noAutofill} name="game" defaultValue={game} aria-label={a.allGames}>
                   <option value="">{a.allGames}</option>
                   {games.map(([v, l]) => (
-                    <option key={v} value={v}>
+                    <option key={v} value={v} dir="auto">
                       {l}
                     </option>
                   ))}
@@ -157,10 +157,10 @@ export default async function EntityList({ params, searchParams }: { params: Pro
                           ) : f.name === mainCol ? (
                             <Link prefetch={false} className="name" href={editHref(String(r.__pk))}>
                               {e.key === "servers" ? <GameIcon realgame={baseOf(r.game)} /> : null}
-                              {show(f, r[f.name], lang) || "–"}
+                              <bdi>{show(f, r[f.name], lang) || "–"}</bdi>
                             </Link>
                           ) : (
-                            show(f, r[f.name], lang)
+                            <bdi>{show(f, r[f.name], lang)}</bdi>
                           )}
                         </td>
                       ))}

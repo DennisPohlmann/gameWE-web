@@ -80,7 +80,7 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
                   <label htmlFor="search-q">{t.searchFor}</label>
                 </td>
                 <td>
-                  <input {...noAutofill} id="search-q" type="search" name="q" defaultValue={q} maxLength={64} autoFocus={!q} />
+                  <input {...noAutofill} id="search-q" type="search" name="q" dir="auto" defaultValue={q} maxLength={64} autoFocus={!q} />
                 </td>
               </tr>
               <tr>
@@ -105,7 +105,7 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
                   <select {...noAutofill} id="search-game" name="game" defaultValue={game}>
                     <option value="">{t.searchAllRankings}</option>
                     {games.map((g) => (
-                      <option key={g.code} value={g.code}>
+                      <option key={g.code} value={g.code} dir="auto">
                         {g.name}
                       </option>
                     ))}
@@ -147,11 +147,11 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
                     <tr key={c.clanId}>
                       <td>
                         <Link prefetch={false} href={`/${c.game}/clans/${c.clanId}`}>
-                          {c.tag ? <b>{c.tag}</b> : null} {c.name}
+                          {c.tag ? <b><bdi>{c.tag}</bdi></b> : null} <bdi>{c.name}</bdi>
                         </Link>
                       </td>
                       <td>
-                        <Link prefetch={false} href={`/${c.game}`}>{gameName.get(c.game) ?? c.game}</Link>
+                        <Link prefetch={false} href={`/${c.game}`}><bdi>{gameName.get(c.game) ?? c.game}</bdi></Link>
                       </td>
                       <td className="num">{fmtNum(Number(c.members), lang)}</td>
                       <td className="num">{c.skill === null ? "–" : fmtNum(Number(c.skill), lang)}</td>
@@ -185,7 +185,7 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
                         ) : null}
                       </td>
                       <td>
-                        <Link prefetch={false} href={`/${p.game}/players`}>{gameName.get(p.game) ?? p.game}</Link>
+                        <Link prefetch={false} href={`/${p.game}/players`}><bdi>{gameName.get(p.game) ?? p.game}</bdi></Link>
                       </td>
                       <td className="num">{fmtNum(Number(p.skill), lang)}</td>
                       <td className="num hide-sm">{fmtNum(Number(p.kills), lang)}</td>

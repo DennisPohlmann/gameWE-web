@@ -107,10 +107,10 @@ export default async function WeaponsPage({ params, searchParams }: { params: Pr
                       <td className="rank">{i + 1}</td>
                       <td>
                         <Link prefetch={false} className="player" href={`/${game}/weapons/${encodeURIComponent(w.code)}`}>
-                          {w.code}
+                          <bdi>{w.code}</bdi>
                         </Link>
                       </td>
-                      <td>{weaponName(w)}</td>
+                      <td><bdi>{weaponName(w)}</bdi></td>
                       <td className="num">{fmtNum(Number(w.modifier), lang, 2)}</td>
                       <td className="num">{fmtNum(Number(w.kills), lang)}</td>
                       <td className="barcell">

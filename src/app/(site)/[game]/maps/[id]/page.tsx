@@ -124,7 +124,7 @@ export default async function MapPage({ params, searchParams }: Props) {
             </div>
           </div>
           <div className="map-facts">
-            <h3>{m.map}</h3>
+            <h3><bdi>{m.map}</bdi></h3>
             <Stats
               items={[
                 [t.time, time ? fmtDuration(time) : "–"],

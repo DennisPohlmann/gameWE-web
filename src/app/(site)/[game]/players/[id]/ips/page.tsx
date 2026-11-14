@@ -57,7 +57,7 @@ export default async function PlayerIpsPage({ params, searchParams }: Props) {
                   <td className="num">{fmtNum(r.connects, lang)}</td>
                   <td className="hide-sm muted nowrap">{fmtDateTime(r.first, lang)}</td>
                   <td className="muted nowrap">{fmtDateTime(r.last, lang)}</td>
-                  <td className="hide-sm muted wrap-cell">{r.hostname || "-"}</td>
+                  <td className="hide-sm muted wrap-cell"><bdi>{r.hostname || "-"}</bdi></td>
                 </tr>
               ))}
             </tbody>

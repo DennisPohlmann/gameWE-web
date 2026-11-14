@@ -226,10 +226,10 @@ export function AdminSidebar({
         <>
           <details className="adm-picker" ref={picker}>
             <summary>
-              <span className="adm-gtag">{current ? current.tag : "∗"}</span>
+              <span className="adm-gtag"><bdi>{current ? current.tag : "∗"}</bdi></span>
               <span className="adm-picker-text">
                 <small>{t.ranking}</small>
-                <b>{current ? current.name : t.noRanking}</b>
+                <b><bdi>{current ? current.name : t.noRanking}</bdi></b>
                 <small>{current ? `${current.code} · ${current.servers} ${t.colServers}` : t.noRankingSub}</small>
               </span>
               <Icon name="chevron" />
@@ -243,9 +243,9 @@ export function AdminSidebar({
                   one whose definitions are open now. */}
               {rankings.filter((r) => !r.template || r.code === game).map((r) => (
                 <Link prefetch={false} key={r.code} href={pickHref(r.code)} className={r.code === game ? "on" : undefined} onClick={closePicker}>
-                  <span className="adm-gtag">{r.tag}</span>
+                  <span className="adm-gtag"><bdi>{r.tag}</bdi></span>
                   <span>
-                    {r.name}
+                    <bdi>{r.name}</bdi>
                     <small>
                       {r.code} · {r.servers} {t.colServers}
                     </small>

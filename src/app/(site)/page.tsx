@@ -104,7 +104,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                         {/* Without a known game an empty square, so the names line up. */}
                         {gameIconSrc(r.realgame) ? <GameIcon realgame={r.realgame} size={24} /> : <span className="game-icon-24" aria-hidden="true" />}
                         <Link prefetch={false} className="rnk" href={`/${r.code}`} title={r.name}>
-                          {r.name}
+                          <bdi>{r.name}</bdi>
                         </Link>
                       </span>
                     </td>
@@ -137,9 +137,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                           <MiniAvatar src={externalImage(consent, `${basePath}/avatar/${r.topPlayerId}`)} fallback={`${basePath}/avatar-unknown.svg`} />
                           <Flag code={r.topPlayerFlag} title={r.topPlayerCountry} />{" "}
                           {bots.has(r.topPlayerId) ? (
-                            r.topPlayerName || `#${r.topPlayerId}`
+                            <bdi>{r.topPlayerName || `#${r.topPlayerId}`}</bdi>
                           ) : (
-                            <Link prefetch={false} href={`/${r.code}/players/${r.topPlayerId}`}>{r.topPlayerName || `#${r.topPlayerId}`}</Link>
+                            <Link prefetch={false} href={`/${r.code}/players/${r.topPlayerId}`}><bdi>{r.topPlayerName || `#${r.topPlayerId}`}</bdi></Link>
                           )}
                         </>
                       ) : (
@@ -150,7 +150,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                       {r.topClanId ? (
                         <>
                           <Flag code={clanFlags.get(r.topClanId)?.flag} title={clanFlags.get(r.topClanId)?.country} />{" "}
-                          <Link prefetch={false} href={`/${r.code}/clans/${r.topClanId}`}>{r.topClanTag}</Link>
+                          <Link prefetch={false} href={`/${r.code}/clans/${r.topClanId}`}><bdi>{r.topClanTag}</bdi></Link>
                         </>
                       ) : (
                         <span className="rnk-none">-</span>

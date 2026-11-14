@@ -5,7 +5,8 @@ import { getAdminLang } from "@/lib/i18n";
 
 // Heading of an admin page: breadcrumbs, title, one line of help and the
 // page's buttons. A crumb with the same label as the next one is left out
-// (Settings › Admin area › Admin area).
+// (Settings › Admin area › Admin area). Crumbs and title often hold a name
+// (player, server), so they keep their own direction (bdi).
 export async function PageHead({
   crumbs,
   title,
@@ -28,7 +29,7 @@ export async function PageHead({
           <ol>
             {trail.map(([label, href], i) => (
               <li key={i} aria-current={i === trail.length - 1 ? "page" : undefined}>
-                {href && i < trail.length - 1 ? <Link prefetch={false} href={href}>{label}</Link> : <span>{label}</span>}
+                {href && i < trail.length - 1 ? <Link prefetch={false} href={href}><bdi>{label}</bdi></Link> : <bdi>{label}</bdi>}
               </li>
             ))}
           </ol>
@@ -37,7 +38,7 @@ export async function PageHead({
       <div className="page-head">
         {badge}
         <div>
-          <h1>{title}</h1>
+          <h1><bdi>{title}</bdi></h1>
           {intro ? <p>{intro}</p> : null}
         </div>
         {actions ? <div className="actions">{actions}</div> : null}

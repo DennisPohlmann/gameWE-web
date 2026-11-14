@@ -96,7 +96,7 @@ function TeamTable({
               return (
                 <tr key={r.id}>
                   <td className="rank">{i + 1}</td>
-                  <td>{r.name}</td>
+                  <td><bdi>{r.name}</bdi></td>
                   <td className="num">{fmtDuration(Number(r.time_played))}</td>
                   <td className="barcell">
                     <PctBar value={s.timePct} lang={lang} tone="share" />

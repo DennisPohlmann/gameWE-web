@@ -152,7 +152,7 @@ export function HeaderLinksEditor({ initial, homeName, text, badField }: { initi
                 <span className="hl-pos" title={fill(text.hlPosition, { n: i + 1 })}>
                   {i + 1}
                 </span>
-                <strong className="hl-name">{name}</strong>
+                <strong className="hl-name"><bdi>{name}</bdi></strong>
                 {r.kind === "builtin" || r.kind === "sourcebans" ? (
                   <span className="hl-badge" title={r.kind === "builtin" ? text.hlBuiltinHint : text.hlSourcebansHint}>
                     🔒 {text.hlBuiltin}
@@ -188,6 +188,7 @@ export function HeaderLinksEditor({ initial, homeName, text, badField }: { initi
                     <input
                       {...noAutofill}
                       name={`${key}__label`}
+                      dir="auto"
                       value={r.label}
                       onChange={(e) => update(r.id, { label: e.target.value })}
                       placeholder={r.kind === "home" ? homeName : text.hlLabelPlaceholder}

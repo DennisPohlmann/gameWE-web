@@ -16,7 +16,7 @@ export function ChartHead({ title, note, series, className }: { title?: string; 
         <span className="legend">
           {series.map((s) => (
             <span key={s.label}>
-              <i className={`swatch line ${s.className}`} /> {s.label}
+              <i className={`swatch line ${s.className}`} /> <bdi>{s.label}</bdi>
             </span>
           ))}
         </span>

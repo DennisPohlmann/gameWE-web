@@ -98,10 +98,10 @@ export async function ServersCard({ id, code, lang, sp }: { id: number; code: st
                   <td className="main wrap-cell">
                     <Link prefetch={false} className="name" href={`/admin/servers/${s.serverId}?returnTo=${returnTo}`}>
                       <GameIcon realgame={base} />
-                      {s.name || `${s.address}:${s.port}`}
+                      <bdi>{s.name || `${s.address}:${s.port}`}</bdi>
                     </Link>
                   </td>
-                  <td className="mono">{s.publicaddress || `${s.address}:${s.port}`}</td>
+                  <td className="mono"><bdi>{s.publicaddress || `${s.address}:${s.port}`}</bdi></td>
                   <td>
                     <MapLink game={code} id={s.act_map_id} name={s.act_map} />
                   </td>
@@ -120,7 +120,7 @@ export async function ServersCard({ id, code, lang, sp }: { id: number; code: st
                             {a.rankingRemoveTo} …
                           </option>
                           {targets.map(([v, l]) => (
-                            <option key={v} value={v}>
+                            <option key={v} value={v} dir="auto">
                               {l}
                             </option>
                           ))}
@@ -158,7 +158,7 @@ export async function ServersCard({ id, code, lang, sp }: { id: number; code: st
               {others.map((s) => (
                 <label key={s.serverId} className="check">
                   <input type="checkbox" name="server" value={s.serverId} /> <GameIcon realgame={bases.get(s.game)} />
-                  {s.name || `${s.address}:${s.port}`}{" "}
+                  <bdi>{s.name || `${s.address}:${s.port}`}</bdi>{" "}
                   <span className="muted">
                     ({a.rankingNow}: {s.game}, {gameName(s.game)})
                   </span>

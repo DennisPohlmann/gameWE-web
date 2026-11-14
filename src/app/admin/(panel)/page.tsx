@@ -142,7 +142,7 @@ export default async function AdminHome() {
                     {nf(r.order)}
                   </td>
                   <td className="main">
-                    <span className="name">{r.name}</span> <span className="subt">{r.code}</span>
+                    <span className="name"><bdi>{r.name}</bdi></span> <span className="subt">{r.code}</span>
                   </td>
                   <td>{r.base ? <GameTag realgame={r.base} long /> : <span className="pill warn">{a.gameUnset}</span>}</td>
                   <td className="num" data-l={`${u.colServers}:`}>

@@ -32,7 +32,7 @@ export default async function VoicePage() {
         title={
           <>
             {box.country !== null ? <ServerFlag code={box.country} lang={lang} /> : null}
-            {box.name}
+            <bdi>{box.name}</bdi>
           </>
         }
         aside={
@@ -44,7 +44,7 @@ export default async function VoicePage() {
         <Stats
           items={[
             [t.voiceType, box.type],
-            [t.address, <a key="a" href={box.link}>{box.address}</a>],
+            [t.address, <a key="a" href={box.link}><bdi>{box.address}</bdi></a>],
             [t.password, <TsPassword key="p" password={box.password} passwordProtected={box.passwordProtected} t={t} />],
           ]}
         />
@@ -195,7 +195,7 @@ function Channels({ list, t }: { list: VoiceChannel[]; t: Dict }) {
             </div>
           ) : (
             <div className="voice-channel" title={c.topic || undefined}>
-              <span className="voice-ch-icon" aria-hidden="true" /> {c.name}
+              <span className="voice-ch-icon" aria-hidden="true" /> <bdi>{c.name}</bdi>
               {c.password ? <span className="muted" title={t.password}> 🔒</span> : null}
               {c.count && !c.clients.length ? <span className="muted"> ({c.count})</span> : null}
             </div>
@@ -205,7 +205,7 @@ function Channels({ list, t }: { list: VoiceChannel[]; t: Dict }) {
               {c.clients.map((u, i) => (
                 <li key={i} className={u.away ? "away" : undefined}>
                   <span className={`voice-user${u.deaf ? " deaf" : u.muted ? " muted" : ""}`} aria-hidden="true" /> {u.country ? <Flag code={u.country} /> : null}
-                  {u.name}
+                  <bdi>{u.name}</bdi>
                   {u.away ? <span className="muted"> ({t.voiceAway})</span> : null}
                   {u.deaf ? <span className="muted"> ({t.voiceDeaf})</span> : u.muted ? <span className="muted"> ({t.voiceMuted})</span> : null}
                 </li>

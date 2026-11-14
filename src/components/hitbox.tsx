@@ -129,7 +129,7 @@ export function Hitbox({
         <span>{labels.weapon}</span>
         <select {...noAutofill} name="hw" value={sel} onChange={(e) => setSel(Number(e.target.value))}>
           {weapons.map((x, i) => (
-            <option key={`${i}-${x.name}`} value={i}>
+            <option key={`${i}-${x.name}`} value={i} dir="auto">
               {x.name}
             </option>
           ))}

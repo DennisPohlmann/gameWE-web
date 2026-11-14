@@ -96,7 +96,7 @@ export default async function RankingsPage({ searchParams }: { searchParams: Pro
                   </td>
                   <td className="main">
                     <Link prefetch={false} className="name" href={`/admin/rankings/${encodeURIComponent(r.code)}`}>
-                      {r.name}
+                      <bdi>{r.name}</bdi>
                     </Link>{" "}
                     <span className="subt">{r.code}</span>
                   </td>

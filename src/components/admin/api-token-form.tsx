@@ -78,7 +78,7 @@ export function ApiTokenForm({
       <form ref={form} action={run} className="form">
         <label>
           {text.name}
-          <input {...noAutofill} name="name" maxLength={40} required />
+          <input {...noAutofill} name="name" dir="auto" maxLength={40} required />
           <small>{text.nameHint}</small>
         </label>
         <label>

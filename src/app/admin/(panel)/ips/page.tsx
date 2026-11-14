@@ -48,7 +48,7 @@ export default async function AdminIps({ searchParams }: { searchParams: Promise
             <select {...noAutofill} name="game" defaultValue={game} aria-label={a.allGames}>
               <option value="">{a.allGames}</option>
               {games.map(([v, l]) => (
-                <option key={v} value={v}>
+                <option key={v} value={v} dir="auto">
                   {l}
                 </option>
               ))}
@@ -62,7 +62,7 @@ export default async function AdminIps({ searchParams }: { searchParams: Promise
               ))}
             </select>
             <SortInputs keep={order.keep} />
-            <input {...noAutofill} type="search" name="q" defaultValue={q} placeholder={a.ipsSearch} aria-label={a.ipsSearch} maxLength={100} />
+            <input {...noAutofill} type="search" name="q" dir="auto" defaultValue={q} placeholder={a.ipsSearch} aria-label={a.ipsSearch} maxLength={100} />
             <button type="submit">{a.filter}</button>
           </Form>
         }
@@ -97,19 +97,19 @@ export default async function AdminIps({ searchParams }: { searchParams: Promise
                       </td>
                       <td>
                         {r.game ? (
-                          <Link prefetch={false} href={`/${encodeURIComponent(r.game)}/players/${r.playerId}/ips`}>{r.name || `#${r.playerId}`}</Link>
+                          <Link prefetch={false} href={`/${encodeURIComponent(r.game)}/players/${r.playerId}/ips`}><bdi>{r.name || `#${r.playerId}`}</bdi></Link>
                         ) : (
-                          r.name || `#${r.playerId}`
+                          <bdi>{r.name || `#${r.playerId}`}</bdi>
                         )}
                       </td>
                       <td className="hide-sm nowrap">
                         {r.uniqueId ? <Link prefetch={false} href={`${base}?q=${encodeURIComponent(r.uniqueId)}`}>{r.uniqueId}</Link> : "-"}
                       </td>
-                      <td className="hide-sm">{gameName.get(r.game) ?? r.game}</td>
+                      <td className="hide-sm"><bdi>{gameName.get(r.game) ?? r.game}</bdi></td>
                       <td className="num">{fmtNum(r.connects, lang)}</td>
                       <td className="hide-sm muted nowrap">{fmtDateTime(r.first, lang)}</td>
                       <td className="muted nowrap">{fmtDateTime(r.last, lang)}</td>
-                      <td className="hide-sm muted wrap-cell">{r.hostname || "-"}</td>
+                      <td className="hide-sm muted wrap-cell"><bdi>{r.hostname || "-"}</bdi></td>
                     </tr>
                   ))}
                 </tbody>

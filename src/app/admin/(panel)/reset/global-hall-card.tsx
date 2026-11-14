@@ -56,7 +56,7 @@ export async function GlobalHallCard({ lang, status, rankings }: { lang: Lang; s
                       ...names.flatMap((r, j) => [
                         j ? ", " : "",
                         <Link prefetch={false} key={r.code} href={`/admin/rankings/${encodeURIComponent(r.code)}#hall-of-fame`}>
-                          {r.name}
+                          <bdi>{r.name}</bdi>
                         </Link>,
                       ]),
                       part,

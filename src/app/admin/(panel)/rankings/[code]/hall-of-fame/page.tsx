@@ -117,15 +117,15 @@ export default async function HallOfFameEditPage({ params, searchParams }: { par
                       <td className="main">
                         {e.currentName !== null ? (
                           <Link prefetch={false} className="name" href={`/admin/players/${e.playerId}`}>
-                            {e.currentName}
+                            <bdi>{e.currentName}</bdi>
                           </Link>
                         ) : (
-                          <span className="name">{e.name}</span>
+                          <span className="name"><bdi>{e.name}</bdi></span>
                         )}
                         {e.currentName && e.currentName !== e.name ? (
                           <span className="subt">
                             {" "}
-                            {t.then}: {e.name}
+                            {t.then}: <bdi>{e.name}</bdi>
                           </span>
                         ) : null}
                       </td>

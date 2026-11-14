@@ -38,7 +38,7 @@ export function FieldControl({
       <select {...noAutofill} id={id} name={f.name} defaultValue={value === null || value === undefined ? "" : String(value)} required={f.required}>
         {(!f.required || value === undefined) && !opts.some(([v]) => v === "") ? <option value="">{emptyLabel}</option> : null}
         {opts.filter(([v]) => !f.keepOnly?.includes(v) || v === String(value ?? "")).map(([v, l]) => (
-          <option key={v} value={v}>
+          <option key={v} value={v} dir="auto">
             {l}
           </option>
         ))}
@@ -55,6 +55,7 @@ export function FieldControl({
       name={f.name}
       defaultValue={value === null || value === undefined ? "" : String(value)}
       type={f.type === "number" ? "number" : "text"}
+      dir={f.type === "text" ? "auto" : undefined}
       inputMode={f.type === "decimal" ? "decimal" : undefined}
       min={f.type === "number" ? f.min : undefined}
       max={f.type === "number" ? f.maxValue : undefined}

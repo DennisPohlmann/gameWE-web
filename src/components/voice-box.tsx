@@ -32,12 +32,12 @@ export async function VoiceBox() {
                 <td>
                   {box.ts.country !== null ? <ServerFlag code={box.ts.country} lang={lang} /> : null}
                   <Link prefetch={false} href="/voice" className="voice-name" title={box.ts.name}>
-                    {box.ts.name}
+                    <bdi>{box.ts.name}</bdi>
                   </Link>
                 </td>
                 <td className="hide-sm">{box.ts.type}</td>
                 <td>
-                  <a href={box.ts.link}>{box.ts.address}</a>
+                  <a href={box.ts.link}><bdi>{box.ts.address}</bdi></a>
                   {/* Phones hide the password column: the lock follows the address. */}
                   {box.ts.passwordProtected ? (
                     <span className="voice-pw-sm">
@@ -59,7 +59,7 @@ export async function VoiceBox() {
             {box.discord ? (
               <tr>
                 <td title={box.discord.name}>
-                  <span className="voice-icon discord" aria-hidden="true" /> {box.discord.name}
+                  <span className="voice-icon discord" aria-hidden="true" /> <bdi>{box.discord.name}</bdi>
                 </td>
                 <td className="hide-sm">{box.discord.type}</td>
                 <td>

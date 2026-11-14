@@ -45,14 +45,14 @@ export default async function AdminChat({ searchParams }: { searchParams: Promis
             <select {...noAutofill} name="game" defaultValue={game} aria-label={a.allGames}>
               <option value="">{a.allGames}</option>
               {games.map(([v, l]) => (
-                <option key={v} value={v}>
+                <option key={v} value={v} dir="auto">
                   {l}
                 </option>
               ))}
             </select>
             {player ? <input type="hidden" name="player" value={player} /> : null}
             <SortInputs keep={order.keep} />
-            <input {...noAutofill} type="search" name="q" defaultValue={q} placeholder={a.chatSearch} aria-label={a.chatSearch} maxLength={100} />
+            <input {...noAutofill} type="search" name="q" dir="auto" defaultValue={q} placeholder={a.chatSearch} aria-label={a.chatSearch} maxLength={100} />
             <button type="submit">{a.filter}</button>
           </Form>
         }
@@ -79,13 +79,13 @@ export default async function AdminChat({ searchParams }: { searchParams: Promis
                     <tr key={i}>
                       <td className="muted nowrap">{fmtEventTime(c.timestamp_id, lang)}</td>
                       <td>
-                        <Link prefetch={false} href={`${base}?player=${c.playerId}`}>{c.name ?? `#${c.playerId}`}</Link>
+                        <Link prefetch={false} href={`${base}?player=${c.playerId}`}><bdi>{c.name ?? `#${c.playerId}`}</bdi></Link>
                       </td>
                       <td className="wrap-cell">
                         {c.message_mode === 2 ? <span className="muted">({t.sayTeam}) </span> : null}
-                        {c.message}
+                        <bdi>{c.message}</bdi>
                       </td>
-                      <td className="hide-sm muted">{c.server ?? "-"}</td>
+                      <td className="hide-sm muted"><bdi>{c.server ?? "-"}</bdi></td>
                     </tr>
                   ))}
                 </tbody>

@@ -170,7 +170,7 @@ export default async function LicensesPage() {
                   cells: [
                     <span key="g">
                       <GameIcon realgame={code} />
-                      {name}
+                      <bdi>{name}</bdi>
                     </span>,
                     holder,
                     changes,
@@ -195,7 +195,7 @@ export default async function LicensesPage() {
               values: [r.name, r.version, r.license],
               cells: [
                 <a key="n" href={`https://www.npmjs.com/package/${r.name}/v/${r.version}`} rel="noopener noreferrer" target="_blank">
-                  {r.name}
+                  <bdi>{r.name}</bdi>
                 </a>,
                 r.version,
                 r.platform ? `${r.license} (${t.licPlatform})` : r.license,

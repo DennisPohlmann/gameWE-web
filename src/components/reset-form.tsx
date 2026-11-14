@@ -59,7 +59,7 @@ export function ResetForm({
         <select {...noAutofill} name="game" value={game} onChange={(e) => setGame(e.target.value)} required>
           <option value="">-</option>
           {games.map(([code, n]) => (
-            <option key={code} value={code}>
+            <option key={code} value={code} dir="auto">
               {n}
             </option>
           ))}
@@ -85,7 +85,7 @@ export function ResetForm({
         <h2 id="reset-dialog-title">{labels.dialogTitle}</h2>
         <dl>
           <dt>{labels.dialogRanking}</dt>
-          <dd>{name}</dd>
+          <dd><bdi>{name}</bdi></dd>
           <dt>{labels.dialogMode}</dt>
           <dd>{chosen?.title}</dd>
           <dt>{labels.dialogDeletes}</dt>

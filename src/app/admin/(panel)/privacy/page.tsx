@@ -63,11 +63,11 @@ export default async function PrivacyAdminPage({ searchParams }: { searchParams:
       <form action={savePrivacyAction}>
         <section className="card">
           <div className="fields">
-            {field("name", a.privacyNameHint, <input {...noAutofill} id="p-name" name="name" defaultValue={o.name} maxLength={LIMITS.name} aria-invalid={bad === "name" || undefined} />)}
+            {field("name", a.privacyNameHint, <input {...noAutofill} id="p-name" name="name" dir="auto" defaultValue={o.name} maxLength={LIMITS.name} aria-invalid={bad === "name" || undefined} />)}
             {field(
               "address",
               a.privacyAddressHint,
-              <textarea {...noAutofill} id="p-address" name="address" defaultValue={o.address} maxLength={LIMITS.address} rows={4} aria-invalid={bad === "address" || undefined} />,
+              <textarea {...noAutofill} id="p-address" name="address" dir="auto" defaultValue={o.address} maxLength={LIMITS.address} rows={4} aria-invalid={bad === "address" || undefined} />,
             )}
             {field("email", null, <input {...noAutofill} id="p-email" name="email" type="email" defaultValue={o.email} maxLength={LIMITS.email} aria-invalid={bad === "email" || undefined} />)}
             {field(

@@ -50,11 +50,11 @@ export function HeaderMenu({ tabs, label, navLabel }: { tabs: HeaderTab[]; label
           const current = isCurrentTab(tab, path) ? ("page" as const) : undefined;
           return tab.kind === "page" ? (
             <Link prefetch={false} key={tab.id} href={tab.href} aria-current={current} onClick={() => setOpen(false)}>
-              {tab.label}
+              <bdi>{tab.label}</bdi>
             </Link>
           ) : (
             <a key={tab.id} href={tab.href} onClick={() => setOpen(false)} {...(tab.kind === "external" ? { target: "_blank", rel: "noopener" } : {})}>
-              {tab.label}
+              <bdi>{tab.label}</bdi>
             </a>
           );
         })}

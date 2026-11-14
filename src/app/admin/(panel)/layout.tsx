@@ -112,12 +112,12 @@ export default async function PanelLayout({ children }: { children: ReactNode })
             <span className="adm-avatar" aria-hidden="true">
               {user.username.slice(0, 1).toUpperCase()}
             </span>
-            <span className="adm-hide-m">{user.username}</span>
+            <span className="adm-hide-m"><bdi>{user.username}</bdi></span>
             <Icon name="chevron" />
           </summary>
           <div className="adm-menu">
             <p className="adm-menu-head">
-              <b>{user.username}</b>
+              <b><bdi>{user.username}</bdi></b>
               <small>{isAdmin ? "Admin (100)" : `${user.acclevel}`}</small>
             </p>
             <Link prefetch={false} href="/admin/account">

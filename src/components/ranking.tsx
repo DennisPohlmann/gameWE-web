@@ -204,7 +204,7 @@ export function PlaceTable({
               <td className="rank">{fmtNum(firstRank + i, lang)}</td>
               <td>
                 <Flag code={r.code} title={r.name} />
-                <Link prefetch={false} href={placeHref(game, r.code, r.city, r.state)}>{r.city || r.state || r.name || r.code.toUpperCase()}</Link>
+                <Link prefetch={false} href={placeHref(game, r.code, r.city, r.state)}><bdi>{r.city || r.state || r.name || r.code.toUpperCase()}</bdi></Link>
               </td>
               <td className="num">{fmtNum(r.players, lang)}</td>
               <td className="num">{fmtNum(r.avgSkill, lang)}</td>

@@ -205,6 +205,7 @@ function SettingField({
         defaultValue={v}
         disabled={readOnly}
         type={s.type === "number" ? "number" : "text"}
+        dir={s.type === "number" ? undefined : "auto"}
         min={s.min}
         max={s.max}
         maxLength={255}

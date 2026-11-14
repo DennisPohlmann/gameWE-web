@@ -227,7 +227,7 @@ export function GameEventsLive({
                   <td className="muted nowrap ev-time">{fmtEventTime(e.ts, lang, timeZone)}</td>
                   <td className="wrap-cell">{text(e)}</td>
                   {withServer ? (
-                    <td className="hide-sm muted ev-name">{e.server ?? "-"}</td>
+                    <td className="hide-sm muted ev-name"><bdi>{e.server ?? "-"}</bdi></td>
                   ) : null}
                   <td className="hide-sm muted ev-name">
                     <MapLink game={game} id={e.map_id} name={e.map} />

@@ -88,18 +88,18 @@ export function ServerTable({
                     <GameIcon realgame={base} />
                     <div className="srv-text">
                       <Link prefetch={false} className="srv" href={`/${game}/servers/${s.serverId}`} title={s.name || addr}>
-                        {s.name || addr}
+                        <bdi>{s.name || addr}</bdi>
                       </Link>
                       <span className="srv-where">
                         <ServerFlag code={s.country_code} lang={lang} />
-                        {addr}
+                        <bdi>{addr}</bdi>
                       </span>
                     </div>
                   </div>
                 </td>
                 <td className="hide-sm nowrap">
                   <ServerFlag code={s.country_code} lang={lang} />
-                  <a href={`steam://connect/${addr}/`}>{addr}</a>
+                  <a href={`steam://connect/${addr}/`}><bdi>{addr}</bdi></a>
                 </td>
                 <td>
                   <MapLink game={game} id={s.act_map_id} name={s.act_map} />
@@ -235,10 +235,10 @@ export async function LiveTable({ game, players, t, lang }: { game: string; play
                     {p.is_bot ? <Flag code="bot" /> : <Flag code={p.flag} title={p.country} />}{" "}
                     {/* Bots without profiles and hidden players (id 0): the name only. */}
                     {(p.is_bot && !botLinks) || !p.player_id ? (
-                      <span className={p.is_dead ? "dead" : undefined}>{p.name || (p.player_id ? `#${p.player_id}` : "?")}</span>
+                      <bdi className={p.is_dead ? "dead" : undefined}>{p.name || (p.player_id ? `#${p.player_id}` : "?")}</bdi>
                     ) : (
                       <Link prefetch={false} href={`/${game}/players/${p.player_id}`} className={p.is_dead ? "dead" : undefined}>
-                        {p.name || `#${p.player_id}`}
+                        <bdi>{p.name || `#${p.player_id}`}</bdi>
                       </Link>
                     )}
                   </td>

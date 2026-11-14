@@ -31,10 +31,10 @@ export function PlayerLink({
     <>
       <Flag code={flag?.flag} title={flag?.country} />{" "}
       {plain || flag?.nolink ? (
-        <span className="player">{name || `#${id}`}</span>
+        <bdi className="player">{name || `#${id}`}</bdi>
       ) : (
         <Link prefetch={false} className="player" href={`/${game}/players/${id}`}>
-          {name || `#${id}`}
+          <bdi>{name || `#${id}`}</bdi>
         </Link>
       )}
     </>

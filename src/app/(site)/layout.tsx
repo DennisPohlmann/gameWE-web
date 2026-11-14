@@ -145,11 +145,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             {tabs.map((tab) =>
               tab.kind === "page" ? (
                 <Link prefetch={false} key={tab.id} href={tab.href}>
-                  {tab.label}
+                  <bdi>{tab.label}</bdi>
                 </Link>
               ) : (
                 <a key={tab.id} href={tab.href} {...(tab.kind === "external" ? { target: "_blank", rel: "noopener" } : {})}>
-                  {tab.label}
+                  <bdi>{tab.label}</bdi>
                 </a>
               ),
             )}

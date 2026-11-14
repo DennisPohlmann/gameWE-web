@@ -54,7 +54,7 @@ export default async function PrivacyPage() {
         <div className="box privacy-text">
           {hasOperator ? (
             <address>
-              {operator.name ? <b>{operator.name}</b> : null}
+              {operator.name ? <b><bdi>{operator.name}</bdi></b> : null}
               {operator.address.split("\n").filter(Boolean).map((l, i) => (
                 <span key={i}>{l}</span>
               ))}

@@ -46,7 +46,7 @@ export function WeaponTargets({ weapons, labels, locale, initial = 0, query = ""
             setSel(i);
           }}
         >
-          {w.name}
+          <bdi>{w.name}</bdi>
         </a>,
         total.toLocaleString(locale),
         pct(left, total),

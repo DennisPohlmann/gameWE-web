@@ -74,7 +74,7 @@ export function GameEventsList({
                   <td className="wrap-cell">
                     <GameEventText e={e} game={game} flags={flags} evText={labels.evText} />
                   </td>
-                  {withServer ? <td className="hide-sm muted ev-name">{e.server ?? "-"}</td> : null}
+                  {withServer ? <td className="hide-sm muted ev-name"><bdi>{e.server ?? "-"}</bdi></td> : null}
                   <td className="hide-sm muted ev-name">
                     <MapLink game={game} id={e.map_id} name={e.map} />
                   </td>

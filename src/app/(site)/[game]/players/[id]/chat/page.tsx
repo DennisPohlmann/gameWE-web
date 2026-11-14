@@ -49,9 +49,9 @@ export default async function PlayerChatPage({ params, searchParams }: Props) {
                     <td className="muted nowrap">{fmtEventTime(c.timestamp_id, lang)}</td>
                     <td className="wrap-cell">
                       {c.message_mode === 2 ? <span className="muted">({t.sayTeam}) </span> : null}
-                      {c.message}
+                      <bdi>{c.message}</bdi>
                     </td>
-                    <td className="hide-sm muted">{c.server || "-"}</td>
+                    <td className="hide-sm muted"><bdi>{c.server || "-"}</bdi></td>
                   </tr>
                 ))}
               </tbody>
