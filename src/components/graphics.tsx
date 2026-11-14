@@ -3,7 +3,7 @@ import { ChartHead } from "./chart-head";
 import { HoverTip } from "./hover-tip";
 import { tipText } from "./tip-text";
 import { steadyFps } from "@/lib/fps";
-import { dateFormat } from "@/lib/format";
+import { dateFormat, ltrDate } from "@/lib/format";
 
 // Server-rendered SVG graphics: spark pills of the player profile, pies,
 // weekday bars and the server load. Hovering shows the values (HoverTip box,
@@ -100,7 +100,7 @@ export function Pie({ slices, locale }: { slices: { label: string; value: number
   const c = 90;
   const r = 80;
   let a0 = -Math.PI / 2;
-  const pct = (v: number) => `${((v / total) * 100).toLocaleString(locale, { maximumFractionDigits: 1 })} %`;
+  const pct = (v: number) => ltrDate(locale, `${((v / total) * 100).toLocaleString(locale, { maximumFractionDigits: 1 })} %`);
   const tip = (s: { label: string; value: number }, pie: string) => tipText("", [{ swatch: pie, label: s.label, value: `${pct(s.value)} · ${s.value.toLocaleString(locale)}` }]);
   return (
     <HoverTip className="pie">

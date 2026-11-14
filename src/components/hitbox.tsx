@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import { noAutofill } from "@/lib/autofill";
 import { ZONES, type Zone } from "@/lib/zones";
+import { ltrDate } from "@/lib/format";
 export type HitboxWeapon = { name: string; hits: Record<Zone, number> };
 
 // Body shapes, facing the viewer: the player's left arm is on the right.
@@ -79,7 +80,7 @@ export function Hitbox({
   const zones = ZONES.filter((z) => z !== "neck" || neck);
   const total = zones.reduce((s, z) => s + w.hits[z], 0);
   const pct = (z: Zone) => (total ? w.hits[z] / total : 0);
-  const fmtPct = (v: number) => `${(v * 100).toLocaleString(locale, { maximumFractionDigits: 1 })} %`;
+  const fmtPct = (v: number) => ltrDate(locale, `${(v * 100).toLocaleString(locale, { maximumFractionDigits: 1 })} %`);
   // Colours relative to the most hit zone, so the spread stays visible.
   const top = Math.max(0, ...zones.map(pct));
   const hoverProps = (z: Zone) => ({ onMouseEnter: () => setHover(z), onMouseLeave: () => setHover(null) });

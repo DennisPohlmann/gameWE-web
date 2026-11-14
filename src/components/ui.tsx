@@ -114,7 +114,7 @@ export function Bar({
   ) : (
     <span className="meter">
       {bar}
-      <span className="meter-val">{label}</span>
+      <span className="meter-val">{ltrNumbers(label)}</span>
     </span>
   );
 }
@@ -141,7 +141,7 @@ export function PctBar({ value, lang, tone, fill }: { value: number | null; lang
   return (
     <span className={`pbar${tone ? ` ${tone}` : v >= 0.3 ? " good" : v > 0 ? " low" : ""}`} title={exact}>
       <span className="pbar-fill" style={{ width: `${(w * 100).toFixed(1)}%`, background: tone === "activity" ? activityColor(v) : undefined }} />
-      <span className="pbar-text">{tone === "share" ? exact : `${Math.round(pct)}%`}</span>
+      <span className="pbar-text">{ltrNumbers(tone === "share" ? exact : `${Math.round(pct)}%`)}</span>
     </span>
   );
 }
@@ -157,10 +157,10 @@ export function WinRatioBar({ ct, t, labels }: { ct: number; t: number; labels: 
   return (
     <span className="winbar" title={title} role="img" aria-label={title}>
       <span className="winbar-ct" style={{ width: `${split.ct}%` }}>
-        {split.ct >= 20 ? `${split.ct}%` : ""}
+        {split.ct >= 20 ? ltrNumbers(`${split.ct}%`) : ""}
       </span>
       <span className="winbar-t" style={{ width: `${split.t}%` }}>
-        {split.t >= 20 ? `${split.t}%` : ""}
+        {split.t >= 20 ? ltrNumbers(`${split.t}%`) : ""}
       </span>
     </span>
   );

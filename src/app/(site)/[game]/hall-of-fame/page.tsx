@@ -203,7 +203,8 @@ function Card({ game, place, e, steam, t, lang }: { game: string; place: number;
           </>
         )}
       </div>
-      {name !== e.name ? <div className="hof-then">{fill(t.hofThen, { name: e.name })}</div> : null}
+      {/* The old name keeps its own direction inside the translated sentence. */}
+      {name !== e.name ? <div className="hof-then">{t.hofThen.split("{name}").flatMap((part, i) => (i ? [<bdi key={i}>{e.name}</bdi>, part] : [part]))}</div> : null}
       <div className="hof-skill">
         {fmtNum(e.skill, lang)} <span>{t.points}</span>
       </div>

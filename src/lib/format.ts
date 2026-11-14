@@ -56,9 +56,11 @@ export function kpd(kills: number, deaths: number): number {
   return deaths > 0 ? kills / deaths : kills;
 }
 
+// On right-to-left pages "27 %" stays in this order (else "% 27"), also
+// inside translated sentences, title attributes and SVG text.
 export function fmtPct(part: number | null | undefined, lang: Lang, digits = 0): string {
   if (part === null || part === undefined || !Number.isFinite(part)) return "-";
-  return `${fmtNum(part * 100, lang, digits)} %`;
+  return ltrDate(locales[lang], `${fmtNum(part * 100, lang, digits)} %`);
 }
 
 // Seconds -> "2d 09:14h" (days omitted below one day).

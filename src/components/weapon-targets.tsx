@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Hitbox, type HitboxWeapon } from "@/components/hitbox";
 import { SortableTable } from "@/components/sortable-table";
 import type { Zone } from "@/lib/zones";
+import { ltrDate } from "@/lib/format";
 
 type Labels = Record<Zone, string> & {
   weapon: string;
@@ -25,7 +26,7 @@ type Labels = Record<Zone, string> & {
 export function WeaponTargets({ weapons, labels, locale, initial = 0, query = "" }: { weapons: HitboxWeapon[]; labels: Labels; locale: string; initial?: number; query?: string }) {
   const [sel, setSel] = useState(initial);
   const sum = (w: HitboxWeapon, zones: Zone[]) => zones.reduce((n, z) => n + (w.hits[z] ?? 0), 0);
-  const pct = (part: number, total: number) => (total ? `${((part / total) * 100).toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %` : "-");
+  const pct = (part: number, total: number) => (total ? ltrDate(locale, `${((part / total) * 100).toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`) : "-");
   const rows = weapons.map((w, i) => {
     const total = sum(w, ["head", "neck", "chest", "stomach", "leftarm", "rightarm", "leftleg", "rightleg"]);
     const left = sum(w, ["leftarm", "leftleg"]);

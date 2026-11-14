@@ -19,3 +19,9 @@ test("text, empty values and elements keep the page's direction", () => {
   assert.ok(!numbersOnly(42));
   assert.ok(!numbersOnly(null));
 });
+
+test("percentages are one left-to-right run on right-to-left pages only", () => {
+  assert.equal(fmtPct(0.27, "ar"), "⁦27 %⁩");
+  assert.equal(fmtPct(0.27, "en"), "27 %");
+  assert.equal(fmtPct(null, "ar"), "-");
+});

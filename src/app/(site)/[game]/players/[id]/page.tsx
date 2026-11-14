@@ -288,7 +288,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
             </div>
             <div>
               <small>{t.activity}</small>
-              <b>{activity(p.last_event, settings.activityDays)} %</b>
+              <b>{ltrNumbers(`${activity(p.last_event, settings.activityDays)} %`)}</b>
               <span className="p-meter">
                 <span style={{ width: `${activity(p.last_event, settings.activityDays)}%` }} />
               </span>
@@ -299,7 +299,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
           <div className="p-card">
             <small>{t.kills}</small>
             <b>{fmtNum(p.kills, lang)}</b>
-            <em>{fmtNum(kills14, lang)}*</em>
+            <em>{ltrNumbers(`${fmtNum(kills14, lang)}*`)}</em>
           </div>
           <div className="p-card">
             <small>{t.deaths}</small>
@@ -311,7 +311,7 @@ export default async function PlayerPage({ params, searchParams }: Props) {
           </div>
           <div className="p-card">
             <small>{t.hpkLong}</small>
-            <b>{pc(ratio(p.headshots, p.kills))}</b>
+            <b>{ltrNumbers(pc(ratio(p.headshots, p.kills)))}</b>
           </div>
           <div className="p-card">
             <small>{t.killsPerMin}</small>
