@@ -471,7 +471,6 @@ const texts: Record<string, string> = {
   "Placeholders such as {LANG_RANG_PVT} (Private) or {LANG_RANG_GEN} (General) show the rank with its insignia; any other text is shown as it is, with a badge of its initials.": "Symbole zastępcze, takie jak {LANG_RANG_PVT} (szeregowy) lub {LANG_RANG_GEN} (generał), pokazują stopień z jego insygniami; każdy inny tekst jest wyświetlany bez zmian, z odznaką z jego inicjałów.",
   "From kills": "Od zabójstw",
   "Users": "Użytkownicy",
-  "Level 100 = admin (everything), 80 = restricted (no games, servers or users). Each user changes their password and TOTP only themselves, under My account.": "Poziom 100 = administrator (wszystko), 80 = ograniczony (bez gier, serwerów i użytkowników). Każdy użytkownik zmienia swoje hasło i TOTP tylko sam, w Moje konto.",
   "First password, at least 10 characters. Afterwards only the user changes it, under My account.": "Pierwsze hasło, co najmniej 10 znaków. Później zmienia je tylko użytkownik, w Moje konto.",
   "Level": "Poziom",
   "General": "Ogólne",

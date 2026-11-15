@@ -476,7 +476,6 @@ const texts: Record<string, string> = {
   "Placeholders such as {LANG_RANG_PVT} (Private) or {LANG_RANG_GEN} (General) show the rank with its insignia; any other text is shown as it is, with a badge of its initials.": "Zástupné symboly jako {LANG_RANG_PVT} (Private) nebo {LANG_RANG_GEN} (General) zobrazí hodnost s jejím odznakem; jakýkoli jiný text se zobrazí tak, jak je, s odznakem jeho iniciál.",
   "From kills": "Od zabití",
   "Users": "Uživatelé",
-  "Level 100 = admin (everything), 80 = restricted (no games, servers or users). Each user changes their password and TOTP only themselves, under My account.": "Úroveň 100 = administrátor (vše), 80 = omezený (bez her, serverů a uživatelů). Každý uživatel si heslo a TOTP mění jen sám, v sekci Můj účet.",
   "First password, at least 10 characters. Afterwards only the user changes it, under My account.": "První heslo, alespoň 10 znaků. Poté ho mění jen uživatel sám v sekci Můj účet.",
   "Level": "Úroveň",
   "General": "Obecné",

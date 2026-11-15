@@ -65,11 +65,11 @@ test("a stored secret is loaded only on click and only for an admin allowed to c
   const actions = src("src/app/admin/actions.ts");
   const fn = actions.slice(actions.indexOf("export async function revealSecretAction"));
   assert.match(fn, /^export async function revealSecretAction\(ref: string\): Promise<string> \{\n  await requireAdmin\(\);/);
-  // Entity: only a field defined as secret (no other column), at the entity's level.
-  assert.match(fn, /f\.name === c && f\.type === "secret"\)\) return "";\n    await requireAdmin\(e\.minLevel\);/);
-  // Setting: only a secret setting, at its level; FastDL access: level 100.
-  assert.match(fn, /x\.key === a && x\.type === "secret"\);\n    if \(!s\) return "";\n    await requireAdmin\(s\.minLevel \?\? LEVEL_MIN\);/);
-  assert.match(fn, /kind === "fastdl" && ACCESS_SECRETS\.includes[^\n]*\n    await requireAdmin\(LEVEL_ADMIN\);/);
+  // Entity: only a field defined as secret (no other column), with the right to change the entity.
+  assert.match(fn, /f\.name === c && f\.type === "secret"\)\) return "";\n    await requirePerm\(e\.perm\.edit\);/);
+  // Setting: only a secret setting, with the right to change it; FastDL access: rankings.edit.
+  assert.match(fn, /x\.key === a && x\.type === "secret"\);\n    if \(!s\) return "";\n    await requirePerm\(s\.minLevel \? "settings\.protected" : "settings\.edit"\);/);
+  assert.match(fn, /kind === "fastdl" && ACCESS_SECRETS\.includes[^\n]*\n    await requirePerm\("rankings\.edit"\);/);
   // Never from the environment: only stored values are read.
   assert.doesNotMatch(fn, /env\(|process\.env/);
   const control = src("src/components/admin/secret-control.tsx");

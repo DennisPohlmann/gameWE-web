@@ -6,14 +6,16 @@ import { getPlayer, noProfile } from "@/lib/data";
 import { getPlayerAwardWins, getPlayerChatCount } from "@/lib/history";
 import type { Dict } from "@/lib/i18n";
 import { currentAdmin } from "@/lib/auth";
+import { allowed } from "@/lib/admin-perms";
 import { getSettings } from "@/lib/settings";
 
 export type HistoryTab = "events" | "awards" | "sessions" | "chat" | "ips";
 
-// Chat is public when the setting says so, IPs never; a signed-in admin sees both.
+// Chat is public when the setting says so, IPs never; a signed-in admin sees
+// what their rights allow (chat.view, ips.view).
 export async function historyAccess() {
   const [{ chatPublic }, admin] = await Promise.all([getSettings(), currentAdmin()]);
-  return { chat: chatPublic || !!admin, ips: !!admin };
+  return { chat: chatPublic || (!!admin && allowed(admin, "chat.view")), ips: !!admin && allowed(admin, "ips.view") };
 }
 
 // The history pages follow the profile: a player banned in the ranking

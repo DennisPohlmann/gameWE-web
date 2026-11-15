@@ -5,11 +5,13 @@ import { Icon } from "@/components/admin/icons";
 import { IdleLogout } from "@/components/admin/idle-logout";
 import { AdminSidebar, AreaTabs, Logo, type NavText } from "@/components/admin/nav";
 import { entities } from "@/lib/admin-entities";
-import { adminDict, tr } from "@/lib/admin-i18n";
+import { adminDict, localized, tr } from "@/lib/admin-i18n";
+import { isFullAdmin, permMap } from "@/lib/admin-perms";
+import { PERM_T } from "@/lib/admin-texts";
 import { rankingSummaries } from "@/lib/admin-rankings";
 import { settingGroups } from "@/lib/admin-settings";
 import { ADMIN_THEMES, getAdminTheme } from "@/lib/admin-theme";
-import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { collectorStatus } from "@/lib/collector-status";
 import { fmtDateTime } from "@/lib/format";
 import { basePath } from "@/lib/base-path";
@@ -57,7 +59,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
     chat: site.chat,
     ips: a.ips,
   } as NavText;
-  const isAdmin = user.acclevel >= LEVEL_ADMIN;
+  const pt = localized(PERM_T, lang);
   // Versions, each a link to the page of its release, and a link to the
   // release of each available update (cached answers only; the overview
   // page asks GitHub, lib/updates.ts).
@@ -65,12 +67,10 @@ export default async function PanelLayout({ children }: { children: ReactNode })
   const web = process.env.APP_VERSION;
   // In brackets where it runs: (Docker), (Container), nothing on the host.
   // First the collector's state, a link to its page (/admin/collector).
+  // The collector's page needs jobs.view; without it only the text.
+  const csText = { ok: u.csOk, stale: fill(u.csStale, { t: fmtDateTime(collector.heartbeat, lang) }), never: u.csNever }[collector.state];
   const footer: Parameters<typeof AdminSidebar>[0]["footer"] = [
-    {
-      text: { ok: u.csOk, stale: fill(u.csStale, { t: fmtDateTime(collector.heartbeat, lang) }), never: u.csNever }[collector.state],
-      href: "/admin/collector",
-      state: collector.state,
-    },
+    permMap(user)["jobs.view"] ? { text: csText, href: "/admin/collector", state: collector.state } : csText,
     version(`gameWE Web ${web ? `v${web}` : "?"}${runtimeSuffix(webRuntime())}`, releasePage("web", web))];
   if (status.collector)
     footer.push(version(`gameWE Collector v${status.collector.slice(0, 32)}${runtimeSuffix(status.collectorRuntime)}`, releasePage("collector", status.collector)));
@@ -94,7 +94,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
           <small>Admin</small>
         </Link>
         <Suspense>
-          <AreaTabs t={text} className="adm-areas" />
+          <AreaTabs t={text} className="adm-areas" rankings={rankingsArea(user)} />
         </Suspense>
         <span className="adm-spacer" />
         {/* Time left before the automatic sign-out (Settings → Admin area). */}
@@ -118,7 +118,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
           <div className="adm-menu">
             <p className="adm-menu-head">
               <b><bdi>{user.username}</bdi></b>
-              <small>{isAdmin ? "Admin (100)" : `${user.acclevel}`}</small>
+              <small>{isFullAdmin(user) ? pt.levelFull : fill(pt.levelRestricted, { n: String(user.acclevel) })}</small>
             </p>
             <Link prefetch={false} href="/admin/account">
               <Icon name="lock" />
@@ -161,7 +161,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
           <Suspense>
             <AdminSidebar
               t={text}
-              isAdmin={isAdmin}
+              can={permMap(user)}
               footer={footer}
               rankings={rankings.map((r) => ({ code: r.code, name: r.name, servers: r.servers, hidden: r.hidden, tag: tagOf(r.base, r.code), template: r.template }))}
               groups={settingGroups.map((g) => ({ id: g.id, area: g.area, title: tr(g.title, lang) }))}
@@ -172,10 +172,16 @@ export default async function PanelLayout({ children }: { children: ReactNode })
         <main className="adm-main">{children}</main>
       </div>
       <Suspense>
-        <AreaTabs t={text} className="adm-bottom" />
+        <AreaTabs t={text} className="adm-bottom" rankings={rankingsArea(user)} />
       </Suspense>
     </>
   );
+}
+
+// The rankings area has something for this admin (its pages need one of these).
+function rankingsArea(user: Parameters<typeof permMap>[0]) {
+  const can = permMap(user);
+  return can["rankings.view"] || can["servers.view"] || can["players.view"] || can["definitions.view"];
 }
 
 // Short tag of a ranking's game for the menu (CS:S, TF2, ...).

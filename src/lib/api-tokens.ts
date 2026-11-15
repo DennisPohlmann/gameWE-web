@@ -1,5 +1,5 @@
 import "server-only";
-import { LEVEL_MIN, adminSecret, type AdminUser } from "./auth";
+import { LEVEL_MIN, adminSecret, withPerms, type AdminUser } from "./auth";
 import { adminExec, adminQuery, upsert } from "./db";
 import {
   MAX_TOKENS_PER_USER,
@@ -91,12 +91,12 @@ export async function authenticate(token: string): Promise<TokenAuth | null> {
   const rec = decodeRecord(row?.value);
   const t = now();
   if (!rec || expired(rec, t)) return null;
-  const [user] = await adminQuery<AdminUser>(`SELECT username, acclevel FROM hlstats_Users WHERE username = ?`, [rec.owner]);
+  const [user] = await adminQuery<Omit<AdminUser, "perms">>(`SELECT username, acclevel FROM hlstats_Users WHERE username = ?`, [rec.owner]);
   if (!user || user.username !== rec.owner || Number(user.acclevel) < LEVEL_MIN) return null;
   if (needsTouch(rec, t)) {
     const value = encodeRecord({ ...rec, lastUsed: t });
     // Only while the token still exists (a revoke in between wins).
     if (value) await adminExec(`UPDATE hlstats_Options SET value = ? WHERE keyname = ?`, [value, key]).catch(() => undefined);
   }
-  return { user: { username: user.username, acclevel: Number(user.acclevel) }, token: { id: tokenId(key), name: rec.name, scopes: rec.scopes, prefix: rec.prefix } };
+  return { user: await withPerms(user), token: { id: tokenId(key), name: rec.name, scopes: rec.scopes, prefix: rec.prefix } };
 }

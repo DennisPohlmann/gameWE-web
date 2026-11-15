@@ -208,9 +208,13 @@ are listed once in `src/lib/openapi-admin.ts`, and the router
   `401` without details; 20 failed authentications from one address in 15
   minutes block it for 15 minutes (`429`), and every address may make 300
   requests a minute.
-- **Rights:** the token acts as its admin with their level, re-read on
-  every request: level 80 gets `403 forbidden` for rankings, servers and
-  users, as in the admin area. Every change is logged
+- **Rights:** the token acts as its admin with their level and rights,
+  re-read on every request: level 100 may do everything, level 80 only
+  what its rights allow (`rankings.view`, `servers.edit`, `resets`, ...;
+  see USAGE.md, Admin rights), as in the admin area; otherwise `403
+  forbidden`. The MCP server lists only the tools the rights allow. Admins
+  and their rights (`permissions` of the users operations) are managed by
+  level 100 only. Every change is logged
   (`gameWE: admin API PATCH /admin/servers/3 -> 200 by <admin> via token "<name>"`).
 - **Never with a token** (`403 self_security_forbidden`): the password,
   level, TOTP and deletion of the token's own account (also under another

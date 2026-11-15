@@ -6,7 +6,7 @@ import { noAutofill } from "@/lib/autofill";
 import { localeOf } from "@/lib/format";
 import { optionList } from "@/lib/admin-data";
 import { adminDict } from "@/lib/admin-i18n";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { countChat, getChat } from "@/lib/data";
 import { fmtEventTime } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
@@ -16,7 +16,7 @@ import { sortState, timeSorts } from "@/lib/table-sort";
 // All stored chat, for admins (the public pages show it only when
 // gamewe_chat_public is on).
 export default async function AdminChat({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  await requireAdmin();
+  await requirePerm("chat.view");
   const { lang, t } = await getDict();
   const a = adminDict(lang);
   const sp = await searchParams;

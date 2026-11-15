@@ -476,7 +476,6 @@ const texts: Record<string, string> = {
   "Placeholders such as {LANG_RANG_PVT} (Private) or {LANG_RANG_GEN} (General) show the rank with its insignia; any other text is shown as it is, with a badge of its initials.": "Заповнювачі, як-от {LANG_RANG_PVT} (Private) або {LANG_RANG_GEN} (General), показують звання з його знаками розрізнення; будь-який інший текст показується як є, зі значком з його ініціалів.",
   "From kills": "Від вбивств",
   "Users": "Користувачі",
-  "Level 100 = admin (everything), 80 = restricted (no games, servers or users). Each user changes their password and TOTP only themselves, under My account.": "Рівень 100 = адміністратор (усе), 80 = обмежений (без ігор, серверів і користувачів). Кожен користувач змінює пароль і TOTP лише сам, у розділі «Мій обліковий запис».",
   "First password, at least 10 characters. Afterwards only the user changes it, under My account.": "Перший пароль, щонайменше 10 символів. Далі його змінює лише сам користувач у розділі «Мій обліковий запис».",
   "Level": "Рівень",
   "General": "Загальне",

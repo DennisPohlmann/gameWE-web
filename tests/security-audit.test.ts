@@ -18,13 +18,13 @@ test("hiddenSql also finds a hidden player in the inactive table", () => {
   assert.match(src("src/lib/data.ts"), /CASE WHEN \$\{hiddenSql\("o\.playerId"\)\} THEN 1 ELSE 0 END AS hidden/);
 });
 
-test("level 100 rows cannot be written through the raw options below level 100", () => {
+test("level 100 rows cannot be written through the raw options without settings.protected", () => {
   const ops = src("src/lib/admin-ops.ts");
-  assert.match(ops, /acclevel < LEVEL_ADMIN && adminOnlyOption\(key\)\) bad/);
-  assert.match(ops, /acclevel < LEVEL_ADMIN && adminOnlyOption\(newKey\)\)/);
+  assert.match(ops, /!allowed\(a\.user, "settings\.protected"\) && adminOnlyOption\(key\)\) bad/);
+  assert.match(ops, /!allowed\(a\.user, "settings\.protected"\) && adminOnlyOption\(newKey\)\)/);
   const s = src("src/lib/admin-settings.ts");
   for (const p of ["gamewe_reset_", "gamewe_hof_", "gamewe_block_vac_", "gamewe_rank_bots_", "gamewe_fastdl_url_", "gamewe_geoip_db"]) assert.ok(s.includes(`"${p}"`), p);
-  assert.match(src("src/app/admin/(panel)/settings/[group]/page.tsx"), /level < LEVEL_ADMIN && adminOnlyOption\(r\.keyname\)/);
+  assert.match(src("src/app/admin/(panel)/settings/[group]/page.tsx"), /!protectedOk && adminOnlyOption\(r\.keyname\)/);
 });
 
 test("the ServerQuery target and login are level 100, and the form does not send them below it", () => {

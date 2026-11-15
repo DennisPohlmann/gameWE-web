@@ -9,6 +9,11 @@ import { test } from "node:test";
 import { CONFIRM_SECONDS, MCP_VERSIONS, RpcError, canonical, confirmCode, confirmOk, initializeResult, originOk, rpcMessage, toolCall, tools } from "../src/lib/admin-mcp.ts";
 import { decodeRecord, encodeRecord, scopeFor, tokenScopes } from "../src/lib/api-token-core.ts";
 import { adminOps } from "../src/lib/openapi-admin.ts";
+import { LEVEL80_DEFAULT, allowed, type PermUser } from "../src/lib/admin-perms.ts";
+
+const FULL: PermUser = { acclevel: 100 };
+// A level 80 admin without stored rights: what level 80 always had.
+const OLD80: PermUser = { acclevel: 80, perms: LEVEL80_DEFAULT };
 
 const rpcCode = (f: () => unknown) => {
   try {
@@ -78,11 +83,11 @@ const RW = ["read", "write", "mcp"];
 
 test("mcp: one tool per operation, GET with read, the others with write, by level", () => {
   const ids = (ops: typeof adminOps) => ops.map((o) => o.operationId).sort();
-  const names = (s: string[], level = 100) => tools(level, s).map((t) => t.name).sort();
+  const names = (s: string[], user: PermUser = FULL) => tools(user, s).map((t) => t.name).sort();
   assert.deepEqual(names(R), ids(adminOps.filter((o) => o.method === "GET")));
   assert.deepEqual(names(W), ids(adminOps.filter((o) => o.method !== "GET")));
   assert.deepEqual(names(RW), ids(adminOps));
-  const all = tools(100, RW);
+  const all = tools(FULL, RW);
   assert.ok(all.every((t) => /^[A-Za-z0-9_.-]{1,128}$/.test(t.name)));
   for (const t of all) {
     const w = adminOps.find((o) => o.operationId === t.name)!.method !== "GET";
@@ -90,31 +95,33 @@ test("mcp: one tool per operation, GET with read, the others with write, by leve
     assert.equal("confirmation" in t.inputSchema.properties, w, t.name);
     if (w) assert.equal(t.annotations.destructiveHint, true, t.name);
   }
-  const restricted = names(RW, 80);
+  const restricted = names(RW, OLD80);
   assert.ok(restricted.length < all.length, "level 80 sees fewer tools");
-  for (const op of adminOps.filter((o) => o.level === 100)) assert.ok(!restricted.includes(op.operationId), op.operationId);
+  for (const op of adminOps.filter((o) => !allowed(OLD80, o.need))) assert.ok(!restricted.includes(op.operationId), op.operationId);
+  // Only what the rights reach: chat alone gives the chat tool and adminMe.
+  assert.deepEqual(names(RW, { acclevel: 80, perms: ["chat.view"] }), ["adminChat", "adminMe"]);
   assert.deepEqual(all.find((t) => t.name === "adminGetRanking")!.inputSchema.required, ["code"]);
   assert.deepEqual(all.find((t) => t.name === "adminUpdateServer")!.inputSchema.required, ["id", "body"]);
 });
 
 test("mcp: a call goes through the router with the REST checks", () => {
-  const c = toolCall("adminGetRanking", { code: "css" }, 100, R);
+  const c = toolCall("adminGetRanking", { code: "css" }, FULL, R);
   assert.equal(c.op.operationId, "adminGetRanking");
   assert.deepEqual(c.params, { code: "css" });
-  const list = toolCall("adminListServers", { page: 2, q: "de" }, 100, R);
+  const list = toolCall("adminListServers", { page: 2, q: "de" }, FULL, R);
   assert.equal(list.query.get("page"), "2");
   assert.equal(list.query.get("q"), "de");
-  const u = toolCall("adminUpdateServer", { id: 3, body: { name: "x" }, confirmation: "1.a" }, 100, W);
+  const u = toolCall("adminUpdateServer", { id: 3, body: { name: "x" }, confirmation: "1.a" }, FULL, W);
   assert.deepEqual([u.params, u.body, u.args, u.confirmation], [{ id: "3" }, { name: "x" }, { id: 3, body: { name: "x" } }, "1.a"]);
-  assert.equal(rpcCode(() => toolCall("adminGetRanking", { code: "../x" }, 100, R)), -32602, "path shape checked");
-  assert.equal(rpcCode(() => toolCall("adminGetRanking", {}, 100, R)), -32602, "missing argument");
-  assert.equal(rpcCode(() => toolCall("adminGetRanking", { code: "css", x: 1 }, 100, R)), -32602, "unknown argument");
-  assert.equal(rpcCode(() => toolCall("adminGetRanking", { code: "css", body: {} }, 100, RW)), -32602, "no body on a read");
-  assert.equal(rpcCode(() => toolCall("adminGetRanking", { code: "css", confirmation: "x" }, 100, RW)), -32602, "no confirmation on a read");
-  assert.equal(rpcCode(() => toolCall("adminGetRanking", { code: { a: 1 } }, 100, R)), -32602);
-  assert.equal(rpcCode(() => toolCall("adminDeleteRanking", { code: "css" }, 100, R)), -32602, "no writing tools without write");
-  assert.equal(rpcCode(() => toolCall("adminGetRanking", { code: "css" }, 100, W)), -32602, "no reading tools without read");
-  assert.equal(rpcCode(() => toolCall("adminGetRanking", { code: "css" }, 80, RW)), -32602, "level 80 cannot see rankings");
+  assert.equal(rpcCode(() => toolCall("adminGetRanking", { code: "../x" }, FULL, R)), -32602, "path shape checked");
+  assert.equal(rpcCode(() => toolCall("adminGetRanking", {}, FULL, R)), -32602, "missing argument");
+  assert.equal(rpcCode(() => toolCall("adminGetRanking", { code: "css", x: 1 }, FULL, R)), -32602, "unknown argument");
+  assert.equal(rpcCode(() => toolCall("adminGetRanking", { code: "css", body: {} }, FULL, RW)), -32602, "no body on a read");
+  assert.equal(rpcCode(() => toolCall("adminGetRanking", { code: "css", confirmation: "x" }, FULL, RW)), -32602, "no confirmation on a read");
+  assert.equal(rpcCode(() => toolCall("adminGetRanking", { code: { a: 1 } }, FULL, R)), -32602);
+  assert.equal(rpcCode(() => toolCall("adminDeleteRanking", { code: "css" }, FULL, R)), -32602, "no writing tools without write");
+  assert.equal(rpcCode(() => toolCall("adminGetRanking", { code: "css" }, FULL, W)), -32602, "no reading tools without read");
+  assert.equal(rpcCode(() => toolCall("adminGetRanking", { code: "css" }, { acclevel: 80, perms: ["chat.view"] }, RW)), -32602, "no rankings without rankings.view");
 });
 
 test("mcp: a confirmation fits only its token, tool and arguments, for 5 minutes", () => {

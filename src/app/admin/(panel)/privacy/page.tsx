@@ -3,8 +3,10 @@ import type { ReactNode } from "react";
 import { savePrivacyAction } from "../../actions";
 import { Icon } from "@/components/admin/icons";
 import { PageHead } from "@/components/admin/page-head";
-import { adminDict } from "@/lib/admin-i18n";
-import { requireAdmin } from "@/lib/auth";
+import { adminDict, localized } from "@/lib/admin-i18n";
+import { allowed } from "@/lib/admin-perms";
+import { PERM_T } from "@/lib/admin-texts";
+import { requirePerm } from "@/lib/auth";
 import { noAutofill } from "@/lib/autofill";
 import { basePath } from "@/lib/base-path";
 import { adminQuery } from "@/lib/db";
@@ -15,7 +17,8 @@ import { getSettings } from "@/lib/settings";
 
 // The operator's part of the public privacy page (lib/privacy-operator.ts).
 export default async function PrivacyAdminPage({ searchParams }: { searchParams: Promise<{ saved?: string; field?: string }> }) {
-  await requireAdmin();
+  const user = await requirePerm("settings.view");
+  const canEdit = allowed(user, "settings.edit");
   const lang = await getAdminLang();
   const a = adminDict(lang);
   const u = a.ui;
@@ -60,7 +63,9 @@ export default async function PrivacyAdminPage({ searchParams }: { searchParams:
       {sp.saved ? <p className="notice">{a.saved}</p> : null}
       {bad ? <p className="notice error">{fill(a.invalidField, { f: labels[bad] })}</p> : null}
       {external.length ? <p className="notice info">{fill(a.privacyExternal, { hosts: external.join(", ") })}</p> : null}
+      {canEdit ? null : <p className="notice">{localized(PERM_T, lang).readOnly}</p>}
       <form action={savePrivacyAction}>
+        <fieldset className="adm-ro" disabled={!canEdit}>
         <section className="card">
           <div className="fields">
             {field("name", a.privacyNameHint, <input {...noAutofill} id="p-name" name="name" dir="auto" defaultValue={o.name} maxLength={LIMITS.name} aria-invalid={bad === "name" || undefined} />)}
@@ -91,6 +96,7 @@ export default async function PrivacyAdminPage({ searchParams }: { searchParams:
             </button>
           </span>
         </div>
+        </fieldset>
       </form>
     </>
   );

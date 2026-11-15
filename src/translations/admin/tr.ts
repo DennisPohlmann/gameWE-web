@@ -476,7 +476,6 @@ const texts: Record<string, string> = {
   "Placeholders such as {LANG_RANG_PVT} (Private) or {LANG_RANG_GEN} (General) show the rank with its insignia; any other text is shown as it is, with a badge of its initials.": "{LANG_RANG_PVT} (Private) veya {LANG_RANG_GEN} (General) gibi yer tutucular rütbeyi nişanıyla gösterir; diğer metinler olduğu gibi, baş harflerinden bir rozetle gösterilir.",
   "From kills": "Öldürme sayısından",
   "Users": "Kullanıcılar",
-  "Level 100 = admin (everything), 80 = restricted (no games, servers or users). Each user changes their password and TOTP only themselves, under My account.": "Seviye 100 = yönetici (her şey), 80 = kısıtlı (oyun, sunucu veya kullanıcı yok). Her kullanıcı parolasını ve TOTP'sini yalnızca kendisi, Hesabım altında değiştirir.",
   "First password, at least 10 characters. Afterwards only the user changes it, under My account.": "İlk parola, en az 10 karakter. Sonrasında yalnızca kullanıcı Hesabım altında değiştirir.",
   "Level": "Seviye",
   "General": "Genel",

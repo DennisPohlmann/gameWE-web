@@ -6,7 +6,8 @@ import { PageHead } from "@/components/admin/page-head";
 import { GameTag } from "@/components/ui";
 import { adminDict } from "@/lib/admin-i18n";
 import { playersByRanking, rankingSummaries } from "@/lib/admin-rankings";
-import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
+import { allowed } from "@/lib/admin-perms";
 import { localeOf } from "@/lib/format";
 import { getAdminLang } from "@/lib/i18n";
 
@@ -15,17 +16,18 @@ import { getAdminLang } from "@/lib/i18n";
 // servers yet is listed with the rankings), with their game, servers, players and
 // state; one button per ranking leads to its page, where it is also edited.
 export default async function RankingsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
-  const user = await requireAdmin();
+  const user = await requirePerm("rankings.view");
   const sp = await searchParams;
   const hof = sp.hof;
   const templates = sp.view === "templates";
   const lang = await getAdminLang();
   const a = adminDict(lang);
   const u = a.ui;
-  const isAdmin = user.acclevel >= LEVEL_ADMIN;
-  // The scheduled reset for all rankings moved to the reset page (level 100
-  // as before): an old link with its status (?hof=) goes there.
-  if (isAdmin && hof && ["on", "off", "input", "confirm"].includes(hof)) redirect(`/admin/reset?hof=${hof}#hall-of-fame`);
+  const canEdit = allowed(user, "rankings.edit");
+  const canReset = allowed(user, "resets");
+  // The scheduled reset for all rankings moved to the reset page (right
+  // resets): an old link with its status (?hof=) goes there.
+  if (canReset && hof && ["on", "off", "input", "confirm"].includes(hof)) redirect(`/admin/reset?hof=${hof}#hall-of-fame`);
   const nf = (n: number) => n.toLocaleString(localeOf(lang));
   const [all, players] = await Promise.all([rankingSummaries(), playersByRanking()]);
   // Rankings or the templates, in display order.
@@ -54,7 +56,7 @@ export default async function RankingsPage({ searchParams }: { searchParams: Pro
         title={u.manageRankings}
         intro={u.rankingsIntro}
         actions={
-          isAdmin ? (
+          canEdit ? (
             <Link prefetch={false} className="button primary" href="/admin/games/new">
               <Icon name="plus" />
               {u.newRanking}
@@ -121,7 +123,7 @@ export default async function RankingsPage({ searchParams }: { searchParams: Pro
           <p className="empty">{templates ? u.noTemplates : u.noActiveRankings}</p>
         )}
       </section>
-      {isAdmin ? <HashRedirect hash="hall-of-fame" to="/admin/reset#hall-of-fame" /> : null}
+      {canReset ? <HashRedirect hash="hall-of-fame" to="/admin/reset#hall-of-fame" /> : null}
     </>
   );
 }

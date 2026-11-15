@@ -10,7 +10,8 @@ import { ADMIN_THEME_COOKIE, isAdminTheme } from "@/lib/admin-theme";
 import { basePath } from "@/lib/base-path";
 import { expiryDays, tokenName, tokenScopes } from "@/lib/api-token-core";
 import { createToken, purgeTokens, revokeToken } from "@/lib/api-tokens";
-import { LEVEL_ADMIN, LEVEL_MIN, adminSecret, brakedCode, confirmIdentity, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, newChallenge, passkeyHost, passkeyLogin, requireAdmin, takeChallenge } from "@/lib/auth";
+import { adminSecret, brakedCode, confirmIdentity, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, newChallenge, passkeyHost, passkeyLogin, requireAdmin, requirePerm, takeChallenge } from "@/lib/auth";
+import { normalizePerms } from "@/lib/admin-perms";
 import { ALGS, MAX_PER_USER, checkRegistration, passkeyName, rpIdOf, userHandle, type Assertion, type Registration } from "@/lib/passkey-core";
 import { addPasskey, deletePasskey, listPasskeys, passkeyOnly, setPasskeyOnly } from "@/lib/passkeys";
 import { codeMode, codeStepHref } from "@/lib/login-code";
@@ -103,7 +104,7 @@ async function entityFrom(form: FormData) {
 
 export async function saveAction(form: FormData) {
   const e = await entityFrom(form);
-  const user = await requireAdmin(e.minLevel);
+  const user = await requirePerm(e.perm.edit);
   const rawId = String(form.get("__id") ?? "");
   const id = rawId === "new" ? null : rawId;
   const list = safeReturnTo(form.get("__returnTo"), e.key);
@@ -123,12 +124,14 @@ export async function saveAction(form: FormData) {
   const back = async (params: Record<string, string | undefined>) => (ownPage ? rankingPageHref(rawId, params, "settings") : editHref(e.key, rawId, form, params));
   let saved: string;
   try {
-    saved = await saveEntity({ user }, e, id, form, { ranking });
+    // The rights checkboxes of an admin's page (the hidden __perms marks them as sent).
+    const perms = e.key === "users" && form.get("__perms") === "1" ? normalizePerms(form.getAll("perm").map(String)) : undefined;
+    saved = await saveEntity({ user }, e, id, form, { ranking, perms });
   } catch (err) {
     if (!(err instanceof OpError)) throw err;
     const c = err.code;
     if (c === "cannot" || c === "notfound") redirect(list);
-    if (c === "self" || c === "mismatch" || c === "password") redirect(await back({ error: c }));
+    if (c === "self" || c === "mismatch" || c === "password" || c === "lastadmin" || c === "perm") redirect(await back({ error: c }));
     if (c === "duplicate") redirect(editHref(e.key, rawId, form, { error: "duplicate", dup: err.detail.dup, ...kept }));
     if (c === "field") redirect(await back({ error: "field", field: err.detail.field, ...kept }));
     // A new ranking is saved, but its template's definitions failed.
@@ -143,7 +146,7 @@ export async function saveAction(form: FormData) {
 
 // Moves servers into a ranking (servers card of the ranking's page).
 export async function assignServersAction(form: FormData) {
-  const user = await requireAdmin(100);
+  const user = await requirePerm("servers.edit");
   const gameId = String(form.get("__id") ?? "");
   const e = await withColumns(getEntity("games")!);
   const row = await getRow(e, gameId);
@@ -160,7 +163,7 @@ export async function assignServersAction(form: FormData) {
 
 // Takes one server out of a ranking by moving it into another one.
 export async function moveServerAction(form: FormData) {
-  const user = await requireAdmin(100);
+  const user = await requirePerm("servers.edit");
   const gameId = String(form.get("__id") ?? "");
   try {
     await moveServer({ user }, Number(form.get("server")), String(form.get("target") ?? "").trim());
@@ -174,24 +177,24 @@ export async function moveServerAction(form: FormData) {
 
 export async function deleteAction(form: FormData) {
   const e = await entityFrom(form);
-  const user = await requireAdmin(e.minLevel);
+  const user = await requirePerm(e.perm.edit);
   const id = String(form.get("__id") ?? "");
   if (form.get("confirm") !== "1") redirect(editHref(e.key, id, form));
   try {
     await deleteEntity({ user }, e, id);
   } catch (err) {
     if (!(err instanceof OpError)) throw err;
-    if (err.code === "self") redirect(editHref(e.key, id, form, { error: "self" }));
+    if (err.code === "self" || err.code === "lastadmin") redirect(editHref(e.key, id, form, { error: err.code }));
     if (err.code === "db") redirect(editHref(e.key, id, form, { error: "db", msg: err.detail.msg ?? "?" }));
     redirect(editHref(e.key, id, form));
   }
   redirect(addParams(safeReturnTo(form.get("__returnTo"), e.key), { deleted: "1" }));
 }
 
-// Erases a player with everything recorded about them: admins only, confirmed
+// Erases a player with everything recorded about them (right players.erase), confirmed
 // by the checkbox; the collector does it, the job list shows the result.
 export async function deletePlayerAction(form: FormData) {
-  const user = await requireAdmin(LEVEL_ADMIN);
+  const user = await requirePerm("players.erase");
   const id = String(form.get("id") ?? "");
   const back = `/admin/players/${encodeURIComponent(id)}`;
   if (form.get("confirm") !== "1") redirect(back);
@@ -209,7 +212,7 @@ export async function deletePlayerAction(form: FormData) {
 // One settings page (/admin/settings/<group>) is one form: only the settings
 // of that group, or on the raw page the raw rows, are read and written.
 export async function saveSettingsAction(form: FormData) {
-  const user = await requireAdmin();
+  const user = await requirePerm("settings.edit");
   const page = String(form.get("group") ?? "");
   try {
     await saveSettings({ user }, page, form);
@@ -224,7 +227,7 @@ export async function saveSettingsAction(form: FormData) {
 // The operator's part of the privacy page (Admin → Website → Privacy):
 // checked and split by lib/privacy-operator.ts, written with the admin user.
 export async function savePrivacyAction(form: FormData) {
-  const user = await requireAdmin();
+  const user = await requirePerm("settings.edit");
   try {
     await savePrivacy({ user }, form);
   } catch (err) {
@@ -411,10 +414,10 @@ export async function revokeApiTokenAction(form: FormData) {
   redirect(`/admin/account?token=${r ? "revoked" : "unknown"}#api-tokens`);
 }
 
-// Ranking reset (lib/reset.ts): admins only, confirmed in the dialog of the
+// Ranking reset (lib/reset.ts): right resets, confirmed in the dialog of the
 // reset page (the checkbox "deleted for good" and its confirm button).
 export async function resetRankingAction(form: FormData) {
-  const user = await requireAdmin(LEVEL_ADMIN);
+  const user = await requirePerm("resets");
   const game = String(form.get("game") ?? "");
   const mode = resetMode(form.get("mode"));
   // Only rankings with servers: templates are never reset.
@@ -436,10 +439,10 @@ export async function resetRankingAction(form: FormData) {
 }
 
 // Bot settings of one ranking (lib/admin-ranking-bots.ts), on the ranking's
-// admin page: admins only. Switching the ranking of bots also shows or hides
+// admin page: right rankings.edit. Switching the ranking of bots also shows or hides
 // the ranking's existing bots.
 export async function rankingBotsAction(form: FormData) {
-  const user = await requireAdmin(LEVEL_ADMIN);
+  const user = await requirePerm("rankings.edit");
   const game = String(form.get("game") ?? "");
   // The switches send a hidden 0 and, when on, a 1 as well.
   const on = (name: string) => form.getAll(name).map(String).includes("1");
@@ -454,9 +457,9 @@ export async function rankingBotsAction(form: FormData) {
 }
 
 // The VAC block of one ranking (gamewe_block_vac_<game>), on the ranking's
-// admin page: admins only.
+// admin page: right rankings.edit.
 export async function rankingVacAction(form: FormData) {
-  const user = await requireAdmin(LEVEL_ADMIN);
+  const user = await requirePerm("rankings.edit");
   const game = String(form.get("game") ?? "");
   // The switch sends a hidden 0 and, when on, a 1 as well.
   try {
@@ -469,9 +472,9 @@ export async function rankingVacAction(form: FormData) {
 }
 
 // The FastDL address of one ranking (gamewe_fastdl_url_<game>), on the ranking's
-// admin page: admins only.
+// admin page: right rankings.edit.
 export async function rankingFastdlAction(form: FormData) {
-  const user = await requireAdmin(LEVEL_ADMIN);
+  const user = await requirePerm("rankings.edit");
   const game = String(form.get("game") ?? "");
   const page = `/admin/rankings/${encodeURIComponent(game)}`;
   try {
@@ -486,10 +489,10 @@ export async function rankingFastdlAction(form: FormData) {
 }
 
 // Scheduled ranking reset and hall of fame of one ranking (lib/admin-hall.ts),
-// on the ranking's admin page: admins only. Turning a schedule on or changing
+// on the ranking's admin page: right resets. Turning a schedule on or changing
 // it must be confirmed (the ranking is then reset at the end of every period).
 export async function hallOfFameSettingsAction(form: FormData) {
-  const user = await requireAdmin(LEVEL_ADMIN);
+  const user = await requirePerm("resets");
   const game = String(form.get("game") ?? "");
   const back = `/admin/rankings/${encodeURIComponent(game)}`;
   try {
@@ -504,7 +507,7 @@ export async function hallOfFameSettingsAction(form: FormData) {
 
 // The reset schedule for all rankings (Admin > Rankings).
 export async function globalHallAction(form: FormData) {
-  const user = await requireAdmin(LEVEL_ADMIN);
+  const user = await requirePerm("resets");
   const back = "/admin/reset";
   const enabled = form.get("enabled") === "yes";
   try {
@@ -519,7 +522,7 @@ export async function globalHallAction(form: FormData) {
 // Removes or brings back hall of fame entries: one place, or a whole period
 // (place empty).
 export async function hallEntryAction(form: FormData) {
-  const user = await requireAdmin(LEVEL_ADMIN);
+  const user = await requirePerm("resets");
   const game = String(form.get("game") ?? "");
   const back = `/admin/rankings/${encodeURIComponent(game)}/hall-of-fame`;
   const start = String(form.get("start") ?? "");
@@ -545,18 +548,18 @@ export async function revealSecretAction(ref: string): Promise<string> {
   if (kind === "entity") {
     const e = getEntity(a);
     if (!e?.fields.some((f) => f.name === c && f.type === "secret")) return "";
-    await requireAdmin(e.minLevel);
+    await requirePerm(e.perm.edit);
     const [row] = await adminQuery<{ v: string | null }>(`SELECT ${c} AS v FROM ${e.table} WHERE ${e.pk} = ?`, [b]);
     return row?.v ?? "";
   }
   if (kind === "setting") {
     const s = allSettings.find((x) => x.key === a && x.type === "secret");
     if (!s) return "";
-    await requireAdmin(s.minLevel ?? LEVEL_MIN);
+    await requirePerm(s.minLevel ? "settings.protected" : "settings.edit");
     return (await secretOptions())[a] ?? "";
   }
   if (kind === "fastdl" && ACCESS_SECRETS.includes(b as AccessField)) {
-    await requireAdmin(LEVEL_ADMIN);
+    await requirePerm("rankings.edit");
     const key = accessKey(b as AccessField, a);
     return (await secretsOf([key]))[key] ?? "";
   }

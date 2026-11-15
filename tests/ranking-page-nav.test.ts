@@ -10,11 +10,13 @@ const page = readFileSync("src/app/admin/(panel)/rankings/[code]/page.tsx", "utf
 const nav = readFileSync("src/components/admin/page-nav.tsx", "utf8");
 const css = readFileSync("src/app/admin/admin.css", "utf8");
 
-test("every card of the page has an entry with an icon, level 100 parts only for level 100", () => {
+test("every card of the page has an entry with an icon, each only with its right", () => {
   for (const [id, icon] of [["settings", "gear"], ["servers", "server"], ["values", "list"], ["bots", "players"], ["vac", "shield"], ["hall-of-fame", "clock"], ["maintenance", "reset"]]) {
     assert.match(page, new RegExp(`\\["${id}", u\\.[A-Za-z]+, "${icon}"\\]`), id);
   }
-  assert.match(page, /\.\.\.\(isAdmin\s*\?\s*\(\[\s*\["settings"/);
+  assert.match(page, /\.\.\.\(can\["rankings\.edit"\] \? \(\[\["settings"/);
+  assert.match(page, /\.\.\.\(can\["servers\.edit"\] \? \(\[\["servers"/);
+  assert.match(page, /\.\.\.\(can\.resets\s*\?\s*\(\[\.\.\.\(noServers/);
   // A ranking without servers (a template or a new one) has no scheduled
   // reset, so no entry for it.
   assert.match(page, /\.\.\.\(noServers \? \[\] : \[\["hall-of-fame"/);

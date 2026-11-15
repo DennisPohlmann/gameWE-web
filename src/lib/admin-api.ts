@@ -38,6 +38,7 @@ import {
   setRankingFastdlAccess,
   setRankingHall,
   setRankingVac,
+  setUserPerms,
   type Actor,
 } from "./admin-ops";
 import { rankingBlockVac, rankingBots, rankingFastdl, rankingFastdlAccess } from "./admin-ranking-bots";
@@ -50,7 +51,8 @@ import { apiEnabled } from "./settings";
 import { bearerToken, sameOwner, scopeFor } from "./api-token-core";
 import { CONFIRM_SECONDS, MCP_VERSIONS, RpcError, confirmCode, confirmOk, initializeResult, originOk, rpcError, rpcMessage, rpcResult, toolCall, tools } from "./admin-mcp";
 import { authenticate } from "./api-tokens";
-import { LEVEL_ADMIN, adminSecret } from "./auth";
+import { adminSecret } from "./auth";
+import { allowed, effectivePerms, isFullAdmin, isPerm, normalizePerms, parsePerms, permsKey, type Perm, type PermUser } from "./admin-perms";
 import { clientIp } from "./client-ip";
 import { countChat, getChat } from "./data";
 import { adminQuery } from "./db";
@@ -145,7 +147,7 @@ export async function adminApi(req: Request, segments: string[]): Promise<Respon
     }
     const need = scopeFor(method);
     if (!auth.token.scopes.includes(need)) throw new ApiFail(403, "insufficient_scope", `this token lacks the scope ${need}`);
-    if (auth.user.acclevel < m.op.level) throw new ApiFail(403, "forbidden", `needs admin level ${m.op.level}`);
+    if (!allowed(auth.user, m.op.need)) throw new ApiFail(403, "forbidden", m.op.need === "admin" ? "needs admin level 100" : `needs the right ${m.op.need}`);
     const body = m.op.body ? await readBody(req) : undefined;
     const query = new URL(req.url).searchParams;
     const allowedQuery = (m.op.params ?? []).filter((p) => p.in === "query").map((p) => p.name);
@@ -186,9 +188,9 @@ async function mcp(req: Request, method: string, actor: Actor, token: Ctx["token
       case "ping":
         return json(200, rpcResult(id, {}));
       case "tools/list":
-        return json(200, rpcResult(id, { tools: tools(actor.user.acclevel, token.scopes) }));
+        return json(200, rpcResult(id, { tools: tools(actor.user, token.scopes) }));
       case "tools/call": {
-        const call = toolCall(p.name, p.arguments, actor.user.acclevel, token.scopes);
+        const call = toolCall(p.name, p.arguments, actor.user, token.scopes);
         const out = (isError: boolean, body: unknown) => json(200, rpcResult(id, { content: [{ type: "text", text: JSON.stringify(body) }], isError }));
         const what = `${call.op.method} /api/v1${call.op.path.replace(/\{(\w+)\}/g, (_, k: string) => call.params[k])}${call.query.size ? `?${call.query}` : ""}`;
         const writing = call.op.method !== "GET";
@@ -262,6 +264,10 @@ function failure(err: unknown): Response {
         return error(405, "method_not_allowed", "not possible for this kind of row");
       case "self":
         return error(403, "self_security_forbidden", "not for your own account");
+      case "lastadmin":
+        return error(409, "last_full_admin", "at least one admin with level 100 must stay");
+      case "perm":
+        return error(403, "forbidden", "you cannot hand out a right you do not have yourself", { field: "permissions" });
       case "password":
         return error(403, "password_own_only", "an admin's password is set only when the admin is created", { field: "password" });
       case "mismatch":
@@ -346,7 +352,24 @@ async function rowKey(c: Ctx, m: (typeof ADMIN_ENTITIES)[number]): Promise<strin
 async function rowOut(e: Entity, id: string): Promise<Record<string, unknown>> {
   const row = await getRow(e, id);
   if (!row) throw new ApiFail(404, "not_found", "not found");
-  return entityRow(e, row as Record<string, unknown>);
+  const out = entityRow(e, row as Record<string, unknown>);
+  return e.key === "users" ? (await withUserPerms([out]))[0] : out;
+}
+
+// The rights of admins as the API returns them (level 100: every right).
+async function withUserPerms(rows: Record<string, unknown>[]): Promise<Record<string, unknown>[]> {
+  const keys = rows.map((r) => permsKey(String(r.username ?? r.id)));
+  const stored = keys.length ? await adminQuery<{ keyname: string; value: string | null }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [keys]) : [];
+  const byKey = new Map(stored.map((r) => [r.keyname, r.value ?? ""]));
+  return rows.map((r, i) => ({ ...r, permissions: effectivePerms({ acclevel: Number(r.acclevel), perms: parsePerms(byKey.get(keys[i]) ?? null) }) }));
+}
+
+// permissions of a users body: taken out before the fields are checked.
+function permsInput(body: unknown): { body: unknown; perms?: Perm[] } {
+  if (!isObject(body) || !("permissions" in body)) return { body };
+  const { permissions: v, ...rest } = body;
+  if (!Array.isArray(v) || v.length > 64 || v.some((p) => !isPerm(p))) throw new BodyError(400, "invalid_field", "permissions", "permissions must be an array of known rights (see AdminUser)");
+  return { body: rest, perms: normalizePerms(v as string[]) };
 }
 
 // The token's own account: what the database takes for the same user name
@@ -376,7 +399,7 @@ const scheduleEntries = (b: Record<string, unknown>, required: boolean): Entries
 function apiJob(j: Job, c: Ctx) {
   // Who queued a job: other admins' names (and their token names) only for
   // level 100 (as the Jobs page).
-  const show = c.actor.user.acclevel >= LEVEL_ADMIN || j.requestedBy === c.actor.user.username;
+  const show = isFullAdmin(c.actor.user) || j.requestedBy === c.actor.user.username;
   const o = j.origin;
   return {
     ...j,
@@ -401,7 +424,7 @@ async function hallOut(code: string) {
   };
 }
 
-async function settingsOut(groupId: string, level: number) {
+async function settingsOut(groupId: string, user: PermUser) {
   const g = settingGroups.find((x) => x.id === groupId);
   if (!g) throw new ApiFail(404, "not_found", "unknown settings page");
   const rows = await adminQuery<{ keyname: string; value: string | null }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [g.items.map((s) => s.key)]);
@@ -411,7 +434,7 @@ async function settingsOut(groupId: string, level: number) {
     area: g.area,
     title: g.title.en,
     settings: Object.fromEntries(g.items.map((s) => [s.key, settingOut(s, s.type === "secret" ? (stored.get(s.key) ? "1" : undefined) : stored.get(s.key))])),
-    readOnly: g.items.filter((s) => s.minLevel !== undefined && level < s.minLevel).map((s) => s.key),
+    readOnly: g.items.filter((s) => s.minLevel !== undefined && !allowed(user, "settings.protected")).map((s) => s.key),
   };
 }
 
@@ -419,7 +442,7 @@ async function settingsOut(groupId: string, level: number) {
 
 const handlers: Record<string, Handler> = {
   async me(c) {
-    return { body: { username: c.actor.user.username, level: c.actor.user.acclevel, token: { name: c.token.name, scopes: c.token.scopes, prefix: c.token.prefix } } };
+    return { body: { username: c.actor.user.username, level: c.actor.user.acclevel, permissions: effectivePerms(c.actor.user), token: { name: c.token.name, scopes: c.token.scopes, prefix: c.token.prefix } } };
   },
 
   // Rows of the admin entities (rankings, servers, players, clans, ...).
@@ -433,7 +456,8 @@ const handlers: Record<string, Handler> = {
     const page = intQuery(q, "page", 1, 1, 100000);
     const limit = intQuery(q, "limit", 50, 1, ADMIN_PAGE_MAX);
     const r = await listRows(e, { game, q: search, status, page, pageSize: limit, sort, asc: asc(q, false) });
-    return { body: pageOf(r.rows.map((row: Row) => entityRow(e, row as Record<string, unknown>)), page, limit, r.total) };
+    const rows = r.rows.map((row: Row) => entityRow(e, row as Record<string, unknown>));
+    return { body: pageOf(e.key === "users" ? await withUserPerms(rows) : rows, page, limit, r.total) };
   },
   async entityGet(c) {
     const { e, m } = await entityOf(c);
@@ -441,12 +465,13 @@ const handlers: Record<string, Handler> = {
   },
   async entityCreate(c) {
     const { e } = await entityOf(c);
-    const input = entityInput(e, c.body, true);
+    const p = e.key === "users" ? permsInput(c.body) : { body: c.body };
+    const input = entityInput(e, p.body, true);
     if (e.key === "users") {
       const name = input.entries.find(([k]) => k === "username")?.[1];
       if (name !== undefined) await guardSelf(c, name);
     }
-    const saved = await saveEntity(c.actor, e, null, form(input.entries));
+    const saved = await saveEntity(c.actor, e, null, form(input.entries), { perms: p.perms });
     return { body: await rowOut(e, saved) };
   },
   async entityUpdate(c) {
@@ -459,8 +484,13 @@ const handlers: Record<string, Handler> = {
         throw new ApiFail(403, "password_own_only", "an admin's password is set only when the admin is created; afterwards only its owner changes it, on their account page", { field: "password" });
       }
     }
-    const input = entityInput(e, c.body, false);
-    await saveEntity(c.actor, e, id, form(input.entries), { only: input.only });
+    const p = e.key === "users" ? permsInput(c.body) : { body: c.body };
+    // Only the rights: no row to write.
+    if (p.perms && isObject(p.body) && !Object.keys(p.body).length) await setUserPerms(c.actor, id, p.perms);
+    else {
+      const input = entityInput(e, p.body, false);
+      await saveEntity(c.actor, e, id, form(input.entries), { only: input.only, perms: p.perms });
+    }
     return { body: await rowOut(e, id) };
   },
   async entityDelete(c) {
@@ -644,19 +674,19 @@ const handlers: Record<string, Handler> = {
         id: g.id,
         area: g.area,
         title: g.title.en,
-        settings: g.items.map((s) => ({ key: s.key, type: s.type, label: s.label.en, readOnly: s.minLevel !== undefined && c.actor.user.acclevel < s.minLevel })),
+        settings: g.items.map((s) => ({ key: s.key, type: s.type, label: s.label.en, readOnly: s.minLevel !== undefined && !allowed(c.actor.user, "settings.protected") })),
       })),
     };
   },
   async settingsGet(c) {
-    return { body: await settingsOut(c.params.group, c.actor.user.acclevel) };
+    return { body: await settingsOut(c.params.group, c.actor.user) };
   },
   async settingsSet(c) {
     const g = settingGroups.find((x) => x.id === c.params.group);
     if (!g) throw new ApiFail(404, "not_found", "unknown settings page");
     const input = settingsInput(g.items, c.body);
     await saveSettings(c.actor, g.id, form(input.entries), input.only);
-    return { body: await settingsOut(g.id, c.actor.user.acclevel) };
+    return { body: await settingsOut(g.id, c.actor.user) };
   },
   async rawGet() {
     return { body: (await rawOptions()).map((r) => ({ key: r.keyname, value: r.value, readOnly: READONLY_OPTIONS.includes(r.keyname) })) };

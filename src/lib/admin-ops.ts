@@ -10,6 +10,7 @@ import { ACCESS_KEYS, ACCESS_SECRETS, FASTDL_ACCESS, accessValueOk, type Access,
 import { purgeTokens } from "./api-tokens";
 import { purgePasskeys } from "./passkeys";
 import { LEVEL_ADMIN, revokeSessions, type AdminUser } from "./auth";
+import { allowed, permsKey, permsValue, LEVEL80_DEFAULT, type Perm } from "./admin-perms";
 import { steamKey } from "./config";
 import { saveSecret, SECRET_OPTIONS } from "./secret-options";
 import { adminExec, adminQuery, upsert } from "./db";
@@ -49,6 +50,8 @@ export type OpCode =
   | "confirm" // a destructive change was not confirmed
   | "table" // the database lacks the table (old collector)
   | "nojobs" // no job table: the collector cannot run a reset
+  | "lastadmin" // would leave no full admin (level 100)
+  | "perm" // a right the acting admin does not have themselves
   | "template"; // the ranking is a template (no servers): never reset
 
 export class OpError extends Error {
@@ -87,7 +90,9 @@ async function checkResettable(game: string) {
 // only: write just these fields (the API's PATCH); without it every field
 // of the entity is written, as the edit form sends them all. ranking: a new
 // server goes into this ranking (the "Add server" button of a ranking).
-export async function saveEntity(a: Actor, e: Entity, id: string | null, form: Form, opts: { only?: Set<string>; ranking?: string | null } = {}): Promise<string> {
+// perms (users): the admin's rights (lib/admin-perms.ts); left out, they stay
+// (a new admin gets the old level 80 rights).
+export async function saveEntity(a: Actor, e: Entity, id: string | null, form: Form, opts: { only?: Set<string>; ranking?: string | null; perms?: Perm[] } = {}): Promise<string> {
   if (id === null && !e.canCreate) throw new OpError("cannot");
   const row = id === null ? undefined : await getRow(e, id);
   if (id !== null && !row) throw new OpError("notfound");
@@ -97,6 +102,12 @@ export async function saveEntity(a: Actor, e: Entity, id: string | null, form: F
   if (e.key === "users" && id !== null && String(form.get("password") ?? "").trim()) throw new OpError("password");
   if (e.key === "users" && id === a.user.username && writes("acclevel") && Number(form.get("acclevel")) < LEVEL_ADMIN && a.user.acclevel >= LEVEL_ADMIN) {
     throw new OpError("self");
+  }
+  if (e.key === "users") {
+    if (opts.perms) checkPerms(a, opts.perms);
+    if (row && Number(row.acclevel) >= LEVEL_ADMIN && writes("acclevel") && Number(form.get("acclevel")) < LEVEL_ADMIN && !(await otherFullAdmin(String(id)))) {
+      throw new OpError("lastadmin");
+    }
   }
   // A server only moves into a ranking of the same base game.
   if (e.key === "servers" && row && writes("game")) {
@@ -157,6 +168,8 @@ export async function saveEntity(a: Actor, e: Entity, id: string | null, form: F
   }
   // A new user never inherits the API tokens or passkeys of an earlier user of that name.
   if (e.key === "users" && id === null) await Promise.all([purgeTokens(saved), purgePasskeys(saved)]);
+  // A new user never inherits the rights of an earlier user of that name either.
+  if (e.key === "users" && (id === null || opts.perms)) await writePerms(a, saved, opts.perms ?? LEVEL80_DEFAULT);
   // A new ranking takes the definitions of its template.
   if (e.key === "games" && id === null) {
     const template = String(form.get("template") ?? "");
@@ -177,6 +190,31 @@ export async function saveEntity(a: Actor, e: Entity, id: string | null, form: F
   return saved;
 }
 
+// Nobody hands out a right they lack (only level 100 manages admins today).
+function checkPerms(a: Actor, perms: Perm[]) {
+  if (perms.some((p) => !allowed(a.user, p))) throw new OpError("perm");
+}
+
+async function writePerms(a: Actor, username: string, perms: Perm[]) {
+  await adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [permsKey(username), permsValue(perms)]);
+  console.info(`gameWE: rights of admin ${username} set to ${permsValue(perms) || "none"} by ${who(a)}`);
+}
+
+// Only the rights of an existing admin (the API's PATCH with nothing else).
+export async function setUserPerms(a: Actor, username: string, perms: Perm[]): Promise<void> {
+  const e = getEntity("users")!;
+  if (!(await getRow(await withColumns(e), username))) throw new OpError("notfound");
+  checkPerms(a, perms);
+  await writePerms(a, username, perms);
+}
+
+// Another level 100 admin than `username` exists (compared in the database's
+// collation, so another spelling of the same name does not count).
+async function otherFullAdmin(username: string): Promise<boolean> {
+  const [r] = await adminQuery<{ n: number | string }>(`SELECT COUNT(*) AS n FROM hlstats_Users WHERE acclevel >= ? AND username <> ?`, [LEVEL_ADMIN, username]);
+  return Number(r?.n ?? 0) > 0;
+}
+
 function withValue(form: Form, name: string, value: string): Form {
   const f = new FormData();
   for (const [k, v] of form.entries()) if (k !== name) f.append(k, v);
@@ -188,9 +226,13 @@ export async function deleteEntity(a: Actor, e: Entity, id: string): Promise<voi
   if (!e.canDelete) throw new OpError("cannot");
   if (!(await getRow(e, id))) throw new OpError("notfound");
   if (e.key === "users" && id === a.user.username) throw new OpError("self");
+  if (e.key === "users" && !(await otherFullAdmin(id))) {
+    const [u] = await adminQuery<{ acclevel: number }>(`SELECT acclevel FROM hlstats_Users WHERE username = ?`, [id]);
+    if (u && Number(u.acclevel) >= LEVEL_ADMIN) throw new OpError("lastadmin");
+  }
   try {
     await deleteRow(e, id);
-    if (e.key === "users") await Promise.all([removeSecret(id, false), removeSecret(id, true), removeBackupCodes(id), purgeTokens(id), purgePasskeys(id), revokeSessions(id)]);
+    if (e.key === "users") await Promise.all([removeSecret(id, false), removeSecret(id, true), removeBackupCodes(id), purgeTokens(id), purgePasskeys(id), revokeSessions(id), adminExec(`DELETE FROM hlstats_Options WHERE keyname = ?`, [permsKey(id)])]);
   } catch (err) {
     throw new OpError("db", { msg: dbMsg(err) });
   }
@@ -248,7 +290,7 @@ export async function saveSettings(a: Actor, groupId: string, form: Form, only?:
   const values: [string, string][] = [];
   for (const s of group?.items ?? []) {
     if (only && !only.has(s.key)) continue;
-    if (s.minLevel !== undefined && a.user.acclevel < s.minLevel) {
+    if (s.minLevel !== undefined && !allowed(a.user, "settings.protected")) {
       // Read-only for this admin: a sent value is refused, nothing is written.
       if (form.get(s.key) || form.get(`${s.key}__clear`)) bad(s.key);
       continue;
@@ -346,7 +388,7 @@ export async function saveSettings(a: Actor, groupId: string, form: Form, only?:
       if (!m) continue;
       const key = String(entry);
       if (!rawKeys.has(key) || READONLY_OPTIONS.includes(key)) continue;
-      if (a.user.acclevel < LEVEL_ADMIN && adminOnlyOption(key)) bad(`raw:${key}`);
+      if (!allowed(a.user, "settings.protected") && adminOnlyOption(key)) bad(`raw:${key}`);
       if (form.get(`raw_del_${m[1]}`) === "1") {
         removed.push(key);
         continue;
@@ -358,7 +400,7 @@ export async function saveSettings(a: Actor, groupId: string, form: Form, only?:
     const newKey = String(form.get("raw_new_key") ?? "").trim();
     if (newKey) {
       const v = String(form.get("raw_new_val") ?? "");
-      if ((a.user.acclevel < LEVEL_ADMIN && adminOnlyOption(newKey)) || !rawKeyAllowed(newKey) || rawKeys.has(newKey) || v.length > 255 || /[\r\n]/.test(v)) bad("raw_new");
+      if ((!allowed(a.user, "settings.protected") && adminOnlyOption(newKey)) || !rawKeyAllowed(newKey) || rawKeys.has(newKey) || v.length > 255 || /[\r\n]/.test(v)) bad("raw_new");
       const exists = await adminQuery(`SELECT keyname FROM hlstats_Options WHERE keyname = ?`, [newKey]);
       if (exists.length) bad("raw_new");
       values.push([newKey, v]);

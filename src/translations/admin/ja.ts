@@ -476,7 +476,6 @@ const texts: Record<string, string> = {
   "Placeholders such as {LANG_RANG_PVT} (Private) or {LANG_RANG_GEN} (General) show the rank with its insignia; any other text is shown as it is, with a badge of its initials.": "{LANG_RANG_PVT} (Private) や {LANG_RANG_GEN} (General) のようなプレースホルダーは記章付きでランクを表示します。それ以外の文字列はそのまま表示され、頭文字のバッジが付きます。",
   "From kills": "キル数から",
   "Users": "ユーザー",
-  "Level 100 = admin (everything), 80 = restricted (no games, servers or users). Each user changes their password and TOTP only themselves, under My account.": "レベル 100 = 管理者 (すべて)、80 = 制限付き (ゲーム、サーバー、ユーザーは不可)。パスワードと TOTP は各ユーザーが自分で「マイアカウント」から変更します。",
   "First password, at least 10 characters. Afterwards only the user changes it, under My account.": "初期パスワード、10文字以上。以後はユーザー本人が「マイアカウント」で変更します。",
   "Level": "レベル",
   "General": "全般",

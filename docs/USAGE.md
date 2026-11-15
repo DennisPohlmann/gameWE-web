@@ -467,10 +467,49 @@ removing TOTP and `create-admin` delete the user's tokens too, so scripts need
 a new token afterwards.
 
 Users are the rows of `hlstats_Users`. Changing the address, port or public address of a server without entering the
-RCON password again clears the stored one. Level 100 may change everything, level 80
-everything except games, servers and users, and it cannot change rows that
-belong to those (reset schedules, VAC block and bot settings in the raw
-options; they are read-only there) or the TeamSpeak query login and address. A new user gets a first password
+RCON password again clears the stored one.
+
+**Admin rights.** Level 100 (full admin) may do everything and is the only
+one who manages the admins and their rights (Settings → Users). A level 80
+admin may do only what is checked on their page under **Rights**; buttons for
+presets (read only, moderator, ranking manager, as level 80 before) check a
+set of boxes, which is saved with Save. The rights, with their names in the
+admin API:
+
+| Right | May |
+|---|---|
+| `rankings.view` / `rankings.edit` | see rankings / create, change and delete them, with bots, VAC block and FastDL |
+| `servers.view` / `servers.edit` | see servers / create, change, delete and move them (RCON password included) |
+| `players.view` / `players.edit` | see players and clans / change them |
+| `players.erase` | erase a player for good (Delete player data) |
+| `definitions.view` / `definitions.edit` | see weapons, actions, teams, roles, awards and ranks / change them |
+| `resets` | reset rankings, set the reset schedules, edit the hall of fame |
+| `chat.view` | the admin chat page, and the chat on the player pages while it is not public |
+| `ips.view` | the IP address page, and the IP addresses on the player pages |
+| `jobs.view` | the jobs and the collector's page |
+| `settings.view` / `settings.edit` | see the settings, privacy and raw options / change them |
+| `settings.protected` | change protected settings: credentials and keys (TeamSpeak query, Steam key, API, ...) and the raw rows of ranking rules (reset schedules, VAC block, bots, FastDL) |
+
+Changing includes seeing (`rankings.edit` brings `rankings.view` along). The
+overview and My account (password, TOTP, API tokens) are for every admin.
+Menus and buttons show only what the rights allow, and every page, form, API
+operation and MCP tool checks the right on the server (`403 forbidden` in the
+API). A level 80 admin without stored rights (every admin from before
+the rights existed) keeps what level 80 always had: see rankings, players, clans,
+definitions, chat, IPs, jobs and settings, and change players, clans,
+definitions and settings. The rights are stored in `hlstats_Options`
+(`gamewe_perms_<hash of the user name>`, hidden on the raw page) and go
+with the account: deleting the user removes them, a new user of the same
+name starts with the old level 80 rights or those given when they are
+created. At least one admin with level 100 always stays: the last one
+cannot be demoted or deleted, and nobody changes their own level. In the
+admin API, the users operations (level 100 only) return and take
+`permissions`, e.g. `POST /api/v1/admin/users` with `{"username": "mod",
+"password": "...", "acclevel": "80", "permissions": ["chat.view",
+"ips.view"]}`, or `PATCH /api/v1/admin/users/mod` with only `permissions`;
+`GET /api/v1/admin/me` shows the token owner's rights.
+
+A new user gets a first password
 when they are created; after that each user changes only their own password
 (My account, with the current one), in the admin area and in the API, and
 only the user sets up or removes their TOTP. On the server,
@@ -486,7 +525,7 @@ top bar of every admin page counts the time left down (m:ss, red in the
 last minute) and starts again with each activity; at 0 the page asks the
 server and signs out, unless another tab was active meanwhile (then the
 countdown shows that tab's time).
-Settings → Admin area (level 100) turns it off or sets the time (1 to 1440
+Settings → Admin area (right `settings.protected`) turns it off or sets the time (1 to 1440
 minutes, `gamewe_admin_auto_logout`, `gamewe_admin_logout_minutes` in
 `hlstats_Options`). The session cookie carries the time of the last
 activity; an open admin page renews it at most once a minute (every
@@ -594,7 +633,7 @@ menu button), and lists turn into cards on narrow screens:
   "On this page" (Settings, Servers in this ranking, Values of this
   ranking, Bots, VAC block, Scheduled reset, Maintenance, each with an
   icon) stays below the top bar while scrolling and marks the card in view
-  (on a phone one row that scrolls sideways); then the cards Settings (code, game, name, hidden, order; level 100), Servers
+  (on a phone one row that scrolls sideways); then the cards Settings (code, game, name, hidden, order; right `rankings.edit`), Servers
   (address, map and players now, edit, move a server into another ranking of
   the same game, move servers of other rankings of the same game in, only
   those are listed and every other is refused, also in the server form and
@@ -658,7 +697,7 @@ What the admin area edits:
   value, and hides it again. The field is masked by default; the stored
   value is not in the page but loaded on that click (server action
   `revealSecretAction`), only for an admin allowed to change it (the
-  entity's or setting's level, FastDL access level 100). A value set only
+  right to change the entity or setting, FastDL access `rankings.edit`). A value set only
   in the environment is never shown. The admin API never returns secrets.
   Public pages never read it, and the
   read-only web user has no right to that column. The optional **log
@@ -692,7 +731,7 @@ What the admin area edits:
   to the list with the same filters. The player list shows hidden and banned
   players marked and filters them (All, Visible, Hidden, Banned), so they can
   be let back in; the public pages keep leaving them out.
-- **Reset ranking** (level 100, needs collector 0.1.0 or newer): sets one ranking
+- **Reset ranking** (right `resets`, needs collector 0.1.0 or newer): sets one ranking
   back, in one of three kinds (collector 0.2.0 or newer; an older collector
   refuses the job and changes nothing):
   - "Player statistics only" deletes the events, player histories, the
@@ -732,7 +771,7 @@ What the admin area edits:
   deletes finished and failed jobs after 30 days (every hour, and `gamewe db
   purge` too), waiting and running ones stay, so the list reaches back about
   30 days.
-- **Hall of fame & scheduled reset** (level 100, on the ranking's overview
+- **Hall of fame & scheduled reset** (right `resets`, on the ranking's overview
   `/admin/rankings/<code>`, needs a collector with the table
   `hlstats_gamewe_hall_of_fame`): resets the ranking every N days, weeks,
   months, quarters or years, in one of the three kinds above. Schedule: "As
@@ -758,7 +797,7 @@ What the admin area edits:
   `gamewe_hof_<code>`; the collector writes `gamewe_reset_last_<code>`). From
   the console: `gamewe halloffame schedule CODE [EVERY|off|inherit] -mode
   MODE`.
-- **Scheduled reset for all rankings** (level 100, on the reset page
+- **Scheduled reset for all rankings** (right `resets`, on the reset page
   `/admin/reset`, below the manual reset; old links to
   `/admin/rankings#hall-of-fame` lead there): one schedule (with start day
   and kind of reset) for every ranking set to "As for all rankings", e.g.
@@ -796,7 +835,7 @@ What the admin area edits:
   Below the list of following rankings the card names the reset time
   (`features.scheduled_resets.time` in the collector's config.yaml, default
   00:00, in its time zone) and the console command.
-- **Edit the hall of fame** (level 100, `/admin/rankings/<code>/hall-of-fame`,
+- **Edit the hall of fame** (right `resets`, `/admin/rankings/<code>/hall-of-fame`,
   "Hall of fame" in the menu of a ranking with servers and "Edit entries" on
   the card, both also before the first reset, when the page says that the
   first entries come with it; "View hall of fame" there and on the card is
@@ -811,7 +850,7 @@ What the admin area edits:
   in the admin is left out the same way. Stars are counted from the podiums.
   Only the column `removed` is written; the admin database user may update
   nothing else in `hlstats_gamewe_hall_of_fame`.
-- **Bots** (level 100, on the ranking's overview `/admin/rankings/<code>`):
+- **Bots** (right `rankings.edit`, on the ranking's overview `/admin/rankings/<code>`):
   three switches per ranking, all on by default. "Bots in the ranking": bots
   are ranked like players (they can be number 1, win awards, have profile
   pages); off, they stay out of the ranking and the awards, their names are
@@ -846,7 +885,7 @@ What the admin area edits:
   which the collector's grants do not give yet: without it the form says
   so and the player can be changed after their next connect. The overview's "hidden or banned" counts inactive players
   too.
-  **Delete player data** on a player's page (level 100, for erasure requests)
+  **Delete player data** on a player's page (right `players.erase`, for erasure requests)
   queues a job for the collector, which pauses the ranking's servers and deletes
   the player with names, Steam IDs, statistics, events, chat, connection data,
   bans and hall of fame entries; the job list shows the deleted rows. Events

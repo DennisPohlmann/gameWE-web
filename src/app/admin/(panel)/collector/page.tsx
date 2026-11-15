@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { PageHead } from "@/components/admin/page-head";
 import { adminDict } from "@/lib/admin-i18n";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { collectorSchema, collectorStatus } from "@/lib/collector-status";
 import { adminQuery } from "@/lib/db";
 import { fmtDateTime, nowUnix } from "@/lib/format";
@@ -16,7 +16,7 @@ import { updateStatus } from "@/lib/updates";
 // menu): running or not, last sign of life, version, environment, database
 // schema and open jobs, all from what the collector writes. Read only.
 export default async function CollectorPage() {
-  await requireAdmin();
+  await requirePerm("jobs.view");
   const lang = await getAdminLang();
   const u = adminDict(lang).ui;
   const [st, schema, updates, open] = await Promise.all([

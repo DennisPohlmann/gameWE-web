@@ -471,7 +471,6 @@ const texts: Record<string, string> = {
   "Placeholders such as {LANG_RANG_PVT} (Private) or {LANG_RANG_GEN} (General) show the rank with its insignia; any other text is shown as it is, with a badge of its initials.": "Plaatshouders zoals {LANG_RANG_PVT} (soldaat) of {LANG_RANG_GEN} (generaal) tonen de rang met zijn insigne; andere tekst wordt getoond zoals hij is, met een badge van de beginletters.",
   "From kills": "Vanaf kills",
   "Users": "Gebruikers",
-  "Level 100 = admin (everything), 80 = restricted (no games, servers or users). Each user changes their password and TOTP only themselves, under My account.": "Niveau 100 = beheerder (alles), 80 = beperkt (geen spellen, servers of gebruikers). Elke gebruiker wijzigt zijn wachtwoord en TOTP alleen zelf, onder Mijn account.",
   "First password, at least 10 characters. Afterwards only the user changes it, under My account.": "Eerste wachtwoord, minstens 10 tekens. Daarna wijzigt alleen de gebruiker het, onder Mijn account.",
   "Level": "Niveau",
   "General": "Algemeen",

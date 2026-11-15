@@ -471,7 +471,6 @@ const texts: Record<string, string> = {
   "Placeholders such as {LANG_RANG_PVT} (Private) or {LANG_RANG_GEN} (General) show the rank with its insignia; any other text is shown as it is, with a badge of its initials.": "Чувари места као {LANG_RANG_PVT} (редов) или {LANG_RANG_GEN} (генерал) приказују чин са ознаком; сваки други текст приказује се онакав какав је, са значком од почетних слова.",
   "From kills": "Од убистава",
   "Users": "Корисници",
-  "Level 100 = admin (everything), 80 = restricted (no games, servers or users). Each user changes their password and TOTP only themselves, under My account.": "Ниво 100 = администратор (све), 80 = ограничен (без игара, сервера и корисника). Сваки корисник своју лозинку и TOTP мења само сам, у одељку Мој налог.",
   "First password, at least 10 characters. Afterwards only the user changes it, under My account.": "Прва лозинка, најмање 10 знакова. Касније је мења само корисник, у одељку Мој налог.",
   "Level": "Ниво",
   "General": "Опште",

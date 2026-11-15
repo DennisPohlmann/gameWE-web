@@ -476,7 +476,6 @@ const texts: Record<string, string> = {
   "Placeholders such as {LANG_RANG_PVT} (Private) or {LANG_RANG_GEN} (General) show the rank with its insignia; any other text is shown as it is, with a badge of its initials.": "{LANG_RANG_PVT} (Private)나 {LANG_RANG_GEN} (General) 같은 자리 표시자는 휘장과 함께 계급을 표시합니다. 그 밖의 텍스트는 그대로 표시되며 머리글자 배지가 붙습니다.",
   "From kills": "킬 수부터",
   "Users": "사용자",
-  "Level 100 = admin (everything), 80 = restricted (no games, servers or users). Each user changes their password and TOTP only themselves, under My account.": "레벨 100 = 관리자 (전부), 80 = 제한 (게임, 서버, 사용자 불가). 비밀번호와 TOTP는 각 사용자가 내 계정에서 직접 변경합니다.",
   "First password, at least 10 characters. Afterwards only the user changes it, under My account.": "첫 비밀번호, 10자 이상. 이후에는 사용자가 내 계정에서 직접 변경합니다.",
   "Level": "레벨",
   "General": "일반",

@@ -476,7 +476,6 @@ const texts: Record<string, string> = {
   "Placeholders such as {LANG_RANG_PVT} (Private) or {LANG_RANG_GEN} (General) show the rank with its insignia; any other text is shown as it is, with a badge of its initials.": "العناصر النائبة مثل {LANG_RANG_PVT} (Private) أو {LANG_RANG_GEN} (General) تعرض الرتبة مع شارتها؛ وأي نص آخر يُعرض كما هو، مع شارة بأحرفه الأولى.",
   "From kills": "من القتلات",
   "Users": "المستخدمون",
-  "Level 100 = admin (everything), 80 = restricted (no games, servers or users). Each user changes their password and TOTP only themselves, under My account.": "المستوى 100 = مشرف (كل شيء)، 80 = مقيّد (دون ألعاب أو خوادم أو مستخدمين). كل مستخدم يغيّر كلمة مروره وTOTP بنفسه فقط، ضمن حسابي.",
   "First password, at least 10 characters. Afterwards only the user changes it, under My account.": "كلمة المرور الأولى، 10 أحرف على الأقل. بعدها يغيّرها المستخدم بنفسه فقط، ضمن حسابي.",
   "Level": "المستوى",
   "General": "عام",

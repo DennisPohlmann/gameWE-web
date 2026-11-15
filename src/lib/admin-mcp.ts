@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { adminOps, matchOp, type AdminOp } from "./openapi-admin.ts";
+import { allowed, type PermUser } from "./admin-perms.ts";
 
 // The MCP server of the admin API (POST /api/v1/admin/mcp, lib/admin-api.ts):
 // Model Context Protocol over Streamable HTTP, stateless (no sessions, no
@@ -7,7 +8,7 @@ import { adminOps, matchOp, type AdminOp } from "./openapi-admin.ts";
 // operations of lib/openapi-admin.ts, one tool per operation, and a call runs
 // the same handler as the REST request. Only for tokens with the scope mcp:
 // with read the GET operations, with write the others; what a tool may reach
-// is the token owner's level, as on the API. A writing tool never acts on its
+// is what the token owner's rights allow, as on the API. A writing tool never acts on its
 // first call: it answers with what it would do and a confirmation code, and
 // only the same call again with that code does it (see confirmCode). No
 // database access, so `npm test` can load it.
@@ -58,12 +59,12 @@ export function initializeResult(asked: unknown, version: string) {
 const writes = (op: AdminOp) => op.method !== "GET";
 
 // The operations a token may run as tools: GET with read, the others with
-// write, each up to the admin's level.
-export const toolOps = (level: number, scopes: readonly string[]): AdminOp[] =>
-  adminOps.filter((op) => op.level <= level && scopes.includes(writes(op) ? "write" : "read"));
+// write, each as far as the admin's rights reach.
+export const toolOps = (user: PermUser, scopes: readonly string[]): AdminOp[] =>
+  adminOps.filter((op) => allowed(user, op.need) && scopes.includes(writes(op) ? "write" : "read"));
 
-export function tools(level: number, scopes: readonly string[]) {
-  return toolOps(level, scopes).map((op) => {
+export function tools(user: PermUser, scopes: readonly string[]) {
+  return toolOps(user, scopes).map((op) => {
     const params = op.params ?? [];
     const w = writes(op);
     const required = [...params.filter((p) => p.in === "path" || p.required).map((p) => p.name), ...(op.body ? ["body"] : [])];
@@ -92,8 +93,8 @@ export type ToolCall = { op: AdminOp; params: Record<string, string>; query: URL
 // arguments go through the same router as a REST request (matchOp checks each
 // path parameter's shape); query values become strings, so the handler checks
 // them as it checks a URL; the body is checked by the handler as on the API.
-export function toolCall(name: unknown, args: unknown, level: number, scopes: readonly string[]): ToolCall {
-  const op = toolOps(level, scopes).find((o) => o.operationId === name);
+export function toolCall(name: unknown, args: unknown, user: PermUser, scopes: readonly string[]): ToolCall {
+  const op = toolOps(user, scopes).find((o) => o.operationId === name);
   if (!op) throw new RpcError(-32602, `unknown tool ${String(name)}`);
   if (args !== undefined && (typeof args !== "object" || args === null || Array.isArray(args))) throw new RpcError(-32602, "arguments must be an object");
   const { confirmation, ...a } = (args ?? {}) as Record<string, unknown>;

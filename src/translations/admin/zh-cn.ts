@@ -471,7 +471,6 @@ const texts: Record<string, string> = {
   "Placeholders such as {LANG_RANG_PVT} (Private) or {LANG_RANG_GEN} (General) show the rank with its insignia; any other text is shown as it is, with a badge of its initials.": "诸如 {LANG_RANG_PVT}（列兵）或 {LANG_RANG_GEN}（将军）的占位符会显示带徽章的军衔；其他文本按原样显示，并配有其首字母徽章。",
   "From kills": "起始击杀数",
   "Users": "用户",
-  "Level 100 = admin (everything), 80 = restricted (no games, servers or users). Each user changes their password and TOTP only themselves, under My account.": "等级 100 = 管理员（全部权限），80 = 受限（无游戏、服务器和用户）。每个用户只能自己修改自己的密码和 TOTP，在“我的账户”中。",
   "First password, at least 10 characters. Afterwards only the user changes it, under My account.": "初始密码，至少 10 个字符。之后只有该用户本人可在“我的账户”中修改。",
   "Level": "等级",
   "General": "常规",

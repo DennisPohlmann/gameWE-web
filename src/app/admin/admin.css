@@ -556,6 +556,20 @@ select { padding-inline-end: 28px; }
 .hof-form .hof-num { width: 80px; }
 .hof-form fieldset, .token-scopes { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
 .hof-form legend, .token-scopes legend { font-weight: 600; margin-bottom: 4px; }
+/* A form shown without the right to change it (disabled fieldset) and the
+   rights of an admin (Admin > Users). */
+.adm-ro { border: 0; padding: 0; margin: 0; min-inline-size: 0; }
+.perm-groups { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
+.perm-groups fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; align-content: start; min-inline-size: 0; }
+.perm-groups legend { font-weight: 600; margin-bottom: 4px; }
+.perm-groups label.check input { flex: none; }
+.perm-presets { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.perm-box { display: grid; gap: 14px; }
+/* Level 100 has every right: no checkboxes while it is chosen (no script). */
+form:has(select[name="acclevel"] option[value="100"]:checked) .perm-groups,
+form:has(select[name="acclevel"] option[value="100"]:checked) .perm-presets { display: none; }
+.perm-full { display: none; }
+form:has(select[name="acclevel"] option[value="100"]:checked) .perm-full { display: block; }
 .hof-source label.check { flex-wrap: wrap; }
 .hof-source label.check small { flex-basis: 100%; padding-inline-start: 24px; }
 .hof-own { display: grid; gap: 14px; padding-inline-start: 14px; border-inline-start: 2px solid var(--line-2); }

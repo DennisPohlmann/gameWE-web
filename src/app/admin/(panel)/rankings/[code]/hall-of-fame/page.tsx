@@ -6,7 +6,7 @@ import { hallEntries, hallSettings } from "@/lib/admin-hall";
 import { adminDict, localized } from "@/lib/admin-i18n";
 import { HALL_PAGE_T } from "@/lib/admin-texts";
 import { rankingSummaries } from "@/lib/admin-rankings";
-import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { basePath } from "@/lib/base-path";
 import { localeOf } from "@/lib/format";
 import { periodLabel, podium, type HallUnit } from "@/lib/hall-period";
@@ -15,7 +15,7 @@ import { getAdminLang } from "@/lib/i18n";
 // All stored hall of fame entries of a ranking, to remove or bring back
 // (admins only).
 export default async function HallOfFameEditPage({ params, searchParams }: { params: Promise<{ code: string }>; searchParams: Promise<Record<string, string | undefined>> }) {
-  await requireAdmin(LEVEL_ADMIN);
+  await requirePerm("resets");
   const code = decodeURIComponent((await params).code);
   const status = (await searchParams).hof;
   const r = (await rankingSummaries()).find((x) => x.code === code);

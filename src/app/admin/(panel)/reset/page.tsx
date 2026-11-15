@@ -13,7 +13,7 @@ import { Empty, Pager, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam, st
 import { noAutofill } from "@/lib/autofill";
 import { jobPeriod } from "@/lib/job-period";
 import { rankingSummaries, resettableRankings } from "@/lib/admin-rankings";
-import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { getAdminLang } from "@/lib/i18n";
 import { dateFormat, localeOf } from "@/lib/format";
 import { originText } from "@/lib/job-origin";
@@ -26,7 +26,7 @@ function when(ts: number | null, locale: string) {
 }
 
 export default async function ResetPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  await requireAdmin(LEVEL_ADMIN);
+  await requirePerm("resets");
   const lang = await getAdminLang();
   const t = localized(RESET_T, lang);
   const locale = localeOf(lang);

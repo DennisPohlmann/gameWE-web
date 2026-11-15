@@ -2,6 +2,7 @@ import type { Lang } from "../translations/languages";
 import { GAME_KINDS, RETIRED_GAMES } from "./games";
 import { canonicalIp } from "./ip";
 import { isLogSecret, isLogToken } from "./log-secret";
+import type { Need } from "./admin-perms";
 
 // What the admin area can edit. Each entity is one table; the generic list,
 // edit and save code in app/admin works from these definitions only, so
@@ -59,7 +60,8 @@ export type Entity = {
   joinCols?: string;
   canCreate: boolean;
   canDelete: boolean;
-  minLevel?: number;
+  // The rights to see the rows and to change them (lib/admin-perms.ts).
+  perm: { view: Need; edit: Need };
   // Rows whose key starts with one of these (any case) are never listed,
   // read, created, changed or deleted here, e.g. the TOTP secrets and the
   // TeamSpeak query password in Options.
@@ -88,6 +90,7 @@ const gameField: Field = { name: "game", label: { de: "Rangliste", en: "Ranking"
 export const entities: Entity[] = [
   {
     key: "games",
+    perm: { view: "rankings.view", edit: "rankings.edit" },
     table: "hlstats_Games",
     pk: "id",
     label: { de: "Ranglisten", en: "Rankings" },
@@ -135,10 +138,10 @@ export const entities: Entity[] = [
     order: "display_id, name",
     canCreate: true,
     canDelete: false,
-    minLevel: 100,
   },
   {
     key: "servers",
+    perm: { view: "servers.view", edit: "servers.edit" },
     table: "hlstats_Servers",
     pk: "serverId",
     label: { de: "Server", en: "Servers" },
@@ -195,10 +198,10 @@ export const entities: Entity[] = [
     search: ["name", "address"],
     canCreate: true,
     canDelete: true,
-    minLevel: 100,
   },
   {
     key: "players",
+    perm: { view: "players.view", edit: "players.edit" },
     table: "hlstats_Players",
     pk: "playerId",
     alsoTable: "hlstats_PlayersInactive",
@@ -258,6 +261,7 @@ export const entities: Entity[] = [
   },
   {
     key: "clans",
+    perm: { view: "players.view", edit: "players.edit" },
     table: "hlstats_Clans",
     pk: "clanId",
     label: { de: "Clans", en: "Clans" },
@@ -279,6 +283,7 @@ export const entities: Entity[] = [
   },
   {
     key: "weapons",
+    perm: { view: "definitions.view", edit: "definitions.edit" },
     table: "hlstats_Weapons",
     pk: "weaponId",
     label: { de: "Waffen", en: "Weapons" },
@@ -300,6 +305,7 @@ export const entities: Entity[] = [
   },
   {
     key: "actions",
+    perm: { view: "definitions.view", edit: "definitions.edit" },
     table: "hlstats_Actions",
     pk: "id",
     label: { de: "Aktionen", en: "Actions" },
@@ -327,6 +333,7 @@ export const entities: Entity[] = [
   },
   {
     key: "teams",
+    perm: { view: "definitions.view", edit: "definitions.edit" },
     table: "hlstats_Teams",
     pk: "teamId",
     label: { de: "Teams", en: "Teams" },
@@ -343,6 +350,7 @@ export const entities: Entity[] = [
   },
   {
     key: "roles",
+    perm: { view: "definitions.view", edit: "definitions.edit" },
     table: "hlstats_Roles",
     pk: "roleId",
     label: { de: "Rollen", en: "Roles" },
@@ -359,6 +367,7 @@ export const entities: Entity[] = [
   },
   {
     key: "awards",
+    perm: { view: "definitions.view", edit: "definitions.edit" },
     table: "hlstats_Awards",
     pk: "awardId",
     label: { de: "Awards", en: "Awards" },
@@ -381,6 +390,7 @@ export const entities: Entity[] = [
   },
   {
     key: "ranks",
+    perm: { view: "definitions.view", edit: "definitions.edit" },
     table: "hlstats_Definition_Ranks_Ribbons",
     pk: "id",
     label: { de: "Ränge", en: "Ranks" },
@@ -413,25 +423,25 @@ export const entities: Entity[] = [
   },
   {
     key: "users",
+    perm: { view: "admin", edit: "admin" },
     table: "hlstats_Users",
     pk: "username",
     pkIsText: true,
     label: { de: "Benutzer", en: "Users" },
     help: {
-      de: "Stufe 100 = Admin (alles), 80 = eingeschränkt (keine Spiele, Server und Benutzer). Passwort und TOTP ändert jeder Benutzer nur selbst, unter Mein Konto.",
-      en: "Level 100 = admin (everything), 80 = restricted (no games, servers or users). Each user changes their password and TOTP only themselves, under My account.",
+      de: "Stufe 100 = Voll-Admin (alle Rechte, verwaltet die Admins). Stufe 80 = eingeschränkt: nur die Rechte, die auf der Seite des Admins angehakt sind. Passwort und TOTP ändert jeder Benutzer nur selbst, unter Mein Konto.",
+      en: "Level 100 = full admin (every right, manages the admins). Level 80 = restricted: only the rights checked on the admin's page. Each user changes their password and TOTP only themselves, under My account.",
     },
     fields: [
       { name: "username", label: { de: "Benutzername", en: "User name" }, type: "text", inList: true, required: true, createOnly: true, max: 128 },
       // Only when the user is created: afterwards each admin changes only
       // their own password, on My account with the current one.
       { name: "password", label: { de: "Passwort", en: "Password" }, type: "password", createOnly: true, help: { de: "Erstes Passwort, mindestens 10 Zeichen. Danach ändert es nur der Benutzer selbst unter Mein Konto.", en: "First password, at least 10 characters. Afterwards only the user changes it, under My account." } },
-      { name: "acclevel", label: { de: "Stufe", en: "Level" }, type: "select", options: [["100", "100 Admin"], ["80", "80"]], inList: true, required: true },
+      { name: "acclevel", label: { de: "Stufe", en: "Level" }, type: "select", options: [["100", { de: "100 Voll-Admin", en: "100 Full admin" }], ["80", { de: "80 Eingeschränkt", en: "80 Restricted" }]], inList: true, required: true },
     ],
     order: "username",
     canCreate: true,
     canDelete: true,
-    minLevel: 100,
   },
 ];
 

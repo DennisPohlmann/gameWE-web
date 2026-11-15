@@ -2,9 +2,10 @@ import { entities, type Entity, type Field } from "./admin-entities.ts";
 import { RAW_GROUP, settingGroups, type Setting } from "./admin-settings.ts";
 import { MAX_TOKENS_PER_USER, NAME_MAX } from "./api-token-core.ts";
 import { RESET_MODES } from "./reset-modes.ts";
+import { PERMS, type Need } from "./admin-perms.ts";
 
 // The admin API (/api/v1/admin/...): one entry per operation. The router in
-// lib/admin-api.ts serves exactly these (method, path, level, handler) and
+// lib/admin-api.ts serves exactly these (method, path, right, handler) and
 // openapi.ts adds them to the document on /api, so routes and documentation
 // cannot drift apart. No database access, so `npm test` can load it.
 
@@ -21,7 +22,7 @@ export type AdminOp = {
   tag: AdminTag;
   summary: string;
   description: string;
-  level: 80 | 100; // admin level needed (100 = admin, 80 = restricted)
+  need: Need; // the right needed (lib/admin-perms.ts; "admin": level 100, null: any admin)
   handler: string; // name of the handler in lib/admin-api.ts
   entity?: string; // admin-entities key, for the generic row handlers
   params?: AdminParam[];
@@ -124,14 +125,13 @@ const ROW_EXAMPLES: Record<string, Record<string, unknown>> = {
   roles: { id: 1, code: "sniper", name: "Sniper", hidden: false, game: G },
   awards: { id: 9, awardType: "W", code: "awp", name: "AWP Master", verb: "kills with the AWP", game: G },
   ranks: { id: 5, name: "{LANG_RANG_PVT}", minimum: 50, game_code: G },
-  users: { id: "editor", username: "editor", acclevel: "80" },
+  users: { id: "editor", username: "editor", acclevel: "80", permissions: ["rankings.view", "players.view", "players.edit", "chat.view"] },
 };
 
 function entityOps(): AdminOp[] {
   const ops: AdminOp[] = [];
   for (const m of ADMIN_ENTITIES) {
     const e = entities.find((x) => x.key === m.key) as Entity;
-    const level = (e.minLevel ?? 80) as 80 | 100;
     const Name = m.one[0].toUpperCase() + m.one.slice(1);
     const Names = m.path[0].toUpperCase() + m.path.slice(1);
     const base = `/admin/${m.path}`;
@@ -153,7 +153,7 @@ function entityOps(): AdminOp[] {
         tag: m.tag,
         summary: `List ${m.path}`,
         description: `${e.help?.en ?? e.label.en} Same list as Admin → ${e.label.en}.`,
-        level,
+        need: e.perm.view,
         handler: "entityList",
         entity: m.key,
         params: [
@@ -177,7 +177,7 @@ function entityOps(): AdminOp[] {
       tag: m.tag,
       summary: `Get a ${m.one}`,
       description: `One ${m.one} with every field of its edit page. Passwords and secrets are never returned, only whether a secret is set.`,
-      level,
+      need: e.perm.view,
       handler: "entityGet",
       entity: m.key,
       params: [idP],
@@ -197,13 +197,13 @@ function entityOps(): AdminOp[] {
           `Creates a ${m.one} with the checks of the admin page.` +
           (m.key === "games" ? " `realgame` is the ranking's game; `template` (optional) copies weapons, actions, teams, roles, awards, ranks and ribbons from that ranking, must be of the same game and defaults to the game's standard ranking (e.g. `css`); `name` empty takes the game's name; `realgame` empty takes the template's game, one of the two is required." : "") +
           (m.key === "servers" ? " IP and port must be unique (`409 duplicate`, with the other server's ID)." : "") +
-          (m.key === "users" ? " `password` is required." : "") +
+          (m.key === "users" ? " `password` is required. `permissions` are the rights of a level 80 admin (left out: the old level 80 rights)." : "") +
           " Fields left out get the value an empty form field gives.",
-        level,
+        need: e.perm.edit,
         handler: "entityCreate",
         entity: m.key,
         body: ref(`Admin${Name}Create`),
-        bodyExample: m.key === "users" ? { username: "editor", password: "REPLACE_WITH_A_PASSWORD", acclevel: "80" } : m.key === "games" ? { code: G, template: "css", name: "Example Assault", hidden: false, display_id: 1 } : { ...bodyEx(create), ...(m.key === "servers" ? { rcon_password: "REPLACE_WITH_RCON_PASSWORD" } : {}) },
+        bodyExample: m.key === "users" ? { username: "editor", password: "REPLACE_WITH_A_PASSWORD", acclevel: "80", permissions: ["players.edit", "chat.view"] } : m.key === "games" ? { code: G, template: "css", name: "Example Assault", hidden: false, display_id: 1 } : { ...bodyEx(create), ...(m.key === "servers" ? { rcon_password: "REPLACE_WITH_RCON_PASSWORD" } : {}) },
         status: 201,
         response: row,
         example: ex,
@@ -220,14 +220,15 @@ function entityOps(): AdminOp[] {
         `Changes only the fields sent, with the checks of the admin page.` +
         (m.key === "servers" ? " A new `game` must be a ranking of the same game (`409 mismatch`); IP and port stay unique (`409 duplicate`). A secret set to null is cleared." : "") +
         (m.key === "players" ? " `hideranking`: 0 visible, 1 hidden (admin or bot), 2 banned, 3 hidden by the player." : "") +
+        (m.key === "users" ? " `permissions` replaces the rights of a level 80 admin; demoting the last level 100 admin is refused (`409 last_full_admin`)." : "") +
         selfNote +
         pwNote,
-      level,
+      need: e.perm.edit,
       handler: "entityUpdate",
       entity: m.key,
       params: [idP],
       body: ref(`Admin${Name}Update`),
-      bodyExample: m.key === "users" ? { acclevel: "100" } : Object.fromEntries(Object.entries(bodyEx(update)).slice(0, 2)),
+      bodyExample: m.key === "users" ? { permissions: ["rankings.view", "ips.view"] } : Object.fromEntries(Object.entries(bodyEx(update)).slice(0, 2)),
       status: 200,
       response: row,
       example: ex,
@@ -240,18 +241,27 @@ function entityOps(): AdminOp[] {
         operationId: `adminDelete${Name}`,
         tag: m.tag,
         summary: `Delete a ${m.one}`,
-        description: `Deletes the ${m.one} for good.` + (m.key === "users" ? " Also removes the user's TOTP key and API tokens." : "") + selfNote,
-        level,
+        description: `Deletes the ${m.one} for good.` + (m.key === "users" ? " Also removes the user's TOTP key, API tokens and rights. The last level 100 admin cannot be deleted (`409 last_full_admin`)." : "") + selfNote,
+        need: e.perm.edit,
         handler: "entityDelete",
         entity: m.key,
         params: [idP],
         status: 204,
-        errors: [404],
+        errors: m.key === "users" ? [404, 409] : [404],
       });
     }
   }
   return ops;
 }
+
+// The rights of an admin (users only): what a level 80 admin may do.
+const permsSchema = (input: boolean): Schema =>
+  arr(
+    str("", { enum: [...PERMS] }),
+    input
+      ? "Rights of a level 80 admin (a change needs seeing too, so e.g. rankings.edit adds rankings.view). Left out, they stay (a new admin gets the old level 80 rights). Only rights you have yourself."
+      : "What the admin may do; level 100 has every right",
+  );
 
 function entitySchemas(): Record<string, Schema> {
   const out: Record<string, Schema> = {};
@@ -263,17 +273,25 @@ function entitySchemas(): Record<string, Schema> {
       if (f.virtual || f.type === "password") continue;
       props[f.type === "secret" ? `${f.name}Set` : f.name] = fieldSchema(f, false);
     }
+    if (m.key === "users") props.permissions = permsSchema(false);
     // Optional columns may be missing in older databases.
     out[`Admin${Name}`] = obj(props, e.fields.filter((f) => f.optional).flatMap((f) => [f.name, `${f.name}Set`]), `${e.label.en} (Admin → ${e.label.en})`);
     const create = e.fields.filter((f) => !f.readonly);
     if (e.canCreate) {
       out[`Admin${Name}Create`] = {
-        ...obj(Object.fromEntries(create.map((f) => [f.name, fieldSchema(f, true)])), create.filter((f) => !f.required && !(m.key === "users" && f.type === "password")).map((f) => f.name)),
+        ...obj(
+          { ...Object.fromEntries(create.map((f) => [f.name, fieldSchema(f, true)])), ...(m.key === "users" ? { permissions: permsSchema(true) } : {}) },
+          [...create.filter((f) => !f.required && !(m.key === "users" && f.type === "password")).map((f) => f.name), "permissions"],
+        ),
         description: `New ${m.one}`,
       };
     }
     const update = e.fields.filter((f) => !f.readonly && !f.createOnly && !f.virtual);
-    out[`Admin${Name}Update`] = { ...obj(Object.fromEntries(update.map((f) => [f.name, fieldSchema(f, true)])), update.map((f) => f.name)), minProperties: 1, description: "Only the fields to change" };
+    out[`Admin${Name}Update`] = {
+      ...obj({ ...Object.fromEntries(update.map((f) => [f.name, fieldSchema(f, true)])), ...(m.key === "users" ? { permissions: permsSchema(true) } : {}) }, [...update.map((f) => f.name), "permissions"]),
+      minProperties: 1,
+      description: "Only the fields to change",
+    };
   }
   return out;
 }
@@ -281,7 +299,7 @@ function entitySchemas(): Record<string, Schema> {
 // ---------------------------------------------------------------- settings
 
 function settingSchema(s: Setting, input: boolean): Schema {
-  const d = s.label.en + (s.help ? `. ${s.help.en}` : "") + (s.minLevel ? ` (level ${s.minLevel} only)` : "");
+  const d = s.label.en + (s.help ? `. ${s.help.en}` : "") + (s.minLevel ? " (needs the right settings.protected)" : "");
   switch (s.type) {
     case "bool":
       return bool(d);
@@ -378,14 +396,14 @@ export const adminSchemas: Record<string, Schema> = {
     area: str("website, services or collector"),
     title: str("Title of the page"),
     settings: { type: "object", additionalProperties: true, description: "Key → stored value or default. Secrets: { set }; links: { label, url }; order: tab ids. The types are those of AdminSettingsChange." },
-    readOnly: arr(str("Key"), "Settings above your admin level"),
+    readOnly: arr(str("Key"), "Settings you cannot change (they need the right settings.protected)"),
   }),
   AdminJob: job,
   AdminSettingGroup: obj({
     id: str("Group id, as in /admin/settings/{group}"),
     area: str("website, services or collector"),
     title: str("Title of the settings page"),
-    settings: arr(obj({ key: str("hlstats_Options key"), type: str("text, number, bool, choice, link, template, secret, home or order"), label: str("Label of the field"), readOnly: bool("You cannot change it (admin level)") })),
+    settings: arr(obj({ key: str("hlstats_Options key"), type: str("text, number, bool, choice, link, template, secret, home or order"), label: str("Label of the field"), readOnly: bool("You cannot change it (needs the right settings.protected)") })),
   }),
 };
 
@@ -435,12 +453,12 @@ export const adminOps: AdminOp[] = [
     operationId: "adminMe",
     tag: "Admin: account",
     summary: "Token owner",
-    description: "The admin the token belongs to, their level and the token used. Tokens are created and revoked only on the account page (Admin → My account → API tokens); there is no API for that.",
-    level: 80,
+    description: "The admin the token belongs to, their level and rights, and the token used. Tokens are created and revoked only on the account page (Admin → My account → API tokens); there is no API for that.",
+    need: null,
     handler: "me",
     status: 200,
-    response: obj({ username: str("User name"), level: int("Admin level: 100 admin, 80 restricted"), token: obj({ name: str("Name of the token"), scopes: arr(str("", { enum: ["read", "write", "mcp"] }), "What the token may do"), prefix: str("First characters of the token") }) }),
-    example: { username: "admin", level: 100, token: { name: "deploy script", scopes: ["read", "write"], prefix: "gwe_Ab12Cd34" } },
+    response: obj({ username: str("User name"), level: int("Admin level: 100 full admin, 80 restricted"), permissions: arr(str("", { enum: [...PERMS] }), "What the admin may do (level 100: every right)"), token: obj({ name: str("Name of the token"), scopes: arr(str("", { enum: ["read", "write", "mcp"] }), "What the token may do"), prefix: str("First characters of the token") }) }),
+    example: { username: "admin", level: 100, permissions: [...PERMS], token: { name: "deploy script", scopes: ["read", "write"], prefix: "gwe_Ab12Cd34" } },
     errors: [],
   },
   {
@@ -450,7 +468,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: rankings",
     summary: "List rankings",
     description: "Every ranking (also hidden ones and templates without servers) with its game and number of servers, in display order.",
-    level: 80,
+    need: "rankings.view",
     handler: "rankingsList",
     status: 200,
     response: arr(ref("AdminRankingSummary")),
@@ -465,7 +483,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: rankings",
     summary: "Servers of a ranking",
     description: "The servers whose logs count for this ranking.",
-    level: 100,
+    need: "servers.view",
     handler: "rankingServers",
     params: [codeParam],
     status: 200,
@@ -480,7 +498,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: rankings",
     summary: "Assign servers to a ranking",
     description: "Moves the servers into this ranking (they leave their current one). Only servers of the same game (`409 mismatch`). The collector picks the change up within a minute.",
-    level: 100,
+    need: "servers.edit",
     handler: "rankingAssign",
     params: [codeParam],
     body: obj({ servers: arr(int("Server ID", { minimum: 1 }), "Server IDs (1-500)") }),
@@ -497,7 +515,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: servers",
     summary: "Move a server to another ranking",
     description: "Moves one server into another ranking of the same game (`409 mismatch` otherwise).",
-    level: 100,
+    need: "servers.edit",
     handler: "serverMove",
     params: [idParam("server")],
     body: obj({ ranking: str("Code of the target ranking") }),
@@ -514,7 +532,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: rankings",
     summary: "Bot settings of a ranking",
     description: "Whether bots are ranked, kills with bots give points, kills of bots count for the career rank and kills with bots count in the players' stats.",
-    level: 80,
+    need: "rankings.view",
     handler: "botsGet",
     params: [codeParam],
     status: 200,
@@ -529,7 +547,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: rankings",
     summary: "Change the bot settings",
     description: "Switching `ranked` also shows or hides the ranking's existing bots; `changedBots` is their number.",
-    level: 100,
+    need: "rankings.edit",
     handler: "botsSet",
     params: [codeParam],
     body: obj({ ranked: bool("Bots appear in the ranking"), points: bool("Kills with bots give points"), kills: bool("Kills of bots count for the career rank"), stats: bool("Kills with bots count in the players' stats (kills, deaths, headshots, K/D)") }),
@@ -546,7 +564,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: rankings",
     summary: "VAC block of a ranking",
     description: "Whether players with a VAC or game ban are left out of the ranking.",
-    level: 80,
+    need: "rankings.view",
     handler: "vacGet",
     params: [codeParam],
     status: 200,
@@ -561,7 +579,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: rankings",
     summary: "Switch the VAC block",
     description: "The collector applies it within a minute (it needs a Steam API key).",
-    level: 100,
+    need: "rankings.edit",
     handler: "vacSet",
     params: [codeParam],
     body: obj({ block: bool("VAC block on") }),
@@ -578,7 +596,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: rankings",
     summary: "Own FastDL address and download headers of a ranking",
     description: "Empty: the ranking uses the global address (setting `gamewe_fastdl_url`) and the global header fields (`gamewe_fastdl_agent`, `gamewe_fastdl_referer`, `gamewe_fastdl_user`; the secrets `gamewe_fastdl_password`, `gamewe_fastdl_token`, `gamewe_fastdl_header`). Secrets only say whether they are set.",
-    level: 80,
+    need: "rankings.view",
     handler: "fastdlGet",
     params: [codeParam],
     status: 200,
@@ -593,7 +611,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: rankings",
     summary: "Change the own FastDL address and download headers",
     description: "url: http(s) only, no user or password; empty removes it, so the global address applies. The download refuses private addresses and redirects as with the global address. The other fields are optional: missing keeps the stored value, an empty agent, referer or user removes it (the global one applies), null removes a secret. A token goes as `Authorization: Bearer`, a user with the password as `Authorization: Basic`; this ranking's token or user replace the global authentication, a token wins over a user. header: one `Name: value`, not Host, Authorization, User-Agent, Referer or connection headers. Secrets are never logged or returned.",
-    level: 100,
+    need: "rankings.edit",
     handler: "fastdlSet",
     params: [codeParam],
     body: obj(
@@ -621,7 +639,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: rankings",
     summary: "Reset schedule and hall of fame of a ranking",
     description: "The ranking's own schedule, the one for all rankings, and the one in effect.",
-    level: 80,
+    need: "rankings.view",
     handler: "hallGet",
     params: [codeParam],
     status: 200,
@@ -636,7 +654,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: rankings",
     summary: "Change the reset schedule of a ranking",
     description: "`schedule` is needed for `source: own`. Switching a schedule on or changing it needs `confirm: true` (`400 confirmation_required`): the ranking is then reset at the end of every period. A template (a ranking without servers) has no schedule (`409 template_ranking`).",
-    level: 100,
+    need: "resets",
     handler: "hallSet",
     params: [codeParam],
     body: hallBody,
@@ -653,7 +671,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: rankings",
     summary: "Hall of fame entries",
     description: "Every stored period with all places, removed entries too, newest first.",
-    level: 100,
+    need: "resets",
     handler: "hallEntries",
     params: [codeParam],
     status: 200,
@@ -676,7 +694,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: rankings",
     summary: "Remove hall of fame entries",
     description: "Removes one place or, without `place`, the whole period from the hall of fame (they can be restored). Needs `confirm: true`.",
-    level: 100,
+    need: "resets",
     handler: "hallRemove",
     params: [codeParam],
     body: obj({ start: str("First day of the period, YYYY-MM-DD"), place: int("Place 1-99; left out: the whole period", { minimum: 1, maximum: 99 }), confirm: bool("Must be true") }, ["place"]),
@@ -693,7 +711,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: rankings",
     summary: "Restore hall of fame entries",
     description: "Brings back one place or, without `place`, the whole period.",
-    level: 100,
+    need: "resets",
     handler: "hallRestore",
     params: [codeParam],
     body: entryParts,
@@ -711,7 +729,7 @@ export const adminOps: AdminOp[] = [
     summary: "Delete a player's data",
     description:
       "Queues a job for an erasure request; the collector deletes the player with names, Steam IDs, statistics, events, chat, connection data, bans and hall of fame entries (it pauses the ranking's servers). `confirm: true` is required because the data is **deleted for good**. Events shared with another player go too, that player's totals stay.",
-    level: 100,
+    need: "players.erase",
     handler: "playerErase",
     params: [idParam("player")],
     body: obj({ confirm: bool("Must be true: the data is deleted for good") }),
@@ -729,7 +747,7 @@ export const adminOps: AdminOp[] = [
     summary: "Reset a ranking",
     description:
       "Queues a reset job; the collector runs it (it pauses the ranking's servers). `confirm: true` is required because the data is **deleted for good**. A reset already queued for the ranking is returned instead (`existing: true`). Poll `/admin/jobs/{id}` for the result. A template (a ranking without servers) is never reset (`409 template_ranking`).",
-    level: 100,
+    need: "resets",
     handler: "reset",
     params: [codeParam],
     body: obj({ mode: modeSchema, confirm: bool("Must be true: the data is deleted for good") }),
@@ -746,7 +764,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: rankings",
     summary: "Reset schedule for all rankings",
     description: "The schedule every ranking without its own one follows.",
-    level: 80,
+    need: "rankings.view",
     handler: "globalHallGet",
     status: 200,
     response: obj({ enabled: bool("Switched on"), schedule: nullable(ref("AdminSchedule")), mode: modeSchema }),
@@ -760,7 +778,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: rankings",
     summary: "Change the reset schedule for all rankings",
     description: "Switching it on or changing it while on needs `confirm: true`: every ranking that follows it is reset at the end of every period.",
-    level: 100,
+    need: "resets",
     handler: "globalHallSet",
     body: obj({ enabled: bool("Switched on"), schedule: ref("AdminSchedule"), mode: modeSchema, confirm: bool("Must be true when it is switched on or changed") }, ["confirm"]),
     bodyExample: { enabled: true, schedule: { unit: "month", every: 1, monthDay: 1 }, mode: "player-stats", confirm: true },
@@ -776,7 +794,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: jobs and resets",
     summary: "Jobs of the collector",
     description: "What the collector does next, what waits or runs and what it did last (Admin → Jobs).",
-    level: 80,
+    need: "jobs.view",
     handler: "jobs",
     status: 200,
     response: obj({
@@ -807,7 +825,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: jobs and resets",
     summary: "State of a reset job",
     description: "The reset job returned by `POST /admin/rankings/{code}/reset`.",
-    level: 80,
+    need: "jobs.view",
     handler: "job",
     params: [idParam("job", 17)],
     status: 200,
@@ -825,7 +843,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: settings",
     summary: "Settings pages",
     description: "The settings pages and their settings (without values).",
-    level: 80,
+    need: "settings.view",
     handler: "settingGroups",
     status: 200,
     response: arr(ref("AdminSettingGroup")),
@@ -839,7 +857,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: settings",
     summary: "Other options (raw)",
     description: "hlstats_Options rows without a field on a settings page. Secrets, TOTP keys, API tokens and the privacy texts are never listed.",
-    level: 80,
+    need: "settings.view",
     handler: "rawGet",
     status: 200,
     response: arr(obj({ key: str("Key"), value: str("Value"), readOnly: bool("Written by the collector") })),
@@ -852,8 +870,8 @@ export const adminOps: AdminOp[] = [
     operationId: "adminUpdateRawOptions",
     tag: "Admin: settings",
     summary: "Change other options (raw)",
-    description: "Changes or deletes listed rows and adds one new key (letters, digits, `_ . -`; not a key of a settings page or a hidden one). Below level 100, rows of reset schedules, the VAC block and bot settings are refused. Values: at most 255 characters, no line breaks.",
-    level: 80,
+    description: "Changes or deletes listed rows and adds one new key (letters, digits, `_ . -`; not a key of a settings page or a hidden one). Without the right settings.protected, rows of reset schedules, the VAC block and bot settings are refused. Values: at most 255 characters, no line breaks.",
+    need: "settings.edit",
     handler: "rawSet",
     body: obj({ set: { type: "object", additionalProperties: { type: "string", maxLength: 255 }, description: "Existing keys and their new values" }, delete: arr(str("Key"), "Existing keys to delete"), create: obj({ key: str("New key", { maxLength: 128 }), value: str("Value", { maxLength: 255 }) }) }, ["set", "delete", "create"]),
     bodyExample: { set: { contact: "admin@example.org" }, create: { key: "example_key", value: "1" } },
@@ -869,7 +887,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: settings",
     summary: "Settings of one page",
     description: "The stored values (or defaults) of one settings page. Secrets show only whether they are set.",
-    level: 80,
+    need: "settings.view",
     handler: "settingsGet",
     params: [{ name: "group", in: "path", required: true, description: "Settings page", schema: str("", { enum: groupIds }), example: "general" }],
     status: 200,
@@ -883,8 +901,8 @@ export const adminOps: AdminOp[] = [
     operationId: "adminUpdateSettings",
     tag: "Admin: settings",
     summary: "Change settings of one page",
-    description: "Changes only the settings sent, with the checks of the settings page. Settings above your level are refused. Types per setting: see `AdminSettingsChange`.",
-    level: 80,
+    description: "Changes only the settings sent, with the checks of the settings page. Settings that need the right settings.protected are refused without it. Types per setting: see `AdminSettingsChange`.",
+    need: "settings.edit",
     handler: "settingsSet",
     params: [{ name: "group", in: "path", required: true, description: "Settings page", schema: str("", { enum: groupIds }), example: "general" }],
     body: ref("AdminSettingsChange"),
@@ -901,7 +919,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: settings",
     summary: "Operator data of the privacy page",
     description: "Name, postal address, contact e-mail and the free text of the privacy page.",
-    level: 80,
+    need: "settings.view",
     handler: "privacyGet",
     status: 200,
     response: obj({ name: str("Controller"), address: str("Postal address (lines with \\n)"), email: str("Contact e-mail"), text: str("Free text") }),
@@ -915,7 +933,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: settings",
     summary: "Change the operator data of the privacy page",
     description: "All four fields, with the checks of the page (lengths, e-mail format, no hidden characters).",
-    level: 80,
+    need: "settings.edit",
     handler: "privacySet",
     body: obj({ name: str("Controller", { maxLength: 120 }), address: str("Postal address", { maxLength: 120 }), email: str("Contact e-mail", { maxLength: 120 }), text: str("Free text", { maxLength: 3000 }) }),
     bodyExample: { name: "Example Clan e.V.", address: "Example Street 1\n12345 Example City", email: "privacy@example.org", text: "" },
@@ -931,7 +949,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: data",
     summary: "Stored chat",
     description: "All stored chat lines, also of hidden players (Admin → Chat). Personal data.",
-    level: 80,
+    need: "chat.view",
     handler: "chat",
     params: [
       { name: "game", in: "query", description: "Only this ranking", schema: str("", { pattern: "^[A-Za-z0-9_-]{1,32}$" }), example: G },
@@ -952,7 +970,7 @@ export const adminOps: AdminOp[] = [
     tag: "Admin: data",
     summary: "Stored player addresses",
     description: "Address, player and connects (Admin → IP addresses). `q`: an IPv4 address or prefix, a Steam ID or part of a name or host name. Personal data.",
-    level: 80,
+    need: "ips.view",
     handler: "ips",
     params: [
       { name: "game", in: "query", description: "Only this ranking", schema: str("", { pattern: "^[A-Za-z0-9_-]{1,32}$" }), example: G },
@@ -996,10 +1014,10 @@ export const ADMIN_API_INFO = [
   "- **Authentication:** `Authorization: Bearer gwe_...` on every request. Nothing else (no cookie, no query parameter). A missing, wrong, expired or revoked token, or one of an admin that was deleted or lost admin rights, gets `401` without details.",
   "- **Scopes:** chosen when the token is made: `read` (`GET`), `write` (every other method) and `mcp`. A request outside them gets `403 insufficient_scope`. Tokens made before scopes have `read` and `write`.",
   "- **MCP server:** `POST /api/v1/admin/mcp` (Model Context Protocol, Streamable HTTP, stateless, JSON answers) for tokens with `mcp`: one tool per operation below, named by its `operationId` (`GET` with `read`, the others with `write`), returning the same JSON. A changing tool first answers only what it would do and a `confirmation` code (5 minutes); the same call with that code does it.",
-  "- **Rights:** the token acts as its admin, with their level: level 80 cannot reach rankings, servers or users, as in the admin area (`403 forbidden`). Every change is logged with the admin and the token name.",
+  "- **Rights:** the token acts as its admin, with their rights: level 100 may do everything; level 80 only what the rights set for them allow (`rankings.view`, `servers.edit`, `resets`, ...: Admin → Users, or `permissions` of the users operations), as in the admin area. Each operation names the right it needs; without it `403 forbidden`. Admins and their rights are managed only by level 100. Every change is logged with the admin and the token name.",
   "- **Never with a token** (`403 self_security_forbidden`):",
   ...FORBIDDEN_WITH_TOKEN.map((f) => `  - ${f}`),
-  "  Other admins can be created (with a first password), changed (level) and deleted as in the admin area. The password of an existing admin is never set (`403 password_own_only`): each admin changes only their own, on the account page.",
+  "  Other admins can be created (with a first password), changed (level, rights) and deleted as in the admin area, by level 100 only; the last level 100 admin cannot be demoted or deleted (`409 last_full_admin`), and nobody hands out a right they lack (`403 forbidden`). The password of an existing admin is never set (`403 password_own_only`): each admin changes only their own, on the account page.",
   "- **Bodies** are JSON (`Content-Type: application/json`, at most 64 KB). Unknown, read-only or wrongly typed fields are refused (`400`); `PATCH` changes only the fields sent. The checks are those of the admin pages.",
   "- **Errors:** `{ \"error\": code, \"message\": text, \"field\"?: name }` with `400`, `401`, `403`, `404`, `405`, `409` (`mismatch`, `duplicate`), `413`, `415`, `429`, `503`.",
   "- **Rate limit:** 300 requests per minute and address; 20 failed authentications per 15 minutes block the address for 15 minutes.",
@@ -1016,7 +1034,7 @@ export function adminPathItems(): Record<string, Record<string, unknown>> {
   const texts: Record<number, string> = {
     400: "Invalid body or parameter: the field and what it accepts are named; also confirmation_required",
     404: "Unknown ranking, row, job or settings page",
-    409: "mismatch (server and ranking of different games) or duplicate (IP and port taken, or another row with the same unique key, e.g. an award code twice in a ranking)",
+    409: "mismatch (server and ranking of different games), last_full_admin (no level 100 admin would be left) or duplicate (IP and port taken, or another row with the same unique key, e.g. an award code twice in a ranking)",
     503: "The database lacks what this needs (update the collector)",
   };
   const items: Record<string, Record<string, unknown>> = {};
@@ -1030,7 +1048,7 @@ export function adminPathItems(): Record<string, Record<string, unknown>> {
       operationId: op.operationId,
       tags: [op.tag],
       summary: op.summary,
-      description: `${op.description}\n\nAdmin level: ${op.level === 100 ? "100 (admin)" : "80 or higher"}.`,
+      description: `${op.description}\n\nNeeds: ${op.need === "admin" ? "admin level 100" : op.need === null ? "any admin" : `the right \`${op.need}\` (level 100 has every right)`}.`,
       security: [{ bearerAuth: [] }],
       ...(params?.length ? { parameters: params } : {}),
       ...(op.body ? { requestBody: { required: true, content: { "application/json": { schema: op.body, example: op.bodyExample } } } } : {}),
@@ -1038,7 +1056,7 @@ export function adminPathItems(): Record<string, Record<string, unknown>> {
         [String(op.status)]: success,
         ...Object.fromEntries(op.errors.map((s) => [String(s), err(texts[s] ?? "Error")])),
         "401": err("No, a wrong, expired or revoked token, or its admin no longer exists"),
-        "403": err(op.path.startsWith("/admin/users") ? "Admin level too low, self_security_forbidden (your own account) or password_own_only (another admin's password)" : "Admin level too low"),
+        "403": err(op.path.startsWith("/admin/users") ? "Missing right, self_security_forbidden (your own account) or password_own_only (another admin's password)" : "The admin lacks the right this needs"),
         "429": err("Too many requests or failed authentications; see Retry-After"),
         "500": err("Internal or database error"),
       },

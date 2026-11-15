@@ -237,16 +237,39 @@ test("no operation manages tokens, passwords, passkeys or TOTP of the own accoun
   assert.ok(text.includes("bearerAuth"));
 });
 
-test("the admin levels are those of the admin pages", () => {
+test("the rights of the operations are those of the admin pages", () => {
   for (const m of ADMIN_ENTITIES) {
     const e = entities.find((x) => x.key === m.key)!;
-    for (const op of adminOps.filter((o) => o.entity === m.key)) assert.equal(op.level, e.minLevel ?? 80, op.operationId);
+    for (const op of adminOps.filter((o) => o.entity === m.key)) assert.equal(op.need, op.method === "GET" ? e.perm.view : e.perm.edit, op.operationId);
   }
-  // Rankings, servers and users need level 100 (as requireAdmin(100) and
-  // requireAdmin(LEVEL_ADMIN) in app/admin/actions.ts).
-  const admin = ["playerErase", "rankingServers", "rankingAssign", "serverMove", "botsSet", "vacSet", "hallSet", "hallEntries", "hallRemove", "hallRestore", "reset", "globalHallSet"];
-  for (const h of admin) assert.equal(adminOps.find((o) => o.handler === h)?.level, 100, h);
-  for (const op of adminOps.filter((o) => o.path.startsWith("/admin/users"))) assert.equal(op.level, 100, op.operationId);
+  // The same rights as requirePerm(...) in app/admin/actions.ts and the pages.
+  const need: Record<string, string | null> = {
+    me: null,
+    playerErase: "players.erase",
+    rankingServers: "servers.view",
+    rankingAssign: "servers.edit",
+    serverMove: "servers.edit",
+    botsSet: "rankings.edit",
+    vacSet: "rankings.edit",
+    fastdlSet: "rankings.edit",
+    hallSet: "resets",
+    hallEntries: "resets",
+    hallRemove: "resets",
+    hallRestore: "resets",
+    reset: "resets",
+    globalHallSet: "resets",
+    chat: "chat.view",
+    ips: "ips.view",
+    jobs: "jobs.view",
+    settingsSet: "settings.edit",
+    rawSet: "settings.edit",
+    privacySet: "settings.edit",
+  };
+  for (const [h, n] of Object.entries(need)) assert.equal(adminOps.find((o) => o.handler === h)?.need, n, h);
+  for (const op of adminOps.filter((o) => o.path.startsWith("/admin/users"))) assert.equal(op.need, "admin", op.operationId);
+  // Every page and action checks a right (or is the overview, the account or the sign-in).
+  const actions = src("src/app/admin/actions.ts");
+  assert.ok(!/requireAdmin\((?:LEVEL_ADMIN|100|e\.minLevel)\)/.test(actions), "levels replaced by rights");
 });
 
 test("every server action of the admin area has an API operation or is account-only", () => {

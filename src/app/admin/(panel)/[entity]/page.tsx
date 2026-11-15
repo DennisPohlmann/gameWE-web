@@ -14,7 +14,8 @@ import { allServers, rankingBaseGames } from "@/lib/admin-rankings";
 import { RankBadge, rankName } from "@/components/badges";
 import { getEntity, type Field, type L } from "@/lib/admin-entities";
 import { adminDict, tr } from "@/lib/admin-i18n";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
+import { allowed } from "@/lib/admin-perms";
 import { getAdminLang, type Lang } from "@/lib/i18n";
 import { listHref, withReturnTo } from "@/lib/return-to";
 import { isTemplateRanking } from "@/lib/ranking-template";
@@ -25,7 +26,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
   const found = getEntity((await params).entity);
   if (!found) notFound();
   const e = await withColumns(found);
-  await requireAdmin(e.minLevel);
+  const user = await requirePerm(e.perm.view);
   const lang = await getAdminLang();
   const a = adminDict(lang);
   const u = a.ui;
@@ -84,7 +85,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
           </>
         }
         actions={
-          e.canCreate ? (
+          e.canCreate && allowed(user, e.perm.edit) ? (
             <Link prefetch={false} className="button primary" href={editHref("new")}>
               <Icon name="plus" />
               {a.new}

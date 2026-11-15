@@ -4,7 +4,8 @@ import { PageHead } from "@/components/admin/page-head";
 import { GameTag } from "@/components/ui";
 import { adminDict } from "@/lib/admin-i18n";
 import { adminPlayerTotals, playersByRanking, rankingSummaries } from "@/lib/admin-rankings";
-import { LEVEL_ADMIN, adminSecret, requireAdmin } from "@/lib/auth";
+import { adminSecret, requireAdmin } from "@/lib/auth";
+import { permMap } from "@/lib/admin-perms";
 import { adminQuery } from "@/lib/db";
 import { dateFormat, localeOf } from "@/lib/format";
 import { fill, getAdminLang } from "@/lib/i18n";
@@ -19,7 +20,8 @@ export default async function AdminHome() {
   const lang = await getAdminLang();
   const a = adminDict(lang);
   const u = a.ui;
-  const isAdmin = user.acclevel >= LEVEL_ADMIN;
+  // Links only to what this admin may open (lib/admin-perms.ts).
+  const can = permMap(user);
   const nf = (n: number) => n.toLocaleString(localeOf(lang));
   const midnight = new Date();
   midnight.setHours(0, 0, 0, 0);
@@ -58,16 +60,16 @@ export default async function AdminHome() {
       icon: "warn",
       title: beatAt ? fill(u.attCollector, { t: since }) : u.attCollectorNever,
       text: u.attCollectorText,
-      href: "/admin/settings/capture",
+      href: can["settings.view"] ? "/admin/settings/capture" : "/admin/collector",
       link: u.navCollector,
     });
-  for (const r of noGame) {
+  for (const r of can["rankings.view"] ? noGame : []) {
     todo.push({
       tone: "warn",
       icon: "warn",
       title: fill(u.attNoGame, { list: r.name }),
       text: u.attNoGameText,
-      href: `/admin/rankings/${encodeURIComponent(r.code)}${isAdmin ? "#settings" : ""}`,
+      href: `/admin/rankings/${encodeURIComponent(r.code)}${can["rankings.edit"] ? "#settings" : ""}`,
       link: u.attNoGameLink,
     });
   }
@@ -81,7 +83,7 @@ export default async function AdminHome() {
       link: u.attUpdateLink,
       external: true,
     });
-  if (isAdmin && Number(servers?.n ?? 0) === 0)
+  if (can["servers.edit"] && Number(servers?.n ?? 0) === 0)
     todo.push({ tone: "acc", icon: "server", title: u.attNoServers, text: u.attNoServersText, href: "/admin/servers/new", link: u.attNoServersLink });
 
   return (
@@ -119,9 +121,11 @@ export default async function AdminHome() {
         <section className="card">
           <header>
             <h2>{u.areaRankings}</h2>
-            <Link prefetch={false} className="more" href="/admin/rankings">
-              {u.manageAll}
-            </Link>
+            {can["rankings.view"] ? (
+              <Link prefetch={false} className="more" href="/admin/rankings">
+                {u.manageAll}
+              </Link>
+            ) : null}
           </header>
           <table className="cards">
             <thead>
@@ -166,9 +170,11 @@ export default async function AdminHome() {
                     )}
                   </td>
                   <td className="end num">
-                    <Link prefetch={false} className="button small" href={`/admin/rankings/${encodeURIComponent(r.code)}`}>
-                      {u.open}
-                    </Link>
+                    {can["rankings.view"] ? (
+                      <Link prefetch={false} className="button small" href={`/admin/rankings/${encodeURIComponent(r.code)}`}>
+                        {u.open}
+                      </Link>
+                    ) : null}
                   </td>
                 </tr>
               ))}
@@ -192,9 +198,11 @@ export default async function AdminHome() {
                     <span className="pill">{u.stTemplate}</span>
                   </td>
                   <td className="end num">
-                    <Link prefetch={false} className="button small" href="/admin/rankings?view=templates">
-                      {u.show}
-                    </Link>
+                    {can["rankings.view"] ? (
+                      <Link prefetch={false} className="button small" href="/admin/rankings?view=templates">
+                        {u.show}
+                      </Link>
+                    ) : null}
                   </td>
                 </tr>
               ) : null}
@@ -250,28 +258,36 @@ export default async function AdminHome() {
               <h2>{u.quick}</h2>
             </header>
             <div className="grid quick">
-              <Link prefetch={false} href="/admin/players">
-                <Icon name="search" />
-                {u.qPlayers}
-              </Link>
-              {isAdmin ? (
+              {can["players.view"] ? (
+                <Link prefetch={false} href="/admin/players">
+                  <Icon name="search" />
+                  {u.qPlayers}
+                </Link>
+              ) : null}
+              {can["servers.edit"] ? (
                 <Link prefetch={false} href="/admin/servers/new">
                   <Icon name="plus" />
                   {u.qServer}
                 </Link>
               ) : null}
-              <Link prefetch={false} href="/admin/settings/design">
-                <Icon name="palette" />
-                {u.qDesign}
-              </Link>
-              <Link prefetch={false} href="/admin/chat">
-                <Icon name="chat" />
-                {u.qChat}
-              </Link>
-              <Link prefetch={false} href="/admin/jobs">
-                <Icon name="clock" />
-                {u.qJobs}
-              </Link>
+              {can["settings.view"] ? (
+                <Link prefetch={false} href="/admin/settings/design">
+                  <Icon name="palette" />
+                  {u.qDesign}
+                </Link>
+              ) : null}
+              {can["chat.view"] ? (
+                <Link prefetch={false} href="/admin/chat">
+                  <Icon name="chat" />
+                  {u.qChat}
+                </Link>
+              ) : null}
+              {can["jobs.view"] ? (
+                <Link prefetch={false} href="/admin/jobs">
+                  <Icon name="clock" />
+                  {u.qJobs}
+                </Link>
+              ) : null}
             </div>
           </section>
         </div>

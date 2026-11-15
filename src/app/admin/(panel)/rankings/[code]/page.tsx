@@ -8,7 +8,8 @@ import { GameTag } from "@/components/ui";
 import { entities } from "@/lib/admin-entities";
 import { adminDict, tr } from "@/lib/admin-i18n";
 import { countByRanking, rankingClans, rankingPlayers, rankingSummaries } from "@/lib/admin-rankings";
-import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
+import { permMap } from "@/lib/admin-perms";
 import { basePath } from "@/lib/base-path";
 import { dateFormat, localeOf } from "@/lib/format";
 import { gameKind } from "@/lib/games";
@@ -40,10 +41,11 @@ const LISTS: [string, IconName, string, string][] = [
 
 // One ranking, the one place to manage it: what state it is in, its
 // settings, servers, values, rules (bots, VAC, scheduled reset) and the
-// reset. Level 100 sees and edits everything; lower levels see the state and
-// the values.
+// reset. Each card needs its right (lib/admin-perms.ts): rankings.edit the
+// settings and rules, servers.edit the servers, resets the schedule and the
+// reset; rankings.view the state and the values.
 export default async function RankingPage({ params, searchParams }: { params: Promise<{ code: string }>; searchParams: Promise<Record<string, string | undefined>> }) {
-  const user = await requireAdmin();
+  const user = await requirePerm("rankings.view");
   const code = decodeURIComponent((await params).code);
   const sp = await searchParams;
   const rankings = await rankingSummaries();
@@ -52,7 +54,7 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
   const lang = await getAdminLang();
   const a = adminDict(lang);
   const u = a.ui;
-  const isAdmin = user.acclevel >= LEVEL_ADMIN;
+  const can = permMap(user);
   const nf = (n: number) => n.toLocaleString(localeOf(lang));
   const q = `?game=${encodeURIComponent(r.code)}`;
   // A template (seeded, no servers) or a new ranking before its first server:
@@ -75,7 +77,7 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
     ),
   ]);
   // Servers with players right now (the addresses stay on the servers card).
-  const busy = isAdmin
+  const busy = can["servers.view"]
     ? Number((await countByRanking("hlstats_Servers", "game", "act_players > 0")).get(r.code) ?? 0)
     : null;
   // Players and clans counted as on the start page and the public lists, the
@@ -107,21 +109,18 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
           };
   // The cards of this page, for the jump bar at the top.
   const parts: [string, string, IconName][] = [
-    ...(isAdmin
-      ? ([
-          ["settings", u.settings, "gear"],
-          ["servers", u.serversHere, "server"],
-        ] as [string, string, IconName][])
-      : []),
+    ...(can["rankings.edit"] ? ([["settings", u.settings, "gear"]] as [string, string, IconName][]) : []),
+    ...(can["servers.edit"] ? ([["servers", u.serversHere, "server"]] as [string, string, IconName][]) : []),
     ["values", u.definitionsFrom, "list"],
-    ...(isAdmin
+    ...(can["rankings.edit"]
       ? ([
           ["bots", u.partBots, "players"],
           ["vac", u.partVac, "shield"],
           ["fastdl", u.partFastdl, "map"],
-          ...(noServers ? [] : [["hall-of-fame", u.kpiReset, "clock"]]),
-          ["maintenance", u.maintenance, "reset"],
         ] as [string, string, IconName][])
+      : []),
+    ...(can.resets
+      ? ([...(noServers ? [] : [["hall-of-fame", u.kpiReset, "clock"]]), ["maintenance", u.maintenance, "reset"]] as [string, string, IconName][])
       : []),
   ];
 
@@ -147,10 +146,10 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
       />
       <div className="grid kpis">
         <Kpi k={u.colStatus} v={state.pill} s={state.sub} text />
-        <Kpi href={isAdmin ? "#servers" : undefined} k={u.kpiServers} v={nf(r.servers)} s={busy !== null ? fill(u.kpiServersSub, { n: nf(busy) }) : null} />
+        <Kpi href={can["servers.edit"] ? "#servers" : undefined} k={u.kpiServers} v={nf(r.servers)} s={busy !== null ? fill(u.kpiServersSub, { n: nf(busy) }) : null} />
         <Kpi k={u.kpiPlayers} v={nf(allPlayers)} s={u.kpiPlayersHere} />
         <Kpi
-          href={isAdmin && !noServers ? "#hall-of-fame" : undefined}
+          href={can.resets && !noServers ? "#hall-of-fame" : undefined}
           k={u.kpiReset}
           v={noServers ? "–" : hall.effective ? scheduleText(lang, hall.effective) : u.kpiResetOff}
           s={
@@ -166,15 +165,15 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
         />
       </div>
       <PageNav label={u.onThisPage} parts={parts} />
-      {isAdmin ? <SettingsCard id={r.id} lang={lang} sp={sp} /> : null}
-      {isAdmin ? <ServersCard id={r.id} code={r.code} lang={lang} sp={sp} /> : null}
+      {can["rankings.edit"] ? <SettingsCard id={r.id} lang={lang} sp={sp} /> : null}
+      {can["servers.edit"] ? <ServersCard id={r.id} code={r.code} lang={lang} sp={sp} /> : null}
       <section className="card" id="values">
         <header>
           <h2>{u.definitionsFrom}</h2>
         </header>
         <ul className="todo values">
           {LISTS.map(([key, icon], i) => (
-            <li key={key}>
+            <li key={key} hidden={!can[key === "players" || key === "clans" ? "players.view" : "definitions.view"]}>
               <Link prefetch={false} className="todo-link" href={`/admin/${key}${q}`} title={shown[key]?.[2]}>
                 <span className="ic">
                   <Icon name={icon} />
@@ -189,12 +188,16 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
           ))}
         </ul>
       </section>
-      {isAdmin ? (
+      {can["rankings.edit"] || can.resets ? <h2 className="group-head">{u.rulesHead}</h2> : null}
+      {can["rankings.edit"] ? (
         <>
-          <h2 className="group-head">{u.rulesHead}</h2>
           <BotsCard game={r.code} lang={lang} status={sp.bots} changed={sp.n} />
           <VacCard game={r.code} lang={lang} on={vacBlock} keyStored={vacKey} status={sp.vac} />
           <FastdlCard game={r.code} lang={lang} status={sp.fastdl} />
+        </>
+      ) : null}
+      {can.resets ? (
+        <>
           {/* A ranking without servers is never reset: no schedule to set. */}
           {!noServers ? <HallOfFameCard game={r.code} lang={lang} status={sp.hof} /> : null}
           <section className="card" id="maintenance">

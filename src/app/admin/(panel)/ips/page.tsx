@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Empty, Pager, ROW_OPTIONS, Section, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
 import { optionList } from "@/lib/admin-data";
 import { adminDict } from "@/lib/admin-i18n";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { noAutofill } from "@/lib/autofill";
 import { fmtDateTime, fmtNum, localeOf } from "@/lib/format";
 import { countIps, searchIps } from "@/lib/history";
@@ -17,7 +17,7 @@ const PERIODS = [7, 30, 90, 365];
 // All stored player addresses (hlstats_Events_Connects), searchable, for
 // admins only; the public pages never show them.
 export default async function AdminIps({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  await requireAdmin();
+  await requirePerm("ips.view");
   const { lang, t } = await getDict();
   const a = adminDict(lang);
   const sp = await searchParams;

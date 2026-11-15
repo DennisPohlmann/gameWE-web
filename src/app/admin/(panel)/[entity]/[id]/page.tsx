@@ -10,8 +10,11 @@ import { Section } from "@/components/ui";
 import { getRow, optionList, withColumns } from "@/lib/admin-data";
 import { RankBadge, rankName } from "@/components/badges";
 import { getEntity, type Field } from "@/lib/admin-entities";
-import { adminDict, tr } from "@/lib/admin-i18n";
-import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
+import { adminDict, localized, tr } from "@/lib/admin-i18n";
+import { requirePerm, withPerms } from "@/lib/auth";
+import { LEVEL80_DEFAULT, PERM_GROUPS, ROLE_PRESETS, allowed, normalizePerms } from "@/lib/admin-perms";
+import { PERM_T } from "@/lib/admin-texts";
+import { PermPresets } from "@/components/admin/perm-presets";
 import { GAME_KINDS, sameBaseGame, SUPPORTED_GAMES } from "@/lib/games";
 import { fill, getAdminLang } from "@/lib/i18n";
 import { templateOptions } from "@/lib/new-ranking";
@@ -26,10 +29,12 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
   const found = getEntity(entity);
   if (!found) notFound();
   const e = await withColumns(found);
-  const user = await requireAdmin(e.minLevel);
+  const user = await requirePerm(e.perm.view);
+  // Without the right to change, the page only shows the row.
+  const canEdit = allowed(user, e.perm.edit);
   const id = decodeURIComponent(rawId);
   const isNew = id === "new";
-  if (isNew && !e.canCreate) notFound();
+  if (isNew && (!e.canCreate || !canEdit)) notFound();
   const row = isNew ? {} : await getRow(e, id);
   if (!row) notFound();
   // A ranking is edited on its own page (/admin/rankings/<code>), which has
@@ -38,7 +43,10 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
   if (!isNew && e.key === "games") redirect(await rankingPageHref(id, await searchParams));
   const lang = await getAdminLang();
   const a = adminDict(lang);
+  const pt = localized(PERM_T, lang);
   const sp = await searchParams;
+  // The rights of a level 80 admin (stored, or the old level 80 rights).
+  const userPerms = e.key === "users" ? (isNew ? LEVEL80_DEFAULT : (await withPerms({ username: id, acclevel: 80 })).perms) : [];
   // The list (ranking, search, page) this page was opened from.
   const returnTo = safeReturnTo(sp.returnTo, e.key);
   const r0 = row as Record<string, unknown>;
@@ -90,6 +98,10 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
         ? fill(a.dbWriteError, { msg: sp.msg ?? "" })
         : sp.error === "self"
           ? a.notSelf
+          : sp.error === "lastadmin"
+            ? pt.lastAdmin
+          : sp.error === "perm"
+            ? pt.notOwn
           : sp.error === "password"
             ? a.pwOwnOnly
           : sp.error === "mismatch"
@@ -126,6 +138,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
         </p>
       ) : null}
       {sp.saved ? <p className="notice">{a.saved}</p> : null}
+      {canEdit ? null : <p className="notice">{pt.readOnly}</p>}
       {cs2 ? <p className="notice">{fill(a.cs2LogHint, { port: String(Number(r0.port) || "<port>") })}</p> : null}
       {error ? (
         <p className="notice error">
@@ -144,6 +157,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
           <input type="hidden" name="__id" value={id} />
           <input type="hidden" name="__returnTo" value={returnTo} />
           {preset ? <input type="hidden" name="__ranking" value={preset} /> : null}
+          <fieldset className="adm-ro form" disabled={!canEdit}>
           {/* An existing user's password is changed only by that user (My account). */}
           {e.fields.filter((f) => (isNew ? !f.readonly : !f.virtual && f.type !== "password")).map((f) => {
             const value = (preset && f.name === "game" ? preset : kept(f.name)) ?? (row as Record<string, string | number | null>)[f.name];
@@ -200,18 +214,48 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
             );
           })}
           {e.key === "users" && !isNew ? <small className="muted">{a.pwOwnOnly}</small> : null}
+          {e.key === "users" ? (
+            <div className="form-field">
+              <b>{pt.title}</b>
+              <small className="muted">
+                {pt.intro} {pt.implied}
+              </small>
+              <p className="perm-full notice">{pt.full}</p>
+              <input type="hidden" name="__perms" value="1" />
+              <PermPresets
+                label={pt.presets}
+                hint={pt.presetsHint}
+                presets={ROLE_PRESETS.map((p) => ({ id: p.id, name: pt.preset[p.id as keyof typeof pt.preset], perms: normalizePerms(p.perms) }))}
+              />
+              <div className="perm-groups">
+                {PERM_GROUPS.map((g) => (
+                  <fieldset key={g.id}>
+                    <legend>{pt.groups[g.id]}</legend>
+                    {g.perms.map((p) => (
+                      <label key={p} className="check">
+                        <input type="checkbox" name="perm" value={p} defaultChecked={userPerms.includes(p)} /> {pt.perm[p]}
+                      </label>
+                    ))}
+                  </fieldset>
+                ))}
+              </div>
+            </div>
+          ) : null}
           {newRanking ? (
             <NewRankingSync
               templates={Object.fromEntries(templates.map(([c, , g]) => [c, g]))}
               names={Object.fromEntries(SUPPORTED_GAMES.map((k) => [k, GAME_KINDS[k].name]))}
             />
           ) : null}
-          <button type="submit" className="button">
-            {a.save}
-          </button>
+          {canEdit ? (
+            <button type="submit" className="button">
+              {a.save}
+            </button>
+          ) : null}
+          </fieldset>
         </form>
       </Section>
-      {!isNew && e.key === "players" && user.acclevel >= LEVEL_ADMIN ? (
+      {!isNew && e.key === "players" && allowed(user, "players.erase") ? (
         <Section title={a.deletePlayer}>
           <p className="notice warn">{a.deletePlayerHelp}</p>
           <form action={deletePlayerAction} className="form">
@@ -225,7 +269,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
           </form>
         </Section>
       ) : null}
-      {!isNew && e.canDelete ? (
+      {!isNew && e.canDelete && canEdit ? (
         <Section title={a.delete}>
           <form action={deleteAction} className="form">
             <input type="hidden" name="__entity" value={e.key} />

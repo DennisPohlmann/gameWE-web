@@ -4,12 +4,16 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { Icon, type IconName } from "./icons";
+import type { Perm } from "@/lib/admin-perms";
 
 // Menu of the admin area: the three areas (overview, rankings, settings)
 // in the top bar and the bottom bar on phones, and the side menu of the
 // area the page belongs to. Which area and which ranking a page belongs to
 // comes from its address: /admin/rankings/<code>, ?game=<code> of the lists,
-// or the list an edit page returns to (?returnTo=...game=<code>).
+// or the list an edit page returns to (?returnTo=...game=<code>). Only what
+// the admin's rights reach is shown (lib/admin-perms.ts; the pages check too).
+
+export type NavCan = Record<Perm | "admin", boolean>;
 
 export type NavRanking = { code: string; name: string; servers: number; hidden: boolean; tag: string; template: boolean };
 export type NavGroup = { id: string; area: string; title: string };
@@ -98,11 +102,11 @@ const AREAS: [Area, string, IconName, keyof NavText][] = [
   ["settings", "/admin/settings", "gear", "areaSettings"],
 ];
 
-export function AreaTabs({ t, className }: { t: NavText; className: string }) {
+export function AreaTabs({ t, className, rankings = true }: { t: NavText; className: string; rankings?: boolean }) {
   const { area, game } = useWhere();
   return (
     <nav className={className} aria-label={t.menu}>
-      {AREAS.map(([key, href, icon, label]) => (
+      {AREAS.filter(([key]) => rankings || key !== "rankings").map(([key, href, icon, label]) => (
         <Link prefetch={false}
           key={key}
           href={key === "rankings" && game ? `/admin/rankings/${encodeURIComponent(game)}` : href}
@@ -137,13 +141,13 @@ export function AdminSidebar({
   t,
   rankings,
   groups,
-  isAdmin,
+  can,
   footer,
 }: {
   t: NavText;
   rankings: NavRanking[];
   groups: NavGroup[];
-  isAdmin: boolean;
+  can: NavCan;
   // Lines below the menu; one with href is a link to an external page
   // (the release of a running version, or of an available update), one with
   // state the collector's state, a link to its page in the admin area.
@@ -176,8 +180,10 @@ export function AdminSidebar({
     if (seg === "reset") return code ? `/admin/reset?game=${c}` : "/admin/reset";
     return code ? `/admin/rankings/${c}` : "/admin/rankings";
   };
+  const rankingsArea = can["rankings.view"] || can["servers.view"] || can["players.view"] || can["definitions.view"];
   const groupLinks = (areaKey: string, icons: Record<string, IconName>) =>
     groups
+      .filter(() => can["settings.view"])
       .filter((g) => g.area === areaKey)
       .map((g) => (
         <Item key={g.id} href={`/admin/settings/${g.id}`} icon={icons[g.id] ?? "gear"} label={g.title} on={seg === "settings" && parts[2] === g.id} />
@@ -197,7 +203,7 @@ export function AdminSidebar({
         </label>
       </div>
       <nav className="adm-side-areas" aria-label={t.areas}>
-        {AREAS.map(([key, href, icon, label]) => (
+        {AREAS.filter(([key]) => rankingsArea || key !== "rankings").map(([key, href, icon, label]) => (
           <Link prefetch={false} key={key} href={href} className={area === key ? "on" : undefined}>
             <Icon name={icon} />
             {t[label]}
@@ -209,12 +215,12 @@ export function AdminSidebar({
           <h4>{t.start}</h4>
           <nav>
             <Item href="/admin" icon="home" label={t.areaHome} on={seg === ""} />
-            <Item href="/admin/jobs" icon="clock" label={t.jobs} on={seg === "jobs"} />
-            <Item href="/admin/collector" icon="pulse" label={t.navCollector} on={seg === "collector"} />
+            {can["jobs.view"] ? <Item href="/admin/jobs" icon="clock" label={t.jobs} on={seg === "jobs"} /> : null}
+            {can["jobs.view"] ? <Item href="/admin/collector" icon="pulse" label={t.navCollector} on={seg === "collector"} /> : null}
           </nav>
           <h4>{t.areas}</h4>
           <nav>
-            <Item href="/admin/rankings" icon="trophy" label={t.areaRankings} on={false} />
+            {can["rankings.view"] ? <Item href="/admin/rankings" icon="trophy" label={t.areaRankings} on={false} /> : null}
             <Item href="/admin/settings" icon="gear" label={t.areaSettings} on={false} />
           </nav>
           <h4>{t.navAccount}</h4>
@@ -256,7 +262,7 @@ export function AdminSidebar({
           </details>
           <h4>{current ? t.thisRanking : t.allRankings}</h4>
           <nav>
-            {current ? (
+            {current && can["rankings.view"] ? (
               <Item
                 href={`/admin/rankings/${encodeURIComponent(current.code)}`}
                 icon="pulse"
@@ -266,7 +272,7 @@ export function AdminSidebar({
             ) : null}
             {/* Its hall of fame (entries and schedule), also before the first
                 reset; not for a template (no servers), which is never reset. */}
-            {current && isAdmin && current.servers > 0 ? (
+            {current && can.resets && current.servers > 0 ? (
               <Item
                 href={`/admin/rankings/${encodeURIComponent(current.code)}/hall-of-fame`}
                 icon="trophy"
@@ -274,25 +280,33 @@ export function AdminSidebar({
                 on={seg === "rankings" && parts[2] === current.code && parts[3] === "hall-of-fame"}
               />
             ) : null}
-            {isAdmin ? list("servers", "server", t.servers, current?.servers) : null}
-            {list("players", "players", t.players)}
-            {list("clans", "shield", t.clans)}
+            {can["servers.view"] ? list("servers", "server", t.servers, current?.servers) : null}
+            {can["players.view"] ? list("players", "players", t.players) : null}
+            {can["players.view"] ? list("clans", "shield", t.clans) : null}
           </nav>
-          <h4>{t.definitions}</h4>
-          <nav>
-            {list("weapons", "weapon", t.weapons)}
-            {list("actions", "bolt", t.actions)}
-            {list("teams", "flag", t.teams)}
-            {list("roles", "mask", t.roles)}
-            {list("awards", "award", t.awards)}
-            {list("ranks", "star", t.ranks)}
-          </nav>
-          {isAdmin ? (
+          {can["definitions.view"] ? (
+            <>
+              <h4>{t.definitions}</h4>
+              <nav>
+                {list("weapons", "weapon", t.weapons)}
+                {list("actions", "bolt", t.actions)}
+                {list("teams", "flag", t.teams)}
+                {list("roles", "mask", t.roles)}
+                {list("awards", "award", t.awards)}
+                {list("ranks", "star", t.ranks)}
+              </nav>
+            </>
+          ) : null}
+          {can.resets ? (
             <>
               <h4>{t.maintenance}</h4>
               <nav>
                 <Item href={`/admin/reset${q}`} icon="reset" label={t.resetRanking} on={seg === "reset"} />
               </nav>
+            </>
+          ) : null}
+          {can["rankings.view"] ? (
+            <>
               <h4>{t.allRankings}</h4>
               <nav>
                 <Item
@@ -302,41 +316,57 @@ export function AdminSidebar({
                   on={(seg === "rankings" && !parts[2]) || (seg === "games" && parts[2] !== "new")}
                   count={rankings.filter((r) => !r.template).length}
                 />
-                <Item href="/admin/games/new" icon="plus" label={t.newRanking} on={seg === "games" && parts[2] === "new"} />
+                {can["rankings.edit"] ? <Item href="/admin/games/new" icon="plus" label={t.newRanking} on={seg === "games" && parts[2] === "new"} /> : null}
               </nav>
             </>
           ) : null}
         </>
       ) : (
         <>
-          <h4>{t.navWebsite}</h4>
-          <nav>
-            {groupLinks("website", { general: "globe", design: "palette", header: "header", maps: "map", seo: "search" })}
-            <Item href="/admin/privacy" icon="shield" label={t.privacy} on={seg === "privacy"} />
-          </nav>
-          <h4>{t.navServices}</h4>
-          <nav>{groupLinks("services", { voice: "headset", bans: "ban", steam: "user", monitoring: "pulse" })}</nav>
-          <h4>{t.navCollector}</h4>
-          <nav>
-            {groupLinks("collector", { points: "points", capture: "shield", commands: "terminal" })}
-            <Item href="/admin/jobs" icon="clock" label={t.jobs} on={false} />
-          </nav>
-          <h4>{t.navModeration}</h4>
-          <nav>
-            <Item href="/admin/chat" icon="chat" label={t.chat} on={seg === "chat"} />
-            <Item href="/admin/ips" icon="ip" label={t.ips} on={seg === "ips"} />
-          </nav>
+          {can["settings.view"] ? (
+            <>
+              <h4>{t.navWebsite}</h4>
+              <nav>
+                {groupLinks("website", { general: "globe", design: "palette", header: "header", maps: "map", seo: "search" })}
+                <Item href="/admin/privacy" icon="shield" label={t.privacy} on={seg === "privacy"} />
+              </nav>
+              <h4>{t.navServices}</h4>
+              <nav>{groupLinks("services", { voice: "headset", bans: "ban", steam: "user", monitoring: "pulse" })}</nav>
+            </>
+          ) : null}
+          {can["settings.view"] || can["jobs.view"] ? (
+            <>
+              <h4>{t.navCollector}</h4>
+              <nav>
+                {groupLinks("collector", { points: "points", capture: "shield", commands: "terminal" })}
+                {can["jobs.view"] ? <Item href="/admin/jobs" icon="clock" label={t.jobs} on={false} /> : null}
+              </nav>
+            </>
+          ) : null}
+          {can["chat.view"] || can["ips.view"] ? (
+            <>
+              <h4>{t.navModeration}</h4>
+              <nav>
+                {can["chat.view"] ? <Item href="/admin/chat" icon="chat" label={t.chat} on={seg === "chat"} /> : null}
+                {can["ips.view"] ? <Item href="/admin/ips" icon="ip" label={t.ips} on={seg === "ips"} /> : null}
+              </nav>
+            </>
+          ) : null}
           <h4>{t.navAccess}</h4>
           <nav>
-            {isAdmin ? <Item href="/admin/users" icon="user" label={t.users} on={seg === "users"} /> : null}
+            {can.admin ? <Item href="/admin/users" icon="user" label={t.users} on={seg === "users"} /> : null}
             <Item href="/admin/account" icon="lock" label={t.myAccount} on={seg === "account" || seg === "totp"} />
           </nav>
-          <h4>{t.navAdmin}</h4>
-          <nav>{groupLinks("admin", { admin: "lock" })}</nav>
-          <h4>{t.navAdvanced}</h4>
-          <nav>
-            <Item href="/admin/settings/raw" icon="code" label={t.rawOptions} on={seg === "settings" && parts[2] === "raw"} />
-          </nav>
+          {can["settings.view"] ? (
+            <>
+              <h4>{t.navAdmin}</h4>
+              <nav>{groupLinks("admin", { admin: "lock" })}</nav>
+              <h4>{t.navAdvanced}</h4>
+              <nav>
+                <Item href="/admin/settings/raw" icon="code" label={t.rawOptions} on={seg === "settings" && parts[2] === "raw"} />
+              </nav>
+            </>
+          ) : null}
         </>
       )}
       <div className="adm-side-foot">

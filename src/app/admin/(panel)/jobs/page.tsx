@@ -8,7 +8,8 @@ import { adminDict, localized } from "@/lib/admin-i18n";
 import { JOBS_T } from "@/lib/admin-texts";
 import { jobsOverview, type Job, type ScheduledRanking } from "@/lib/admin-jobs";
 import { rankingSummaries } from "@/lib/admin-rankings";
-import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
+import { isFullAdmin } from "@/lib/admin-perms";
 import { dateFormat, fmtDateTime, fmtNum, nowUnix, localeOf } from "@/lib/format";
 import { scheduleValue } from "@/lib/hall-period";
 import { fill, getAdminLang } from "@/lib/i18n";
@@ -23,9 +24,9 @@ type Upcoming = { key: string; job: ReactNode; sub: ReactNode; next: number; pla
 // players, the bans-sync job, scheduled resets), the queue and the history of
 // hlstats_gamewe_jobs.
 export default async function JobsPage() {
-  const user = await requireAdmin();
+  const user = await requirePerm("jobs.view");
   // Who queued a job: names of other admins only for level 100 (as the user list).
-  const isAdmin = user.acclevel >= LEVEL_ADMIN;
+  const isAdmin = isFullAdmin(user);
   const lang = await getAdminLang();
   const t = localized(JOBS_T, lang);
   const u = adminDict(lang).ui;

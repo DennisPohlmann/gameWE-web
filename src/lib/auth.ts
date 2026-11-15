@@ -12,6 +12,7 @@ import { adminExec, adminQuery, upsert } from "./db";
 import { readSecret, secondFactor, sessionEpochKey } from "./totp";
 import { idleLeft } from "./admin-idle";
 import { getSettings } from "./settings";
+import { PERMS, allowed, isFullAdmin, parsePerms, permsKey, type Need, type Perm } from "./admin-perms";
 import { checkAssertion, type Assertion, type Expect } from "./passkey-core";
 import { findPasskey, listPasskeys, passkeyOnly, touchPasskey } from "./passkeys";
 
@@ -35,7 +36,16 @@ const PENDING_MINUTES = 5;
 // Wrong codes per pending login before the password is asked again.
 const PENDING_TRIES = 5;
 
-export type AdminUser = { username: string; acclevel: number };
+// perms: what the admin may do (lib/admin-perms.ts), read with the account.
+export type AdminUser = { username: string; acclevel: number; perms: Perm[] };
+
+// The account with its rights: level 100 all, level 80 the stored ones.
+export async function withPerms(u: { username: string; acclevel: number }): Promise<AdminUser> {
+  const acclevel = Number(u.acclevel);
+  if (isFullAdmin({ acclevel })) return { username: u.username, acclevel, perms: [...PERMS] };
+  const [row] = await adminQuery<{ value: string | null }>(`SELECT value FROM hlstats_Options WHERE keyname = ?`, [permsKey(u.username)]);
+  return { username: u.username, acclevel, perms: parsePerms(row ? (row.value ?? "") : null) };
+}
 
 let warned = false;
 
@@ -439,13 +449,21 @@ export const currentAdmin = cache(async (): Promise<AdminUser | null> => {
   const [ended] = await adminQuery<{ value: string }>(`SELECT value FROM hlstats_Options WHERE keyname = ?`, [sessionEpochKey(data.u)]);
   if (ended && data.i <= Number(ended.value)) return null;
   // Re-read the account so a deleted or demoted user loses access at once.
-  const [user] = await adminQuery<AdminUser>(`SELECT username, acclevel FROM hlstats_Users WHERE username = ?`, [data.u]);
-  return user && user.acclevel >= LEVEL_MIN ? user : null;
+  const [user] = await adminQuery<{ username: string; acclevel: number }>(`SELECT username, acclevel FROM hlstats_Users WHERE username = ?`, [data.u]);
+  return user && user.acclevel >= LEVEL_MIN ? withPerms(user) : null;
 });
 
 export async function requireAdmin(level = LEVEL_MIN): Promise<AdminUser> {
   const user = await currentAdmin();
   if (!user) redirect("/admin/login");
   if (user.acclevel < level) redirect("/admin");
+  return user;
+}
+
+// A page or action that needs a right (lib/admin-perms.ts); without it back
+// to the overview, which every admin may see.
+export async function requirePerm(need: Need): Promise<AdminUser> {
+  const user = await requireAdmin();
+  if (!allowed(user, need)) redirect("/admin");
   return user;
 }

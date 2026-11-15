@@ -7,9 +7,11 @@ import { HeaderLinksEditor, type EditorRow, type HeaderLinksText } from "@/compo
 import { headerOrder } from "@/lib/header-links";
 import { dicts } from "@/translations";
 import { rawOptions } from "@/lib/admin-data";
-import { adminDict, tr } from "@/lib/admin-i18n";
+import { adminDict, localized, tr } from "@/lib/admin-i18n";
 import { RAW_GROUP, adminOnlyOption, rawOptionHelp, READONLY_OPTIONS, allSettings, settingGroups, settingsReader, type Setting } from "@/lib/admin-settings";
-import { LEVEL_ADMIN, requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
+import { allowed } from "@/lib/admin-perms";
+import { PERM_T } from "@/lib/admin-texts";
 import { ENV_FALLBACK, envFormValues, valueSource } from "@/lib/config";
 import { noAutofill } from "@/lib/autofill";
 import { pageSizeStep } from "@/lib/page-size";
@@ -31,7 +33,10 @@ export default async function SettingsPage({
   params: Promise<{ group: string }>;
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  const user = await requireAdmin();
+  const user = await requirePerm("settings.view");
+  // Without settings.edit the page is only shown; protected settings need settings.protected.
+  const canEdit = allowed(user, "settings.edit");
+  const canProtected = allowed(user, "settings.protected");
   const { group: groupId } = await params;
   const group = settingGroups.find((g) => g.id === groupId);
   const isRaw = groupId === RAW_GROUP;
@@ -82,8 +87,10 @@ export default async function SettingsPage({
       {bad ? <p className="notice error">{fill(a.invalidField, { f: tr(bad.label, lang) })}</p> : null}
       {badRaw ? <p className="notice error">{fill(a.invalidField, { f: badRaw })}</p> : null}
       {css ? <style>{css}</style> : null}
+      {canEdit ? null : <p className="notice">{localized(PERM_T, lang).readOnly}</p>}
       <form action={saveSettingsAction}>
         <input type="hidden" name="group" value={groupId} />
+        <fieldset className="adm-ro" disabled={!canEdit}>
         <section className="card">
           {group?.id === "header" ? (
             <>
@@ -106,7 +113,7 @@ export default async function SettingsPage({
                   s={s}
                   value={values[s.key] || (source(s.key) === "env" ? envValues[s.key] : undefined)}
                   fromEnv={source(s.key) === "env" ? ENV_FALLBACK[s.key as keyof typeof ENV_FALLBACK] : undefined}
-                  readOnly={s.minLevel !== undefined && user.acclevel < s.minLevel}
+                  readOnly={!canEdit || (s.minLevel !== undefined && !canProtected)}
                   lang={lang}
                   templates={templates}
                   stored={values[s.key] !== undefined && values[s.key] !== ""}
@@ -114,7 +121,7 @@ export default async function SettingsPage({
                 />
               ),
             )}
-            {isRaw ? <RawFields raw={raw} lang={lang} level={user.acclevel} /> : null}
+            {isRaw ? <RawFields raw={raw} lang={lang} protectedOk={canProtected} /> : null}
           </div>
         </section>
         <div className="savebar">
@@ -131,6 +138,7 @@ export default async function SettingsPage({
             </button>
           </span>
         </div>
+        </fieldset>
       </form>
     </>
   );
@@ -230,14 +238,14 @@ function SettingField({
 }
 
 // The rows of hlstats_Options without a field of their own.
-function RawFields({ raw, lang, level }: { raw: { keyname: string; value: string }[]; lang: Lang; level: number }) {
+function RawFields({ raw, lang, protectedOk }: { raw: { keyname: string; value: string }[]; lang: Lang; protectedOk: boolean }) {
   const a = adminDict(lang);
   return (
     <>
       {raw.length ? null : <p className="settings-help">{a.rawNone}</p>}
       {raw.map((r, i) => {
         const help = rawOptionHelp(r.keyname, lang) ?? a.rawUnknown;
-        const locked = READONLY_OPTIONS.includes(r.keyname) || (level < LEVEL_ADMIN && adminOnlyOption(r.keyname));
+        const locked = READONLY_OPTIONS.includes(r.keyname) || (!protectedOk && adminOnlyOption(r.keyname));
         return (
           <div className="field" key={r.keyname}>
             <div className="l">

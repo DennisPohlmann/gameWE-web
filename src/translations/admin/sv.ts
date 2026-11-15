@@ -476,7 +476,6 @@ const texts: Record<string, string> = {
   "Placeholders such as {LANG_RANG_PVT} (Private) or {LANG_RANG_GEN} (General) show the rank with its insignia; any other text is shown as it is, with a badge of its initials.": "Platshållare som {LANG_RANG_PVT} (Private) eller {LANG_RANG_GEN} (General) visar graden med dess gradbeteckning; all annan text visas som den är, med ett märke med dess initialer.",
   "From kills": "Från kills",
   "Users": "Användare",
-  "Level 100 = admin (everything), 80 = restricted (no games, servers or users). Each user changes their password and TOTP only themselves, under My account.": "Nivå 100 = administratör (allt), 80 = begränsad (inga spel, servrar eller användare). Varje användare ändrar sitt lösenord och TOTP bara själv, under Mitt konto.",
   "First password, at least 10 characters. Afterwards only the user changes it, under My account.": "Första lösenordet, minst 10 tecken. Därefter ändrar bara användaren det, under Mitt konto.",
   "Level": "Nivå",
   "General": "Allmänt",
