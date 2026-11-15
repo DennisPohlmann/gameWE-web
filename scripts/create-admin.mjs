@@ -76,6 +76,9 @@ const totpKey = `gamewe_totp_${hashName}`;
 const pendingKey = `gamewe_totpp_${hashName}`;
 // As sessionEpochKey in src/lib/totp.ts: all sessions of the user end now.
 const epochKey = `gamewe_totps_${createHash("sha256").update(name.trim().toLowerCase()).digest("hex").slice(0, 32)}`;
+// As passkeys.ts: the switch "sign in only with a passkey"; the recovery of
+// a lost account turns it off (the passkeys stay).
+const passkeyOnlyKey = `gamewe_passkeyonly_${hashName}`;
 const backupKeys = Array.from({ length: 10 }, (_, i) => `gamewe_totpb_${hashName}_${i}`);
 const totpSecret = totp === "new" ? newSecret() : null;
 const backupCodes = totpSecret ? newBackupCodes() : [];
@@ -134,6 +137,7 @@ if (ms) {
   await q(upsert(options, "", "keyname", "value"), epochKey, String(Date.now()));
   // API tokens of this user end too: this is the recovery of a lost account.
   await q(`DELETE FROM ${options} WHERE keyname LIKE 'gamewe\\_apitoken\\_%' ESCAPE '\\' AND value LIKE @p1 ESCAPE '\\'`, ownerLike);
+  await q(`DELETE FROM ${options} WHERE keyname = @p1`, passkeyOnlyKey);
   const keys = [totpKey, pendingKey, ...backupKeys];
   if (totp) await q(`DELETE FROM ${options} WHERE keyname IN (${keys.map((_, i) => `@p${i + 1}`).join(", ")})`, ...keys);
   if (totpSecret) await q(`INSERT INTO ${options} (keyname, value) VALUES (@p1, @p2)`, totpKey, seal(totpSecret));
@@ -152,6 +156,7 @@ if (ms) {
   await db.query(`INSERT INTO ${options} (keyname, value) VALUES ($1, $2) ON CONFLICT (keyname) DO UPDATE SET value = EXCLUDED.value`, [epochKey, String(Date.now())]);
   // API tokens of this user end too: this is the recovery of a lost account.
   await db.query(`DELETE FROM ${options} WHERE keyname LIKE 'gamewe\\_apitoken\\_%' AND value LIKE $1`, [ownerLike]);
+  await db.query(`DELETE FROM ${options} WHERE keyname = $1`, [passkeyOnlyKey]);
   const keys = [totpKey, pendingKey, ...backupKeys];
   if (totp) await db.query(`DELETE FROM ${options} WHERE keyname IN (${keys.map((_, i) => `$${i + 1}`).join(", ")})`, keys);
   if (totpSecret) await db.query(`INSERT INTO ${options} (keyname, value) VALUES ($1, $2)`, [totpKey, seal(totpSecret)]);
@@ -169,6 +174,7 @@ if (ms) {
   await db.query(`INSERT INTO ${options} (keyname, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)`, [epochKey, String(Date.now())]);
   // API tokens of this user end too: this is the recovery of a lost account.
   await db.query(`DELETE FROM ${options} WHERE keyname LIKE 'gamewe\\_apitoken\\_%' AND value LIKE ?`, [ownerLike]);
+  await db.query(`DELETE FROM ${options} WHERE keyname = ?`, [passkeyOnlyKey]);
   const keys = [totpKey, pendingKey, ...backupKeys];
   if (totp) await db.query(`DELETE FROM ${options} WHERE keyname IN (${keys.map(() => "?").join(", ")})`, keys);
   if (totpSecret) await db.query(`INSERT INTO ${options} (keyname, value) VALUES (?, ?)`, [totpKey, seal(totpSecret)]);

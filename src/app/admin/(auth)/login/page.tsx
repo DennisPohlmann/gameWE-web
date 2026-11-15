@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { loginAction, loginCancelAction, loginCodeAction } from "../../actions";
 import { Logo } from "@/components/admin/nav";
+import { PasskeyLogin } from "@/components/admin/passkey-login";
 import { RevealInput } from "@/components/admin/reveal-input";
 import { basePath } from "@/lib/base-path";
 import { adminSecret, currentAdmin, pendingLogin } from "@/lib/auth";
@@ -42,11 +43,13 @@ export default async function LoginPage({
           : a.codeInvalid
         : error === "blocked"
           ? a.blocked
-          : error === "expired" || (step === "code" && !pending)
-            ? a.totpExpired
-            : error === "idle"
-              ? a.idleLogout
-              : null;
+          : error === "passkey"
+            ? a.pkOnlyLogin
+            : error === "expired" || (step === "code" && !pending)
+              ? a.totpExpired
+              : error === "idle"
+                ? a.idleLogout
+                : null;
   return (
     <div className="adm-login">
     <div className="login">
@@ -118,6 +121,12 @@ export default async function LoginPage({
           </form>
         </>
       ) : (
+        <>
+        <PasskeyLogin
+          disabled={noSecret}
+          text={{ button: a.pkLogin, unsupported: a.pkUnsupported, failed: a.pkFailed, errors: { invalid: a.pkInvalid, expired: a.pkErrExpired, blocked: a.blocked, nosecret: a.nosecret } }}
+        />
+        <p className="login-or">{a.pkOr}</p>
         <form action={loginAction} className="form">
           <label>
             {a.username}
@@ -142,6 +151,7 @@ export default async function LoginPage({
             {a.login}
           </button>
         </form>
+        </>
       )}
       <p className="login-foot">
         <a href={`${basePath}/`}>← {a.toSite}</a>

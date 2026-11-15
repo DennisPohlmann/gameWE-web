@@ -381,7 +381,7 @@ Pictures of the admin area (dark look, demo data):
 
 Two-factor sign-in with TOTP is optional. Each user can set it up under
 Settings → My account & 2FA (also in the user menu top right), where the password
-can be changed too, or `create-admin <name> --totp` prints a key
+can be changed and passkeys added too, or `create-admin <name> --totp` prints a key
 as text for the authenticator app (in the container:
 `docker exec gamewe-web node scripts/create-admin.mjs admin --totp`). After
 that the sign-in also needs the six-digit code. Turning TOTP on makes ten
@@ -397,6 +397,55 @@ and the codes are lost. The key is stored encrypted with `ADMIN_SECRET` in
 `hlstats_Options`, the backup codes only as an HMAC keyed with it (one row
 each, `gamewe_totpb_...`, deleted when used), so changing `ADMIN_SECRET` locks
 out users with TOTP until they are reset this way.
+
+Passkeys sign in without password and TOTP code: the fingerprint, face or
+PIN of the device (user verification is required, so a passkey stands for
+both factors). Each user adds their own under My account → Passkeys, only
+while signed in and confirmed with the password (and the TOTP code), and
+can keep several (for example phone and laptop, at most 20), each with a
+name, when it was added and last used, and a delete button. The sign-in
+page offers "Sign in with a passkey" above the password form; the browser
+shows the passkeys it has for the site, no user name is asked. Passkeys
+need https and a domain name (browsers refuse them on an IP address; on
+`localhost` plain http works), and a passkey only works at the address it
+was made at. Under "Sign-in" on the same page each user chooses between
+"with a passkey or with the password" (the default; password plus TOTP
+code stay as the fallback) and "only with a passkey": then the password
+and the TOTP code no longer sign in, though the password still confirms
+new passkeys and API tokens. "Only with a passkey" needs one passkey,
+and while it is on the last one cannot be deleted; a second passkey (for
+example on the phone) keeps a lost device from locking the account out.
+`create-admin <name>` turns it off again (and sets a new password), the
+passkeys stay. Attestation is not
+checked, any authenticator is accepted. The public keys are stored in
+`hlstats_Options` (`gamewe_passkey_...`, split into rows, never listed on
+the raw settings page) and do not depend on `ADMIN_SECRET`; deleting a user
+deletes their passkeys.
+
+Locked out (passkey, password, authenticator app and backup codes lost):
+on the server, `create-admin <name> --no-totp` (in the container:
+`docker exec gamewe-web node scripts/create-admin.mjs <name> --no-totp`)
+prints a new password, removes TOTP and the backup codes, turns "only with
+a passkey" off, ends all sessions of the user and deletes their API
+tokens. The passkeys stay; delete lost ones under My account → Passkeys
+after signing in. Without a shell on the server, the same works in the
+database with the admin database user. The rows of a user carry the
+first 32 hex digits of the SHA-256 of the exact user name
+(`printf %s '<name>' | sha256sum | cut -c1-32`, below `<h>`):
+
+```sql
+-- "only with a passkey" off
+DELETE FROM hlstats_Options WHERE keyname = 'gamewe_passkeyonly_<h>';
+-- TOTP and its backup codes off
+DELETE FROM hlstats_Options WHERE keyname IN ('gamewe_totp_<h>', 'gamewe_totpp_<h>');
+DELETE FROM hlstats_Options WHERE keyname LIKE 'gamewe\_totpb\_<h>\_%';
+-- a new password (MariaDB/MySQL and PostgreSQL); the old MD5 form is
+-- accepted once and replaced by a scrypt hash at the sign-in
+UPDATE hlstats_Users SET password = MD5('<new password>') WHERE username = '<name>';
+```
+
+On SQL Server the password is set with `create-admin`. Change the password
+under My account right after signing in.
 
 API tokens let scripts use the admin API (`/api/v1/admin`, documented on
 `/api`, see [INTERFACE.md](INTERFACE.md#admin-api)) with the rights of their

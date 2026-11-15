@@ -12,6 +12,8 @@ import { adminExec, adminQuery, upsert } from "./db";
 import { readSecret, secondFactor, sessionEpochKey } from "./totp";
 import { idleLeft } from "./admin-idle";
 import { getSettings } from "./settings";
+import { checkAssertion, type Assertion, type Expect } from "./passkey-core";
+import { findPasskey, listPasskeys, passkeyOnly, touchPasskey } from "./passkeys";
 
 // Admin accounts are the rows of hlstats_Users (username, password, acclevel).
 // New passwords are stored as scrypt hashes; old HLstatsX MD5 hashes still
@@ -124,8 +126,9 @@ export async function cookieSecure() {
 }
 
 // Step 1: user name and password. "totp": the account has TOTP, the code
-// form comes next (loginCode).
-export async function login(username: string, password: string): Promise<"ok" | "totp" | "invalid" | "blocked" | "nosecret"> {
+// form comes next (loginCode). "passkey": the account signs in only with a
+// passkey (My account → Passkeys); said whatever the password.
+export async function login(username: string, password: string): Promise<"ok" | "totp" | "passkey" | "invalid" | "blocked" | "nosecret"> {
   const secret = adminSecret();
   if (!secret) return "nosecret";
   const ip = await clientIp();
@@ -137,6 +140,12 @@ export async function login(username: string, password: string): Promise<"ok" | 
   );
   // The same work for an unknown name, so the answer time does not tell which names exist.
   const check = await verifyPassword(password, user ? user.password : DUMMY_HASH);
+  // Passkey-only (while passkeys exist): the same answer for a right and a
+  // wrong password, so guessing never tells which one is right.
+  if (user && user.acclevel >= LEVEL_MIN && (await passkeyOnly(user.username)) && (await listPasskeys(user.username)).length) {
+    if (!check.ok) fail(ip);
+    return "passkey";
+  }
   if (!user || !check.ok || user.acclevel < LEVEL_MIN) {
     fail(ip);
     return "invalid";
@@ -254,6 +263,81 @@ export async function loginCode(code: string): Promise<"ok" | "code" | "expired"
   tries.delete(p.nonce);
   await cancelPendingLogin();
   await startSession(user.username, secret);
+  return "ok";
+}
+
+// Passkey ceremonies (passkey-core.ts): the challenge waits in a signed
+// cookie (under its own prefix, so it never works as a session or TOTP
+// step) for 5 minutes and works once. "login" is the sign-in, "add" a new
+// passkey of the signed-in user, who confirmed it with the password first.
+const CHALLENGE = "gamewe_pk";
+const usedChallenges = new Map<string, number>();
+
+// The host the admin area is reached under; the browser binds a passkey to it.
+export async function passkeyHost(): Promise<string> {
+  const h = await headers();
+  const host = (h.get("x-forwarded-host") ?? h.get("host") ?? "").split(",")[0].trim();
+  return /^[A-Za-z0-9.\-:[\]]+$/.test(host) ? host : "";
+}
+
+export async function newChallenge(kind: "login" | "add", user = ""): Promise<string | null> {
+  const secret = adminSecret();
+  if (!secret) return null;
+  const c = randomBytes(32).toString("base64url");
+  const payload = Buffer.from(JSON.stringify({ k: kind, u: user, c, exp: Date.now() + PENDING_MINUTES * 60_000 })).toString("base64url");
+  (await cookies()).set(CHALLENGE, `${payload}.${sign(`pk.${payload}`, secret)}`, {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: await cookieSecure(),
+    path: `${basePath}/admin`,
+    maxAge: PENDING_MINUTES * 60,
+  });
+  return c;
+}
+
+// The challenge of this kind (and user), used up; null if there is none.
+export async function takeChallenge(kind: "login" | "add", user = ""): Promise<string | null> {
+  const secret = adminSecret();
+  const jar = await cookies();
+  const raw = jar.get(CHALLENGE)?.value;
+  jar.delete({ name: CHALLENGE, path: `${basePath}/admin` });
+  if (!secret || !raw) return null;
+  const [payload, mac] = raw.split(".");
+  if (!payload || !mac) return null;
+  const want = Buffer.from(sign(`pk.${payload}`, secret));
+  const got = Buffer.from(mac);
+  if (want.length !== got.length || !timingSafeEqual(want, got)) return null;
+  try {
+    const d = JSON.parse(Buffer.from(payload, "base64url").toString()) as { k?: string; u?: string; c?: string; exp?: number };
+    const now = Date.now();
+    if (d.k !== kind || d.u !== user || !d.c || !d.exp || d.exp < now || usedChallenges.has(d.c)) return null;
+    for (const [k, exp] of usedChallenges) if (exp < now) usedChallenges.delete(k);
+    usedChallenges.set(d.c, d.exp);
+    return d.c;
+  } catch {
+    return null;
+  }
+}
+
+// Sign-in with a passkey: one step for password and second factor.
+export async function passkeyLogin(r: Assertion): Promise<"ok" | "invalid" | "expired" | "blocked" | "nosecret"> {
+  const secret = adminSecret();
+  if (!secret) return "nosecret";
+  const ip = await clientIp();
+  if (await blocked(ip)) return "blocked";
+  const challenge = await takeChallenge("login");
+  if (!challenge) return "expired";
+  const p = typeof r?.id === "string" ? await findPasskey(r.id) : null;
+  const [user] = p ? await adminQuery<{ username: string; acclevel: number }>(`SELECT username, acclevel FROM hlstats_Users WHERE username = ?`, [p.owner]) : [];
+  const e: Expect = { challenge, host: await passkeyHost(), type: "webauthn.get" };
+  const ok = p && user && user.username === p.owner && user.acclevel >= LEVEL_MIN ? checkAssertion(r, p, p.counter, e) : null;
+  if (!p || !ok) {
+    fail(ip);
+    return "invalid";
+  }
+  await touchPasskey(p.hash, ok.counter);
+  failures.delete(ip);
+  await startSession(p.owner, secret);
   return "ok";
 }
 

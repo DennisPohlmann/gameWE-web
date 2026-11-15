@@ -10,7 +10,9 @@ import { ADMIN_THEME_COOKIE, isAdminTheme } from "@/lib/admin-theme";
 import { basePath } from "@/lib/base-path";
 import { expiryDays, tokenName, tokenScopes } from "@/lib/api-token-core";
 import { createToken, purgeTokens, revokeToken } from "@/lib/api-tokens";
-import { LEVEL_ADMIN, LEVEL_MIN, adminSecret, brakedCode, confirmIdentity, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, requireAdmin } from "@/lib/auth";
+import { LEVEL_ADMIN, LEVEL_MIN, adminSecret, brakedCode, confirmIdentity, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, newChallenge, passkeyHost, passkeyLogin, requireAdmin, takeChallenge } from "@/lib/auth";
+import { ALGS, MAX_PER_USER, checkRegistration, passkeyName, rpIdOf, userHandle, type Assertion, type Registration } from "@/lib/passkey-core";
+import { addPasskey, deletePasskey, listPasskeys, passkeyOnly, setPasskeyOnly } from "@/lib/passkeys";
 import { codeMode, codeStepHref } from "@/lib/login-code";
 import { resetMode } from "@/lib/reset";
 import { apiEnabled, getSettings } from "@/lib/settings";
@@ -29,6 +31,19 @@ export async function loginAction(form: FormData) {
   if (res === "totp") redirect("/admin/login?step=code");
   if (res !== "ok") redirect(`/admin/login?error=${res}`);
   redirect("/admin");
+}
+
+// Sign-in with a passkey (PasskeyLogin): the challenge first, then the
+// answer of the browser. A passkey is found by its id (no user name asked).
+export async function passkeyLoginStartAction(): Promise<{ challenge: string; rpId: string } | { error: "nosecret" }> {
+  const challenge = await newChallenge("login");
+  if (!challenge) return { error: "nosecret" };
+  return { challenge, rpId: rpIdOf(await passkeyHost()) };
+}
+
+export async function passkeyLoginAction(r: Assertion): Promise<{ error?: "invalid" | "expired" | "blocked" | "nosecret" }> {
+  const res = await passkeyLogin(r);
+  return res === "ok" ? {} : { error: res };
 }
 
 export async function loginCodeAction(form: FormData) {
@@ -291,6 +306,65 @@ export async function totpDisableAction(form: FormData) {
   // Whoever had the old second factor may have made a token with it.
   await purgeTokens(user);
   redirect("/admin/account?done=off");
+}
+
+// Passkeys of the signed-in user's own account (lib/passkeys.ts). A new one
+// is confirmed with the password (and TOTP code) first, like an API token;
+// the browser then makes it and passkeyAddAction checks and stores it.
+export type PasskeyAddError = "name" | "wrong" | "code" | "blocked" | "nosecret" | "limit" | "expired" | "invalid" | "duplicate";
+export type PasskeyOptions = { challenge: string; rpId: string; rpName: string; user: { id: string; name: string }; exclude: string[]; algs: number[] };
+
+export async function passkeyAddStartAction(form: FormData): Promise<PasskeyOptions | { error: PasskeyAddError }> {
+  const user = await requireAdmin();
+  if (!passkeyName(form.get("name"))) return { error: "name" };
+  const mine = await listPasskeys(user.username);
+  if (mine.length >= MAX_PER_USER) return { error: "limit" };
+  const ok = await confirmIdentity(user.username, String(form.get("password") ?? ""), String(form.get("code") ?? ""));
+  if (ok !== "ok") return { error: ok };
+  const challenge = await newChallenge("add", user.username);
+  if (!challenge) return { error: "nosecret" };
+  return {
+    challenge,
+    rpId: rpIdOf(await passkeyHost()),
+    rpName: (await getSettings()).siteName || "gameWE",
+    user: { id: userHandle(user.username), name: user.username },
+    exclude: mine.map((p) => p.id),
+    algs: [...ALGS],
+  };
+}
+
+export async function passkeyAddAction(name: string, r: Registration): Promise<{ error?: PasskeyAddError }> {
+  const user = await requireAdmin();
+  const n = passkeyName(name);
+  if (!n) return { error: "name" };
+  const challenge = await takeChallenge("add", user.username);
+  if (!challenge) return { error: "expired" };
+  const reg = checkRegistration(r, { challenge, host: await passkeyHost(), type: "webauthn.create" });
+  if (!reg) return { error: "invalid" };
+  if ((await listPasskeys(user.username)).length >= MAX_PER_USER) return { error: "limit" };
+  if ((await addPasskey({ owner: user.username, name: n, id: reg.id, key: reg.key, alg: reg.alg }, reg.counter)) !== "ok") return { error: "duplicate" };
+  console.info(`gameWE: passkey "${n}" added by ${user.username}`);
+  revalidatePath("/admin/account");
+  return {};
+}
+
+// While "only passkey" is on, the last passkey stays: the account would lock itself out.
+export async function deletePasskeyAction(form: FormData) {
+  const user = await requireAdmin();
+  const mine = await listPasskeys(user.username);
+  if ((await passkeyOnly(user.username)) && mine.length <= 1) redirect("/admin/account?pk=keep#passkeys");
+  const r = await deletePasskey(user.username, String(form.get("id") ?? ""));
+  if (r) console.info(`gameWE: passkey "${r.name}" deleted by ${user.username}`);
+  redirect(`/admin/account?pk=${r ? "deleted" : "unknown"}#passkeys`);
+}
+
+export async function passkeyOnlyAction(form: FormData) {
+  const user = await requireAdmin();
+  const on = form.getAll("only").map(String).includes("1");
+  if (on && (await listPasskeys(user.username)).length === 0) redirect("/admin/account?pk=few#passkeys");
+  await setPasskeyOnly(user.username, on);
+  console.info(`gameWE: sign-in ${on ? "only with a passkey" : "with a passkey or the password"} for ${user.username}`);
+  redirect(`/admin/account?pk=${on ? "only" : "any"}#passkeys`);
 }
 
 // Own password (Mein Konto).

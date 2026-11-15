@@ -8,6 +8,7 @@ import { RAW_GROUP, READONLY_OPTIONS, adminOnlyOption, homeValue, linkValue, raw
 import { fastdlBase } from "./overview-format";
 import { ACCESS_KEYS, ACCESS_SECRETS, FASTDL_ACCESS, accessValueOk, type Access, type AccessField } from "./fastdl-access";
 import { purgeTokens } from "./api-tokens";
+import { purgePasskeys } from "./passkeys";
 import { LEVEL_ADMIN, revokeSessions, type AdminUser } from "./auth";
 import { steamKey } from "./config";
 import { saveSecret, SECRET_OPTIONS } from "./secret-options";
@@ -154,8 +155,8 @@ export async function saveEntity(a: Actor, e: Entity, id: string | null, form: F
     console.error("admin save:", err instanceof Error ? err.message : err);
     throw new OpError("db", { msg: dbMsg(err), ...(isDuplicateKey(err) ? { dupkey: "1" } : {}) });
   }
-  // A new user never inherits the API tokens of an earlier user of that name.
-  if (e.key === "users" && id === null) await purgeTokens(saved);
+  // A new user never inherits the API tokens or passkeys of an earlier user of that name.
+  if (e.key === "users" && id === null) await Promise.all([purgeTokens(saved), purgePasskeys(saved)]);
   // A new ranking takes the definitions of its template.
   if (e.key === "games" && id === null) {
     const template = String(form.get("template") ?? "");
@@ -189,7 +190,7 @@ export async function deleteEntity(a: Actor, e: Entity, id: string): Promise<voi
   if (e.key === "users" && id === a.user.username) throw new OpError("self");
   try {
     await deleteRow(e, id);
-    if (e.key === "users") await Promise.all([removeSecret(id, false), removeSecret(id, true), removeBackupCodes(id), purgeTokens(id), revokeSessions(id)]);
+    if (e.key === "users") await Promise.all([removeSecret(id, false), removeSecret(id, true), removeBackupCodes(id), purgeTokens(id), purgePasskeys(id), revokeSessions(id)]);
   } catch (err) {
     throw new OpError("db", { msg: dbMsg(err) });
   }

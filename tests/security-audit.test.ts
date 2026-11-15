@@ -40,13 +40,15 @@ test("sessions and tokens end with the credentials", () => {
   assert.match(auth, /data\.i <= Number\(ended\.value\)/, "currentAdmin refuses ended sessions");
   assert.match(auth.slice(auth.indexOf("export async function logout")), /revokeSessions/);
   assert.match(auth.slice(auth.indexOf("export async function changePassword"), auth.indexOf("export async function confirmIdentity")), /revokeSessions/);
-  assert.match(src("src/lib/admin-ops.ts"), /purgeTokens\(id\), revokeSessions\(id\)/);
+  assert.match(src("src/lib/admin-ops.ts"), /purgeTokens\(id\), purgePasskeys\(id\), revokeSessions\(id\)/);
+  assert.match(src("src/lib/admin-ops.ts"), /purgeTokens\(saved\), purgePasskeys\(saved\)/, "a new user of an old name gets no passkeys");
   const a = src("src/app/admin/actions.ts");
   assert.match(a.slice(a.indexOf("function totpDisableAction")), /purgeTokens\(user\)/);
   assert.match(a.slice(a.indexOf("function changePasswordAction")), /purgeTokens\(user\.username\)/);
   const cli = src("scripts/create-admin.mjs");
   assert.match(cli, /epochKey/);
   assert.match(cli, /gamewe\\\\_apitoken/);
+  assert.match(cli, /gamewe_passkeyonly_\$\{hashName\}/, "the recovery turns passkey-only off");
 });
 
 test("code checks of a signed-in user have the brake", () => {

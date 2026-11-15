@@ -223,8 +223,8 @@ test("paths are matched strictly; settings/raw is not a settings page", () => {
   }
 });
 
-test("no operation manages tokens, passwords or TOTP of the own account", () => {
-  for (const op of adminOps) assert.doesNotMatch(op.path, /token|totp|password|session|login|logout|account/i, op.path);
+test("no operation manages tokens, passwords, passkeys or TOTP of the own account", () => {
+  for (const op of adminOps) assert.doesNotMatch(op.path, /token|totp|passkey|password|session|login|logout|account/i, op.path);
   // Only the users entity writes hlstats_Users, and its handlers check the owner.
   const code = src("src/lib/admin-api.ts");
   for (const h of ["entityCreate", "entityUpdate", "entityDelete"]) {
@@ -267,9 +267,9 @@ test("every server action of the admin area has an API operation or is account-o
     globalHallAction: ["globalHallSet"],
     hallEntryAction: ["hallRemove", "hallRestore"],
   };
-  // Sign-in, own password, own TOTP, own tokens, look of the admin area:
+  // Sign-in, own password, own TOTP, own passkeys, own tokens, look of the admin area:
   // only signed in, never with a token.
-  const accountOnly = ["loginAction", "loginCodeAction", "loginCancelAction", "logoutAction", "adminThemeAction", "totpStartAction", "totpCancelAction", "totpConfirmAction", "totpBackupCodesAction", "totpDisableAction", "changePasswordAction", "createApiTokenAction", "revokeApiTokenAction"];
+  const accountOnly = ["loginAction", "loginCodeAction", "loginCancelAction", "logoutAction", "adminThemeAction", "totpStartAction", "totpCancelAction", "totpConfirmAction", "totpBackupCodesAction", "totpDisableAction", "changePasswordAction", "createApiTokenAction", "revokeApiTokenAction", "passkeyLoginStartAction", "passkeyLoginAction", "passkeyAddStartAction", "passkeyAddAction", "deletePasskeyAction", "passkeyOnlyAction"];
   // A stored secret's value for its eye button: signed in only, the API never returns secrets.
   const uiOnly = ["revealSecretAction"];
   for (const a of actions) {

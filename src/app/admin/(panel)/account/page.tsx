@@ -1,8 +1,9 @@
-import { changePasswordAction, createApiTokenAction, revokeApiTokenAction, totpBackupCodesAction, totpCancelAction, totpConfirmAction, totpDisableAction, totpStartAction } from "../../actions";
+import { changePasswordAction, createApiTokenAction, deletePasskeyAction, passkeyOnlyAction, revokeApiTokenAction, totpBackupCodesAction, totpCancelAction, totpConfirmAction, totpDisableAction, totpStartAction } from "../../actions";
 import { PageHead } from "@/components/admin/page-head";
 import { RevealInput } from "@/components/admin/reveal-input";
 import { BackupCodesForm, type BackupCodesText } from "@/components/admin/backup-codes-form";
 import { ApiTokenForm } from "@/components/admin/api-token-form";
+import { PasskeyAdd } from "@/components/admin/passkey-add";
 import { TotpSetup } from "@/components/admin/totp-setup";
 import { Section } from "@/components/ui";
 import { adminDict } from "@/lib/admin-i18n";
@@ -15,14 +16,21 @@ import { fmtDateTime, nowUnix } from "@/lib/format";
 import { fill, getAdminLang } from "@/lib/i18n";
 import { apiEnabled, getSettings } from "@/lib/settings";
 import { BACKUP_CODES, countBackupCodes, readSecret } from "@/lib/totp";
+import { MAX_PER_USER } from "@/lib/passkey-core";
+import { listPasskeys, passkeyOnly } from "@/lib/passkeys";
 
-// The signed-in user's own account: password, optional TOTP with its backup
-// codes and API tokens (only a notice while the API is off).
-export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; done?: string; pw?: string; token?: string }> }) {
+// The signed-in user's own account: password, passkeys and how to sign in,
+// optional TOTP with its backup codes and API tokens (only a notice while
+// the API is off).
+export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; done?: string; pw?: string; token?: string; pk?: string }> }) {
   const user = await requireAdmin();
   const lang = await getAdminLang();
   const a = adminDict(lang);
-  const { error, done, pw, token } = await searchParams;
+  const { error, done, pw, token, pk } = await searchParams;
+  const passkeys = await listPasskeys(user.username);
+  const only = await passkeyOnly(user.username);
+  const pkNotice = { deleted: a.pkDeleted, only: a.pkOnlyOn, any: a.pkOnlyOff }[pk ?? ""];
+  const pkError = { few: a.pkErrFew, keep: a.pkErrKeep }[pk ?? ""];
   const api = await apiEnabled();
   const tokens = api ? await listTokens(user.username) : [];
   const now = nowUnix();
@@ -72,6 +80,92 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             {a.pwSave}
           </button>
         </form>
+      </Section>
+      <Section title={a.pkTitle} id="passkeys">
+        <div className="form">
+          <p>{a.pkIntro}</p>
+          {pkNotice ? <p className="notice">{pkNotice}</p> : null}
+          {pkError ? <p className="notice error">{pkError}</p> : null}
+          {passkeys.length ? null : <p className="muted">{a.pkNone}</p>}
+        </div>
+        {passkeys.length ? (
+          <div className="table-wrap">
+            <table className="cards">
+              <thead>
+                <tr>
+                  <th>{a.tokName}</th>
+                  <th>{a.tokCreated}</th>
+                  <th>{a.tokLastUsed}</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {passkeys.map((p) => (
+                  <tr key={p.hash}>
+                    <td className="main">{p.name}</td>
+                    <td data-l={`${a.tokCreated}:`}>{fmtDateTime(p.created, lang)}</td>
+                    <td data-l={`${a.tokLastUsed}:`}>{p.lastUsed ? fmtDateTime(p.lastUsed, lang) : a.tokNotUsed}</td>
+                    <td className="end">
+                      <form action={deletePasskeyAction}>
+                        <input type="hidden" name="id" value={p.hash} />
+                        <button type="submit" className="button danger small" disabled={only && passkeys.length <= 1}>
+                          {a.pkDelete}
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+        <div className="form">
+          <h3>{a.pkAdd}</h3>
+          <PasskeyAdd
+            key={pk ?? ""}
+            totp={active !== null}
+            text={{
+              name: a.tokName,
+              nameHint: a.pkNameHint,
+              password: a.tokPassword,
+              show: a.secretShow,
+              hide: a.secretHide,
+              code: a.tokCode,
+              add: a.pkAdd,
+              added: a.pkAdded,
+              unsupported: a.pkUnsupported,
+              failed: a.pkFailed,
+              errors: {
+                name: a.tokErrName,
+                wrong: a.tokErrWrong,
+                code: a.tokErrCode,
+                blocked: a.pwBlocked,
+                nosecret: a.nosecret,
+                limit: fill(a.pkErrLimit, { n: String(MAX_PER_USER) }),
+                expired: a.pkErrExpired,
+                invalid: a.pkErrInvalid,
+                duplicate: a.pkErrDuplicate,
+              },
+            }}
+          />
+          <h3 id="pk-mode">{a.pkModeTitle}</h3>
+          <form action={passkeyOnlyAction} className="form">
+            <fieldset className="token-scopes" aria-labelledby="pk-mode">
+              <label className="check">
+                <input type="radio" name="only" value="0" defaultChecked={!only} />
+                {a.pkModeAny}
+              </label>
+              <label className="check">
+                <input type="radio" name="only" value="1" defaultChecked={only} disabled={!only && !passkeys.length} />
+                {a.pkModeOnly}
+              </label>
+            </fieldset>
+            <small>{a.pkModeHint}</small>
+            <button type="submit" className="button">
+              {a.pkModeSave}
+            </button>
+          </form>
+        </div>
       </Section>
       {error === "code" ? <p className="notice error">{a.codeInvalid}</p> : null}
       {done === "on" ? <p className="notice">{a.totpEnabled}</p> : done === "off" ? <p className="notice">{a.totpDisabled}</p> : null}

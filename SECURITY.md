@@ -49,7 +49,7 @@ details yourself.
 In scope is the code in this repository, in particular:
 
 - the public pages and the public JSON API
-- the admin area, its login (passwords, TOTP, sessions) and the admin API tokens
+- the admin area, its login (passwords, TOTP, passkeys, sessions) and the admin API tokens
 - the container image, the Helm chart and the packaging in this repository
 
 Vulnerabilities in Next.js, Node.js or the database server belong to those projects; please report them there (a note to us is still welcome if gameWE needs an update).

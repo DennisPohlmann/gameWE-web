@@ -447,6 +447,9 @@ select { padding-inline-end: 28px; }
 .login .form { max-width: none; }
 .login .form input { width: 100%; }
 .login .form .button { width: 100%; justify-self: stretch; }
+.login .passkey-login { display: grid; gap: 10px; }
+.login .passkey-login .button { width: 100%; }
+.login .login-or { margin: 14px 0 10px; text-align: center; font-size: 13px; color: var(--muted); }
 .login-foot { margin-top: 16px; font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; gap: 10px; }
 
 /* bottom bar (phones only) */

@@ -14,7 +14,7 @@ on MariaDB/MySQL, PostgreSQL or Microsoft SQL Server. It
   phone: an overview of what needs attention (also a newer release of the
   web or the collector), ranking management (rankings,
   servers, players, definitions, ranking resets) and settings (website,
-  services, collector, users with optional TOTP),
+  services, collector, users with optional TOTP and passkeys),
 - offers a read-only public JSON API for everything the public pages show
   (rankings, players, countries, states, cities, clans, weapons, maps with
   heatmaps, awards, ranks, servers, events, hall of fame, player maps,
