@@ -59,11 +59,19 @@ export type NavText = Record<
   | "adminRoles"
   | "chat"
   | "ips"
-  | "colServers",
+  | "colServers"
+  | "account"
+  | "accName"
+  | "accPasskeys"
+  | "accSignIn"
+  | "accTotp"
+  | "accPassword"
+  | "accTokens"
+  | "accNotify",
   string
 >;
 
-type Area = "home" | "rankings" | "settings";
+type Area = "home" | "rankings" | "settings" | "account";
 
 // First path segment after /admin per area.
 const RANKING_SEGMENTS = ["rankings", "games", "servers", "players", "clans", "weapons", "actions", "teams", "roles", "awards", "ranks", "reset"];
@@ -72,7 +80,7 @@ const RANKING_LISTS = ["servers", "players", "clans", "weapons", "actions", "tea
 function where(pathname: string, params: URLSearchParams) {
   const parts = pathname.split("/").filter(Boolean);
   const seg = parts[1] ?? "";
-  const area: Area = seg === "" || seg === "jobs" || seg === "collector" ? "home" : RANKING_SEGMENTS.includes(seg) ? "rankings" : "settings";
+  const area: Area = seg === "" || seg === "jobs" || seg === "collector" ? "home" : seg === "account" ? "account" : RANKING_SEGMENTS.includes(seg) ? "rankings" : "settings";
   let game = params.get("game") ?? "";
   if (!game && seg === "rankings" && parts[2] && parts[2] !== "new") game = decodeURIComponent(parts[2]);
   if (!game) {
@@ -91,6 +99,17 @@ function useWhere() {
   const params = useSearchParams();
   return { pathname, ...where(pathname, new URLSearchParams(params.toString())) };
 }
+
+// The parts of My account, each its own page (app/admin/(panel)/account).
+const ACCOUNT_PARTS: [string, IconName, keyof NavText][] = [
+  ["name", "user", "accName"],
+  ["passkeys", "key", "accPasskeys"],
+  ["sign-in", "lock", "accSignIn"],
+  ["totp", "shield", "accTotp"],
+  ["password", "lock", "accPassword"],
+  ["api-tokens", "code", "accTokens"],
+  ["notifications", "bell", "accNotify"],
+];
 
 const AREAS: [Area, string, IconName, keyof NavText][] = [
   ["home", "/admin", "home", "areaHome"],
@@ -218,6 +237,16 @@ export function AdminSidebar({
           <nav>
             {can["rankings.view"] ? <Item href="/admin/rankings" icon="trophy" label={t.areaRankings} on={false} /> : null}
             <Item href="/admin/settings" icon="gear" label={t.areaSettings} on={false} />
+          </nav>
+        </>
+      ) : area === "account" ? (
+        <>
+          <h4>{t.account}</h4>
+          <nav>
+            <Item href="/admin/account" icon="home" label={t.overview} on={!parts[2]} />
+            {ACCOUNT_PARTS.map(([key, icon, label]) => (
+              <Item key={key} href={`/admin/account/${key}`} icon={icon} label={t[label]} on={parts[2] === key} />
+            ))}
           </nav>
         </>
       ) : area === "rankings" ? (

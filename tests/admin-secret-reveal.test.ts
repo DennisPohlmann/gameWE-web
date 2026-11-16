@@ -42,7 +42,7 @@ test("a generated log token is shown via the eye button, not by changing the typ
 });
 
 test("the TOTP key, link and QR code are shown once, never from a reload", () => {
-  const page = src("src/app/admin/(panel)/account/page.tsx");
+  const page = src("src/app/admin/(panel)/account/[[...part]]/page.tsx");
   // The page knows only that a setup was started, never the pending key.
   assert.match(page, /started=\{pending !== null\}/);
   assert.doesNotMatch(page, /otpauthUri|QrCode|qrData|value=\{pending/);

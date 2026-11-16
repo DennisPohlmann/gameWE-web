@@ -248,7 +248,7 @@ export async function savePrivacyAction(form: FormData) {
 async function totpUser() {
   const user = await requireAdmin();
   const secret = adminSecret();
-  if (!secret) redirect("/admin/account");
+  if (!secret) redirect("/admin/account/totp");
   return { user: user.username, secret };
 }
 
@@ -268,7 +268,7 @@ export async function totpStartAction(): Promise<TotpStartState> {
 export async function totpCancelAction() {
   const { user } = await totpUser();
   await removeSecret(user, true);
-  redirect("/admin/account");
+  redirect("/admin/account/totp");
 }
 
 // Turning TOTP on and making new backup codes answer the form (BackupCodesForm)
@@ -309,12 +309,12 @@ export async function totpDisableAction(form: FormData) {
   const { user, secret } = await totpUser();
   const active = await readSecret(user, secret);
   const right = await brakedCode(user, async () => active !== null && (await secondFactor(user, active, String(form.get("code") ?? ""), secret)) !== null);
-  if (right !== "ok") redirect("/admin/account?error=code");
+  if (right !== "ok") redirect("/admin/account/totp?error=code");
   await removeSecret(user, false);
   await removeBackupCodes(user);
   // Whoever had the old second factor may have made a token with it.
   await purgeTokens(user);
-  redirect("/admin/account?done=off");
+  redirect("/admin/account/totp?done=off");
 }
 
 // Passkeys of the signed-in user's own account (lib/passkeys.ts). A new one
@@ -353,7 +353,7 @@ export async function passkeyAddAction(name: string, r: Registration): Promise<{
   if ((await listPasskeys(user.username)).length >= MAX_PER_USER) return { error: "limit" };
   if ((await addPasskey({ owner: user.username, name: n, id: reg.id, key: reg.key, alg: reg.alg }, reg.counter)) !== "ok") return { error: "duplicate" };
   console.info(`gameWE: passkey "${n}" added by ${user.username}`);
-  revalidatePath("/admin/account");
+  revalidatePath("/admin/account", "layout");
   // The page marks the new passkey by this.
   return { added: passkeyHash(reg.id) };
 }
@@ -362,19 +362,19 @@ export async function passkeyAddAction(name: string, r: Registration): Promise<{
 export async function deletePasskeyAction(form: FormData) {
   const user = await requireAdmin();
   const mine = await listPasskeys(user.username);
-  if ((await passkeyOnly(user.username)) && mine.length <= 1) redirect("/admin/account?pk=keep#passkeys");
+  if ((await passkeyOnly(user.username)) && mine.length <= 1) redirect("/admin/account/passkeys?pk=keep");
   const r = await deletePasskey(user.username, String(form.get("id") ?? ""));
   if (r) console.info(`gameWE: passkey "${r.name}" deleted by ${user.username}`);
-  redirect(`/admin/account?pk=${r ? "deleted" : "unknown"}#passkeys`);
+  redirect(`/admin/account/passkeys?pk=${r ? "deleted" : "unknown"}`);
 }
 
 export async function passkeyOnlyAction(form: FormData) {
   const user = await requireAdmin();
   const on = form.getAll("only").map(String).includes("1");
-  if (on && (await listPasskeys(user.username)).length === 0) redirect("/admin/account?pk=few#passkeys");
+  if (on && (await listPasskeys(user.username)).length === 0) redirect("/admin/account/sign-in?pk=few");
   await setPasskeyOnly(user.username, on);
   console.info(`gameWE: sign-in ${on ? "only with a passkey" : "with a passkey or the password"} for ${user.username}`);
-  redirect(`/admin/account?pk=${on ? "only" : "any"}#passkeys`);
+  redirect(`/admin/account/sign-in?pk=${on ? "only" : "any"}`);
 }
 
 // Own password (Mein Konto).
@@ -383,20 +383,20 @@ export async function displayNameAction(form: FormData) {
   const user = await requireAdmin();
   const raw = String(form.get("name") ?? "").trim();
   const name = raw === "" ? null : roleName(raw);
-  if (raw !== "" && !name) redirect("/admin/account?name=invalid#name");
+  if (raw !== "" && !name) redirect("/admin/account/name?name=invalid");
   await setDisplayName(user.username, name);
   revalidatePath("/admin", "layout");
-  redirect("/admin/account?name=saved#name");
+  redirect("/admin/account/name?name=saved");
 }
 
 export async function changePasswordAction(form: FormData) {
   const user = await requireAdmin();
   const next = String(form.get("next") ?? "");
-  if (next !== String(form.get("repeat") ?? "")) redirect("/admin/account?pw=mismatch");
+  if (next !== String(form.get("repeat") ?? "")) redirect("/admin/account/password?pw=mismatch");
   const r = await changePassword(user.username, String(form.get("current") ?? ""), next);
   // Whoever had the old password may have made a token with it.
   if (r === "ok") await purgeTokens(user.username);
-  redirect(`/admin/account?pw=${r === "ok" ? "saved" : r}`);
+  redirect(`/admin/account/password?pw=${r === "ok" ? "saved" : r}`);
 }
 
 // API tokens of the signed-in user's own account (lib/api-tokens.ts): a new
@@ -420,16 +420,16 @@ export async function createApiTokenAction(_prev: TokenFormState, form: FormData
   const res = await createToken(user.username, name, scopes, days);
   if ("error" in res) return { error: res.error, at };
   console.info(`gameWE: API token "${name}" (${scopes.join(", ")}) created by ${user.username}${days ? `, expires in ${days} days` : ""}`);
-  revalidatePath("/admin/account");
+  revalidatePath("/admin/account", "layout");
   return { token: res.token, name, at };
 }
 
 export async function revokeApiTokenAction(form: FormData) {
   const user = await requireAdmin();
-  if (!(await apiEnabled())) redirect("/admin/account?token=disabled#api-tokens");
+  if (!(await apiEnabled())) redirect("/admin/account/api-tokens?token=disabled");
   const r = await revokeToken(user.username, String(form.get("id") ?? ""));
   if (r) console.info(`gameWE: API token "${r.name}" revoked by ${user.username}`);
-  redirect(`/admin/account?token=${r ? "revoked" : "unknown"}#api-tokens`);
+  redirect(`/admin/account/api-tokens?token=${r ? "revoked" : "unknown"}`);
 }
 
 // Ranking reset (lib/reset.ts): right resets, confirmed in the dialog of the
@@ -623,19 +623,19 @@ export async function saveOwnNotifyAction(form: FormData) {
   const own = ownFromForm(form);
   const test = String(form.get("test") ?? "");
   // A test needs an address of that channel.
-  if (isChannel(test) && !own[test].to) redirect(`/admin/account?notify=bad&field=${test}#notifications`);
+  if (isChannel(test) && !own[test].to) redirect(`/admin/account/notifications?notify=bad&field=${test}`);
   try {
     await saveOwnNotify({ user }, own);
   } catch (err) {
-    if (err instanceof OpError && err.code === "field") redirect(`/admin/account?notify=bad&field=${encodeURIComponent(err.detail.field)}#notifications`);
+    if (err instanceof OpError && err.code === "field") redirect(`/admin/account/notifications?notify=bad&field=${encodeURIComponent(err.detail.field)}`);
     throw err;
   }
-  if (!isChannel(test)) redirect("/admin/account?notify=saved#notifications");
+  if (!isChannel(test)) redirect("/admin/account/notifications?notify=saved");
   const job = await queueNotifyTest({ user }, test, true).catch((err) => {
-    if (err instanceof OpError && err.code === "nojobs") redirect("/admin/account?notify=nojobs#notifications");
+    if (err instanceof OpError && err.code === "nojobs") redirect("/admin/account/notifications?notify=nojobs");
     throw err;
   });
-  redirect(`/admin/account?notify=test&job=${job.id}#notifications`);
+  redirect(`/admin/account/notifications?notify=test&job=${job.id}`);
 }
 
 export async function sharedNotifyTestAction(form: FormData) {

@@ -50,10 +50,10 @@ export default async function AdminHome() {
   // external: href is a page outside the admin area (a GitHub release).
   const todo: { tone: "bad" | "warn" | "acc"; icon: Parameters<typeof Icon>[0]["name"]; title: string; text: string; href: string; link: string; external?: boolean }[] = [];
   if (totp === null)
-    todo.push({ tone: "bad", icon: "lock", title: fill(u.att2fa, { u: user.username }), text: u.att2faText, href: "/admin/account", link: u.att2faLink });
+    todo.push({ tone: "bad", icon: "lock", title: fill(u.att2fa, { u: user.username }), text: u.att2faText, href: "/admin/account/totp", link: u.att2faLink });
   const backupLeft = totp != null ? await countBackupCodes(user.username).catch(() => null) : null;
   if (backupLeft !== null && backupLeft <= 2)
-    todo.push({ tone: "warn", icon: "lock", title: fill(u.attBackup, { n: backupLeft, u: user.username }), text: u.attBackupText, href: "/admin/account", link: u.attBackupLink });
+    todo.push({ tone: "warn", icon: "lock", title: fill(u.attBackup, { n: backupLeft, u: user.username }), text: u.attBackupText, href: "/admin/account/totp", link: u.attBackupLink });
   if (!beatOk)
     todo.push({
       tone: "warn",

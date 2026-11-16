@@ -1,4 +1,7 @@
-import { saveOwnNotifyAction, changePasswordAction, displayNameAction, createApiTokenAction, deletePasskeyAction, passkeyOnlyAction, revokeApiTokenAction, totpBackupCodesAction, totpCancelAction, totpConfirmAction, totpDisableAction, totpStartAction } from "../../actions";
+import { saveOwnNotifyAction, changePasswordAction, displayNameAction, createApiTokenAction, deletePasskeyAction, passkeyOnlyAction, revokeApiTokenAction, totpBackupCodesAction, totpCancelAction, totpConfirmAction, totpDisableAction, totpStartAction } from "../../../actions";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { HashRedirect } from "@/components/admin/hash-redirect";
 import { PageHead } from "@/components/admin/page-head";
 import { RevealInput } from "@/components/admin/reveal-input";
 import { BackupCodesForm, type BackupCodesText } from "@/components/admin/backup-codes-form";
@@ -26,11 +29,17 @@ import { NOTIFY_EVENT_LABELS } from "@/lib/admin-settings";
 import { NOTIFY_T } from "@/lib/admin-texts";
 import { isChannel } from "@/lib/notify-core";
 
-// The signed-in user's own account: password, passkeys and how to sign in,
-// optional TOTP with its backup codes and API tokens (only a notice while
-// the API is off).
-export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; done?: string; pw?: string; token?: string; pk?: string; new?: string; notify?: string; field?: string; job?: string; name?: string }> }) {
+// The signed-in user's own account: /admin/account shows every part at a
+// glance, each part (name, passkeys, how to sign in, optional TOTP with its
+// backup codes, password, API tokens, only a notice while the API is off,
+// notifications) has its own page /admin/account/<part>, listed in the side
+// menu (components/admin/nav.tsx, ACCOUNT_PARTS there too).
+const PARTS = ["name", "passkeys", "sign-in", "totp", "password", "api-tokens", "notifications"];
+
+export default async function AccountPage({ params, searchParams }: { params: Promise<{ part?: string[] }>; searchParams: Promise<{ error?: string; done?: string; pw?: string; token?: string; pk?: string; new?: string; notify?: string; field?: string; job?: string; name?: string }> }) {
   const user = await requireAdmin();
+  const part = (await params).part?.join("/") ?? "";
+  if (part && !PARTS.includes(part)) notFound();
   const lang = await getAdminLang();
   const a = adminDict(lang);
   const { error, done, pw, token, pk, new: fresh, notify, field, job, name: nameState } = await searchParams;
@@ -51,6 +60,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const pending = secret && active === null ? await readSecret(user.username, secret, true) : null;
   const backupLeft = active !== null ? await countBackupCodes(user.username) : 0;
   const issuer = (await getSettings()).siteName || "gameWE";
+  const titles: Record<string, string> = { name: a.nameTitle, passkeys: a.pkTitle, "sign-in": a.pkModeTitle, totp: a.totp, password: a.pwTitle, "api-tokens": a.tokTitle, notifications: nt.title };
   const backupText = (hint: string, submit: string): BackupCodesText => ({
     code: a.totpCode,
     show: a.valueShow,
@@ -67,15 +77,28 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   });
   return (
     <>
-      <PageHead crumbs={[[a.account]]} title={a.account} intro={a.accountIntro} />
-      {/* The state of every part at a glance; each tile jumps to its part. */}
-      <nav className="grid kpis acc-glance" aria-label={a.accGlance}>
-        <Tile href="#passkeys" icon="key" k={a.pkTitle} v={String(passkeys.length)} s={passkeys.length ? a.accPkSome : a.accPkNone} state={passkeys.length ? "ok" : undefined} />
-        <Tile href="#sign-in" icon="lock" k={a.pkModeTitle} v={only ? a.accModeOnly : a.accModeAny} s={a.accModeSub} text />
-        <Tile href="#totp" icon="shield" k={a.totp} v={active !== null ? a.accOn : a.accOff} s={a.accTotpSub} state={active !== null ? "ok" : undefined} text />
-        <Tile href="#api-tokens" icon="code" k={a.tokTitle} v={api ? String(tokens.length) : a.accOff} s={a.accTokSub} text={!api} />
-        <Tile href="#notifications" icon="bell" k={nt.title} v={String(notifyOn)} s={nt.tile} state={notifyOn ? "ok" : undefined} />
-      </nav>
+      {part ? (
+        <PageHead crumbs={[[a.account, "/admin/account"], [titles[part]]]} title={titles[part]} />
+      ) : (
+        <>
+          <PageHead crumbs={[[a.account]]} title={a.account} intro={a.accountIntro} />
+          {/* Old links to a part on the one long page (/admin/account#totp). */}
+          {PARTS.map((p) => (
+            <HashRedirect key={p} hash={p} to={`/admin/account/${p}`} />
+          ))}
+          {/* The state of every part at a glance; each tile opens its page. */}
+          <nav className="grid kpis acc-glance" aria-label={a.accGlance}>
+            <Tile href="name" icon="user" k={a.nameTitle} v={shown || user.username} s={user.username} text />
+            <Tile href="passkeys" icon="key" k={a.pkTitle} v={String(passkeys.length)} s={passkeys.length ? a.accPkSome : a.accPkNone} state={passkeys.length ? "ok" : undefined} />
+            <Tile href="sign-in" icon="lock" k={a.pkModeTitle} v={only ? a.accModeOnly : a.accModeAny} s={a.accModeSub} text />
+            <Tile href="totp" icon="shield" k={a.totp} v={active !== null ? a.accOn : a.accOff} s={a.accTotpSub} state={active !== null ? "ok" : undefined} text />
+            <Tile href="password" icon="lock" k={a.pwTitle} v="••••••••" s={a.pwHint} text />
+            <Tile href="api-tokens" icon="code" k={a.tokTitle} v={api ? String(tokens.length) : a.accOff} s={a.accTokSub} text={!api} />
+            <Tile href="notifications" icon="bell" k={nt.title} v={String(notifyOn)} s={nt.tile} state={notifyOn ? "ok" : undefined} />
+          </nav>
+        </>
+      )}
+      {part === "name" ? (
       <Section title={a.nameTitle} id="name">
         {nameState === "saved" ? <p className="notice">{a.nameSaved}</p> : null}
         {nameState === "invalid" ? <p className="notice error">{a.nameInvalid}</p> : null}
@@ -90,6 +113,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           </button>
         </form>
       </Section>
+      ) : null}
+      {part === "passkeys" ? (
       <Section title={a.pkTitle} id="passkeys" aside={<span className={passkeys.length ? "pill ok" : "pill"}>{passkeys.length}</span>}>
         <div className="form">
           <p className="muted">{a.pkIntro}</p>
@@ -99,8 +124,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
               <span>{fill(a.pkAddedName, { n: added.name })}</span>
             </p>
           ) : null}
-          {pkNotice ? <p className="notice">{pkNotice}</p> : null}
-          {pkError ? <p className="notice error">{pkError}</p> : null}
+          {pk === "deleted" ? <p className="notice">{pkNotice}</p> : null}
+          {pk === "keep" ? <p className="notice error">{pkError}</p> : null}
           {passkeys.length ? (
             <ul className="pk-list">
               {passkeys.map((p) => (
@@ -167,8 +192,12 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           </div>
         </div>
       </Section>
+      ) : null}
+      {part === "sign-in" ? (
       <Section title={a.pkModeTitle} id="sign-in" aside={<span className={only ? "pill ok" : "pill"}>{only ? a.accModeOnly : a.accModeAny}</span>}>
         <form action={passkeyOnlyAction} className="form">
+          {pk === "only" || pk === "any" ? <p className="notice">{pkNotice}</p> : null}
+          {pk === "few" ? <p className="notice error">{pkError}</p> : null}
           <fieldset className="choice-cards" aria-label={a.pkModeTitle}>
             <label className="check">
               <input type="radio" name="only" value="0" defaultChecked={!only} />
@@ -185,6 +214,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           </button>
         </form>
       </Section>
+      ) : null}
+      {part === "totp" ? (
+      <>
       {error === "code" ? <p className="notice error">{a.codeInvalid}</p> : null}
       {done === "on" ? <p className="notice">{a.totpEnabled}</p> : done === "off" ? <p className="notice">{a.totpDisabled}</p> : null}
       {!secret ? <p className="notice error">{a.nosecret}</p> : null}
@@ -227,6 +259,10 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <small>{a.totpReset}</small>
         </div>
       </Section>
+      </>
+      ) : null}
+      {part === "password" ? (
+      <>
       {pw === "saved" ? <p className="notice">{a.pwSaved}</p> : null}
       {pw && pw !== "saved" ? (
         <p className="notice error">{pw === "wrong" ? a.pwWrong : pw === "mismatch" ? a.pwMismatch : pw === "short" ? a.pwShort : a.pwBlocked}</p>
@@ -252,14 +288,16 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           </button>
         </form>
       </Section>
-      {api ? null : (
+      </>
+      ) : null}
+      {part === "api-tokens" && !api ? (
         <Section title={a.tokTitle} id="api-tokens">
           <div className="form">
             <p className="notice">{a.tokOff}</p>
           </div>
         </Section>
-      )}
-      {api ? (
+      ) : null}
+      {part === "api-tokens" && api ? (
         <Section title={a.tokTitle} id="api-tokens" aside={<span className="pill">{tokens.length}</span>}>
           <div className="form">
             <p>
@@ -352,6 +390,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           </div>
         </Section>
       ) : null}
+      {part === "notifications" ? (
       <Section title={nt.title} id="notifications" aside={<span className={notifyOn ? "pill ok" : "pill"}>{notifyOn}</span>}>
         <form action={saveOwnNotifyAction} className="form notify-own">
           <p className="muted">{nt.intro}</p>
@@ -418,19 +457,20 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           </div>
         </form>
       </Section>
+      ) : null}
     </>
   );
 }
 
 function Tile({ href, icon, k, v, s, state, text }: { href: string; icon: IconName; k: string; v: string; s: string; state?: "ok"; text?: boolean }) {
   return (
-    <a className={`card kpi kpi-link acc-tile${state ? ` ${state}` : ""}`} href={href}>
+    <Link prefetch={false} className={`card kpi kpi-link acc-tile${state ? ` ${state}` : ""}`} href={`/admin/account/${href}`}>
       <div className="k">
         <Icon name={icon} />
         {k}
       </div>
-      <div className={text ? "v kpi-text" : "v"}>{v}</div>
-      <div className="s">{s}</div>
-    </a>
+      <div className={text ? "v kpi-text" : "v"}><bdi>{v}</bdi></div>
+      <div className="s"><bdi>{s}</bdi></div>
+    </Link>
   );
 }

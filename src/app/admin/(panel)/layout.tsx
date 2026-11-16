@@ -8,7 +8,7 @@ import { AdminSidebar, AreaTabs, Logo, type NavText } from "@/components/admin/n
 import { entities } from "@/lib/admin-entities";
 import { adminDict, localized, tr } from "@/lib/admin-i18n";
 import { isFullAdmin, permMap } from "@/lib/admin-perms";
-import { PERM_T } from "@/lib/admin-texts";
+import { NOTIFY_T, PERM_T } from "@/lib/admin-texts";
 import { rankingSummaries } from "@/lib/admin-rankings";
 import { settingGroups } from "@/lib/admin-settings";
 import { ADMIN_THEMES, getAdminTheme } from "@/lib/admin-theme";
@@ -62,6 +62,14 @@ export default async function PanelLayout({ children }: { children: ReactNode })
     adminRoles: localized(PERM_T, lang).rolesTitle,
     chat: site.chat,
     ips: a.ips,
+    account: a.account,
+    accName: a.nameTitle,
+    accPasskeys: a.pkTitle,
+    accSignIn: a.pkModeTitle,
+    accTotp: a.totp,
+    accPassword: a.pwTitle,
+    accTokens: a.tokTitle,
+    accNotify: localized(NOTIFY_T, lang).title,
   } as NavText;
   const pt = localized(PERM_T, lang);
   // Versions, each a link to the page of its release, and a link to the
