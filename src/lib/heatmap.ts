@@ -1,12 +1,13 @@
 import "server-only";
 import { query, queryOne } from "./db";
+import { fragsWin } from "./heat-source";
 import { onLevel, type MapLevel } from "./map-levels";
 
 // Kill and death positions of a map, drawn as dots like gameME's map
 // tracking: from the positions the collector stores with each frag
 // (hlstats_Events_Frags.pos_x/pos_y for the killer, with the headshot flag,
 // pos_victim_x/pos_victim_y for the victim; Source games, collector 1.7) or,
-// where that has more of them, from hlstats_Events_Locations (loc_1/loc_2;
+// where those are too few (heat-source.ts), from hlstats_Events_Locations (loc_1/loc_2;
 // type 1 = where a killer stood, type 2 = where a player died; no headshot
 // flag), which the collector fills as well. At most DOTS of the newest per
 // kind. Kept for ten minutes per map, a missing one for one minute.
@@ -108,11 +109,11 @@ export function heatLevel(heat: Heatmap, split: number, level: MapLevel): Heatma
   };
 }
 
-// The source with more positions wins: older kills (CS:S before collector
-// 1.7.3) only have locations, newer ones have both.
+// The frags win (they have the headshot flag), see heat-source.ts: older
+// kills (CS:S before collector 1.7.3) only have locations, newer ones both.
 async function best(mapId: number, who: HeatWho): Promise<Dots | null> {
   const [f, l] = await Promise.all([dots(mapId, FRAGS[who]).catch(() => null), dots(mapId, LOCATIONS[who]).catch(() => null)]);
-  return f && (!l || f.n >= l.n) ? f : l;
+  return f && fragsWin(f.n, l?.n ?? 0, DOTS) ? f : l;
 }
 
 async function dots(mapId: number, src: Source): Promise<Dots | null> {
