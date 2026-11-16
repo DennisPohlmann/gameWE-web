@@ -66,6 +66,16 @@ export function addressOk(c: Channel, v: string): boolean {
   return TOPIC.test(v);
 }
 
+// An admin's own ntfy address: a topic on the site's ntfy server or the
+// address of a topic on their own server (https://ntfy.example.org/topic).
+// The collector only sends to a public address there, without the site's token.
+export function ownNtfyOk(v: string): boolean {
+  if (TOPIC.test(v)) return true;
+  if (v.length > 200) return false;
+  const i = v.lastIndexOf("/");
+  return i > 0 && TOPIC.test(v.slice(i + 1)) && ntfyBase(v.slice(0, i)) === v.slice(0, i);
+}
+
 export const botTokenOk = (v: string) => BOT_TOKEN.test(v);
 export const hostOk = (v: string) => v.length <= 253 && HOST.test(v);
 
@@ -116,7 +126,8 @@ export type Own = { to: string; events: NotifyEvent[] };
 export function badOwn(values: Partial<Record<Channel, Own>>): Channel | null {
   for (const c of CHANNELS) {
     const v = values[c];
-    if (v && ((v.to.trim() && !addressOk(c, v.to.trim())) || !v.events.every(isEvent))) return c;
+    const to = v?.to.trim();
+    if (v && ((to && !(c === "ntfy" ? ownNtfyOk(to) : addressOk(c, to))) || !v.events.every(isEvent))) return c;
   }
   return null;
 }

@@ -551,7 +551,10 @@ server, the bot token and the ntfy server, and picks shared recipients (up to
 20 e-mail addresses, a Telegram chat or channel, an ntfy topic) and which
 events they get; **Send a test message** queues a job `notify-test` for the
 collector and shows its outcome. Under My account every admin picks their own
-address per channel and the events, without a right. The passwords and
+address per channel and the events, without a right; for ntfy that is a topic
+on the site's ntfy server or one on their own server
+(`https://ntfy.example.org/topic`, sent without the site's ntfy token and only
+to a public address). The passwords and
 tokens are stored in `hlstats_gamewe_secrets` and never shown again; the
 collector writes the outcome of the last message per recipient
 (`gamewe_notify_last_<channel>`, `gamewe_notifyu_<hash>_last_<channel>`).

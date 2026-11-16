@@ -3,7 +3,7 @@
 // Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { badOwn, notifySettingValue, ntfyBase, ownValue, parseOwn, parseStatus, recipients, userHash } from "../src/lib/notify-core.ts";
+import { badOwn, ownNtfyOk, notifySettingValue, ntfyBase, ownValue, parseOwn, parseStatus, recipients, userHash } from "../src/lib/notify-core.ts";
 
 test("shared e-mail recipients: checked, each once, at most 20", () => {
   assert.equal(recipients("a@example.org; b@example.org a@example.org"), "a@example.org, b@example.org");
@@ -26,6 +26,10 @@ test("an admin's own: one bad channel is reported, nothing else counts", () => {
   assert.equal(badOwn({ email: { to: "me@example.org", events: ["reset"] }, ntfy: { to: "bad topic!", events: [] } }), "ntfy");
   assert.equal(badOwn({ telegram: { to: "@my_channel", events: ["update"] }, email: { to: "", events: [] } }), null);
   assert.equal(badOwn({ email: { to: "me@example.org", events: ["nope" as "reset"] } }), "email");
+  // ntfy: a topic or a topic on an own https server
+  assert.equal(badOwn({ ntfy: { to: "https://ntfy.example.org/my-topic", events: ["hof"] } }), null);
+  assert.ok(ownNtfyOk("my_topic") && ownNtfyOk("https://push.example.org/ntfy/my-topic"));
+  for (const bad of ["http://ntfy.example.org/t", "https://ntfy.example.org/", "https://ntfy.example.org/a b", "https://u:p@ntfy.example.org/t", "https://ntfy.example.org/t?x=1", "https://topic"]) assert.equal(ownNtfyOk(bad), false, bad);
   const v = ownValue({ to: "me@example.org", events: ["update", "reset"] });
   assert.equal(v, "reset,update|me@example.org");
   assert.deepEqual(parseOwn(v), { to: "me@example.org", events: ["reset", "update"] });

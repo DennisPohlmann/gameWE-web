@@ -807,7 +807,7 @@ export const NOTIFY_T = {
     toHint: {
       email: "Zum Beispiel du@example.org.",
       telegram: "Deine Chat-ID als Zahl (zum Beispiel von @userinfobot). Schreib dem Bot vorher einmal /start, sonst darf er dir nicht schreiben.",
-      ntfy: "Abonniere das Topic in der ntfy-App. Wähle einen schwer zu ratenden Namen, denn wer ihn kennt, liest mit.",
+      ntfy: "Ein Topic auf dem Server dieser Seite oder die Adresse eines Topics auf deinem eigenen ntfy-Server (https://ntfy.example.org/topic). Abonniere es in der ntfy-App und wähle einen schwer zu ratenden Namen, denn wer ihn kennt, liest mit.",
     },
     events: "Worüber",
     off: "Noch nicht eingeschaltet. Ein Admin mit dem Recht für die Einstellungen schaltet den Kanal unter Einstellungen → Benachrichtigungen ein.",
@@ -838,7 +838,7 @@ export const NOTIFY_T = {
     toHint: {
       email: "For example you@example.org.",
       telegram: "Your chat ID as a number (for example from @userinfobot). Send /start to the bot once first, or it may not write to you.",
-      ntfy: "Subscribe to the topic in the ntfy app. Choose a name that is hard to guess: whoever knows it reads along.",
+      ntfy: "A topic on the server of this site, or the address of a topic on your own ntfy server (https://ntfy.example.org/topic). Subscribe to it in the ntfy app and choose a name that is hard to guess: whoever knows it reads along.",
     },
     events: "About",
     off: "Not turned on yet. An admin with the right for the settings turns the channel on under Settings → Notifications.",
