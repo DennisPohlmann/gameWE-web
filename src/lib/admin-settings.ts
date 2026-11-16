@@ -100,6 +100,18 @@ const notifyEvents = (c: string): Setting[] =>
 const EMAIL_ON = { key: "gamewe_notify_email", value: "1" };
 const TG_ON = { key: "gamewe_notify_telegram", value: "1" };
 const NTFY_ON = { key: "gamewe_notify_ntfy", value: "1" };
+// The switch of a channel: only the shared recipients; the admins' own
+// messages need only the channel's server (collector notify.Ready).
+const sharedSwitch = (c: string): Setting => ({
+  key: `gamewe_notify_${c}`,
+  label: { de: "An die gemeinsamen Empfänger senden", en: "Send to the shared recipients" },
+  type: "bool",
+  def: "0",
+  help: {
+    de: "Nur für die gemeinsamen Empfänger darunter. Die eigenen Benachrichtigungen der Admins unter Mein Konto brauchen nur den Server darüber.",
+    en: "Only for the shared recipients below. The admins' own notifications under My account need only the server above.",
+  },
+});
 const same = (s: string): L => ({ de: s, en: s, all: Object.fromEntries(LANGUAGES.map((l) => [l.code, s])) });
 
 // Notifications (lib/notify-core.ts): the collector sends them.
@@ -114,9 +126,8 @@ const notifyDefinitions: Setting[] = [
       ...LANGUAGES.filter((l) => !("base" in l && l.base)).map((l): [string, L] => [l.code, same(`${l.name} (${l.code})`)]),
     ],
   },
-  { key: "gamewe_notify_email", section: { de: "E-Mail", en: "E-mail" }, label: { de: "E-Mail einschalten", en: "Turn on e-mail" }, type: "bool", def: "0" },
-  { key: "gamewe_notify_smtp_host", label: { de: "SMTP-Server", en: "SMTP server" }, type: "text", def: "", minLevel: 100, help: { de: "Zum Beispiel smtp.example.org.", en: "For example smtp.example.org." }, show: EMAIL_ON },
-  { key: "gamewe_notify_smtp_port", label: { de: "SMTP-Port", en: "SMTP port" }, type: "number", def: "587", min: 1, max: 65535, minLevel: 100, help: { de: "587 mit STARTTLS, 465 mit TLS.", en: "587 with STARTTLS, 465 with TLS." }, show: EMAIL_ON },
+  { key: "gamewe_notify_smtp_host", section: { de: "E-Mail", en: "E-mail" }, label: { de: "SMTP-Server", en: "SMTP server" }, type: "text", def: "", minLevel: 100, help: { de: "Zum Beispiel smtp.example.org.", en: "For example smtp.example.org." } },
+  { key: "gamewe_notify_smtp_port", label: { de: "SMTP-Port", en: "SMTP port" }, type: "number", def: "587", min: 1, max: 65535, minLevel: 100, help: { de: "587 mit STARTTLS, 465 mit TLS.", en: "587 with STARTTLS, 465 with TLS." } },
   {
     key: "gamewe_notify_smtp_security",
     label: { de: "Verschlüsselung", en: "Encryption" },
@@ -129,11 +140,11 @@ const notifyDefinitions: Setting[] = [
       ["none", { de: "Keine (nur ein Server auf demselben Rechner)", en: "None (only a server on the same machine)" }],
     ],
     help: { de: "Ohne Verschlüsselung schickt der Collector keine Anmeldung, außer an localhost.", en: "Without encryption the collector sends no login, except to localhost." },
-    show: EMAIL_ON,
   },
-  { key: "gamewe_notify_smtp_user", label: { de: "SMTP-Benutzer", en: "SMTP user" }, type: "text", def: "", minLevel: 100, help: { de: "Leer: ohne Anmeldung.", en: "Empty: no login." }, show: EMAIL_ON },
-  { key: "gamewe_notify_smtp_password", label: { de: "SMTP-Passwort", en: "SMTP password" }, type: "secret", def: "", minLevel: 100, help: MASKED, show: EMAIL_ON },
-  { key: "gamewe_notify_email_from", label: { de: "Absender", en: "Sender" }, type: "text", def: "", minLevel: 100, help: { de: "Absenderadresse der E-Mails, z. B. stats@example.org.", en: "Sender address of the e-mails, e.g. stats@example.org." }, show: EMAIL_ON },
+  { key: "gamewe_notify_smtp_user", label: { de: "SMTP-Benutzer", en: "SMTP user" }, type: "text", def: "", minLevel: 100, help: { de: "Leer: ohne Anmeldung.", en: "Empty: no login." } },
+  { key: "gamewe_notify_smtp_password", label: { de: "SMTP-Passwort", en: "SMTP password" }, type: "secret", def: "", minLevel: 100, help: MASKED },
+  { key: "gamewe_notify_email_from", label: { de: "Absender", en: "Sender" }, type: "text", def: "", minLevel: 100, help: { de: "Absenderadresse der E-Mails, z. B. stats@example.org.", en: "Sender address of the e-mails, e.g. stats@example.org." } },
+  sharedSwitch("email"),
   {
     key: "gamewe_notify_email_to",
     label: { de: "Gemeinsame Empfänger", en: "Shared recipients" },
@@ -143,16 +154,16 @@ const notifyDefinitions: Setting[] = [
     show: EMAIL_ON,
   },
   ...notifyEvents("email"),
-  { key: "gamewe_notify_telegram", section: same("Telegram"), label: { de: "Telegram einschalten", en: "Turn on Telegram" }, type: "bool", def: "0" },
   {
     key: "gamewe_notify_telegram_token",
+    section: same("Telegram"),
     label: { de: "Bot-Token", en: "Bot token" },
     type: "secret",
     def: "",
     minLevel: 100,
     help: { de: "Von @BotFather. Der Bot muss Mitglied des Chats sein, in einem Kanal als Admin. Maskiert; leer lassen behält ihn.", en: "From @BotFather. The bot must be a member of the chat, in a channel as an admin. Masked; leave empty to keep it." },
-    show: TG_ON,
   },
+  sharedSwitch("telegram"),
   {
     key: "gamewe_notify_telegram_chat",
     label: { de: "Gemeinsamer Chat", en: "Shared chat" },
@@ -162,16 +173,9 @@ const notifyDefinitions: Setting[] = [
     show: TG_ON,
   },
   ...notifyEvents("telegram"),
-  {
-    key: "gamewe_notify_ntfy",
-    section: { de: "ntfy (Push-Nachrichten)", en: "ntfy (push messages)" },
-    label: { de: "ntfy einschalten", en: "Turn on ntfy" },
-    type: "bool",
-    def: "0",
-    help: { de: "ntfy.sh oder ein eigener ntfy-Server schickt Push-Nachrichten an die ntfy-App.", en: "ntfy.sh or an own ntfy server sends push messages to the ntfy app." },
-  },
-  { key: "gamewe_notify_ntfy_url", label: { de: "ntfy-Server", en: "ntfy server" }, type: "text", def: "https://ntfy.sh", minLevel: 100, help: { de: "https-Adresse, z. B. https://ntfy.sh.", en: "https address, e.g. https://ntfy.sh." }, show: NTFY_ON },
-  { key: "gamewe_notify_ntfy_token", label: { de: "Zugriffs-Token", en: "Access token" }, type: "secret", def: "", minLevel: 100, help: { de: "Nur für geschützte Topics (tk_…). Maskiert; leer lassen behält es.", en: "Only for protected topics (tk_…). Masked; leave empty to keep it." }, show: NTFY_ON },
+  { key: "gamewe_notify_ntfy_url", section: { de: "ntfy (Push-Nachrichten)", en: "ntfy (push messages)" }, label: { de: "ntfy-Server", en: "ntfy server" }, type: "text", def: "https://ntfy.sh", minLevel: 100, help: { de: "https-Adresse, z. B. https://ntfy.sh.", en: "https address, e.g. https://ntfy.sh." } },
+  { key: "gamewe_notify_ntfy_token", label: { de: "Zugriffs-Token", en: "Access token" }, type: "secret", def: "", minLevel: 100, help: { de: "Nur für geschützte Topics (tk_…). Maskiert; leer lassen behält es.", en: "Only for protected topics (tk_…). Masked; leave empty to keep it." } },
+  sharedSwitch("ntfy"),
   {
     key: "gamewe_notify_ntfy_topic",
     label: { de: "Gemeinsames Topic", en: "Shared topic" },

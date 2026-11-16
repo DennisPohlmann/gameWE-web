@@ -3,7 +3,7 @@
 // Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { badOwn, ownNtfyOk, notifySettingValue, ntfyBase, ownValue, parseOwn, parseStatus, recipients, userHash } from "../src/lib/notify-core.ts";
+import { badOwn, ntfyTokenOk, ownNtfyOk, ownTokenKey, notifySettingValue, ntfyBase, ownValue, parseOwn, parseStatus, recipients, userHash } from "../src/lib/notify-core.ts";
 
 test("shared e-mail recipients: checked, each once, at most 20", () => {
   assert.equal(recipients("a@example.org; b@example.org a@example.org"), "a@example.org, b@example.org");
@@ -43,4 +43,11 @@ test("status and hash as the collector writes and reads them", () => {
   // internal/notify reads the same 32 hex digits (lower-case, trimmed name)
   assert.equal(userHash(" Admin "), userHash("admin"));
   assert.match(userHash("admin"), /^[0-9a-f]{32}$/);
+  // internal/notify UserTokenKey and IsUserSecret
+  assert.equal(ownTokenKey("Admin"), `gamewe_notifyu_${userHash("admin")}_ntfy_token`);
+});
+
+test("an admin's own ntfy token: the characters ntfy uses, no header injection", () => {
+  assert.ok(ntfyTokenOk("tk_AbC123-_x"));
+  for (const bad of ["", "tk_a b", "tk_a\r\nX-Evil: 1", "x".repeat(129)]) assert.equal(ntfyTokenOk(bad), false, bad);
 });

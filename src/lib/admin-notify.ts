@@ -4,9 +4,9 @@ import { jobOriginColumns } from "./admin-jobs";
 import { OpError, who, type Actor } from "./admin-ops";
 import { adminExec, adminInsert, adminQuery, upsert } from "./db";
 import { webOriginDetail } from "./job-origin";
-import { CHANNELS, EVENTS, badOwn, channelKey, ownKey, ownValue, parseOwn, parseStatus, sharedToKey, statusKey, userHash, type Channel, type NotifyEvent, type NotifyStatus, type Own } from "./notify-core";
+import { CHANNELS, EVENTS, badOwn, channelKey, ntfyTokenOk, ownKey, ownTokenKey, ownValue, parseOwn, parseStatus, sharedToKey, statusKey, userHash, type Channel, type NotifyEvent, type NotifyStatus, type Own } from "./notify-core";
 import { collectorRunning, jobsAvailable } from "./reset";
-import { secretOptions } from "./secret-options";
+import { deleteSecrets, saveSecret, secretOptions, secretsOf } from "./secret-options";
 
 // What the notifications pages and the admin API show and change
 // (lib/notify-core.ts has the keys): the channels, the shared recipients'
@@ -15,13 +15,13 @@ import { secretOptions } from "./secret-options";
 export type TestJob = { id: number; status: string; result: string; at: number };
 export type ChannelState = {
   channel: Channel;
-  on: boolean; // turned on in the settings
-  ready: boolean; // the server is set up (e-mail: server and sender; Telegram: bot token)
+  on: boolean; // turned on for the shared recipients
+  ready: boolean; // the server is set up (e-mail: server and sender; Telegram: bot token); the admins' own need only this
   shared: boolean; // has shared recipients
   status: NotifyStatus; // last message to the shared recipients
   test: TestJob | null; // last test of the shared recipients
 };
-export type OwnState = Own & { channel: Channel; status: NotifyStatus; test: TestJob | null };
+export type OwnState = Own & { channel: Channel; status: NotifyStatus; test: TestJob | null; token: boolean };
 export type NotifyState = { channels: ChannelState[]; own: OwnState[]; collector: boolean; jobs: boolean };
 
 const FIXED = ["gamewe_notify_smtp_host", "gamewe_notify_email_from", ...CHANNELS.flatMap((c) => [channelKey(c), sharedToKey[c], statusKey(c)])];
@@ -51,7 +51,15 @@ async function lastTests(hash: string): Promise<Map<string, TestJob>> {
 export async function notifyState(user?: string): Promise<NotifyState> {
   const hash = user ? userHash(user) : "";
   const own = user ? CHANNELS.flatMap((c) => [ownKey(user, c), statusKey(c, hash)]) : [];
-  const [o, secrets, shared, mine, run, jobs] = await Promise.all([options([...FIXED, ...own]), secretOptions(), lastTests(""), user ? lastTests(hash) : Promise.resolve(new Map()), collectorRunning(), jobsAvailable()]);
+  const [o, secrets, shared, mine, run, jobs, tok] = await Promise.all([
+    options([...FIXED, ...own]),
+    secretOptions(),
+    lastTests(""),
+    user ? lastTests(hash) : Promise.resolve(new Map()),
+    collectorRunning(),
+    jobsAvailable(),
+    user ? secretsOf([ownTokenKey(user)]) : Promise.resolve({} as Record<string, string>),
+  ]);
   const ready: Record<Channel, boolean> = {
     email: !!o.get("gamewe_notify_smtp_host") && !!o.get("gamewe_notify_email_from"),
     telegram: !!secrets.gamewe_notify_telegram_token,
@@ -59,7 +67,7 @@ export async function notifyState(user?: string): Promise<NotifyState> {
   };
   return {
     channels: CHANNELS.map((c) => ({ channel: c, on: o.get(channelKey(c)) === "1", ready: ready[c], shared: !!o.get(sharedToKey[c]), status: parseStatus(o.get(statusKey(c))), test: shared.get(c) ?? null })),
-    own: user ? CHANNELS.map((c) => ({ channel: c, ...parseOwn(o.get(ownKey(user, c))), status: parseStatus(o.get(statusKey(c, hash))), test: mine.get(c) ?? null })) : [],
+    own: user ? CHANNELS.map((c) => ({ channel: c, ...parseOwn(o.get(ownKey(user, c))), status: parseStatus(o.get(statusKey(c, hash))), test: mine.get(c) ?? null, token: c === "ntfy" && !!tok[ownTokenKey(user)] })) : [],
     collector: run.running,
     jobs,
   };
@@ -67,11 +75,14 @@ export async function notifyState(user?: string): Promise<NotifyState> {
 
 // Stores the admin's own addresses and events; a channel not in values
 // stays. A bad address throws OpError("field", { field: <channel> }); an
-// empty one removes the channel's row.
-export async function saveOwnNotify(a: Actor, values: Partial<Record<Channel, Own>>): Promise<void> {
+// empty one removes the channel's row (ntfy: with the token). ntfyToken:
+// undefined keeps it, "" removes it, else the new one.
+export async function saveOwnNotify(a: Actor, values: Partial<Record<Channel, Own>>, ntfyToken?: string): Promise<void> {
   const user = a.user.username;
-  const bad = badOwn(values); // a bad channel changes nothing
+  const bad = badOwn(values) ?? (ntfyToken && !ntfyTokenOk(ntfyToken) ? "ntfy" : null); // a bad channel changes nothing
   if (bad) throw new OpError("field", { field: bad });
+  if (ntfyToken === "" || values.ntfy?.to.trim() === "") await deleteSecrets([ownTokenKey(user)]);
+  else if (ntfyToken) await saveSecret(ownTokenKey(user), ntfyToken);
   for (const c of CHANNELS) {
     const v = values[c];
     if (!v) continue;
@@ -79,7 +90,7 @@ export async function saveOwnNotify(a: Actor, values: Partial<Record<Channel, Ow
     if (!to) await adminExec(`DELETE FROM hlstats_Options WHERE keyname = ?`, [ownKey(user, c)]);
     else await adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [ownKey(user, c), ownValue({ to, events: v.events })]);
   }
-  if (a.via) console.info(`gameWE: own notifications changed (${Object.keys(values).join(", ")}) by ${who(a)}`);
+  if (a.via) console.info(`gameWE: own notifications changed (${Object.keys(values).join(", ")}${ntfyToken !== undefined ? ", ntfy token" : ""}) by ${who(a)}`);
 }
 
 // Queues a test message: to the admin's own address (own) or to the shared
@@ -98,6 +109,13 @@ export async function queueNotifyTest(a: Actor, channel: Channel, own: boolean):
   );
   if (a.via) console.info(`gameWE: notification test ${channel}${own ? " (own)" : ""} queued by ${who(a)}`);
   return { id, existing: false };
+}
+
+// The own ntfy token of a form (notify_ntfy_token, SecretControl): undefined
+// keeps the stored one, "" (Remove ticked) deletes it.
+export function ownTokenFromForm(form: Pick<FormData, "get">): string | undefined {
+  if (form.get("notify_ntfy_token__clear") === "1") return "";
+  return String(form.get("notify_ntfy_token") ?? "").trim() || undefined;
 }
 
 // The own values of a form: per channel the address (notify_<c>) and the

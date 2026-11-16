@@ -474,7 +474,8 @@ async function settingsOut(groupId: string, user: PermUser) {
 
 async function ownNotifyOut(user: string) {
   const s = await notifyState(user);
-  return { channels: s.own.map((o) => ({ channel: o.channel, on: s.channels.find((c) => c.channel === o.channel)?.on ?? false, to: o.to, events: o.events, status: o.status, test: o.test })) };
+  // on: the channel's server is set up, which is all an admin's own messages need.
+  return { channels: s.own.map((o) => ({ channel: o.channel, on: s.channels.find((c) => c.channel === o.channel)?.ready ?? false, to: o.to, events: o.events, ...(o.channel === "ntfy" ? { token: o.token } : {}), status: o.status, test: o.test })) };
 }
 
 // ---------------------------------------------------------------- handlers
@@ -696,13 +697,15 @@ const handlers: Record<string, Handler> = {
   async ownNotifySet(c) {
     const b = onlyKeys(c.body, CHANNELS);
     const values: Partial<Record<Channel, Own>> = {};
+    let token: string | undefined;
     for (const ch of CHANNELS) {
       if (b[ch] === undefined) continue;
-      const v = onlyKeys(b[ch], ["to", "events"], ["to", "events"]);
+      const v = onlyKeys(b[ch], ch === "ntfy" ? ["to", "events", "token"] : ["to", "events"], ["to", "events"]);
       if (!Array.isArray(v.events) || v.events.length > EVENTS.length || !v.events.every(isEvent)) throw new BodyError(400, "invalid_field", ch, `${ch}.events must be an array of ${EVENTS.join(", ")}`);
       values[ch] = { to: strField(v, "to", 200), events: v.events };
+      if (v.token !== undefined) token = strField(v, "token", 128);
     }
-    await saveOwnNotify(c.actor, values);
+    await saveOwnNotify(c.actor, values, token);
     return { body: await ownNotifyOut(c.actor.user.username) };
   },
   async ownNotifyTest(c) {

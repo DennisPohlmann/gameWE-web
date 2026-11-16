@@ -742,4 +742,5 @@ form[data-dirty] .savebar .msg { display: none; }
 .notify-ch .ev { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; padding: 0; border: 0; }
 .notify-ch .ev legend { padding: 0; margin-bottom: 4px; font-size: 13px; color: var(--muted); }
 .notify-ch .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.notify-token { display: grid; gap: 4px; min-width: 0; }
 .notify-own .btns { display: flex; flex-wrap: wrap; gap: 8px; }

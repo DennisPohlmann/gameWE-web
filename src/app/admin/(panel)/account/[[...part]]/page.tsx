@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { HashRedirect } from "@/components/admin/hash-redirect";
 import { PageHead } from "@/components/admin/page-head";
 import { RevealInput } from "@/components/admin/reveal-input";
+import { SecretControl } from "@/components/admin/secret-control";
 import { BackupCodesForm, type BackupCodesText } from "@/components/admin/backup-codes-form";
 import { ApiTokenForm } from "@/components/admin/api-token-form";
 import { PasskeyAdd } from "@/components/admin/passkey-add";
@@ -48,7 +49,7 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
   const shown = (await displayNames([user.username])).get(user.username) ?? "";
   const nt = localized(NOTIFY_T, lang);
   const ns = await notifyState(user.username);
-  const notifyOn = ns.own.filter((o) => o.to && o.events.length && ns.channels.find((c) => c.channel === o.channel)?.on).length;
+  const notifyOn = ns.own.filter((o) => o.to && o.events.length && ns.channels.find((c) => c.channel === o.channel)?.ready).length;
   const passkeys = await listPasskeys(user.username);
   const only = await passkeyOnly(user.username);
   const added = pk === "added" ? passkeys.find((p) => p.hash === fresh) : undefined;
@@ -397,14 +398,15 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
           {notify === "bad" ? <p className="notice error">{fill(nt.bad, { c: isChannel(field) ? nt.channel[field] : "" })}</p> : null}
           {notify === "nojobs" || !ns.jobs ? <p className="notice error">{nt.noJobs}</p> : !ns.collector ? <p className="notice">{nt.noCollector}</p> : null}
           {ns.own.map((o) => {
-            const on = ns.channels.find((c) => c.channel === o.channel)?.on ?? false;
+            // Own messages need only the channel's server, not its switch.
+            const on = ns.channels.find((c) => c.channel === o.channel)?.ready ?? false;
             return (
               <div key={o.channel} className={on ? "notify-ch" : "notify-ch off"}>
                 <h3>
                   <Icon name="bell" />
                   {nt.channel[o.channel]}
                 </h3>
-                {on ? null : <small>{nt.off}</small>}
+                {on ? null : <small>{nt.notSetUp}</small>}
                 <label>
                   {nt.to[o.channel]}
                   <input
@@ -419,6 +421,13 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
                   />
                   <small>{nt.toHint[o.channel]}</small>
                 </label>
+                {o.channel === "ntfy" ? (
+                  <div className="notify-token">
+                    <label htmlFor="notify-ntfy-token">{nt.token}</label>
+                    <SecretControl id="notify-ntfy-token" name="notify_ntfy_token" maxLength={128} set={o.token} invalid={notify === "bad" && field === "ntfy"} lang={lang} />
+                    <small>{nt.tokenHint}</small>
+                  </div>
+                ) : null}
                 {/* a disabled channel keeps what is stored */}
                 {on ? null : (
                   <>

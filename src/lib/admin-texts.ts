@@ -801,7 +801,7 @@ export const PERM_T = {
 export const NOTIFY_T = {
   de: {
     title: "Benachrichtigungen",
-    intro: "Wähle, worüber du benachrichtigt wirst und wohin. Die Nachrichten schickt der Collector.",
+    intro: "Nur für dich: Wähle, worüber du benachrichtigt wirst und wohin. Die Nachrichten schickt der Collector.",
     channel: { email: "E-Mail", telegram: "Telegram", ntfy: "ntfy" },
     to: { email: "Deine E-Mail-Adresse", telegram: "Dein Telegram-Chat", ntfy: "Dein ntfy-Topic" },
     toHint: {
@@ -810,7 +810,10 @@ export const NOTIFY_T = {
       ntfy: "Ein Topic auf dem Server dieser Seite oder die Adresse eines Topics auf deinem eigenen ntfy-Server (https://ntfy.example.org/topic). Abonniere es in der ntfy-App und wähle einen schwer zu ratenden Namen, denn wer ihn kennt, liest mit.",
     },
     events: "Worüber",
-    off: "Noch nicht eingeschaltet. Ein Admin mit dem Recht für die Einstellungen schaltet den Kanal unter Einstellungen → Benachrichtigungen ein.",
+    off: "Der Schalter „An die gemeinsamen Empfänger senden“ oben ist aus.",
+    notSetUp: "Die Seite hat diesen Kanal noch nicht eingerichtet. Ein Admin mit dem Recht für geschützte Einstellungen trägt den Server unter Einstellungen → Benachrichtigungen ein.",
+    token: "Zugriffs-Token",
+    tokenHint: "Nur für geschützte Topics (tk_…). Maskiert; leer lassen behält es.",
     save: "Speichern",
     saveTest: "Speichern und Testnachricht senden",
     saved: "Deine Benachrichtigungen sind gespeichert.",
@@ -832,7 +835,7 @@ export const NOTIFY_T = {
   },
   en: {
     title: "Notifications",
-    intro: "Choose what you are notified about and where. The collector sends the messages.",
+    intro: "Only for you: choose what you are notified about and where. The collector sends the messages.",
     channel: { email: "E-mail", telegram: "Telegram", ntfy: "ntfy" },
     to: { email: "Your e-mail address", telegram: "Your Telegram chat", ntfy: "Your ntfy topic" },
     toHint: {
@@ -841,7 +844,10 @@ export const NOTIFY_T = {
       ntfy: "A topic on the server of this site, or the address of a topic on your own ntfy server (https://ntfy.example.org/topic). Subscribe to it in the ntfy app and choose a name that is hard to guess: whoever knows it reads along.",
     },
     events: "About",
-    off: "Not turned on yet. An admin with the right for the settings turns the channel on under Settings → Notifications.",
+    off: "The switch \"Send to the shared recipients\" above is off.",
+    notSetUp: "The site has not set up this channel yet. An admin with the right for protected settings enters its server under Settings → Notifications.",
+    token: "Access token",
+    tokenHint: "Only for protected topics (tk_…). Masked; leave empty to keep it.",
     save: "Save",
     saveTest: "Save and send a test message",
     saved: "Your notifications are saved.",

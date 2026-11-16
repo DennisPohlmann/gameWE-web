@@ -25,7 +25,7 @@ import { checkCode, consumeStep, newBackupCodes, newSecret, otpauthUri, readSecr
 import { ACCESS_SECRETS, FASTDL_ACCESS, accessKey, type AccessField } from "@/lib/fastdl-access";
 import { allSettings } from "@/lib/admin-settings";
 import { adminQuery } from "@/lib/db";
-import { ownFromForm, queueNotifyTest, saveOwnNotify } from "@/lib/admin-notify";
+import { ownFromForm, ownTokenFromForm, queueNotifyTest, saveOwnNotify } from "@/lib/admin-notify";
 import { isChannel } from "@/lib/notify-core";
 import { secretOptions, secretsOf } from "@/lib/secret-options";
 
@@ -625,7 +625,7 @@ export async function saveOwnNotifyAction(form: FormData) {
   // A test needs an address of that channel.
   if (isChannel(test) && !own[test].to) redirect(`/admin/account/notifications?notify=bad&field=${test}`);
   try {
-    await saveOwnNotify({ user }, own);
+    await saveOwnNotify({ user }, own, ownTokenFromForm(form));
   } catch (err) {
     if (err instanceof OpError && err.code === "field") redirect(`/admin/account/notifications?notify=bad&field=${encodeURIComponent(err.detail.field)}`);
     throw err;

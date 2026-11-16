@@ -8,6 +8,7 @@ import { createHash } from "node:crypto";
 //   gamewe_notify_email_to, _telegram_chat, _ntfy_topic   the shared recipients
 //   gamewe_notify_smtp_*, _email_from, _telegram_token, _ntfy_url, _ntfy_token
 //   gamewe_notifyu_<hash>_<channel>         an admin's own: "<events>|<address>"
+//   gamewe_notifyu_<hash>_ntfy_token        an admin's own ntfy token (hlstats_gamewe_secrets)
 //   gamewe_notify_last_<channel>, gamewe_notifyu_<hash>_last_<channel>
 //                                           written by the collector: "<unix>|ok" or "<unix>|error|<text>"
 // A test message is a job "notify-test" (mode: the channel; game: the
@@ -36,7 +37,13 @@ export const statusKey = (c: Channel, hash = "") => (hash ? `${NOTIFY_USER_PREFI
 export const userHash = (user: string) => createHash("sha256").update(user.trim().toLowerCase()).digest("hex").slice(0, 32);
 export const ownKey = (user: string, c: Channel) => `${NOTIFY_USER_PREFIX}${userHash(user)}_${c}`;
 
-// The rows of an admin's own notifications (removed with the admin).
+// An admin's own ntfy token: the collector sends it, not the site's one,
+// with that admin's messages only.
+export const ownTokenKey = (user: string) => `${NOTIFY_USER_PREFIX}${userHash(user)}_ntfy_token`;
+export const ntfyTokenOk = (v: string) => /^[A-Za-z0-9_-]{1,128}$/.test(v);
+
+// The rows of an admin's own notifications in hlstats_Options (removed with
+// the admin, as is ownTokenKey).
 export const ownNotifyKeys = (user: string) => CHANNELS.flatMap((c) => [ownKey(user, c), statusKey(c, userHash(user))]);
 
 // ---------------------------------------------------------------- values
@@ -112,7 +119,7 @@ export function notifySettingValue(key: string, v: string): string | null | unde
     case "gamewe_notify_telegram_token":
       return botTokenOk(v) ? v : null;
     case "gamewe_notify_ntfy_token":
-      return /^[A-Za-z0-9_-]{1,128}$/.test(v) ? v : null;
+      return ntfyTokenOk(v) ? v : null;
   }
   return undefined;
 }

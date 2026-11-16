@@ -352,7 +352,7 @@ const eventSchema = str("Event: reset (a ranking was reset), hof (a period ended
 const notifyStatus = nullable(obj({ at: unix("When"), ok: bool("Delivered"), error: str("Error of the channel, empty if delivered") }, [], "Outcome of the last message, written by the collector; null: none yet"));
 const notifyTestJob = nullable(obj({ id: int("Job ID"), status: str("pending, running, done or failed"), result: str("Result"), at: unix("Requested") }, [], "Last test message; null: none"));
 const notifyChannel = obj({ channel: channelSchema, on: bool("Turned on"), ready: bool("Server set up"), shared: bool("Shared recipients set"), status: notifyStatus, test: notifyTestJob });
-const ownChannel = obj({ channel: channelSchema, on: bool("Turned on in the settings"), to: str("Own address, empty: none"), events: arr(eventSchema), status: notifyStatus, test: notifyTestJob });
+const ownChannel = obj({ channel: channelSchema, on: bool("The site has set up the channel's server (all own messages need; the switch of the settings is only for the shared recipients)"), to: str("Own address, empty: none"), events: arr(eventSchema), token: bool("ntfy only: an own access token is stored"), status: notifyStatus, test: notifyTestJob }, ["token"]);
 const modeSchema = str("What a reset deletes: player-stats (player statistics), all-stats (also server statistics), all (also the players)", { enum: [...RESET_MODES] });
 const job = obj({
   id: int("Job ID"),
@@ -1053,7 +1053,7 @@ export const adminOps: AdminOp[] = [
     operationId: "adminMyNotifications",
     tag: "Admin: account",
     summary: "My notifications",
-    description: "The token owner's own address and events per channel (Admin → My account → Notifications), with the outcome of the last message and test. `on`: the channel is turned on in the settings.",
+    description: "The token owner's own address and events per channel (Admin → My account → Notifications), with the outcome of the last message and test. `on`: the site has set up the channel's server, all your messages need (the switch under Settings is only for the shared recipients). ntfy also tells whether you stored an own access token (`token`), never the token itself.",
     need: null,
     handler: "ownNotifyGet",
     status: 200,
@@ -1067,10 +1067,10 @@ export const adminOps: AdminOp[] = [
     operationId: "adminSetMyNotifications",
     tag: "Admin: account",
     summary: "Change my notifications",
-    description: "Sets the token owner's own address and events of the channels sent; others stay. An empty `to` removes the channel. Addresses: e-mail an address, Telegram the chat ID (or @channel), ntfy a topic (letters, digits, `_ -`).",
+    description: "Sets the token owner's own address and events of the channels sent; others stay. An empty `to` removes the channel (ntfy: with its token). Addresses: e-mail an address, Telegram the chat ID (or @channel), ntfy a topic (letters, digits, `_ -`) or `https://<own server>/<topic>`. ntfy takes an optional `token` (own access token, `tk_…`): sent instead of the site's one, only with your messages; empty removes it, missing keeps it.",
     need: null,
     handler: "ownNotifySet",
-    body: obj(Object.fromEntries(CHANNELS.map((c) => [c, obj({ to: str("Address, empty: none", { maxLength: 200 }), events: arr(eventSchema) })])), [...CHANNELS]),
+    body: obj(Object.fromEntries(CHANNELS.map((c) => [c, obj({ to: str("Address, empty: none", { maxLength: 200 }), events: arr(eventSchema), ...(c === "ntfy" ? { token: str("Own access token; empty: remove it, missing: keep it", { maxLength: 128 }) } : {}) }, ["token"])])), [...CHANNELS]),
     bodyExample: { email: { to: "me@example.org", events: ["reset", "hof", "update"] } },
     status: 200,
     response: obj({ channels: arr(ownChannel) }),
