@@ -23,8 +23,12 @@ case "$want" in
 esac
 
 if grep -rqlF "$PLACEHOLDER" "$dir/server.js" "$dir/.next" 2>/dev/null; then
+  # Regexes in the manifests (the proxy matcher) carry it as \/__gamewe_base__
+  # (JSON: \\/); for the root its backslashes go too, a lone "\" breaks them.
+  from=$PLACEHOLDER
+  [ -n "$want" ] || from="\\\\*$PLACEHOLDER"
   grep -rlF "$PLACEHOLDER" "$dir/server.js" "$dir/.next" | while IFS= read -r f; do
-    sed -i "s:$PLACEHOLDER:$want:g" "$f"
+    sed -i "s:$from:$want:g" "$f"
   done
   printf '%s' "$want" > "$mark"
   echo "gameWE web: sub path set to \"${want:-/}\""
