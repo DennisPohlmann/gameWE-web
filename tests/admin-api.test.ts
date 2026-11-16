@@ -296,10 +296,11 @@ test("every server action of the admin area has an API operation or is account-o
     saveRoleAction: ["roleCreate", "roleUpdate"],
     deleteRoleAction: ["roleDelete"],
     saveOwnNotifyAction: ["ownNotifySet", "ownNotifyTest"],
+    smtpTestAction: ["ownNotifyTest"],
   };
   // Sign-in, own password, own TOTP, own passkeys, own tokens, look of the admin area:
   // only signed in, never with a token.
-  const accountOnly = ["loginAction", "loginCodeAction", "loginCancelAction", "logoutAction", "adminThemeAction", "totpStartAction", "totpCancelAction", "totpConfirmAction", "totpBackupCodesAction", "totpDisableAction", "changePasswordAction", "displayNameAction", "createApiTokenAction", "revokeApiTokenAction", "passkeyLoginStartAction", "passkeyLoginAction", "passkeyAddStartAction", "passkeyAddAction", "deletePasskeyAction", "passkeyOnlyAction"];
+  const accountOnly = ["loginAction", "loginCodeAction", "loginCancelAction", "logoutAction", "adminThemeAction", "totpStartAction", "totpCancelAction", "totpConfirmAction", "totpBackupCodesAction", "totpDisableAction", "changePasswordAction", "displayNameAction", "adminLangAction", "createApiTokenAction", "revokeApiTokenAction", "passkeyLoginStartAction", "passkeyLoginAction", "passkeyAddStartAction", "passkeyAddAction", "deletePasskeyAction", "passkeyOnlyAction"];
   // A stored secret's value for its eye button: signed in only, the API never returns secrets.
   const uiOnly = ["revealSecretAction"];
   for (const a of actions) {

@@ -11,7 +11,7 @@ import { ACCESS_KEYS, ACCESS_SECRETS, FASTDL_ACCESS, accessValueOk, type Access,
 import { purgeTokens } from "./api-tokens";
 import { purgePasskeys } from "./passkeys";
 import { LEVEL_ADMIN, revokeSessions, type AdminUser } from "./auth";
-import { allowed, isRoleId, nameKey, parsePerms, parseRole, permsKey, permsValue, roleKey, roleName, roleOf, roleValue, LEVEL80_DEFAULT, ROLE_MAX, ROLE_PREFIX, ROLE_REF, type Perm, type Role } from "./admin-perms";
+import { adminLangKey, allowed, isRoleId, nameKey, parsePerms, parseRole, permsKey, permsValue, roleKey, roleName, roleOf, roleValue, LEVEL80_DEFAULT, ROLE_MAX, ROLE_PREFIX, ROLE_REF, type Perm, type Role } from "./admin-perms";
 import { steamKey } from "./config";
 import { deleteSecrets, saveSecret, SECRET_OPTIONS } from "./secret-options";
 import { notifySettingValue, ownNotifyKeys, ownTokenKey } from "./notify-core";
@@ -334,7 +334,7 @@ export async function deleteEntity(a: Actor, e: Entity, id: string): Promise<voi
   }
   try {
     await deleteRow(e, id);
-    if (e.key === "users") await Promise.all([removeSecret(id, false), removeSecret(id, true), removeBackupCodes(id), purgeTokens(id), purgePasskeys(id), revokeSessions(id), adminExec(`DELETE FROM hlstats_Options WHERE keyname IN (?, ?)`, [permsKey(id), nameKey(id)]), adminExec(`DELETE FROM hlstats_Options WHERE keyname IN (?)`, [ownNotifyKeys(id)]), deleteSecrets([ownTokenKey(id, "telegram"), ownTokenKey(id, "ntfy")])]);
+    if (e.key === "users") await Promise.all([removeSecret(id, false), removeSecret(id, true), removeBackupCodes(id), purgeTokens(id), purgePasskeys(id), revokeSessions(id), adminExec(`DELETE FROM hlstats_Options WHERE keyname IN (?, ?, ?)`, [permsKey(id), nameKey(id), adminLangKey(id)]), adminExec(`DELETE FROM hlstats_Options WHERE keyname IN (?)`, [ownNotifyKeys(id)]), deleteSecrets([ownTokenKey(id, "telegram"), ownTokenKey(id, "ntfy")])]);
   } catch (err) {
     throw new OpError("db", { msg: dbMsg(err) });
   }

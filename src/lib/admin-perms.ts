@@ -69,6 +69,10 @@ export const permsKey = (user: string) => `gamewe_perms_${userHash(user)}`;
 // The display name an admin gives themselves (My account): shown in the
 // account menu and the user list; the sign-in stays the user name.
 export const nameKey = (user: string) => `gamewe_name_${userHash(user)}`;
+// The language of the admin area an admin chose (My account or the language
+// menu in the admin header), on every device; the collector also writes
+// their messages in it when they chose no language for those.
+export const adminLangKey = (user: string) => `gamewe_adminlang_${userHash(user)}`;
 
 export type PermUser = { acclevel: number; perms?: readonly Perm[] };
 

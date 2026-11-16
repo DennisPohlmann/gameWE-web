@@ -5,7 +5,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { LEVEL80_DEFAULT, PERMS, PERM_GROUPS, ROLE_PRESETS, ROLE_REF, allowed, nameKey, effectivePerms, isPerm, isRoleId, normalizePerms, parsePerms, parseRole, permMap, permsKey, permsValue, roleName, roleOf, roleValue } from "../src/lib/admin-perms.ts";
+import { LEVEL80_DEFAULT, PERMS, PERM_GROUPS, ROLE_PRESETS, ROLE_REF, adminLangKey, allowed, nameKey, effectivePerms, isPerm, isRoleId, normalizePerms, parsePerms, parseRole, permMap, permsKey, permsValue, roleName, roleOf, roleValue } from "../src/lib/admin-perms.ts";
 import { HIDDEN_OPTION_PREFIXES } from "../src/lib/admin-settings.ts";
 import { PERM_T } from "../src/lib/admin-texts.ts";
 import { tools } from "../src/lib/admin-mcp.ts";
@@ -117,7 +117,7 @@ test("nobody locks the admins out and nobody hands out a right they lack", () =>
   const del = ops.slice(ops.indexOf("export async function deleteEntity"));
   assert.match(del, /!\(await otherFullAdmin\(id\)\)[\s\S]*throw new OpError\("lastadmin"\)/);
   // The rights go with the user: removed on deletion, never inherited by a new user of the name.
-  assert.match(del, /DELETE FROM hlstats_Options WHERE keyname IN \(\?, \?\)`, \[permsKey\(id\), nameKey\(id\)\]/);
+  assert.match(del, /DELETE FROM hlstats_Options WHERE keyname IN \(\?, \?, \?\)`, \[permsKey\(id\), nameKey\(id\), adminLangKey\(id\)\]/);
   assert.match(save, /else if \(id === null \|\| opts\.perms \|\| opts\.role === null\) await writePerms\(a, saved, opts\.perms \?\? \(id === null \? LEVEL80_DEFAULT : await ownPerms\(saved\)\)\)/);
   // A role hands out its rights: only one whose rights the actor has.
   assert.match(save, /if \(opts\.role\) checkPerms\(a, \(await roleFor\(opts\.role\)\)\.perms\)/);
@@ -149,12 +149,26 @@ test("admin roles: stored as a reference, never read as more rights", () => {
   assert.ok(roleValue("x".repeat(40), [...PERMS]).length <= 255);
 });
 
+test("admin language: its own row per user, hidden, removed with the user, wins in the admin area", () => {
+  assert.equal(adminLangKey("Dennis "), adminLangKey("dennis"));
+  assert.match(adminLangKey("x"), /^gamewe_adminlang_[0-9a-f]{32}$/);
+  assert.equal(adminLangKey("x").slice(-32), nameKey("x").slice(-32));
+  assert.ok(HIDDEN_OPTION_PREFIXES.includes("gamewe_adminlang_"));
+  // The stored language before the cookie and the browser.
+  assert.match(src("src/lib/i18n.ts"), /getAdminLang = cache\(async[\s\S]*currentAdmin\(\)[\s\S]*adminLangOf\(user\.username\)\)\) \|\| getLang\(\)/);
+  // Only the signed-in admin sets their own; the header menu only from an admin page.
+  const act = src("src/app/admin/actions.ts");
+  assert.match(act.slice(act.indexOf("export async function adminLangAction")), /const user = await requireAdmin\(\);[\s\S]*isLang\(raw\)[\s\S]*setAdminLang\(user\.username/);
+  const route = src("src/app/lang/[lang]/route.ts");
+  assert.match(route, /const admin = back === `\$\{basePath\}\/admin`[\s\S]*admin \? await currentAdmin\(\) : null/);
+});
+
 test("display name: its own row per user, hidden, removed with the user", () => {
   assert.equal(nameKey("Dennis "), nameKey("dennis"));
   assert.notEqual(nameKey("dennis"), permsKey("dennis"));
   assert.match(nameKey("x"), /^gamewe_name_[0-9a-f]{32}$/);
   assert.ok(HIDDEN_OPTION_PREFIXES.includes("gamewe_name_"));
-  assert.match(src("src/lib/admin-ops.ts"), /keyname IN \(\?, \?\)`, \[permsKey\(id\), nameKey\(id\)\]/);
+  assert.match(src("src/lib/admin-ops.ts"), /keyname IN \(\?, \?, \?\)`, \[permsKey\(id\), nameKey\(id\), adminLangKey\(id\)\]/);
   // Only the signed-in admin sets their own, checked like a role name.
   const act = src("src/app/admin/actions.ts");
   assert.match(act.slice(act.indexOf("export async function displayNameAction")), /const user = await requireAdmin\(\);[\s\S]*roleName\(raw\)[\s\S]*setDisplayName\(user\.username, name\)/);

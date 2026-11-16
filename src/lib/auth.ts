@@ -12,7 +12,8 @@ import { adminExec, adminQuery, upsert } from "./db";
 import { readSecret, secondFactor, sessionEpochKey } from "./totp";
 import { idleLeft } from "./admin-idle";
 import { getSettings } from "./settings";
-import { PERMS, allowed, isFullAdmin, nameKey, parsePerms, parseRole, permsKey, roleKey, roleOf, type Need, type Perm } from "./admin-perms";
+import { isLang, type Lang } from "../translations/languages";
+import { PERMS, adminLangKey, allowed, isFullAdmin, nameKey, parsePerms, parseRole, permsKey, roleKey, roleOf, type Need, type Perm } from "./admin-perms";
 import { checkAssertion, type Assertion, type Expect } from "./passkey-core";
 import { findPasskey, listPasskeys, passkeyOnly, touchPasskey } from "./passkeys";
 
@@ -67,6 +68,20 @@ export async function displayNames(users: string[]): Promise<Map<string, string>
 export async function setDisplayName(user: string, name: string | null): Promise<void> {
   if (name) await adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [nameKey(user), name]);
   else await adminExec(`DELETE FROM hlstats_Options WHERE keyname = ?`, [nameKey(user)]);
+}
+
+// The admin-area language this admin stored, null: none (the language menu's
+// cookie or the browser decide).
+export async function adminLangOf(user: string): Promise<Lang | null> {
+  const [row] = await adminQuery<{ value: string | null }>(`SELECT value FROM hlstats_Options WHERE keyname = ?`, [adminLangKey(user)]);
+  const v = row?.value?.trim();
+  return isLang(v) ? v : null;
+}
+
+// Stores (or, null, removes) the admin-area language of this admin.
+export async function setAdminLang(user: string, lang: Lang | null): Promise<void> {
+  if (lang) await adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [adminLangKey(user), lang]);
+  else await adminExec(`DELETE FROM hlstats_Options WHERE keyname = ?`, [adminLangKey(user)]);
 }
 
 let warned = false;

@@ -803,7 +803,7 @@ export const definedSettings = definitions.flatMap((g) => g.items);
 // TOTP secrets, API tokens and rights of the admin users, the secrets of the form
 // above and the privacy page's keys (their own page, /admin/privacy; the address and the
 // text hold line breaks a raw value may not have).
-export const HIDDEN_OPTION_PREFIXES = ["gamewe_totp", "gamewe_apitoken", "gamewe_passkey", "gamewe_perms_", "gamewe_role_", "gamewe_name_", "gamewe_notifyu_", "gamewe_notify_last_", "gamewe_notify_seen_", "gamewe_notify_smtp_password", "gamewe_notify_telegram_token", "gamewe_notify_ntfy_token", "gamewe_ts_query_password", "gamewe_metrics_token", "gamewe_steam_api_key", "gamewe_privacy_"];
+export const HIDDEN_OPTION_PREFIXES = ["gamewe_totp", "gamewe_apitoken", "gamewe_passkey", "gamewe_perms_", "gamewe_role_", "gamewe_name_", "gamewe_adminlang_", "gamewe_notifyu_", "gamewe_notify_last_", "gamewe_notify_seen_", "gamewe_notify_smtp_password", "gamewe_notify_telegram_token", "gamewe_notify_ntfy_token", "gamewe_ts_query_password", "gamewe_metrics_token", "gamewe_steam_api_key", "gamewe_privacy_"];
 // Rows the level 100 operations write (reset schedules, VAC block, bots, the FastDL address), which
 // the collector acts on, or that it opens as a file: below level 100 the raw
 // list shows them read-only and refuses them.

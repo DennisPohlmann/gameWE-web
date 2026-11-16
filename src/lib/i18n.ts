@@ -1,6 +1,7 @@
 import "server-only";
 import { cookies, headers } from "next/headers";
 import { cache } from "react";
+import { adminLangOf, currentAdmin } from "./auth";
 import { getSettings } from "./settings";
 import { dicts, type Dict } from "@/translations";
 import { LANGUAGES, LANG_COOKIE, isLang, type Lang } from "@/translations/languages";
@@ -39,8 +40,13 @@ export async function getDict(): Promise<{ lang: Lang; t: Dict }> {
   return { lang, t: dicts[lang] };
 }
 
-// The admin area has the same languages as the public pages.
-export const getAdminLang = getLang;
+// The admin area has the same languages as the public pages. The language a
+// signed-in admin stored (My account, the header menu) wins over the cookie
+// and the browser, on every device.
+export const getAdminLang = cache(async (): Promise<Lang> => {
+  const user = await currentAdmin();
+  return (user && (await adminLangOf(user.username))) || getLang();
+});
 
 // fill("Tracking {n}", { n: 3 }) -> "Tracking 3"
 export function fill(s: string, vars: Record<string, string | number>): string {

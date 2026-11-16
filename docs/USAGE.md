@@ -553,15 +553,19 @@ rights again; not together with `permissions`).
 messages by e-mail (SMTP), Telegram (a bot) or ntfy (push messages) when a
 ranking is reset, when a scheduled reset stores a hall of fame and when a new
 collector or web release is out. Every admin sets up their own under My
-account → Notifications, without a right: the language of their messages,
+account → Notifications, without a right: the language of their messages
+(without one, their language of the admin area, else the site's),
 per channel the address and the events; Telegram with their own bot (bot token from @BotFather and their chat
 ID; send `/start` to the bot once), ntfy with a server (empty: ntfy.sh), a
 topic and, for a protected topic, an access token. E-mail goes through the
 SMTP server of the site, the only part set up once for all: Settings →
 Notifications (right `settings.edit`; the server fields and the password need
 `settings.protected`) holds it. **Save and
-send a test message** queues a job `notify-test` for the collector and shows
-its outcome. The ntfy servers the admins enter are only reached at a public
+send a test message**, under every channel the site has set up, queues a job
+`notify-test` for the collector and shows its outcome (the page reloads
+itself while the test waits). **Send a test e-mail** on Settings →
+Notifications sends one through the stored SMTP server to the admin's own
+e-mail address from My account. The ntfy servers the admins enter are only reached at a public
 address. The tokens (`gamewe_notifyu_<hash>_telegram_token`,
 `gamewe_notifyu_<hash>_ntfy_token`) and the SMTP password are stored in
 `hlstats_gamewe_secrets`, never shown again and sent only with that admin's
@@ -604,7 +608,13 @@ minutes.
 
 The admin area has its own design, independent of the templates of the
 public pages: light or dark (it follows the device; the user menu top right
-switches it and the language). "To the website" in the top bar and in the
+switches it and the language). The language each admin picks there, or
+under My account → Name & password ("Language of the admin area"), is
+stored for their account (`gamewe_adminlang_<hash of the user name>`, hidden
+on the raw page, removed with the user) and wins in the admin area over the
+language cookie and the browser, on every device and after signing out;
+"Automatic" removes it. Picked on a public page, the language menu only sets
+the cookie. "To the website" in the top bar and in the
 user menu opens the public pages in a new tab (on phones the top bar shows
 only its icon). The top bar has three areas, on phones a bar
 at the bottom; each area has its own side menu (on phones a drawer behind the

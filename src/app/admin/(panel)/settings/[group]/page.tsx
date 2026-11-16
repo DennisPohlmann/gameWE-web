@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
-import { saveSettingsAction } from "../../../actions";
+import { saveSettingsAction, smtpTestAction } from "../../../actions";
+import { AutoRefresh } from "@/components/auto-refresh";
+import { notifyState, type OwnState } from "@/lib/admin-notify";
 import { NotifyStatusLine } from "@/components/admin/notify-status";
 import { Section } from "@/components/ui";
 import { NOTIFY_T } from "@/lib/admin-texts";
@@ -49,11 +51,12 @@ export default async function SettingsPage({
   const u = a.ui;
   const sp = await searchParams;
   const items = group?.items ?? [];
-  const [rows, templates, raw] = await Promise.all([
+  const [rows, templates, raw, notify] = await Promise.all([
     // All settings: some pages show values of others (header links: SourceBans).
     adminQuery<{ keyname: string; value: string }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [allSettings.map((s) => s.key)]),
     items.some((s) => s.type === "template") ? listTemplates() : Promise.resolve([]),
     isRaw ? rawOptions() : Promise.resolve([]),
+    groupId === "notifications" ? notifyState(user.username) : Promise.resolve(null),
   ]);
   const values: Record<string, string> = { ...Object.fromEntries(rows.map((r) => [r.keyname, r.value])), ...(await secretOptions()) };
   // Settings that older installations set in the environment (lib/config.ts):
@@ -145,7 +148,43 @@ export default async function SettingsPage({
         </div>
         </fieldset>
       </form>
+      {notify ? <SmtpTest own={notify.own.find((o) => o.channel === "email")!} jobs={notify.jobs} collector={notify.collector} lang={lang} queued={sp.notify === "test" ? sp.job : undefined} noJobs={sp.notify === "nojobs"} /> : null}
     </>
+  );
+}
+
+// A test e-mail through the shared SMTP server to the admin's own address
+// (My account → Notifications), with the outcome of its last message.
+function SmtpTest({ own, jobs, collector, lang, queued, noJobs }: { own: OwnState; jobs: boolean; collector: boolean; lang: Lang; queued?: string; noJobs: boolean }) {
+  const n = localized(NOTIFY_T, lang);
+  const waiting = collector && own.test && (own.test.status === "pending" || own.test.status === "running");
+  return (
+    <Section title={n.smtpTitle} id="smtp-test" className="notify-test">
+      <div className="form">
+        <p className="muted">
+          {n.smtpIntro}
+          {own.ready && own.to ? (
+            <>
+              {" "}
+              {n.smtpTo.split("{a}")[0]}
+              <bdi dir="ltr">{own.to}</bdi>
+              {n.smtpTo.split("{a}")[1]}
+            </>
+          ) : null}
+        </p>
+        {queued && /^\d+$/.test(queued) ? <p className="notice" role="status">{fill(n.testQueued, { id: queued })}</p> : null}
+        {noJobs || !jobs ? <p className="notice error">{n.noJobs}</p> : null}
+        {!own.ready ? <p className="notice">{n.smtpNotReady}</p> : !own.to ? <p className="notice">{n.smtpNoAddress}</p> : null}
+        {own.ready && own.to ? <NotifyStatusLine status={own.status} test={own.test} lang={lang} /> : null}
+        {waiting ? <AutoRefresh seconds={3} /> : null}
+        <form action={smtpTestAction}>
+          <button type="submit" className="button" disabled={!jobs || !own.ready || !own.to}>
+            <Icon name="bell" />
+            {n.smtpTest}
+          </button>
+        </form>
+      </div>
+    </Section>
   );
 }
 

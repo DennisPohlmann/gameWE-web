@@ -17,6 +17,7 @@ import tr from "./tr";
 import uk from "./uk";
 import zhCn from "./zh-cn";
 import zhTw from "./zh-tw";
+import { ACCOUNT_TEXTS } from "./account";
 import { NOTIFY_TEXTS } from "./notify";
 import { PERM_TEXTS } from "./perms";
 import type { Dialect, Lang } from "../languages";
@@ -25,5 +26,5 @@ import type { Dialect, Lang } from "../languages";
 // Dialects use the texts of their base language.
 // The type makes a new language in languages.ts fail the build until it has a file here.
 const base: Record<Exclude<Lang, "de" | "en" | Dialect>, Record<string, string>> = { ru, es, fr, pt, nl, da, pl, "pt-br": ptBr, sr, "zh-tw": zhTw, "zh-cn": zhCn, ja, ko, ar, tr, it, uk, cs, sv };
-// The texts of the admin rights and of the notifications live in perms.ts and notify.ts (one file each for all languages).
-export const ADMIN_TEXTS = Object.fromEntries(Object.entries(base).map(([l, t]) => [l, { ...t, ...PERM_TEXTS[l], ...NOTIFY_TEXTS[l] }])) as typeof base;
+// The texts of the admin rights, of the notifications and of the own language live in perms.ts, notify.ts and account.ts (one file each for all languages).
+export const ADMIN_TEXTS = Object.fromEntries(Object.entries(base).map(([l, t]) => [l, { ...t, ...PERM_TEXTS[l], ...NOTIFY_TEXTS[l], ...ACCOUNT_TEXTS[l] }])) as typeof base;

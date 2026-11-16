@@ -1,4 +1,4 @@
-import { saveOwnNotifyAction, changePasswordAction, displayNameAction, createApiTokenAction, deletePasskeyAction, passkeyOnlyAction, revokeApiTokenAction, totpBackupCodesAction, totpCancelAction, totpConfirmAction, totpDisableAction, totpStartAction } from "../../../actions";
+import { adminLangAction, saveOwnNotifyAction, changePasswordAction, displayNameAction, createApiTokenAction, deletePasskeyAction, passkeyOnlyAction, revokeApiTokenAction, totpBackupCodesAction, totpCancelAction, totpConfirmAction, totpDisableAction, totpStartAction } from "../../../actions";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { HashRedirect } from "@/components/admin/hash-redirect";
@@ -14,7 +14,7 @@ import { TotpSetup } from "@/components/admin/totp-setup";
 import { Section } from "@/components/ui";
 import { EXPIRY_DAYS } from "@/lib/api-token-core";
 import { listTokens } from "@/lib/api-tokens";
-import { adminSecret, displayNames, requireAdmin } from "@/lib/auth";
+import { adminLangOf, adminSecret, displayNames, requireAdmin } from "@/lib/auth";
 import { noAutofill } from "@/lib/autofill";
 import { basePath } from "@/lib/base-path";
 import { fmtDateTime, nowUnix } from "@/lib/format";
@@ -27,7 +27,9 @@ import { NotifyStatusLine } from "@/components/admin/notify-status";
 import { adminDict, localized, tr } from "@/lib/admin-i18n";
 import { NOTIFY_LANGS, notifyState } from "@/lib/admin-notify";
 import { NOTIFY_EVENT_LABELS } from "@/lib/admin-settings";
-import { NOTIFY_T } from "@/lib/admin-texts";
+import { ADMIN_LANG_T, NOTIFY_T } from "@/lib/admin-texts";
+import { AutoRefresh } from "@/components/auto-refresh";
+import { LANGUAGES } from "@/translations/languages";
 import { DEFAULT_NTFY, isChannel, splitNtfy } from "@/lib/notify-core";
 
 // The signed-in user's own account: /admin/account shows every part at a
@@ -39,15 +41,17 @@ const PARTS = ["profile", "passkeys", "sign-in", "totp", "api-tokens", "notifica
 // Old links to a part of the one long page (/admin/account#totp).
 const OLD_HASHES: [string, string][] = [["name", "profile"], ["password", "profile"], ...PARTS.slice(1).map((p): [string, string] => [p, p])];
 
-export default async function AccountPage({ params, searchParams }: { params: Promise<{ part?: string[] }>; searchParams: Promise<{ error?: string; done?: string; pw?: string; token?: string; pk?: string; new?: string; notify?: string; field?: string; job?: string; name?: string }> }) {
+export default async function AccountPage({ params, searchParams }: { params: Promise<{ part?: string[] }>; searchParams: Promise<{ lang?: string; error?: string; done?: string; pw?: string; token?: string; pk?: string; new?: string; notify?: string; field?: string; job?: string; name?: string }> }) {
   const user = await requireAdmin();
   const part = (await params).part?.join("/") ?? "";
   if (part && !PARTS.includes(part)) notFound();
   const lang = await getAdminLang();
   const a = adminDict(lang);
-  const { error, done, pw, token, pk, new: fresh, notify, field, job, name: nameState } = await searchParams;
+  const { lang: langState, error, done, pw, token, pk, new: fresh, notify, field, job, name: nameState } = await searchParams;
   const shown = (await displayNames([user.username])).get(user.username) ?? "";
   const nt = localized(NOTIFY_T, lang);
+  const al = localized(ADMIN_LANG_T, lang);
+  const ownLang = part === "profile" ? await adminLangOf(user.username) : null;
   const ns = await notifyState(user.username);
   const notifyOn = ns.own.filter((o) => o.to && o.events.length && o.ready).length;
   const passkeys = await listPasskeys(user.username);
@@ -112,6 +116,27 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
           </label>
           <button type="submit" className="button primary">
             {a.nameSave}
+          </button>
+        </form>
+      </Section>
+      <Section title={al.title} id="language">
+        {langState === "saved" ? <p className="notice" role="status">{al.saved}</p> : null}
+        {langState === "invalid" ? <p className="notice error">{al.invalid}</p> : null}
+        <form action={adminLangAction} className="form">
+          <label>
+            {al.label}
+            <select name="lang" defaultValue={ownLang ?? ""}>
+              <option value="">{al.auto}</option>
+              {LANGUAGES.map((l) => (
+                <option key={l.code} value={l.code} lang={l.code}>
+                  {l.name}
+                </option>
+              ))}
+            </select>
+            <small>{al.hint}</small>
+          </label>
+          <button type="submit" className="button">
+            {al.save}
           </button>
         </form>
       </Section>
@@ -407,7 +432,10 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
                 </option>
               ))}
             </select>
+            <small>{nt.langHint}</small>
           </label>
+          {/* Only while the collector runs: else a waiting test never ends. */}
+          {ns.collector && ns.own.some((o) => o.test && (o.test.status === "pending" || o.test.status === "running")) ? <AutoRefresh seconds={3} /> : null}
           {ns.own.map((o) => {
             // E-mail needs the site's SMTP server; Telegram and ntfy are the admin's own.
             const locked = o.channel === "email" && !o.ready;
@@ -468,7 +496,8 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
                   ))}
                 </fieldset>
                 {locked ? null : <NotifyStatusLine status={o.status} test={o.test} lang={lang} />}
-                {o.ready ? (
+                {/* Telegram without a stored bot token too: the token in the form is saved first. */}
+                {!locked ? (
                   <div className="row">
                     <button type="submit" name="test" value={o.channel} className="button small" disabled={!ns.jobs}>
                       {nt.saveTest}

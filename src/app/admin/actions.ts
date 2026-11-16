@@ -10,7 +10,8 @@ import { ADMIN_THEME_COOKIE, isAdminTheme } from "@/lib/admin-theme";
 import { basePath } from "@/lib/base-path";
 import { expiryDays, tokenName, tokenScopes } from "@/lib/api-token-core";
 import { createToken, purgeTokens, revokeToken } from "@/lib/api-tokens";
-import { adminSecret, brakedCode, confirmIdentity, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, newChallenge, passkeyHost, passkeyLogin, requireAdmin, requirePerm, setDisplayName, takeChallenge } from "@/lib/auth";
+import { adminSecret, brakedCode, confirmIdentity, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, newChallenge, passkeyHost, passkeyLogin, requireAdmin, requirePerm, setAdminLang, setDisplayName, takeChallenge } from "@/lib/auth";
+import { isLang } from "@/translations/languages";
 import { normalizePerms, roleName } from "@/lib/admin-perms";
 import { ALGS, MAX_PER_USER, checkRegistration, passkeyHash, passkeyName, rpIdOf, userHandle, type Assertion, type Registration } from "@/lib/passkey-core";
 import { addPasskey, deletePasskey, listPasskeys, passkeyOnly, setPasskeyOnly } from "@/lib/passkeys";
@@ -389,6 +390,17 @@ export async function displayNameAction(form: FormData) {
   redirect("/admin/account/profile?name=saved");
 }
 
+// The admin's own language of the admin area (My account); empty: automatic
+// (the language menu's cookie, else the browser).
+export async function adminLangAction(form: FormData) {
+  const user = await requireAdmin();
+  const raw = String(form.get("lang") ?? "");
+  if (raw !== "" && !isLang(raw)) redirect("/admin/account/profile?lang=invalid");
+  await setAdminLang(user.username, raw === "" ? null : raw);
+  revalidatePath("/admin", "layout");
+  redirect("/admin/account/profile?lang=saved");
+}
+
 export async function changePasswordAction(form: FormData) {
   const user = await requireAdmin();
   const next = String(form.get("next") ?? "");
@@ -636,5 +648,16 @@ export async function saveOwnNotifyAction(form: FormData) {
     throw err;
   });
   redirect(`/admin/account/notifications?notify=test&job=${job.id}`);
+}
+
+// Settings → Notifications: a test e-mail through the shared SMTP server to
+// the admin's own address (only theirs, so no settings right is needed).
+export async function smtpTestAction() {
+  const user = await requireAdmin();
+  const job = await queueNotifyTest({ user }, "email").catch((err) => {
+    if (err instanceof OpError && err.code === "nojobs") redirect("/admin/settings/notifications?notify=nojobs#smtp-test");
+    throw err;
+  });
+  redirect(`/admin/settings/notifications?notify=test&job=${job.id}#smtp-test`);
 }
 
