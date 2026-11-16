@@ -5,10 +5,11 @@ import { createHash } from "node:crypto";
 // channels, addresses and events; only the SMTP server is set up once for
 // all. The web stores them in hlstats_Options, the passwords and tokens in
 // hlstats_gamewe_secrets:
-//   gamewe_notify_smtp_*, gamewe_notify_email_from, gamewe_notify_lang   for all
+//   gamewe_notify_smtp_*, gamewe_notify_email_from   for all
 //   gamewe_notifyu_<hash>_<channel>         an admin's own: "<events>|<address>"
 //   gamewe_notifyu_<hash>_telegram_token    the admin's Telegram bot (secret)
 //   gamewe_notifyu_<hash>_ntfy_token        the admin's ntfy access token (secret)
+//   gamewe_notifyu_<hash>_lang              the language of the admin's messages (empty: the site's)
 //   gamewe_notifyu_<hash>_last_<channel>    written by the collector: "<unix>|ok" or "<unix>|error|<text>"
 // A test message is a job "notify-test" (mode: the channel; game: the
 // admin's hash). No database access, so `npm test` can load it. Keep it in
@@ -44,7 +45,8 @@ export const tokenOk = (c: TokenChannel, v: string) => (c === "telegram" ? botTo
 
 // The rows of an admin's own notifications in hlstats_Options (removed with
 // the admin, as are the ownTokenKey secrets).
-export const ownNotifyKeys = (user: string) => CHANNELS.flatMap((c) => [ownKey(user, c), statusKey(c, userHash(user))]);
+export const ownLangKey = (user: string) => `${NOTIFY_USER_PREFIX}${userHash(user)}_lang`;
+export const ownNotifyKeys = (user: string) => [ownLangKey(user), ...CHANNELS.flatMap((c) => [ownKey(user, c), statusKey(c, userHash(user))])];
 
 // ---------------------------------------------------------------- values
 

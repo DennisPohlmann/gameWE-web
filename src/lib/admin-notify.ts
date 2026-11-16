@@ -3,7 +3,8 @@ import { jobOriginColumns } from "./admin-jobs";
 import { OpError, who, type Actor } from "./admin-ops";
 import { adminExec, adminInsert, adminQuery, upsert } from "./db";
 import { webOriginDetail } from "./job-origin";
-import { CHANNELS, EVENTS, TOKEN_CHANNELS, badOwn, joinNtfy, ownKey, ownTokenKey, ownValue, parseOwn, parseStatus, statusKey, tokenOk, userHash, type Channel, type NotifyEvent, type NotifyStatus, type Own, type TokenChannel } from "./notify-core";
+import { LANGUAGES } from "../translations/languages";
+import { CHANNELS, EVENTS, TOKEN_CHANNELS, badOwn, joinNtfy, ownKey, ownLangKey, ownTokenKey, ownValue, parseOwn, parseStatus, statusKey, tokenOk, userHash, type Channel, type NotifyEvent, type NotifyStatus, type Own, type TokenChannel } from "./notify-core";
 import { collectorRunning, jobsAvailable } from "./reset";
 import { deleteSecrets, saveSecret, secretsOf } from "./secret-options";
 
@@ -16,7 +17,9 @@ export type TestJob = { id: number; status: string; result: string; at: number }
 // Telegram: the admin's bot token; ntfy always). token: an own token is
 // stored (Telegram, ntfy).
 export type OwnState = Own & { channel: Channel; ready: boolean; token: boolean; status: NotifyStatus; test: TestJob | null };
-export type NotifyState = { own: OwnState[]; collector: boolean; jobs: boolean };
+export type NotifyState = { own: OwnState[]; lang: string; collector: boolean; jobs: boolean };
+// The languages of the messages (the collector's texts; dialects use their base).
+export const NOTIFY_LANGS = LANGUAGES.filter((l) => !("base" in l && l.base)).map((l) => ({ code: l.code, name: `${l.name} (${l.code})` }));
 export type OwnTokens = Partial<Record<TokenChannel, string>>;
 
 async function options(keys: string[]): Promise<Map<string, string>> {
@@ -42,12 +45,13 @@ async function lastTests(hash: string): Promise<Map<string, TestJob>> {
 // The admin's own notifications per channel.
 export async function notifyState(user: string): Promise<NotifyState> {
   const hash = userHash(user);
-  const keys = ["gamewe_notify_smtp_host", "gamewe_notify_email_from", ...CHANNELS.flatMap((c) => [ownKey(user, c), statusKey(c, hash)])];
+  const keys = ["gamewe_notify_smtp_host", "gamewe_notify_email_from", ownLangKey(user), ...CHANNELS.flatMap((c) => [ownKey(user, c), statusKey(c, hash)])];
   const [o, tok, mine, run, jobs] = await Promise.all([options(keys), secretsOf(TOKEN_CHANNELS.map((c) => ownTokenKey(user, c))), lastTests(hash), collectorRunning(), jobsAvailable()]);
   const has = (c: Channel) => (c === "telegram" || c === "ntfy") && !!tok[ownTokenKey(user, c)];
   const ready = (c: Channel) => (c === "email" ? !!o.get("gamewe_notify_smtp_host") && !!o.get("gamewe_notify_email_from") : c === "telegram" ? has(c) : true);
   return {
     own: CHANNELS.map((c) => ({ channel: c, ...parseOwn(o.get(ownKey(user, c))), ready: ready(c), token: has(c), status: parseStatus(o.get(statusKey(c, hash))), test: mine.get(c) ?? null })),
+    lang: o.get(ownLangKey(user)) ?? "",
     collector: run.running,
     jobs,
   };
@@ -55,12 +59,15 @@ export async function notifyState(user: string): Promise<NotifyState> {
 
 // Stores the admin's own addresses, events and tokens; a channel not in
 // values stays. A bad address or token throws OpError("field", { field:
-// <channel> }) before anything is written; an empty address removes the
-// channel's row and its token. tokens: undefined keeps one, "" removes it.
-export async function saveOwnNotify(a: Actor, values: Partial<Record<Channel, Own>>, tokens: OwnTokens = {}): Promise<void> {
+// <channel> | "lang" }) before anything is written; an empty address removes
+// the channel's row and its token. tokens: undefined keeps one, "" removes
+// it. lang: undefined keeps it, "" the site's language.
+export async function saveOwnNotify(a: Actor, values: Partial<Record<Channel, Own>>, tokens: OwnTokens = {}, lang?: string): Promise<void> {
   const user = a.user.username;
-  const bad = badOwn(values) ?? TOKEN_CHANNELS.find((c) => tokens[c] && !tokenOk(c, tokens[c]!)) ?? null;
+  const bad = badOwn(values) ?? TOKEN_CHANNELS.find((c) => tokens[c] && !tokenOk(c, tokens[c]!)) ?? (lang && !NOTIFY_LANGS.some((l) => l.code === lang) ? "lang" : null);
   if (bad) throw new OpError("field", { field: bad });
+  if (lang === "") await adminExec(`DELETE FROM hlstats_Options WHERE keyname = ?`, [ownLangKey(user)]);
+  else if (lang) await adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [ownLangKey(user), lang]);
   for (const c of CHANNELS) {
     const v = values[c];
     if (!v) continue;
@@ -72,7 +79,7 @@ export async function saveOwnNotify(a: Actor, values: Partial<Record<Channel, Ow
     if (tokens[c] === "" || values[c]?.to.trim() === "") await deleteSecrets([ownTokenKey(user, c)]);
     else if (tokens[c]) await saveSecret(ownTokenKey(user, c), tokens[c]!);
   }
-  const what = [...Object.keys(values), ...TOKEN_CHANNELS.filter((c) => tokens[c] !== undefined).map((c) => `${c} token`)];
+  const what = [...Object.keys(values), ...(lang !== undefined ? ["language"] : []), ...TOKEN_CHANNELS.filter((c) => tokens[c] !== undefined).map((c) => `${c} token`)];
   if (a.via) console.info(`gameWE: own notifications changed (${what.join(", ")}) by ${who(a)}`);
 }
 

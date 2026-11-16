@@ -625,7 +625,7 @@ export async function saveOwnNotifyAction(form: FormData) {
   // A test needs an address of that channel.
   if (isChannel(test) && !own[test].to) redirect(`/admin/account/notifications?notify=bad&field=${test}`);
   try {
-    await saveOwnNotify({ user }, own, ownTokensFromForm(form));
+    await saveOwnNotify({ user }, own, ownTokensFromForm(form), String(form.get("notify_lang") ?? ""));
   } catch (err) {
     if (err instanceof OpError && err.code === "field") redirect(`/admin/account/notifications?notify=bad&field=${encodeURIComponent(err.detail.field)}`);
     throw err;

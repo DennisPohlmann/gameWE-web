@@ -60,7 +60,7 @@ import { allowed, effectivePerms, isFullAdmin, isPerm, isRoleId, normalizePerms,
 import { clientIp } from "./client-ip";
 import { countChat, getChat } from "./data";
 import { adminQuery } from "./db";
-import { notifyState, queueNotifyTest, saveOwnNotify, type OwnTokens } from "./admin-notify";
+import { NOTIFY_LANGS, notifyState, queueNotifyTest, saveOwnNotify, type OwnTokens } from "./admin-notify";
 import { CHANNELS, EVENTS, isEvent, type Channel, type Own } from "./notify-core";
 import { scheduleValue } from "./hall-period";
 import { countIps, searchIps } from "./history";
@@ -475,7 +475,7 @@ async function settingsOut(groupId: string, user: PermUser) {
 async function ownNotifyOut(user: string) {
   const s = await notifyState(user);
   // ready: the channel can send (e-mail: the site's SMTP server; Telegram: the own bot token).
-  return { channels: s.own.map((o) => ({ channel: o.channel, ready: o.ready, to: o.to, events: o.events, ...(o.channel === "email" ? {} : { token: o.token }), status: o.status, test: o.test })), collectorRunning: s.collector, available: s.jobs };
+  return { channels: s.own.map((o) => ({ channel: o.channel, ready: o.ready, to: o.to, events: o.events, ...(o.channel === "email" ? {} : { token: o.token }), status: o.status, test: o.test })), lang: s.lang, collectorRunning: s.collector, available: s.jobs };
 }
 
 // ---------------------------------------------------------------- handlers
@@ -686,9 +686,10 @@ const handlers: Record<string, Handler> = {
     return { body: await ownNotifyOut(c.actor.user.username) };
   },
   async ownNotifySet(c) {
-    const b = onlyKeys(c.body, CHANNELS);
+    const b = onlyKeys(c.body, [...CHANNELS, "lang"]);
     const values: Partial<Record<Channel, Own>> = {};
     const tokens: OwnTokens = {};
+    const lang = b.lang === undefined ? undefined : enumField(b, "lang", ["", ...NOTIFY_LANGS.map((l) => l.code)]);
     for (const ch of CHANNELS) {
       if (b[ch] === undefined) continue;
       const v = onlyKeys(b[ch], ch === "email" ? ["to", "events"] : ["to", "events", "token"], ["to", "events"]);
@@ -696,7 +697,7 @@ const handlers: Record<string, Handler> = {
       values[ch] = { to: strField(v, "to", 200), events: v.events };
       if (v.token !== undefined && ch !== "email") tokens[ch] = strField(v, "token", 128);
     }
-    await saveOwnNotify(c.actor, values, tokens);
+    await saveOwnNotify(c.actor, values, tokens, lang);
     return { body: await ownNotifyOut(c.actor.user.username) };
   },
   async ownNotifyTest(c) {

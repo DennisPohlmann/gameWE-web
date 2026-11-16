@@ -25,7 +25,7 @@ import { MAX_PER_USER } from "@/lib/passkey-core";
 import { listPasskeys, passkeyOnly } from "@/lib/passkeys";
 import { NotifyStatusLine } from "@/components/admin/notify-status";
 import { adminDict, localized, tr } from "@/lib/admin-i18n";
-import { notifyState } from "@/lib/admin-notify";
+import { NOTIFY_LANGS, notifyState } from "@/lib/admin-notify";
 import { NOTIFY_EVENT_LABELS } from "@/lib/admin-settings";
 import { NOTIFY_T } from "@/lib/admin-texts";
 import { DEFAULT_NTFY, isChannel, splitNtfy } from "@/lib/notify-core";
@@ -395,8 +395,19 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
           <p className="muted">{nt.intro}</p>
           {notify === "saved" ? <p className="notice" role="status">{nt.saved}</p> : null}
           {notify === "test" && job && /^\d+$/.test(job) ? <p className="notice" role="status">{fill(nt.testQueued, { id: job })}</p> : null}
-          {notify === "bad" ? <p className="notice error">{fill(nt.bad, { c: isChannel(field) ? nt.channel[field] : "" })}</p> : null}
+          {notify === "bad" ? <p className="notice error">{fill(nt.bad, { c: isChannel(field) ? nt.channel[field] : field === "lang" ? nt.lang : "" })}</p> : null}
           {notify === "nojobs" || !ns.jobs ? <p className="notice error">{nt.noJobs}</p> : !ns.collector ? <p className="notice">{nt.noCollector}</p> : null}
+          <label className="notify-lang">
+            {nt.lang}
+            <select name="notify_lang" defaultValue={ns.lang} aria-invalid={(notify === "bad" && field === "lang") || undefined}>
+              <option value="">{nt.langSite}</option>
+              {NOTIFY_LANGS.map((l) => (
+                <option key={l.code} value={l.code}>
+                  {l.name}
+                </option>
+              ))}
+            </select>
+          </label>
           {ns.own.map((o) => {
             // E-mail needs the site's SMTP server; Telegram and ntfy are the admin's own.
             const locked = o.channel === "email" && !o.ready;

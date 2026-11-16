@@ -96,18 +96,8 @@ const MASKED: L = { de: "Maskiert, das Auge zeigt den gespeicherten Wert; leer l
 const same = (s: string): L => ({ de: s, en: s, all: Object.fromEntries(LANGUAGES.map((l) => [l.code, s])) });
 
 // Notifications (lib/notify-core.ts): the collector sends them. Every admin
-// chooses their own under My account; here only what all share.
+// chooses their own under My account; here only the SMTP server all share.
 const notifyDefinitions: Setting[] = [
-  {
-    key: "gamewe_notify_lang",
-    label: { de: "Sprache der Nachrichten", en: "Language of the messages" },
-    type: "choice",
-    def: "",
-    choices: [
-      ["", { de: "Standardsprache der Seite", en: "Default language of the site" }],
-      ...LANGUAGES.filter((l) => !("base" in l && l.base)).map((l): [string, L] => [l.code, same(`${l.name} (${l.code})`)]),
-    ],
-  },
   { key: "gamewe_notify_smtp_host", section: { de: "E-Mail", en: "E-mail" }, label: { de: "SMTP-Server", en: "SMTP server" }, type: "text", def: "", minLevel: 100, help: { de: "Zum Beispiel smtp.example.org.", en: "For example smtp.example.org." } },
   { key: "gamewe_notify_smtp_port", label: { de: "SMTP-Port", en: "SMTP port" }, type: "number", def: "587", min: 1, max: 65535, minLevel: 100, help: { de: "587 mit STARTTLS, 465 mit TLS.", en: "587 with STARTTLS, 465 with TLS." } },
   {
@@ -753,8 +743,8 @@ export const settingGroups: SettingGroup[] = [
     area: "services",
     title: { de: "Benachrichtigungen", en: "Notifications" },
     help: {
-      de: "Der Collector schickt Nachrichten per E-Mail, Telegram oder ntfy, wenn ein Ranking zurückgesetzt wird, eine Ruhmeshalle entsteht oder eine neue Version erscheint. Jeder Admin wählt unter Mein Konto seine Kanäle, Adressen, Tokens und Ereignisse selbst. Hier stehen nur die Sprache der Nachrichten und der SMTP-Server, über den alle E-Mails gehen.",
-      en: "The collector sends messages by e-mail, Telegram or ntfy when a ranking is reset, a hall of fame is stored or a new version is out. Every admin chooses their own channels, addresses, tokens and events under My account. Here are only the language of the messages and the SMTP server all e-mails go through.",
+      de: "Der Collector schickt Nachrichten per E-Mail, Telegram oder ntfy, wenn ein Ranking zurückgesetzt wird, eine Ruhmeshalle entsteht oder eine neue Version erscheint. Jeder Admin wählt unter Mein Konto seine Sprache, Kanäle, Adressen, Tokens und Ereignisse selbst. Hier steht nur der SMTP-Server, über den alle E-Mails gehen.",
+      en: "The collector sends messages by e-mail, Telegram or ntfy when a ranking is reset, a hall of fame is stored or a new version is out. Every admin chooses their own language, channels, addresses, tokens and events under My account. Here is only the SMTP server all e-mails go through.",
     },
     items: notifyDefinitions,
   },
