@@ -722,3 +722,20 @@ form[data-dirty] .savebar .msg { display: none; }
 .perm-mode label.check > span { display: grid; gap: 6px; min-width: 0; flex: 1; }
 .perm-mode select { max-width: 360px; }
 .perm-roles-link { font-size: 13px; width: max-content; }
+
+/* notifications: parts of the settings page, the outcome of the last message, the own channels on My account */
+.fields-section { margin: 0; padding: 14px 18px 10px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--soft); background: var(--panel-2); border-bottom: 1px solid var(--line); }
+.notify-test { margin-top: 18px; }
+.notify-status { display: flex; gap: 8px; align-items: flex-start; margin: 0; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.notify-status svg { flex: none; margin-top: 1px; }
+.notify-status.ok { color: var(--ok); }
+.notify-status.bad { color: var(--bad); }
+.notify-status.wait { color: var(--warn); }
+.notify-own { display: grid; gap: 14px; }
+.notify-ch { border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: grid; gap: 10px; min-width: 0; }
+.notify-ch h3 { margin: 0; display: flex; gap: 8px; align-items: center; font-size: 14px; }
+.notify-ch.off { color: var(--soft); background: var(--panel-2); }
+.notify-ch .ev { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; padding: 0; border: 0; }
+.notify-ch .ev legend { padding: 0; margin-bottom: 4px; font-size: 13px; color: var(--muted); }
+.notify-ch .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.notify-own .btns { display: flex; flex-wrap: wrap; gap: 8px; }

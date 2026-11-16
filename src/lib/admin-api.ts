@@ -60,6 +60,8 @@ import { allowed, effectivePerms, isFullAdmin, isPerm, isRoleId, normalizePerms,
 import { clientIp } from "./client-ip";
 import { countChat, getChat } from "./data";
 import { adminQuery } from "./db";
+import { notifyState, queueNotifyTest, saveOwnNotify } from "./admin-notify";
+import { CHANNELS, EVENTS, isEvent, type Channel, type Own } from "./notify-core";
 import { scheduleValue } from "./hall-period";
 import { countIps, searchIps } from "./history";
 import { ADMIN_ENTITIES, ADMIN_PAGE_MAX, adminOps, matchOp, type AdminOp } from "./openapi-admin";
@@ -283,6 +285,8 @@ function failure(err: unknown): Response {
         return error(409, "role_in_use", "admins still have this role: give them another role or rights of their own first");
       case "limit":
         return error(409, "limit", "at most 50 admin roles");
+      case "forbidden":
+        return error(403, "forbidden", "you lack the right for this");
       case "field":
         return error(400, "invalid_field", `invalid value of ${d.field}`, { field: d.field });
       case "input":
@@ -466,6 +470,11 @@ async function settingsOut(groupId: string, user: PermUser) {
     settings: Object.fromEntries(g.items.map((s) => [s.key, settingOut(s, s.type === "secret" ? (stored.get(s.key) ? "1" : undefined) : stored.get(s.key))])),
     readOnly: g.items.filter((s) => s.minLevel !== undefined && !allowed(user, "settings.protected")).map((s) => s.key),
   };
+}
+
+async function ownNotifyOut(user: string) {
+  const s = await notifyState(user);
+  return { channels: s.own.map((o) => ({ channel: o.channel, on: s.channels.find((c) => c.channel === o.channel)?.on ?? false, to: o.to, events: o.events, status: o.status, test: o.test })) };
 }
 
 // ---------------------------------------------------------------- handlers
@@ -671,6 +680,35 @@ const handlers: Record<string, Handler> = {
     const place = b.place === undefined ? null : intField(b, "place", 1, 99);
     const n = await setHallEntry(c.actor, c.params.code, strField(b, "start", 10), place, "restore", false);
     return { body: { changed: n } };
+  },
+  async notifyGet() {
+    const s = await notifyState();
+    return { body: { channels: s.channels, collectorRunning: s.collector, available: s.jobs } };
+  },
+  async notifyTest(c) {
+    const b = onlyKeys(c.body, ["channel"], ["channel"]);
+    const job = await queueNotifyTest(c.actor, enumField(b, "channel", CHANNELS), false);
+    return { body: { job: job.id, existing: job.existing } };
+  },
+  async ownNotifyGet(c) {
+    return { body: await ownNotifyOut(c.actor.user.username) };
+  },
+  async ownNotifySet(c) {
+    const b = onlyKeys(c.body, CHANNELS);
+    const values: Partial<Record<Channel, Own>> = {};
+    for (const ch of CHANNELS) {
+      if (b[ch] === undefined) continue;
+      const v = onlyKeys(b[ch], ["to", "events"], ["to", "events"]);
+      if (!Array.isArray(v.events) || v.events.length > EVENTS.length || !v.events.every(isEvent)) throw new BodyError(400, "invalid_field", ch, `${ch}.events must be an array of ${EVENTS.join(", ")}`);
+      values[ch] = { to: strField(v, "to", 200), events: v.events };
+    }
+    await saveOwnNotify(c.actor, values);
+    return { body: await ownNotifyOut(c.actor.user.username) };
+  },
+  async ownNotifyTest(c) {
+    const b = onlyKeys(c.body, ["channel"], ["channel"]);
+    const job = await queueNotifyTest(c.actor, enumField(b, "channel", CHANNELS), true);
+    return { body: { job: job.id, existing: job.existing } };
   },
   async reset(c) {
     await ranking(c.params.code);

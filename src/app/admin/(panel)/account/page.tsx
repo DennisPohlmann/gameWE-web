@@ -1,4 +1,4 @@
-import { changePasswordAction, createApiTokenAction, deletePasskeyAction, passkeyOnlyAction, revokeApiTokenAction, totpBackupCodesAction, totpCancelAction, totpConfirmAction, totpDisableAction, totpStartAction } from "../../actions";
+import { saveOwnNotifyAction, changePasswordAction, createApiTokenAction, deletePasskeyAction, passkeyOnlyAction, revokeApiTokenAction, totpBackupCodesAction, totpCancelAction, totpConfirmAction, totpDisableAction, totpStartAction } from "../../actions";
 import { PageHead } from "@/components/admin/page-head";
 import { RevealInput } from "@/components/admin/reveal-input";
 import { BackupCodesForm, type BackupCodesText } from "@/components/admin/backup-codes-form";
@@ -8,7 +8,6 @@ import { ConfirmButton } from "@/components/admin/confirm-button";
 import { Icon, type IconName } from "@/components/admin/icons";
 import { TotpSetup } from "@/components/admin/totp-setup";
 import { Section } from "@/components/ui";
-import { adminDict } from "@/lib/admin-i18n";
 import { EXPIRY_DAYS } from "@/lib/api-token-core";
 import { listTokens } from "@/lib/api-tokens";
 import { adminSecret, requireAdmin } from "@/lib/auth";
@@ -20,15 +19,24 @@ import { apiEnabled, getSettings } from "@/lib/settings";
 import { BACKUP_CODES, countBackupCodes, readSecret } from "@/lib/totp";
 import { MAX_PER_USER } from "@/lib/passkey-core";
 import { listPasskeys, passkeyOnly } from "@/lib/passkeys";
+import { NotifyStatusLine } from "@/components/admin/notify-status";
+import { adminDict, localized, tr } from "@/lib/admin-i18n";
+import { notifyState } from "@/lib/admin-notify";
+import { NOTIFY_EVENT_LABELS } from "@/lib/admin-settings";
+import { NOTIFY_T } from "@/lib/admin-texts";
+import { isChannel } from "@/lib/notify-core";
 
 // The signed-in user's own account: password, passkeys and how to sign in,
 // optional TOTP with its backup codes and API tokens (only a notice while
 // the API is off).
-export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; done?: string; pw?: string; token?: string; pk?: string; new?: string }> }) {
+export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; done?: string; pw?: string; token?: string; pk?: string; new?: string; notify?: string; field?: string; job?: string }> }) {
   const user = await requireAdmin();
   const lang = await getAdminLang();
   const a = adminDict(lang);
-  const { error, done, pw, token, pk, new: fresh } = await searchParams;
+  const { error, done, pw, token, pk, new: fresh, notify, field, job } = await searchParams;
+  const nt = localized(NOTIFY_T, lang);
+  const ns = await notifyState(user.username);
+  const notifyOn = ns.own.filter((o) => o.to && o.events.length && ns.channels.find((c) => c.channel === o.channel)?.on).length;
   const passkeys = await listPasskeys(user.username);
   const only = await passkeyOnly(user.username);
   const added = pk === "added" ? passkeys.find((p) => p.hash === fresh) : undefined;
@@ -65,6 +73,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         <Tile href="#sign-in" icon="lock" k={a.pkModeTitle} v={only ? a.accModeOnly : a.accModeAny} s={a.accModeSub} text />
         <Tile href="#totp" icon="shield" k={a.totp} v={active !== null ? a.accOn : a.accOff} s={a.accTotpSub} state={active !== null ? "ok" : undefined} text />
         <Tile href="#api-tokens" icon="code" k={a.tokTitle} v={api ? String(tokens.length) : a.accOff} s={a.accTokSub} text={!api} />
+        <Tile href="#notifications" icon="bell" k={nt.title} v={String(notifyOn)} s={nt.tile} state={notifyOn ? "ok" : undefined} />
       </nav>
       <Section title={a.pkTitle} id="passkeys" aside={<span className={passkeys.length ? "pill ok" : "pill"}>{passkeys.length}</span>}>
         <div className="form">
@@ -328,6 +337,72 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           </div>
         </Section>
       ) : null}
+      <Section title={nt.title} id="notifications" aside={<span className={notifyOn ? "pill ok" : "pill"}>{notifyOn}</span>}>
+        <form action={saveOwnNotifyAction} className="form notify-own">
+          <p className="muted">{nt.intro}</p>
+          {notify === "saved" ? <p className="notice" role="status">{nt.saved}</p> : null}
+          {notify === "test" && job && /^\d+$/.test(job) ? <p className="notice" role="status">{fill(nt.testQueued, { id: job })}</p> : null}
+          {notify === "bad" ? <p className="notice error">{fill(nt.bad, { c: isChannel(field) ? nt.channel[field] : "" })}</p> : null}
+          {notify === "nojobs" || !ns.jobs ? <p className="notice error">{nt.noJobs}</p> : !ns.collector ? <p className="notice">{nt.noCollector}</p> : null}
+          {ns.own.map((o) => {
+            const on = ns.channels.find((c) => c.channel === o.channel)?.on ?? false;
+            return (
+              <div key={o.channel} className={on ? "notify-ch" : "notify-ch off"}>
+                <h3>
+                  <Icon name="bell" />
+                  {nt.channel[o.channel]}
+                </h3>
+                {on ? null : <small>{nt.off}</small>}
+                <label>
+                  {nt.to[o.channel]}
+                  <input
+                    {...noAutofill}
+                    name={`notify_${o.channel}`}
+                    defaultValue={o.to}
+                    type={o.channel === "email" ? "email" : "text"}
+                    dir="ltr"
+                    maxLength={200}
+                    disabled={!on}
+                    aria-invalid={(notify === "bad" && field === o.channel) || undefined}
+                  />
+                  <small>{nt.toHint[o.channel]}</small>
+                </label>
+                {/* a disabled channel keeps what is stored */}
+                {on ? null : (
+                  <>
+                    <input type="hidden" name={`notify_${o.channel}`} value={o.to} />
+                    {o.events.map((e) => (
+                      <input key={e} type="hidden" name={`notify_${o.channel}_${e}`} value="1" />
+                    ))}
+                  </>
+                )}
+                <fieldset className="ev" disabled={!on}>
+                  <legend>{nt.events}</legend>
+                  {NOTIFY_EVENT_LABELS.map(([e, label]) => (
+                    <label key={e} className="check">
+                      <input type="checkbox" name={`notify_${o.channel}_${e}`} value="1" defaultChecked={o.events.includes(e)} />
+                      <span>{tr(label, lang)}</span>
+                    </label>
+                  ))}
+                </fieldset>
+                {on ? <NotifyStatusLine status={o.status} test={o.test} lang={lang} /> : null}
+                {on ? (
+                  <div className="row">
+                    <button type="submit" name="test" value={o.channel} className="button small" disabled={!ns.jobs}>
+                      {nt.saveTest}
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+          <div className="btns">
+            <button type="submit" className="button primary">
+              {nt.save}
+            </button>
+          </div>
+        </form>
+      </Section>
     </>
   );
 }

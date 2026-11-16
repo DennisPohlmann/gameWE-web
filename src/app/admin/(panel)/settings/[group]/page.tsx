@@ -1,5 +1,9 @@
 import { notFound } from "next/navigation";
-import { saveSettingsAction } from "../../../actions";
+import { saveSettingsAction, sharedNotifyTestAction } from "../../../actions";
+import { NotifyStatusLine } from "@/components/admin/notify-status";
+import { Section } from "@/components/ui";
+import { notifyState, type NotifyState } from "@/lib/admin-notify";
+import { NOTIFY_T } from "@/lib/admin-texts";
 import { Icon } from "@/components/admin/icons";
 import { PageHead } from "@/components/admin/page-head";
 import { SecretControl } from "@/components/admin/secret-control";
@@ -46,11 +50,12 @@ export default async function SettingsPage({
   const u = a.ui;
   const sp = await searchParams;
   const items = group?.items ?? [];
-  const [rows, templates, raw] = await Promise.all([
+  const [rows, templates, raw, notify] = await Promise.all([
     // All settings: some pages show values of others (header links: SourceBans).
     adminQuery<{ keyname: string; value: string }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [allSettings.map((s) => s.key)]),
     items.some((s) => s.type === "template") ? listTemplates() : Promise.resolve([]),
     isRaw ? rawOptions() : Promise.resolve([]),
+    groupId === "notifications" ? notifyState() : Promise.resolve(null),
   ]);
   const values: Record<string, string> = { ...Object.fromEntries(rows.map((r) => [r.keyname, r.value])), ...(await secretOptions()) };
   // Settings that older installations set in the environment (lib/config.ts):
@@ -67,7 +72,8 @@ export default async function SettingsPage({
   const css = conditional
     .map((c) => {
       const [k, v] = c.split("=");
-      return `form:not(:has(select[name="${k}"] option[value="${v}"]:checked)) [data-show="${c}"]{display:none}`;
+      // a choice (select) or a switch (bool: its checkbox with value 1)
+      return `form:not(:has(select[name="${k}"] option[value="${v}"]:checked, input[type="checkbox"][name="${k}"][value="${v}"]:checked)) [data-show="${c}"]{display:none}`;
     })
     .join("\n");
   const bad = allSettings.find((s) => s.key === sp.field);
@@ -141,7 +147,41 @@ export default async function SettingsPage({
         </div>
         </fieldset>
       </form>
+      {notify ? <NotifyTest state={notify} canEdit={canEdit} lang={lang} queued={sp.notify === "test" ? sp.job : undefined} noJobs={sp.notify === "nojobs"} /> : null}
     </>
+  );
+}
+
+// Test messages to the shared recipients, one button per channel, with the
+// outcome of the last message (written by the collector).
+function NotifyTest({ state, canEdit, lang, queued, noJobs }: { state: NotifyState; canEdit: boolean; lang: Lang; queued?: string; noJobs: boolean }) {
+  const n = localized(NOTIFY_T, lang);
+  return (
+    <Section title={n.sharedTitle} id="notify-test" className="notify-test">
+      <p className="settings-help">{n.sharedIntro}</p>
+      {queued && /^\d+$/.test(queued) ? <p className="notice" role="status">{fill(n.testQueued, { id: queued })}</p> : null}
+      {noJobs || !state.jobs ? <p className="notice error">{n.noJobs}</p> : !state.collector ? <p className="notice">{n.noCollector}</p> : null}
+      <div className="fields">
+        {state.channels.map((c) => (
+          <div className="field" key={c.channel}>
+            <div className="l">
+              <b>{n.channel[c.channel]}</b>
+              <span>{!c.on ? n.off : !c.ready ? n.notReady : !c.shared ? n.noShared : null}</span>
+            </div>
+            <div className="c">
+              <NotifyStatusLine status={c.status} test={c.test} lang={lang} />
+              <form action={sharedNotifyTestAction}>
+                <input type="hidden" name="channel" value={c.channel} />
+                <button type="submit" className="button" disabled={!canEdit || !c.on || !c.ready || !c.shared || !state.jobs}>
+                  <Icon name="bell" />
+                  {n.test}
+                </button>
+              </form>
+            </div>
+          </div>
+        ))}
+      </div>
+    </Section>
   );
 }
 
@@ -223,6 +263,8 @@ function SettingField({
     );
   }
   return (
+    <>
+    {s.section ? <h3 className="fields-section">{tr(s.section, lang)}</h3> : null}
     <div className="field" data-show={s.show ? `${s.show.key}=${s.show.value}` : undefined}>
       <div className="l">
         <b>
@@ -235,6 +277,7 @@ function SettingField({
       </div>
       <div className="c">{control}</div>
     </div>
+    </>
   );
 }
 

@@ -14,6 +14,7 @@ import { LEVEL_ADMIN, revokeSessions, type AdminUser } from "./auth";
 import { allowed, isRoleId, parsePerms, parseRole, permsKey, permsValue, roleKey, roleName, roleOf, roleValue, LEVEL80_DEFAULT, ROLE_MAX, ROLE_PREFIX, ROLE_REF, type Perm, type Role } from "./admin-perms";
 import { steamKey } from "./config";
 import { saveSecret, SECRET_OPTIONS } from "./secret-options";
+import { notifySettingValue, ownNotifyKeys } from "./notify-core";
 import { adminExec, adminQuery, upsert } from "./db";
 import { RETIRED_GAMES, sameBaseGame } from "./games";
 import { MAX_EVERY, parseSchedule, scheduleValue } from "./hall-period";
@@ -55,6 +56,7 @@ export type OpCode =
   | "perm" // a right the acting admin does not have themselves
   | "inuse" // an admin role that admins still have
   | "limit" // too many admin roles
+  | "forbidden" // the acting admin lacks the right
   | "template"; // the ranking is a template (no servers): never reset
 
 export class OpError extends Error {
@@ -332,7 +334,7 @@ export async function deleteEntity(a: Actor, e: Entity, id: string): Promise<voi
   }
   try {
     await deleteRow(e, id);
-    if (e.key === "users") await Promise.all([removeSecret(id, false), removeSecret(id, true), removeBackupCodes(id), purgeTokens(id), purgePasskeys(id), revokeSessions(id), adminExec(`DELETE FROM hlstats_Options WHERE keyname = ?`, [permsKey(id)])]);
+    if (e.key === "users") await Promise.all([removeSecret(id, false), removeSecret(id, true), removeBackupCodes(id), purgeTokens(id), purgePasskeys(id), revokeSessions(id), adminExec(`DELETE FROM hlstats_Options WHERE keyname = ?`, [permsKey(id)]), adminExec(`DELETE FROM hlstats_Options WHERE keyname IN (?)`, [ownNotifyKeys(id)])]);
   } catch (err) {
     throw new OpError("db", { msg: dbMsg(err) });
   }
@@ -421,7 +423,9 @@ export async function saveSettings(a: Actor, groupId: string, form: Form, only?:
         if (v.length > 255 || /[\r\n]/.test(v)) bad(s.key);
         if (s.key === "gamewe_steam_api_key" && !steamKey(v)) bad(s.key);
         if (accessFieldOf(s.key) && !accessValueOk(accessFieldOf(s.key)!, v)) bad(s.key);
-        values.push([s.key, s.key === "gamewe_steam_api_key" ? v.trim() : v]);
+        const token = notifySettingValue(s.key, v.trim()); // a bot or ntfy token, checked and trimmed
+        if (token === null) bad(s.key);
+        values.push([s.key, s.key === "gamewe_steam_api_key" ? v.trim() : (token ?? v)]);
       }
       continue;
     }
@@ -469,6 +473,11 @@ export async function saveSettings(a: Actor, groupId: string, form: Form, only?:
       const base = fastdlBase(v);
       if (!base || base.length > 255) bad(s.key);
       values.push([s.key, base]);
+      continue;
+    } else if (notifySettingValue(s.key, v) !== undefined) {
+      const n = notifySettingValue(s.key, v);
+      if (n === null) bad(s.key);
+      values.push([s.key, n!]);
       continue;
     } else if (s.key === "gamewe_sourcebans_url" && v) {
       const base = sourcebansBase(v);

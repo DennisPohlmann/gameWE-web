@@ -80,6 +80,7 @@ test("mcp: initialize answers the client's version if known, else the newest", (
 const R = ["read", "mcp"];
 const W = ["write", "mcp"];
 const RW = ["read", "write", "mcp"];
+const OWN = ["adminMyNotificationTest", "adminMyNotifications", "adminSetMyNotifications"];
 
 test("mcp: one tool per operation, GET with read, the others with write, by level", () => {
   const ids = (ops: typeof adminOps) => ops.map((o) => o.operationId).sort();
@@ -98,8 +99,8 @@ test("mcp: one tool per operation, GET with read, the others with write, by leve
   const restricted = names(RW, OLD80);
   assert.ok(restricted.length < all.length, "level 80 sees fewer tools");
   for (const op of adminOps.filter((o) => !allowed(OLD80, o.need))) assert.ok(!restricted.includes(op.operationId), op.operationId);
-  // Only what the rights reach: chat alone gives the chat tool and adminMe.
-  assert.deepEqual(names(RW, { acclevel: 80, perms: ["chat.view"] }), ["adminChat", "adminMe"]);
+  // Only what the rights reach: chat alone gives the chat tool, adminMe and the own notifications.
+  assert.deepEqual(names(RW, { acclevel: 80, perms: ["chat.view"] }), ["adminChat", "adminMe", ...OWN]);
   assert.deepEqual(all.find((t) => t.name === "adminGetRanking")!.inputSchema.required, ["code"]);
   assert.deepEqual(all.find((t) => t.name === "adminUpdateServer")!.inputSchema.required, ["id", "body"]);
 });

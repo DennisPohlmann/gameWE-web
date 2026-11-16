@@ -3,6 +3,7 @@ import { RAW_GROUP, settingGroups, type Setting } from "./admin-settings.ts";
 import { MAX_TOKENS_PER_USER, NAME_MAX } from "./api-token-core.ts";
 import { RESET_MODES } from "./reset-modes.ts";
 import { PERMS, ROLE_MAX, type Need } from "./admin-perms.ts";
+import { CHANNELS, EVENTS } from "./notify-core.ts";
 
 // The admin API (/api/v1/admin/...): one entry per operation. The router in
 // lib/admin-api.ts serves exactly these (method, path, right, handler) and
@@ -346,6 +347,12 @@ const scheduleSchema = obj(
   ["every", "monthDay", "weekday", "month", "day"],
   "Reset schedule: every N units; without a start day periods start on the 1st, on Monday and on 1 January. Quarters are stored as 3 months.",
 );
+const channelSchema = str("Channel", { enum: [...CHANNELS] });
+const eventSchema = str("Event: reset (a ranking was reset), hof (a period ended, the hall of fame was stored), update (a new release of the collector or the web)", { enum: [...EVENTS] });
+const notifyStatus = nullable(obj({ at: unix("When"), ok: bool("Delivered"), error: str("Error of the channel, empty if delivered") }, [], "Outcome of the last message, written by the collector; null: none yet"));
+const notifyTestJob = nullable(obj({ id: int("Job ID"), status: str("pending, running, done or failed"), result: str("Result"), at: unix("Requested") }, [], "Last test message; null: none"));
+const notifyChannel = obj({ channel: channelSchema, on: bool("Turned on"), ready: bool("Server set up"), shared: bool("Shared recipients set"), status: notifyStatus, test: notifyTestJob });
+const ownChannel = obj({ channel: channelSchema, on: bool("Turned on in the settings"), to: str("Own address, empty: none"), events: arr(eventSchema), status: notifyStatus, test: notifyTestJob });
 const modeSchema = str("What a reset deletes: player-stats (player statistics), all-stats (also server statistics), all (also the players)", { enum: [...RESET_MODES] });
 const job = obj({
   id: int("Job ID"),
@@ -1008,6 +1015,83 @@ export const adminOps: AdminOp[] = [
     response: ref("AdminSettings"),
     example: settingsEx,
     errors: [400, 404],
+  },
+  {
+    method: "GET",
+    path: "/admin/notifications",
+    operationId: "adminNotifications",
+    tag: "Admin: settings",
+    summary: "Notification channels",
+    description:
+      "Per channel (email, telegram, ntfy): turned on, set up (e-mail: server and sender; Telegram: bot token), shared recipients set, the outcome of the last message to the shared recipients and their last test. The channels themselves are set with `PATCH /admin/settings/notifications`; the collector sends the messages.",
+    need: "settings.view",
+    handler: "notifyGet",
+    status: 200,
+    response: obj({ channels: arr(notifyChannel), collectorRunning: bool("The collector's heartbeat is fresh"), available: bool("The job table exists (test messages)") }),
+    example: { channels: [{ channel: "email", on: true, ready: true, shared: true, status: { at: 1767225600, ok: true, error: "" }, test: null }], collectorRunning: true, available: true },
+    errors: [],
+  },
+  {
+    method: "POST",
+    path: "/admin/notifications/test",
+    operationId: "adminNotificationTest",
+    tag: "Admin: settings",
+    summary: "Test message to the shared recipients",
+    description: "Queues a test message (job notify-test) with the stored settings; the collector sends it within seconds. A test still waiting is returned (`existing: true`). Its outcome: `GET /admin/notifications`.",
+    need: "settings.edit",
+    handler: "notifyTest",
+    body: obj({ channel: channelSchema }),
+    bodyExample: { channel: "telegram" },
+    status: 202,
+    response: obj({ job: int("Job ID"), existing: bool("A test was already waiting") }),
+    example: { job: 21, existing: false },
+    errors: [400, 503],
+  },
+  {
+    method: "GET",
+    path: "/admin/me/notifications",
+    operationId: "adminMyNotifications",
+    tag: "Admin: account",
+    summary: "My notifications",
+    description: "The token owner's own address and events per channel (Admin → My account → Notifications), with the outcome of the last message and test. `on`: the channel is turned on in the settings.",
+    need: null,
+    handler: "ownNotifyGet",
+    status: 200,
+    response: obj({ channels: arr(ownChannel) }),
+    example: { channels: [{ channel: "email", on: true, to: "me@example.org", events: ["reset", "hof"], status: null, test: null }] },
+    errors: [],
+  },
+  {
+    method: "PUT",
+    path: "/admin/me/notifications",
+    operationId: "adminSetMyNotifications",
+    tag: "Admin: account",
+    summary: "Change my notifications",
+    description: "Sets the token owner's own address and events of the channels sent; others stay. An empty `to` removes the channel. Addresses: e-mail an address, Telegram the chat ID (or @channel), ntfy a topic (letters, digits, `_ -`).",
+    need: null,
+    handler: "ownNotifySet",
+    body: obj(Object.fromEntries(CHANNELS.map((c) => [c, obj({ to: str("Address, empty: none", { maxLength: 200 }), events: arr(eventSchema) })])), [...CHANNELS]),
+    bodyExample: { email: { to: "me@example.org", events: ["reset", "hof", "update"] } },
+    status: 200,
+    response: obj({ channels: arr(ownChannel) }),
+    example: { channels: [{ channel: "email", on: true, to: "me@example.org", events: ["reset", "hof", "update"], status: null, test: null }] },
+    errors: [400],
+  },
+  {
+    method: "POST",
+    path: "/admin/me/notifications/test",
+    operationId: "adminMyNotificationTest",
+    tag: "Admin: account",
+    summary: "Test message to me",
+    description: "Queues a test message to the token owner's own stored address of the channel. A test still waiting is returned (`existing: true`).",
+    need: null,
+    handler: "ownNotifyTest",
+    body: obj({ channel: channelSchema }),
+    bodyExample: { channel: "email" },
+    status: 202,
+    response: obj({ job: int("Job ID"), existing: bool("A test was already waiting") }),
+    example: { job: 22, existing: false },
+    errors: [400, 503],
   },
   {
     method: "GET",

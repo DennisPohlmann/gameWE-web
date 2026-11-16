@@ -322,7 +322,7 @@ export function AdminSidebar({
                 <Item href="/admin/privacy" icon="shield" label={t.privacy} on={seg === "privacy"} />
               </nav>
               <h4>{t.navServices}</h4>
-              <nav>{groupLinks("services", { voice: "headset", bans: "ban", steam: "user", monitoring: "pulse" })}</nav>
+              <nav>{groupLinks("services", { voice: "headset", bans: "ban", steam: "user", monitoring: "pulse", notifications: "bell" })}</nav>
             </>
           ) : null}
           {can["settings.view"] || can["jobs.view"] ? (

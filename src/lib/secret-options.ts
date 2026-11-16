@@ -5,8 +5,9 @@
 // they are still in hlstats_Options.
 import "server-only";
 import { adminExec, adminQuery, query, upsert } from "./db";
+import { NOTIFY_SECRETS } from "./notify-core";
 
-export const SECRET_OPTIONS: readonly string[] = ["gamewe_steam_api_key", "gamewe_ts_query_password", "gamewe_ts_password", "gamewe_metrics_token", "gamewe_fastdl_password", "gamewe_fastdl_token", "gamewe_fastdl_header"];
+export const SECRET_OPTIONS: readonly string[] = ["gamewe_steam_api_key", "gamewe_ts_query_password", "gamewe_ts_password", "gamewe_metrics_token", "gamewe_fastdl_password", "gamewe_fastdl_token", "gamewe_fastdl_header", ...NOTIFY_SECRETS];
 
 const noTable = (err: unknown) => {
   const code = (err as { code?: unknown } | null)?.code;

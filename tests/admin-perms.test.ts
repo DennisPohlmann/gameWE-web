@@ -56,9 +56,11 @@ test("every API operation and MCP tool needs a known right", () => {
   for (const op of adminOps) assert.ok(op.need === null || op.need === "admin" || isPerm(op.need), op.operationId);
   // A chat moderator gets the chat and nothing else that changes or reads data.
   const chat = tools({ acclevel: 80, perms: ["chat.view"] }, ["read", "write", "mcp"]).map((t) => t.name).sort();
-  assert.deepEqual(chat, ["adminChat", "adminMe"]);
-  const none = tools({ acclevel: 80, perms: [] }, ["read", "write", "mcp"]).map((t) => t.name);
-  assert.deepEqual(none, ["adminMe"]);
+  // Every admin has their own account and notifications.
+  const own = ["adminMyNotificationTest", "adminMyNotifications", "adminSetMyNotifications"];
+  assert.deepEqual(chat, ["adminChat", "adminMe", ...own]);
+  const none = tools({ acclevel: 80, perms: [] }, ["read", "write", "mcp"]).map((t) => t.name).sort();
+  assert.deepEqual(none, ["adminMe", ...own]);
   // Admins and their rights: level 100 only.
   for (const op of adminOps.filter((o) => o.entity === "users")) assert.equal(op.need, "admin", op.operationId);
 });

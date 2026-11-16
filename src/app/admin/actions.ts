@@ -25,6 +25,8 @@ import { checkCode, consumeStep, newBackupCodes, newSecret, otpauthUri, readSecr
 import { ACCESS_SECRETS, FASTDL_ACCESS, accessKey, type AccessField } from "@/lib/fastdl-access";
 import { allSettings } from "@/lib/admin-settings";
 import { adminQuery } from "@/lib/db";
+import { ownFromForm, queueNotifyTest, saveOwnNotify } from "@/lib/admin-notify";
+import { isChannel } from "@/lib/notify-core";
 import { secretOptions, secretsOf } from "@/lib/secret-options";
 
 export async function loginAction(form: FormData) {
@@ -600,4 +602,38 @@ export async function deleteRoleAction(form: FormData) {
     redirect("/admin/admin-roles");
   }
   redirect("/admin/admin-roles?deleted=1");
+}
+
+// Notifications: the admin's own addresses and events (Mein Konto), and
+// test messages, queued as collector jobs. "test" (a button of the own
+// form) saves first, then queues the test for that channel.
+export async function saveOwnNotifyAction(form: FormData) {
+  const user = await requireAdmin();
+  const own = ownFromForm(form);
+  const test = String(form.get("test") ?? "");
+  // A test needs an address of that channel.
+  if (isChannel(test) && !own[test].to) redirect(`/admin/account?notify=bad&field=${test}#notifications`);
+  try {
+    await saveOwnNotify({ user }, own);
+  } catch (err) {
+    if (err instanceof OpError && err.code === "field") redirect(`/admin/account?notify=bad&field=${encodeURIComponent(err.detail.field)}#notifications`);
+    throw err;
+  }
+  if (!isChannel(test)) redirect("/admin/account?notify=saved#notifications");
+  const job = await queueNotifyTest({ user }, test, true).catch((err) => {
+    if (err instanceof OpError && err.code === "nojobs") redirect("/admin/account?notify=nojobs#notifications");
+    throw err;
+  });
+  redirect(`/admin/account?notify=test&job=${job.id}#notifications`);
+}
+
+export async function sharedNotifyTestAction(form: FormData) {
+  const user = await requirePerm("settings.edit");
+  const channel = String(form.get("channel") ?? "");
+  if (!isChannel(channel)) redirect("/admin/settings/notifications");
+  const job = await queueNotifyTest({ user }, channel, false).catch((err) => {
+    if (err instanceof OpError && err.code === "nojobs") redirect("/admin/settings/notifications?notify=nojobs#notify-test");
+    throw err;
+  });
+  redirect(`/admin/settings/notifications?notify=test&job=${job.id}#notify-test`);
 }

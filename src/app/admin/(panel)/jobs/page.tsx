@@ -125,9 +125,11 @@ export default async function JobsPage() {
       return m ? t.modes[m] : j.mode;
     }
     if (j.type === "delete-player") return `#${j.mode}`;
+    if (j.type === "notify-test") return j.mode;
     return "";
   };
-  const ranking = (j: Job) => (j.game ? (names.get(j.game) ?? j.game) : t.allRankings);
+  // A test message's game is the admin's hash, no ranking.
+  const ranking = (j: Job) => (j.type === "notify-test" ? "" : j.game ? (names.get(j.game) ?? j.game) : t.allRankings);
   const by = (j: Job) => (isAdmin || j.requestedBy === user.username ? j.requestedBy : t.anAdmin);
   const took = (j: Job) => (j.startedAt && j.finishedAt >= j.startedAt ? shortDuration(j.finishedAt - j.startedAt, lang) : "");
 

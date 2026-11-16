@@ -5,6 +5,7 @@ import { DEFAULT_PAGE_SIZE, PAGE_SIZES } from "./page-size";
 import { IDLE_DEFAULT_MINUTES, IDLE_MAX_MINUTES, IDLE_MIN_MINUTES } from "./admin-idle";
 import { LANGUAGES, type Lang } from "../translations/languages";
 import { tr } from "./admin-i18n";
+import type { NotifyEvent } from "./notify-core";
 
 // Header links: validation and order live in lib/header-links.ts.
 export { homeValue, linkValue } from "./header-links";
@@ -35,6 +36,8 @@ export type Setting = {
   // Admin level needed to change it (default: every admin). The field is
   // read-only below it and saveSettingsAction refuses a value.
   minLevel?: number;
+  // A heading shown above the field (pages with parts, e.g. notifications).
+  section?: L;
 };
 
 // One page of the settings (/admin/settings/<id>) in one area of the menu.
@@ -81,6 +84,104 @@ function countryChoices(): [string, L][] {
     .sort((a, b) => a[1].de.localeCompare(b[1].de, "de"));
 }
 const DISCORD = { key: "gamewe_voice_type", value: "discord" };
+
+
+// The events of the notifications with their names (also on My account).
+export const NOTIFY_EVENT_LABELS: [NotifyEvent, L][] = [
+  ["reset", { de: "Ranking zurückgesetzt", en: "Ranking reset" }],
+  ["hof", { de: "Ruhmeshalle erstellt", en: "Hall of fame stored" }],
+  ["update", { de: "Neue Version erschienen", en: "New version out" }],
+];
+const MASKED: L = { de: "Maskiert, das Auge zeigt den gespeicherten Wert; leer lassen behält es.", en: "Masked, the eye button shows the stored value; leave empty to keep it." };
+const SHARED_EVENTS: L = { de: "An die gemeinsamen Empfänger dieses Kanals.", en: "To the shared recipients of this channel." };
+// The switches "shared recipients get event" of one channel.
+const notifyEvents = (c: string): Setting[] =>
+  NOTIFY_EVENT_LABELS.map(([e, label]) => ({ key: `gamewe_notify_${c}_${e}`, label, type: "bool", def: e === "update" ? "0" : "1", help: SHARED_EVENTS, show: { key: `gamewe_notify_${c}`, value: "1" } }));
+const EMAIL_ON = { key: "gamewe_notify_email", value: "1" };
+const TG_ON = { key: "gamewe_notify_telegram", value: "1" };
+const NTFY_ON = { key: "gamewe_notify_ntfy", value: "1" };
+const same = (s: string): L => ({ de: s, en: s, all: Object.fromEntries(LANGUAGES.map((l) => [l.code, s])) });
+
+// Notifications (lib/notify-core.ts): the collector sends them.
+const notifyDefinitions: Setting[] = [
+  {
+    key: "gamewe_notify_lang",
+    label: { de: "Sprache der Nachrichten", en: "Language of the messages" },
+    type: "choice",
+    def: "",
+    choices: [
+      ["", { de: "Standardsprache der Seite", en: "Default language of the site" }],
+      ...LANGUAGES.filter((l) => !("base" in l && l.base)).map((l): [string, L] => [l.code, same(`${l.name} (${l.code})`)]),
+    ],
+  },
+  { key: "gamewe_notify_email", section: { de: "E-Mail", en: "E-mail" }, label: { de: "E-Mail einschalten", en: "Turn on e-mail" }, type: "bool", def: "0" },
+  { key: "gamewe_notify_smtp_host", label: { de: "SMTP-Server", en: "SMTP server" }, type: "text", def: "", minLevel: 100, help: { de: "Zum Beispiel smtp.example.org.", en: "For example smtp.example.org." }, show: EMAIL_ON },
+  { key: "gamewe_notify_smtp_port", label: { de: "SMTP-Port", en: "SMTP port" }, type: "number", def: "587", min: 1, max: 65535, minLevel: 100, help: { de: "587 mit STARTTLS, 465 mit TLS.", en: "587 with STARTTLS, 465 with TLS." }, show: EMAIL_ON },
+  {
+    key: "gamewe_notify_smtp_security",
+    label: { de: "Verschlüsselung", en: "Encryption" },
+    type: "choice",
+    def: "starttls",
+    minLevel: 100,
+    choices: [
+      ["starttls", same("STARTTLS")],
+      ["tls", same("TLS")],
+      ["none", { de: "Keine (nur ein Server auf demselben Rechner)", en: "None (only a server on the same machine)" }],
+    ],
+    help: { de: "Ohne Verschlüsselung schickt der Collector keine Anmeldung, außer an localhost.", en: "Without encryption the collector sends no login, except to localhost." },
+    show: EMAIL_ON,
+  },
+  { key: "gamewe_notify_smtp_user", label: { de: "SMTP-Benutzer", en: "SMTP user" }, type: "text", def: "", minLevel: 100, help: { de: "Leer: ohne Anmeldung.", en: "Empty: no login." }, show: EMAIL_ON },
+  { key: "gamewe_notify_smtp_password", label: { de: "SMTP-Passwort", en: "SMTP password" }, type: "secret", def: "", minLevel: 100, help: MASKED, show: EMAIL_ON },
+  { key: "gamewe_notify_email_from", label: { de: "Absender", en: "Sender" }, type: "text", def: "", minLevel: 100, help: { de: "Absenderadresse der E-Mails, z. B. stats@example.org.", en: "Sender address of the e-mails, e.g. stats@example.org." }, show: EMAIL_ON },
+  {
+    key: "gamewe_notify_email_to",
+    label: { de: "Gemeinsame Empfänger", en: "Shared recipients" },
+    type: "text",
+    def: "",
+    help: { de: "Mehrere Adressen mit Komma trennen, höchstens 20; sie sehen sich gegenseitig nicht. Leer: keine.", en: "Separate several addresses with commas, at most 20; they do not see each other. Empty: none." },
+    show: EMAIL_ON,
+  },
+  ...notifyEvents("email"),
+  { key: "gamewe_notify_telegram", section: same("Telegram"), label: { de: "Telegram einschalten", en: "Turn on Telegram" }, type: "bool", def: "0" },
+  {
+    key: "gamewe_notify_telegram_token",
+    label: { de: "Bot-Token", en: "Bot token" },
+    type: "secret",
+    def: "",
+    minLevel: 100,
+    help: { de: "Von @BotFather. Der Bot muss Mitglied des Chats sein, in einem Kanal als Admin. Maskiert; leer lassen behält ihn.", en: "From @BotFather. The bot must be a member of the chat, in a channel as an admin. Masked; leave empty to keep it." },
+    show: TG_ON,
+  },
+  {
+    key: "gamewe_notify_telegram_chat",
+    label: { de: "Gemeinsamer Chat", en: "Shared chat" },
+    type: "text",
+    def: "",
+    help: { de: "@kanalname eines öffentlichen Kanals oder die Chat-ID als Zahl (z. B. -1001234567890). Leer: keiner.", en: "@channelname of a public channel or the chat ID as a number (e.g. -1001234567890). Empty: none." },
+    show: TG_ON,
+  },
+  ...notifyEvents("telegram"),
+  {
+    key: "gamewe_notify_ntfy",
+    section: { de: "ntfy (Push-Nachrichten)", en: "ntfy (push messages)" },
+    label: { de: "ntfy einschalten", en: "Turn on ntfy" },
+    type: "bool",
+    def: "0",
+    help: { de: "ntfy.sh oder ein eigener ntfy-Server schickt Push-Nachrichten an die ntfy-App.", en: "ntfy.sh or an own ntfy server sends push messages to the ntfy app." },
+  },
+  { key: "gamewe_notify_ntfy_url", label: { de: "ntfy-Server", en: "ntfy server" }, type: "text", def: "https://ntfy.sh", minLevel: 100, help: { de: "https-Adresse, z. B. https://ntfy.sh.", en: "https address, e.g. https://ntfy.sh." }, show: NTFY_ON },
+  { key: "gamewe_notify_ntfy_token", label: { de: "Zugriffs-Token", en: "Access token" }, type: "secret", def: "", minLevel: 100, help: { de: "Nur für geschützte Topics (tk_…). Maskiert; leer lassen behält es.", en: "Only for protected topics (tk_…). Masked; leave empty to keep it." }, show: NTFY_ON },
+  {
+    key: "gamewe_notify_ntfy_topic",
+    label: { de: "Gemeinsames Topic", en: "Shared topic" },
+    type: "text",
+    def: "",
+    help: { de: "Wer das Topic kennt, liest mit: einen schwer zu ratenden Namen wählen oder ein Zugriffs-Token nutzen. Leer: keins.", en: "Whoever knows the topic reads along: choose a name that is hard to guess or use an access token. Empty: none." },
+    show: NTFY_ON,
+  },
+  ...notifyEvents("ntfy"),
+];
 
 // Every setting, by its old section; settingGroups below puts them on pages.
 const definitions: Omit<SettingGroup, "area">[] = [
@@ -642,6 +743,7 @@ const definitions: Omit<SettingGroup, "area">[] = [
       },
     ],
   },
+  { id: "notifications", title: { de: "Benachrichtigungen", en: "Notifications" }, items: notifyDefinitions },
 ];
 
 const byKey = new Map(definitions.flatMap((g) => g.items).map((s) => [s.key, s]));
@@ -701,6 +803,16 @@ export const settingGroups: SettingGroup[] = [
     items: pick("gamewe_metrics_token", "gamewe_update_check"),
   },
   { id: "api", area: "services", title: { de: "API", en: "API" }, items: pick("gamewe_api_enabled") },
+  {
+    id: "notifications",
+    area: "services",
+    title: { de: "Benachrichtigungen", en: "Notifications" },
+    help: {
+      de: "Der Collector schickt Nachrichten per E-Mail, Telegram oder ntfy, wenn ein Ranking zurückgesetzt wird, eine Ruhmeshalle entsteht oder eine neue Version erscheint. Hier richtest du die Kanäle ein und wählst gemeinsame Empfänger. Jeder Admin wählt unter Mein Konto, was er selbst bekommt.",
+      en: "The collector sends messages by e-mail, Telegram or ntfy when a ranking is reset, a hall of fame is stored or a new version is out. Here you set up the channels and choose shared recipients. Every admin chooses under My account what they get themselves.",
+    },
+    items: notifyDefinitions,
+  },
   { id: "points", area: "collector", title: { de: "Punkte", en: "Points" }, help: helpOf("points"), items: definitions.find((g) => g.id === "points")!.items },
   {
     id: "capture",
@@ -756,17 +868,21 @@ export const definedSettings = definitions.flatMap((g) => g.items);
 // TOTP secrets, API tokens and rights of the admin users, the secrets of the form
 // above and the privacy page's keys (their own page, /admin/privacy; the address and the
 // text hold line breaks a raw value may not have).
-export const HIDDEN_OPTION_PREFIXES = ["gamewe_totp", "gamewe_apitoken", "gamewe_passkey", "gamewe_perms_", "gamewe_role_", "gamewe_ts_query_password", "gamewe_metrics_token", "gamewe_steam_api_key", "gamewe_privacy_"];
+export const HIDDEN_OPTION_PREFIXES = ["gamewe_totp", "gamewe_apitoken", "gamewe_passkey", "gamewe_perms_", "gamewe_role_", "gamewe_notifyu_", "gamewe_notify_last_", "gamewe_notify_seen_", "gamewe_notify_smtp_password", "gamewe_notify_telegram_token", "gamewe_notify_ntfy_token", "gamewe_ts_query_password", "gamewe_metrics_token", "gamewe_steam_api_key", "gamewe_privacy_"];
 // Rows the level 100 operations write (reset schedules, VAC block, bots, the FastDL address), which
 // the collector acts on, or that it opens as a file: below level 100 the raw
 // list shows them read-only and refuses them.
 const ADMIN_ONLY_OPTION_PREFIXES = ["gamewe_reset_", "gamewe_next_reset_", "gamewe_hof_", "gamewe_block_vac_", "gamewe_rank_bots_", "gamewe_bot_points_", "gamewe_bot_kills_", "gamewe_bot_stats_", "gamewe_fastdl_url_", "gamewe_fastdl_agent_", "gamewe_fastdl_referer_", "gamewe_fastdl_user_", "gamewe_fastdl_password_", "gamewe_fastdl_token_", "gamewe_fastdl_header_", "gamewe_geoip_db"];
 export const adminOnlyOption = (key: string) => ADMIN_ONLY_OPTION_PREFIXES.some((p) => key.toLowerCase().startsWith(p));
 // Written by the collector, shown read-only.
-export const READONLY_OPTIONS = ["gamewe_heartbeat", "gamewe_collector_version", "gamewe_collector_runtime"];
+export const READONLY_OPTIONS = ["gamewe_heartbeat", "gamewe_collector_version", "gamewe_collector_runtime", "gamewe_web_version"];
 
 // Meaning of known keys that have no field above (raw list of the settings page).
 export const RAW_OPTION_HELP: Record<string, L> = {
+  gamewe_web_version: {
+    de: "Schreibt die Webseite beim Start (ihre Version); der Collector vergleicht sie für die Update-Benachrichtigungen mit dem neuesten Release. Keine Einstellung.",
+    en: "Written by the website at start (its version); the collector compares it with the latest release for the update notifications. Not a setting.",
+  },
   gamewe_heartbeat: {
     de: "Schreibt der Collector jede Minute (Unix-Zeit seiner letzten Runde); keine Einstellung.",
     en: "Written by the collector every minute (Unix time of its last poll); not a setting.",

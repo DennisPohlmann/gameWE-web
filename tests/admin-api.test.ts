@@ -264,6 +264,12 @@ test("the rights of the operations are those of the admin pages", () => {
     settingsSet: "settings.edit",
     rawSet: "settings.edit",
     privacySet: "settings.edit",
+    notifyGet: "settings.view",
+    notifyTest: "settings.edit",
+    // an admin's own notifications, like the account page
+    ownNotifyGet: null,
+    ownNotifySet: null,
+    ownNotifyTest: null,
   };
   for (const [h, n] of Object.entries(need)) assert.equal(adminOps.find((o) => o.handler === h)?.need, n, h);
   for (const op of adminOps.filter((o) => o.path.startsWith("/admin/users"))) assert.equal(op.need, "admin", op.operationId);
@@ -291,6 +297,8 @@ test("every server action of the admin area has an API operation or is account-o
     hallEntryAction: ["hallRemove", "hallRestore"],
     saveRoleAction: ["roleCreate", "roleUpdate"],
     deleteRoleAction: ["roleDelete"],
+    saveOwnNotifyAction: ["ownNotifySet", "ownNotifyTest"],
+    sharedNotifyTestAction: ["notifyTest"],
   };
   // Sign-in, own password, own TOTP, own passkeys, own tokens, look of the admin area:
   // only signed in, never with a token.
