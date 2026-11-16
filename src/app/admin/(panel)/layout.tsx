@@ -12,7 +12,7 @@ import { PERM_T } from "@/lib/admin-texts";
 import { rankingSummaries } from "@/lib/admin-rankings";
 import { settingGroups } from "@/lib/admin-settings";
 import { ADMIN_THEMES, getAdminTheme } from "@/lib/admin-theme";
-import { requireAdmin } from "@/lib/auth";
+import { displayNames, requireAdmin } from "@/lib/auth";
 import { collectorStatus } from "@/lib/collector-status";
 import { fmtDateTime } from "@/lib/format";
 import { basePath } from "@/lib/base-path";
@@ -42,6 +42,8 @@ export default async function PanelLayout({ children }: { children: ReactNode })
   ]);
   const a = adminDict(lang);
   const u = a.ui;
+  // The display name the admin gave themselves (My account), else the user name.
+  const shown = (await displayNames([user.username])).get(user.username) ?? user.username;
   const label = (key: string) => ((l) => (l ? tr(l, lang) : key))(entities.find((e) => e.key === key)?.label);
   const text: NavText = {
     ...Object.fromEntries(Object.entries(u).filter(([, v]) => typeof v === "string")),
@@ -112,14 +114,15 @@ export default async function PanelLayout({ children }: { children: ReactNode })
         <details className="adm-user">
           <summary>
             <span className="adm-avatar" aria-hidden="true">
-              {user.username.slice(0, 1).toUpperCase()}
+              {shown.slice(0, 1).toUpperCase()}
             </span>
-            <span className="adm-hide-m"><bdi>{user.username}</bdi></span>
+            <span className="adm-hide-m"><bdi>{shown}</bdi></span>
             <Icon name="chevron" />
           </summary>
           <div className="adm-menu">
             <p className="adm-menu-head">
-              <b><bdi>{user.username}</bdi></b>
+              <b><bdi>{shown}</bdi></b>
+              {shown !== user.username ? <small><bdi>{user.username}</bdi></small> : null}
               <small>{isFullAdmin(user) ? pt.levelFull : fill(pt.levelRestricted, { n: String(user.acclevel) })}</small>
             </p>
             <Link prefetch={false} href="/admin/account">

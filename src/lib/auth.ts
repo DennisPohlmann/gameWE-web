@@ -12,7 +12,7 @@ import { adminExec, adminQuery, upsert } from "./db";
 import { readSecret, secondFactor, sessionEpochKey } from "./totp";
 import { idleLeft } from "./admin-idle";
 import { getSettings } from "./settings";
-import { PERMS, allowed, isFullAdmin, parsePerms, parseRole, permsKey, roleKey, roleOf, type Need, type Perm } from "./admin-perms";
+import { PERMS, allowed, isFullAdmin, nameKey, parsePerms, parseRole, permsKey, roleKey, roleOf, type Need, type Perm } from "./admin-perms";
 import { checkAssertion, type Assertion, type Expect } from "./passkey-core";
 import { findPasskey, listPasskeys, passkeyOnly, touchPasskey } from "./passkeys";
 
@@ -51,6 +51,22 @@ export async function withPerms(u: { username: string; acclevel: number }): Prom
   if (role === null) return { username: u.username, acclevel, perms: parsePerms(raw), role: null };
   const [r] = await adminQuery<{ value: string | null }>(`SELECT value FROM hlstats_Options WHERE keyname = ?`, [roleKey(role)]);
   return { username: u.username, acclevel, perms: parseRole(role, r?.value)?.perms ?? [], role };
+}
+
+// The display names of these admins (My account), by user name; without one
+// the user name is shown.
+export async function displayNames(users: string[]): Promise<Map<string, string>> {
+  if (!users.length) return new Map();
+  const keys = users.map(nameKey);
+  const rows = await adminQuery<{ keyname: string; value: string | null }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [keys]);
+  const byKey = new Map(rows.map((r) => [r.keyname, r.value ?? ""]));
+  return new Map(users.flatMap((u, i) => (byKey.get(keys[i]) ? [[u, byKey.get(keys[i])!]] : [])));
+}
+
+// Sets (or, empty, removes) the display name of this admin.
+export async function setDisplayName(user: string, name: string | null): Promise<void> {
+  if (name) await adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [nameKey(user), name]);
+  else await adminExec(`DELETE FROM hlstats_Options WHERE keyname = ?`, [nameKey(user)]);
 }
 
 let warned = false;

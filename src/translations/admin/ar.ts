@@ -285,7 +285,6 @@ const texts: Record<string, string> = {
   "none waiting": "لا شيء منتظر",
   "Moderation": "الإشراف",
   "Admin area": "منطقة الإدارة",
-  "Account": "الحساب",
   "All options (raw)": "كل الخيارات (خام)",
   "Privacy": "الخصوصية",
   "My account & 2FA": "حسابي والمصادقة الثنائية",
@@ -998,6 +997,11 @@ const texts: Record<string, string> = {
   "Role": "الدور",
   "Manage roles": "إدارة الأدوار",
   "No roles created yet.": "لم يُنشأ أي دور بعد.",
+  "Display name": "الاسم المعروض",
+  "Shown at the top right and in the user list. You still sign in with {u}. Empty: the user name.": "يظهر في أعلى اليمين وفي قائمة المستخدمين. ما زلت تسجّل الدخول باسم {u}. فارغ: اسم المستخدم.",
+  "Save name": "حفظ الاسم",
+  "The name has been saved.": "تم حفظ الاسم.",
+  "The name needs 1 to 40 characters.": "يجب أن يتكوّن الاسم من 1 إلى 40 حرفًا.",
 };
 
 export default texts;

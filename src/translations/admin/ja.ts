@@ -285,7 +285,6 @@ const texts: Record<string, string> = {
   "none waiting": "待機中なし",
   "Moderation": "モデレーション",
   "Admin area": "管理エリア",
-  "Account": "アカウント",
   "All options (raw)": "すべてのオプション (生の値)",
   "Privacy": "プライバシー",
   "My account & 2FA": "マイアカウントと 2FA",
@@ -998,6 +997,11 @@ const texts: Record<string, string> = {
   "Role": "ロール",
   "Manage roles": "ロールを管理",
   "No roles created yet.": "ロールはまだ作成されていません。",
+  "Display name": "表示名",
+  "Shown at the top right and in the user list. You still sign in with {u}. Empty: the user name.": "右上と利用者一覧に表示されます。サインインは引き続き {u} で行います。空欄：ユーザー名。",
+  "Save name": "名前を保存",
+  "The name has been saved.": "名前を保存しました。",
+  "The name needs 1 to 40 characters.": "名前は 1〜40 文字にしてください。",
 };
 
 export default texts;

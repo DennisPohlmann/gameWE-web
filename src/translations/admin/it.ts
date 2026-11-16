@@ -285,7 +285,6 @@ const texts: Record<string, string> = {
   "none waiting": "nessuno in attesa",
   "Moderation": "Moderazione",
   "Admin area": "Area di amministrazione",
-  "Account": "Account",
   "All options (raw)": "Tutte le opzioni (grezze)",
   "Privacy": "Privacy",
   "My account & 2FA": "Il mio account e 2FA",
@@ -998,6 +997,11 @@ const texts: Record<string, string> = {
   "Role": "Ruolo",
   "Manage roles": "Gestisci ruoli",
   "No roles created yet.": "Nessun ruolo creato finora.",
+  "Display name": "Nome visualizzato",
+  "Shown at the top right and in the user list. You still sign in with {u}. Empty: the user name.": "Compare in alto a destra e nell’elenco utenti. Accedi sempre con {u}. Vuoto: il nome utente.",
+  "Save name": "Salva nome",
+  "The name has been saved.": "Il nome è stato salvato.",
+  "The name needs 1 to 40 characters.": "Il nome deve avere da 1 a 40 caratteri.",
 };
 
 export default texts;

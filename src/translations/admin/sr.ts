@@ -280,7 +280,6 @@ const texts: Record<string, string> = {
   "none waiting": "ништа на чекању",
   "Moderation": "Модерација",
   "Admin area": "Администрација",
-  "Account": "Налог",
   "All options (raw)": "Све опције (сирове)",
   "Privacy": "Приватност",
   "My account & 2FA": "Мој налог и 2FA",
@@ -998,6 +997,11 @@ const texts: Record<string, string> = {
   "Role": "Улога",
   "Manage roles": "Управљај улогама",
   "No roles created yet.": "Још није направљена ниједна улога.",
+  "Display name": "Име за приказ",
+  "Shown at the top right and in the user list. You still sign in with {u}. Empty: the user name.": "Приказује се горе десно и на листи корисника. И даље се пријављујете као {u}. Празно: корисничко име.",
+  "Save name": "Сачувај име",
+  "The name has been saved.": "Име је сачувано.",
+  "The name needs 1 to 40 characters.": "Име мора имати од 1 до 40 знакова.",
 };
 
 export default texts;

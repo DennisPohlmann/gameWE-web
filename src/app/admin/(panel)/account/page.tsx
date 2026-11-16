@@ -1,4 +1,4 @@
-import { saveOwnNotifyAction, changePasswordAction, createApiTokenAction, deletePasskeyAction, passkeyOnlyAction, revokeApiTokenAction, totpBackupCodesAction, totpCancelAction, totpConfirmAction, totpDisableAction, totpStartAction } from "../../actions";
+import { saveOwnNotifyAction, changePasswordAction, displayNameAction, createApiTokenAction, deletePasskeyAction, passkeyOnlyAction, revokeApiTokenAction, totpBackupCodesAction, totpCancelAction, totpConfirmAction, totpDisableAction, totpStartAction } from "../../actions";
 import { PageHead } from "@/components/admin/page-head";
 import { RevealInput } from "@/components/admin/reveal-input";
 import { BackupCodesForm, type BackupCodesText } from "@/components/admin/backup-codes-form";
@@ -10,7 +10,7 @@ import { TotpSetup } from "@/components/admin/totp-setup";
 import { Section } from "@/components/ui";
 import { EXPIRY_DAYS } from "@/lib/api-token-core";
 import { listTokens } from "@/lib/api-tokens";
-import { adminSecret, requireAdmin } from "@/lib/auth";
+import { adminSecret, displayNames, requireAdmin } from "@/lib/auth";
 import { noAutofill } from "@/lib/autofill";
 import { basePath } from "@/lib/base-path";
 import { fmtDateTime, nowUnix } from "@/lib/format";
@@ -29,11 +29,12 @@ import { isChannel } from "@/lib/notify-core";
 // The signed-in user's own account: password, passkeys and how to sign in,
 // optional TOTP with its backup codes and API tokens (only a notice while
 // the API is off).
-export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; done?: string; pw?: string; token?: string; pk?: string; new?: string; notify?: string; field?: string; job?: string }> }) {
+export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; done?: string; pw?: string; token?: string; pk?: string; new?: string; notify?: string; field?: string; job?: string; name?: string }> }) {
   const user = await requireAdmin();
   const lang = await getAdminLang();
   const a = adminDict(lang);
-  const { error, done, pw, token, pk, new: fresh, notify, field, job } = await searchParams;
+  const { error, done, pw, token, pk, new: fresh, notify, field, job, name: nameState } = await searchParams;
+  const shown = (await displayNames([user.username])).get(user.username) ?? "";
   const nt = localized(NOTIFY_T, lang);
   const ns = await notifyState(user.username);
   const notifyOn = ns.own.filter((o) => o.to && o.events.length && ns.channels.find((c) => c.channel === o.channel)?.on).length;
@@ -66,7 +67,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   });
   return (
     <>
-      <PageHead crumbs={[[a.ui.areaSettings, "/admin/settings"], [a.ui.navAccess], [a.account]]} title={a.account} intro={a.accountIntro} />
+      <PageHead crumbs={[[a.account]]} title={a.account} intro={a.accountIntro} />
       {/* The state of every part at a glance; each tile jumps to its part. */}
       <nav className="grid kpis acc-glance" aria-label={a.accGlance}>
         <Tile href="#passkeys" icon="key" k={a.pkTitle} v={String(passkeys.length)} s={passkeys.length ? a.accPkSome : a.accPkNone} state={passkeys.length ? "ok" : undefined} />
@@ -75,6 +76,20 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         <Tile href="#api-tokens" icon="code" k={a.tokTitle} v={api ? String(tokens.length) : a.accOff} s={a.accTokSub} text={!api} />
         <Tile href="#notifications" icon="bell" k={nt.title} v={String(notifyOn)} s={nt.tile} state={notifyOn ? "ok" : undefined} />
       </nav>
+      <Section title={a.nameTitle} id="name">
+        {nameState === "saved" ? <p className="notice">{a.nameSaved}</p> : null}
+        {nameState === "invalid" ? <p className="notice error">{a.nameInvalid}</p> : null}
+        <form action={displayNameAction} className="form">
+          <label>
+            {a.nameLabel}
+            <input {...noAutofill} name="name" dir="auto" maxLength={40} defaultValue={shown} placeholder={user.username} />
+            <small>{fill(a.nameHint, { u: user.username })}</small>
+          </label>
+          <button type="submit" className="button primary">
+            {a.nameSave}
+          </button>
+        </form>
+      </Section>
       <Section title={a.pkTitle} id="passkeys" aside={<span className={passkeys.length ? "pill ok" : "pill"}>{passkeys.length}</span>}>
         <div className="form">
           <p className="muted">{a.pkIntro}</p>

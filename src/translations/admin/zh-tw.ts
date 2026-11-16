@@ -280,7 +280,6 @@ const texts: Record<string, string> = {
   "none waiting": "沒有等待中的工作",
   "Moderation": "管理審核",
   "Admin area": "管理後台",
-  "Account": "帳號",
   "All options (raw)": "所有選項（原始）",
   "Privacy": "隱私權",
   "My account & 2FA": "我的帳號與 2FA",
@@ -998,6 +997,11 @@ const texts: Record<string, string> = {
   "Role": "角色",
   "Manage roles": "管理角色",
   "No roles created yet.": "尚未建立任何角色。",
+  "Display name": "顯示名稱",
+  "Shown at the top right and in the user list. You still sign in with {u}. Empty: the user name.": "顯示在右上角和使用者清單中。登入時仍使用 {u}。留空：使用者名稱。",
+  "Save name": "儲存名稱",
+  "The name has been saved.": "名稱已儲存。",
+  "The name needs 1 to 40 characters.": "名稱需要 1 到 40 個字元。",
 };
 
 export default texts;

@@ -280,7 +280,6 @@ const texts: Record<string, string> = {
   "none waiting": "ingen venter",
   "Moderation": "Moderation",
   "Admin area": "Administration",
-  "Account": "Konto",
   "All options (raw)": "Alle indstillinger (rå)",
   "Privacy": "Privatliv",
   "My account & 2FA": "Min konto og 2FA",
@@ -998,6 +997,11 @@ const texts: Record<string, string> = {
   "Role": "Rolle",
   "Manage roles": "Administrer roller",
   "No roles created yet.": "Der er ikke oprettet nogen roller endnu.",
+  "Display name": "Visningsnavn",
+  "Shown at the top right and in the user list. You still sign in with {u}. Empty: the user name.": "Vises øverst til højre og i brugerlisten. Du logger stadig ind med {u}. Tomt: brugernavnet.",
+  "Save name": "Gem navn",
+  "The name has been saved.": "Navnet er gemt.",
+  "The name needs 1 to 40 characters.": "Navnet skal have 1 til 40 tegn.",
 };
 
 export default texts;

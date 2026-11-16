@@ -19,7 +19,7 @@ import { getEntity, type Field, type L } from "@/lib/admin-entities";
 import { adminDict, localized, tr } from "@/lib/admin-i18n";
 import { PERM_T } from "@/lib/admin-texts";
 import { listRoles } from "@/lib/admin-ops";
-import { requirePerm, withPerms, type AdminUser } from "@/lib/auth";
+import { displayNames, requirePerm, withPerms, type AdminUser } from "@/lib/auth";
 import { allowed } from "@/lib/admin-perms";
 import { getAdminLang, type Lang } from "@/lib/i18n";
 import { listHref, withReturnTo } from "@/lib/return-to";
@@ -79,6 +79,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
   const nfmt = (n: number) => n.toLocaleString(localeOf(lang));
   // Admins: what each may do at a glance (full admin, a role, own rights).
   const pt = localized(PERM_T, lang);
+  const names = e.key === "users" ? await displayNames(rows.map((r) => String(r.__pk))) : null;
   const access = e.key === "users" ? new Map((await Promise.all(rows.map((r) => withPerms({ username: String(r.__pk), acclevel: Number(r.acclevel) })))).map((x) => [x.username, x])) : null;
   const accessRoles = access ? new Map((await listRoles()).map((r) => [r.id, r.name])) : new Map<string, string>();
   // Delete right in the row (as on the edit page, after a dialog); not for
@@ -169,10 +170,18 @@ export default async function EntityList({ params, searchParams }: { params: Pro
                           ) : f.name === e.statusColumn ? (
                             <StatusPill f={f} v={r[f.name]} filter={statusOf(r[f.name])} lang={lang} />
                           ) : f.name === mainCol ? (
-                            <Link prefetch={false} className="name" href={editHref(String(r.__pk))}>
-                              {e.key === "servers" ? <GameIcon realgame={baseOf(r.game)} /> : null}
-                              <bdi>{show(f, r[f.name], lang) || "–"}</bdi>
-                            </Link>
+                            <>
+                              <Link prefetch={false} className="name" href={editHref(String(r.__pk))}>
+                                {e.key === "servers" ? <GameIcon realgame={baseOf(r.game)} /> : null}
+                                <bdi>{show(f, r[f.name], lang) || "–"}</bdi>
+                              </Link>
+                              {names?.get(String(r.__pk)) ? (
+                                <small className="muted">
+                                  {" "}
+                                  <bdi>{names.get(String(r.__pk))}</bdi>
+                                </small>
+                              ) : null}
+                            </>
                           ) : (
                             <bdi>{show(f, r[f.name], lang)}</bdi>
                           )}

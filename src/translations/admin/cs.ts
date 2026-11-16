@@ -285,7 +285,6 @@ const texts: Record<string, string> = {
   "none waiting": "nic nečeká",
   "Moderation": "Moderace",
   "Admin area": "Administrace",
-  "Account": "Účet",
   "All options (raw)": "Všechny volby (surové)",
   "Privacy": "Soukromí",
   "My account & 2FA": "Můj účet a 2FA",
@@ -998,6 +997,11 @@ const texts: Record<string, string> = {
   "Role": "Role",
   "Manage roles": "Spravovat role",
   "No roles created yet.": "Zatím nebyla vytvořena žádná role.",
+  "Display name": "Zobrazované jméno",
+  "Shown at the top right and in the user list. You still sign in with {u}. Empty: the user name.": "Zobrazuje se vpravo nahoře a v seznamu uživatelů. Přihlašujete se dál jako {u}. Prázdné: uživatelské jméno.",
+  "Save name": "Uložit jméno",
+  "The name has been saved.": "Jméno bylo uloženo.",
+  "The name needs 1 to 40 characters.": "Jméno musí mít 1 až 40 znaků.",
 };
 
 export default texts;

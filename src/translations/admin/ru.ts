@@ -280,7 +280,6 @@ const texts: Record<string, string> = {
   "none waiting": "ничего не ожидает",
   "Moderation": "Модерация",
   "Admin area": "Админ-панель",
-  "Account": "Учётная запись",
   "All options (raw)": "Все параметры (сырые)",
   "Privacy": "Конфиденциальность",
   "My account & 2FA": "Моя учётная запись и 2FA",
@@ -998,6 +997,11 @@ const texts: Record<string, string> = {
   "Role": "Роль",
   "Manage roles": "Управлять ролями",
   "No roles created yet.": "Роли ещё не созданы.",
+  "Display name": "Отображаемое имя",
+  "Shown at the top right and in the user list. You still sign in with {u}. Empty: the user name.": "Показывается справа вверху и в списке пользователей. Входите вы по-прежнему как {u}. Пусто: имя пользователя.",
+  "Save name": "Сохранить имя",
+  "The name has been saved.": "Имя сохранено.",
+  "The name needs 1 to 40 characters.": "Имя должно содержать от 1 до 40 символов.",
 };
 
 export default texts;

@@ -285,7 +285,6 @@ const texts: Record<string, string> = {
   "none waiting": "대기 중 없음",
   "Moderation": "관리 감독",
   "Admin area": "관리 영역",
-  "Account": "계정",
   "All options (raw)": "모든 옵션 (원시)",
   "Privacy": "개인정보",
   "My account & 2FA": "내 계정 및 2FA",
@@ -998,6 +997,11 @@ const texts: Record<string, string> = {
   "Role": "역할",
   "Manage roles": "역할 관리",
   "No roles created yet.": "아직 만든 역할이 없습니다.",
+  "Display name": "표시 이름",
+  "Shown at the top right and in the user list. You still sign in with {u}. Empty: the user name.": "오른쪽 위와 사용자 목록에 표시됩니다. 로그인은 계속 {u}(으)로 합니다. 비우면: 사용자 이름.",
+  "Save name": "이름 저장",
+  "The name has been saved.": "이름을 저장했습니다.",
+  "The name needs 1 to 40 characters.": "이름은 1~40자여야 합니다.",
 };
 
 export default texts;

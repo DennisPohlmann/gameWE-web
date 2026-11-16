@@ -64,7 +64,11 @@ export const parsePerms = (raw: string | null | undefined): Perm[] => (raw == nu
 
 // The option row of a user's rights. Not bound to the exact spelling, as the
 // database may compare names without case or trailing spaces.
-export const permsKey = (user: string) => `gamewe_perms_${createHash("sha256").update(user.trim().toLowerCase()).digest("hex").slice(0, 32)}`;
+const userHash = (user: string) => createHash("sha256").update(user.trim().toLowerCase()).digest("hex").slice(0, 32);
+export const permsKey = (user: string) => `gamewe_perms_${userHash(user)}`;
+// The display name an admin gives themselves (My account): shown in the
+// account menu and the user list; the sign-in stays the user name.
+export const nameKey = (user: string) => `gamewe_name_${userHash(user)}`;
 
 export type PermUser = { acclevel: number; perms?: readonly Perm[] };
 
@@ -127,7 +131,8 @@ export function roleOf(raw: string | null | undefined): string | null {
   return isRoleId(id) ? id : null;
 }
 
-// A role's name: 1 to 40 characters, no control characters.
+// A role's name (and an admin's display name): 1 to 40 characters, no
+// control characters.
 export function roleName(v: unknown): string | null {
   if (typeof v !== "string") return null;
   const n = v.trim().replace(/\s+/g, " ");

@@ -285,7 +285,6 @@ const texts: Record<string, string> = {
   "none waiting": "bekleyen yok",
   "Moderation": "Moderasyon",
   "Admin area": "Yönetim alanı",
-  "Account": "Hesap",
   "All options (raw)": "Tüm seçenekler (ham)",
   "Privacy": "Gizlilik",
   "My account & 2FA": "Hesabım ve 2FA",
@@ -998,6 +997,11 @@ const texts: Record<string, string> = {
   "Role": "Rol",
   "Manage roles": "Rolleri yönet",
   "No roles created yet.": "Henüz rol oluşturulmadı.",
+  "Display name": "Görünen ad",
+  "Shown at the top right and in the user list. You still sign in with {u}. Empty: the user name.": "Sağ üstte ve kullanıcı listesinde görünür. Giriş yine {u} ile yapılır. Boş: kullanıcı adı.",
+  "Save name": "Adı kaydet",
+  "The name has been saved.": "Ad kaydedildi.",
+  "The name needs 1 to 40 characters.": "Ad 1 ile 40 karakter arasında olmalı.",
 };
 
 export default texts;

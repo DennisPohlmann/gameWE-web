@@ -10,8 +10,8 @@ import { ADMIN_THEME_COOKIE, isAdminTheme } from "@/lib/admin-theme";
 import { basePath } from "@/lib/base-path";
 import { expiryDays, tokenName, tokenScopes } from "@/lib/api-token-core";
 import { createToken, purgeTokens, revokeToken } from "@/lib/api-tokens";
-import { adminSecret, brakedCode, confirmIdentity, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, newChallenge, passkeyHost, passkeyLogin, requireAdmin, requirePerm, takeChallenge } from "@/lib/auth";
-import { normalizePerms } from "@/lib/admin-perms";
+import { adminSecret, brakedCode, confirmIdentity, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, newChallenge, passkeyHost, passkeyLogin, requireAdmin, requirePerm, setDisplayName, takeChallenge } from "@/lib/auth";
+import { normalizePerms, roleName } from "@/lib/admin-perms";
 import { ALGS, MAX_PER_USER, checkRegistration, passkeyHash, passkeyName, rpIdOf, userHandle, type Assertion, type Registration } from "@/lib/passkey-core";
 import { addPasskey, deletePasskey, listPasskeys, passkeyOnly, setPasskeyOnly } from "@/lib/passkeys";
 import { codeMode, codeStepHref } from "@/lib/login-code";
@@ -378,6 +378,17 @@ export async function passkeyOnlyAction(form: FormData) {
 }
 
 // Own password (Mein Konto).
+// The own display name (My account); empty: the user name again.
+export async function displayNameAction(form: FormData) {
+  const user = await requireAdmin();
+  const raw = String(form.get("name") ?? "").trim();
+  const name = raw === "" ? null : roleName(raw);
+  if (raw !== "" && !name) redirect("/admin/account?name=invalid#name");
+  await setDisplayName(user.username, name);
+  revalidatePath("/admin", "layout");
+  redirect("/admin/account?name=saved#name");
+}
+
 export async function changePasswordAction(form: FormData) {
   const user = await requireAdmin();
   const next = String(form.get("next") ?? "");

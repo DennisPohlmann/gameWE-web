@@ -280,7 +280,6 @@ const texts: Record<string, string> = {
   "none waiting": "geen wachtend",
   "Moderation": "Moderatie",
   "Admin area": "Beheergedeelte",
-  "Account": "Account",
   "All options (raw)": "Alle opties (ruw)",
   "Privacy": "Privacy",
   "My account & 2FA": "Mijn account en 2FA",
@@ -998,6 +997,11 @@ const texts: Record<string, string> = {
   "Role": "Rol",
   "Manage roles": "Rollen beheren",
   "No roles created yet.": "Nog geen rollen aangemaakt.",
+  "Display name": "Weergavenaam",
+  "Shown at the top right and in the user list. You still sign in with {u}. Empty: the user name.": "Staat rechtsboven en in de gebruikerslijst. Je meldt je nog steeds aan met {u}. Leeg: de gebruikersnaam.",
+  "Save name": "Naam opslaan",
+  "The name has been saved.": "De naam is opgeslagen.",
+  "The name needs 1 to 40 characters.": "De naam moet 1 tot 40 tekens hebben.",
 };
 
 export default texts;

@@ -40,10 +40,8 @@ export type NavText = Record<
   | "navCollector"
   | "navModeration"
   | "navAccess"
-  | "navAccount"
   | "rawOptions"
   | "privacy"
-  | "myAccount"
   | "areas"
   | "start"
   | "toSite"
@@ -221,10 +219,6 @@ export function AdminSidebar({
             {can["rankings.view"] ? <Item href="/admin/rankings" icon="trophy" label={t.areaRankings} on={false} /> : null}
             <Item href="/admin/settings" icon="gear" label={t.areaSettings} on={false} />
           </nav>
-          <h4>{t.navAccount}</h4>
-          <nav>
-            <Item href="/admin/account" icon="lock" label={t.myAccount} on={false} />
-          </nav>
         </>
       ) : area === "rankings" ? (
         <>
@@ -343,13 +337,13 @@ export function AdminSidebar({
               </nav>
             </>
           ) : null}
-          {/* Admins, own account, the admin area's own settings and the raw
-              values: one group instead of three. */}
+          {/* Admins, roles, the admin area's own settings and the raw values:
+              one group instead of three. My account is only in the account
+              menu at the top right. */}
           <h4>{t.navAccess}</h4>
           <nav>
             {can.admin ? <Item href="/admin/users" icon="user" label={t.users} on={seg === "users"} /> : null}
             {can.admin ? <Item href="/admin/admin-roles" icon="key" label={t.adminRoles} on={seg === "admin-roles"} /> : null}
-            <Item href="/admin/account" icon="lock" label={t.myAccount} on={seg === "account" || seg === "totp"} />
             {can["settings.view"] ? groupLinks("admin", { admin: "gear" }) : null}
             {can["settings.view"] ? <Item href="/admin/settings/raw" icon="code" label={t.rawOptions} on={seg === "settings" && parts[2] === "raw"} /> : null}
           </nav>

@@ -280,7 +280,6 @@ const texts: Record<string, string> = {
   "none waiting": "ninguna en espera",
   "Moderation": "Moderación",
   "Admin area": "Área de administración",
-  "Account": "Cuenta",
   "All options (raw)": "Todas las opciones (en bruto)",
   "Privacy": "Privacidad",
   "My account & 2FA": "Mi cuenta y 2FA",
@@ -998,6 +997,11 @@ const texts: Record<string, string> = {
   "Role": "Rol",
   "Manage roles": "Gestionar roles",
   "No roles created yet.": "Aún no se ha creado ningún rol.",
+  "Display name": "Nombre visible",
+  "Shown at the top right and in the user list. You still sign in with {u}. Empty: the user name.": "Se muestra arriba a la derecha y en la lista de usuarios. Sigues iniciando sesión con {u}. Vacío: el nombre de usuario.",
+  "Save name": "Guardar nombre",
+  "The name has been saved.": "El nombre se ha guardado.",
+  "The name needs 1 to 40 characters.": "El nombre necesita de 1 a 40 caracteres.",
 };
 
 export default texts;

@@ -285,7 +285,6 @@ const texts: Record<string, string> = {
   "none waiting": "немає очікуваних",
   "Moderation": "Модерація",
   "Admin area": "Зона адміністрування",
-  "Account": "Обліковий запис",
   "All options (raw)": "Усі параметри (сирі)",
   "Privacy": "Конфіденційність",
   "My account & 2FA": "Мій обліковий запис і 2FA",
@@ -998,6 +997,11 @@ const texts: Record<string, string> = {
   "Role": "Роль",
   "Manage roles": "Керувати ролями",
   "No roles created yet.": "Ще не створено жодної ролі.",
+  "Display name": "Ім’я для показу",
+  "Shown at the top right and in the user list. You still sign in with {u}. Empty: the user name.": "Показується праворуч угорі та в списку користувачів. Входите ви й далі як {u}. Порожньо: ім’я користувача.",
+  "Save name": "Зберегти ім’я",
+  "The name has been saved.": "Ім’я збережено.",
+  "The name needs 1 to 40 characters.": "Ім’я має містити від 1 до 40 символів.",
 };
 
 export default texts;
