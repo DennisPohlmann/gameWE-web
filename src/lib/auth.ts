@@ -12,7 +12,7 @@ import { adminExec, adminQuery, upsert } from "./db";
 import { readSecret, secondFactor, sessionEpochKey } from "./totp";
 import { idleLeft } from "./admin-idle";
 import { getSettings } from "./settings";
-import { PERMS, allowed, isFullAdmin, parsePerms, permsKey, type Need, type Perm } from "./admin-perms";
+import { PERMS, allowed, isFullAdmin, parsePerms, parseRole, permsKey, roleKey, roleOf, type Need, type Perm } from "./admin-perms";
 import { checkAssertion, type Assertion, type Expect } from "./passkey-core";
 import { findPasskey, listPasskeys, passkeyOnly, touchPasskey } from "./passkeys";
 
@@ -36,15 +36,21 @@ const PENDING_MINUTES = 5;
 // Wrong codes per pending login before the password is asked again.
 const PENDING_TRIES = 5;
 
-// perms: what the admin may do (lib/admin-perms.ts), read with the account.
-export type AdminUser = { username: string; acclevel: number; perms: Perm[] };
+// perms: what the admin may do (lib/admin-perms.ts), read with the account;
+// role: the admin role they have (its rights are perms), null: own rights.
+export type AdminUser = { username: string; acclevel: number; perms: Perm[]; role?: string | null };
 
-// The account with its rights: level 100 all, level 80 the stored ones.
+// The account with its rights: level 100 all, level 80 the stored ones or
+// those of its role (a role that is gone: no rights).
 export async function withPerms(u: { username: string; acclevel: number }): Promise<AdminUser> {
   const acclevel = Number(u.acclevel);
-  if (isFullAdmin({ acclevel })) return { username: u.username, acclevel, perms: [...PERMS] };
+  if (isFullAdmin({ acclevel })) return { username: u.username, acclevel, perms: [...PERMS], role: null };
   const [row] = await adminQuery<{ value: string | null }>(`SELECT value FROM hlstats_Options WHERE keyname = ?`, [permsKey(u.username)]);
-  return { username: u.username, acclevel, perms: parsePerms(row ? (row.value ?? "") : null) };
+  const raw = row ? (row.value ?? "") : null;
+  const role = roleOf(raw);
+  if (role === null) return { username: u.username, acclevel, perms: parsePerms(raw), role: null };
+  const [r] = await adminQuery<{ value: string | null }>(`SELECT value FROM hlstats_Options WHERE keyname = ?`, [roleKey(role)]);
+  return { username: u.username, acclevel, perms: parseRole(role, r?.value)?.perms ?? [], role };
 }
 
 let warned = false;

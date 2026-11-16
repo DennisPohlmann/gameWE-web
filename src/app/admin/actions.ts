@@ -5,7 +5,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getEntity } from "@/lib/admin-entities";
 import { getRow, keptValues, optionList, withColumns } from "@/lib/admin-data";
-import { OpError, assignServersTo, deleteEntity, deletePlayer, moveServer, resetRanking, saveEntity, savePrivacy, saveSettings, setGlobalHall, setHallEntry, setRankingBots, setRankingFastdl, setRankingFastdlAccess, setRankingHall, setRankingVac } from "@/lib/admin-ops";
+import { OpError, assignServersTo, deleteEntity, deleteRole, saveRole, deletePlayer, moveServer, resetRanking, saveEntity, savePrivacy, saveSettings, setGlobalHall, setHallEntry, setRankingBots, setRankingFastdl, setRankingFastdlAccess, setRankingHall, setRankingVac } from "@/lib/admin-ops";
 import { ADMIN_THEME_COOKIE, isAdminTheme } from "@/lib/admin-theme";
 import { basePath } from "@/lib/base-path";
 import { expiryDays, tokenName, tokenScopes } from "@/lib/api-token-core";
@@ -125,8 +125,12 @@ export async function saveAction(form: FormData) {
   let saved: string;
   try {
     // The rights checkboxes of an admin's page (the hidden __perms marks them as sent).
-    const perms = e.key === "users" && form.get("__perms") === "1" ? normalizePerms(form.getAll("perm").map(String)) : undefined;
-    saved = await saveEntity({ user }, e, id, form, { ranking, perms });
+    // With __role an admin role (its id), empty: the admin's own rights.
+    const sent = e.key === "users" && form.get("__perms") === "1";
+    const roleIn = sent ? String(form.get("__role") ?? "") : "";
+    const role = !sent ? undefined : roleIn === "" ? null : roleIn;
+    const perms = sent && role === null ? normalizePerms(form.getAll("perm").map(String)) : undefined;
+    saved = await saveEntity({ user }, e, id, form, { ranking, perms, role });
   } catch (err) {
     if (!(err instanceof OpError)) throw err;
     const c = err.code;
@@ -565,4 +569,35 @@ export async function revealSecretAction(ref: string): Promise<string> {
     return (await secretsOf([key]))[key] ?? "";
   }
   return "";
+}
+
+// Admin roles (Settings → Admin roles, level 100 only): create or change one
+// (name and rights), or delete one no admin has.
+export async function saveRoleAction(form: FormData) {
+  const user = await requirePerm("admin");
+  const raw = String(form.get("id") ?? "");
+  const id = raw === "new" ? null : raw;
+  let saved: string;
+  try {
+    saved = await saveRole({ user }, id, form.get("name"), normalizePerms(form.getAll("perm").map(String)));
+  } catch (err) {
+    if (!(err instanceof OpError)) throw err;
+    if (err.code === "notfound") redirect("/admin/admin-roles");
+    redirect(`/admin/admin-roles/${encodeURIComponent(raw)}?error=${err.code}`);
+  }
+  redirect(`/admin/admin-roles/${encodeURIComponent(saved)}?saved=1`);
+}
+
+export async function deleteRoleAction(form: FormData) {
+  const user = await requirePerm("admin");
+  const id = String(form.get("id") ?? "");
+  if (form.get("confirm") !== "1") redirect(`/admin/admin-roles/${encodeURIComponent(id)}`);
+  try {
+    await deleteRole({ user }, id);
+  } catch (err) {
+    if (!(err instanceof OpError)) throw err;
+    if (err.code === "inuse") redirect(`/admin/admin-roles/${encodeURIComponent(id)}?error=inuse`);
+    redirect("/admin/admin-roles");
+  }
+  redirect("/admin/admin-roles?deleted=1");
 }

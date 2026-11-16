@@ -5,7 +5,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { LEVEL80_DEFAULT, PERMS, PERM_GROUPS, ROLE_PRESETS, allowed, effectivePerms, isPerm, normalizePerms, parsePerms, permMap, permsKey, permsValue } from "../src/lib/admin-perms.ts";
+import { LEVEL80_DEFAULT, PERMS, PERM_GROUPS, ROLE_PRESETS, ROLE_REF, allowed, effectivePerms, isPerm, isRoleId, normalizePerms, parsePerms, parseRole, permMap, permsKey, permsValue, roleName, roleOf, roleValue } from "../src/lib/admin-perms.ts";
 import { HIDDEN_OPTION_PREFIXES } from "../src/lib/admin-settings.ts";
 import { PERM_T } from "../src/lib/admin-texts.ts";
 import { tools } from "../src/lib/admin-mcp.ts";
@@ -116,7 +116,33 @@ test("nobody locks the admins out and nobody hands out a right they lack", () =>
   assert.match(del, /!\(await otherFullAdmin\(id\)\)[\s\S]*throw new OpError\("lastadmin"\)/);
   // The rights go with the user: removed on deletion, never inherited by a new user of the name.
   assert.match(del, /DELETE FROM hlstats_Options WHERE keyname = \?`, \[permsKey\(id\)\]/);
-  assert.match(save, /id === null \|\| opts\.perms\)\) await writePerms\(a, saved, opts\.perms \?\? LEVEL80_DEFAULT\)/);
+  assert.match(save, /else if \(id === null \|\| opts\.perms \|\| opts\.role === null\) await writePerms\(a, saved, opts\.perms \?\? \(id === null \? LEVEL80_DEFAULT : await ownPerms\(saved\)\)\)/);
+  // A role hands out its rights: only one whose rights the actor has.
+  assert.match(save, /if \(opts\.role\) checkPerms\(a, \(await roleFor\(opts\.role\)\)\.perms\)/);
+  const set = ops.slice(ops.indexOf("export async function setUserPerms"));
+  assert.match(set, /checkPerms\(a, \(await roleFor\(role\)\)\.perms\)/);
+  const saveRole = ops.slice(ops.indexOf("export async function saveRole"));
+  assert.match(saveRole, /checkPerms\(a, perms\)/);
   // Compared in the database's collation.
   assert.match(ops, /WHERE acclevel >= \? AND username <> \?/);
+});
+
+test("admin roles: stored as a reference, never read as more rights", () => {
+  // An admin with a role stores only the reference; read as own rights (an
+  // older version does that) it is no right at all.
+  assert.equal(roleOf(`${ROLE_REF}a1b2c3d4`), "a1b2c3d4");
+  assert.deepEqual(parsePerms(`${ROLE_REF}a1b2c3d4`), []);
+  assert.equal(roleOf("rankings.view"), null);
+  assert.equal(roleOf(`${ROLE_REF}../x`), null);
+  assert.ok(isRoleId("a1b2c3d4") && !isRoleId("A1B2C3D4") && !isRoleId("a1b2c3"));
+  // Name: trimmed, 1-40 characters, no control characters; a "|" in it stays.
+  assert.equal(roleName("  Level   75 "), "Level 75");
+  assert.equal(roleName(""), null);
+  assert.equal(roleName("x".repeat(41)), null);
+  assert.equal(roleName("a\u0007b"), null);
+  const r = parseRole("a1b2c3d4", roleValue("Mod | chat", ["players.edit"]));
+  assert.deepEqual(r, { id: "a1b2c3d4", name: "Mod | chat", perms: ["players.view", "players.edit"] });
+  assert.equal(parseRole("a1b2c3d4", "players.view"), null);
+  // Every right and the longest name fit the option column (varchar 255).
+  assert.ok(roleValue("x".repeat(40), [...PERMS]).length <= 255);
 });

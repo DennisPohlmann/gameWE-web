@@ -1,4 +1,5 @@
 import "server-only";
+import { randomBytes } from "node:crypto";
 import { getEntity, type Entity } from "./admin-entities";
 import { deleteRow, getRow, InputError, isDuplicateKey, optionList, otherServerAt, rawOptions, saveRow, withColumns } from "./admin-data";
 import { globalHall, hallSettings, saveGlobalHall, saveHallSettings, setHallRemoved } from "./admin-hall";
@@ -10,7 +11,7 @@ import { ACCESS_KEYS, ACCESS_SECRETS, FASTDL_ACCESS, accessValueOk, type Access,
 import { purgeTokens } from "./api-tokens";
 import { purgePasskeys } from "./passkeys";
 import { LEVEL_ADMIN, revokeSessions, type AdminUser } from "./auth";
-import { allowed, permsKey, permsValue, LEVEL80_DEFAULT, type Perm } from "./admin-perms";
+import { allowed, isRoleId, parsePerms, parseRole, permsKey, permsValue, roleKey, roleName, roleOf, roleValue, LEVEL80_DEFAULT, ROLE_MAX, ROLE_PREFIX, ROLE_REF, type Perm, type Role } from "./admin-perms";
 import { steamKey } from "./config";
 import { saveSecret, SECRET_OPTIONS } from "./secret-options";
 import { adminExec, adminQuery, upsert } from "./db";
@@ -43,7 +44,7 @@ export type OpCode =
   | "self" // would lock the user out of the admin area
   | "password" // the password of an existing user (only its owner, on My account)
   | "mismatch" // server and ranking of different base games
-  | "duplicate" // another server has this IP and port
+  | "duplicate" // another server has this IP and port (detail.dup), or a role this name (detail.name)
   | "field" // a field is invalid (detail.field)
   | "db" // the database refused the write (detail.msg)
   | "input" // invalid input outside the fields
@@ -52,6 +53,8 @@ export type OpCode =
   | "nojobs" // no job table: the collector cannot run a reset
   | "lastadmin" // would leave no full admin (level 100)
   | "perm" // a right the acting admin does not have themselves
+  | "inuse" // an admin role that admins still have
+  | "limit" // too many admin roles
   | "template"; // the ranking is a template (no servers): never reset
 
 export class OpError extends Error {
@@ -90,9 +93,16 @@ async function checkResettable(game: string) {
 // only: write just these fields (the API's PATCH); without it every field
 // of the entity is written, as the edit form sends them all. ranking: a new
 // server goes into this ranking (the "Add server" button of a ranking).
-// perms (users): the admin's rights (lib/admin-perms.ts); left out, they stay
-// (a new admin gets the old level 80 rights).
-export async function saveEntity(a: Actor, e: Entity, id: string | null, form: Form, opts: { only?: Set<string>; ranking?: string | null; perms?: Perm[] } = {}): Promise<string> {
+// perms (users): the admin's own rights (lib/admin-perms.ts); left out, they
+// stay (a new admin gets the old level 80 rights). role (users): an admin
+// role instead (its id), or null for own rights again; left out, it stays.
+export async function saveEntity(
+  a: Actor,
+  e: Entity,
+  id: string | null,
+  form: Form,
+  opts: { only?: Set<string>; ranking?: string | null; perms?: Perm[]; role?: string | null } = {},
+): Promise<string> {
   if (id === null && !e.canCreate) throw new OpError("cannot");
   const row = id === null ? undefined : await getRow(e, id);
   if (id !== null && !row) throw new OpError("notfound");
@@ -105,6 +115,7 @@ export async function saveEntity(a: Actor, e: Entity, id: string | null, form: F
   }
   if (e.key === "users") {
     if (opts.perms) checkPerms(a, opts.perms);
+    if (opts.role) checkPerms(a, (await roleFor(opts.role)).perms);
     if (row && Number(row.acclevel) >= LEVEL_ADMIN && writes("acclevel") && Number(form.get("acclevel")) < LEVEL_ADMIN && !(await otherFullAdmin(String(id)))) {
       throw new OpError("lastadmin");
     }
@@ -169,7 +180,10 @@ export async function saveEntity(a: Actor, e: Entity, id: string | null, form: F
   // A new user never inherits the API tokens or passkeys of an earlier user of that name.
   if (e.key === "users" && id === null) await Promise.all([purgeTokens(saved), purgePasskeys(saved)]);
   // A new user never inherits the rights of an earlier user of that name either.
-  if (e.key === "users" && (id === null || opts.perms)) await writePerms(a, saved, opts.perms ?? LEVEL80_DEFAULT);
+  if (e.key === "users") {
+    if (opts.role) await writeRole(a, saved, opts.role);
+    else if (id === null || opts.perms || opts.role === null) await writePerms(a, saved, opts.perms ?? (id === null ? LEVEL80_DEFAULT : await ownPerms(saved)));
+  }
   // A new ranking takes the definitions of its template.
   if (e.key === "games" && id === null) {
     const template = String(form.get("template") ?? "");
@@ -200,12 +214,98 @@ async function writePerms(a: Actor, username: string, perms: Perm[]) {
   console.info(`gameWE: rights of admin ${username} set to ${permsValue(perms) || "none"} by ${who(a)}`);
 }
 
-// Only the rights of an existing admin (the API's PATCH with nothing else).
-export async function setUserPerms(a: Actor, username: string, perms: Perm[]): Promise<void> {
+// Only the rights of an existing admin (the API's PATCH with nothing else):
+// own rights (perms), or a role (role: its id; null: own rights again).
+export async function setUserPerms(a: Actor, username: string, perms: Perm[] | undefined, role?: string | null): Promise<void> {
   const e = getEntity("users")!;
   if (!(await getRow(await withColumns(e), username))) throw new OpError("notfound");
+  if (role) {
+    checkPerms(a, (await roleFor(role)).perms);
+    await writeRole(a, username, role);
+    return;
+  }
+  if (perms) checkPerms(a, perms);
+  await writePerms(a, username, perms ?? (await ownPerms(username)));
+}
+
+// ---------------------------------------------------------------- admin roles
+
+async function roleRows(): Promise<Role[]> {
+  const rows = await adminQuery<{ keyname: string; value: string | null }>(`SELECT keyname, value FROM hlstats_Options WHERE LEFT(keyname, ${ROLE_PREFIX.length}) = ?`, [ROLE_PREFIX]);
+  return rows
+    .map((r) => parseRole(r.keyname.slice(ROLE_PREFIX.length), r.value))
+    .filter((r): r is Role => r !== null)
+    .sort((x, y) => x.name.localeCompare(y.name) || x.id.localeCompare(y.id));
+}
+
+async function roleFor(id: string): Promise<Role> {
+  const r = isRoleId(id) ? (await roleRows()).find((x) => x.id === id) : undefined;
+  if (!r) throw new OpError("field", { field: "role" });
+  return r;
+}
+
+// Which admins have which role (level 100 has none: it has every right).
+async function roleAdmins(): Promise<Map<string, string[]>> {
+  const users = await adminQuery<{ username: string; acclevel: number }>(`SELECT username, acclevel FROM hlstats_Users WHERE acclevel < ?`, [LEVEL_ADMIN]);
+  if (!users.length) return new Map();
+  const keys = users.map((u) => permsKey(u.username));
+  const rows = await adminQuery<{ keyname: string; value: string | null }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [keys]);
+  const byKey = new Map(rows.map((r) => [r.keyname, r.value]));
+  const out = new Map<string, string[]>();
+  users.forEach((u, i) => {
+    const role = roleOf(byKey.get(keys[i]));
+    if (role) out.set(role, [...(out.get(role) ?? []), u.username]);
+  });
+  return out;
+}
+
+// Every role with the admins who have it, by name.
+export async function listRoles(): Promise<(Role & { admins: string[] })[]> {
+  const [roles, admins] = await Promise.all([roleRows(), roleAdmins()]);
+  return roles.map((r) => ({ ...r, admins: (admins.get(r.id) ?? []).sort((x, y) => x.localeCompare(y)) }));
+}
+
+export async function getRole(id: string): Promise<(Role & { admins: string[] }) | null> {
+  return (await listRoles()).find((r) => r.id === id) ?? null;
+}
+
+// Creates (id null) or changes a role; returns its id. Names are unique
+// (without case); nobody puts a right they lack into a role.
+export async function saveRole(a: Actor, id: string | null, nameIn: unknown, perms: Perm[]): Promise<string> {
+  const name = roleName(nameIn);
+  if (!name) throw new OpError("field", { field: "name" });
   checkPerms(a, perms);
-  await writePerms(a, username, perms);
+  const roles = await roleRows();
+  if (id !== null && !roles.some((r) => r.id === id)) throw new OpError("notfound");
+  if (roles.some((r) => r.id !== id && r.name.toLowerCase() === name.toLowerCase())) throw new OpError("duplicate", { name });
+  if (id === null && roles.length >= ROLE_MAX) throw new OpError("limit");
+  const rid = id ?? randomBytes(4).toString("hex");
+  await adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [roleKey(rid), roleValue(name, perms)]);
+  console.info(`gameWE: admin role "${name}" ${id === null ? "created" : "changed"} (${permsValue(perms) || "no rights"}) by ${who(a)}`);
+  return rid;
+}
+
+// A role that admins still have stays: they would lose every right.
+export async function deleteRole(a: Actor, id: string): Promise<void> {
+  const r = await getRole(id);
+  if (!r) throw new OpError("notfound");
+  if (r.admins.length) throw new OpError("inuse", { admins: r.admins.join(", ") });
+  await adminExec(`DELETE FROM hlstats_Options WHERE keyname = ?`, [roleKey(id)]);
+  console.info(`gameWE: admin role "${r.name}" deleted by ${who(a)}`);
+}
+
+async function writeRole(a: Actor, username: string, role: string) {
+  await adminExec(upsert("hlstats_Options", ["keyname", "value"], ["keyname"], ["value"]), [permsKey(username), `${ROLE_REF}${role}`]);
+  console.info(`gameWE: admin ${username} given the role ${role} by ${who(a)}`);
+}
+
+// An admin's own rights; one with a role starts from the role's rights.
+async function ownPerms(username: string): Promise<Perm[]> {
+  const [row] = await adminQuery<{ value: string | null }>(`SELECT value FROM hlstats_Options WHERE keyname = ?`, [permsKey(username)]);
+  const raw = row ? (row.value ?? "") : null;
+  const role = roleOf(raw);
+  if (role === null) return parsePerms(raw);
+  return (await roleRows()).find((r) => r.id === role)?.perms ?? [];
 }
 
 // Another level 100 admin than `username` exists (compared in the database's

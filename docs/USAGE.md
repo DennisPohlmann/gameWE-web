@@ -521,6 +521,24 @@ admin API, the users operations (level 100 only) return and take
 "ips.view"]}`, or `PATCH /api/v1/admin/users/mod` with only `permissions`;
 `GET /api/v1/admin/me` shows the token owner's rights.
 
+**Admin roles.** A role is a set of rights under one name, e.g. "Moderator"
+or "Level 75" (Settings → Admin roles, level 100 only, up to 50 roles). On a
+level 80 admin's page, **Set the rights by** chooses a role (the boxes then
+show the role's rights, locked) or rights of their own (boxes to tick, as
+before). An admin with a role has exactly the role's rights: changing the
+role changes every admin who has it. Switching back to own rights starts
+from the role's rights. A role that admins still have cannot be deleted.
+Nobody hands out a role with a right they lack. Each role is a row
+`gamewe_role_<id>` in `hlstats_Options` (`<rights>|<name>`, hidden on the raw
+page); the admin's `gamewe_perms_<hash>` then holds `role:<id>`. Existing
+admins keep their own rights unchanged; an older gameWE version reads a role
+reference as no rights at all, never as more. A level 100 admin's page shows
+every right checked and locked. In the admin API (and as MCP tools):
+`GET`/`POST /api/v1/admin/admin-roles`, `GET`/`PATCH`/`DELETE
+/api/v1/admin/admin-roles/{id}` (`409 duplicate`, `409 limit`, `409
+role_in_use`), and `role` on the users operations (an id, or `null` for own
+rights again; not together with `permissions`).
+
 A new user gets a first password
 when they are created; after that each user changes only their own password
 (My account, with the current one), in the admin area and in the API, and

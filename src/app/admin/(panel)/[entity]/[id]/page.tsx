@@ -8,6 +8,7 @@ import { PageHead } from "@/components/admin/page-head";
 import { TokenGenerate } from "@/components/admin/token-generate";
 import { Section } from "@/components/ui";
 import { getRow, optionList, withColumns } from "@/lib/admin-data";
+import { listRoles } from "@/lib/admin-ops";
 import { RankBadge, rankName } from "@/components/badges";
 import { getEntity, type Field } from "@/lib/admin-entities";
 import { adminDict, localized, tr } from "@/lib/admin-i18n";
@@ -47,7 +48,10 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
   const pt = localized(PERM_T, lang);
   const sp = await searchParams;
   // The rights of a level 80 admin (stored, or the old level 80 rights).
-  const userPerms = e.key === "users" ? (isNew ? LEVEL80_DEFAULT : (await withPerms({ username: id, acclevel: 80 })).perms) : [];
+  // An admin with a role: its id (the boxes show the role's rights).
+  const stored = e.key === "users" && !isNew ? await withPerms({ username: id, acclevel: 80 }) : null;
+  const userPerms = e.key === "users" ? (stored ? stored.perms : LEVEL80_DEFAULT) : [];
+  const roles = e.key === "users" ? await listRoles() : [];
   // The list (ranking, search, page) this page was opened from.
   const returnTo = safeReturnTo(sp.returnTo, e.key);
   const r0 = row as Record<string, unknown>;
@@ -94,7 +98,7 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
       : sp.error === "field"
       ? sp.field === "inactive"
         ? a.inactiveNoRight
-        : fill(a.invalidField, { f: cs2 && sp.field === "log_secret" ? a.cs2LogToken : (badField ? tr(badField.label, lang) : (sp.field ?? "")) })
+        : fill(a.invalidField, { f: cs2 && sp.field === "log_secret" ? a.cs2LogToken : sp.field === "role" && e.key === "users" ? pt.rolePick : (badField ? tr(badField.label, lang) : (sp.field ?? "")) })
       : sp.error === "db"
         ? fill(a.dbWriteError, { msg: sp.msg ?? "" })
         : sp.error === "self"
@@ -226,7 +230,20 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
                 initial={userPerms}
                 groups={PERM_GROUPS.map((g) => ({ id: g.id, legend: pt.groups[g.id], perms: g.perms.map((p) => ({ id: p, label: pt.perm[p] })) }))}
                 presets={ROLE_PRESETS.map((p) => ({ id: p.id, name: pt.preset[p.id as keyof typeof pt.preset], perms: normalizePerms(p.perms) }))}
-                text={{ full: pt.full, presets: pt.presets, presetsHint: pt.presetsHint }}
+                roles={roles.map((r) => ({ id: r.id, name: r.name, perms: r.perms }))}
+                initialRole={stored?.role ?? null}
+                text={{
+                  full: pt.full,
+                  presets: pt.presets,
+                  presetsHint: pt.presetsHint,
+                  access: pt.access,
+                  modeRole: pt.modeRole,
+                  modeRoleHint: pt.modeRoleHint,
+                  modeOwn: pt.modeOwn,
+                  rolePick: pt.rolePick,
+                  noRoles: pt.noRoles,
+                  rolesManage: pt.rolesManage,
+                }}
               />
             </div>
           ) : null}

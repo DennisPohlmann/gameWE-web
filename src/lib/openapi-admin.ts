@@ -2,7 +2,7 @@ import { entities, type Entity, type Field } from "./admin-entities.ts";
 import { RAW_GROUP, settingGroups, type Setting } from "./admin-settings.ts";
 import { MAX_TOKENS_PER_USER, NAME_MAX } from "./api-token-core.ts";
 import { RESET_MODES } from "./reset-modes.ts";
-import { PERMS, type Need } from "./admin-perms.ts";
+import { PERMS, ROLE_MAX, type Need } from "./admin-perms.ts";
 
 // The admin API (/api/v1/admin/...): one entry per operation. The router in
 // lib/admin-api.ts serves exactly these (method, path, right, handler) and
@@ -125,7 +125,7 @@ const ROW_EXAMPLES: Record<string, Record<string, unknown>> = {
   roles: { id: 1, code: "sniper", name: "Sniper", hidden: false, game: G },
   awards: { id: 9, awardType: "W", code: "awp", name: "AWP Master", verb: "kills with the AWP", game: G },
   ranks: { id: 5, name: "{LANG_RANG_PVT}", minimum: 50, game_code: G },
-  users: { id: "editor", username: "editor", acclevel: "80", permissions: ["rankings.view", "players.view", "players.edit", "chat.view"] },
+  users: { id: "editor", username: "editor", acclevel: "80", role: null, permissions: ["rankings.view", "players.view", "players.edit", "chat.view"] },
 };
 
 function entityOps(): AdminOp[] {
@@ -197,7 +197,7 @@ function entityOps(): AdminOp[] {
           `Creates a ${m.one} with the checks of the admin page.` +
           (m.key === "games" ? " `realgame` is the ranking's game; `template` (optional) copies weapons, actions, teams, roles, awards, ranks and ribbons from that ranking, must be of the same game and defaults to the game's standard ranking (e.g. `css`); `name` empty takes the game's name; `realgame` empty takes the template's game, one of the two is required." : "") +
           (m.key === "servers" ? " IP and port must be unique (`409 duplicate`, with the other server's ID)." : "") +
-          (m.key === "users" ? " `password` is required. `permissions` are the rights of a level 80 admin (left out: the old level 80 rights)." : "") +
+          (m.key === "users" ? " `password` is required. `permissions` are the rights of a level 80 admin (left out: the old level 80 rights); or `role`, an admin role (GET /admin/admin-roles)." : "") +
           " Fields left out get the value an empty form field gives.",
         need: e.perm.edit,
         handler: "entityCreate",
@@ -220,7 +220,7 @@ function entityOps(): AdminOp[] {
         `Changes only the fields sent, with the checks of the admin page.` +
         (m.key === "servers" ? " A new `game` must be a ranking of the same game (`409 mismatch`); IP and port stay unique (`409 duplicate`). A secret set to null is cleared." : "") +
         (m.key === "players" ? " `hideranking`: 0 visible, 1 hidden (admin or bot), 2 banned, 3 hidden by the player." : "") +
-        (m.key === "users" ? " `permissions` replaces the rights of a level 80 admin; demoting the last level 100 admin is refused (`409 last_full_admin`)." : "") +
+        (m.key === "users" ? " `permissions` replaces the rights of a level 80 admin, `role` gives them an admin role instead (null: rights of their own again); demoting the last level 100 admin is refused (`409 last_full_admin`)." : "") +
         selfNote +
         pwNote,
       need: e.perm.edit,
@@ -263,6 +263,17 @@ const permsSchema = (input: boolean): Schema =>
       : "What the admin may do; level 100 has every right",
   );
 
+// The admin role of an admin (users only): its rights come from the role.
+const roleIdSchema = (description: string): Schema => str(description, { pattern: "^[a-z0-9]{8}$" });
+const roleRefSchema = (input: boolean): Schema =>
+  nullable(
+    roleIdSchema(
+      input
+        ? "ID of an admin role (GET /admin/admin-roles): the admin then has exactly the role's rights; null: rights of their own again (they start from the role's). Not together with permissions. Only roles whose rights you have yourself."
+        : "ID of the admin's role, null for rights of their own (level 100: always null)",
+    ),
+  );
+
 function entitySchemas(): Record<string, Schema> {
   const out: Record<string, Schema> = {};
   for (const m of ADMIN_ENTITIES) {
@@ -273,22 +284,22 @@ function entitySchemas(): Record<string, Schema> {
       if (f.virtual || f.type === "password") continue;
       props[f.type === "secret" ? `${f.name}Set` : f.name] = fieldSchema(f, false);
     }
-    if (m.key === "users") props.permissions = permsSchema(false);
+    if (m.key === "users") Object.assign(props, { role: roleRefSchema(false), permissions: permsSchema(false) });
     // Optional columns may be missing in older databases.
     out[`Admin${Name}`] = obj(props, e.fields.filter((f) => f.optional).flatMap((f) => [f.name, `${f.name}Set`]), `${e.label.en} (Admin → ${e.label.en})`);
     const create = e.fields.filter((f) => !f.readonly);
     if (e.canCreate) {
       out[`Admin${Name}Create`] = {
         ...obj(
-          { ...Object.fromEntries(create.map((f) => [f.name, fieldSchema(f, true)])), ...(m.key === "users" ? { permissions: permsSchema(true) } : {}) },
-          [...create.filter((f) => !f.required && !(m.key === "users" && f.type === "password")).map((f) => f.name), "permissions"],
+          { ...Object.fromEntries(create.map((f) => [f.name, fieldSchema(f, true)])), ...(m.key === "users" ? { role: roleRefSchema(true), permissions: permsSchema(true) } : {}) },
+          [...create.filter((f) => !f.required && !(m.key === "users" && f.type === "password")).map((f) => f.name), "role", "permissions"],
         ),
         description: `New ${m.one}`,
       };
     }
     const update = e.fields.filter((f) => !f.readonly && !f.createOnly && !f.virtual);
     out[`Admin${Name}Update`] = {
-      ...obj({ ...Object.fromEntries(update.map((f) => [f.name, fieldSchema(f, true)])), ...(m.key === "users" ? { permissions: permsSchema(true) } : {}) }, [...update.map((f) => f.name), "permissions"]),
+      ...obj({ ...Object.fromEntries(update.map((f) => [f.name, fieldSchema(f, true)])), ...(m.key === "users" ? { role: roleRefSchema(true), permissions: permsSchema(true) } : {}) }, [...update.map((f) => f.name), "role", "permissions"]),
       minProperties: 1,
       description: "Only the fields to change",
     };
@@ -368,11 +379,16 @@ const job = obj({
   ),
 });
 
+const roleInputProps = {
+  name: str("Name, 1-40 characters, unique (case ignored)", { minLength: 1, maxLength: 40 }),
+  permissions: arr(str("", { enum: [...PERMS] }), "The rights (a change needs seeing too, so e.g. rankings.edit adds rankings.view)"),
+};
+
 export const adminSchemas: Record<string, Schema> = {
   AdminError: {
     type: "object",
     properties: {
-      error: str("Error code", { examples: ["unauthorized", "forbidden", "self_security_forbidden", "password_own_only", "not_found", "invalid_field", "unknown_field", "read_only_field", "missing_field", "confirmation_required", "mismatch", "duplicate", "template_ranking", "rate_limited"] }),
+      error: str("Error code", { examples: ["unauthorized", "forbidden", "self_security_forbidden", "password_own_only", "not_found", "invalid_field", "unknown_field", "read_only_field", "missing_field", "confirmation_required", "mismatch", "duplicate", "role_in_use", "limit", "template_ranking", "rate_limited"] }),
       message: str("What went wrong, in English"),
       field: str("The field it is about, if any"),
       id: int("For duplicate: the ID of the other server"),
@@ -381,6 +397,9 @@ export const adminSchemas: Record<string, Schema> = {
     required: ["error", "message"],
   },
   ...entitySchemas(),
+  AdminAccessRole: obj({ id: roleIdSchema("ID of the role"), name: str("Name, unique (case ignored)"), permissions: arr(str("", { enum: [...PERMS] }), "The rights of every admin with this role"), admins: arr(str(""), "User names of the admins with this role") }, [], "An admin role (Admin → Admin roles)"),
+  AdminAccessRoleCreate: obj(roleInputProps, [], "New admin role"),
+  AdminAccessRoleUpdate: { ...obj(roleInputProps, ["name", "permissions"]), minProperties: 1, description: "Only what to change" },
   AdminRankingSummary: obj({
     id: int("ID"),
     code: str("Code"),
@@ -445,6 +464,9 @@ const hallEx = { source: "own", schedule: { unit: "month", every: 1, monthDay: 1
 const entryParts = obj({ start: str("First day of the period, YYYY-MM-DD", { pattern: "^\\d{4}-\\d{2}-\\d{2}$" }), place: int("Place 1-99; left out: the whole period", { minimum: 1, maximum: 99 }) }, ["place"]);
 
 const settingsEx = { id: "general", area: "website", title: "General", settings: { sitename: "Example Stats", gamewe_default_lang: "en", MinActivity: 28, gamewe_chat_public: false }, readOnly: [] };
+
+const roleParam: AdminParam = { name: "role", in: "path", required: true, description: "ID of the admin role", schema: roleIdSchema(""), example: "a1b2c3d4" };
+const roleEx = { id: "a1b2c3d4", name: "Level 75", permissions: ["rankings.view", "players.view", "players.edit"], admins: ["editor"] };
 
 export const adminOps: AdminOp[] = [
   {
@@ -838,6 +860,81 @@ export const adminOps: AdminOp[] = [
   },
   {
     method: "GET",
+    path: "/admin/admin-roles",
+    operationId: "adminListAdminRoles",
+    tag: "Admin: users",
+    summary: "List admin roles",
+    description: "Every admin role with its rights and the admins who have it. An admin with a role has exactly the role's rights (users: `role`).",
+    need: "admin",
+    handler: "rolesList",
+    status: 200,
+    response: arr(ref("AdminAccessRole")),
+    example: [roleEx],
+    errors: [],
+  },
+  {
+    method: "POST",
+    path: "/admin/admin-roles",
+    operationId: "adminCreateAdminRole",
+    tag: "Admin: users",
+    summary: "Create an admin role",
+    description: `A new role with a unique name (\`409 duplicate\`). At most ${ROLE_MAX} roles (\`409 limit\`).`,
+    need: "admin",
+    handler: "roleCreate",
+    body: ref("AdminAccessRoleCreate"),
+    bodyExample: { name: "Level 75", permissions: ["rankings.view", "players.edit"] },
+    status: 201,
+    response: ref("AdminAccessRole"),
+    example: roleEx,
+    errors: [400, 409],
+  },
+  {
+    method: "GET",
+    path: "/admin/admin-roles/{role}",
+    operationId: "adminGetAdminRole",
+    tag: "Admin: users",
+    summary: "Get an admin role",
+    description: "One role with its rights and admins.",
+    need: "admin",
+    handler: "roleGet",
+    params: [roleParam],
+    status: 200,
+    response: ref("AdminAccessRole"),
+    example: roleEx,
+    errors: [404],
+  },
+  {
+    method: "PATCH",
+    path: "/admin/admin-roles/{role}",
+    operationId: "adminUpdateAdminRole",
+    tag: "Admin: users",
+    summary: "Change an admin role",
+    description: "Renames the role or replaces its rights; every admin with the role has the new rights at once.",
+    need: "admin",
+    handler: "roleUpdate",
+    params: [roleParam],
+    body: ref("AdminAccessRoleUpdate"),
+    bodyExample: { permissions: ["rankings.view", "players.edit", "chat.view"] },
+    status: 200,
+    response: ref("AdminAccessRole"),
+    example: roleEx,
+    errors: [400, 404, 409],
+  },
+  {
+    method: "DELETE",
+    path: "/admin/admin-roles/{role}",
+    operationId: "adminDeleteAdminRole",
+    tag: "Admin: users",
+    summary: "Delete an admin role",
+    description: "Deletes the role. A role that admins still have stays (`409 role_in_use`): give them another role or rights of their own first.",
+    need: "admin",
+    handler: "roleDelete",
+    params: [roleParam],
+    status: 204,
+    errors: [404, 409],
+  },
+  {
+    method: "GET",
     path: "/admin/settings",
     operationId: "adminSettingGroups",
     tag: "Admin: settings",
@@ -1071,6 +1168,7 @@ const PARAM_OK: Record<string, (s: string) => boolean> = {
   id: (s) => /^[1-9]\d{0,9}$/.test(s),
   username: (s) => s.length >= 1 && s.length <= 128 && !/[\u0000-\u001f\u007f]/.test(s),
   group: (s) => /^[a-z0-9_-]{1,32}$/.test(s),
+  role: (s) => /^[a-z0-9]{8}$/.test(s),
 };
 
 // The operation for a path (segments below /api/v1/admin) and method. A

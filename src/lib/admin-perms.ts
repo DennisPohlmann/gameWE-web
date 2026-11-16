@@ -58,8 +58,9 @@ export function normalizePerms(list: readonly string[]): Perm[] {
 // The stored value (comma-separated; at most ~190 characters, the column has 255).
 export const permsValue = (perms: readonly Perm[]) => normalizePerms(perms).join(",");
 
-// A stored value; no row (null): the old level 80 rights.
-export const parsePerms = (raw: string | null | undefined): Perm[] => (raw == null ? [...LEVEL80_DEFAULT] : normalizePerms(raw.split(",").map((s) => s.trim())));
+// A stored value; no row (null): the old level 80 rights. A role reference
+// ("role:<id>") is no right of its own: the role's rights come from its row.
+export const parsePerms = (raw: string | null | undefined): Perm[] => (raw == null ? [...LEVEL80_DEFAULT] : roleOf(raw) !== null ? [] : normalizePerms(raw.split(",").map((s) => s.trim())));
 
 // The option row of a user's rights. Not bound to the exact spelling, as the
 // database may compare names without case or trailing spaces.
@@ -100,3 +101,44 @@ export const PERM_GROUPS: { id: "rankings" | "servers" | "players" | "definition
   { id: "collector", perms: ["jobs.view"] },
   { id: "settings", perms: ["settings.view", "settings.edit", "settings.protected"] },
 ];
+
+// ---------------------------------------------------------------- roles
+// An admin role: a name and a set of rights, defined once (Settings →
+// Admin roles or the API) and given to restricted admins. An admin with a
+// role has exactly the role's rights, which change with the role; without
+// one the admin keeps rights of their own as before. Stored in
+// hlstats_Options:
+//   gamewe_role_<id>     "<rights>|<name>" (rights as in permsValue)
+//   gamewe_perms_<hash>  "role:<id>" instead of the admin's own rights
+// An older version reads "role:<id>" as no rights at all, never as more.
+
+export type Role = { id: string; name: string; perms: Perm[] };
+
+export const ROLE_REF = "role:";
+export const ROLE_PREFIX = "gamewe_role_";
+export const ROLE_MAX = 50;
+export const isRoleId = (v: unknown): v is string => typeof v === "string" && /^[a-z0-9]{8}$/.test(v);
+export const roleKey = (id: string) => `${ROLE_PREFIX}${id}`;
+
+// The role an admin's stored rights point to, or null for own rights.
+export function roleOf(raw: string | null | undefined): string | null {
+  if (!raw?.startsWith(ROLE_REF)) return null;
+  const id = raw.slice(ROLE_REF.length).trim();
+  return isRoleId(id) ? id : null;
+}
+
+// A role's name: 1 to 40 characters, no control characters.
+export function roleName(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const n = v.trim().replace(/\s+/g, " ");
+  return n.length >= 1 && n.length <= 40 && !/[\u0000-\u001f\u007f]/.test(n) ? n : null;
+}
+
+export const roleValue = (name: string, perms: readonly Perm[]) => `${permsValue(perms)}|${name}`;
+
+export function parseRole(id: string, raw: string | null | undefined): Role | null {
+  if (!isRoleId(id) || !raw) return null;
+  const i = raw.indexOf("|");
+  const name = roleName(i < 0 ? "" : raw.slice(i + 1));
+  return name ? { id, name, perms: normalizePerms(raw.slice(0, i).split(",").map((s) => s.trim())) } : null;
+}

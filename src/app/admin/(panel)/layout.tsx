@@ -57,6 +57,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
     awards: label("awards"),
     ranks: label("ranks"),
     users: label("users"),
+    adminRoles: localized(PERM_T, lang).rolesTitle,
     chat: site.chat,
     ips: a.ips,
   } as NavText;

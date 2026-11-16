@@ -39,6 +39,10 @@ import {
   setRankingHall,
   setRankingVac,
   setUserPerms,
+  listRoles,
+  getRole,
+  saveRole,
+  deleteRole,
   type Actor,
 } from "./admin-ops";
 import { rankingBlockVac, rankingBots, rankingFastdl, rankingFastdlAccess } from "./admin-ranking-bots";
@@ -52,7 +56,7 @@ import { bearerToken, sameOwner, scopeFor } from "./api-token-core";
 import { CONFIRM_SECONDS, MCP_VERSIONS, RpcError, confirmCode, confirmOk, initializeResult, originOk, rpcError, rpcMessage, rpcResult, toolCall, tools } from "./admin-mcp";
 import { authenticate } from "./api-tokens";
 import { adminSecret } from "./auth";
-import { allowed, effectivePerms, isFullAdmin, isPerm, normalizePerms, parsePerms, permsKey, type Perm, type PermUser } from "./admin-perms";
+import { allowed, effectivePerms, isFullAdmin, isPerm, isRoleId, normalizePerms, parsePerms, permsKey, roleOf, type Perm, type PermUser } from "./admin-perms";
 import { clientIp } from "./client-ip";
 import { countChat, getChat } from "./data";
 import { adminQuery } from "./db";
@@ -273,7 +277,12 @@ function failure(err: unknown): Response {
       case "mismatch":
         return error(409, "mismatch", "server and ranking are of different games");
       case "duplicate":
+        if (d.name) return error(409, "duplicate", "another admin role has this name", { field: "name" });
         return error(409, "duplicate", "another server has this IP address and port", d.dup ? { id: Number(d.dup) } : {});
+      case "inuse":
+        return error(409, "role_in_use", "admins still have this role: give them another role or rights of their own first");
+      case "limit":
+        return error(409, "limit", "at most 50 admin roles");
       case "field":
         return error(400, "invalid_field", `invalid value of ${d.field}`, { field: d.field });
       case "input":
@@ -361,15 +370,36 @@ async function withUserPerms(rows: Record<string, unknown>[]): Promise<Record<st
   const keys = rows.map((r) => permsKey(String(r.username ?? r.id)));
   const stored = keys.length ? await adminQuery<{ keyname: string; value: string | null }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [keys]) : [];
   const byKey = new Map(stored.map((r) => [r.keyname, r.value ?? ""]));
-  return rows.map((r, i) => ({ ...r, permissions: effectivePerms({ acclevel: Number(r.acclevel), perms: parsePerms(byKey.get(keys[i]) ?? null) }) }));
+  const roles = stored.some((r) => roleOf(r.value) !== null) ? await listRoles() : [];
+  return rows.map((r, i) => {
+    const full = Number(r.acclevel) >= 100;
+    const raw = byKey.get(keys[i]) ?? null;
+    const role = full ? null : roles.find((x) => x.id === roleOf(raw));
+    return { ...r, role: role ? role.id : null, permissions: effectivePerms({ acclevel: Number(r.acclevel), perms: role ? role.perms : parsePerms(raw) }) };
+  });
 }
 
-// permissions of a users body: taken out before the fields are checked.
-function permsInput(body: unknown): { body: unknown; perms?: Perm[] } {
-  if (!isObject(body) || !("permissions" in body)) return { body };
-  const { permissions: v, ...rest } = body;
-  if (!Array.isArray(v) || v.length > 64 || v.some((p) => !isPerm(p))) throw new BodyError(400, "invalid_field", "permissions", "permissions must be an array of known rights (see AdminUser)");
-  return { body: rest, perms: normalizePerms(v as string[]) };
+// permissions and role of a users body: taken out before the fields are checked.
+function permsInput(body: unknown): { body: unknown; perms?: Perm[]; role?: string | null } {
+  if (!isObject(body) || !("permissions" in body || "role" in body)) return { body };
+  const { permissions: v, role, ...rest } = body;
+  if (v !== undefined && (!Array.isArray(v) || v.length > 64 || v.some((p) => !isPerm(p)))) throw new BodyError(400, "invalid_field", "permissions", "permissions must be an array of known rights (see AdminUser)");
+  if (role !== undefined && role !== null && !isRoleId(role)) throw new BodyError(400, "invalid_field", "role", "role must be the id of an admin role (GET /admin/admin-roles) or null");
+  if (role && v !== undefined) throw new BodyError(400, "invalid_field", "permissions", "give either role or permissions: an admin with a role has the role's rights");
+  return { body: rest, perms: v === undefined ? undefined : normalizePerms(v as string[]), role: role as string | null | undefined };
+}
+
+const roleOut = (r: Awaited<ReturnType<typeof listRoles>>[number]) => ({ id: r.id, name: r.name, permissions: r.perms, admins: r.admins });
+
+async function roleOr404(id: string) {
+  const r = await getRole(id);
+  if (!r) throw new ApiFail(404, "not_found", "no admin role with this id");
+  return r;
+}
+
+function rolePerms(v: unknown): Perm[] {
+  if (!Array.isArray(v) || v.length > 64 || v.some((p) => !isPerm(p))) throw new BodyError(400, "invalid_field", "permissions", "permissions must be an array of known rights");
+  return normalizePerms(v as string[]);
 }
 
 // The token's own account: what the database takes for the same user name
@@ -471,7 +501,7 @@ const handlers: Record<string, Handler> = {
       const name = input.entries.find(([k]) => k === "username")?.[1];
       if (name !== undefined) await guardSelf(c, name);
     }
-    const saved = await saveEntity(c.actor, e, null, form(input.entries), { perms: p.perms });
+    const saved = await saveEntity(c.actor, e, null, form(input.entries), { perms: p.perms, role: p.role });
     return { body: await rowOut(e, saved) };
   },
   async entityUpdate(c) {
@@ -486,10 +516,10 @@ const handlers: Record<string, Handler> = {
     }
     const p = e.key === "users" ? permsInput(c.body) : { body: c.body };
     // Only the rights: no row to write.
-    if (p.perms && isObject(p.body) && !Object.keys(p.body).length) await setUserPerms(c.actor, id, p.perms);
+    if ((p.perms || p.role !== undefined) && isObject(p.body) && !Object.keys(p.body).length) await setUserPerms(c.actor, id, p.perms, p.role);
     else {
       const input = entityInput(e, p.body, false);
-      await saveEntity(c.actor, e, id, form(input.entries), { only: input.only, perms: p.perms });
+      await saveEntity(c.actor, e, id, form(input.entries), { only: input.only, perms: p.perms, role: p.role });
     }
     return { body: await rowOut(e, id) };
   },
@@ -498,6 +528,29 @@ const handlers: Record<string, Handler> = {
     const id = await rowKey(c, m);
     if (e.key === "users") await guardSelf(c, id);
     await deleteEntity(c.actor, e, id);
+    return {};
+  },
+
+  // Admin roles (level 100 only, as the admins they are given to).
+  async rolesList() {
+    return { body: (await listRoles()).map(roleOut) };
+  },
+  async roleGet(c) {
+    return { body: roleOut(await roleOr404(c.params.role)) };
+  },
+  async roleCreate(c) {
+    const b = onlyKeys(c.body, ["name", "permissions"], ["name", "permissions"]);
+    return { body: roleOut(await roleOr404(await saveRole(c.actor, null, b.name, rolePerms(b.permissions)))) };
+  },
+  async roleUpdate(c) {
+    const b = onlyKeys(c.body, ["name", "permissions"]);
+    if (!Object.keys(b).length) throw new ApiFail(400, "invalid_input", "give name or permissions");
+    const cur = await roleOr404(c.params.role);
+    await saveRole(c.actor, cur.id, b.name ?? cur.name, b.permissions === undefined ? cur.perms : rolePerms(b.permissions));
+    return { body: roleOut(await roleOr404(cur.id)) };
+  },
+  async roleDelete(c) {
+    await deleteRole(c.actor, (await roleOr404(c.params.role)).id);
     return {};
   },
 

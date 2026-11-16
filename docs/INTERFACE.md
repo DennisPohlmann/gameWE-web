@@ -213,7 +213,8 @@ are listed once in `src/lib/openapi-admin.ts`, and the router
   what its rights allow (`rankings.view`, `servers.edit`, `resets`, ...;
   see USAGE.md, Admin rights), as in the admin area; otherwise `403
   forbidden`. The MCP server lists only the tools the rights allow. Admins
-  and their rights (`permissions` of the users operations) are managed by
+  and their rights (`permissions` and `role` of the users operations, the
+  admin roles under `/admin/admin-roles`) are managed by
   level 100 only. Every change is logged
   (`gameWE: admin API PATCH /admin/servers/3 -> 200 by <admin> via token "<name>"`).
 - **Never with a token** (`403 self_security_forbidden`): the password,

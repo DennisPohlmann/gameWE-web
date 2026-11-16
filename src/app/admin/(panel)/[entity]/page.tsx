@@ -16,8 +16,10 @@ import { sortState } from "@/lib/table-sort";
 import { allServers, rankingBaseGames } from "@/lib/admin-rankings";
 import { RankBadge, rankName } from "@/components/badges";
 import { getEntity, type Field, type L } from "@/lib/admin-entities";
-import { adminDict, tr } from "@/lib/admin-i18n";
-import { requirePerm } from "@/lib/auth";
+import { adminDict, localized, tr } from "@/lib/admin-i18n";
+import { PERM_T } from "@/lib/admin-texts";
+import { listRoles } from "@/lib/admin-ops";
+import { requirePerm, withPerms, type AdminUser } from "@/lib/auth";
 import { allowed } from "@/lib/admin-perms";
 import { getAdminLang, type Lang } from "@/lib/i18n";
 import { listHref, withReturnTo } from "@/lib/return-to";
@@ -75,6 +77,10 @@ export default async function EntityList({ params, searchParams }: { params: Pro
   const statusOf = (v: unknown) => e.statusFilter?.find((f) => f.value === statusValue(v));
   const area = e.key === "users" ? u.areaSettings : u.areaRankings;
   const nfmt = (n: number) => n.toLocaleString(localeOf(lang));
+  // Admins: what each may do at a glance (full admin, a role, own rights).
+  const pt = localized(PERM_T, lang);
+  const access = e.key === "users" ? new Map((await Promise.all(rows.map((r) => withPerms({ username: String(r.__pk), acclevel: Number(r.acclevel) })))).map((x) => [x.username, x])) : null;
+  const accessRoles = access ? new Map((await listRoles()).map((r) => [r.id, r.name])) : new Map<string, string>();
   // Delete right in the row (as on the edit page, after a dialog); not for
   // rankings, which are managed on their own page.
   const rowDelete = e.canDelete && e.key !== "games" && allowed(user, e.perm.edit);
@@ -149,6 +155,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
                     {cols.map((f) => (sortable[f.name] ? <Fragment key={f.name}>{th(tr(f.label, lang), f.name, "")}</Fragment> : <th key={f.name}>{tr(f.label, lang)}</th>))}
                     {gameCol ? <th>{a.baseGame}</th> : null}
                     {e.key === "games" ? <th className="num">{a.serverCount}</th> : null}
+                    {access ? <th>{pt.title}</th> : null}
                     <th />
                   </tr>
                 </thead>
@@ -191,6 +198,11 @@ export default async function EntityList({ params, searchParams }: { params: Pro
                               {a.template}
                             </span>
                           )}
+                        </td>
+                      ) : null}
+                      {access ? (
+                        <td data-l={`${pt.title}:`}>
+                          <AccessCell a={access.get(String(r.__pk))} level={Number(r.acclevel)} pt={pt} roles={accessRoles} />
                         </td>
                       ) : null}
                       <td className="end num">
@@ -275,4 +287,11 @@ function show(f: Field, v: string | number | null, lang: Lang) {
     if (o) return typeof o[1] === "string" ? o[1] : tr(o[1], lang);
   }
   return String(v);
+}
+
+// Full admin, the role's name or the number of own rights.
+function AccessCell({ a, level, pt, roles }: { a?: AdminUser; level: number; pt: (typeof PERM_T)["de"]; roles: Map<string, string> }) {
+  if (level >= 100) return <span className="pill ok">{pt.levelFull}</span>;
+  if (a?.role) return <span className="pill"><bdi>{roles.get(a.role) ?? a.role}</bdi></span>;
+  return <span className="pill">{fill(pt.roleRights, { n: String(a?.perms.length ?? 0) })}</span>;
 }

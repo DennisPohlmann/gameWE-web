@@ -58,6 +58,7 @@ export type NavText = Record<
   | "awards"
   | "ranks"
   | "users"
+  | "adminRoles"
   | "chat"
   | "ips"
   | "colServers",
@@ -347,6 +348,7 @@ export function AdminSidebar({
           <h4>{t.navAccess}</h4>
           <nav>
             {can.admin ? <Item href="/admin/users" icon="user" label={t.users} on={seg === "users"} /> : null}
+            {can.admin ? <Item href="/admin/admin-roles" icon="key" label={t.adminRoles} on={seg === "admin-roles"} /> : null}
             <Item href="/admin/account" icon="lock" label={t.myAccount} on={seg === "account" || seg === "totp"} />
             {can["settings.view"] ? groupLinks("admin", { admin: "gear" }) : null}
             {can["settings.view"] ? <Item href="/admin/settings/raw" icon="code" label={t.rawOptions} on={seg === "settings" && parts[2] === "raw"} /> : null}

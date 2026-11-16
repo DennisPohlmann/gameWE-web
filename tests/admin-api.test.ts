@@ -289,6 +289,8 @@ test("every server action of the admin area has an API operation or is account-o
     hallOfFameSettingsAction: ["hallSet"],
     globalHallAction: ["globalHallSet"],
     hallEntryAction: ["hallRemove", "hallRestore"],
+    saveRoleAction: ["roleCreate", "roleUpdate"],
+    deleteRoleAction: ["roleDelete"],
   };
   // Sign-in, own password, own TOTP, own passkeys, own tokens, look of the admin area:
   // only signed in, never with a token.
