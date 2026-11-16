@@ -24,7 +24,6 @@ export type NavText = Record<
   | "menu"
   | "thisRanking"
   | "definitions"
-  | "maintenance"
   | "allRankings"
   | "manageRankings"
   | "newRanking"
@@ -41,8 +40,6 @@ export type NavText = Record<
   | "navCollector"
   | "navModeration"
   | "navAccess"
-  | "navAdvanced"
-  | "navAdmin"
   | "navAccount"
   | "rawOptions"
   | "privacy"
@@ -283,6 +280,7 @@ export function AdminSidebar({
             {can["servers.view"] ? list("servers", "server", t.servers, current?.servers) : null}
             {can["players.view"] ? list("players", "players", t.players) : null}
             {can["players.view"] ? list("clans", "shield", t.clans) : null}
+            {can.resets ? <Item href={`/admin/reset${q}`} icon="reset" label={t.resetRanking} on={seg === "reset"} /> : null}
           </nav>
           {can["definitions.view"] ? (
             <>
@@ -297,17 +295,9 @@ export function AdminSidebar({
               </nav>
             </>
           ) : null}
-          {can.resets ? (
-            <>
-              <h4>{t.maintenance}</h4>
-              <nav>
-                <Item href={`/admin/reset${q}`} icon="reset" label={t.resetRanking} on={seg === "reset"} />
-              </nav>
-            </>
-          ) : null}
           {can["rankings.view"] ? (
             <>
-              <h4>{t.allRankings}</h4>
+              <h4>{t.areaRankings}</h4>
               <nav>
                 <Item
                   href="/admin/rankings"
@@ -352,21 +342,15 @@ export function AdminSidebar({
               </nav>
             </>
           ) : null}
+          {/* Admins, own account, the admin area's own settings and the raw
+              values: one group instead of three. */}
           <h4>{t.navAccess}</h4>
           <nav>
             {can.admin ? <Item href="/admin/users" icon="user" label={t.users} on={seg === "users"} /> : null}
             <Item href="/admin/account" icon="lock" label={t.myAccount} on={seg === "account" || seg === "totp"} />
+            {can["settings.view"] ? groupLinks("admin", { admin: "gear" }) : null}
+            {can["settings.view"] ? <Item href="/admin/settings/raw" icon="code" label={t.rawOptions} on={seg === "settings" && parts[2] === "raw"} /> : null}
           </nav>
-          {can["settings.view"] ? (
-            <>
-              <h4>{t.navAdmin}</h4>
-              <nav>{groupLinks("admin", { admin: "lock" })}</nav>
-              <h4>{t.navAdvanced}</h4>
-              <nav>
-                <Item href="/admin/settings/raw" icon="code" label={t.rawOptions} on={seg === "settings" && parts[2] === "raw"} />
-              </nav>
-            </>
-          ) : null}
         </>
       )}
       <div className="adm-side-foot">

@@ -87,6 +87,7 @@ export default async function PrivacyAdminPage({ searchParams }: { searchParams:
             <Icon name="info" />
             {u.saveHint}
           </span>
+          <span className="unsaved-note">{u.unsaved}</span>
           <span className="btns">
             <a className="button" href="">
               {u.discard}

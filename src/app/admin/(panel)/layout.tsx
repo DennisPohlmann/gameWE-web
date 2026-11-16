@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { adminThemeAction, logoutAction } from "../actions";
+import { UnsavedBar } from "@/components/admin/unsaved-bar";
 import { Icon } from "@/components/admin/icons";
 import { IdleLogout } from "@/components/admin/idle-logout";
 import { AdminSidebar, AreaTabs, Logo, type NavText } from "@/components/admin/nav";
@@ -170,6 +171,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
         </aside>
         <label htmlFor="adm-nav" className="adm-scrim" aria-label={u.closeMenu} />
         <main className="adm-main">{children}</main>
+        <UnsavedBar text={{ unsaved: u.unsaved, discard: u.discard }} />
       </div>
       <Suspense>
         <AreaTabs t={text} className="adm-bottom" rankings={rankingsArea(user)} />

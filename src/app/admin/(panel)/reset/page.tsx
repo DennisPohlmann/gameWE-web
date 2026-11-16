@@ -3,6 +3,7 @@ import Link from "next/link";
 import { resetRankingAction } from "../../actions";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { PageHead } from "@/components/admin/page-head";
+import { PageNav } from "@/components/admin/page-nav";
 import { adminDict, localized } from "@/lib/admin-i18n";
 import { RESET_T } from "@/lib/admin-texts";
 import { scheduleText } from "@/components/admin/hall-schedule";
@@ -45,7 +46,7 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
   if (!(await jobsAvailable())) {
     return (
       <>
-        <PageHead crumbs={[[adminDict(lang).ui.areaRankings, "/admin/rankings"], [t.title]]} title={t.title} />
+        <PageHead crumbs={[[adminDict(lang).ui.areaRankings, "/admin/rankings"], [t.pageTitle]]} title={t.pageTitle} intro={t.pageIntro} />
         <p className="notice">{t.missing}</p>
         {scheduled}
       </>
@@ -79,7 +80,15 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <PageHead crumbs={[[adminDict(lang).ui.areaRankings, "/admin/rankings"], [t.title]]} title={t.title} />
+      <PageHead crumbs={[[adminDict(lang).ui.areaRankings, "/admin/rankings"], [t.pageTitle]]} title={t.pageTitle} intro={t.pageIntro} />
+      <PageNav
+        label={a.ui.onThisPage}
+        parts={[
+          ["reset-now", t.nowTitle, "reset"],
+          ["hall-of-fame", t.scheduleTitle, "clock"],
+          ["jobs", t.recent, "list"],
+        ]}
+      />
       {sp.error === "confirm" ? <p className="notice error">{t.errConfirm}</p> : null}
       {sp.error === "input" ? <p className="notice error">{t.errInput}</p> : null}
       {sp.error === "db" ? <p className="notice error">{t.errDb}</p> : null}
@@ -97,7 +106,7 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
           {open ? <AutoRefresh seconds={3} /> : null}
         </div>
       ) : null}
-      <Section title={t.title}>
+      <Section title={t.nowTitle} id="reset-now">
         <ResetForm
           action={resetRankingAction}
           games={games}
@@ -106,11 +115,14 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
           labels={t}
         >
           <p className="settings-help">{t.intro}</p>
-          <p className="settings-help">{t.how}</p>
-          <p className="settings-help">{t.version}</p>
-          <p className="settings-help">{t.templates}</p>
           {!games.length ? <p className="settings-help notice">{t.noRankings}</p> : null}
           {!running ? <p className="settings-help notice error">{t.noCollector} {beatText}</p> : null}
+          <details className="help-more">
+            <summary>{t.more}</summary>
+            <p>{t.how}</p>
+            <p>{t.templates}</p>
+            <p>{t.version}</p>
+          </details>
         </ResetForm>
       </Section>
       {scheduled}
@@ -131,7 +143,10 @@ export default async function ResetPage({ searchParams }: { searchParams: Promis
         }
       >
         {period.invalid ? <p className="notice error">{t.errRange}</p> : null}
-        <p className="settings-help">{t.recentHelp}</p>
+        <details className="help-more in-card">
+          <summary>{t.more}</summary>
+          <p>{t.recentHelp}</p>
+        </details>
         {jobs.length ? (
           <>
           <TableWrap>

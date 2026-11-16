@@ -14,7 +14,8 @@ import { adminDict, localized, tr } from "@/lib/admin-i18n";
 import { requirePerm, withPerms } from "@/lib/auth";
 import { LEVEL80_DEFAULT, PERM_GROUPS, ROLE_PRESETS, allowed, normalizePerms } from "@/lib/admin-perms";
 import { PERM_T } from "@/lib/admin-texts";
-import { PermPresets } from "@/components/admin/perm-presets";
+import { PermFields } from "@/components/admin/perm-fields";
+import { ConfirmButton } from "@/components/admin/confirm-button";
 import { GAME_KINDS, sameBaseGame, SUPPORTED_GAMES } from "@/lib/games";
 import { fill, getAdminLang } from "@/lib/i18n";
 import { templateOptions } from "@/lib/new-ranking";
@@ -220,25 +221,13 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
               <small className="muted">
                 {pt.intro} {pt.implied}
               </small>
-              <p className="perm-full notice">{pt.full}</p>
               <input type="hidden" name="__perms" value="1" />
-              <PermPresets
-                label={pt.presets}
-                hint={pt.presetsHint}
+              <PermFields
+                initial={userPerms}
+                groups={PERM_GROUPS.map((g) => ({ id: g.id, legend: pt.groups[g.id], perms: g.perms.map((p) => ({ id: p, label: pt.perm[p] })) }))}
                 presets={ROLE_PRESETS.map((p) => ({ id: p.id, name: pt.preset[p.id as keyof typeof pt.preset], perms: normalizePerms(p.perms) }))}
+                text={{ full: pt.full, presets: pt.presets, presetsHint: pt.presetsHint }}
               />
-              <div className="perm-groups">
-                {PERM_GROUPS.map((g) => (
-                  <fieldset key={g.id}>
-                    <legend>{pt.groups[g.id]}</legend>
-                    {g.perms.map((p) => (
-                      <label key={p} className="check">
-                        <input type="checkbox" name="perm" value={p} defaultChecked={userPerms.includes(p)} /> {pt.perm[p]}
-                      </label>
-                    ))}
-                  </fieldset>
-                ))}
-              </div>
             </div>
           ) : null}
           {newRanking ? (
@@ -256,31 +245,33 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
         </form>
       </Section>
       {!isNew && e.key === "players" && allowed(user, "players.erase") ? (
-        <Section title={a.deletePlayer}>
-          <p className="notice warn">{a.deletePlayerHelp}</p>
+        <Section title={a.deletePlayer} className="danger-zone">
           <form action={deletePlayerAction} className="form">
+            <p className="muted">{a.deletePlayerHelp}</p>
             <input type="hidden" name="id" value={id} />
-            <label className="check">
-              <input type="checkbox" name="confirm" value="1" required /> {a.deletePlayerConfirm}
-            </label>
-            <button type="submit" className="button danger">
-              {a.deletePlayer}
-            </button>
+            <ConfirmButton
+              label={a.deletePlayer}
+              title={fill(a.deletePlayerTitle, { n: title })}
+              yes={a.deletePlayer}
+              typed={a.confirmWord}
+              text={{ cancel: a.confirmCancel, typeHint: a.confirmTyped }}
+            >
+              <p>{a.deleteBody}</p>
+            </ConfirmButton>
           </form>
         </Section>
       ) : null}
-      {!isNew && e.canDelete && canEdit ? (
-        <Section title={a.delete}>
+      {/* Nobody deletes their own account (the server refuses it too). */}
+      {!isNew && e.canDelete && canEdit && !(e.key === "users" && id === user.username) ? (
+        <Section title={a.delete} className="danger-zone">
           <form action={deleteAction} className="form">
+            <p className="muted">{a.deleteHint}</p>
             <input type="hidden" name="__entity" value={e.key} />
             <input type="hidden" name="__id" value={id} />
             <input type="hidden" name="__returnTo" value={returnTo} />
-            <label className="check">
-              <input type="checkbox" name="confirm" value="1" required /> {a.deleteConfirm}
-            </label>
-            <button type="submit" className="button danger">
-              {a.delete}
-            </button>
+            <ConfirmButton label={a.delete} title={fill(a.deleteTitle, { n: title })} yes={a.deleteYes} text={{ cancel: a.confirmCancel }}>
+              <p>{a.deleteBody}</p>
+            </ConfirmButton>
           </form>
         </Section>
       ) : null}

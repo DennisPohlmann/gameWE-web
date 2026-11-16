@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConfirmButton } from "@/components/admin/confirm-button";
 import { globalHallAction } from "../../actions";
 import { HallScheduleFields, hallT, scheduleText } from "@/components/admin/hall-schedule";
 import { globalHall, inheritingRankings } from "@/lib/admin-hall";
@@ -64,13 +65,18 @@ export async function GlobalHallCard({ lang, status, rankings }: { lang: Lang; s
               )
             : t.none}
         </p>
-        <label className="check hof-understood">
-          <input type="checkbox" name="understood" value="yes" />
-          {t.understood}
-        </label>
-        <button type="submit" className="button primary">
-          {t.save}
-        </button>
+        <ConfirmButton
+          className="button primary"
+          label={t.save}
+          title={t.saveTitle}
+          yes={t.saveYes}
+          text={{ cancel: t.cancel }}
+          name="understood"
+          value="yes"
+          when={'input[name="enabled"]:checked'}
+        >
+          <p>{t.understood}</p>
+        </ConfirmButton>
         <small>
           {ht.time} {t.cli}
         </small>

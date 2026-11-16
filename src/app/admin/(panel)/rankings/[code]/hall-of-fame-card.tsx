@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConfirmButton } from "@/components/admin/confirm-button";
 import { hallOfFameSettingsAction } from "../../../actions";
 import { HallScheduleFields, hallT, scheduleText } from "@/components/admin/hall-schedule";
 import { noAutofill } from "@/lib/autofill";
@@ -77,13 +78,18 @@ export async function HallOfFameCard({ game, lang, status }: { game: string; lan
           </select>
           <small>{t.pageHelp}</small>
         </label>
-        <label className="check">
-          <input type="checkbox" name="understood" value="yes" />
-          {t.understood}
-        </label>
-        <button type="submit" className="button primary">
-          {t.save}
-        </button>
+        <ConfirmButton
+          className="button primary"
+          label={t.save}
+          title={t.saveTitle}
+          yes={t.saveYes}
+          text={{ cancel: t.cancel }}
+          name="understood"
+          value="yes"
+          when={'input[name="source"]:not([value="off"]):checked'}
+        >
+          <p>{t.understood}</p>
+        </ConfirmButton>
         <small>
           {s.entries ? `${f(t.entries, { n: String(s.entries) })} ` : ""}
           {ht.time} {f(t.cli, { g: game })}

@@ -5,8 +5,9 @@ import { noAutofill } from "@/lib/autofill";
 
 // The form of the ranking reset (admin/reset): the button only opens a
 // dialog that names the ranking and what goes; its confirm button stays
-// disabled until "deleted for good" is ticked, and only it submits the form
-// (confirmed=yes, checked again by resetRankingAction).
+// disabled until the ranking's code is typed (as every dangerous step of the
+// admin area, components/admin/confirm-button.tsx), and only it submits the
+// form (confirmed=yes, checked again by resetRankingAction).
 export type ResetModeText = { value: string; title: string; deletes: string; keeps: string };
 export type ResetFormLabels = {
   ranking: string;
@@ -17,7 +18,7 @@ export type ResetFormLabels = {
   dialogMode: string;
   dialogDeletes: string;
   dialogKeeps: string;
-  understood: string;
+  typeCode: string;
   confirm: string;
   cancel: string;
 };
@@ -41,13 +42,14 @@ export function ResetForm({
   const dialog = useRef<HTMLDialogElement>(null);
   const [game, setGame] = useState(initialGame ?? "");
   const [mode, setMode] = useState(modes[0]?.value ?? "");
-  const [understood, setUnderstood] = useState(false);
+  const [typed, setTyped] = useState("");
+  const understood = game !== "" && typed.trim().toLowerCase() === game.toLowerCase();
   const chosen = modes.find((m) => m.value === mode) ?? modes[0];
   const name = games.find(([code]) => code === game)?.[1] ?? game;
 
   const open = () => {
     if (!form.current?.reportValidity()) return;
-    setUnderstood(false);
+    setTyped("");
     dialog.current?.showModal();
   };
 
@@ -81,7 +83,7 @@ export function ResetForm({
           {labels.submit}
         </button>
       </div>
-      <dialog ref={dialog} className="reset-dialog" aria-labelledby="reset-dialog-title" onClose={() => setUnderstood(false)}>
+      <dialog ref={dialog} className="reset-dialog" aria-labelledby="reset-dialog-title" onClose={() => setTyped("")}>
         <h2 id="reset-dialog-title">{labels.dialogTitle}</h2>
         <dl>
           <dt>{labels.dialogRanking}</dt>
@@ -93,16 +95,16 @@ export function ResetForm({
           <dt>{labels.dialogKeeps}</dt>
           <dd>{chosen?.keeps}</dd>
         </dl>
-        <label className="reset-understood">
-          <input type="checkbox" name="understood" value="yes" checked={understood} onChange={(e) => setUnderstood(e.target.checked)} />{" "}
-          {labels.understood}
+        <label className="confirm-typed">
+          <span>{labels.typeCode.split("{w}").flatMap((p, i) => (i ? [<b key={i}>{game}</b>, p] : [p]))}</span>
+          <input {...noAutofill} name="typed" value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" spellCheck={false} dir="ltr" />
         </label>
         <div className="reset-dialog-buttons">
           <button type="button" className="button" onClick={() => dialog.current?.close()}>
             {labels.cancel}
           </button>
           <input type="hidden" name="confirmed" value={understood ? "yes" : ""} />
-          <button type="submit" className="button danger" disabled={!understood}>
+          <button type="submit" className="button danger solid" disabled={!understood}>
             {labels.confirm}
           </button>
         </div>

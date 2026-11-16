@@ -64,7 +64,8 @@ export function PasskeyAdd({ text, totp }: { text: PasskeyAddText; totp: boolean
       if (res.error) return fail(text.errors[res.error]);
       form.current?.reset();
       setMsg({ error: false, text: text.added });
-      router.refresh();
+      // The list shows the new passkey marked, with its name in the notice.
+      router.replace(`/admin/account?pk=added&new=${encodeURIComponent(res.added ?? "")}#passkeys`);
     } catch (err) {
       // InvalidStateError: this device already has a passkey of the account.
       fail(err instanceof DOMException && err.name === "InvalidStateError" ? text.errors.duplicate : err instanceof DOMException && err.name === "SecurityError" ? text.unsupported : text.failed);

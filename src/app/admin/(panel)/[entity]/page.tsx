@@ -3,6 +3,9 @@ import { Fragment } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Icon } from "@/components/admin/icons";
+import { ConfirmButton } from "@/components/admin/confirm-button";
+import { deleteAction } from "../../actions";
+import { fill } from "@/lib/i18n";
 import { PageHead } from "@/components/admin/page-head";
 import { Empty, GameIcon, GameTag, Pager, ROW_OPTIONS, TableWrap, pageParam, rowsParam, strParam } from "@/components/ui";
 import { noAutofill } from "@/lib/autofill";
@@ -72,6 +75,9 @@ export default async function EntityList({ params, searchParams }: { params: Pro
   const statusOf = (v: unknown) => e.statusFilter?.find((f) => f.value === statusValue(v));
   const area = e.key === "users" ? u.areaSettings : u.areaRankings;
   const nfmt = (n: number) => n.toLocaleString(localeOf(lang));
+  // Delete right in the row (as on the edit page, after a dialog); not for
+  // rankings, which are managed on their own page.
+  const rowDelete = e.canDelete && e.key !== "games" && allowed(user, e.perm.edit);
 
   return (
     <>
@@ -188,9 +194,28 @@ export default async function EntityList({ params, searchParams }: { params: Pro
                         </td>
                       ) : null}
                       <td className="end num">
-                        <Link prefetch={false} className="button small" href={editHref(String(r.__pk))}>
-                          {a.edit}
-                        </Link>
+                        <span className="row-actions">
+                          <Link prefetch={false} className="button small" href={editHref(String(r.__pk))}>
+                            {a.edit}
+                          </Link>
+                          {rowDelete ? (
+                            <form action={deleteAction}>
+                              <input type="hidden" name="__entity" value={e.key} />
+                              <input type="hidden" name="__id" value={String(r.__pk)} />
+                              <input type="hidden" name="__returnTo" value={listHref(e.key, listParams)} />
+                              <ConfirmButton
+                                className="button small danger"
+                                label={a.delete}
+                                title={fill(a.deleteTitle, { n: String((mainCol ? r[mainCol] : null) ?? r.__pk) })}
+                                yes={a.deleteYes}
+                                text={{ cancel: a.confirmCancel }}
+                                disabled={e.key === "users" && String(r.__pk) === user.username}
+                              >
+                                <p>{a.deleteBody}</p>
+                              </ConfirmButton>
+                            </form>
+                          ) : null}
+                        </span>
                       </td>
                     </tr>
                   ))}

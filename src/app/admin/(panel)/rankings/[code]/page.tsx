@@ -119,9 +119,7 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
           ["fastdl", u.partFastdl, "map"],
         ] as [string, string, IconName][])
       : []),
-    ...(can.resets
-      ? ([...(noServers ? [] : [["hall-of-fame", u.kpiReset, "clock"]]), ["maintenance", u.maintenance, "reset"]] as [string, string, IconName][])
-      : []),
+    ...(can.resets ? ([["resets", u.resetsHead, "reset"]] as [string, string, IconName][]) : []),
   ];
 
   return (
@@ -188,7 +186,7 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
           ))}
         </ul>
       </section>
-      {can["rankings.edit"] || can.resets ? <h2 className="group-head">{u.rulesHead}</h2> : null}
+      {can["rankings.edit"] ? <h2 className="group-head">{u.rulesHead}</h2> : null}
       {can["rankings.edit"] ? (
         <>
           <BotsCard game={r.code} lang={lang} status={sp.bots} changed={sp.n} />
@@ -198,11 +196,16 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
       ) : null}
       {can.resets ? (
         <>
+          {/* Everything about resetting this ranking under one heading:
+              the schedule (with its hall of fame) and the manual reset. */}
+          <h2 className="group-head" id="resets">
+            {u.resetsHead}
+          </h2>
           {/* A ranking without servers is never reset: no schedule to set. */}
           {!noServers ? <HallOfFameCard game={r.code} lang={lang} status={sp.hof} /> : null}
           <section className="card" id="maintenance">
             <header>
-              <h2>{u.maintenance}</h2>
+              <h2>{u.resetNow}</h2>
             </header>
             {noServers ? (
               <p className="muted">{template ? u.templateMaintenance : u.noServersMaintenance}</p>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConfirmButton } from "@/components/admin/confirm-button";
 import { notFound } from "next/navigation";
 import { hallEntryAction } from "../../../../actions";
 import { PageHead } from "@/components/admin/page-head";
@@ -28,29 +29,24 @@ export default async function HallOfFameEditPage({ params, searchParams }: { par
   const [s, periods] = await Promise.all([hallSettings(code), hallEntries(code).catch(() => [])]);
   const msg = { removed: t.removed, restored: t.restored, input: t.errInput, confirm: t.errConfirm }[status ?? ""];
   const back = `/admin/rankings/${encodeURIComponent(code)}`;
-  const Op = ({ start, place, op, sure, label, cls }: { start: string; place?: number; op: "remove" | "restore"; sure?: string; label: string; cls?: string }) => {
-    const form = (
-      <form action={hallEntryAction} className="hof-op">
-        <input type="hidden" name="game" value={code} />
-        <input type="hidden" name="start" value={start} />
-        <input type="hidden" name="place" value={place ?? ""} />
-        <input type="hidden" name="op" value={op} />
-        {sure ? <input type="hidden" name="confirm" value="yes" /> : null}
-        <button type="submit" className={`button small ${sure ? "danger" : ""}`}>
-          {sure ?? label}
+  // Removing asks first in a dialog (components/admin/confirm-button.tsx).
+  const Op = ({ start, place, op, sure, label, cls }: { start: string; place?: number; op: "remove" | "restore"; sure?: string; label: string; cls?: string }) => (
+    <form action={hallEntryAction} className={`hof-op ${cls ?? ""}`}>
+      <input type="hidden" name="game" value={code} />
+      <input type="hidden" name="start" value={start} />
+      <input type="hidden" name="place" value={place ?? ""} />
+      <input type="hidden" name="op" value={op} />
+      {sure ? (
+        <ConfirmButton className="button small" label={label} title={t.removeTitle} yes={sure} text={{ cancel: t.cancel }} value="yes">
+          <p>{t.removeBody}</p>
+        </ConfirmButton>
+      ) : (
+        <button type="submit" className="button small">
+          {label}
         </button>
-      </form>
-    );
-    // Removing takes two clicks: the first opens the confirmation.
-    return sure ? (
-      <details className={`hof-confirm ${cls ?? ""}`}>
-        <summary className="button small">{label}</summary>
-        {form}
-      </details>
-    ) : (
-      form
-    );
-  };
+      )}
+    </form>
+  );
   return (
     <>
       <PageHead

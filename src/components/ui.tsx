@@ -166,9 +166,9 @@ export function WinRatioBar({ ct, t, labels }: { ct: number; t: number; labels: 
   );
 }
 
-export function Section({ id, title, aside, children }: { id?: string; title: ReactNode; aside?: ReactNode; children: ReactNode }) {
+export function Section({ id, title, aside, children, className }: { id?: string; title: ReactNode; aside?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className="section" id={id}>
+    <section className={className ? `section ${className}` : "section"} id={id}>
       <header className="section-head">
         <h2>{title}</h2>
         {aside ? <div className="section-aside">{aside}</div> : null}

@@ -12,7 +12,7 @@ import { expiryDays, tokenName, tokenScopes } from "@/lib/api-token-core";
 import { createToken, purgeTokens, revokeToken } from "@/lib/api-tokens";
 import { adminSecret, brakedCode, confirmIdentity, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, newChallenge, passkeyHost, passkeyLogin, requireAdmin, requirePerm, takeChallenge } from "@/lib/auth";
 import { normalizePerms } from "@/lib/admin-perms";
-import { ALGS, MAX_PER_USER, checkRegistration, passkeyName, rpIdOf, userHandle, type Assertion, type Registration } from "@/lib/passkey-core";
+import { ALGS, MAX_PER_USER, checkRegistration, passkeyHash, passkeyName, rpIdOf, userHandle, type Assertion, type Registration } from "@/lib/passkey-core";
 import { addPasskey, deletePasskey, listPasskeys, passkeyOnly, setPasskeyOnly } from "@/lib/passkeys";
 import { codeMode, codeStepHref } from "@/lib/login-code";
 import { resetMode } from "@/lib/reset";
@@ -336,7 +336,7 @@ export async function passkeyAddStartAction(form: FormData): Promise<PasskeyOpti
   };
 }
 
-export async function passkeyAddAction(name: string, r: Registration): Promise<{ error?: PasskeyAddError }> {
+export async function passkeyAddAction(name: string, r: Registration): Promise<{ error?: PasskeyAddError; added?: string }> {
   const user = await requireAdmin();
   const n = passkeyName(name);
   if (!n) return { error: "name" };
@@ -348,7 +348,8 @@ export async function passkeyAddAction(name: string, r: Registration): Promise<{
   if ((await addPasskey({ owner: user.username, name: n, id: reg.id, key: reg.key, alg: reg.alg }, reg.counter)) !== "ok") return { error: "duplicate" };
   console.info(`gameWE: passkey "${n}" added by ${user.username}`);
   revalidatePath("/admin/account");
-  return {};
+  // The page marks the new passkey by this.
+  return { added: passkeyHash(reg.id) };
 }
 
 // While "only passkey" is on, the last passkey stays: the account would lock itself out.
@@ -415,7 +416,7 @@ export async function revokeApiTokenAction(form: FormData) {
 }
 
 // Ranking reset (lib/reset.ts): right resets, confirmed in the dialog of the
-// reset page (the checkbox "deleted for good" and its confirm button).
+// reset page (the ranking's code typed, then its confirm button).
 export async function resetRankingAction(form: FormData) {
   const user = await requirePerm("resets");
   const game = String(form.get("game") ?? "");
@@ -423,7 +424,7 @@ export async function resetRankingAction(form: FormData) {
   // Only rankings with servers: templates are never reset.
   const games = await resettableRankings();
   if (!games.some(([code]) => code === game) || !mode) redirect("/admin/reset?error=input");
-  if (form.get("confirmed") !== "yes" || form.get("understood") !== "yes") {
+  if (form.get("confirmed") !== "yes" || String(form.get("typed") ?? "").trim().toLowerCase() !== game.toLowerCase()) {
     redirect(`/admin/reset?error=confirm&game=${encodeURIComponent(game)}`);
   }
   let job: { id: number; existing: boolean };

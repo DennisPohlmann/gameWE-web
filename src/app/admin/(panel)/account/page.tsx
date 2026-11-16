@@ -4,6 +4,8 @@ import { RevealInput } from "@/components/admin/reveal-input";
 import { BackupCodesForm, type BackupCodesText } from "@/components/admin/backup-codes-form";
 import { ApiTokenForm } from "@/components/admin/api-token-form";
 import { PasskeyAdd } from "@/components/admin/passkey-add";
+import { ConfirmButton } from "@/components/admin/confirm-button";
+import { Icon, type IconName } from "@/components/admin/icons";
 import { TotpSetup } from "@/components/admin/totp-setup";
 import { Section } from "@/components/ui";
 import { adminDict } from "@/lib/admin-i18n";
@@ -22,13 +24,14 @@ import { listPasskeys, passkeyOnly } from "@/lib/passkeys";
 // The signed-in user's own account: password, passkeys and how to sign in,
 // optional TOTP with its backup codes and API tokens (only a notice while
 // the API is off).
-export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; done?: string; pw?: string; token?: string; pk?: string }> }) {
+export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; done?: string; pw?: string; token?: string; pk?: string; new?: string }> }) {
   const user = await requireAdmin();
   const lang = await getAdminLang();
   const a = adminDict(lang);
-  const { error, done, pw, token, pk } = await searchParams;
+  const { error, done, pw, token, pk, new: fresh } = await searchParams;
   const passkeys = await listPasskeys(user.username);
   const only = await passkeyOnly(user.username);
+  const added = pk === "added" ? passkeys.find((p) => p.hash === fresh) : undefined;
   const pkNotice = { deleted: a.pkDeleted, only: a.pkOnlyOn, any: a.pkOnlyOff }[pk ?? ""];
   const pkError = { few: a.pkErrFew, keep: a.pkErrKeep }[pk ?? ""];
   const api = await apiEnabled();
@@ -56,121 +59,112 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   return (
     <>
       <PageHead crumbs={[[a.ui.areaSettings, "/admin/settings"], [a.ui.navAccess], [a.account]]} title={a.account} intro={a.accountIntro} />
-      {pw === "saved" ? <p className="notice">{a.pwSaved}</p> : null}
-      {pw && pw !== "saved" ? (
-        <p className="notice error">{pw === "wrong" ? a.pwWrong : pw === "mismatch" ? a.pwMismatch : pw === "short" ? a.pwShort : a.pwBlocked}</p>
-      ) : null}
-      <Section title={a.pwTitle}>
-        <form action={changePasswordAction} className="form">
-          <input type="text" name="username" value={user.username} autoComplete="username" readOnly hidden />
-          <label>
-            {a.pwCurrent}
-            <RevealInput show={a.secretShow} hide={a.secretHide} name="current" autoComplete="current-password" required />
-          </label>
-          <label>
-            {a.pwNew}
-            <RevealInput show={a.secretShow} hide={a.secretHide} name="next" autoComplete="new-password" minLength={10} maxLength={200} required />
-            <small>{a.pwHint}</small>
-          </label>
-          <label>
-            {a.pwRepeat}
-            <RevealInput show={a.secretShow} hide={a.secretHide} name="repeat" autoComplete="new-password" minLength={10} maxLength={200} required />
-          </label>
-          <button type="submit" className="button">
-            {a.pwSave}
-          </button>
-        </form>
-      </Section>
-      <Section title={a.pkTitle} id="passkeys">
+      {/* The state of every part at a glance; each tile jumps to its part. */}
+      <nav className="grid kpis acc-glance" aria-label={a.accGlance}>
+        <Tile href="#passkeys" icon="key" k={a.pkTitle} v={String(passkeys.length)} s={passkeys.length ? a.accPkSome : a.accPkNone} state={passkeys.length ? "ok" : undefined} />
+        <Tile href="#sign-in" icon="lock" k={a.pkModeTitle} v={only ? a.accModeOnly : a.accModeAny} s={a.accModeSub} text />
+        <Tile href="#totp" icon="shield" k={a.totp} v={active !== null ? a.accOn : a.accOff} s={a.accTotpSub} state={active !== null ? "ok" : undefined} text />
+        <Tile href="#api-tokens" icon="code" k={a.tokTitle} v={api ? String(tokens.length) : a.accOff} s={a.accTokSub} text={!api} />
+      </nav>
+      <Section title={a.pkTitle} id="passkeys" aside={<span className={passkeys.length ? "pill ok" : "pill"}>{passkeys.length}</span>}>
         <div className="form">
-          <p>{a.pkIntro}</p>
+          <p className="muted">{a.pkIntro}</p>
+          {added ? (
+            <p className="notice pk-added" role="status">
+              <Icon name="check" />
+              <span>{fill(a.pkAddedName, { n: added.name })}</span>
+            </p>
+          ) : null}
           {pkNotice ? <p className="notice">{pkNotice}</p> : null}
           {pkError ? <p className="notice error">{pkError}</p> : null}
-          {passkeys.length ? null : <p className="muted">{a.pkNone}</p>}
-        </div>
-        {passkeys.length ? (
-          <div className="table-wrap">
-            <table className="cards">
-              <thead>
-                <tr>
-                  <th>{a.tokName}</th>
-                  <th>{a.tokCreated}</th>
-                  <th>{a.tokLastUsed}</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {passkeys.map((p) => (
-                  <tr key={p.hash}>
-                    <td className="main">{p.name}</td>
-                    <td data-l={`${a.tokCreated}:`}>{fmtDateTime(p.created, lang)}</td>
-                    <td data-l={`${a.tokLastUsed}:`}>{p.lastUsed ? fmtDateTime(p.lastUsed, lang) : a.tokNotUsed}</td>
-                    <td className="end">
-                      <form action={deletePasskeyAction}>
-                        <input type="hidden" name="id" value={p.hash} />
-                        <button type="submit" className="button danger small" disabled={only && passkeys.length <= 1}>
-                          {a.pkDelete}
-                        </button>
-                      </form>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {passkeys.length ? (
+            <ul className="pk-list">
+              {passkeys.map((p) => (
+                <li key={p.hash} id={`pk-${p.hash}`} className={p.hash === added?.hash ? "pk-item fresh" : "pk-item"}>
+                  <span className="pk-icon" aria-hidden="true">
+                    <Icon name="key" />
+                  </span>
+                  <span className="pk-main">
+                    <b dir="auto">{p.name}</b>
+                    {p.hash === added?.hash ? <span className="pill ok">{a.pkNew}</span> : null}
+                    <small>
+                      {a.tokCreated}: {fmtDateTime(p.created, lang)} · {a.tokLastUsed}: {p.lastUsed ? fmtDateTime(p.lastUsed, lang) : a.tokNotUsed}
+                    </small>
+                  </span>
+                  <form action={deletePasskeyAction}>
+                    <input type="hidden" name="id" value={p.hash} />
+                    <ConfirmButton
+                      className="button small danger"
+                      label={a.pkDelete}
+                      title={fill(a.pkDeleteTitle, { n: p.name })}
+                      yes={a.deleteYes}
+                      text={{ cancel: a.confirmCancel }}
+                      disabled={only && passkeys.length <= 1}
+                    >
+                      <p>{a.pkDeleteBody}</p>
+                    </ConfirmButton>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="empty-note">{a.pkNone}</p>
+          )}
+          <div className="box sub-box">
+            <h3>{a.pkAdd}</h3>
+            <p className="muted">{a.pkAddIntro}</p>
+            <PasskeyAdd
+              key={pk ?? ""}
+              totp={active !== null}
+              text={{
+                name: a.tokName,
+                nameHint: a.pkNameHint,
+                password: a.tokPassword,
+                show: a.secretShow,
+                hide: a.secretHide,
+                code: a.tokCode,
+                add: a.pkAdd,
+                added: a.pkAdded,
+                unsupported: a.pkUnsupported,
+                failed: a.pkFailed,
+                errors: {
+                  name: a.tokErrName,
+                  wrong: a.tokErrWrong,
+                  code: a.tokErrCode,
+                  blocked: a.pwBlocked,
+                  nosecret: a.nosecret,
+                  limit: fill(a.pkErrLimit, { n: String(MAX_PER_USER) }),
+                  expired: a.pkErrExpired,
+                  invalid: a.pkErrInvalid,
+                  duplicate: a.pkErrDuplicate,
+                },
+              }}
+            />
           </div>
-        ) : null}
-        <div className="form">
-          <h3>{a.pkAdd}</h3>
-          <PasskeyAdd
-            key={pk ?? ""}
-            totp={active !== null}
-            text={{
-              name: a.tokName,
-              nameHint: a.pkNameHint,
-              password: a.tokPassword,
-              show: a.secretShow,
-              hide: a.secretHide,
-              code: a.tokCode,
-              add: a.pkAdd,
-              added: a.pkAdded,
-              unsupported: a.pkUnsupported,
-              failed: a.pkFailed,
-              errors: {
-                name: a.tokErrName,
-                wrong: a.tokErrWrong,
-                code: a.tokErrCode,
-                blocked: a.pwBlocked,
-                nosecret: a.nosecret,
-                limit: fill(a.pkErrLimit, { n: String(MAX_PER_USER) }),
-                expired: a.pkErrExpired,
-                invalid: a.pkErrInvalid,
-                duplicate: a.pkErrDuplicate,
-              },
-            }}
-          />
-          <h3 id="pk-mode">{a.pkModeTitle}</h3>
-          <form action={passkeyOnlyAction} className="form">
-            <fieldset className="token-scopes" aria-labelledby="pk-mode">
-              <label className="check">
-                <input type="radio" name="only" value="0" defaultChecked={!only} />
-                {a.pkModeAny}
-              </label>
-              <label className="check">
-                <input type="radio" name="only" value="1" defaultChecked={only} disabled={!only && !passkeys.length} />
-                {a.pkModeOnly}
-              </label>
-            </fieldset>
-            <small>{a.pkModeHint}</small>
-            <button type="submit" className="button">
-              {a.pkModeSave}
-            </button>
-          </form>
         </div>
+      </Section>
+      <Section title={a.pkModeTitle} id="sign-in" aside={<span className={only ? "pill ok" : "pill"}>{only ? a.accModeOnly : a.accModeAny}</span>}>
+        <form action={passkeyOnlyAction} className="form">
+          <fieldset className="choice-cards" aria-label={a.pkModeTitle}>
+            <label className="check">
+              <input type="radio" name="only" value="0" defaultChecked={!only} />
+              <span>{a.pkModeAny}</span>
+            </label>
+            <label className="check">
+              <input type="radio" name="only" value="1" defaultChecked={only} disabled={!only && !passkeys.length} />
+              <span>{a.pkModeOnly}</span>
+            </label>
+          </fieldset>
+          <small>{a.pkModeHint}</small>
+          <button type="submit" className="button">
+            {a.pkModeSave}
+          </button>
+        </form>
       </Section>
       {error === "code" ? <p className="notice error">{a.codeInvalid}</p> : null}
       {done === "on" ? <p className="notice">{a.totpEnabled}</p> : done === "off" ? <p className="notice">{a.totpDisabled}</p> : null}
       {!secret ? <p className="notice error">{a.nosecret}</p> : null}
-      <Section title={a.totp}>
+      <Section title={a.totp} id="totp" aside={<span className={active !== null ? "pill ok" : "pill"}>{active !== null ? a.accOn : a.accOff}</span>}>
         <div className="form">
           <p>{a.totpIntro}</p>
           {active !== null ? (
@@ -209,6 +203,31 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <small>{a.totpReset}</small>
         </div>
       </Section>
+      {pw === "saved" ? <p className="notice">{a.pwSaved}</p> : null}
+      {pw && pw !== "saved" ? (
+        <p className="notice error">{pw === "wrong" ? a.pwWrong : pw === "mismatch" ? a.pwMismatch : pw === "short" ? a.pwShort : a.pwBlocked}</p>
+      ) : null}
+      <Section title={a.pwTitle} id="password">
+        <form action={changePasswordAction} className="form">
+          <input type="text" name="username" value={user.username} autoComplete="username" readOnly hidden />
+          <label>
+            {a.pwCurrent}
+            <RevealInput show={a.secretShow} hide={a.secretHide} name="current" autoComplete="current-password" required />
+          </label>
+          <label>
+            {a.pwNew}
+            <RevealInput show={a.secretShow} hide={a.secretHide} name="next" autoComplete="new-password" minLength={10} maxLength={200} required />
+            <small>{a.pwHint}</small>
+          </label>
+          <label>
+            {a.pwRepeat}
+            <RevealInput show={a.secretShow} hide={a.secretHide} name="repeat" autoComplete="new-password" minLength={10} maxLength={200} required />
+          </label>
+          <button type="submit" className="button">
+            {a.pwSave}
+          </button>
+        </form>
+      </Section>
       {api ? null : (
         <Section title={a.tokTitle} id="api-tokens">
           <div className="form">
@@ -217,7 +236,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         </Section>
       )}
       {api ? (
-        <Section title={a.tokTitle} id="api-tokens">
+        <Section title={a.tokTitle} id="api-tokens" aside={<span className="pill">{tokens.length}</span>}>
           <div className="form">
             <p>
               {a.tokIntro} <a href={`${basePath}/api`}>{`${basePath}/api`}</a>
@@ -255,9 +274,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                       <td className="end">
                         <form action={revokeApiTokenAction}>
                           <input type="hidden" name="id" value={t.id} />
-                          <button type="submit" className="button danger small">
-                            {a.tokRevoke}
-                          </button>
+                          <ConfirmButton className="button small danger" label={a.tokRevoke} title={fill(a.tokRevokeTitle, { n: t.name })} yes={a.tokRevoke} text={{ cancel: a.confirmCancel }}>
+                            <p>{a.tokRevokeBody}</p>
+                          </ConfirmButton>
                         </form>
                       </td>
                     </tr>
@@ -310,5 +329,18 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         </Section>
       ) : null}
     </>
+  );
+}
+
+function Tile({ href, icon, k, v, s, state, text }: { href: string; icon: IconName; k: string; v: string; s: string; state?: "ok"; text?: boolean }) {
+  return (
+    <a className={`card kpi kpi-link acc-tile${state ? ` ${state}` : ""}`} href={href}>
+      <div className="k">
+        <Icon name={icon} />
+        {k}
+      </div>
+      <div className={text ? "v kpi-text" : "v"}>{v}</div>
+      <div className="s">{s}</div>
+    </a>
   );
 }

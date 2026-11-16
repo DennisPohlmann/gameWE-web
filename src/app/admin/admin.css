@@ -426,6 +426,15 @@ select { padding-inline-end: 28px; }
 .reset-dialog dd { margin: 0; }
 .form .reset-dialog label.reset-understood { display: flex; gap: 8px; align-items: flex-start; }
 .reset-dialog-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 14px; }
+/* The confirmation dialog of every delete and reset (components/admin/confirm-button.tsx). */
+.confirm-dialog p { margin: 0 0 10px; }
+.confirm-typed { display: grid; gap: 6px; margin: 4px 0 0; font-weight: 500; }
+.button.danger.solid { background: var(--bad); border-color: var(--bad); color: #fff; }
+.button.danger.solid:hover { filter: brightness(1.08); background: var(--bad); }
+.row-actions { display: inline-flex; gap: 6px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+.row-actions form { display: contents; }
+.section.danger-zone, .card.danger-zone { border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); }
+.section.danger-zone > .section-head h2, .card.danger-zone > header h2 { color: var(--bad); }
 .reset-result { white-space: pre-wrap; font-size: 0.9em; margin: 6px 0 0; max-height: 240px; overflow: auto; }
 .reset-result-cell { white-space: pre-wrap; min-width: 240px; font-size: 0.9em; }
 .job-result { white-space: pre-wrap; overflow-wrap: anywhere; min-width: 220px; font-size: 13px; color: var(--soft); }
@@ -565,11 +574,9 @@ select { padding-inline-end: 28px; }
 .perm-groups label.check input { flex: none; }
 .perm-presets { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .perm-box { display: grid; gap: 14px; }
-/* Level 100 has every right: no checkboxes while it is chosen (no script). */
-form:has(select[name="acclevel"] option[value="100"]:checked) .perm-groups,
-form:has(select[name="acclevel"] option[value="100"]:checked) .perm-presets { display: none; }
-.perm-full { display: none; }
-form:has(select[name="acclevel"] option[value="100"]:checked) .perm-full { display: block; }
+/* Level 100 has every right: every box checked and locked (components/admin/perm-fields.tsx). */
+.perm-groups.locked label.check { color: var(--soft); cursor: not-allowed; }
+.perm-groups.locked input:disabled { opacity: 1; }
 .hof-source label.check { flex-wrap: wrap; }
 .hof-source label.check small { flex-basis: 100%; padding-inline-start: 24px; }
 .hof-own { display: grid; gap: 14px; padding-inline-start: 14px; border-inline-start: 2px solid var(--line-2); }
@@ -590,10 +597,6 @@ form:has(select[name="acclevel"] option[value="100"]:checked) .perm-full { displ
 .hof-form:has(input[name="enabled"]:not(:checked)) .hof-understood { display: none; }
 .hof-links { display: flex; gap: 14px; flex-wrap: wrap; }
 .hof-op { display: inline; }
-details.hof-confirm { display: inline-block; }
-details.hof-confirm > summary { list-style: none; cursor: pointer; }
-details.hof-confirm > summary::-webkit-details-marker { display: none; }
-details.hof-confirm[open] > summary { display: none; }
 #hall-of-fame { margin-top: 18px; }
 
 /* Phones and tablets: form controls at 16px. iOS Safari zooms the page in
@@ -650,3 +653,60 @@ details.assign-servers > .form { padding: 0 18px 16px; max-width: none; }
   #servers table.cards.stack td.end { position: static; transform: none; margin-inline-start: auto; order: 1; }
   #servers table.cards.stack td.act { order: 2; }
 }
+
+/* My account: tiles at a glance, passkeys as cards, the add form in a box of its own. */
+.acc-glance .k { display: flex; align-items: center; gap: 6px; }
+.acc-glance .k .i { width: 15px; height: 15px; }
+.acc-glance .acc-tile.ok .v { color: var(--ok); }
+.pk-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.pk-item { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel-2); }
+.pk-item.fresh { border-color: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 25%, transparent); background: var(--ok-soft); animation: pk-fresh 1.2s ease-out 1; }
+@keyframes pk-fresh { from { box-shadow: 0 0 0 10px color-mix(in srgb, var(--ok) 45%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .pk-item.fresh { animation: none; } }
+.pk-icon { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-text); }
+.pk-item.fresh .pk-icon { background: var(--ok); color: #fff; }
+.pk-icon .i { width: 20px; height: 20px; }
+.pk-main { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; flex: 1; }
+.pk-main b { font-size: 15px; overflow-wrap: anywhere; }
+.pk-main small { flex-basis: 100%; color: var(--muted); }
+.pk-item > form { flex: none; }
+.notice.pk-added { display: flex; gap: 8px; align-items: flex-start; font-weight: 600; }
+.notice.pk-added .i { margin-top: 2px; }
+.empty-note { padding: 14px; border: 1px dashed var(--line-2); border-radius: var(--radius); color: var(--muted); text-align: center; margin: 0; }
+.sub-box { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin-top: 6px; }
+.sub-box h3 { margin: 0 0 4px; }
+.sub-box > .muted { margin: 0 0 10px; }
+.choice-cards { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; }
+.form .choice-cards label.check { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); font-weight: 500; cursor: pointer; }
+.form .choice-cards label.check:has(input:checked) { border-color: var(--accent-btn); background: var(--accent-soft); }
+.form .choice-cards label.check:has(input:disabled) { opacity: 0.6; cursor: not-allowed; }
+.form .choice-cards input { margin-top: 2px; }
+@media (max-width: 720px) {
+  .pk-item { flex-wrap: wrap; }
+  .pk-item > form { flex-basis: 100%; }
+  .pk-item > form .button { width: 100%; }
+}
+
+/* Unsaved changes (components/admin/unsaved-bar.tsx): a bar at the bottom
+   with the form's own save button; the settings pages mark their save bar. */
+.unsaved-bar { position: fixed; z-index: 20; bottom: 16px; inset-inline-start: calc(var(--side-w, 260px) + 32px); inset-inline-end: 32px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 10px 14px; background: var(--panel); border: 1px solid var(--accent-btn); border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); }
+.unsaved-bar .msg, .savebar .unsaved-note { display: flex; gap: 8px; align-items: center; font-weight: 600; color: var(--accent-text); }
+.unsaved-bar .msg i, .savebar .unsaved-note::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--accent-btn); flex: none; }
+.unsaved-bar .btns { margin-inline-start: auto; display: flex; gap: 8px; }
+.savebar .unsaved-note { display: none; }
+form[data-dirty] .savebar { border-top-color: var(--accent-btn); }
+form[data-dirty] .savebar .unsaved-note { display: flex; }
+form[data-dirty] .savebar .msg { display: none; }
+.adm-main:has(.unsaved-bar) { padding-bottom: 120px; }
+@media (max-width: 900px) {
+  .unsaved-bar { inset-inline: 10px; bottom: calc(66px + env(safe-area-inset-bottom)); }
+  .unsaved-bar .btns { width: 100%; margin: 0; }
+  .unsaved-bar .btns .button { flex: 1; }
+  form[data-dirty] .savebar .unsaved-note { display: none; }
+}
+
+/* Background of a card, folded away until asked for. */
+.help-more { color: var(--soft); font-size: 13px; }
+.help-more > summary { cursor: pointer; color: var(--accent-text); font-weight: 600; width: max-content; max-width: 100%; }
+.help-more > p { margin: 8px 0 0; max-width: 80ch; }
+.help-more.in-card { margin: 12px 18px; }

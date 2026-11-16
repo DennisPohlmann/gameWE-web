@@ -1,6 +1,6 @@
 // A ranking's admin page: the jump bar to its cards (Settings, Servers in
-// this ranking, Values of this ranking, Bots, VAC block, Scheduled reset,
-// Maintenance) is easy to see and stays at the top while scrolling.
+// this ranking, Values of this ranking, Bots, VAC block, FastDL, and one
+// entry for resets and the hall of fame) is easy to see and stays at the top while scrolling.
 // Run with `npm test`.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -11,15 +11,14 @@ const nav = readFileSync("src/components/admin/page-nav.tsx", "utf8");
 const css = readFileSync("src/app/admin/admin.css", "utf8");
 
 test("every card of the page has an entry with an icon, each only with its right", () => {
-  for (const [id, icon] of [["settings", "gear"], ["servers", "server"], ["values", "list"], ["bots", "players"], ["vac", "shield"], ["hall-of-fame", "clock"], ["maintenance", "reset"]]) {
+  for (const [id, icon] of [["settings", "gear"], ["servers", "server"], ["values", "list"], ["bots", "players"], ["vac", "shield"], ["fastdl", "map"], ["resets", "reset"]]) {
     assert.match(page, new RegExp(`\\["${id}", u\\.[A-Za-z]+, "${icon}"\\]`), id);
   }
   assert.match(page, /\.\.\.\(can\["rankings\.edit"\] \? \(\[\["settings"/);
   assert.match(page, /\.\.\.\(can\["servers\.edit"\] \? \(\[\["servers"/);
-  assert.match(page, /\.\.\.\(can\.resets\s*\?\s*\(\[\.\.\.\(noServers/);
-  // A ranking without servers (a template or a new one) has no scheduled
-  // reset, so no entry for it.
-  assert.match(page, /\.\.\.\(noServers \? \[\] : \[\["hall-of-fame"/);
+  // Schedule, hall of fame and the manual reset: one entry, to their heading.
+  assert.match(page, /\.\.\.\(can\.resets \? \(\[\["resets"/);
+  assert.match(page, /<h2 className="group-head" id="resets">/);
   assert.match(page, /<PageNav label=\{u\.onThisPage\} parts=\{parts\} \/>/);
 });
 
