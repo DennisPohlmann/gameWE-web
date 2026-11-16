@@ -60,7 +60,7 @@ import { allowed, effectivePerms, isFullAdmin, isPerm, isRoleId, normalizePerms,
 import { clientIp } from "./client-ip";
 import { countChat, getChat } from "./data";
 import { adminQuery } from "./db";
-import { notifyState, queueNotifyTest, saveOwnNotify } from "./admin-notify";
+import { notifyState, queueNotifyTest, saveOwnNotify, type OwnTokens } from "./admin-notify";
 import { CHANNELS, EVENTS, isEvent, type Channel, type Own } from "./notify-core";
 import { scheduleValue } from "./hall-period";
 import { countIps, searchIps } from "./history";
@@ -474,8 +474,8 @@ async function settingsOut(groupId: string, user: PermUser) {
 
 async function ownNotifyOut(user: string) {
   const s = await notifyState(user);
-  // on: the channel's server is set up, which is all an admin's own messages need.
-  return { channels: s.own.map((o) => ({ channel: o.channel, on: s.channels.find((c) => c.channel === o.channel)?.ready ?? false, to: o.to, events: o.events, ...(o.channel === "ntfy" ? { token: o.token } : {}), status: o.status, test: o.test })) };
+  // ready: the channel can send (e-mail: the site's SMTP server; Telegram: the own bot token).
+  return { channels: s.own.map((o) => ({ channel: o.channel, ready: o.ready, to: o.to, events: o.events, ...(o.channel === "email" ? {} : { token: o.token }), status: o.status, test: o.test })), collectorRunning: s.collector, available: s.jobs };
 }
 
 // ---------------------------------------------------------------- handlers
@@ -682,35 +682,26 @@ const handlers: Record<string, Handler> = {
     const n = await setHallEntry(c.actor, c.params.code, strField(b, "start", 10), place, "restore", false);
     return { body: { changed: n } };
   },
-  async notifyGet() {
-    const s = await notifyState();
-    return { body: { channels: s.channels, collectorRunning: s.collector, available: s.jobs } };
-  },
-  async notifyTest(c) {
-    const b = onlyKeys(c.body, ["channel"], ["channel"]);
-    const job = await queueNotifyTest(c.actor, enumField(b, "channel", CHANNELS), false);
-    return { body: { job: job.id, existing: job.existing } };
-  },
   async ownNotifyGet(c) {
     return { body: await ownNotifyOut(c.actor.user.username) };
   },
   async ownNotifySet(c) {
     const b = onlyKeys(c.body, CHANNELS);
     const values: Partial<Record<Channel, Own>> = {};
-    let token: string | undefined;
+    const tokens: OwnTokens = {};
     for (const ch of CHANNELS) {
       if (b[ch] === undefined) continue;
-      const v = onlyKeys(b[ch], ch === "ntfy" ? ["to", "events", "token"] : ["to", "events"], ["to", "events"]);
+      const v = onlyKeys(b[ch], ch === "email" ? ["to", "events"] : ["to", "events", "token"], ["to", "events"]);
       if (!Array.isArray(v.events) || v.events.length > EVENTS.length || !v.events.every(isEvent)) throw new BodyError(400, "invalid_field", ch, `${ch}.events must be an array of ${EVENTS.join(", ")}`);
       values[ch] = { to: strField(v, "to", 200), events: v.events };
-      if (v.token !== undefined) token = strField(v, "token", 128);
+      if (v.token !== undefined && ch !== "email") tokens[ch] = strField(v, "token", 128);
     }
-    await saveOwnNotify(c.actor, values, token);
+    await saveOwnNotify(c.actor, values, tokens);
     return { body: await ownNotifyOut(c.actor.user.username) };
   },
   async ownNotifyTest(c) {
     const b = onlyKeys(c.body, ["channel"], ["channel"]);
-    const job = await queueNotifyTest(c.actor, enumField(b, "channel", CHANNELS), true);
+    const job = await queueNotifyTest(c.actor, enumField(b, "channel", CHANNELS));
     return { body: { job: job.id, existing: job.existing } };
   },
   async reset(c) {

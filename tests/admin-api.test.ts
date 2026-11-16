@@ -264,8 +264,6 @@ test("the rights of the operations are those of the admin pages", () => {
     settingsSet: "settings.edit",
     rawSet: "settings.edit",
     privacySet: "settings.edit",
-    notifyGet: "settings.view",
-    notifyTest: "settings.edit",
     // an admin's own notifications, like the account page
     ownNotifyGet: null,
     ownNotifySet: null,
@@ -298,7 +296,6 @@ test("every server action of the admin area has an API operation or is account-o
     saveRoleAction: ["roleCreate", "roleUpdate"],
     deleteRoleAction: ["roleDelete"],
     saveOwnNotifyAction: ["ownNotifySet", "ownNotifyTest"],
-    sharedNotifyTestAction: ["notifyTest"],
   };
   // Sign-in, own password, own TOTP, own passkeys, own tokens, look of the admin area:
   // only signed in, never with a token.

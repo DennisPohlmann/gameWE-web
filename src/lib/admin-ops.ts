@@ -334,7 +334,7 @@ export async function deleteEntity(a: Actor, e: Entity, id: string): Promise<voi
   }
   try {
     await deleteRow(e, id);
-    if (e.key === "users") await Promise.all([removeSecret(id, false), removeSecret(id, true), removeBackupCodes(id), purgeTokens(id), purgePasskeys(id), revokeSessions(id), adminExec(`DELETE FROM hlstats_Options WHERE keyname IN (?, ?)`, [permsKey(id), nameKey(id)]), adminExec(`DELETE FROM hlstats_Options WHERE keyname IN (?)`, [ownNotifyKeys(id)]), deleteSecrets([ownTokenKey(id)])]);
+    if (e.key === "users") await Promise.all([removeSecret(id, false), removeSecret(id, true), removeBackupCodes(id), purgeTokens(id), purgePasskeys(id), revokeSessions(id), adminExec(`DELETE FROM hlstats_Options WHERE keyname IN (?, ?)`, [permsKey(id), nameKey(id)]), adminExec(`DELETE FROM hlstats_Options WHERE keyname IN (?)`, [ownNotifyKeys(id)]), deleteSecrets([ownTokenKey(id, "telegram"), ownTokenKey(id, "ntfy")])]);
   } catch (err) {
     throw new OpError("db", { msg: dbMsg(err) });
   }
@@ -423,9 +423,7 @@ export async function saveSettings(a: Actor, groupId: string, form: Form, only?:
         if (v.length > 255 || /[\r\n]/.test(v)) bad(s.key);
         if (s.key === "gamewe_steam_api_key" && !steamKey(v)) bad(s.key);
         if (accessFieldOf(s.key) && !accessValueOk(accessFieldOf(s.key)!, v)) bad(s.key);
-        const token = notifySettingValue(s.key, v.trim()); // a bot or ntfy token, checked and trimmed
-        if (token === null) bad(s.key);
-        values.push([s.key, s.key === "gamewe_steam_api_key" ? v.trim() : (token ?? v)]);
+        values.push([s.key, s.key === "gamewe_steam_api_key" ? v.trim() : v]);
       }
       continue;
     }

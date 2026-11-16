@@ -28,7 +28,7 @@ import { adminDict, localized, tr } from "@/lib/admin-i18n";
 import { notifyState } from "@/lib/admin-notify";
 import { NOTIFY_EVENT_LABELS } from "@/lib/admin-settings";
 import { NOTIFY_T } from "@/lib/admin-texts";
-import { isChannel } from "@/lib/notify-core";
+import { DEFAULT_NTFY, isChannel, splitNtfy } from "@/lib/notify-core";
 
 // The signed-in user's own account: /admin/account shows every part at a
 // glance, each part (display name and password, passkeys, how to sign in,
@@ -49,7 +49,7 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
   const shown = (await displayNames([user.username])).get(user.username) ?? "";
   const nt = localized(NOTIFY_T, lang);
   const ns = await notifyState(user.username);
-  const notifyOn = ns.own.filter((o) => o.to && o.events.length && ns.channels.find((c) => c.channel === o.channel)?.ready).length;
+  const notifyOn = ns.own.filter((o) => o.to && o.events.length && o.ready).length;
   const passkeys = await listPasskeys(user.username);
   const only = await passkeyOnly(user.username);
   const added = pk === "added" ? passkeys.find((p) => p.hash === fresh) : undefined;
@@ -398,46 +398,56 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
           {notify === "bad" ? <p className="notice error">{fill(nt.bad, { c: isChannel(field) ? nt.channel[field] : "" })}</p> : null}
           {notify === "nojobs" || !ns.jobs ? <p className="notice error">{nt.noJobs}</p> : !ns.collector ? <p className="notice">{nt.noCollector}</p> : null}
           {ns.own.map((o) => {
-            // Own messages need only the channel's server, not its switch.
-            const on = ns.channels.find((c) => c.channel === o.channel)?.ready ?? false;
+            // E-mail needs the site's SMTP server; Telegram and ntfy are the admin's own.
+            const locked = o.channel === "email" && !o.ready;
+            const ntfy = splitNtfy(o.to);
+            const token = (c: "telegram" | "ntfy", label: string, hint: string) => (
+              <div className="notify-token">
+                <label htmlFor={`notify-${c}-token`}>{label}</label>
+                <SecretControl id={`notify-${c}-token`} name={`notify_${c}_token`} maxLength={128} set={o.token} invalid={notify === "bad" && field === c} lang={lang} />
+                <small>{hint}</small>
+              </div>
+            );
             return (
-              <div key={o.channel} className={on ? "notify-ch" : "notify-ch off"}>
+              <div key={o.channel} className={locked ? "notify-ch off" : "notify-ch"}>
                 <h3>
                   <Icon name="bell" />
                   {nt.channel[o.channel]}
                 </h3>
-                {on ? null : <small>{nt.notSetUp}</small>}
+                {locked ? <small>{nt.notSetUp}</small> : null}
+                {o.channel === "telegram" ? token("telegram", nt.botToken, nt.botTokenHint) : null}
+                {o.channel === "ntfy" ? (
+                  <label>
+                    {nt.server}
+                    <input {...noAutofill} name="notify_ntfy_server" defaultValue={ntfy.server} placeholder={DEFAULT_NTFY} type="url" dir="ltr" maxLength={200} aria-invalid={(notify === "bad" && field === "ntfy") || undefined} />
+                    <small>{nt.serverHint}</small>
+                  </label>
+                ) : null}
                 <label>
                   {nt.to[o.channel]}
                   <input
                     {...noAutofill}
                     name={`notify_${o.channel}`}
-                    defaultValue={o.to}
+                    defaultValue={o.channel === "ntfy" ? ntfy.topic : o.to}
                     type={o.channel === "email" ? "email" : "text"}
                     dir="ltr"
                     maxLength={200}
-                    disabled={!on}
+                    disabled={locked}
                     aria-invalid={(notify === "bad" && field === o.channel) || undefined}
                   />
                   <small>{nt.toHint[o.channel]}</small>
                 </label>
-                {o.channel === "ntfy" ? (
-                  <div className="notify-token">
-                    <label htmlFor="notify-ntfy-token">{nt.token}</label>
-                    <SecretControl id="notify-ntfy-token" name="notify_ntfy_token" maxLength={128} set={o.token} invalid={notify === "bad" && field === "ntfy"} lang={lang} />
-                    <small>{nt.tokenHint}</small>
-                  </div>
-                ) : null}
-                {/* a disabled channel keeps what is stored */}
-                {on ? null : (
+                {o.channel === "ntfy" ? token("ntfy", nt.token, nt.tokenHint) : null}
+                {/* a locked channel keeps what is stored */}
+                {locked ? (
                   <>
                     <input type="hidden" name={`notify_${o.channel}`} value={o.to} />
                     {o.events.map((e) => (
                       <input key={e} type="hidden" name={`notify_${o.channel}_${e}`} value="1" />
                     ))}
                   </>
-                )}
-                <fieldset className="ev" disabled={!on}>
+                ) : null}
+                <fieldset className="ev" disabled={locked}>
                   <legend>{nt.events}</legend>
                   {NOTIFY_EVENT_LABELS.map(([e, label]) => (
                     <label key={e} className="check">
@@ -446,8 +456,8 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
                     </label>
                   ))}
                 </fieldset>
-                {on ? <NotifyStatusLine status={o.status} test={o.test} lang={lang} /> : null}
-                {on ? (
+                {locked ? null : <NotifyStatusLine status={o.status} test={o.test} lang={lang} />}
+                {o.ready ? (
                   <div className="row">
                     <button type="submit" name="test" value={o.channel} className="button small" disabled={!ns.jobs}>
                       {nt.saveTest}

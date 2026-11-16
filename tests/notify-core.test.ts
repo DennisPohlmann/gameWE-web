@@ -3,14 +3,7 @@
 // Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { badOwn, ntfyTokenOk, ownNtfyOk, ownTokenKey, notifySettingValue, ntfyBase, ownValue, parseOwn, parseStatus, recipients, userHash } from "../src/lib/notify-core.ts";
-
-test("shared e-mail recipients: checked, each once, at most 20", () => {
-  assert.equal(recipients("a@example.org; b@example.org a@example.org"), "a@example.org, b@example.org");
-  assert.equal(recipients("a@example.org, nope"), null);
-  assert.equal(recipients("a@example.org\r\nBcc: x@example.org"), null);
-  assert.equal(recipients(Array.from({ length: 21 }, (_, i) => `u${i}@example.org`).join(",")), null);
-});
+import { badOwn, joinNtfy, ntfyTokenOk, ownNtfyOk, ownTokenKey, notifySettingValue, ntfyBase, ownValue, parseOwn, parseStatus, splitNtfy, tokenOk, userHash } from "../src/lib/notify-core.ts";
 
 test("server fields: ntfy https only, no header injection", () => {
   assert.equal(ntfyBase("https://ntfy.example.org/"), "https://ntfy.example.org");
@@ -18,7 +11,7 @@ test("server fields: ntfy https only, no header injection", () => {
   assert.equal(ntfyBase("https://user:pw@ntfy.example.org"), null);
   assert.equal(notifySettingValue("gamewe_notify_smtp_host", "smtp.example.org\r\nX"), null);
   assert.equal(notifySettingValue("gamewe_notify_email_from", "x@example.org>\r\nBcc: y@example.org"), null);
-  assert.equal(notifySettingValue("gamewe_notify_telegram_token", "123:short"), null);
+  assert.equal(notifySettingValue("gamewe_notify_telegram_token", "x"), undefined); // no setting any more: per admin
   assert.equal(notifySettingValue("gamewe_page_size", "x"), undefined);
 });
 
@@ -44,10 +37,23 @@ test("status and hash as the collector writes and reads them", () => {
   assert.equal(userHash(" Admin "), userHash("admin"));
   assert.match(userHash("admin"), /^[0-9a-f]{32}$/);
   // internal/notify UserTokenKey and IsUserSecret
-  assert.equal(ownTokenKey("Admin"), `gamewe_notifyu_${userHash("admin")}_ntfy_token`);
+  assert.equal(ownTokenKey("Admin", "ntfy"), `gamewe_notifyu_${userHash("admin")}_ntfy_token`);
+  assert.equal(ownTokenKey("Admin", "telegram"), `gamewe_notifyu_${userHash("admin")}_telegram_token`);
 });
 
-test("an admin's own ntfy token: the characters ntfy uses, no header injection", () => {
+test("an admin's own tokens: what Telegram and ntfy use, no header injection", () => {
   assert.ok(ntfyTokenOk("tk_AbC123-_x"));
   for (const bad of ["", "tk_a b", "tk_a\r\nX-Evil: 1", "x".repeat(129)]) assert.equal(ntfyTokenOk(bad), false, bad);
+  assert.ok(tokenOk("telegram", "123456:ABCdefGHIjklMNOpqrSTUvwxYZ012345678"));
+  assert.equal(tokenOk("telegram", "tk_AbC123-_x"), false);
+});
+
+test("the ntfy server and topic fields of My account", () => {
+  assert.equal(joinNtfy("", "mine"), "mine");
+  assert.equal(joinNtfy("https://ntfy.sh/", "mine"), "mine");
+  assert.equal(joinNtfy("https://push.example.org/ntfy/", "mine"), "https://push.example.org/ntfy/mine");
+  assert.equal(joinNtfy("https://push.example.org", ""), ""); // no topic: the channel is removed
+  assert.equal(ownNtfyOk(joinNtfy("http://push.example.org", "mine")), false); // a bad server stays and is refused
+  assert.deepEqual(splitNtfy("https://push.example.org/ntfy/mine"), { server: "https://push.example.org/ntfy", topic: "mine" });
+  assert.deepEqual(splitNtfy("mine"), { server: "", topic: "mine" });
 });

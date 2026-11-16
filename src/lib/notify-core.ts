@@ -1,19 +1,18 @@
 import { createHash } from "node:crypto";
 
 // Notifications by e-mail, Telegram and ntfy. The collector sends them
-// (internal/notify of gameWE-collector); the web stores what it needs in
-// hlstats_Options and the passwords and tokens in hlstats_gamewe_secrets:
-//   gamewe_notify_<channel>                 1: the channel is on
-//   gamewe_notify_<channel>_<event>         1/0: the shared recipients get the event
-//   gamewe_notify_email_to, _telegram_chat, _ntfy_topic   the shared recipients
-//   gamewe_notify_smtp_*, _email_from, _telegram_token, _ntfy_url, _ntfy_token
+// (internal/notify of gameWE-collector). Every admin chooses their own
+// channels, addresses and events; only the SMTP server is set up once for
+// all. The web stores them in hlstats_Options, the passwords and tokens in
+// hlstats_gamewe_secrets:
+//   gamewe_notify_smtp_*, gamewe_notify_email_from, gamewe_notify_lang   for all
 //   gamewe_notifyu_<hash>_<channel>         an admin's own: "<events>|<address>"
-//   gamewe_notifyu_<hash>_ntfy_token        an admin's own ntfy token (hlstats_gamewe_secrets)
-//   gamewe_notify_last_<channel>, gamewe_notifyu_<hash>_last_<channel>
-//                                           written by the collector: "<unix>|ok" or "<unix>|error|<text>"
+//   gamewe_notifyu_<hash>_telegram_token    the admin's Telegram bot (secret)
+//   gamewe_notifyu_<hash>_ntfy_token        the admin's ntfy access token (secret)
+//   gamewe_notifyu_<hash>_last_<channel>    written by the collector: "<unix>|ok" or "<unix>|error|<text>"
 // A test message is a job "notify-test" (mode: the channel; game: the
-// admin's hash, empty for the shared recipients). No database access, so
-// `npm test` can load it. Keep it in step with the collector.
+// admin's hash). No database access, so `npm test` can load it. Keep it in
+// step with the collector.
 
 export const CHANNELS = ["email", "telegram", "ntfy"] as const;
 export type Channel = (typeof CHANNELS)[number];
@@ -25,25 +24,26 @@ export const EVENTS = ["reset", "hof", "update"] as const;
 export type NotifyEvent = (typeof EVENTS)[number];
 export const isEvent = (v: unknown): v is NotifyEvent => typeof v === "string" && (EVENTS as readonly string[]).includes(v);
 
-export const MAX_RECIPIENTS = 20;
 export const NOTIFY_USER_PREFIX = "gamewe_notifyu_";
-export const NOTIFY_SECRETS = ["gamewe_notify_smtp_password", "gamewe_notify_telegram_token", "gamewe_notify_ntfy_token"];
+export const NOTIFY_SECRETS = ["gamewe_notify_smtp_password"];
+export const DEFAULT_NTFY = "https://ntfy.sh";
 
-export const channelKey = (c: Channel) => `gamewe_notify_${c}`;
-export const sharedToKey: Record<Channel, string> = { email: "gamewe_notify_email_to", telegram: "gamewe_notify_telegram_chat", ntfy: "gamewe_notify_ntfy_topic" };
-export const statusKey = (c: Channel, hash = "") => (hash ? `${NOTIFY_USER_PREFIX}${hash}_last_${c}` : `gamewe_notify_last_${c}`);
+export const statusKey = (c: Channel, hash: string) => `${NOTIFY_USER_PREFIX}${hash}_last_${c}`;
 
 // The hash of an admin's keys: the one of their rights (admin-perms.ts permsKey).
 export const userHash = (user: string) => createHash("sha256").update(user.trim().toLowerCase()).digest("hex").slice(0, 32);
 export const ownKey = (user: string, c: Channel) => `${NOTIFY_USER_PREFIX}${userHash(user)}_${c}`;
 
-// An admin's own ntfy token: the collector sends it, not the site's one,
-// with that admin's messages only.
-export const ownTokenKey = (user: string) => `${NOTIFY_USER_PREFIX}${userHash(user)}_ntfy_token`;
+// An admin's own Telegram bot token or ntfy access token: the collector
+// sends it with that admin's messages only.
+export const TOKEN_CHANNELS = ["telegram", "ntfy"] as const;
+export type TokenChannel = (typeof TOKEN_CHANNELS)[number];
+export const ownTokenKey = (user: string, c: TokenChannel) => `${NOTIFY_USER_PREFIX}${userHash(user)}_${c}_token`;
 export const ntfyTokenOk = (v: string) => /^[A-Za-z0-9_-]{1,128}$/.test(v);
+export const tokenOk = (c: TokenChannel, v: string) => (c === "telegram" ? botTokenOk(v) : ntfyTokenOk(v));
 
 // The rows of an admin's own notifications in hlstats_Options (removed with
-// the admin, as is ownTokenKey).
+// the admin, as are the ownTokenKey secrets).
 export const ownNotifyKeys = (user: string) => CHANNELS.flatMap((c) => [ownKey(user, c), statusKey(c, userHash(user))]);
 
 // ---------------------------------------------------------------- values
@@ -56,26 +56,16 @@ const HOST = /^(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\.[A-Za-z0-9]
 
 export const emailOk = (v: string) => v.length <= 200 && EMAIL.test(v);
 
-// Comma, semicolon or space separated addresses, each once; null if one is
-// bad, there is none or more than MAX_RECIPIENTS. Stored comma separated.
-export function recipients(v: string): string | null {
-  const list = [...new Set(v.split(/[\s,;]+/).filter(Boolean))];
-  if (!list.length || list.length > MAX_RECIPIENTS || !list.every(emailOk)) return null;
-  const out = list.join(", ");
-  return out.length <= 255 ? out : null;
-}
-
-// The address of a channel (one e-mail address for an admin's own; the
-// shared e-mail recipients use recipients()).
+// The address of a channel (ntfy: a topic; an admin's own also ownNtfyOk).
 export function addressOk(c: Channel, v: string): boolean {
   if (c === "email") return emailOk(v);
   if (c === "telegram") return CHAT.test(v);
   return TOPIC.test(v);
 }
 
-// An admin's own ntfy address: a topic on the site's ntfy server or the
-// address of a topic on their own server (https://ntfy.example.org/topic).
-// The collector only sends to a public address there, without the site's token.
+// An admin's own ntfy address: a topic on ntfy.sh or the address of a
+// topic on their server (https://ntfy.example.org/topic). The collector
+// only sends to a public address there.
 export function ownNtfyOk(v: string): boolean {
   if (TOPIC.test(v)) return true;
   if (v.length > 200) return false;
@@ -85,6 +75,20 @@ export function ownNtfyOk(v: string): boolean {
 
 export const botTokenOk = (v: string) => BOT_TOKEN.test(v);
 export const hostOk = (v: string) => v.length <= 253 && HOST.test(v);
+
+// The two fields of the ntfy address on My account: the server (empty:
+// ntfy.sh) and the topic. A bad server stays in, so ownNtfyOk refuses it.
+export function joinNtfy(server: string, topic: string): string {
+  const t = topic.trim();
+  const s = server.trim().replace(/\/+$/, "");
+  if (!t || !s) return t;
+  const base = ntfyBase(s);
+  return base === DEFAULT_NTFY ? t : `${base ?? s}/${t}`;
+}
+export function splitNtfy(to: string): { server: string; topic: string } {
+  const i = to.lastIndexOf("/");
+  return i < 0 ? { server: "", topic: to } : { server: to.slice(0, i), topic: to.slice(i + 1) };
+}
 
 // The ntfy server: https without user, query or fragment, no trailing slash.
 export function ntfyBase(v: string): string | null {
@@ -98,28 +102,16 @@ export function ntfyBase(v: string): string | null {
   }
 }
 
-// A checked value of a setting of the notifications page (empty allowed for
-// optional ones), null if it is bad; undefined: no notify setting.
+// A checked value of a setting of the notifications page (empty allowed),
+// null if it is bad; undefined: no notify setting.
 export function notifySettingValue(key: string, v: string): string | null | undefined {
   switch (key) {
-    case "gamewe_notify_email_to":
-      return v ? recipients(v) : "";
     case "gamewe_notify_email_from":
       return !v || emailOk(v) ? v : null;
     case "gamewe_notify_smtp_host":
       return !v || hostOk(v) ? v : null;
     case "gamewe_notify_smtp_user":
       return /[\u0000-\u001f]/.test(v) ? null : v;
-    case "gamewe_notify_telegram_chat":
-      return !v || addressOk("telegram", v) ? v : null;
-    case "gamewe_notify_ntfy_topic":
-      return !v || addressOk("ntfy", v) ? v : null;
-    case "gamewe_notify_ntfy_url":
-      return v ? ntfyBase(v) : "";
-    case "gamewe_notify_telegram_token":
-      return botTokenOk(v) ? v : null;
-    case "gamewe_notify_ntfy_token":
-      return ntfyTokenOk(v) ? v : null;
   }
   return undefined;
 }

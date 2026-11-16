@@ -93,28 +93,10 @@ export const NOTIFY_EVENT_LABELS: [NotifyEvent, L][] = [
   ["update", { de: "Neue Version erschienen", en: "New version out" }],
 ];
 const MASKED: L = { de: "Maskiert, das Auge zeigt den gespeicherten Wert; leer lassen behält es.", en: "Masked, the eye button shows the stored value; leave empty to keep it." };
-const SHARED_EVENTS: L = { de: "An die gemeinsamen Empfänger dieses Kanals.", en: "To the shared recipients of this channel." };
-// The switches "shared recipients get event" of one channel.
-const notifyEvents = (c: string): Setting[] =>
-  NOTIFY_EVENT_LABELS.map(([e, label]) => ({ key: `gamewe_notify_${c}_${e}`, label, type: "bool", def: e === "update" ? "0" : "1", help: SHARED_EVENTS, show: { key: `gamewe_notify_${c}`, value: "1" } }));
-const EMAIL_ON = { key: "gamewe_notify_email", value: "1" };
-const TG_ON = { key: "gamewe_notify_telegram", value: "1" };
-const NTFY_ON = { key: "gamewe_notify_ntfy", value: "1" };
-// The switch of a channel: only the shared recipients; the admins' own
-// messages need only the channel's server (collector notify.Ready).
-const sharedSwitch = (c: string): Setting => ({
-  key: `gamewe_notify_${c}`,
-  label: { de: "An die gemeinsamen Empfänger senden", en: "Send to the shared recipients" },
-  type: "bool",
-  def: "0",
-  help: {
-    de: "Nur für die gemeinsamen Empfänger darunter. Die eigenen Benachrichtigungen der Admins unter Mein Konto brauchen nur den Server darüber.",
-    en: "Only for the shared recipients below. The admins' own notifications under My account need only the server above.",
-  },
-});
 const same = (s: string): L => ({ de: s, en: s, all: Object.fromEntries(LANGUAGES.map((l) => [l.code, s])) });
 
-// Notifications (lib/notify-core.ts): the collector sends them.
+// Notifications (lib/notify-core.ts): the collector sends them. Every admin
+// chooses their own under My account; here only what all share.
 const notifyDefinitions: Setting[] = [
   {
     key: "gamewe_notify_lang",
@@ -144,47 +126,6 @@ const notifyDefinitions: Setting[] = [
   { key: "gamewe_notify_smtp_user", label: { de: "SMTP-Benutzer", en: "SMTP user" }, type: "text", def: "", minLevel: 100, help: { de: "Leer: ohne Anmeldung.", en: "Empty: no login." } },
   { key: "gamewe_notify_smtp_password", label: { de: "SMTP-Passwort", en: "SMTP password" }, type: "secret", def: "", minLevel: 100, help: MASKED },
   { key: "gamewe_notify_email_from", label: { de: "Absender", en: "Sender" }, type: "text", def: "", minLevel: 100, help: { de: "Absenderadresse der E-Mails, z. B. stats@example.org.", en: "Sender address of the e-mails, e.g. stats@example.org." } },
-  sharedSwitch("email"),
-  {
-    key: "gamewe_notify_email_to",
-    label: { de: "Gemeinsame Empfänger", en: "Shared recipients" },
-    type: "text",
-    def: "",
-    help: { de: "Mehrere Adressen mit Komma trennen, höchstens 20; sie sehen sich gegenseitig nicht. Leer: keine.", en: "Separate several addresses with commas, at most 20; they do not see each other. Empty: none." },
-    show: EMAIL_ON,
-  },
-  ...notifyEvents("email"),
-  {
-    key: "gamewe_notify_telegram_token",
-    section: same("Telegram"),
-    label: { de: "Bot-Token", en: "Bot token" },
-    type: "secret",
-    def: "",
-    minLevel: 100,
-    help: { de: "Von @BotFather. Der Bot muss Mitglied des Chats sein, in einem Kanal als Admin. Maskiert; leer lassen behält ihn.", en: "From @BotFather. The bot must be a member of the chat, in a channel as an admin. Masked; leave empty to keep it." },
-  },
-  sharedSwitch("telegram"),
-  {
-    key: "gamewe_notify_telegram_chat",
-    label: { de: "Gemeinsamer Chat", en: "Shared chat" },
-    type: "text",
-    def: "",
-    help: { de: "@kanalname eines öffentlichen Kanals oder die Chat-ID als Zahl (z. B. -1001234567890). Leer: keiner.", en: "@channelname of a public channel or the chat ID as a number (e.g. -1001234567890). Empty: none." },
-    show: TG_ON,
-  },
-  ...notifyEvents("telegram"),
-  { key: "gamewe_notify_ntfy_url", section: { de: "ntfy (Push-Nachrichten)", en: "ntfy (push messages)" }, label: { de: "ntfy-Server", en: "ntfy server" }, type: "text", def: "https://ntfy.sh", minLevel: 100, help: { de: "https-Adresse, z. B. https://ntfy.sh.", en: "https address, e.g. https://ntfy.sh." } },
-  { key: "gamewe_notify_ntfy_token", label: { de: "Zugriffs-Token", en: "Access token" }, type: "secret", def: "", minLevel: 100, help: { de: "Nur für geschützte Topics (tk_…). Maskiert; leer lassen behält es.", en: "Only for protected topics (tk_…). Masked; leave empty to keep it." } },
-  sharedSwitch("ntfy"),
-  {
-    key: "gamewe_notify_ntfy_topic",
-    label: { de: "Gemeinsames Topic", en: "Shared topic" },
-    type: "text",
-    def: "",
-    help: { de: "Wer das Topic kennt, liest mit: einen schwer zu ratenden Namen wählen oder ein Zugriffs-Token nutzen. Leer: keins.", en: "Whoever knows the topic reads along: choose a name that is hard to guess or use an access token. Empty: none." },
-    show: NTFY_ON,
-  },
-  ...notifyEvents("ntfy"),
 ];
 
 // Every setting, by its old section; settingGroups below puts them on pages.
@@ -812,8 +753,8 @@ export const settingGroups: SettingGroup[] = [
     area: "services",
     title: { de: "Benachrichtigungen", en: "Notifications" },
     help: {
-      de: "Der Collector schickt Nachrichten per E-Mail, Telegram oder ntfy, wenn ein Ranking zurückgesetzt wird, eine Ruhmeshalle entsteht oder eine neue Version erscheint. Hier richtest du die Kanäle ein und wählst gemeinsame Empfänger. Jeder Admin wählt unter Mein Konto, was er selbst bekommt.",
-      en: "The collector sends messages by e-mail, Telegram or ntfy when a ranking is reset, a hall of fame is stored or a new version is out. Here you set up the channels and choose shared recipients. Every admin chooses under My account what they get themselves.",
+      de: "Der Collector schickt Nachrichten per E-Mail, Telegram oder ntfy, wenn ein Ranking zurückgesetzt wird, eine Ruhmeshalle entsteht oder eine neue Version erscheint. Jeder Admin wählt unter Mein Konto seine Kanäle, Adressen, Tokens und Ereignisse selbst. Hier stehen nur die Sprache der Nachrichten und der SMTP-Server, über den alle E-Mails gehen.",
+      en: "The collector sends messages by e-mail, Telegram or ntfy when a ranking is reset, a hall of fame is stored or a new version is out. Every admin chooses their own channels, addresses, tokens and events under My account. Here are only the language of the messages and the SMTP server all e-mails go through.",
     },
     items: notifyDefinitions,
   },

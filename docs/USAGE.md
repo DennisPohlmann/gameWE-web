@@ -550,32 +550,25 @@ role_in_use`), and `role` on the users operations (an id, or `null` for own
 rights again; not together with `permissions`).
 
 **Notifications.** The collector (a version with notifications) sends
-messages by e-mail (SMTP), Telegram (a bot) or ntfy (push messages through
-ntfy.sh or an own ntfy server) when a ranking is reset, when a scheduled
-reset stores a hall of fame and when a new collector or web release is out.
-Settings → Notifications (right `settings.edit`; the server fields, passwords
-and tokens need `settings.protected`) sets up the SMTP server, the bot token
-and the ntfy server, and picks shared recipients (up to 20 e-mail addresses, a
-Telegram chat or channel, an ntfy topic) and which events they get; the switch
-**Send to the shared recipients** of a channel is only for them. **Send a test
-message** queues a job `notify-test` for the collector and shows its outcome.
-Under My account every admin picks their own address per channel and the
-events, without a right and without that switch: e-mail only needs the SMTP
-server and sender, Telegram the bot token, ntfy nothing. For ntfy that is a
-topic on the site's ntfy server or one on their own server
-(`https://ntfy.example.org/topic`, sent without the site's ntfy token and only
-to a public address), and optionally their own access token for a protected
-topic: it is sent instead of the site's one with their own messages only,
-stored as `gamewe_notifyu_<hash>_ntfy_token` and removed with the admin. The
-passwords and tokens are stored in `hlstats_gamewe_secrets` and never shown
-again; the
-collector writes the outcome of the last message per recipient
-(`gamewe_notify_last_<channel>`, `gamewe_notifyu_<hash>_last_<channel>`).
-A Telegram bot must be a member (in a channel an admin) of the chat, and a
-private chat needs `/start` sent to the bot once. Admin API and MCP:
-`GET /api/v1/admin/notifications` (`settings.view`), `POST
-/api/v1/admin/notifications/test` (`settings.edit`, `{"channel": "email"}`),
-`GET`/`PUT /api/v1/admin/me/notifications` and `POST
+messages by e-mail (SMTP), Telegram (a bot) or ntfy (push messages) when a
+ranking is reset, when a scheduled reset stores a hall of fame and when a new
+collector or web release is out. Every admin sets up their own under My
+account → Notifications, without a right: per channel the address and the
+events; Telegram with their own bot (bot token from @BotFather and their chat
+ID; send `/start` to the bot once), ntfy with a server (empty: ntfy.sh), a
+topic and, for a protected topic, an access token. E-mail goes through the
+SMTP server of the site, the only part set up once for all: Settings →
+Notifications (right `settings.edit`; the server fields and the password need
+`settings.protected`) holds it and the language of the messages. **Save and
+send a test message** queues a job `notify-test` for the collector and shows
+its outcome. The ntfy servers the admins enter are only reached at a public
+address. The tokens (`gamewe_notifyu_<hash>_telegram_token`,
+`gamewe_notifyu_<hash>_ntfy_token`) and the SMTP password are stored in
+`hlstats_gamewe_secrets`, never shown again and sent only with that admin's
+messages; they are removed with the address or the admin. The collector writes
+the outcome of the last message per admin and channel
+(`gamewe_notifyu_<hash>_last_<channel>`). Admin API and MCP: `GET`/`PUT
+/api/v1/admin/me/notifications` (with `token` for Telegram and ntfy) and `POST
 /api/v1/admin/me/notifications/test` (every admin, their own).
 
 A new user gets a first password

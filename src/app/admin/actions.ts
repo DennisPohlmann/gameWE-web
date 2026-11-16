@@ -25,7 +25,7 @@ import { checkCode, consumeStep, newBackupCodes, newSecret, otpauthUri, readSecr
 import { ACCESS_SECRETS, FASTDL_ACCESS, accessKey, type AccessField } from "@/lib/fastdl-access";
 import { allSettings } from "@/lib/admin-settings";
 import { adminQuery } from "@/lib/db";
-import { ownFromForm, ownTokenFromForm, queueNotifyTest, saveOwnNotify } from "@/lib/admin-notify";
+import { ownFromForm, ownTokensFromForm, queueNotifyTest, saveOwnNotify } from "@/lib/admin-notify";
 import { isChannel } from "@/lib/notify-core";
 import { secretOptions, secretsOf } from "@/lib/secret-options";
 
@@ -625,26 +625,16 @@ export async function saveOwnNotifyAction(form: FormData) {
   // A test needs an address of that channel.
   if (isChannel(test) && !own[test].to) redirect(`/admin/account/notifications?notify=bad&field=${test}`);
   try {
-    await saveOwnNotify({ user }, own, ownTokenFromForm(form));
+    await saveOwnNotify({ user }, own, ownTokensFromForm(form));
   } catch (err) {
     if (err instanceof OpError && err.code === "field") redirect(`/admin/account/notifications?notify=bad&field=${encodeURIComponent(err.detail.field)}`);
     throw err;
   }
   if (!isChannel(test)) redirect("/admin/account/notifications?notify=saved");
-  const job = await queueNotifyTest({ user }, test, true).catch((err) => {
+  const job = await queueNotifyTest({ user }, test).catch((err) => {
     if (err instanceof OpError && err.code === "nojobs") redirect("/admin/account/notifications?notify=nojobs");
     throw err;
   });
   redirect(`/admin/account/notifications?notify=test&job=${job.id}`);
 }
 
-export async function sharedNotifyTestAction(form: FormData) {
-  const user = await requirePerm("settings.edit");
-  const channel = String(form.get("channel") ?? "");
-  if (!isChannel(channel)) redirect("/admin/settings/notifications");
-  const job = await queueNotifyTest({ user }, channel, false).catch((err) => {
-    if (err instanceof OpError && err.code === "nojobs") redirect("/admin/settings/notifications?notify=nojobs#notify-test");
-    throw err;
-  });
-  redirect(`/admin/settings/notifications?notify=test&job=${job.id}#notify-test`);
-}

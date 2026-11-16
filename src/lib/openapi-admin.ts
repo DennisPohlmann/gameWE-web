@@ -351,8 +351,10 @@ const channelSchema = str("Channel", { enum: [...CHANNELS] });
 const eventSchema = str("Event: reset (a ranking was reset), hof (a period ended, the hall of fame was stored), update (a new release of the collector or the web)", { enum: [...EVENTS] });
 const notifyStatus = nullable(obj({ at: unix("When"), ok: bool("Delivered"), error: str("Error of the channel, empty if delivered") }, [], "Outcome of the last message, written by the collector; null: none yet"));
 const notifyTestJob = nullable(obj({ id: int("Job ID"), status: str("pending, running, done or failed"), result: str("Result"), at: unix("Requested") }, [], "Last test message; null: none"));
-const notifyChannel = obj({ channel: channelSchema, on: bool("Turned on"), ready: bool("Server set up"), shared: bool("Shared recipients set"), status: notifyStatus, test: notifyTestJob });
-const ownChannel = obj({ channel: channelSchema, on: bool("The site has set up the channel's server (all own messages need; the switch of the settings is only for the shared recipients)"), to: str("Own address, empty: none"), events: arr(eventSchema), token: bool("ntfy only: an own access token is stored"), status: notifyStatus, test: notifyTestJob }, ["token"]);
+const ownChannel = obj(
+  { channel: channelSchema, ready: bool("The channel can send: e-mail once the site's SMTP server is set up, Telegram once your bot token is stored, ntfy always"), to: str("Own address, empty: none"), events: arr(eventSchema), token: bool("Telegram and ntfy: an own token is stored (never the token itself)"), status: notifyStatus, test: notifyTestJob },
+  ["token"],
+);
 const modeSchema = str("What a reset deletes: player-stats (player statistics), all-stats (also server statistics), all (also the players)", { enum: [...RESET_MODES] });
 const job = obj({
   id: int("Job ID"),
@@ -1018,47 +1020,16 @@ export const adminOps: AdminOp[] = [
   },
   {
     method: "GET",
-    path: "/admin/notifications",
-    operationId: "adminNotifications",
-    tag: "Admin: settings",
-    summary: "Notification channels",
-    description:
-      "Per channel (email, telegram, ntfy): turned on, set up (e-mail: server and sender; Telegram: bot token), shared recipients set, the outcome of the last message to the shared recipients and their last test. The channels themselves are set with `PATCH /admin/settings/notifications`; the collector sends the messages.",
-    need: "settings.view",
-    handler: "notifyGet",
-    status: 200,
-    response: obj({ channels: arr(notifyChannel), collectorRunning: bool("The collector's heartbeat is fresh"), available: bool("The job table exists (test messages)") }),
-    example: { channels: [{ channel: "email", on: true, ready: true, shared: true, status: { at: 1767225600, ok: true, error: "" }, test: null }], collectorRunning: true, available: true },
-    errors: [],
-  },
-  {
-    method: "POST",
-    path: "/admin/notifications/test",
-    operationId: "adminNotificationTest",
-    tag: "Admin: settings",
-    summary: "Test message to the shared recipients",
-    description: "Queues a test message (job notify-test) with the stored settings; the collector sends it within seconds. A test still waiting is returned (`existing: true`). Its outcome: `GET /admin/notifications`.",
-    need: "settings.edit",
-    handler: "notifyTest",
-    body: obj({ channel: channelSchema }),
-    bodyExample: { channel: "telegram" },
-    status: 202,
-    response: obj({ job: int("Job ID"), existing: bool("A test was already waiting") }),
-    example: { job: 21, existing: false },
-    errors: [400, 503],
-  },
-  {
-    method: "GET",
     path: "/admin/me/notifications",
     operationId: "adminMyNotifications",
     tag: "Admin: account",
     summary: "My notifications",
-    description: "The token owner's own address and events per channel (Admin → My account → Notifications), with the outcome of the last message and test. `on`: the site has set up the channel's server, all your messages need (the switch under Settings is only for the shared recipients). ntfy also tells whether you stored an own access token (`token`), never the token itself.",
+    description: "The token owner's own address and events per channel (Admin → My account → Notifications), with the outcome of the last message and test. `ready`: the channel can send (e-mail needs the site's SMTP server, Telegram your bot token). Telegram and ntfy tell whether you stored a token (`token`), never the token itself.",
     need: null,
     handler: "ownNotifyGet",
     status: 200,
-    response: obj({ channels: arr(ownChannel) }),
-    example: { channels: [{ channel: "email", on: true, to: "me@example.org", events: ["reset", "hof"], status: null, test: null }] },
+    response: obj({ channels: arr(ownChannel), collectorRunning: bool("The collector's heartbeat is fresh"), available: bool("The job table exists (test messages)") }),
+    example: { channels: [{ channel: "email", ready: true, to: "me@example.org", events: ["reset", "hof"], status: null, test: null }], collectorRunning: true, available: true },
     errors: [],
   },
   {
@@ -1067,14 +1038,14 @@ export const adminOps: AdminOp[] = [
     operationId: "adminSetMyNotifications",
     tag: "Admin: account",
     summary: "Change my notifications",
-    description: "Sets the token owner's own address and events of the channels sent; others stay. An empty `to` removes the channel (ntfy: with its token). Addresses: e-mail an address, Telegram the chat ID (or @channel), ntfy a topic (letters, digits, `_ -`) or `https://<own server>/<topic>`. ntfy takes an optional `token` (own access token, `tk_…`): sent instead of the site's one, only with your messages; empty removes it, missing keeps it.",
+    description: "Sets the token owner's own address, events and tokens of the channels sent; others stay. An empty `to` removes the channel with its token. Addresses: e-mail an address, Telegram the chat ID (or @channel), ntfy a topic on ntfy.sh (letters, digits, `_ -`) or `https://<server>/<topic>`. `token`: Telegram your bot's token from @BotFather (needed), ntfy an access token (`tk_…`, optional); sent only with your messages; empty removes it, missing keeps it.",
     need: null,
     handler: "ownNotifySet",
-    body: obj(Object.fromEntries(CHANNELS.map((c) => [c, obj({ to: str("Address, empty: none", { maxLength: 200 }), events: arr(eventSchema), ...(c === "ntfy" ? { token: str("Own access token; empty: remove it, missing: keep it", { maxLength: 128 }) } : {}) }, ["token"])])), [...CHANNELS]),
+    body: obj(Object.fromEntries(CHANNELS.map((c) => [c, obj({ to: str("Address, empty: none", { maxLength: 200 }), events: arr(eventSchema), ...(c === "email" ? {} : { token: str("Own bot or access token; empty: remove it, missing: keep it", { maxLength: 128 }) }) }, ["token"])])), [...CHANNELS]),
     bodyExample: { email: { to: "me@example.org", events: ["reset", "hof", "update"] } },
     status: 200,
-    response: obj({ channels: arr(ownChannel) }),
-    example: { channels: [{ channel: "email", on: true, to: "me@example.org", events: ["reset", "hof", "update"], status: null, test: null }] },
+    response: obj({ channels: arr(ownChannel), collectorRunning: bool("The collector's heartbeat is fresh"), available: bool("The job table exists (test messages)") }),
+    example: { channels: [{ channel: "email", ready: true, to: "me@example.org", events: ["reset", "hof", "update"], status: null, test: null }], collectorRunning: true, available: true },
     errors: [400],
   },
   {
