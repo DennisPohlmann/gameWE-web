@@ -63,11 +63,10 @@ export default async function PanelLayout({ children }: { children: ReactNode })
     chat: site.chat,
     ips: a.ips,
     account: a.account,
-    accName: a.nameTitle,
+    accName: `${a.nameTitle} & ${a.password}`,
     accPasskeys: a.pkTitle,
     accSignIn: a.pkModeTitle,
     accTotp: a.totp,
-    accPassword: a.pwTitle,
     accTokens: a.tokTitle,
     accNotify: localized(NOTIFY_T, lang).title,
   } as NavText;

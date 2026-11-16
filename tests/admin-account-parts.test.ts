@@ -23,6 +23,7 @@ test("account actions redirect to an existing part, without a fragment", () => {
 });
 
 test("old links with a fragment are sent on to their part", () => {
-  assert.match(page, /PARTS\.map\(\(p\) => \(\s*<HashRedirect key=\{p\} hash=\{p\} to=\{`\/admin\/account\/\$\{p\}`\} \/>/);
+  assert.match(page, /OLD_HASHES\.map\(\(\[hash, p\]\) => \(\s*<HashRedirect key=\{hash\} hash=\{hash\} to=\{`\/admin\/account\/\$\{p\}`\} \/>/);
+  assert.match(page, /\["name", "profile"\], \["password", "profile"\]/);
   assert.match(readFileSync("src/app/admin/(panel)/totp/page.tsx", "utf8"), /redirect\("\/admin\/account\/totp"\)/);
 });

@@ -383,20 +383,20 @@ export async function displayNameAction(form: FormData) {
   const user = await requireAdmin();
   const raw = String(form.get("name") ?? "").trim();
   const name = raw === "" ? null : roleName(raw);
-  if (raw !== "" && !name) redirect("/admin/account/name?name=invalid");
+  if (raw !== "" && !name) redirect("/admin/account/profile?name=invalid");
   await setDisplayName(user.username, name);
   revalidatePath("/admin", "layout");
-  redirect("/admin/account/name?name=saved");
+  redirect("/admin/account/profile?name=saved");
 }
 
 export async function changePasswordAction(form: FormData) {
   const user = await requireAdmin();
   const next = String(form.get("next") ?? "");
-  if (next !== String(form.get("repeat") ?? "")) redirect("/admin/account/password?pw=mismatch");
+  if (next !== String(form.get("repeat") ?? "")) redirect("/admin/account/profile?pw=mismatch");
   const r = await changePassword(user.username, String(form.get("current") ?? ""), next);
   // Whoever had the old password may have made a token with it.
   if (r === "ok") await purgeTokens(user.username);
-  redirect(`/admin/account/password?pw=${r === "ok" ? "saved" : r}`);
+  redirect(`/admin/account/profile?pw=${r === "ok" ? "saved" : r}`);
 }
 
 // API tokens of the signed-in user's own account (lib/api-tokens.ts): a new

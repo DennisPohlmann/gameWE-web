@@ -30,11 +30,13 @@ import { NOTIFY_T } from "@/lib/admin-texts";
 import { isChannel } from "@/lib/notify-core";
 
 // The signed-in user's own account: /admin/account shows every part at a
-// glance, each part (name, passkeys, how to sign in, optional TOTP with its
-// backup codes, password, API tokens, only a notice while the API is off,
-// notifications) has its own page /admin/account/<part>, listed in the side
-// menu (components/admin/nav.tsx, ACCOUNT_PARTS there too).
-const PARTS = ["name", "passkeys", "sign-in", "totp", "password", "api-tokens", "notifications"];
+// glance, each part (display name and password, passkeys, how to sign in,
+// optional TOTP with its backup codes, API tokens, only a notice while the
+// API is off, notifications) has its own page /admin/account/<part>, listed
+// in the side menu (components/admin/nav.tsx, ACCOUNT_PARTS there too).
+const PARTS = ["profile", "passkeys", "sign-in", "totp", "api-tokens", "notifications"];
+// Old links to a part of the one long page (/admin/account#totp).
+const OLD_HASHES: [string, string][] = [["name", "profile"], ["password", "profile"], ...PARTS.slice(1).map((p): [string, string] => [p, p])];
 
 export default async function AccountPage({ params, searchParams }: { params: Promise<{ part?: string[] }>; searchParams: Promise<{ error?: string; done?: string; pw?: string; token?: string; pk?: string; new?: string; notify?: string; field?: string; job?: string; name?: string }> }) {
   const user = await requireAdmin();
@@ -60,7 +62,7 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
   const pending = secret && active === null ? await readSecret(user.username, secret, true) : null;
   const backupLeft = active !== null ? await countBackupCodes(user.username) : 0;
   const issuer = (await getSettings()).siteName || "gameWE";
-  const titles: Record<string, string> = { name: a.nameTitle, passkeys: a.pkTitle, "sign-in": a.pkModeTitle, totp: a.totp, password: a.pwTitle, "api-tokens": a.tokTitle, notifications: nt.title };
+  const titles: Record<string, string> = { profile: `${a.nameTitle} & ${a.password}`, passkeys: a.pkTitle, "sign-in": a.pkModeTitle, totp: a.totp, "api-tokens": a.tokTitle, notifications: nt.title };
   const backupText = (hint: string, submit: string): BackupCodesText => ({
     code: a.totpCode,
     show: a.valueShow,
@@ -82,23 +84,22 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
       ) : (
         <>
           <PageHead crumbs={[[a.account]]} title={a.account} intro={a.accountIntro} />
-          {/* Old links to a part on the one long page (/admin/account#totp). */}
-          {PARTS.map((p) => (
-            <HashRedirect key={p} hash={p} to={`/admin/account/${p}`} />
+          {OLD_HASHES.map(([hash, p]) => (
+            <HashRedirect key={hash} hash={hash} to={`/admin/account/${p}`} />
           ))}
           {/* The state of every part at a glance; each tile opens its page. */}
           <nav className="grid kpis acc-glance" aria-label={a.accGlance}>
-            <Tile href="name" icon="user" k={a.nameTitle} v={shown || user.username} s={user.username} text />
+            <Tile href="profile" icon="user" k={titles.profile} v={shown || user.username} s={user.username} text />
             <Tile href="passkeys" icon="key" k={a.pkTitle} v={String(passkeys.length)} s={passkeys.length ? a.accPkSome : a.accPkNone} state={passkeys.length ? "ok" : undefined} />
             <Tile href="sign-in" icon="lock" k={a.pkModeTitle} v={only ? a.accModeOnly : a.accModeAny} s={a.accModeSub} text />
             <Tile href="totp" icon="shield" k={a.totp} v={active !== null ? a.accOn : a.accOff} s={a.accTotpSub} state={active !== null ? "ok" : undefined} text />
-            <Tile href="password" icon="lock" k={a.pwTitle} v="••••••••" s={a.pwHint} text />
             <Tile href="api-tokens" icon="code" k={a.tokTitle} v={api ? String(tokens.length) : a.accOff} s={a.accTokSub} text={!api} />
             <Tile href="notifications" icon="bell" k={nt.title} v={String(notifyOn)} s={nt.tile} state={notifyOn ? "ok" : undefined} />
           </nav>
         </>
       )}
-      {part === "name" ? (
+      {part === "profile" ? (
+      <>
       <Section title={a.nameTitle} id="name">
         {nameState === "saved" ? <p className="notice">{a.nameSaved}</p> : null}
         {nameState === "invalid" ? <p className="notice error">{a.nameInvalid}</p> : null}
@@ -113,6 +114,32 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
           </button>
         </form>
       </Section>
+      {pw === "saved" ? <p className="notice">{a.pwSaved}</p> : null}
+      {pw && pw !== "saved" ? (
+        <p className="notice error">{pw === "wrong" ? a.pwWrong : pw === "mismatch" ? a.pwMismatch : pw === "short" ? a.pwShort : a.pwBlocked}</p>
+      ) : null}
+      <Section title={a.pwTitle} id="password">
+        <form action={changePasswordAction} className="form">
+          <input type="text" name="username" value={user.username} autoComplete="username" readOnly hidden />
+          <label>
+            {a.pwCurrent}
+            <RevealInput show={a.secretShow} hide={a.secretHide} name="current" autoComplete="current-password" required />
+          </label>
+          <label>
+            {a.pwNew}
+            <RevealInput show={a.secretShow} hide={a.secretHide} name="next" autoComplete="new-password" minLength={10} maxLength={200} required />
+            <small>{a.pwHint}</small>
+          </label>
+          <label>
+            {a.pwRepeat}
+            <RevealInput show={a.secretShow} hide={a.secretHide} name="repeat" autoComplete="new-password" minLength={10} maxLength={200} required />
+          </label>
+          <button type="submit" className="button">
+            {a.pwSave}
+          </button>
+        </form>
+      </Section>
+      </>
       ) : null}
       {part === "passkeys" ? (
       <Section title={a.pkTitle} id="passkeys" aside={<span className={passkeys.length ? "pill ok" : "pill"}>{passkeys.length}</span>}>
@@ -258,35 +285,6 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
           )}
           <small>{a.totpReset}</small>
         </div>
-      </Section>
-      </>
-      ) : null}
-      {part === "password" ? (
-      <>
-      {pw === "saved" ? <p className="notice">{a.pwSaved}</p> : null}
-      {pw && pw !== "saved" ? (
-        <p className="notice error">{pw === "wrong" ? a.pwWrong : pw === "mismatch" ? a.pwMismatch : pw === "short" ? a.pwShort : a.pwBlocked}</p>
-      ) : null}
-      <Section title={a.pwTitle} id="password">
-        <form action={changePasswordAction} className="form">
-          <input type="text" name="username" value={user.username} autoComplete="username" readOnly hidden />
-          <label>
-            {a.pwCurrent}
-            <RevealInput show={a.secretShow} hide={a.secretHide} name="current" autoComplete="current-password" required />
-          </label>
-          <label>
-            {a.pwNew}
-            <RevealInput show={a.secretShow} hide={a.secretHide} name="next" autoComplete="new-password" minLength={10} maxLength={200} required />
-            <small>{a.pwHint}</small>
-          </label>
-          <label>
-            {a.pwRepeat}
-            <RevealInput show={a.secretShow} hide={a.secretHide} name="repeat" autoComplete="new-password" minLength={10} maxLength={200} required />
-          </label>
-          <button type="submit" className="button">
-            {a.pwSave}
-          </button>
-        </form>
       </Section>
       </>
       ) : null}

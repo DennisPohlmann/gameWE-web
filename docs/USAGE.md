@@ -389,8 +389,8 @@ the dialog typed (DELETE in English), resetting a ranking its code. Once a
 field of a form changes, a bar at the bottom says "Unsaved changes" and
 carries the form's own save button (Discard loads the stored values again);
 leaving the page then asks first. The settings pages mark their save bar the
-same way. My account starts with its state at a glance (name, passkeys, how
-you sign in, TOTP, password, API tokens, notifications); each part has its
+same way. My account starts with its state at a glance (name and password,
+passkeys, how you sign in, TOTP, API tokens, notifications); each part has its
 own page (`/admin/account/<part>`), opened from its tile or from the side
 menu, which lists the parts while you are in My account. Old links such as
 `/admin/account#totp` and `/admin/totp` lead to the matching page. A passkey
