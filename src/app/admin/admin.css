@@ -388,9 +388,12 @@ select { padding-inline-end: 28px; }
 .switch input:focus-visible + i { box-shadow: var(--focus); }
 .switch .on-t, .switch input:checked ~ .off-t { display: none; }
 .switch input:checked ~ .on-t { display: inline; }
-.savebar { position: sticky; bottom: 0; z-index: 5; margin: 8px -32px -64px; padding: 12px 32px; background: color-mix(in srgb, var(--panel) 92%, transparent); backdrop-filter: blur(8px); border-top: 1px solid var(--line); display: flex; gap: 12px; align-items: center; }
+.savebar { position: sticky; bottom: 0; z-index: 5; margin: 8px -32px 16px; padding: 12px 32px; background: color-mix(in srgb, var(--panel) 92%, transparent); backdrop-filter: blur(8px); border-top: 1px solid var(--line); display: flex; gap: 12px; align-items: center; }
 .savebar .msg { color: var(--soft); font-size: 13px; display: flex; gap: 8px; align-items: center; }
 .savebar .btns { margin-inline-start: auto; display: flex; gap: 8px; }
+/* Flush with the screen's bottom edge only when nothing follows the form
+   (the notification tests do); otherwise it would cover that content. */
+.adm-main > form:last-child .savebar { margin-bottom: -64px; }
 .settings-help { margin: 0; padding: 12px 18px; color: var(--soft); border-bottom: 1px solid var(--line); background: var(--panel-2); }
 .settings-help.notice.error { margin: 0; border-radius: 0; }
 
@@ -513,7 +516,8 @@ select { padding-inline-end: 28px; }
   .field { grid-template-columns: minmax(0, 1fr); padding: 14px; }
   dl.kv > div { grid-template-columns: minmax(0, 1fr); padding: 12px 14px; }
   .field .c { max-width: none; }
-  .savebar { margin: 8px -14px 0; bottom: calc(58px + env(safe-area-inset-bottom)); padding: 10px 14px; }
+  .savebar { margin: 8px -14px 16px; bottom: calc(58px + env(safe-area-inset-bottom)); padding: 10px 14px; }
+  .adm-main > form:last-child .savebar { margin-bottom: 0; }
   .savebar .msg { display: none; }
   .savebar .btns { margin: 0; width: 100%; }
   .savebar .btns .button { flex: 1; }
