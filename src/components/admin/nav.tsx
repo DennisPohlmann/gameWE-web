@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { Icon, type IconName } from "./icons";
+import { MenuDetails } from "./menu-details";
 import type { Perm } from "@/lib/admin-perms";
 
 // Menu of the admin area: the three areas (overview, rankings, settings)
@@ -167,20 +168,12 @@ export function AdminSidebar({
   footer: (string | { text: string; href: string; version?: boolean; state?: "ok" | "stale" | "never" })[];
 }) {
   const { pathname, parts, seg, area, game } = useWhere();
-  const picker = useRef<HTMLDetailsElement>(null);
-  // Close the phone menu and the ranking picker after a click on one of
-  // their links: the sidebar stays mounted across pages, so an open
-  // <details> would stay open on the next page.
+  // Close the phone menu after a click on one of its links: the sidebar
+  // stays mounted across pages. The ranking picker closes itself (MenuDetails).
   useEffect(() => {
     const box = document.getElementById("adm-nav") as HTMLInputElement | null;
     if (box) box.checked = false;
-    if (picker.current) picker.current.open = false;
   }, [pathname, game]);
-  // Also right away on the click, so the list closes even when the choice
-  // is the ranking already shown (no navigation).
-  const closePicker = () => {
-    if (picker.current) picker.current.open = false;
-  };
   const current = rankings.find((r) => r.code === game);
   const q = current ? `?game=${encodeURIComponent(current.code)}` : "";
   const list = (key: string, icon: IconName, label: string, count?: number) => (
@@ -249,7 +242,7 @@ export function AdminSidebar({
         </>
       ) : area === "rankings" ? (
         <>
-          <details className="adm-picker" ref={picker}>
+          <MenuDetails className="adm-picker">
             <summary>
               <span className="adm-gtag"><bdi>{current ? current.tag : "∗"}</bdi></span>
               <span className="adm-picker-text">
@@ -260,14 +253,14 @@ export function AdminSidebar({
               <Icon name="chevron" />
             </summary>
             <div className="adm-picker-list" role="list">
-              <Link prefetch={false} href={pickHref("")} className={current ? undefined : "on"} onClick={closePicker}>
+              <Link prefetch={false} href={pickHref("")} className={current ? undefined : "on"}>
                 <span className="adm-gtag">∗</span>
                 {t.noRanking}
               </Link>
               {/* No templates (seeded rankings without servers), except the
                   one whose definitions are open now. */}
               {rankings.filter((r) => !r.template || r.code === game).map((r) => (
-                <Link prefetch={false} key={r.code} href={pickHref(r.code)} className={r.code === game ? "on" : undefined} onClick={closePicker}>
+                <Link prefetch={false} key={r.code} href={pickHref(r.code)} className={r.code === game ? "on" : undefined}>
                   <span className="adm-gtag"><bdi>{r.tag}</bdi></span>
                   <span>
                     <bdi>{r.name}</bdi>
@@ -278,7 +271,7 @@ export function AdminSidebar({
                 </Link>
               ))}
             </div>
-          </details>
+          </MenuDetails>
           <h4>{current ? t.thisRanking : t.allRankings}</h4>
           <nav>
             {current && can["rankings.view"] ? (

@@ -24,6 +24,7 @@ import { updateStatus } from "@/lib/updates";
 import { webRuntime } from "@/lib/runtime";
 import { runtimeSuffix } from "@/lib/runtime-label";
 import { LangMenu } from "@/components/lang-menu";
+import { MenuDetails } from "@/components/admin/menu-details";
 import { FLAG_SPRITE_URL } from "@/lib/flag-codes";
 
 // Frame of every admin page after the login: top bar with the three areas
@@ -118,7 +119,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
         {/* The language of the admin area and the public pages. */}
         <style>{`.flag-svg{background-image:url(${basePath}${FLAG_SPRITE_URL})}`}</style>
         <LangMenu icon className="adm-lang" lang={lang} label={u.language} base={basePath} />
-        <details className="adm-user">
+        <MenuDetails className="adm-user">
           <summary>
             <span className="adm-avatar" aria-hidden="true">
               {shown.slice(0, 1).toUpperCase()}
@@ -166,7 +167,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
               </button>
             </form>
           </div>
-        </details>
+        </MenuDetails>
       </header>
       <div className="adm-shell">
         <aside className="adm-side" aria-label={u.menu}>
