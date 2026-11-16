@@ -18,7 +18,7 @@ Everything else is set in the admin area (Admin → Settings) and stored in
 2. [Settings that moved into the database](#settings-that-moved-into-the-database)
 3. [Header links](#header-links)
 4. [Languages](#languages)
-5. [Search engines and sharing](#search-engines-and-sharing)
+5. [Search engines and sharing](#search-engines-and-sharing), [Old HLstatsX links](#old-hlstatsx-links)
 6. [Voice server](#voice-server)
 7. [Client address and proxies](#client-address-and-proxies), [Access log](#access-log)
 8. [Turning the API off](#turning-the-api-off)
@@ -189,6 +189,41 @@ the site. `/robots.txt` and `/sitemap.xml` are served under the base path
 the host, so with a base path either point the root's `robots.txt` at the
 sitemap (`Sitemap: https://example.org/new/sitemap.xml`) or proxy it. Every
 page has a share button with plain share links (no third-party scripts).
+
+Every page names its address as `<link rel="canonical">`: the path, plus
+only the query parameters that choose what the page shows (`page` from 2,
+`view`, `tab`, `type`, `award`, `rank`, `class`, `date`, `month`, `period`,
+`valuecountry`, `valuestate`, `valuecity`). Sorting, rows per page, search
+words and display toggles are left out, so search engines see one page and
+not one per sort order (`src/lib/canonical.ts`). The sitemap lists only these
+addresses: the rankings with servers or players, their sections (hall of fame,
+events and chat when switched on), their servers, their maps and their best 200 players.
+The language comes from the visitor (flag menu, else the browser), not from
+the address, so there are no `hreflang` alternatives: every page has one
+address in all languages.
+
+### Old HLstatsX links
+
+Links of an HLstatsX:CE site (forums, bookmarks, search engines) keep
+working: `hlstats.php?mode=…` (and `index.php`), the in-game pages
+`ingame.php?mode=…`, the forum signatures `sig.php?player_id=N` and the
+server banners `status.php?server_id=N` answer a 301 to the page or picture
+here, also below an old folder (`/hlstats/hlstats.php`). The modes and
+parameters are those of HLstatsX:CE's `web/hlstats.php`, `web/ingame.php`
+and `web/pages/*.php`. Players, clans and servers keep their number, so
+`mode=playerinfo&player=12` lands on that player's profile in its ranking;
+a number that does not exist answers 404. Ranks, ribbons and daily awards
+land on the awards page (`?view=ranks`, `?view=ribbons`), roles on the
+teams page, TeamSpeak and Ventrilo on `/voice`; an unknown mode goes to the
+ranking (`game=`) or the start page. The mapping is in
+`src/lib/legacy-urls.ts`.
+
+When the old site ran on another host or folder, send its PHP addresses to
+gameWE unchanged, e.g. in nginx on the old host:
+
+```nginx
+location ~ \.php$ { return 301 https://stats.example.org$request_uri; }
+```
 
 ## Latest events
 

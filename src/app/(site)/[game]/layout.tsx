@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { headers } from "next/headers";
+import { notFound, permanentRedirect } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
+import { PATH_HEADER } from "@/lib/canonical";
 import { GameNav } from "@/components/nav";
 import { VoiceBox } from "@/components/voice-box";
 import { currentAdmin } from "@/lib/auth";
@@ -24,6 +26,11 @@ export default async function GameLayout({ children, params }: { children: React
   // A hidden ranking is shown to admins only.
   const game = (await getGame(code)) ?? ((await currentAdmin()) ? await getGame(code, true) : undefined);
   if (!game) notFound();
+  // /CSS/players finds the ranking css on a case-insensitive database: one address per page.
+  if (game.code !== code) {
+    const path = (await headers()).get(PATH_HEADER) ?? "";
+    permanentRedirect(path.startsWith("/") ? path.replace(/^\/[^/?]*/, `/${game.code}`) : `/${game.code}`);
+  }
   const { t } = await getDict();
   const { chatPublic, gameEvents, gameSkins } = await getSettings();
   const skin = gameSkins ? await gameTemplate(game.realgame, game.code) : null;

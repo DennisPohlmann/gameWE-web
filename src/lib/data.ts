@@ -1720,6 +1720,24 @@ export function getMap(id: number) {
   return queryOne<MapRow & { game: string }>(`SELECT ${mapCols}, TRIM(game) AS game FROM hlstats_Maps WHERE id = ?`, [id]);
 }
 
+// The map page's address carries the map's name (/css/maps/de_dust2), unique per ranking.
+export function getMapByName(game: string, name: string) {
+  return queryOne<MapRow & { game: string }>(`SELECT ${mapCols}, TRIM(game) AS game FROM hlstats_Maps WHERE game = ? AND map = ?`, [game, name]);
+}
+
+// The first action with this code in a ranking (old HLstatsX links name the code).
+export async function getActionByCode(game: string, code: string): Promise<number | null> {
+  const r = await queryOne<{ id: number | null }>(`SELECT MIN(id) AS id FROM hlstats_Actions WHERE game = ? AND code = ?`, [game, code]);
+  return r?.id ? Number(r.id) : null;
+}
+
+// The ranking of a player, clan or server by its id (old HLstatsX links leave the ranking out).
+const GAME_OF = { player: "hlstats_Players WHERE playerId", clan: "hlstats_Clans WHERE clanId", server: "hlstats_Servers WHERE serverId" } as const;
+export async function gameOf(kind: keyof typeof GAME_OF, id: number): Promise<string | null> {
+  const r = await queryOne<{ game: string }>(`SELECT TRIM(game) AS game FROM ${GAME_OF[kind]} = ?`, [id]);
+  return r?.game ?? null;
+}
+
 // Best players on one map over the last `days` days, from hlstats_Events_Frags:
 // a = kills, b = deaths, c = headshots.
 export function getMapTop(mapId: number, days: number, limit = 50, offset = 0) {

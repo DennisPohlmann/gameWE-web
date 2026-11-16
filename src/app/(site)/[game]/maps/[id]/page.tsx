@@ -2,9 +2,10 @@ import { cache } from "react";
 import { rankingGate } from "@/lib/ranking-access";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { AutoForm } from "@/components/auto-form";
 import { HeatmapView, type HeatShow } from "@/components/heatmap";
+import { mapHref } from "@/components/map-link";
 import { MiniAvatar } from "@/components/mini-avatar";
 import { externalImage } from "@/lib/consent";
 import { getConsent } from "@/lib/consent-server";
@@ -13,7 +14,7 @@ import { SortInputs } from "@/components/sort-head";
 import { Empty, Pager, PctBar, PlayerLink, ROW_OPTIONS, Section, SortTh, Stats, TableWrap, WinRatioBar, pageParam, rowsParam, strParam } from "@/components/ui";
 import { noAutofill } from "@/lib/autofill";
 import { basePath } from "@/lib/base-path";
-import { countMapKillers, gameHasShots, getGame, getMap, getMapAccuracy, getMapGgWins, getMapLoadTime, getMapPlayerTable, getMapWins, getPlayerFlags } from "@/lib/data";
+import { countMapKillers, gameHasShots, getGame, getMapByName, getMapAccuracy, getMapGgWins, getMapLoadTime, getMapPlayerTable, getMapWins, getPlayerFlags } from "@/lib/data";
 import { fmtDuration, fmtNum, fmtPct, kpd, localeOf, ratio } from "@/lib/format";
 import { DOTS, getHeatmap, heatLevel } from "@/lib/heatmap";
 import { levelParam, levelSplit } from "@/lib/map-levels";
@@ -29,14 +30,20 @@ type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-// Once per request: metadata and page both need it.
-const load = cache(async (raw: string) => {
-  const id = Number.parseInt(raw, 10);
-  return Number.isSafeInteger(id) && id > 0 ? getMap(id) : undefined;
+// Once per request: metadata and page both need it. The address names the
+// map (/css/maps/de_dust2); old ones with its number (/css/maps/17) are
+// moved to the name before (src/proxy.ts).
+const load = cache(async (game: string, raw: string) => {
+  let name = raw;
+  try {
+    name = decodeURIComponent(raw);
+  } catch {}
+  return getMapByName(game, name);
 });
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const m = await load((await params).id);
+  const { game, id } = await params;
+  const m = await load(game, id);
   if (!m) return {};
   return { title: `${(await getDict()).t.maps}: ${m.map}` };
 }
@@ -50,9 +57,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function MapPage({ params, searchParams }: Props) {
   await rankingGate((await params).game);
   const { game, id } = await params;
-  const m = await load(id);
+  const m = await load(game, id);
   if (!m) notFound();
-  if (m.game !== game) redirect(`/${m.game}/maps/${m.id}`);
   const sp = await searchParams;
   const { lang, t } = await getDict();
   const consent = await getConsent();
@@ -101,7 +107,7 @@ export default async function MapPage({ params, searchParams }: Props) {
   const w = wins.get(m.id);
   const time = mapPlayTime(m.play_time, loadTime);
   const perMin = kpm(m.kills, time);
-  const base = `/${game}/maps/${m.id}`;
+  const base = mapHref(game, m.map);
   const maps = `/${game}/maps`;
   const back = (
     <Link prefetch={false} href={maps}>

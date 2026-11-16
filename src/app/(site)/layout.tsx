@@ -7,6 +7,7 @@ import { headerTabs } from "@/lib/header-links";
 import { getDict } from "@/lib/i18n";
 import { localeOf } from "@/lib/format";
 import { statsOrigin } from "@/lib/site-url";
+import { canonicalPath, PATH_HEADER } from "@/lib/canonical";
 import { LangMenu } from "@/components/lang-menu";
 import { langDir } from "@/translations/languages";
 import { ShareMenu } from "@/components/share-menu";
@@ -38,7 +39,8 @@ export const dynamic = "force-dynamic";
 
 // Titles, description and link previews (Admin → Settings → SEO).
 export async function generateMetadata(): Promise<Metadata> {
-  const [s, { lang, t }, origin] = await Promise.all([getSettings(), getDict(), statsOrigin()]);
+  const [s, { lang, t }, origin, h] = await Promise.all([getSettings(), getDict(), statsOrigin(), headers()]);
+  const canonical = canonicalPath(h.get(PATH_HEADER));
   const description = s.seoDescription || t.seoDescription;
   const image = s.seoImage || s.logoUrl;
   const images = image ? [image] : undefined;
@@ -65,6 +67,7 @@ export async function generateMetadata(): Promise<Metadata> {
     robots: s.seoIndex ? { index: true, follow: true } : { index: false, follow: false },
     openGraph: { type: "website", siteName: s.siteName, description, images, locale: localeOf(lang).replace("-", "_") },
     twitter: { card: image ? "summary_large_image" : "summary", site: s.seoTwitter || undefined, description, images },
+    alternates: canonical ? { canonical: `${origin}${canonical}` } : undefined,
   };
 }
 
