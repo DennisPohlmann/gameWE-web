@@ -313,6 +313,8 @@ const texts: Record<string, string> = {
   "Choose the game": "اختر اللعبة",
   "The collector has not reported in since {t}": "لم يُبلغ المُجمِّع منذ {t}",
   "Without the collector no new data arrives.": "دون المُجمِّع لا تصل بيانات جديدة.",
+  "The database is older than this website (schema {v}, needed {n})": "قاعدة البيانات أقدم من هذا الموقع (المخطط {v}، المطلوب {n})",
+  "Update the collector first, it migrates the database at start. Until then pages may show errors.": "حدِّث المُجمِّع أولًا، فهو يرحّل قاعدة البيانات عند التشغيل. حتى ذلك الحين قد تعرض الصفحات أخطاء.",
   "The collector has never reported in": "لم يُبلغ المُجمِّع قط",
   "No server yet": "لا خادم بعد",
   "The collector only accepts logs from servers listed here.": "يقبل المُجمِّع السجلات فقط من الخوادم المدرجة هنا.",

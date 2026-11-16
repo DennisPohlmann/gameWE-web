@@ -313,6 +313,8 @@ const texts: Record<string, string> = {
   "Choose the game": "ゲームを選択",
   "The collector has not reported in since {t}": "コレクターは {t} 以降報告していません",
   "Without the collector no new data arrives.": "コレクターがないと新しいデータは届きません。",
+  "The database is older than this website (schema {v}, needed {n})": "データベースがこのサイトより古いです(スキーマ {v}、必要 {n})",
+  "Update the collector first, it migrates the database at start. Until then pages may show errors.": "先にコレクターを更新してください。起動時にデータベースを移行します。それまではページにエラーが表示されることがあります。",
   "The collector has never reported in": "コレクターは一度も報告していません",
   "No server yet": "まだサーバーがありません",
   "The collector only accepts logs from servers listed here.": "コレクターはここに登録されたサーバーのログのみを受け付けます。",

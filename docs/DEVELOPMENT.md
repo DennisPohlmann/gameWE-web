@@ -99,6 +99,18 @@ image with Trivy scan). Only a push to `main` (and the weekly run) publishes
 the image `ghcr.io/dennispohlmann/gamewe-web` with the tag `edge`; nothing
 else is published without a release run.
 
+### Working with the collector
+
+The website depends on the collector's database. Two things keep them in step:
+
+- A new `gamewe_*` key in `hlstats_Options` goes into `WebKeys` in the
+  collector's `internal/settings/settings.go` in the same push pair, or the
+  collector's CI (`TestWebSourceKeys`, which reads this repository's `main`)
+  fails and `gamewe check` reports the key as a typo.
+- Code that needs a new collector migration raises `MIN_SCHEMA` in
+  `src/lib/collector-status.ts` to that migration's version. The admin area
+  then warns while the database is older.
+
 ## Releases
 
 Releases are made by [semantic-release](https://semantic-release.gitbook.io/)

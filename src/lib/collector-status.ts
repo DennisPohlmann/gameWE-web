@@ -35,6 +35,11 @@ export async function collectorStatus(): Promise<CollectorStatus> {
   };
 }
 
+// The collector schema this website is made for: the newest migration of the
+// collector released with it (collector internal/database/migrations.go).
+// An older one shows a warning in the admin area: update the collector first.
+export const MIN_SCHEMA = 31;
+
 // The newest schema version the collector applied, null when the table is
 // missing or not readable for the admin database user.
 export async function collectorSchema(): Promise<{ version: number; at: string | null } | null> {

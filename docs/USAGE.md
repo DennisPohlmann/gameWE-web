@@ -630,7 +630,10 @@ menu button), and lists turn into cards on narrow screens:
   collector's state, its last sign of life (`gamewe_heartbeat`), version
   (link to its release), whether it runs in Docker, a container or directly
   on the server, a known update, the newest database schema version
-  (`hlstats_gamewe_schema_migrations`, "not readable" without access) and
+  (`hlstats_gamewe_schema_migrations`, "not readable" without access; a
+  red note when it is older than the schema this website needs, `MIN_SCHEMA`
+  in `src/lib/collector-status.ts`, also on the overview: update the
+  collector first) and
   the number of waiting or running jobs (link to Jobs). It reloads every 30
   seconds.
 - **Jobs** (`/admin/jobs`, in the menu under Overview and Settings →

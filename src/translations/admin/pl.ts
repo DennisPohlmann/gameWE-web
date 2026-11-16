@@ -308,6 +308,8 @@ const texts: Record<string, string> = {
   "Choose the game": "Wybierz grę",
   "The collector has not reported in since {t}": "Collector nie zgłasza się od {t}",
   "Without the collector no new data arrives.": "Bez collectora nie napływają nowe dane.",
+  "The database is older than this website (schema {v}, needed {n})": "Baza danych jest starsza niż ta strona (schemat {v}, wymagany {n})",
+  "Update the collector first, it migrates the database at start. Until then pages may show errors.": "Najpierw zaktualizuj kolektor, migruje on bazę danych przy starcie. Do tego czasu strony mogą pokazywać błędy.",
   "The collector has never reported in": "Collector nigdy się nie zgłosił",
   "No server yet": "Brak serwera",
   "The collector only accepts logs from servers listed here.": "Collector przyjmuje logi tylko z serwerów wymienionych tutaj.",

@@ -308,6 +308,8 @@ const texts: Record<string, string> = {
   "Choose the game": "选择游戏",
   "The collector has not reported in since {t}": "收集器自 {t} 起未报告",
   "Without the collector no new data arrives.": "没有收集器就不会有新数据。",
+  "The database is older than this website (schema {v}, needed {n})": "数据库比本网站旧(架构 {v},需要 {n})",
+  "Update the collector first, it migrates the database at start. Until then pages may show errors.": "请先更新采集器,它会在启动时迁移数据库。在此之前页面可能会显示错误。",
   "The collector has never reported in": "收集器从未报告",
   "No server yet": "还没有服务器",
   "The collector only accepts logs from servers listed here.": "收集器只接收此处列出的服务器的日志。",

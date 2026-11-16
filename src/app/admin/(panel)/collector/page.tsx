@@ -4,7 +4,7 @@ import { AutoRefresh } from "@/components/auto-refresh";
 import { PageHead } from "@/components/admin/page-head";
 import { adminDict } from "@/lib/admin-i18n";
 import { requirePerm } from "@/lib/auth";
-import { collectorSchema, collectorStatus } from "@/lib/collector-status";
+import { MIN_SCHEMA, collectorSchema, collectorStatus } from "@/lib/collector-status";
 import { adminQuery } from "@/lib/db";
 import { fmtDateTime, nowUnix } from "@/lib/format";
 import { fill, getAdminLang } from "@/lib/i18n";
@@ -71,7 +71,23 @@ export default async function CollectorPage() {
         u.cUpdateNone
       ),
     ],
-    [u.cSchema, schema ? `${fill(u.cSchemaVersion, { v: String(schema.version) })}${schema.at ? ` · ${fmtDateTime(Number(schema.at), lang)}` : ""}` : u.cSchemaUnknown],
+    [
+      u.cSchema,
+      schema ? (
+        <>
+          {`${fill(u.cSchemaVersion, { v: String(schema.version) })}${schema.at ? ` · ${fmtDateTime(Number(schema.at), lang)}` : ""}`}
+          {schema.version < MIN_SCHEMA ? (
+            <>
+              {" "}
+              <span className="pill bad">{fill(u.attSchema, { v: schema.version, n: MIN_SCHEMA })}</span>
+              <small className="muted">{u.attSchemaText}</small>
+            </>
+          ) : null}
+        </>
+      ) : (
+        u.cSchemaUnknown
+      ),
+    ],
     [u.cJobs, <Link prefetch={false} href="/admin/jobs">{open === null ? "–" : open ? fill(u.cJobsOpen, { n: String(open) }) : u.cJobsNone}</Link>],
   ];
   return (

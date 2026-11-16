@@ -5,6 +5,7 @@ import { GameTag } from "@/components/ui";
 import { adminDict } from "@/lib/admin-i18n";
 import { adminPlayerTotals, playersByRanking, rankingSummaries } from "@/lib/admin-rankings";
 import { adminSecret, requireAdmin } from "@/lib/auth";
+import { MIN_SCHEMA, collectorSchema } from "@/lib/collector-status";
 import { permMap } from "@/lib/admin-perms";
 import { adminQuery } from "@/lib/db";
 import { dateFormat, localeOf } from "@/lib/format";
@@ -26,7 +27,7 @@ export default async function AdminHome() {
   const midnight = new Date();
   midnight.setHours(0, 0, 0, 0);
   const secret = adminSecret();
-  const [rankings, players, totals, [servers], beat, totp, status] = await Promise.all([
+  const [rankings, players, totals, [servers], beat, totp, status, schema] = await Promise.all([
     rankingSummaries(),
     playersByRanking(),
     adminPlayerTotals(Math.floor(midnight.getTime() / 1000)),
@@ -36,6 +37,7 @@ export default async function AdminHome() {
     adminQuery<{ value: string }>(`SELECT value FROM hlstats_Options WHERE keyname = 'gamewe_heartbeat'`).catch(() => []),
     secret ? readSecret(user.username, secret).catch(() => null) : Promise.resolve(undefined),
     updateStatus(true),
+    collectorSchema(),
   ]);
   // Templates (seeded rankings without servers) are folded into one row; a
   // new ranking without servers yet is listed (ranking-template.ts).
@@ -61,6 +63,16 @@ export default async function AdminHome() {
       title: beatAt ? fill(u.attCollector, { t: since }) : u.attCollectorNever,
       text: u.attCollectorText,
       href: can["settings.view"] ? "/admin/settings/capture" : "/admin/collector",
+      link: u.navCollector,
+    });
+  // Unreadable schema (null): no warning, the collector page says so.
+  if (schema && schema.version < MIN_SCHEMA)
+    todo.push({
+      tone: "bad",
+      icon: "warn",
+      title: fill(u.attSchema, { v: schema.version, n: MIN_SCHEMA }),
+      text: u.attSchemaText,
+      href: "/admin/collector",
       link: u.navCollector,
     });
   for (const r of can["rankings.view"] ? noGame : []) {

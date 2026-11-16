@@ -313,6 +313,8 @@ const texts: Record<string, string> = {
   "Choose the game": "Oyunu seç",
   "The collector has not reported in since {t}": "Toplayıcı {t} tarihinden beri bildirmedi",
   "Without the collector no new data arrives.": "Toplayıcı olmadan yeni veri gelmez.",
+  "The database is older than this website (schema {v}, needed {n})": "Veritabanı bu siteden daha eski (şema {v}, gerekli {n})",
+  "Update the collector first, it migrates the database at start. Until then pages may show errors.": "Önce toplayıcıyı güncelleyin, başlangıçta veritabanını taşır. O zamana kadar sayfalar hata gösterebilir.",
   "The collector has never reported in": "Toplayıcı hiç bildirmedi",
   "No server yet": "Henüz sunucu yok",
   "The collector only accepts logs from servers listed here.": "Toplayıcı yalnızca burada listelenen sunuculardan günlük kabul eder.",

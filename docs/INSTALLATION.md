@@ -478,6 +478,19 @@ The admin overview shows when a newer release is out
 journalctl -u gamewe-web -f
 ```
 
+### Collector and website versions
+
+The website reads the tables the collector creates and migrates, so update
+both together and in this order: stop both, update the collector first (it
+migrates the database at start), then the website. Use the same kind of tag
+for both: `latest` or versions released together, or `edge` for both; an
+`edge` website on a `latest` collector can expect columns the database does
+not have yet. A website that is newer than the database shows a red note on
+the admin overview and on Admin → Collector ("The database is older than this
+website", with the schema version the database has and the one it needs);
+until the collector is updated, pages may show errors. An older collector on
+a newer database only warns in `gamewe db status` (update it).
+
 ### Update to 1.8
 
 Update together with the collector 1.7: stop both, update the collector first

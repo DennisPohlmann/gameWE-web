@@ -313,6 +313,8 @@ const texts: Record<string, string> = {
   "Choose the game": "게임 선택",
   "The collector has not reported in since {t}": "콜렉터가 {t} 이후 보고하지 않았습니다",
   "Without the collector no new data arrives.": "콜렉터가 없으면 새 데이터가 들어오지 않습니다.",
+  "The database is older than this website (schema {v}, needed {n})": "데이터베이스가 이 사이트보다 오래되었습니다 (스키마 {v}, 필요 {n})",
+  "Update the collector first, it migrates the database at start. Until then pages may show errors.": "먼저 컬렉터를 업데이트하세요. 시작할 때 데이터베이스를 마이그레이션합니다. 그때까지 페이지에 오류가 표시될 수 있습니다.",
   "The collector has never reported in": "콜렉터가 한 번도 보고하지 않았습니다",
   "No server yet": "아직 서버 없음",
   "The collector only accepts logs from servers listed here.": "콜렉터는 여기 등록된 서버의 로그만 받습니다.",

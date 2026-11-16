@@ -313,6 +313,8 @@ const texts: Record<string, string> = {
   "Choose the game": "Vybrat hru",
   "The collector has not reported in since {t}": "Kolektor se nehlásí od {t}",
   "Without the collector no new data arrives.": "Bez kolektoru nepřicházejí žádná nová data.",
+  "The database is older than this website (schema {v}, needed {n})": "Databáze je starší než tento web (schéma {v}, potřeba {n})",
+  "Update the collector first, it migrates the database at start. Until then pages may show errors.": "Nejprve aktualizujte kolektor, při startu databázi migruje. Do té doby mohou stránky zobrazovat chyby.",
   "The collector has never reported in": "Kolektor se nikdy nehlásil",
   "No server yet": "Zatím žádný server",
   "The collector only accepts logs from servers listed here.": "Kolektor přijímá logy jen ze serverů uvedených zde.",
