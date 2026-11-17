@@ -613,6 +613,8 @@ const texts: Record<string, string> = {
   "API": "API",
   "Turn the API on": "API 켜기",
   "No: the public API, the admin API, their documentation on /api and the API tokens under My account are off. Existing tokens stay stored. Takes effect within 30 seconds.": "아니요: 공개 API, 관리 API, /api의 문서, 내 계정의 API 토큰이 꺼집니다. 기존 토큰은 저장된 채 남습니다. 30초 안에 적용됩니다.",
+  "Turn the MCP server on": "MCP 서버 켜기",
+  "No: the MCP server /api/v1/admin/mcp answers 404 and AI clients no longer reach the admin area; the rest of the API stays on. Tokens with MCP stay stored. With the API off, MCP is off too. Takes effect within 30 seconds.": "아니요: MCP 서버 /api/v1/admin/mcp가 404로 응답하고 AI 클라이언트는 더 이상 관리 영역에 접근하지 못합니다. 나머지 API는 켜진 채 유지됩니다. MCP가 있는 토큰은 저장된 채 남습니다. API가 꺼지면 MCP도 꺼집니다. 30초 안에 적용됩니다.",
   "The collector picks up changes within a minute. Points already awarded stay as they are.": "콜렉터가 1분 안에 변경을 반영합니다. 이미 지급된 점수는 그대로입니다.",
   "Points of a new player": "새 플레이어의 점수",
   "Points per kill (base)": "킬당 점수 (기본)",

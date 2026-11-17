@@ -7,6 +7,8 @@
 
 // Answer of every API path while the API is off.
 export const API_DISABLED = { error: "api_disabled", message: "the API is turned off on this site" } as const;
+// Answer of /api/v1/admin/mcp while only the MCP server is off (gamewe_mcp_enabled).
+export const MCP_DISABLED = { error: "mcp_disabled", message: "the MCP server is turned off on this site" } as const;
 
 // The old environment variable API_ENABLED, still honoured while the setting
 // is not stored: unset or empty is on; an unknown value counts as off, so a
@@ -21,9 +23,15 @@ export function apiSwitch(v: string | undefined): { on: boolean; invalid: boolea
   return { on: false, invalid: true };
 }
 
+// The MCP switch, read like API_ENABLED: unset is on (installations from
+// before it keep MCP), an unknown value is off; never on while the API is off.
+export function mcpSwitch(api: boolean, stored: string | undefined): boolean {
+  return api && apiSwitch(stored).on;
+}
+
 // 404 with API_DISABLED, the answer of every API path while it is off.
-export function apiDisabledResponse(): Response {
-  return new Response(JSON.stringify(API_DISABLED), {
+export function apiDisabledResponse(body: typeof API_DISABLED | typeof MCP_DISABLED = API_DISABLED): Response {
+  return new Response(JSON.stringify(body), {
     status: 404,
     headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff" },
   });

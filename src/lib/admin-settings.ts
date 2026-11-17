@@ -270,6 +270,18 @@ const definitions: Omit<SettingGroup, "area">[] = [
         },
       },
       {
+        key: "gamewe_mcp_enabled",
+        label: { de: "MCP-Server einschalten", en: "Turn the MCP server on" },
+        type: "bool",
+        def: "1",
+        minLevel: 100,
+        show: { key: "gamewe_api_enabled", value: "1" },
+        help: {
+          de: "Nein: der MCP-Server /api/v1/admin/mcp antwortet 404 und KI-Clients erreichen den Admin-Bereich nicht mehr; die übrige API bleibt an. Tokens mit MCP bleiben gespeichert. Ist die API aus, ist auch MCP aus. Wirkt spätestens nach 30 Sekunden.",
+          en: "No: the MCP server /api/v1/admin/mcp answers 404 and AI clients no longer reach the admin area; the rest of the API stays on. Tokens with MCP stay stored. With the API off, MCP is off too. Takes effect within 30 seconds.",
+        },
+      },
+      {
         key: "gamewe_update_check",
         label: { de: "Nach Updates suchen", en: "Check for updates" },
         type: "bool",
@@ -737,7 +749,7 @@ export const settingGroups: SettingGroup[] = [
     },
     items: pick("gamewe_metrics_token", "gamewe_update_check"),
   },
-  { id: "api", area: "services", title: { de: "API", en: "API" }, items: pick("gamewe_api_enabled") },
+  { id: "api", area: "services", title: { de: "API", en: "API" }, items: pick("gamewe_api_enabled", "gamewe_mcp_enabled") },
   {
     id: "notifications",
     area: "services",

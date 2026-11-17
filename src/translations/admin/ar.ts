@@ -613,6 +613,8 @@ const texts: Record<string, string> = {
   "API": "API",
   "Turn the API on": "تشغيل الواجهة البرمجية",
   "No: the public API, the admin API, their documentation on /api and the API tokens under My account are off. Existing tokens stay stored. Takes effect within 30 seconds.": "لا: الواجهة العامة وواجهة الإدارة وتوثيقهما على /api ورموز API ضمن حسابي معطّلة. تبقى الرموز الموجودة مخزّنة. يسري خلال 30 ثانية.",
+  "Turn the MCP server on": "تشغيل خادم MCP",
+  "No: the MCP server /api/v1/admin/mcp answers 404 and AI clients no longer reach the admin area; the rest of the API stays on. Tokens with MCP stay stored. With the API off, MCP is off too. Takes effect within 30 seconds.": "لا: يجيب خادم MCP على /api/v1/admin/mcp بـ 404 ولا يصل عملاء الذكاء الاصطناعي إلى منطقة الإدارة بعد ذلك؛ تبقى بقية الواجهة البرمجية مفعّلة. تبقى الرموز ذات MCP مخزّنة. عند إيقاف الواجهة البرمجية يتوقف MCP أيضًا. يسري خلال 30 ثانية.",
   "The collector picks up changes within a minute. Points already awarded stay as they are.": "يطبّق المُجمِّع التغييرات خلال دقيقة. النقاط الممنوحة سابقًا تبقى كما هي.",
   "Points of a new player": "نقاط اللاعب الجديد",
   "Points per kill (base)": "النقاط لكل قتلة (أساسي)",

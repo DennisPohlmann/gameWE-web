@@ -1,5 +1,6 @@
 import "server-only";
 import { envBacked } from "./config";
+import { mcpSwitch } from "./api-switch";
 import type { Lang } from "@/translations/languages";
 import { eventsMode, type EventsMode } from "./events-mode";
 import { idleMinutes } from "./admin-idle";
@@ -25,6 +26,8 @@ export type Settings = {
   siteName: string;
   // The whole API on or off (lib/api-switch.ts).
   apiEnabled: boolean;
+  // The MCP server of the admin API (gamewe_mcp_enabled); never on while the API is off.
+  mcpEnabled: boolean;
   // Minutes without activity until the admin area signs out; 0 = off
   // (lib/admin-idle.ts).
   adminIdleMinutes: number;
@@ -140,6 +143,10 @@ export async function apiEnabled(): Promise<boolean> {
   return (await getSettings()).apiEnabled;
 }
 
+export async function mcpEnabled(): Promise<boolean> {
+  return (await getSettings()).mcpEnabled;
+}
+
 export async function getSettings(): Promise<Settings> {
   if (cache && Date.now() - cache.at < 30_000) return cache.value;
   let o: Record<string, string> = {};
@@ -147,7 +154,7 @@ export async function getSettings(): Promise<Settings> {
   try {
     const rows = await query<{ keyname: string; value: string }>(
       `SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`,
-      [["sitename", "MinActivity", "gamewe_page_size", "gamewe_default_lang", "gamewe_steam_profiles", "gamewe_site_url", "gamewe_logo_url", "gamewe_header_logo", "gamewe_favicon", "gamewe_apple_icon", "gamewe_title_format", "gamewe_title_ranking", "gamewe_geoip_credit", "gamewe_sig_brand", "gamewe_chat_public", "gamewe_game_events", "gamewe_player_events", "gamewe_skin", "gamewe_game_skins", "gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_sourcebans_url", "gamewe_fastdl", "gamewe_fastdl_url", "gamewe_seo_description", "gamewe_seo_keywords", "gamewe_seo_image", "gamewe_seo_index", "gamewe_seo_twitter", "gamewe_header_home", "gamewe_header_order", "gamewe_admin_auto_logout", "gamewe_admin_logout_minutes", "gamewe_api_enabled", ...linkKeys]],
+      [["sitename", "MinActivity", "gamewe_page_size", "gamewe_default_lang", "gamewe_steam_profiles", "gamewe_site_url", "gamewe_logo_url", "gamewe_header_logo", "gamewe_favicon", "gamewe_apple_icon", "gamewe_title_format", "gamewe_title_ranking", "gamewe_geoip_credit", "gamewe_sig_brand", "gamewe_chat_public", "gamewe_game_events", "gamewe_player_events", "gamewe_skin", "gamewe_game_skins", "gamewe_map_live", "gamewe_map_players", "gamewe_map_style", "gamewe_sourcebans_url", "gamewe_fastdl", "gamewe_fastdl_url", "gamewe_seo_description", "gamewe_seo_keywords", "gamewe_seo_image", "gamewe_seo_index", "gamewe_seo_twitter", "gamewe_header_home", "gamewe_header_order", "gamewe_admin_auto_logout", "gamewe_admin_logout_minutes", "gamewe_api_enabled", "gamewe_mcp_enabled", ...linkKeys]],
     );
     o = Object.fromEntries(rows.map((r) => [r.keyname, r.value]));
   } catch {
@@ -159,6 +166,7 @@ export async function getSettings(): Promise<Settings> {
     siteName: base.siteName,
     // Database down: the switch is unknown, and an API turned off stays closed.
     apiEnabled: !dbDown && base.apiEnabled,
+    mcpEnabled: mcpSwitch(!dbDown && base.apiEnabled, o.gamewe_mcp_enabled),
     seoDescription: (o.gamewe_seo_description ?? "").trim().slice(0, 300),
     seoKeywords: (o.gamewe_seo_keywords ?? "").trim().slice(0, 255) || SEO_KEYWORDS,
     seoImage: safeUrl(o.gamewe_seo_image),

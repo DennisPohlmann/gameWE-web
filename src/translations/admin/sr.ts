@@ -613,6 +613,8 @@ const texts: Record<string, string> = {
   "API": "API",
   "Turn the API on": "Укључи API",
   "No: the public API, the admin API, their documentation on /api and the API tokens under My account are off. Existing tokens stay stored. Takes effect within 30 seconds.": "Не: јавни API, admin API, њихова документација на /api и API токени у Мој налог су искључени. Постојећи токени остају сачувани. Ступа на снагу у року од 30 секунди.",
+  "Turn the MCP server on": "Укључи MCP сервер",
+  "No: the MCP server /api/v1/admin/mcp answers 404 and AI clients no longer reach the admin area; the rest of the API stays on. Tokens with MCP stay stored. With the API off, MCP is off too. Takes effect within 30 seconds.": "Не: MCP сервер /api/v1/admin/mcp одговара 404 и AI клијенти више не стижу до администрације; остатак API-ја остаје укључен. Токени са MCP остају сачувани. Кад је API искључен, искључен је и MCP. Ступа на снагу у року од 30 секунди.",
   "The collector picks up changes within a minute. Points already awarded stay as they are.": "Колектор преузима измене у року од минута. Већ додељени поени остају какви јесу.",
   "Points of a new player": "Поени новог играча",
   "Points per kill (base)": "Поени по убиству (основа)",

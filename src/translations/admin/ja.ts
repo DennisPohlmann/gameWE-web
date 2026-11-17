@@ -613,6 +613,8 @@ const texts: Record<string, string> = {
   "API": "API",
   "Turn the API on": "API を有効にする",
   "No: the public API, the admin API, their documentation on /api and the API tokens under My account are off. Existing tokens stay stored. Takes effect within 30 seconds.": "いいえ: 公開 API、管理 API、/api のドキュメント、マイアカウントの API トークンが無効になります。既存のトークンは保存されたままです。30秒以内に反映されます。",
+  "Turn the MCP server on": "MCP サーバーを有効にする",
+  "No: the MCP server /api/v1/admin/mcp answers 404 and AI clients no longer reach the admin area; the rest of the API stays on. Tokens with MCP stay stored. With the API off, MCP is off too. Takes effect within 30 seconds.": "いいえ: MCP サーバー /api/v1/admin/mcp は 404 を返し、AI クライアントは管理画面に届かなくなります。その他の API は有効なままです。MCP 付きのトークンは保存されたままです。API が無効なら MCP も無効です。30秒以内に反映されます。",
   "The collector picks up changes within a minute. Points already awarded stay as they are.": "コレクターは1分以内に変更を反映します。すでに付与されたポイントはそのままです。",
   "Points of a new player": "新しいプレイヤーのポイント",
   "Points per kill (base)": "1キルあたりのポイント (基本)",

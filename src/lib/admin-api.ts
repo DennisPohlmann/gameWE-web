@@ -50,8 +50,8 @@ import { ACCESS_SECRETS, FASTDL_ACCESS, type Access, type AccessField } from "./
 import { allServers, rankingSummaries } from "./admin-rankings";
 import { RAW_GROUP, READONLY_OPTIONS, settingGroups } from "./admin-settings";
 import { overLimit } from "./api";
-import { apiDisabledResponse } from "./api-switch";
-import { apiEnabled } from "./settings";
+import { MCP_DISABLED, apiDisabledResponse } from "./api-switch";
+import { apiEnabled, mcpEnabled } from "./settings";
 import { bearerToken, sameOwner, scopeFor } from "./api-token-core";
 import { CONFIRM_SECONDS, MCP_VERSIONS, RpcError, confirmCode, confirmOk, initializeResult, originOk, rpcError, rpcMessage, rpcResult, toolCall, tools } from "./admin-mcp";
 import { authenticate } from "./api-tokens";
@@ -128,6 +128,9 @@ type Handler = (c: Ctx) => Promise<Result>;
 export async function adminApi(req: Request, segments: string[]): Promise<Response> {
   // API off: no token is even looked at.
   if (!(await apiEnabled())) return apiDisabledResponse();
+  const isMcp = segments.length === 1 && segments[0] === "mcp";
+  // MCP off: the same, for this one path only.
+  if (isMcp && !(await mcpEnabled())) return apiDisabledResponse(MCP_DISABLED);
   const method = req.method.toUpperCase();
   const ip = await clientIp();
   const wait = failedBefore(ip);
@@ -142,7 +145,7 @@ export async function adminApi(req: Request, segments: string[]): Promise<Respon
   if (busy) return error(429, "rate_limited", `more than ${RATE} requests per minute`, {}, { "retry-after": String(busy) });
 
   const actor: Actor = { user: auth.user, via: auth.token.name };
-  if (segments.length === 1 && segments[0] === "mcp") return mcp(req, method, actor, auth.token);
+  if (isMcp) return mcp(req, method, actor, auth.token);
   const path = `/admin/${segments.map(encodeURIComponent).join("/")}`;
   let status = 500;
   try {

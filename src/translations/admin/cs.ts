@@ -613,6 +613,8 @@ const texts: Record<string, string> = {
   "API": "API",
   "Turn the API on": "Zapnout API",
   "No: the public API, the admin API, their documentation on /api and the API tokens under My account are off. Existing tokens stay stored. Takes effect within 30 seconds.": "Ne: veřejné API, administrační API, jejich dokumentace na /api a API tokeny v Můj účet jsou vypnuté. Existující tokeny zůstanou uložené. Projeví se do 30 sekund.",
+  "Turn the MCP server on": "Zapnout MCP server",
+  "No: the MCP server /api/v1/admin/mcp answers 404 and AI clients no longer reach the admin area; the rest of the API stays on. Tokens with MCP stay stored. With the API off, MCP is off too. Takes effect within 30 seconds.": "Ne: MCP server /api/v1/admin/mcp odpovídá 404 a AI klienti se už do administrace nedostanou; zbytek API zůstane zapnutý. Tokeny s MCP zůstanou uložené. Když je API vypnuté, je vypnuté i MCP. Projeví se do 30 sekund.",
   "The collector picks up changes within a minute. Points already awarded stay as they are.": "Kolektor převezme změny do minuty. Už udělené body zůstávají, jak jsou.",
   "Points of a new player": "Body nového hráče",
   "Points per kill (base)": "Body za zabití (základ)",

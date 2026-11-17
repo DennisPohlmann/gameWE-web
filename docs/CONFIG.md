@@ -110,6 +110,7 @@ removed from `web.env`.
 | Steam → Steam Web API key | `gamewe_steam_api_key` | `STEAM_API_KEY` | - | 32 hex characters |
 | Monitoring → Token for /-/metrics | `gamewe_metrics_token` | `GAMEWE_METRICS_TOKEN` | - | at least 16 characters |
 | API → Turn the API on | `gamewe_api_enabled` | `API_ENABLED` (`on`/`off`) | on | `1` / `0` |
+| API → Turn the MCP server on | `gamewe_mcp_enabled` | - | on | `1` / `0` |
 
 The Steam Web API key (https://steamcommunity.com/dev/apikey) and the
 metrics token are write-only: the form shows only whether they are set (also
@@ -356,6 +357,15 @@ The website itself, `/sig/...`, `/banner/...`, the event feeds and `/-/metrics`
 are not part of the API and keep working. A change takes effect without a
 restart, within 30 seconds. While the database cannot be reached the API counts
 as off too, because the switch cannot be read.
+
+Below it, Admin → Settings → API → Turn the MCP server on (default on, also
+level 100, shown only while the API is on) switches only the MCP server
+`/api/v1/admin/mcp`. While it is off, that path answers `404` with
+`{"error":"mcp_disabled","message":"..."}` before any token is looked at; the
+public API, the rest of the admin API, `/api` and the API tokens keep working,
+and tokens with `mcp` stay stored. With the API off, MCP is off too, whatever
+this switch says. Installations from before the switch keep MCP on until it is
+turned off; it takes effect within 30 seconds as well.
 
 The environment no longer switches the API. An older `API_ENABLED=off` keeps
 the API off after an update until the settings page is saved once (an unknown

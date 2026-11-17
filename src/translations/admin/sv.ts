@@ -613,6 +613,8 @@ const texts: Record<string, string> = {
   "API": "API",
   "Turn the API on": "Slå på API:t",
   "No: the public API, the admin API, their documentation on /api and the API tokens under My account are off. Existing tokens stay stored. Takes effect within 30 seconds.": "Nej: det offentliga API:t, admin-API:t, deras dokumentation på /api och API-tokens under Mitt konto är avstängda. Befintliga tokens sparas. Träder i kraft inom 30 sekunder.",
+  "Turn the MCP server on": "Slå på MCP-servern",
+  "No: the MCP server /api/v1/admin/mcp answers 404 and AI clients no longer reach the admin area; the rest of the API stays on. Tokens with MCP stay stored. With the API off, MCP is off too. Takes effect within 30 seconds.": "Nej: MCP-servern /api/v1/admin/mcp svarar 404 och AI-klienter når inte längre administrationen; resten av API:t är fortfarande på. Tokens med MCP sparas. När API:t är avstängt är även MCP avstängt. Träder i kraft inom 30 sekunder.",
   "The collector picks up changes within a minute. Points already awarded stay as they are.": "Insamlaren tar in ändringar inom en minut. Redan utdelade poäng förblir som de är.",
   "Points of a new player": "Poäng för en ny spelare",
   "Points per kill (base)": "Poäng per kill (bas)",

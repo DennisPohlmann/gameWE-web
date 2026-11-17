@@ -613,6 +613,8 @@ const texts: Record<string, string> = {
   "API": "API",
   "Turn the API on": "开启 API",
   "No: the public API, the admin API, their documentation on /api and the API tokens under My account are off. Existing tokens stay stored. Takes effect within 30 seconds.": "否：公开 API、管理 API、/api 上的文档以及“我的账户”中的 API 令牌均关闭。现有令牌仍会保存。30 秒内生效。",
+  "Turn the MCP server on": "开启 MCP 服务器",
+  "No: the MCP server /api/v1/admin/mcp answers 404 and AI clients no longer reach the admin area; the rest of the API stays on. Tokens with MCP stay stored. With the API off, MCP is off too. Takes effect within 30 seconds.": "否：MCP 服务器 /api/v1/admin/mcp 返回 404，AI 客户端将无法再访问管理区；其余 API 保持开启。带有 MCP 的令牌仍会保存。API 关闭时，MCP 也会关闭。30 秒内生效。",
   "The collector picks up changes within a minute. Points already awarded stay as they are.": "收集器会在一分钟内应用更改。已发放的分数保持不变。",
   "Points of a new player": "新玩家的分数",
   "Points per kill (base)": "每次击杀的分数（基础值）",

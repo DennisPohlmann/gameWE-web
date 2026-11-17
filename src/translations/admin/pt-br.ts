@@ -613,6 +613,8 @@ const texts: Record<string, string> = {
   "API": "API",
   "Turn the API on": "Ativar a API",
   "No: the public API, the admin API, their documentation on /api and the API tokens under My account are off. Existing tokens stay stored. Takes effect within 30 seconds.": "Não: a API pública, a API de administração, a documentação delas em /api e os tokens de API em Minha conta ficam desativados. Os tokens existentes continuam armazenados. Vale em até 30 segundos.",
+  "Turn the MCP server on": "Ativar o servidor MCP",
+  "No: the MCP server /api/v1/admin/mcp answers 404 and AI clients no longer reach the admin area; the rest of the API stays on. Tokens with MCP stay stored. With the API off, MCP is off too. Takes effect within 30 seconds.": "Não: o servidor MCP /api/v1/admin/mcp responde 404 e os clientes de IA não chegam mais à administração; o resto da API continua ativado. Os tokens com MCP continuam armazenados. Com a API desativada, o MCP também fica desativado. Vale em até 30 segundos.",
   "The collector picks up changes within a minute. Points already awarded stay as they are.": "O collector aplica as alterações em até um minuto. Pontos já concedidos continuam como estão.",
   "Points of a new player": "Pontos de um jogador novo",
   "Points per kill (base)": "Pontos por abate (base)",

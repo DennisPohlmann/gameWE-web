@@ -1,7 +1,7 @@
 // The API switch (src/lib/api-switch.ts, Admin -> Settings -> API). Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { API_DISABLED, apiDisabledResponse, apiSwitch } from "../src/lib/api-switch.ts";
+import { API_DISABLED, MCP_DISABLED, apiDisabledResponse, apiSwitch, mcpSwitch } from "../src/lib/api-switch.ts";
 import { allSettings, settingGroups } from "../src/lib/admin-settings.ts";
 import { envBacked, envFormValues, valueSource } from "../src/lib/config.ts";
 
@@ -72,4 +72,35 @@ test("every API route goes through a guarded helper", async () => {
     const body = src.slice(src.indexOf(`export async function ${fn}(`));
     assert.match(body.split("\n").slice(1, 4).join("\n"), /if \(!\(await apiEnabled\(\)\)\) return apiDisabledResponse\(\);/, `${file} ${fn}`);
   }
+});
+
+test("MCP switch: on unless stored off, never without the API", () => {
+  for (const v of [undefined, "", "1", " 1 "]) assert.equal(mcpSwitch(true, v), true, String(v));
+  assert.equal(mcpSwitch(true, "0"), false);
+  assert.equal(mcpSwitch(true, " 0 "), false);
+  for (const v of ["off", "false", "no", "of"]) assert.equal(mcpSwitch(true, v), false, v);
+  for (const v of [undefined, "1", "0"]) assert.equal(mcpSwitch(false, v), false, String(v));
+});
+
+test("MCP field: on the API page, default on, level 100, shown only while the API is on", () => {
+  const s = allSettings.find((x) => x.key === "gamewe_mcp_enabled");
+  assert.equal(s?.type, "bool");
+  assert.equal(s?.def, "1");
+  assert.equal(s?.minLevel, 100);
+  assert.deepEqual(s?.show, { key: "gamewe_api_enabled", value: "1" });
+  assert.deepEqual(settingGroups.find((g) => g.id === "api")?.items.map((x) => x.key), ["gamewe_api_enabled", "gamewe_mcp_enabled"]);
+});
+
+test("MCP off: 404 mcp_disabled, before any token is looked at", async () => {
+  const r = apiDisabledResponse(MCP_DISABLED);
+  assert.equal(r.status, 404);
+  assert.equal(r.headers.get("cache-control"), "no-store");
+  assert.deepEqual(await r.json(), MCP_DISABLED);
+  assert.equal(MCP_DISABLED.error, "mcp_disabled");
+  const { readFileSync } = await import("node:fs");
+  const src = readFileSync("src/lib/admin-api.ts", "utf8");
+  const body = src.slice(src.indexOf("export async function adminApi("));
+  const guard = body.indexOf("if (isMcp && !(await mcpEnabled())) return apiDisabledResponse(MCP_DISABLED);");
+  assert.ok(guard > 0 && guard < body.indexOf("bearerToken("));
+  assert.ok(guard < body.indexOf("return mcp("));
 });

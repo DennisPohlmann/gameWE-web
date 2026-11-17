@@ -613,6 +613,8 @@ const texts: Record<string, string> = {
   "API": "API",
   "Turn the API on": "Увімкнути API",
   "No: the public API, the admin API, their documentation on /api and the API tokens under My account are off. Existing tokens stay stored. Takes effect within 30 seconds.": "Ні: публічний API, API адміністрування, їхня документація на /api і API-токени в «Мій обліковий запис» вимкнені. Наявні токени залишаються збереженими. Діє протягом 30 секунд.",
+  "Turn the MCP server on": "Увімкнути MCP-сервер",
+  "No: the MCP server /api/v1/admin/mcp answers 404 and AI clients no longer reach the admin area; the rest of the API stays on. Tokens with MCP stay stored. With the API off, MCP is off too. Takes effect within 30 seconds.": "Ні: MCP-сервер /api/v1/admin/mcp відповідає 404, і ШІ-клієнти більше не потрапляють до адміністрування; решта API залишається увімкненою. Токени з MCP залишаються збереженими. Коли API вимкнено, MCP теж вимкнено. Діє протягом 30 секунд.",
   "The collector picks up changes within a minute. Points already awarded stay as they are.": "Колектор врахує зміни протягом хвилини. Уже нараховані очки залишаються як є.",
   "Points of a new player": "Очки нового гравця",
   "Points per kill (base)": "Очки за вбивство (базові)",

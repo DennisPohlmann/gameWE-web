@@ -613,6 +613,8 @@ const texts: Record<string, string> = {
   "API": "API",
   "Turn the API on": "API'yi aç",
   "No: the public API, the admin API, their documentation on /api and the API tokens under My account are off. Existing tokens stay stored. Takes effect within 30 seconds.": "Hayır: herkese açık API, yönetim API'si, /api'deki belgeleri ve Hesabım altındaki API belirteçleri kapalıdır. Mevcut belirteçler saklanır. 30 saniye içinde etkili olur.",
+  "Turn the MCP server on": "MCP sunucusunu aç",
+  "No: the MCP server /api/v1/admin/mcp answers 404 and AI clients no longer reach the admin area; the rest of the API stays on. Tokens with MCP stay stored. With the API off, MCP is off too. Takes effect within 30 seconds.": "Hayır: MCP sunucusu /api/v1/admin/mcp 404 yanıtı verir ve yapay zekâ istemcileri artık yönetim alanına ulaşamaz; API'nin geri kalanı açık kalır. MCP'li belirteçler saklanır. API kapalıyken MCP de kapalıdır. 30 saniye içinde etkili olur.",
   "The collector picks up changes within a minute. Points already awarded stay as they are.": "Toplayıcı değişiklikleri bir dakika içinde alır. Önceden verilmiş puanlar olduğu gibi kalır.",
   "Points of a new player": "Yeni oyuncunun puanı",
   "Points per kill (base)": "Öldürme başına puan (temel)",

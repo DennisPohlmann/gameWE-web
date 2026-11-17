@@ -185,7 +185,10 @@ are listed once in `src/lib/openapi-admin.ts`, and the router
   the answer as JSON, no sessions and no event stream, so `GET` gets `405`;
   protocol versions 2025-11-25, 2025-06-18 and 2025-03-26) for AI clients.
   Only tokens with `mcp`; authentication, rate limit and errors are those
-  of the admin API. The tools are the operations of the admin API, one per
+  of the admin API. Admin → Settings → API can turn the MCP server off on
+  its own: it then answers `404` `{"error":"mcp_disabled"}` and the rest of
+  the API keeps working (see
+  [CONFIG.md](CONFIG.md#turning-the-api-off)). The tools are the operations of the admin API, one per
   operation with its `operationId` as name, its parameters as arguments and
   its JSON body as `body`: the `GET` operations with `read`, the others with
   `write`, each up to the token's admin level (`tools/list` shows only

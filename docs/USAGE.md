@@ -482,7 +482,10 @@ read is ticked and the changing ones if change is ticked. Before every
 change the server answers only what it would do and a confirmation code;
 the AI client must ask you and call again with the code (valid 5 minutes).
 A request the token may not make gets `403 insufficient_scope`; tokens from
-before this choice can read and change, but not use MCP. With a token, the own password, TOTP, level and
+before this choice can read and change, but not use MCP. Admin → Settings →
+API → Turn the MCP server on (level 100) switches the MCP server off for all
+tokens without touching the rest of the API; `/api/v1/admin/mcp` then
+answers `404` `mcp_disabled`. With a token, the own password, TOTP, level and
 account cannot be changed, and tokens cannot be managed; deleting a user or
 lowering them below level 80 stops their tokens at once. A new password,
 removing TOTP and `create-admin` delete the user's tokens too, so scripts need
