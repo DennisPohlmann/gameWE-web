@@ -724,6 +724,7 @@
   },
   "bannerLayout": "Макет",
   "bannerBackground": "Тло",
+  "bannerSize": "Розмір",
   "bannerLayouts": {
     "a": "Прозорий",
     "b": "Картка",
@@ -739,6 +740,11 @@
     "stripes": "Смуги",
     "carbon": "Карбон",
     "glow": "Сяйво"
+  },
+  "bannerSizes": {
+    "normal": "Звичайний",
+    "small": "Вузький",
+    "tall": "Вертикальний"
   },
   "offline": "Офлайн",
   "port": "Порт",

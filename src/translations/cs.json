@@ -724,6 +724,7 @@
   },
   "bannerLayout": "Rozvržení",
   "bannerBackground": "Pozadí",
+  "bannerSize": "Velikost",
   "bannerLayouts": {
     "a": "Průhledné",
     "b": "Karta",
@@ -739,6 +740,11 @@
     "stripes": "Pruhy",
     "carbon": "Karbon",
     "glow": "Záře"
+  },
+  "bannerSizes": {
+    "normal": "Normální",
+    "small": "Úzký",
+    "tall": "Na výšku"
   },
   "offline": "Offline",
   "port": "Port",

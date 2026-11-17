@@ -724,6 +724,7 @@
   },
   "bannerLayout": "レイアウト",
   "bannerBackground": "背景",
+  "bannerSize": "サイズ",
   "bannerLayouts": {
     "a": "透明",
     "b": "カード",
@@ -739,6 +740,11 @@
     "stripes": "ストライプ",
     "carbon": "カーボン",
     "glow": "グロー"
+  },
+  "bannerSizes": {
+    "normal": "標準",
+    "small": "細め",
+    "tall": "縦長"
   },
   "offline": "オフライン",
   "port": "ポート",

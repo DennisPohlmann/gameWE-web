@@ -724,6 +724,7 @@
   },
   "bannerLayout": "التخطيط",
   "bannerBackground": "الخلفية",
+  "bannerSize": "الحجم",
   "bannerLayouts": {
     "a": "شفاف",
     "b": "بطاقة",
@@ -739,6 +740,11 @@
     "stripes": "خطوط",
     "carbon": "كربون",
     "glow": "توهّج"
+  },
+  "bannerSizes": {
+    "normal": "عادي",
+    "small": "ضيق",
+    "tall": "عمودي"
   },
   "offline": "غير متصل",
   "port": "المنفذ",

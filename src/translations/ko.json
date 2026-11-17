@@ -724,6 +724,7 @@
   },
   "bannerLayout": "레이아웃",
   "bannerBackground": "배경",
+  "bannerSize": "크기",
   "bannerLayouts": {
     "a": "투명",
     "b": "카드",
@@ -739,6 +740,11 @@
     "stripes": "줄무늬",
     "carbon": "카본",
     "glow": "광채"
+  },
+  "bannerSizes": {
+    "normal": "보통",
+    "small": "좁게",
+    "tall": "세로형"
   },
   "offline": "오프라인",
   "port": "포트",

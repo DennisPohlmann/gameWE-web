@@ -724,6 +724,7 @@
   },
   "bannerLayout": "Layout",
   "bannerBackground": "Sfondo",
+  "bannerSize": "Dimensione",
   "bannerLayouts": {
     "a": "Trasparente",
     "b": "Scheda",
@@ -739,6 +740,11 @@
     "stripes": "Strisce",
     "carbon": "Carbonio",
     "glow": "Bagliore"
+  },
+  "bannerSizes": {
+    "normal": "Normale",
+    "small": "Stretto",
+    "tall": "Verticale"
   },
   "offline": "Offline",
   "port": "Porta",

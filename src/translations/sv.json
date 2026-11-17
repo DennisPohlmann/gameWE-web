@@ -724,6 +724,7 @@
   },
   "bannerLayout": "Layout",
   "bannerBackground": "Bakgrund",
+  "bannerSize": "Storlek",
   "bannerLayouts": {
     "a": "Genomskinlig",
     "b": "Kort",
@@ -739,6 +740,11 @@
     "stripes": "Ränder",
     "carbon": "Kol",
     "glow": "Glöd"
+  },
+  "bannerSizes": {
+    "normal": "Normal",
+    "small": "Smal",
+    "tall": "Stående"
   },
   "offline": "Offline",
   "port": "Port",

@@ -724,6 +724,7 @@
   },
   "bannerLayout": "Düzen",
   "bannerBackground": "Arka plan",
+  "bannerSize": "Boyut",
   "bannerLayouts": {
     "a": "Şeffaf",
     "b": "Kart",
@@ -739,6 +740,11 @@
     "stripes": "Çizgiler",
     "carbon": "Karbon",
     "glow": "Parıltı"
+  },
+  "bannerSizes": {
+    "normal": "Normal",
+    "small": "Dar",
+    "tall": "Dikey"
   },
   "offline": "Çevrimdışı",
   "port": "Port",
