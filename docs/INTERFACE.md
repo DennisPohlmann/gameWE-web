@@ -67,7 +67,7 @@ list by points after all others) and is not counted in `rankedPlayers`;
 | URL | Content |
 |-----|---------|
 | `/api` | documentation page (Scalar) with code examples in curl, PHP, Python and JavaScript |
-| `/api/openapi.json` | OpenAPI 3.1 description of `/api/v1` |
+| `/api/openapi.json` | OpenAPI 3.1 description of `/api/v1`; `info.version` is the API's version (`1`), not the gameWE version |
 | `/api/v1` | list of the endpoints and the link to the documentation |
 | `/api/v1/rankings` | all rankings with servers, players online (`players`, bots included, and `bots`), best player and clan |
 | `/api/v1/rankings/<game>?limit=10&offset=0` | one ranking: totals and the best players by points (limit 1-100, offset 0-1000000; anything else `400`) |

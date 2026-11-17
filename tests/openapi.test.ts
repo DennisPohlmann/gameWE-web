@@ -12,7 +12,7 @@ type Doc = {
   components: { schemas: Record<string, Schema> };
 };
 
-const doc = openApiDocument("1.2.3", "css1") as Doc;
+const doc = openApiDocument("css1") as Doc;
 
 // Field names of an object schema ($ref, allOf and nullable resolved).
 function fields(s: Schema): string[] {
@@ -45,11 +45,11 @@ test("the examples use the first ranking instead of css", () => {
 test("a missing or invalid ranking code falls back to css", () => {
   for (const bad of ["", "x".repeat(33), 'a"b', "../x", "a b"]) {
     assert.equal(gameCodeOk(bad), false, bad);
-    const text = JSON.stringify(openApiDocument("1", bad));
+    const text = JSON.stringify(openApiDocument(bad));
     assert.ok(text.includes("/rankings/css/players"), bad);
     assert.ok(!text.includes(EXAMPLE_GAME), bad);
   }
-  assert.ok(JSON.stringify(openApiDocument("1")).includes("/rankings/css/players"));
+  assert.ok(JSON.stringify(openApiDocument()).includes("/rankings/css/players"));
 });
 
 test("every example has exactly the fields of its schema", () => {
@@ -182,4 +182,8 @@ test("banned players: the bans list and the profile's ban fields are documented"
   assert.deepEqual(Object.keys(ban).sort(), ["bannedAt", "dateText", "endsAt", "length", "reason", "source"]);
   const player = JSON.stringify(doc.paths["/players/{id}"].get.responses["200"]);
   assert.ok(player.includes('"banned"') && player.includes('"bans"'));
+});
+
+test("the document names no gameWE version", () => {
+  assert.equal((doc as unknown as { info: { version: string } }).info.version, "1");
 });

@@ -232,7 +232,7 @@ test("no operation manages tokens, passwords, passkeys or TOTP of the own accoun
     assert.match(body, /guardSelf\(c, /, `${h} checks the own account`);
   }
   assert.ok(FORBIDDEN_WITH_TOKEN.length >= 4);
-  const text = JSON.stringify(openApiDocument("1"));
+  const text = JSON.stringify(openApiDocument());
   assert.ok(text.includes("self_security_forbidden"));
   assert.ok(text.includes("bearerAuth"));
 });
@@ -328,9 +328,9 @@ test("a password is set only when an admin is created; afterwards only its owner
   const update = api.slice(api.indexOf("async entityUpdate("), api.indexOf("async entityDelete("));
   assert.match(update, /"password" in c\.body[\s\S]*password_own_only/);
   assert.match(src("src/lib/admin-ops.ts"), /e\.key === "users" && id !== null && String\(form\.get\("password"\)[^\n]*OpError\("password"\)/);
-  const doc = JSON.stringify(openApiDocument("1"));
+  const doc = JSON.stringify(openApiDocument());
   assert.ok(doc.includes("password_own_only"));
-  const schema = (openApiDocument("1") as { components: { schemas: Record<string, { properties: Record<string, unknown> }> } }).components.schemas;
+  const schema = (openApiDocument() as { components: { schemas: Record<string, { properties: Record<string, unknown> }> } }).components.schemas;
   assert.ok(!("password" in schema.AdminUserUpdate.properties));
   assert.ok("password" in schema.AdminUserCreate.properties);
 });

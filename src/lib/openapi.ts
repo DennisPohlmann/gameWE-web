@@ -1994,12 +1994,12 @@ export const gameCodeOk = (code: string) => /^[A-Za-z0-9_-]{1,32}$/.test(code);
 // The document with `game` (the first ranking of the site, see defaultGame
 // in api.ts) in every example and "try it" request; a code that is no
 // valid ranking code falls back to "css".
-export function openApiDocument(version: string, game = "css") {
+export function openApiDocument(game = "css") {
   const code = gameCodeOk(game) ? game : "css";
-  return JSON.parse(JSON.stringify(buildDocument(version)).replaceAll(EXAMPLE_GAME, code));
+  return JSON.parse(JSON.stringify(buildDocument()).replaceAll(EXAMPLE_GAME, code));
 }
 
-function buildDocument(version: string) {
+function buildDocument() {
   const paths: Record<string, unknown> = {
     "/": {
       get: {
@@ -2044,7 +2044,9 @@ function buildDocument(version: string) {
     openapi: "3.1.0",
     info: {
       title: "gameWE API",
-      version,
+      // The API's own version, not gameWE's: a public release number only helps
+      // an attacker look up known flaws (the admin area shows the real one).
+      version: "1",
       description: [
         "Read-only JSON API of the gameWE statistics. It returns only what the website shows to everyone: no IP addresses, no chat, no hidden players, no admin data, no hidden rankings. Banned players are shown where the website shows them: on the bans list and their profile.",
         "",
