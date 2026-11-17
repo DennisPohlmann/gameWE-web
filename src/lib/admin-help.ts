@@ -40,8 +40,8 @@ export const SETTING_INFO: Record<string, L> = {
     en: "If a player's disconnect gets lost, for example because the server crashes, the collector ends the visit once no log line has come from that player for this long. The playing time counts up to then. For bots this happens after 3 minutes at the latest. Default: 300 seconds.",
   },
   gamewe_commands: {
-    de: "Schreibt ein Spieler !rank, !top10 oder einen ähnlichen Befehl in den Chat, antwortet der Collector über RCON. Dafür muss beim Server das RCON-Passwort eingetragen sein. Wie die Antwort aussieht, legen die Einstellungen darunter fest.",
-    en: "When a player types !rank, !top10 or a similar command in the chat, the collector answers over RCON. The server needs its RCON password for that. The settings below decide what the answer looks like.",
+    de: "Schreibt ein Spieler !rank, !top10 oder einen ähnlichen Befehl in den Chat, antwortet der Collector über RCON. Dafür muss beim Server das RCON-Passwort eingetragen sein. Wie die Antwort aussieht, legen die Einstellungen darunter fest. Anzeigen kann die Antwort nur das gameWE-Plugin auf dem Gameserver (SourceMod, AMX Mod X oder CS2) oder, mit dem Präfix gameme, ein gameME-Plugin. Ohne Plugin erscheint nichts. Ist das hier aus, gehen auch keine Punkte mehr in Konsole und Chat. In der Config des Plugins steht nur, was das Plugin selbst macht, etwa das Nachrichten-Präfix und die Wartezeit zwischen zwei Befehlen.",
+    en: "When a player types !rank, !top10 or a similar command in the chat, the collector answers over RCON. The server needs its RCON password for that. The settings below decide what the answer looks like. Only the gameWE plugin on the game server (SourceMod, AMX Mod X or CS2) can show the answer, or a gameME plugin with the prefix gameme; without a plugin nothing appears. When this is off, no points go to the console or the chat either. The plugin's own config only holds what the plugin does itself, such as the message prefix and the wait between two commands.",
   },
   gamewe_menu_time: {
     de: "So viele Sekunden bleibt das Panel mit der Antwort auf !top10, !rank und Co. beim Spieler offen. Standard: 15.",
@@ -60,8 +60,16 @@ export const SETTING_INFO: Record<string, L> = {
     en: "With these commands the collector drives the plugin on the server, for example gamewe_psay for a line in the chat. Choose gameme only for servers that still run the original gameME plugin.",
   },
   gamewe_raw_messages: {
-    de: "Die Antworten auf !rank, !session, !top10 und !next gehen dann als Raw-Message (gamewe_raw_message) an ein Nachrichten-Plugin auf dem Server, das sie selbst darstellt. Schalte das nur ein, wenn ein solches Plugin läuft.",
-    en: "The answers to !rank, !session, !top10 and !next then go as a raw message (gamewe_raw_message) to a message plugin on the server, which shows them itself. Only switch this on when such a plugin runs.",
+    de: "Die Antworten auf !rank, !session, !top10 und !next gehen dann als Raw-Message (gamewe_raw_message) an ein Nachrichten-Plugin auf dem Server, das sie selbst darstellt. Schalte das nur ein, wenn ein solches Plugin läuft. Das klappt nur auf SourceMod-Servern. AMX-Mod-X- und CS2-Server bekommen weiter normalen Chattext.",
+    en: "The answers to !rank, !session, !top10 and !next then go as a raw message (gamewe_raw_message) to a message plugin on the server, which shows them itself. Only switch this on when such a plugin runs. This only works on SourceMod servers: AMX Mod X and CS2 servers keep getting chat text.",
+  },
+  gamewe_console_events: {
+    de: "Die Zeilen zeigt das gameWE-Plugin auf dem Gameserver an (SourceMod, AMX Mod X oder CS2), ohne Plugin erscheint nichts. Ist das hier an, bekommt sie jeder Spieler, bis er sie selbst mit !gamewe_display 0 abschaltet (wieder an mit !gamewe_display 1). Ist es aus, bekommt sie niemand, egal was der Spieler eingestellt hat. Aus ist es auch, wenn Befehle im Spiel nicht beantwortet werden (Einstellung weiter oben). In der Config des Plugins gibt es dafür keinen Schalter.",
+    en: "The gameWE plugin on the game server (SourceMod, AMX Mod X or CS2) shows these lines; without it nothing appears. When this is on, every player gets them until they turn them off with !gamewe_display 0 (back on with !gamewe_display 1). When this is off, nobody gets them, whatever the player has chosen. They are also off when in-game commands are not answered (setting above). The plugin's config has no switch for this.",
+  },
+  gamewe_global_chat: {
+    de: "Die Ansagen zeigt das gameWE-Plugin auf dem Gameserver an (SourceMod, AMX Mod X oder CS2), ohne Plugin erscheint nichts. Ist das hier an, sieht sie jeder Spieler, bis er sie selbst mit !gamewe_chat 0 abschaltet (wieder an mit !gamewe_chat 1). Ist es aus, sieht sie niemand, egal was der Spieler eingestellt hat. Aus ist es auch, wenn Befehle im Spiel nicht beantwortet werden (Einstellung weiter oben). In der Config des Plugins gibt es dafür keinen Schalter.",
+    en: "The gameWE plugin on the game server (SourceMod, AMX Mod X or CS2) shows these announcements; without it nothing appears. When this is on, every player sees them until they turn them off with !gamewe_chat 0 (back on with !gamewe_chat 1). When this is off, nobody sees them, whatever the player has chosen. They are also off when in-game commands are not answered (setting above). The plugin's config has no switch for this.",
   },
 };
 
