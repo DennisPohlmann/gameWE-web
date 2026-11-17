@@ -23,7 +23,7 @@ import { addParams, safeReturnTo, withReturnTo } from "@/lib/return-to";
 import { rankingPageHref, resettableRankings } from "@/lib/admin-rankings";
 import { presetRanking, rankingServersHref } from "@/lib/ranking-preset";
 import { checkCode, consumeStep, newBackupCodes, newSecret, otpauthUri, readSecret, removeBackupCodes, removeSecret, secondFactor, storeBackupCodes, storeSecret } from "@/lib/totp";
-import { ACCESS_SECRETS, FASTDL_ACCESS, accessKey, type AccessField } from "@/lib/fastdl-access";
+import { ACCESS_SECRETS, FASTDL_ACCESS, accessKey, joinHeaders, type AccessField } from "@/lib/fastdl-access";
 import { allSettings } from "@/lib/admin-settings";
 import { adminQuery } from "@/lib/db";
 import { ownFromForm, ownTokensFromForm, queueNotifyTest, saveOwnNotify } from "@/lib/admin-notify";
@@ -509,7 +509,7 @@ export async function rankingFastdlAction(form: FormData) {
   const page = `/admin/rankings/${encodeURIComponent(game)}`;
   try {
     await setRankingFastdl({ user }, game, String(form.get("url") ?? ""));
-    const access = Object.fromEntries(FASTDL_ACCESS.map((f) => [f, String(form.get(f) ?? "")]));
+    const access = Object.fromEntries(FASTDL_ACCESS.map((f) => [f, f === "header" ? joinHeaders(form.getAll(f).map(String)) : String(form.get(f) ?? "")]));
     await setRankingFastdlAccess({ user }, game, access, FASTDL_ACCESS.filter((f) => form.get(`${f}__clear`) === "1"));
   } catch (err) {
     if (err instanceof OpError) redirect(err.code !== "field" ? "/admin/rankings" : err.detail.field === "url" ? `${page}?fastdl=bad#fastdl` : `${page}?fastdl=bad-${encodeURIComponent(err.detail.field ?? "")}#fastdl`);

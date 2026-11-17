@@ -170,13 +170,16 @@ When the FastDL wants more than a plain request (a block on the browser in
 `.htaccess`, a login), the same settings page sets what every download sends:
 **User-Agent**, **Referer** (game clients send e.g. `hl2://203.0.113.5:27015`),
 a **bearer token** (`Authorization: Bearer ...`), a **user and password** for
-basic auth, and **one more header** as `Name: value` (e.g. `X-Api-Key: ...` or
-`Cookie: ...`; not Host, Authorization, User-Agent, Referer or connection
-headers). They apply to all rankings; a ranking sets any of them again on its
-**FastDL** card, and an empty field there takes the global value. The
-authentication goes as one: a ranking with its own token or user uses only its
-own, and a token wins over a user. Token, password and the header are stored
-in `hlstats_gamewe_secrets`, which the public database user cannot read, are
+basic auth, and **more headers**, up to 8, each as `Name: value` in a row of
+its own (the plus button adds one, the bin removes it; e.g. `X-Api-Key: ...` or
+`Cookie: ...`; each name once, at most 255 characters together; not Host,
+Authorization, User-Agent, Referer or connection headers). A header saved
+before there were rows is the first row. They apply to all rankings; a
+ranking sets any of them again on its **FastDL** card, and an empty field there
+takes the global value. The authentication goes as one: a ranking with its own
+token or user uses only its own, and a token wins over a user; a ranking's own
+headers replace the global ones as a whole. Token, password and the headers are
+stored in `hlstats_gamewe_secrets`, which the public database user cannot read, are
 never shown again or logged, and reach the download process only through its
 environment. Over `http://` they cross the network unencrypted: prefer
 `https://`.

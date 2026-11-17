@@ -7,7 +7,7 @@ import { saveRankingBlockVac, saveRankingBots, saveRankingFastdl, saveRankingFas
 import { allServers, assignServers, copyDefinitions, rankingBaseGames, resettableRankings } from "./admin-rankings";
 import { RAW_GROUP, READONLY_OPTIONS, adminOnlyOption, homeValue, linkValue, rawKeyAllowed, settingGroups } from "./admin-settings";
 import { fastdlBase } from "./overview-format";
-import { ACCESS_KEYS, ACCESS_SECRETS, FASTDL_ACCESS, accessValueOk, type Access, type AccessField } from "./fastdl-access";
+import { ACCESS_KEYS, ACCESS_SECRETS, FASTDL_ACCESS, accessValueOk, joinHeaders, type Access, type AccessField } from "./fastdl-access";
 import { purgeTokens } from "./api-tokens";
 import { purgePasskeys } from "./passkeys";
 import { LEVEL_ADMIN, revokeSessions, type AdminUser } from "./auth";
@@ -416,11 +416,13 @@ export async function saveSettings(a: Actor, groupId: string, form: Form, only?:
       continue;
     }
     if (s.type === "secret") {
-      // Empty keeps the stored value; the checkbox clears it.
-      const v = String(form.get(s.key) ?? "");
+      // Empty keeps the stored value; the checkbox clears it. The FastDL
+      // headers come as one row each, stored one per line.
+      const headers = s.key === ACCESS_KEYS.header;
+      const v = headers ? joinHeaders(form.getAll(s.key).map(String)) : String(form.get(s.key) ?? "");
       if (form.get(`${s.key}__clear`) === "1") values.push([s.key, ""]);
       else if (v) {
-        if (v.length > 255 || /[\r\n]/.test(v)) bad(s.key);
+        if (v.length > 255 || (!headers && /[\r\n]/.test(v))) bad(s.key);
         if (s.key === "gamewe_steam_api_key" && !steamKey(v)) bad(s.key);
         if (accessFieldOf(s.key) && !accessValueOk(accessFieldOf(s.key)!, v)) bad(s.key);
         values.push([s.key, s.key === "gamewe_steam_api_key" ? v.trim() : v]);
@@ -599,7 +601,7 @@ export async function setRankingFastdlAccess(a: Actor, game: string, access: Acc
   for (const f of FASTDL_ACCESS) {
     const s = ACCESS_SECRETS.includes(f) ? (access[f] ?? "") : (access[f] ?? "").trim();
     if (!accessValueOk(f, s)) throw new OpError("field", { field: f });
-    v[f] = f === "header" && s ? s.trim() : s;
+    v[f] = f === "header" ? joinHeaders(s.split("\n")) : s;
   }
   await saveRankingFastdlAccess(game, v, clear.filter((f) => ACCESS_SECRETS.includes(f)));
   console.info(`gameWE: FastDL access of ranking ${game} changed (${FASTDL_ACCESS.filter((f) => v[f] || clear.includes(f)).join(", ") || "-"}), by ${who(a)}`);

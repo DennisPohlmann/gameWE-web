@@ -1,5 +1,6 @@
 // What the FastDL download sends besides the address: User-Agent, Referer,
-// Bearer or Basic authentication and one header of the admin's choice. Each
+// Bearer or Basic authentication and up to MAX_HEADERS headers of the admin's
+// choice (one "Name: value" per line, all in one stored value). Each
 // field is set for all rankings (Settings → Maps & events) and may be set again
 // for one ranking (Rankings → ranking → FastDL); an empty field there takes
 // the global one. password, token and header are secrets
@@ -33,13 +34,34 @@ export function parseHeader(v: string): [string, string] | null {
   return [m[1], m[2].trim()];
 }
 
+// The stored value is one varchar(255) for all of them.
+export const MAX_HEADERS = 8;
+
+/** The extra headers, one "Name: value" per line, or null when one is bad,
+ *  a name comes twice or there are more than MAX_HEADERS. */
+export function parseHeaders(v: string): [string, string][] | null {
+  const out: [string, string][] = [];
+  const names = new Set<string>();
+  for (const line of v.split("\n")) {
+    if (!line.trim()) continue;
+    const h = parseHeader(line);
+    if (!h || names.has(h[0].toLowerCase())) return null;
+    names.add(h[0].toLowerCase());
+    out.push(h);
+  }
+  return out.length <= MAX_HEADERS ? out : null;
+}
+
+/** The header rows of the form as the stored value (empty rows left out). */
+export const joinHeaders = (rows: string[]) => rows.map((r) => r.trim()).filter(Boolean).join("\n");
+
 /** Whether v may be stored in field f (empty always may). */
 export function accessValueOk(f: AccessField, v: string): boolean {
   if (!v) return true;
+  if (f === "header") return v.length <= 255 && parseHeaders(v) !== null;
   if (v.length > 255 || !PRINTABLE.test(v)) return false;
   if (f === "user") return !v.includes(":");
   if (f === "token") return /^[A-Za-z0-9\-._~+/]+=*$/.test(v);
-  if (f === "header") return parseHeader(v) !== null;
   return true;
 }
 
@@ -57,7 +79,6 @@ export function fastdlHeaders(global: Access, own: Access = {}): Record<string, 
   const auth = own.token || own.user ? own : global;
   if (auth.token) out["Authorization"] = `Bearer ${auth.token}`;
   else if (auth.user) out["Authorization"] = `Basic ${Buffer.from(`${auth.user}:${auth.password ?? ""}`).toString("base64")}`;
-  const header = parseHeader(pick("header"));
-  if (header) out[header[0]] = header[1];
+  for (const [name, value] of parseHeaders(pick("header")) ?? []) out[name] = value;
   return out;
 }

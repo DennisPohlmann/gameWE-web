@@ -454,7 +454,7 @@ const fastdlOut = obj({
   user: str("Basic auth user, or empty"),
   password: bool("A basic auth password is stored (never shown)"),
   token: bool("A bearer token is stored (never shown)"),
-  header: bool("One more header is stored (never shown)"),
+  header: bool("Extra headers are stored (never shown)"),
 });
 const fastdlEx = { url: "https://dl.example.org/cstrike/", agent: "Mozilla/5.0", referer: "", user: "", password: false, token: true, header: false };
 const hallOut = obj({
@@ -653,7 +653,7 @@ export const adminOps: AdminOp[] = [
         user: str("Basic auth user without a colon, empty: none of its own", { maxLength: 255 }),
         password: nullable(str("Basic auth password; empty keeps it, null removes it", { maxLength: 255 })),
         token: nullable(str("Bearer token; empty keeps it, null removes it", { maxLength: 255 })),
-        header: nullable(str("One more header as Name: value; empty keeps it, null removes it", { maxLength: 255 })),
+        header: nullable(str("Up to 8 more headers, one Name: value per line (\\n), each name once; empty keeps them, null removes them", { maxLength: 255 })),
       },
       ["agent", "referer", "user", "password", "token", "header"],
     ),

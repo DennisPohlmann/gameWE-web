@@ -5,7 +5,7 @@ import { createServer, type IncomingHttpHeaders } from "node:http";
 import type { AddressInfo } from "node:net";
 import { test } from "node:test";
 import { guardedGet } from "../scripts/overviews/fastdl.ts";
-import { accessValueOk, fastdlHeaders, parseHeader } from "../src/lib/fastdl-access.ts";
+import { MAX_HEADERS, accessValueOk, fastdlHeaders, joinHeaders, parseHeader, parseHeaders } from "../src/lib/fastdl-access.ts";
 import { fastdlQueue } from "../src/lib/overview-fastdl.ts";
 
 test("the ranking's fields over the global ones, authentication as one", () => {
@@ -32,6 +32,23 @@ test("only harmless values are stored", () => {
   assert.equal(accessValueOk("token", "eyJhbGciOi.J9-_x/+="), true);
   assert.equal(accessValueOk("agent", "x".repeat(256)), false);
   assert.equal(accessValueOk("password", ""), true);
+});
+
+test("several headers, one per line; a single old one still works", () => {
+  // Stored before there were rows: one header, the first row now.
+  assert.deepEqual(fastdlHeaders({ header: "X-Api-Key: k1" })["X-Api-Key"], "k1");
+  const rows = joinHeaders([" X-Api-Key: k1 ", "", "Cookie: a=1; b=2"]);
+  assert.equal(rows, "X-Api-Key: k1\nCookie: a=1; b=2");
+  assert.deepEqual(fastdlHeaders({ header: rows }), { "X-Api-Key": "k1", Cookie: "a=1; b=2" });
+  // The ranking's headers replace the global ones as a whole.
+  assert.deepEqual(fastdlHeaders({ header: rows }, { header: "X-Other: o" }), { "X-Other": "o" });
+  assert.equal(accessValueOk("header", rows), true);
+  // A name twice, one bad row, too many, too long together, a smuggled line: refused.
+  for (const bad of ["X-A: 1\nx-a: 2", "X-A: 1\nHost: evil", "X-A: 1\nNoColon", "X-A: 1\rX-B: 2", "X-A: 1\r\nX-B: \u0000"]) assert.equal(accessValueOk("header", bad), false, JSON.stringify(bad));
+  const many = Array.from({ length: MAX_HEADERS + 1 }, (_, i) => `X-${i}: v`).join("\n");
+  assert.equal(parseHeaders(many), null);
+  assert.equal(parseHeaders(many.split("\n").slice(1).join("\n"))?.length, MAX_HEADERS);
+  assert.equal(accessValueOk("header", `X-A: ${"v".repeat(260)}`), false);
 });
 
 test("the queue hands the headers to the download", () => {

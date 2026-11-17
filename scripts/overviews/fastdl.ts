@@ -121,8 +121,8 @@ export async function fetchOverview(base: string, map: string, dir: string, fetc
 
 if (require.main === module) {
   const [base, map, dir] = process.argv.slice(2);
-  // FASTDL_HEADERS: what the site set (User-Agent, Referer, Authorization, one
-  // more), as a JSON object; never written to the output.
+  // FASTDL_HEADERS: what the site set (User-Agent, Referer, Authorization, the
+  // extra ones), as a JSON object; never written to the output.
   let headers: Record<string, string> = {};
   try {
     const h: unknown = JSON.parse(process.env.FASTDL_HEADERS || "{}");
