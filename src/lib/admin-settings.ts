@@ -96,7 +96,7 @@ export const NOTIFY_EVENT_LABELS: [NotifyEvent, L][] = [
   ["hof", { de: "Ruhmeshalle erstellt", en: "Hall of fame stored" }],
   ["update", { de: "Neue Version erschienen", en: "New version out" }],
 ];
-const MASKED: L = { de: "Maskiert, das Auge zeigt den gespeicherten Wert; leer lassen behält es.", en: "Masked, the eye button shows the stored value; leave empty to keep it." };
+const MASKED: L = { de: "Wird verdeckt angezeigt, das Auge blendet den gespeicherten Wert ein. Bleibt das Feld leer, ändert sich nichts.", en: "Masked, the eye button shows the stored value; leave empty to keep it." };
 const same = (s: string): L => ({ de: s, en: s, all: Object.fromEntries(LANGUAGES.map((l) => [l.code, s])) });
 
 // Notifications (lib/notify-core.ts): the collector sends them. Every admin
@@ -126,7 +126,7 @@ const notifyDefinitions: Setting[] = [
 const definitions: Omit<SettingGroup, "area">[] = [
   {
     id: "website",
-    title: { de: "Webseite", en: "Website" },
+    title: { de: "Website", en: "Website" },
     items: [
       { key: "sitename", label: { de: "Seitentitel", en: "Site title" }, type: "text", def: "", help: { de: "Name der Seite, z. B. der Clan-Name.", en: "Name of the site, e.g. the clan name." } },
       {
@@ -141,11 +141,11 @@ const definitions: Omit<SettingGroup, "area">[] = [
       },
       {
         key: "gamewe_title_ranking",
-        label: { de: "Browser-Titel in Ranglisten", en: "Browser title in rankings" },
+        label: { de: "Browser-Titel in Rankings", en: "Browser title in rankings" },
         type: "text",
         def: "{ranking} {page} | {site}",
         help: {
-          de: "Wie oben, dazu {ranking} = Name der Rangliste. Beispiel: „GunGame Spieler | GERMANY RELOADED“, die Startseite einer Rangliste „GunGame | GERMANY RELOADED“.",
+          de: "Wie oben, dazu {ranking} = Name des Rankings. Beispiel: „GunGame Spieler | GERMANY RELOADED“, für die Startseite eines Rankings „GunGame | GERMANY RELOADED“.",
           en: "As above, plus {ranking} = name of the ranking. Example: \"GunGame Players | GERMANY RELOADED\", a ranking's start page \"GunGame | GERMANY RELOADED\".",
         },
       },
@@ -232,12 +232,12 @@ const definitions: Omit<SettingGroup, "area">[] = [
       { key: "gamewe_logo_url", label: { de: "Bild unter dem Kopf", en: "Picture below the header" }, type: "text", def: "", help: { de: "Pfad oder URL eines Bildes (z. B. Banner), das mittig unter der Kopfleiste steht. Leer: keins.", en: "Path or URL of a picture (e.g. a banner) shown centred below the header bar. Empty: none." } },
       {
         key: "gamewe_game_events",
-        label: { de: "Letzte Ereignisse (Startseite einer Rangliste)", en: "Latest events (ranking start page)" },
+        label: { de: "Letzte Ereignisse (Startseite eines Rankings)", en: "Latest events (ranking start page)" },
         type: "choice",
         def: "live",
         choices: EVENT_MODES,
         help: {
-          de: "Gilt auch für die Seite „Events“ einer Rangliste (alle Ereignisse mit Diagramm und Liste) und für die Ereignisse auf der Seite eines Servers. Aus: kein Reiter „Events“, die Seite gibt es nicht.",
+          de: "Gilt auch für die Seite „Ereignisse“ eines Rankings (alle Ereignisse mit Diagramm und Liste) und für die Ereignisse auf der Seite eines Servers. Aus: kein Reiter „Ereignisse“, und die Seite gibt es nicht.",
           en: "Also applies to a ranking's \"Events\" page (all events with a chart and a list) and to the events on a server's page. Off: no \"Events\" tab, the page does not exist.",
         },
       },
@@ -248,7 +248,7 @@ const definitions: Omit<SettingGroup, "area">[] = [
         def: "live",
         choices: EVENT_MODES,
         help: {
-          de: "Wie auf der Startseite einer Rangliste, aber nur Ereignisse dieses Spielers (auf der Clan-Seite: der Mitglieder): Verbinden, Betreten, Verlassen, Team-, Rollen- und Namenswechsel, Kills und Tode, Aktionen von ihm und gegen ihn, Teamboni, Selbstmorde und Teamkills.",
+          de: "Wie auf der Startseite eines Rankings, aber nur Ereignisse dieses Spielers (auf der Clan-Seite: der Mitglieder): Verbinden, Betreten, Verlassen, Team-, Rollen- und Namenswechsel, Kills und Tode, Aktionen von ihm und gegen ihn, Teamboni, Selbstmorde und Teamkills.",
           en: "As on a ranking's start page, but only the events of that player (on the clan page: of the members): connects, entries, leaves, team, role and name changes, kills and deaths, actions by and against them, team bonuses, suicides and team kills.",
         },
       },
@@ -258,7 +258,7 @@ const definitions: Omit<SettingGroup, "area">[] = [
         type: "secret",
         def: "",
         help: {
-          de: "Mindestens 16 Zeichen, z. B. openssl rand -hex 24. Leer: /-/metrics ist aus. Prometheus schickt es als „Authorization: Bearer <Token>“. Maskiert, das Auge zeigt den gespeicherten Wert; leer lassen behält es.",
+          de: "Mindestens 16 Zeichen, z. B. openssl rand -hex 24. Leer: /-/metrics ist aus. Prometheus schickt es als „Authorization: Bearer <Token>“. Wird verdeckt angezeigt, das Auge blendet den gespeicherten Wert ein. Bleibt das Feld leer, ändert sich nichts.",
           en: "At least 16 characters, e.g. openssl rand -hex 24. Empty: /-/metrics is off. Prometheus sends it as \"Authorization: Bearer <token>\". Masked, the eye button shows the stored value; leave empty to keep it.",
         },
       },
@@ -313,7 +313,7 @@ const definitions: Omit<SettingGroup, "area">[] = [
         type: "bool",
         def: "0",
         help: {
-          de: "Ja: fehlt einer Karte (Source-Spiele) das Radarbild, lädt die Webseite die Karte vom FastDL, sobald ein Server sie lädt (geprüft alle 10 Sekunden) oder jemand die Kartenseite aufruft, und zeichnet das Bild daraus. Das Bild landet im Ordner des Spiels, z. B. /var/lib/gamewe/web/overviews/css, und gilt für alle Rankings dieses Spiels. Der Ordner /var/lib/gamewe/web/overviews muss dafür beschreibbar sein.",
+          de: "Ja: Fehlt einer Map (Source-Spiele) das Radarbild, lädt die Website die Map vom FastDL, sobald ein Server sie lädt (geprüft alle 10 Sekunden) oder jemand die Map-Seite aufruft, und zeichnet das Bild daraus. Das Bild landet im Ordner des Spiels, z. B. /var/lib/gamewe/web/overviews/css, und gilt für alle Rankings dieses Spiels. Der Ordner /var/lib/gamewe/web/overviews muss dafür beschreibbar sein.",
           en: "Yes: when a map (Source games) has no radar picture, the website downloads the map from FastDL as soon as a server changes to it (checked every 10 seconds) or someone opens its page, and draws the picture from it. The picture goes into the game's folder, e.g. /var/lib/gamewe/web/overviews/css, and serves all rankings of that game. The folder /var/lib/gamewe/web/overviews must be writable for this.",
         },
       },
@@ -324,7 +324,7 @@ const definitions: Omit<SettingGroup, "area">[] = [
         type: "text",
         def: "",
         help: {
-          de: "Der Ordner über maps/, z. B. https://dl.example.org/cstrike/ (sv_downloadurl). Gilt für alle Rankings, außer ein Ranking hat eine eigene Adresse (Rankings → Ranking → FastDL). Nur öffentliche Adressen (FASTDL_ALLOW_PRIVATE=1 erlaubt private). Geladen wird maps/<Karte>.bsp.bz2, sonst maps/<Karte>.bsp; keine Weiterleitungen, höchstens 512 MB Download und 1 GB entpackt.",
+          de: "Der Ordner über maps/, z. B. https://dl.example.org/cstrike/ (sv_downloadurl). Gilt für alle Rankings, außer ein Ranking hat eine eigene Adresse (Rankings → Ranking → FastDL). Nur öffentliche Adressen (FASTDL_ALLOW_PRIVATE=1 erlaubt private). Geladen wird maps/<Map>.bsp.bz2, sonst maps/<Map>.bsp; keine Weiterleitungen, höchstens 512 MB Download und 1 GB entpackt.",
           en: "The folder above maps/, e.g. https://dl.example.org/cstrike/ (sv_downloadurl). Applies to all rankings, unless a ranking has its own address (Rankings → ranking → FastDL). Public addresses only (FASTDL_ALLOW_PRIVATE=1 allows private ones). It loads maps/<map>.bsp.bz2, otherwise maps/<map>.bsp; no redirects, at most 512 MB download and 1 GB unpacked.",
         },
       },
@@ -357,7 +357,7 @@ const definitions: Omit<SettingGroup, "area">[] = [
         type: "secret",
         def: "",
         help: {
-          de: "Gesendet als „Authorization: Bearer <Token>“. Ist auch ein Benutzer gesetzt, gilt der Token. Maskiert, das Auge zeigt den gespeicherten Wert; leer lassen behält es. Über http:// geht es unverschlüsselt durchs Netz.",
+          de: "Gesendet als „Authorization: Bearer <Token>“. Ist auch ein Benutzer gesetzt, gilt der Token. Wird verdeckt angezeigt, das Auge blendet den gespeicherten Wert ein. Bleibt das Feld leer, ändert sich nichts. Über http:// geht es unverschlüsselt durchs Netz.",
           en: "Sent as \"Authorization: Bearer <token>\". With a user set as well, the token wins. Masked, the eye button shows the stored value; leave empty to keep it. Over http:// it crosses the network unencrypted.",
         },
       },
@@ -378,7 +378,7 @@ const definitions: Omit<SettingGroup, "area">[] = [
         label: { de: "FastDL: Passwort (Basic-Auth)", en: "FastDL: password (basic auth)" },
         type: "secret",
         def: "",
-        help: { de: "Maskiert, das Auge zeigt den gespeicherten Wert; leer lassen behält es.", en: "Masked, the eye button shows the stored value; leave empty to keep it." },
+        help: { de: "Wird verdeckt angezeigt, das Auge blendet den gespeicherten Wert ein. Bleibt das Feld leer, ändert sich nichts.", en: "Masked, the eye button shows the stored value; leave empty to keep it." },
       },
       {
         key: "gamewe_fastdl_header",
@@ -387,7 +387,7 @@ const definitions: Omit<SettingGroup, "area">[] = [
         type: "secret",
         def: "",
         help: {
-          de: "Bis zu 8 Header, jeder als „Name: Wert“, z. B. „X-Api-Key: …“ oder „Cookie: …“; das Plus fügt eine Zeile hinzu. Jeder Name nur einmal, zusammen höchstens 255 Zeichen. Host, Authorization, User-Agent, Referer und Header der Verbindung gehen nicht. Maskiert, das Auge zeigt die gespeicherten Header; bleiben alle Zeilen leer, bleiben sie erhalten.",
+          de: "Bis zu 8 Header, jeder als „Name: Wert“, z. B. „X-Api-Key: …“ oder „Cookie: …“; das Plus fügt eine Zeile hinzu. Jeder Name nur einmal, zusammen höchstens 255 Zeichen. Host, Authorization, User-Agent, Referer und Header der Verbindung gehen nicht. Werden verdeckt angezeigt, das Auge blendet die gespeicherten Header ein. Bleiben alle Zeilen leer, ändert sich nichts.",
           en: "Up to 8 headers, each as \"Name: value\", e.g. \"X-Api-Key: ...\" or \"Cookie: ...\"; the plus button adds a row. Each name once, at most 255 characters together. Host, Authorization, User-Agent, Referer and connection headers are refused. Masked, the eye button shows the stored headers; leave all rows empty to keep them.",
         },
       },
@@ -414,7 +414,7 @@ const definitions: Omit<SettingGroup, "area">[] = [
     id: "bans",
     title: { de: "Bans", en: "Bans" },
     help: {
-      de: "Die Seite „Bans“ eines Spiels zeigt Spieler der Rangliste mit VAC- oder Spiel-Bans (braucht STEAM_API_KEY) und mit Bans aus SourceBans. Sie erscheint, sobald eins von beiden eingerichtet ist.",
+      de: "Die Seite „Bans“ eines Rankings zeigt dessen Spieler mit VAC- oder Spiel-Bans (braucht STEAM_API_KEY) und mit Bans aus SourceBans. Sie erscheint, sobald eins von beiden eingerichtet ist.",
       en: "A game's \"Bans\" page lists ranked players with VAC or game bans (needs STEAM_API_KEY) and with bans from SourceBans. It is shown as soon as one of the two is set up.",
     },
     items: [
@@ -450,12 +450,12 @@ const definitions: Omit<SettingGroup, "area">[] = [
       },
       {
         key: "gamewe_steam_api_key",
-        label: { de: "Steam-Web-API-Key", en: "Steam Web API key" },
+        label: { de: "Steam-Web-API-Schlüssel", en: "Steam Web API key" },
         type: "secret",
         def: "",
         minLevel: 100,
         help: {
-          de: "Optional, 32 Hex-Zeichen von https://steamcommunity.com/dev/apikey. Damit kommen die Avatare zu je 100 über die Steam-API statt einzeln von steamcommunity.com (das viele Abrufe hintereinander sperrt), und die Bans-Seite zeigt VAC- und Spiel-Bans. Maskiert, das Auge zeigt den gespeicherten Wert; leer lassen behält ihn. Nur Admins mit Level 100.",
+          de: "Optional, 32 Hex-Zeichen von https://steamcommunity.com/dev/apikey. Damit kommen die Avatare zu je 100 über die Steam-API statt einzeln von steamcommunity.com (das viele Abrufe hintereinander sperrt), und die Bans-Seite zeigt VAC- und Spiel-Bans. Wird verdeckt angezeigt, das Auge blendet den gespeicherten Wert ein. Bleibt das Feld leer, ändert sich nichts. Nur Admins mit Stufe 100.",
           en: "Optional, 32 hex characters from https://steamcommunity.com/dev/apikey. With it avatars come 100 at a time from the Steam API instead of one by one from steamcommunity.com (which blocks many requests in a row), and the bans page shows VAC and game bans. Masked, the eye button shows the stored value; leave empty to keep it. Admins with level 100 only.",
         },
       },
@@ -480,7 +480,7 @@ const definitions: Omit<SettingGroup, "area">[] = [
     id: "voice",
     title: { de: "Voiceserver", en: "Voice server" },
     help: {
-      de: "Kasten oben auf jeder Seite mit dem TeamSpeak-, Ventrilo- oder Discord-Server der Community. Erst die Art wählen, dann erscheinen die passenden Felder. TeamSpeak: Die Personenzahl liest die Webseite jede Minute über die ServerQuery. Ventrilo: gelesen jede Minute aus dem UDP-Status des Servers. Discord: Gezählt wird über das Server-Widget (Servereinstellungen → Widget → Server-Widget aktivieren).",
+      de: "Kasten oben auf jeder Seite mit dem TeamSpeak-, Ventrilo- oder Discord-Server der Community. Wähle zuerst die Art, dann erscheinen die passenden Felder. TeamSpeak: Die Personenzahl liest die Website jede Minute über die ServerQuery. Ventrilo: Die Personenzahl liest die Website jede Minute aus dem UDP-Status des Servers. Discord: Gezählt wird über das Server-Widget (Servereinstellungen → Widget → Server-Widget aktivieren).",
       en: "Box at the top of every page with the community's TeamSpeak, Ventrilo or Discord server. Choose the kind first, then the matching fields appear. TeamSpeak: the website reads the number of people every minute over the ServerQuery. Ventrilo: read every minute from the server's UDP status. Discord: counted through the server widget (Server settings → Widget → Enable server widget).",
     },
     items: [
@@ -501,7 +501,7 @@ const definitions: Omit<SettingGroup, "area">[] = [
       { key: "gamewe_ts_port", label: { de: "TeamSpeak-Port", en: "TeamSpeak port" }, type: "number", def: "9987", min: 1, max: 65535, show: TS },
       { key: "gamewe_ts_query_port", label: { de: "ServerQuery-Port", en: "ServerQuery port" }, type: "number", def: "10011", minLevel: 100, min: 1, max: 65535, help: { de: "Raw-Query (nicht SSH). Muss vom Webserver aus erreichbar sein.", en: "Raw query (not SSH). Must be reachable from the web server." }, show: TS },
       { key: "gamewe_ts_query_user", label: { de: "ServerQuery-Benutzer", en: "ServerQuery user" }, type: "text", def: "", minLevel: 100, help: { de: "Leer: als Gast abfragen (geht nur, wenn die Gast-Gruppe serverinfo darf).", en: "Empty: query as guest (works only if the guest group may use serverinfo)." }, show: TS },
-      { key: "gamewe_ts_query_password", label: { de: "ServerQuery-Passwort", en: "ServerQuery password" }, type: "secret", def: "", minLevel: 100, help: { de: "Maskiert, das Auge zeigt den gespeicherten Wert (Stufe 100). Leer lassen, um es zu behalten.", en: "Masked, the eye button shows the stored value (level 100). Leave empty to keep it." }, show: TS },
+      { key: "gamewe_ts_query_password", label: { de: "ServerQuery-Passwort", en: "ServerQuery password" }, type: "secret", def: "", minLevel: 100, help: { de: "Wird verdeckt angezeigt, das Auge blendet den gespeicherten Wert ein (Stufe 100). Bleibt das Feld leer, ändert sich nichts.", en: "Masked, the eye button shows the stored value (level 100). Leave empty to keep it." }, show: TS },
       { key: "gamewe_ts_password", label: { de: "TeamSpeak-Serverpasswort", en: "TeamSpeak server password" }, type: "text", def: "", help: { de: "Besucher sehen ein Schloss, wenn eins gesetzt ist; das Passwort selbst nur mit der Einstellung darunter. Leer: „-“.", en: "Visitors see a lock when one is set; the password itself only with the setting below. Empty: \"-\"." }, show: TS },
       {
         key: "gamewe_ts_password_reveal",
@@ -559,7 +559,7 @@ const definitions: Omit<SettingGroup, "area">[] = [
         type: "bool",
         def: "1",
         help: {
-          de: "Auf der Detailseite des TeamSpeak-Servers (Klick auf den Namen im Kasten). Nein: nur die Zahl je Channel. Die Namen sind personenbezogene Daten, gehört in die Datenschutzerklärung.",
+          de: "Auf der Detailseite des TeamSpeak-Servers (Klick auf den Namen im Kasten). Nein: nur die Zahl je Channel. Die Namen sind personenbezogene Daten und gehören in die Datenschutzerklärung.",
           en: "On the TeamSpeak server's detail page (click its name in the box). No: just the number per channel. The names are personal data; mention them in your privacy policy.",
         },
         show: TS,
@@ -619,7 +619,7 @@ const definitions: Omit<SettingGroup, "area">[] = [
     title: { de: "Collector", en: "Collector" },
     items: [
       { key: "gamewe_server_load", label: { de: "Server-Auslastung aufzeichnen", en: "Record server load" }, type: "bool", def: "1", help: { de: "Alle 10 Minuten ein Eintrag je Server, für die Grafik auf der Serverseite.", en: "One row per server every 10 minutes, for the graph on the server page." } },
-      { key: "gamewe_store_chat", label: { de: "Chat speichern", en: "Store chat" }, type: "bool", def: "1", help: { de: "Personenbezogene Daten, gehört in die Datenschutzerklärung. Ob Besucher den Chat sehen, steht unter Webseite.", en: "Personal data; mention it in your privacy policy. Whether visitors see the chat is set under Website." } },
+      { key: "gamewe_store_chat", label: { de: "Chat speichern", en: "Store chat" }, type: "bool", def: "1", help: { de: "Personenbezogene Daten, gehören in die Datenschutzerklärung. Ob Besucher den Chat sehen, stellst du unter Website ein.", en: "Personal data; mention it in your privacy policy. Whether visitors see the chat is set under Website." } },
       { key: "gamewe_store_player_ip", label: { de: "Spieler-IPs speichern", en: "Store player IPs" }, type: "bool", def: "1", help: { de: "Personenbezogene Daten, gehört in die Datenschutzerklärung. Nur Admins sehen sie.", en: "Personal data; mention it in your privacy policy. Only admins see them." } },
       { key: "gamewe_commands", label: { de: "Befehle im Spiel beantworten (!rank, !top10 …)", en: "Answer in-game commands (!rank, !top10 …)" }, type: "bool", def: "1" },
       { key: "gamewe_menu_time", label: { de: "Anzeigedauer !top10-Menü (s)", en: "!top10 menu time (s)" }, type: "number", def: "15", min: 1, max: 300 },
@@ -730,7 +730,7 @@ export const settingGroups: SettingGroup[] = [
     id: "general",
     area: "website",
     title: { de: "Allgemein", en: "General" },
-    help: { de: "Name, Titel und Grundwerte der Webseite.", en: "Name, titles and basic values of the website." },
+    help: { de: "Name, Titel und Grundwerte der Website.", en: "Name, titles and basic values of the website." },
     items: pick("sitename", "gamewe_default_lang", "gamewe_title_format", "gamewe_title_ranking", "gamewe_site_url", "gamewe_page_size", "MinActivity", "gamewe_chat_public", "gamewe_geoip_credit"),
   },
   {
@@ -765,7 +765,7 @@ export const settingGroups: SettingGroup[] = [
     area: "services",
     title: { de: "Monitoring", en: "Monitoring" },
     help: {
-      de: "Kennzahlen der Webseite für Prometheus unter /-/metrics und die Suche nach Updates.",
+      de: "Kennzahlen der Website für Prometheus unter /-/metrics und die Suche nach Updates.",
       en: "Metrics of the website for Prometheus under /-/metrics and the check for updates.",
     },
     items: pick("gamewe_metrics_token", "gamewe_update_check"),
@@ -824,7 +824,7 @@ export const settingGroups: SettingGroup[] = [
     area: "admin",
     title: { de: "Admin-Bereich", en: "Admin area" },
     help: {
-      de: "Einstellungen für den Admin-Bereich selbst. Nur Admins mit Level 100 ändern sie.",
+      de: "Einstellungen für den Admin-Bereich selbst. Nur Admins mit Stufe 100 können sie ändern.",
       en: "Settings of the admin area itself. Only admins with level 100 change them.",
     },
     items: pick("gamewe_admin_auto_logout", "gamewe_admin_logout_minutes"),
@@ -854,7 +854,7 @@ export const READONLY_OPTIONS = ["gamewe_heartbeat", "gamewe_collector_version",
 // Meaning of known keys that have no field above (raw list of the settings page).
 export const RAW_OPTION_HELP: Record<string, L> = {
   gamewe_web_version: {
-    de: "Schreibt die Webseite beim Start (ihre Version); der Collector vergleicht sie für die Update-Benachrichtigungen mit dem neuesten Release. Keine Einstellung.",
+    de: "Schreibt die Website beim Start (ihre Version); der Collector vergleicht sie für die Update-Benachrichtigungen mit dem neuesten Release. Keine Einstellung.",
     en: "Written by the website at start (its version); the collector compares it with the latest release for the update notifications. Not a setting.",
   },
   gamewe_heartbeat: {
@@ -882,7 +882,7 @@ export const RAW_OPTION_HELP: Record<string, L> = {
     en: "Obsolete, replaced by features.daily_awards in config.yaml. Has no effect; a collector update deletes the key.",
   },
   gamewe_default_game: {
-    de: "Veraltet, die Webseite wertet ihn nicht aus. Ein Collector-Update löscht den Schlüssel.",
+    de: "Veraltet, die Website wertet ihn nicht aus. Ein Collector-Update löscht den Schlüssel.",
     en: "Obsolete, the website does not use it. A collector update deletes the key.",
   },
   gamewe_geoip_db: {
@@ -890,11 +890,11 @@ export const RAW_OPTION_HELP: Record<string, L> = {
     en: "Obsolete: path of an .mmdb on the collector's machine. Used only when config.yaml has no geoip.path; better set it there and delete the row.",
   },
   contact: {
-    de: "Aus HLstatsX:CE, die Webseite wertet ihn nicht aus. Leer löscht ein Collector-Update den Schlüssel.",
+    de: "Aus HLstatsX:CE, die Website wertet ihn nicht aus. Leer löscht ein Collector-Update den Schlüssel.",
     en: "From HLstatsX:CE, the website does not use it. When empty, a collector update deletes the key.",
   },
   siteurl: {
-    de: "Aus HLstatsX:CE, die Webseite wertet ihn nicht aus (Link des Seitennamens: unter Allgemein). Leer löscht ein Collector-Update den Schlüssel.",
+    de: "Aus HLstatsX:CE, die Website wertet ihn nicht aus (Link des Seitennamens: unter Allgemein). Leer löscht ein Collector-Update den Schlüssel.",
     en: "From HLstatsX:CE, the website does not use it (site name link: under General). When empty, a collector update deletes the key.",
   },
 };

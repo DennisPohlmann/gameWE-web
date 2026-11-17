@@ -85,7 +85,7 @@ const yesNo: [string, L][] = [
   ["1", { de: "Ja", en: "Yes" }],
 ];
 
-const gameField: Field = { name: "game", label: { de: "Rangliste", en: "Ranking" }, type: "select", options: "games", inList: true, required: true };
+const gameField: Field = { name: "game", label: { de: "Ranking", en: "Ranking" }, type: "select", options: "games", inList: true, required: true };
 
 export const entities: Entity[] = [
   {
@@ -93,9 +93,9 @@ export const entities: Entity[] = [
     perm: { view: "rankings.view", edit: "rankings.edit" },
     table: "hlstats_Games",
     pk: "id",
-    label: { de: "Ranglisten", en: "Rankings" },
+    label: { de: "Rankings", en: "Rankings" },
     help: {
-      de: "Eine Rangliste ist eine Sammlung von Servern mit einem gemeinsamen Ranking, z. B. „Assault“ mit fünf Assault-Servern oder „GunGame“ mit zwei GunGame-Servern. Lege sie hier an und ordne ihr danach die Server zu. Ranglisten ohne Server erscheinen nicht auf der Startseite; die mitgelieferten (eine je Spiel) dienen als Vorlagen.",
+      de: "Ein Ranking ist eine Sammlung von Servern mit einer gemeinsamen Rangliste, z. B. „Assault“ mit fünf Assault-Servern oder „GunGame“ mit zwei GunGame-Servern. Lege es hier an und ordne ihm danach die Server zu. Rankings ohne Server erscheinen nicht auf der Startseite; die mitgelieferten (eines je Spiel) dienen als Vorlagen.",
       en: "A ranking is a set of servers sharing one player ranking, e.g. \"Assault\" with five assault servers or \"GunGame\" with two gungame servers. Create it here, then assign the servers. Rankings without servers are not shown on the start page; the seeded ones (one per game) serve as templates.",
     },
     fields: [
@@ -114,7 +114,7 @@ export const entities: Entity[] = [
         keepOnly: RETIRED_GAMES,
         inList: true,
         help: {
-          de: "Das Spiel der Rangliste, z. B. Counter-Strike: Source. Der Collector liest daraus das Logformat, die Webseite zeigt es als Kennzeichen an. Der Rangliste lassen sich nur Server dieses Spiels zuordnen.",
+          de: "Das Spiel des Rankings, z. B. Counter-Strike: Source. Der Collector liest daraus das Logformat, die Website zeigt es als Kennzeichen an. Dem Ranking lassen sich nur Server dieses Spiels zuordnen.",
           en: "The ranking's game, e.g. Counter-Strike: Source. The collector reads the log format from it, the website shows it as a tag. Only servers of this game can be assigned to the ranking.",
         },
       },
@@ -126,13 +126,13 @@ export const entities: Entity[] = [
         virtual: true,
         createOnly: true,
         help: {
-          de: "Woher Waffen, Aktionen, Teams, Rollen, Awards, Ränge und Ribbons kommen. Leer lassen nimmt die Standardvorlage des Spiels (z. B. css für Counter-Strike: Source). Eine eigene Rangliste desselben Spiels übernimmt deren angepasste Werte; nur Vorlagen des gewählten Spiels sind erlaubt.",
+          de: "Woher Waffen, Aktionen, Teams, Rollen, Awards, Ränge und Ribbons kommen. Leer gelassen gilt die Standardvorlage des Spiels (z. B. css für Counter-Strike: Source). Ein eigenes Ranking desselben Spiels übernimmt dessen angepasste Werte; nur Vorlagen des gewählten Spiels sind erlaubt.",
           en: "Where weapons, actions, teams, roles, awards, ranks and ribbons come from. Left empty, the game's standard template is used (e.g. css for Counter-Strike: Source). One of your own rankings of the same game passes on its adjusted values; only templates of the chosen game are allowed.",
         },
       },
       { name: "name", label: { de: "Name", en: "Name" }, type: "text", inList: true, required: true, max: 255 },
       { name: "code", label: { de: "Kürzel", en: "Code" }, type: "text", inList: true, required: true, createOnly: true, max: 10, pattern: /^[a-z0-9_]+$/, help: { de: "Kurz, nur a–z, 0–9 und _, z. B. assault oder gungame. Steht in der URL und lässt sich später nicht ändern.", en: "Short, only a–z, 0–9 and _, e.g. assault or gungame. Used in the URL and cannot be changed later." } },
-      { name: "hidden", label: { de: "Ausgeblendet", en: "Hidden" }, type: "flag", options: yesNo, inList: true, help: { de: "Ja: Die Webseite zeigt das Ranking nicht, weder auf der Startseite noch mit eigenen Seiten. Die Daten bleiben erhalten.", en: "Yes: the website does not show the ranking, neither on the start page nor with its own pages. The data is kept." } },
+      { name: "hidden", label: { de: "Ausgeblendet", en: "Hidden" }, type: "flag", options: yesNo, inList: true, help: { de: "Ja: Die Website zeigt das Ranking nicht, weder auf der Startseite noch mit eigenen Seiten. Die Daten bleiben erhalten.", en: "Yes: the website does not show the ranking, neither on the start page nor with its own pages. The data is kept." } },
       { name: "display_id", label: { de: "Reihenfolge", en: "Order" }, type: "number", inList: true, help: { de: "Position in Menüs und Listen, kleinere Zahlen stehen weiter vorn.", en: "Position in menus and lists, lower numbers come first." } },
     ],
     order: "display_id, name",
@@ -164,7 +164,7 @@ export const entities: Entity[] = [
       },
       { name: "address", label: { de: "IP-Adresse", en: "IP address" }, type: "text", inList: true, required: true, max: 32, normalize: canonicalIp, help: { de: "Eine IP-Adresse, kein Hostname. Jede Kombination aus IP und Port gibt es nur einmal.", en: "An IP address, not a host name. Each IP and port combination exists only once." } },
       { name: "port", label: { de: "Port", en: "Port" }, type: "number", inList: true, required: true, min: 1, maxValue: 65535, help: { de: "Spiel- und RCON-Port des Servers.", en: "Game and RCON port of the server." } },
-      { ...gameField, help: { de: "Die Rangliste bestimmt das Spiel: erst unter Ranglisten das Spiel der Rangliste wählen, dann den Server ihr zuordnen. Nur Ranglisten desselben Spiels sind erlaubt. Vorlagen (mitgelieferte Ranglisten ohne Server) stehen nicht zur Wahl, neu angelegte Ranglisten schon, auch vor ihrem ersten Server.", en: "The ranking decides the game: first choose the ranking's game under Rankings, then assign the server to it. Only rankings of the same game are allowed. Templates (seeded rankings without servers) are not offered; rankings you created are, also before their first server." } },
+      { ...gameField, help: { de: "Das Ranking bestimmt das Spiel: Wähle zuerst unter Rankings das Spiel des Rankings, dann ordne ihm den Server zu. Nur Rankings desselben Spiels sind erlaubt. Vorlagen (mitgelieferte Rankings ohne Server) stehen nicht zur Auswahl, neu angelegte Rankings schon, auch vor ihrem ersten Server.", en: "The ranking decides the game: first choose the ranking's game under Rankings, then assign the server to it. Only rankings of the same game are allowed. Templates (seeded rankings without servers) are not offered; rankings you created are, also before their first server." } },
       { name: "rcon_password", label: { de: "RCON-Passwort", en: "RCON password" }, type: "secret", max: 128, help: { de: "Für die Antworten auf !rank, !top10 usw. Leer lassen, um es nicht zu ändern; „Entfernen“ löscht es.", en: "For replies to !rank, !top10 etc. Leave empty to keep it; “Remove” clears it." } },
       {
         name: "log_secret",
@@ -215,11 +215,11 @@ export const entities: Entity[] = [
     joinCols: "d.lastName AS lastName",
     fields: [
       { name: "lastName", label: { de: "Name", en: "Name" }, type: "text", inList: true, readonly: true },
-      { name: "game", label: { de: "Rangliste", en: "Ranking" }, type: "text", inList: true, readonly: true },
+      { name: "game", label: { de: "Ranking", en: "Ranking" }, type: "text", inList: true, readonly: true },
       { name: "skill", label: { de: "Punkte", en: "Points" }, type: "number", inList: true },
       {
         name: "hideranking",
-        label: { de: "Aus Rangliste ausblenden", en: "Hide from ranking" },
+        label: { de: "Aus der Rangliste ausblenden", en: "Hide from ranking" },
         type: "select",
         options: [
           ["0", { de: "Nein, sichtbar", en: "No, visible" }],
@@ -372,7 +372,7 @@ export const entities: Entity[] = [
     pk: "awardId",
     label: { de: "Awards", en: "Awards" },
     help: {
-      de: "Award-Definitionen wie bei gameME. Die Tagesgewinner auf der Webseite werden aus den Tageswerten berechnet; diese Liste ergänzt sie.",
+      de: "Award-Definitionen wie bei gameME. Die Tagesgewinner auf der Website werden aus den Tageswerten berechnet; diese Liste ergänzt sie.",
       en: "Award definitions as in gameME. The daily winners on the website are computed from daily totals; this list adds to them.",
     },
     fields: [
@@ -414,7 +414,7 @@ export const entities: Entity[] = [
         },
       },
       { name: "minimum", label: { de: "Ab Kills", en: "From kills" }, type: "number", inList: true, required: true },
-      { name: "game_code", label: { de: "Rangliste", en: "Ranking" }, type: "select", options: "games", inList: true, required: true },
+      { name: "game_code", label: { de: "Ranking", en: "Ranking" }, type: "select", options: "games", inList: true, required: true },
     ],
     order: "game_code, minimum",
     gameColumn: "game_code",
