@@ -11,6 +11,7 @@ test("section links prefetch on pointer, touch and focus only", () => {
   for (const ev of ["onPointerEnter", "onTouchStart", "onFocus"]) assert.match(s, new RegExp(`${ev}=\\{\\(\\) => router\\.prefetch\\(href\\)\\}`), ev);
 });
 
+// In a section, so it is as wide as the boxes above it, not the whole page.
 test("a ranking and the site have a loading state", () => {
-  for (const f of ["src/app/(site)/loading.tsx", "src/app/(site)/[game]/loading.tsx"]) assert.match(readFileSync(f, "utf8"), /<Skeleton rows=\{12\} \/>/, f);
+  for (const f of ["src/app/(site)/loading.tsx", "src/app/(site)/[game]/loading.tsx"]) assert.match(readFileSync(f, "utf8"), /<div className="section">\s*<Skeleton rows=\{\d+\} \/>/, f);
 });
