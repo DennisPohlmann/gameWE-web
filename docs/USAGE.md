@@ -734,13 +734,17 @@ menu button), and lists turn into cards on narrow screens:
   "All rankings" in the same menu shows the lists without a filter.
 - **Settings** (`/admin/settings/<page>`): one page per topic, each with its
   own save bar: Website (general, design & logo, header & links, maps &
-  events, search engines, privacy), Services (voice server, SourceBans, Steam, monitoring),
-  Collector (points, recording & privacy, in-game commands), Moderation (chat,
+  events, search engines, privacy), Services (voice server, SourceBans, Steam, monitoring,
+  API, notifications, recording: server load and when a visit ends), Moderation (chat,
   IP addresses), Access (users, my account & 2FA) and Advanced (all options
-  (raw)). The save bar says who reads the page's values: the website at once
+  (raw)). The points and the in-game commands are in the Rankings area, under
+  "Rankings" at the bottom of its menu (same addresses,
+  `/admin/settings/points` and `/admin/settings/commands`). The settings have
+  no Collector group of their own; the collector's state stays on
+  `/admin/collector`. The save bar says who reads the page's values: the website at once
   after saving (website pages, voice server, monitoring, admin area), the
-  collector within a minute (Collector pages, SourceBans) or both (Steam,
-  Advanced). Every admin page shows its path at the top (e.g. "Rankings ›
+  collector within a minute (points, in-game commands, recording, SourceBans) or both (Steam,
+  privacy, Advanced). Every admin page shows its path at the top (e.g. "Rankings ›
   Servers › name"), the parts before the current page are links; a part
   with the same name as the next one is shown once.
 
@@ -761,7 +765,11 @@ What the admin area edits:
   `gamewe_privacy_address`, `gamewe_privacy_email`, the text split over
   `gamewe_privacy_text_1` … `_25`; not on the raw options page). The page
   also names pictures from the settings that are on other servers. The
-  generated privacy policy is an aid, not legal advice.
+  generated privacy policy is an aid, not legal advice. Below them, on the
+  same page and saved with them, what the collector stores about players:
+  chat, player IPs and kill and death positions (`gamewe_store_chat`,
+  `gamewe_store_player_ip`, `gamewe_store_locations`; before, under
+  Collector → Recording & privacy). Every privacy setting is on this one page.
 - **Servers:** the collector only accepts logs from servers registered here
   (IP address, port, game, RCON password). Each IP address and port exists
   only once: saving a server with the IP and port of another one is refused

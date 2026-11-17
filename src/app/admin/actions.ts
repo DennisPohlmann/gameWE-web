@@ -231,14 +231,16 @@ export async function saveSettingsAction(form: FormData) {
   redirect(`/admin/settings/${page}?saved=1`);
 }
 
-// The operator's part of the privacy page (Admin → Website → Privacy):
-// checked and split by lib/privacy-operator.ts, written with the admin user.
+// The privacy page (Admin → Website → Privacy): the operator's part, checked
+// and split by lib/privacy-operator.ts, and the collector's privacy switches
+// (settings group "privacy"), written with the admin user.
 export async function savePrivacyAction(form: FormData) {
   const user = await requirePerm("settings.edit");
   try {
     await savePrivacy({ user }, form);
+    await saveSettings({ user }, "privacy", form);
   } catch (err) {
-    if (err instanceof OpError && err.code === "field") redirect(`/admin/privacy?field=${err.detail.field}`);
+    if (err instanceof OpError && err.code === "field") redirect(`/admin/privacy?field=${encodeURIComponent(err.detail.field)}`);
     throw err;
   }
   redirect("/admin/privacy?saved=1");

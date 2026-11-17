@@ -3,7 +3,8 @@ import type { ReactNode } from "react";
 import { savePrivacyAction } from "../../actions";
 import { Icon } from "@/components/admin/icons";
 import { PageHead } from "@/components/admin/page-head";
-import { adminDict, localized } from "@/lib/admin-i18n";
+import { adminDict, localized, tr } from "@/lib/admin-i18n";
+import { settingGroups } from "@/lib/admin-settings";
 import { allowed } from "@/lib/admin-perms";
 import { PERM_T } from "@/lib/admin-texts";
 import { requirePerm } from "@/lib/auth";
@@ -15,7 +16,9 @@ import { imageHosts } from "@/lib/privacy-inventory";
 import { ALL_OPERATOR_KEYS, LIMITS, OPERATOR_KEYS, TEXT_MAX, readOperator, type Operator } from "@/lib/privacy-operator";
 import { getSettings } from "@/lib/settings";
 
-// The operator's part of the public privacy page (lib/privacy-operator.ts).
+// Everything about privacy on one page: the operator's part of the public
+// privacy page (lib/privacy-operator.ts) and what the collector stores
+// (settings group "privacy", all switches), saved together.
 export default async function PrivacyAdminPage({ searchParams }: { searchParams: Promise<{ saved?: string; field?: string }> }) {
   const user = await requirePerm("settings.view");
   const canEdit = allowed(user, "settings.edit");
@@ -23,15 +26,18 @@ export default async function PrivacyAdminPage({ searchParams }: { searchParams:
   const a = adminDict(lang);
   const u = a.ui;
   const sp = await searchParams;
+  const stores = settingGroups.find((g) => g.id === "privacy")!.items;
   const [rows, s, host] = await Promise.all([
-    adminQuery<{ keyname: string; value: string | null }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [ALL_OPERATOR_KEYS]),
+    adminQuery<{ keyname: string; value: string | null }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [[...ALL_OPERATOR_KEYS, ...stores.map((x) => x.key)]]),
     getSettings(),
     headers().then((h) => h.get("host") ?? ""),
   ]);
-  const o = readOperator(Object.fromEntries(rows.map((r) => [r.keyname, r.value ?? ""])));
+  const stored = Object.fromEntries(rows.map((r) => [r.keyname, r.value ?? ""]));
+  const o = readOperator(stored);
   const external = imageHosts([s.logoUrl, s.headerLogo, s.favicon, s.appleIcon].filter(Boolean), host);
   const labels: Record<keyof Operator, string> = { name: a.privacyName, address: a.privacyAddress, email: a.privacyEmail, text: a.privacyText };
   const bad = sp.field && sp.field in labels ? (sp.field as keyof Operator) : null;
+  const badStore = stores.find((x) => x.key === sp.field);
   const field = (k: keyof Operator, help: string | null, control: ReactNode) => (
     <div className="field">
       <div className="l">
@@ -47,8 +53,8 @@ export default async function PrivacyAdminPage({ searchParams }: { searchParams:
   return (
     <>
       <PageHead
-        crumbs={[[u.areaSettings, "/admin/settings"], [u.navWebsite], [a.privacyTitle]]}
-        title={a.privacyTitle}
+        crumbs={[[u.areaSettings, "/admin/settings"], [u.navWebsite], [u.privacy]]}
+        title={u.privacy}
         intro={a.privacyIntro}
         actions={
           <a className="button" href={`${basePath}/privacy`} target="_blank" rel="noopener">
@@ -62,6 +68,7 @@ export default async function PrivacyAdminPage({ searchParams }: { searchParams:
       </p>
       {sp.saved ? <p className="notice">{a.saved}</p> : null}
       {bad ? <p className="notice error">{fill(a.invalidField, { f: labels[bad] })}</p> : null}
+      {badStore ? <p className="notice error">{fill(a.invalidField, { f: tr(badStore.label, lang) })}</p> : null}
       {external.length ? <p className="notice info">{fill(a.privacyExternal, { hosts: external.join(", ") })}</p> : null}
       {canEdit ? null : <p className="notice">{localized(PERM_T, lang).readOnly}</p>}
       <form action={savePrivacyAction}>
@@ -80,12 +87,34 @@ export default async function PrivacyAdminPage({ searchParams }: { searchParams:
               fill(a.privacyTextHint, { n: String(TEXT_MAX) }),
               <textarea {...noAutofill} id="p-text" name="text" defaultValue={o.text} maxLength={TEXT_MAX} rows={10} aria-invalid={bad === "text" || undefined} />,
             )}
+            <h3 className="fields-section">{tr(settingGroups.find((g) => g.id === "privacy")!.title, lang)}</h3>
+            {stores.map((x) => (
+              <div className="field" key={x.key}>
+                <div className="l">
+                  <b>
+                    <label htmlFor={`f-${x.key}`}>{tr(x.label, lang)}</label>
+                  </b>
+                  {x.help ? <span>{tr(x.help, lang)}</span> : null}
+                  <code>{x.key}</code>
+                </div>
+                <div className="c">
+                  {/* The hidden 0 is sent when the switch is off (saveSettings). */}
+                  <label className="switch">
+                    <input type="hidden" name={x.key} value="0" />
+                    <input {...noAutofill} id={`f-${x.key}`} type="checkbox" name={x.key} value="1" defaultChecked={(stored[x.key] || x.def) === "1"} />
+                    <i aria-hidden="true" />
+                    <span className="on-t">{u.on}</span>
+                    <span className="off-t">{u.off}</span>
+                  </label>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
         <div className="savebar">
           <span className="msg">
             <Icon name="info" />
-            {u.saveHint}
+            {u.saveHintBoth}
           </span>
           <span className="unsaved-note">{u.unsaved}</span>
           <span className="btns">

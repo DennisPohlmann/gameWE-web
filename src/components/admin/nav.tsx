@@ -75,12 +75,14 @@ type Area = "home" | "rankings" | "settings" | "account";
 
 // First path segment after /admin per area.
 const RANKING_SEGMENTS = ["rankings", "games", "servers", "players", "clans", "weapons", "actions", "teams", "roles", "awards", "ranks", "reset"];
+// Settings pages in the rankings area (area "rankings" in lib/admin-settings.ts).
+const RANKING_SETTINGS = ["points", "commands"];
 const RANKING_LISTS = ["servers", "players", "clans", "weapons", "actions", "teams", "roles", "awards", "ranks"];
 
 function where(pathname: string, params: URLSearchParams) {
   const parts = pathname.split("/").filter(Boolean);
   const seg = parts[1] ?? "";
-  const area: Area = seg === "" || seg === "jobs" || seg === "collector" ? "home" : seg === "account" ? "account" : RANKING_SEGMENTS.includes(seg) ? "rankings" : "settings";
+  const area: Area = seg === "" || seg === "jobs" || seg === "collector" ? "home" : seg === "account" ? "account" : RANKING_SEGMENTS.includes(seg) || (seg === "settings" && RANKING_SETTINGS.includes(parts[2])) ? "rankings" : "settings";
   let game = params.get("game") ?? "";
   if (!game && seg === "rankings" && parts[2] && parts[2] !== "new") game = decodeURIComponent(parts[2]);
   if (!game) {
@@ -187,7 +189,7 @@ export function AdminSidebar({
     if (seg === "reset") return code ? `/admin/reset?game=${c}` : "/admin/reset";
     return code ? `/admin/rankings/${c}` : "/admin/rankings";
   };
-  const rankingsArea = can["rankings.view"] || can["servers.view"] || can["players.view"] || can["definitions.view"];
+  const rankingsArea = can["rankings.view"] || can["servers.view"] || can["players.view"] || can["definitions.view"] || can["settings.view"];
   const groupLinks = (areaKey: string, icons: Record<string, IconName>) =>
     groups
       .filter(() => can["settings.view"])
@@ -311,18 +313,21 @@ export function AdminSidebar({
               </nav>
             </>
           ) : null}
-          {can["rankings.view"] ? (
+          {can["rankings.view"] || can["settings.view"] ? (
             <>
               <h4>{t.areaRankings}</h4>
               <nav>
-                <Item
-                  href="/admin/rankings"
-                  icon="list"
-                  label={t.manageRankings}
-                  on={(seg === "rankings" && !parts[2]) || (seg === "games" && parts[2] !== "new")}
-                  count={rankings.filter((r) => !r.template).length}
-                />
+                {can["rankings.view"] ? (
+                  <Item
+                    href="/admin/rankings"
+                    icon="list"
+                    label={t.manageRankings}
+                    on={(seg === "rankings" && !parts[2]) || (seg === "games" && parts[2] !== "new")}
+                    count={rankings.filter((r) => !r.template).length}
+                  />
+                ) : null}
                 {can["rankings.edit"] ? <Item href="/admin/games/new" icon="plus" label={t.newRanking} on={seg === "games" && parts[2] === "new"} /> : null}
+                {groupLinks("rankings", { points: "points", commands: "terminal" })}
               </nav>
             </>
           ) : null}
@@ -337,16 +342,7 @@ export function AdminSidebar({
                 <Item href="/admin/privacy" icon="shield" label={t.privacy} on={seg === "privacy"} />
               </nav>
               <h4>{t.navServices}</h4>
-              <nav>{groupLinks("services", { voice: "headset", bans: "ban", steam: "user", monitoring: "pulse", notifications: "bell" })}</nav>
-            </>
-          ) : null}
-          {can["settings.view"] || can["jobs.view"] ? (
-            <>
-              <h4>{t.navCollector}</h4>
-              <nav>
-                {groupLinks("collector", { points: "points", capture: "shield", commands: "terminal" })}
-                {can["jobs.view"] ? <Item href="/admin/jobs" icon="clock" label={t.jobs} on={false} /> : null}
-              </nav>
+              <nav>{groupLinks("services", { voice: "headset", bans: "ban", steam: "user", monitoring: "pulse", notifications: "bell", capture: "server" })}</nav>
             </>
           ) : null}
           {can["chat.view"] || can["ips.view"] ? (

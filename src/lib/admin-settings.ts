@@ -41,17 +41,20 @@ export type Setting = {
 };
 
 // One page of the settings (/admin/settings/<id>) in one area of the menu.
-export type SettingArea = "website" | "services" | "collector" | "admin";
+// "privacy": the collector's privacy switches, shown on /admin/privacy with the
+// operator's details instead of a settings page of their own.
+export type SettingArea = "website" | "services" | "rankings" | "privacy" | "admin";
 export type SettingGroup = { id: string; area: SettingArea; title: L; help?: L; items: Setting[] };
 
 // Who reads a settings page's values, for the hint of its save bar: the
 // website (from its cache, emptied on save), the collector (it rereads
 // hlstats_Options every minute) or both (the Steam key: profiles on the
 // website, VAC checks in the collector).
+const COLLECTOR_GROUPS = ["points", "capture", "commands", "bans"];
 export function settingsReader(group: Pick<SettingGroup, "id" | "area"> | undefined): "web" | "collector" | "both" {
   if (!group) return "both";
-  if (group.area === "collector" || group.id === "bans") return "collector";
-  if (group.id === "steam") return "both";
+  if (COLLECTOR_GROUPS.includes(group.id)) return "collector";
+  if (group.id === "steam" || group.area === "privacy") return "both";
   return "web";
 }
 
@@ -760,20 +763,26 @@ export const settingGroups: SettingGroup[] = [
     },
     items: notifyDefinitions,
   },
-  { id: "points", area: "collector", title: { de: "Punkte", en: "Points" }, help: helpOf("points"), items: definitions.find((g) => g.id === "points")!.items },
   {
     id: "capture",
-    area: "collector",
-    title: { de: "Erfassung & Datenschutz", en: "Recording & privacy" },
+    area: "services",
+    title: { de: "Erfassung", en: "Recording" },
     help: {
-      de: "Was der Collector speichert. Der Collector übernimmt Änderungen innerhalb einer Minute.",
-      en: "What the collector stores. The collector picks up changes within a minute.",
+      de: "Serverauslastung und wann ein Besuch endet. Was der Collector über Spieler speichert, stellst du unter Webseite → Datenschutz ein. Der Collector übernimmt Änderungen innerhalb einer Minute.",
+      en: "Server load and when a visit ends. What the collector stores about players is set under Website → Privacy. The collector picks up changes within a minute.",
     },
-    items: pick("gamewe_server_load", "gamewe_store_chat", "gamewe_store_player_ip", "gamewe_store_locations", "gamewe_idle_timeout"),
+    items: pick("gamewe_server_load", "gamewe_idle_timeout"),
   },
   {
+    id: "privacy",
+    area: "privacy",
+    title: { de: "Was der Collector speichert", en: "What the collector stores" },
+    items: pick("gamewe_store_chat", "gamewe_store_player_ip", "gamewe_store_locations"),
+  },
+  { id: "points", area: "rankings", title: { de: "Punkte", en: "Points" }, help: helpOf("points"), items: definitions.find((g) => g.id === "points")!.items },
+  {
     id: "commands",
-    area: "collector",
+    area: "rankings",
     title: { de: "Befehle im Spiel", en: "In-game commands" },
     help: {
       de: "Antworten des Collectors auf !rank, !top10 und Co. über RCON.",

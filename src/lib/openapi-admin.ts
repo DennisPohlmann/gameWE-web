@@ -421,7 +421,7 @@ export const adminSchemas: Record<string, Schema> = {
   AdminSchedule: scheduleSchema,
   AdminSettings: obj({
     id: str("Settings page"),
-    area: str("website, services or collector"),
+    area: str("website, services, rankings, privacy or admin"),
     title: str("Title of the page"),
     settings: { type: "object", additionalProperties: true, description: "Key → stored value or default. Secrets: { set }; links: { label, url }; order: tab ids. The types are those of AdminSettingsChange." },
     readOnly: arr(str("Key"), "Settings you cannot change (they need the right settings.protected)"),
@@ -429,7 +429,7 @@ export const adminSchemas: Record<string, Schema> = {
   AdminJob: job,
   AdminSettingGroup: obj({
     id: str("Group id, as in /admin/settings/{group}"),
-    area: str("website, services or collector"),
+    area: str("website, services, rankings, privacy or admin"),
     title: str("Title of the settings page"),
     settings: arr(obj({ key: str("hlstats_Options key"), type: str("text, number, bool, choice, link, template, secret, home or order"), label: str("Label of the field"), readOnly: bool("You cannot change it (needs the right settings.protected)") })),
   }),

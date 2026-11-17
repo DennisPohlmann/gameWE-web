@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { saveSettingsAction } from "../../../actions";
 import { Section } from "@/components/ui";
 import { NOTIFY_T } from "@/lib/admin-texts";
@@ -45,6 +45,8 @@ export default async function SettingsPage({
   const group = settingGroups.find((g) => g.id === groupId);
   const isRaw = groupId === RAW_GROUP;
   if (!group && !isRaw) notFound();
+  // The collector's privacy switches are on the privacy page.
+  if (group?.area === "privacy") redirect("/admin/privacy");
   const lang = await getAdminLang();
   const a = adminDict(lang);
   const u = a.ui;
@@ -78,13 +80,13 @@ export default async function SettingsPage({
   const bad = allSettings.find((s) => s.key === sp.field);
   const badRaw = sp.field?.startsWith("raw:") ? sp.field.slice(4) : sp.field === "raw_new" ? a.rawNewKey : null;
   const t = dicts[lang];
-  const areaTitle = { website: u.navWebsite, services: u.navServices, collector: u.navCollector, admin: u.navAccess, advanced: u.navAccess };
+  const areaTitle = { website: u.navWebsite, services: u.navServices, privacy: u.navWebsite, admin: u.navAccess, advanced: u.navAccess };
   const title = group ? tr(group.title, lang) : u.rawOptions;
 
   return (
     <>
       <PageHead
-        crumbs={[[u.areaSettings, "/admin/settings"], [areaTitle[group?.area ?? "advanced"]], [title]]}
+        crumbs={group?.area === "rankings" ? [[u.areaRankings, "/admin/rankings"], [title]] : [[u.areaSettings, "/admin/settings"], [areaTitle[group?.area ?? "advanced"]], [title]]}
         title={title}
         intro={group ? group.help && tr(group.help, lang) : a.rawHelp}
       />

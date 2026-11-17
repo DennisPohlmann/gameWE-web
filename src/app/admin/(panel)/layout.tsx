@@ -191,7 +191,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
 // The rankings area has something for this admin (its pages need one of these).
 function rankingsArea(user: Parameters<typeof permMap>[0]) {
   const can = permMap(user);
-  return can["rankings.view"] || can["servers.view"] || can["players.view"] || can["definitions.view"];
+  return can["rankings.view"] || can["servers.view"] || can["players.view"] || can["definitions.view"] || can["settings.view"];
 }
 
 // Short tag of a ranking's game for the menu (CS:S, TF2, ...).
