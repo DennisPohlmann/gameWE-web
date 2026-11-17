@@ -74,7 +74,9 @@ test("a stored secret is loaded only on click and only for an admin allowed to c
   assert.doesNotMatch(fn, /env\(|process\.env/);
   const control = src("src/components/admin/secret-control.tsx");
   // Only a stored, editable secret gets the loader; nothing of it is in the page.
-  assert.match(control, /load=\{reveal && set && !disabled \? revealSecretAction\.bind\(null, reveal\) : undefined\}/);
+  assert.match(control, /const load = reveal && set && !disabled \? revealSecretAction\.bind\(null, reveal\) : undefined;/);
+  // The FastDL header rows: loaded the same way, only on the first show of empty rows.
+  assert.match(src("src/components/admin/header-rows.tsx"), /if \(!shown && load && rows\.every\(\(r\) => !r\.v\)\)/);
   assert.doesNotMatch(control, /defaultValue|value=\{/);
   const input = src("src/components/admin/reveal-input.tsx");
   assert.match(input, /if \(!shown && load && el && !el\.value\)/);

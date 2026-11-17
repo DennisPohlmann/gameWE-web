@@ -2,6 +2,7 @@ import { revealSecretAction } from "@/app/admin/actions";
 import { noAutofill } from "@/lib/autofill";
 import { adminDict } from "@/lib/admin-i18n";
 import type { Lang } from "@/lib/i18n";
+import { HeaderRows } from "./header-rows";
 import { RevealInput } from "./reveal-input";
 
 // The input of a secret (entity field or setting): whether one is stored as
@@ -9,7 +10,8 @@ import { RevealInput } from "./reveal-input";
 // (`<name>__clear`, see secret-field.ts) deletes it on save. isNew: a row
 // not saved yet, nothing to show. The eye button shows what was typed
 // (RevealInput), or with reveal (see revealSecretAction) the stored value,
-// fetched on click; it is never part of the page itself.
+// fetched on click; it is never part of the page itself. rows: a list of
+// up to that many inputs under the same name with a plus button (HeaderRows).
 export function SecretControl({
   id,
   name,
@@ -20,6 +22,7 @@ export function SecretControl({
   invalid,
   isNew,
   reveal,
+  rows,
   lang,
 }: {
   id: string;
@@ -31,25 +34,43 @@ export function SecretControl({
   invalid?: boolean;
   isNew?: boolean;
   reveal?: string;
+  rows?: number;
   lang: Lang;
 }) {
   const a = adminDict(lang);
+  const load = reveal && set && !disabled ? revealSecretAction.bind(null, reveal) : undefined;
   const placeholder = disabled ? (set || fromEnv ? a.secretSetLocked : a.secretEmpty) : set ? a.secretSet : fromEnv ? a.secretSetEnv : isNew ? "" : a.secretEmpty;
   return (
     <span className="secret-control">
-      <RevealInput
-        {...noAutofill}
-        show={a.secretShow}
-        hide={a.secretHide}
-        load={reveal && set && !disabled ? revealSecretAction.bind(null, reveal) : undefined}
-        id={id}
-        name={name}
-        placeholder={placeholder}
-        maxLength={maxLength}
-        disabled={disabled}
-        aria-invalid={invalid || undefined}
-        aria-describedby={isNew ? undefined : `${id}-state`}
-      />
+      {rows ? (
+        <HeaderRows
+          {...noAutofill}
+          text={{ show: a.secretShow, hide: a.secretHide, add: a.headerAdd, remove: a.headerRemove, row: a.headerRow }}
+          max={rows}
+          load={load}
+          id={id}
+          name={name}
+          placeholder={placeholder}
+          maxLength={maxLength}
+          disabled={disabled}
+          aria-invalid={invalid || undefined}
+          aria-describedby={isNew ? undefined : `${id}-state`}
+        />
+      ) : (
+        <RevealInput
+          {...noAutofill}
+          show={a.secretShow}
+          hide={a.secretHide}
+          load={load}
+          id={id}
+          name={name}
+          placeholder={placeholder}
+          maxLength={maxLength}
+          disabled={disabled}
+          aria-invalid={invalid || undefined}
+          aria-describedby={isNew ? undefined : `${id}-state`}
+        />
+      )}
       {isNew ? null : (
         <span className="secret-state" id={`${id}-state`}>
           <span className={`pill secret-now${set || fromEnv ? " ok" : ""}`}>{set ? a.secretStateSet : fromEnv ? a.secretStateEnv : a.secretStateEmpty}</span>

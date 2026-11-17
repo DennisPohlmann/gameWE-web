@@ -379,12 +379,12 @@ const definitions: Omit<SettingGroup, "area">[] = [
       {
         key: "gamewe_fastdl_header",
         minLevel: 100,
-        label: { de: "FastDL: weiterer Header", en: "FastDL: one more header" },
+        label: { de: "FastDL: weitere Header", en: "FastDL: more headers" },
         type: "secret",
         def: "",
         help: {
-          de: "Ein Header als „Name: Wert“, z. B. „X-Api-Key: …“ oder „Cookie: …“. Host, Authorization, User-Agent, Referer und Header der Verbindung gehen nicht. Maskiert, das Auge zeigt den gespeicherten Wert; leer lassen behält ihn.",
-          en: "One header as \"Name: value\", e.g. \"X-Api-Key: ...\" or \"Cookie: ...\". Host, Authorization, User-Agent, Referer and connection headers are refused. Masked, the eye button shows the stored value; leave empty to keep it.",
+          de: "Bis zu 8 Header, jeder als „Name: Wert“, z. B. „X-Api-Key: …“ oder „Cookie: …“; das Plus fügt eine Zeile hinzu. Jeder Name nur einmal, zusammen höchstens 255 Zeichen. Host, Authorization, User-Agent, Referer und Header der Verbindung gehen nicht. Maskiert, das Auge zeigt die gespeicherten Header; bleiben alle Zeilen leer, bleiben sie erhalten.",
+          en: "Up to 8 headers, each as \"Name: value\", e.g. \"X-Api-Key: ...\" or \"Cookie: ...\"; the plus button adds a row. Each name once, at most 255 characters together. Host, Authorization, User-Agent, Referer and connection headers are refused. Masked, the eye button shows the stored headers; leave all rows empty to keep them.",
         },
       },
       { key: "gamewe_map_live", label: { de: "Karte „Gerade online“ (Spielübersicht)", en: "\"Online now\" map (game overview)" }, type: "bool", def: "1" },

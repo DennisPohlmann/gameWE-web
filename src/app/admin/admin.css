@@ -358,6 +358,11 @@ select { padding-inline-end: 28px; }
 .reveal-btn:focus-visible { outline: none; box-shadow: var(--focus); }
 .reveal-btn[aria-pressed="true"] { color: var(--accent-text); }
 .reveal-btn:disabled { cursor: default; opacity: 0.4; }
+/* The FastDL headers: a row per header with its remove button, the plus button below. */
+.header-rows { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; min-width: 0; }
+.header-row { display: flex; gap: 6px; align-items: center; min-width: 0; }
+.header-row .reveal { flex: 1; }
+.header-rows .header-add { justify-self: start; }
 .form .button { justify-self: start; }
 .form.box { margin: 16px 18px; padding: 14px; border: 1px dashed var(--line-2); border-radius: var(--radius); max-width: none; overflow-wrap: anywhere; }
 .inline-form { display: inline-flex; gap: 6px; align-items: center; margin: 0; flex-wrap: wrap; }

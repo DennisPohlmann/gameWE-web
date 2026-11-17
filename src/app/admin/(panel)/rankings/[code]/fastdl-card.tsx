@@ -3,7 +3,7 @@ import { rankingFastdlAction } from "../../../actions";
 import { SecretControl } from "@/components/admin/secret-control";
 import { rankingFastdl, rankingFastdlAccess } from "@/lib/admin-ranking-bots";
 import { adminQuery } from "@/lib/db";
-import { accessKey } from "@/lib/fastdl-access";
+import { MAX_HEADERS, accessKey } from "@/lib/fastdl-access";
 import { noAutofill } from "@/lib/autofill";
 import type { Lang } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
@@ -37,7 +37,7 @@ export async function FastdlCard({ game, lang, status }: { game: string; lang: L
   );
   const plain = (f: "agent" | "referer" | "user") =>
     row(f, <input {...noAutofill} id={`fastdl-${f}`} name={f} type="text" maxLength={255} defaultValue={access[f]} placeholder={inherited(f)} aria-invalid={badField === f || undefined} spellCheck={false} />);
-  const secret = (f: "token" | "password" | "header") => row(f, <SecretControl id={`fastdl-${f}`} name={f} maxLength={255} set={access[f]} invalid={badField === f} reveal={`fastdl:${game}:${f}`} lang={lang} />);
+  const secret = (f: "token" | "password" | "header") => row(f, <SecretControl id={`fastdl-${f}`} name={f} maxLength={255} set={access[f]} invalid={badField === f} reveal={`fastdl:${game}:${f}`} rows={f === "header" ? MAX_HEADERS : undefined} lang={lang} />);
   return (
     <section className="card" id="fastdl">
       <header>

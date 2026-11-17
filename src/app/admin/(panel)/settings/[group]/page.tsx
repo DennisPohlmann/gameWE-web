@@ -21,6 +21,7 @@ import { pageSizeStep } from "@/lib/page-size";
 import { adminQuery } from "@/lib/db";
 import { fill, getAdminLang } from "@/lib/i18n";
 import { secretOptions } from "@/lib/secret-options";
+import { ACCESS_KEYS, MAX_HEADERS } from "@/lib/fastdl-access";
 import { replacedTemplate } from "@/lib/skin-fallback";
 import { listTemplates } from "@/lib/templates";
 import { voiceType } from "@/lib/voice";
@@ -228,7 +229,7 @@ function SettingField({
     );
   } else if (s.type === "secret") {
     // "set" or "not set"; the eye button loads a stored value on click, never one from the environment.
-    control = <SecretControl id={id} name={s.key} maxLength={255} set={Boolean(stored)} fromEnv={Boolean(fromEnv)} disabled={readOnly} invalid={bad} reveal={`setting:${s.key}`} lang={lang} />;
+    control = <SecretControl id={id} name={s.key} maxLength={255} set={Boolean(stored)} fromEnv={Boolean(fromEnv)} disabled={readOnly} invalid={bad} reveal={`setting:${s.key}`} rows={s.key === ACCESS_KEYS.header ? MAX_HEADERS : undefined} lang={lang} />;
   } else {
     control = (
       <input
