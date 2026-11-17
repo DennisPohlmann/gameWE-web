@@ -17,28 +17,11 @@ export async function generateMetadata(): Promise<Metadata> {
 type Row = [string, string, string, string, string];
 
 // The npm packages: generated from package-lock.json by scripts/licenses.mjs
-// (before every build; npm test fails when the file is stale).
+// (before every build; npm test fails when the file is stale). The page
+// shows no versions: they would only help an attacker match known flaws.
 type NpmRow = { name: string; version: string; license: string; platform?: boolean; note?: string };
-const NPM = npm as NpmRow[];
-
-// The version shown after a name of the lists below, from the npm list.
-const VERSION_OF: Record<string, string> = {
-  "Next.js": "next",
-  "React, React DOM": "react",
-  "Satori, resvg (@vercel/og)": "@vercel/og",
-  Leaflet: "leaflet",
-  mysql2: "mysql2",
-  "node-postgres (pg)": "pg",
-  "node-mssql (tedious)": "mssql",
-  "Scalar API Reference": "@scalar/api-reference",
-  uqr: "uqr",
-  "server-only": "server-only",
-};
-
-function withVersion(name: string): string {
-  const v = NPM.find((r) => r.name === VERSION_OF[name])?.version;
-  return v ? `${name} ${v}` : name;
-}
+// Without the version, two versions of one package are one row.
+const NPM = [...new Map((npm as NpmRow[]).map((r) => [`${r.name} ${r.license}`, r])).values()];
 
 const LICENSE_URL: Record<string, string> = {
   MIT: "https://opensource.org/license/mit",
@@ -124,9 +107,9 @@ export default async function LicensesPage() {
           const link = url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
           return {
             key: name,
-            values: [withVersion(name), license, de ? useDe : useEn, link],
+            values: [name, license, de ? useDe : useEn, link],
             cells: [
-              withVersion(name),
+              name,
               LICENSE_URL[license] ? (
                 <a key="l" href={LICENSE_URL[license]} rel="noopener noreferrer" target="_blank">
                   {license}
@@ -191,15 +174,14 @@ export default async function LicensesPage() {
           <SortableTable
             className="lic-table"
             initial={0}
-            cols={[{ label: t.licName }, { label: t.licVersion, className: "nowrap" }, { label: t.licLicense }]}
+            cols={[{ label: t.licName }, { label: t.licLicense }]}
             rows={NPM.map((r) => ({
-              key: `${r.name}@${r.version}`,
-              values: [r.name, r.version, r.license],
+              key: `${r.name} ${r.license}`,
+              values: [r.name, r.license],
               cells: [
-                <a key="n" href={`https://www.npmjs.com/package/${r.name}/v/${r.version}`} rel="noopener noreferrer" target="_blank">
+                <a key="n" href={`https://www.npmjs.com/package/${r.name}`} rel="noopener noreferrer" target="_blank">
                   <bdi>{r.name}</bdi>
                 </a>,
-                r.version,
                 r.platform ? `${r.license} (${t.licPlatform})` : r.license,
               ],
             }))}

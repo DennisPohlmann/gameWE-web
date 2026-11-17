@@ -5,7 +5,7 @@ It ships or uses the third-party components below. The license texts are
 included in each package (`node_modules/<package>/LICENSE`, in the tar.gz
 and the container image under `node_modules/` of the standalone server) or
 linked here. The public page `/licenses` shows the same software, data and
-graphics for visitors.
+graphics for visitors, without version numbers.
 
 All licenses below are compatible with GPL-3.0-or-later.
 
@@ -14,7 +14,7 @@ All licenses below are compatible with GPL-3.0-or-later.
 Every package of a production install (`npm ci --omit=dev`, linux-x64).
 The same list with versions is generated from `package-lock.json` by
 `scripts/licenses.mjs` before every build (`src/lib/npm-licenses.json`, shown
-on `/licenses`); `npm test` fails when a package of it is missing here or its
+on `/licenses` without the versions); `npm test` fails when a package of it is missing here or its
 version differs. Optional platform packages that are not installed on
 linux-x64 (other `@img/sharp-*` and `@next/swc-*` builds) are left out; they
 carry the same licenses as their linux-x64 counterparts.

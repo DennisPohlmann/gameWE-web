@@ -33,3 +33,9 @@ test("THIRD-PARTY-LICENSES.md lists every installed package with its version", (
     assert.ok(md.includes(`| ${r.name} | ${r.version} |`) || md.includes(`${r.name} ${r.version}`) || md.includes(`\`${r.name}\` ${r.version}`), `${r.name} ${r.version} missing in THIRD-PARTY-LICENSES.md`);
   }
 });
+
+// Versions only help an attacker look up known flaws; the page shows names and licenses.
+test("the /licenses page shows no versions", () => {
+  const page = readFileSync("src/app/(site)/licenses/page.tsx", "utf8");
+  assert.doesNotMatch(page, /\.version\b|licVersion|\/v\/\$\{/);
+});
