@@ -212,6 +212,10 @@ website therefore computes some things itself:
   sessions table and `pointsChange` (formerly `skillChange`) of
   `/api/v1/players/{id}/history` use the same difference (the oldest day of
   all: its recorded `skill_change`).
+- **Today beside the points** (profile header, `pointsToday` of
+  `/api/v1/players/{id}`): the same difference for today (the site's `TZ`
+  day), with the tooltip "Points today so far" on hover, focus or tap.
+  Nothing is shown (`null`) while the player has not played today.
 - **Sessions table**: "Wins" are the rounds won that day (`wins`; gameWE
   records no GunGame wins), "-" when there are none; "Accuracy" is "-" on days
   without weapon statistics (`shots` = 0, e.g. games or servers that do not

@@ -2,7 +2,7 @@
 // Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { dayChanges, pointsTrend } from "../src/lib/points-trend.ts";
+import { dayChanges, pointsTrend, todayChange } from "../src/lib/points-trend.ts";
 
 test("the change is the step of the line, also when skill_change disagrees", () => {
   const days = pointsTrend(
@@ -76,4 +76,20 @@ test("sessions and API: the same change, newest first, across page edges", () =>
   const trend = pointsTrend(rows, 1000, "2026-10-31").filter((d) => d.played).map((d) => d.change);
   assert.deepEqual(dayChanges([...rows].reverse(), 1000).reverse(), trend);
   assert.deepEqual(dayChanges([], null), []);
+});
+
+test("today's change: against the last earlier day, null without play today", () => {
+  const rows = [
+    { day: "2026-11-10", skill: 2835, change: -6 },
+    { day: "2026-11-17", skill: 2850, change: 99 },
+  ];
+  assert.equal(todayChange(rows, null, "2026-11-17"), 15);
+  // Only an earlier day: nothing today, not that day's change.
+  assert.equal(todayChange(rows.slice(0, 1), null, "2026-11-17"), null);
+  assert.equal(todayChange([], 2800, "2026-11-17"), null);
+  // Today alone: against the day before the range, else its own change.
+  assert.equal(todayChange(rows.slice(1), 2840, "2026-11-17"), 10);
+  assert.equal(todayChange(rows.slice(1), null, "2026-11-17"), 99);
+  // Played today without a change.
+  assert.equal(todayChange([{ day: "2026-11-17", skill: 2850, change: 0 }], 2850, "2026-11-17"), 0);
 });

@@ -239,6 +239,7 @@
   "overview": "Overview",
   "position": "Position",
   "positionOf": "of {n} in the ranking",
+  "pointsToday": "Points today so far",
   "last14": "* last 14 days",
   "suicides": "Suicides",
   "killsPerMin": "Kills per minute",

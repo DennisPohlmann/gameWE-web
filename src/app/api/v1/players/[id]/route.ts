@@ -1,7 +1,9 @@
 import { api, apiBan, apiPath, publicPlayer } from "@/lib/api";
 import { kpd, pathId, share } from "@/lib/api-params";
 import { getRanks, rankFor } from "@/lib/awards";
-import { getPlayerPosition, getPlayerWeapons } from "@/lib/data";
+import { getPlayerHistory, getPlayerPosition, getPlayerSkillBefore, getPlayerWeapons } from "@/lib/data";
+import { siteDay } from "@/lib/day";
+import { todayChange } from "@/lib/points-trend";
 import { activity } from "@/lib/format";
 import { kpm } from "@/lib/map-table";
 import { getSettings } from "@/lib/settings";
@@ -19,13 +21,16 @@ export function GET(_req: Request, { params }: { params: Promise<{ id: string }>
     const { id } = await params;
     const p = await publicPlayer(pathId(id));
     if (!p) return null;
-    const [rank, { activityDays }, weapons, ranks, hall] = await Promise.all([
+    const [rank, { activityDays }, weapons, ranks, hall, todayRows, before] = await Promise.all([
       // As on the profile: a hidden, banned or inactive player has no place.
       Number(p.hideranking) || p.inactive ? Promise.resolve(null) : getPlayerPosition(p),
       getSettings(),
       getPlayerWeapons(p.playerId),
       getRanks(p.game),
       hallOfFameShown(p.game),
+      // Today's history row and the points of the day before it, for pointsToday.
+      getPlayerHistory(p.playerId, 0),
+      getPlayerSkillBefore(p.playerId, 0),
     ]);
     // The bans of the profile (texts in English); a player banned in the
     // ranking (hideranking 2) has no place in it.
@@ -44,8 +49,14 @@ export function GET(_req: Request, { params }: { params: Promise<{ id: string }>
       city: p.city || null,
       clan: p.clan ? { id: p.clan, tag: p.clanTag, name: p.clanName } : null,
       points: Number(p.skill),
-      // Points change of the last event, as beside the points on the profile.
+      // Points change of the last event.
       pointsChange: Number(p.last_skill_change),
+      // Points won or lost today so far, as beside the points on the profile; null without play today.
+      pointsToday: todayChange(
+        todayRows.map((h) => ({ day: String(h.eventTime).slice(0, 10), skill: Number(h.skill), change: Number(h.skill_change) })),
+        before,
+        siteDay(),
+      ),
       // Deprecated name of points.
       skill: Number(p.skill),
       kills: p.kills,

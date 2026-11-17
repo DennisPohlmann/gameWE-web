@@ -21,6 +21,7 @@ import { PlayerEvents } from "@/components/game-events";
 import { ZONES } from "@/lib/zones";
 import { awardValue, getAwards, getPlayerRibbons, getRanks, getRibbonClasses, rankFor, ribbonFor, ribbonProgress } from "@/lib/awards";
 import { siteDay } from "@/lib/day";
+import { todayChange } from "@/lib/points-trend";
 import { HallStars } from "@/components/hall-stars";
 import { getPlayerStars, hallOfFameShown, type StarCount } from "@/lib/hall-of-fame";
 import { getSteamProfile, type SteamProfile as SteamProfileData } from "@/lib/steam";
@@ -128,6 +129,11 @@ export default async function PlayerPage({ params, searchParams }: Props) {
   ]);
   const stars = hallShown ? await getPlayerStars(game, id) : null;
   const last14 = history.filter((h) => h.eventTime >= siteDay(-13));
+  const today = todayChange(
+    history.map((h) => ({ day: String(h.eventTime).slice(0, 10), skill: Number(h.skill), change: Number(h.skill_change) })),
+    skillBefore,
+    siteDay(),
+  );
 
   const kills14 = last14.reduce((s, h) => s + h.kills, 0);
   const hs14 = last14.reduce((s, h) => s + h.headshots, 0);
@@ -266,10 +272,12 @@ export default async function PlayerPage({ params, searchParams }: Props) {
             <div>
               <small>{t.points}</small>
               <b>{p.hideranking ? "–" : fmtNum(p.skill, lang)}</b>
-              {p.hideranking ? null : (
-                <em className={p.last_skill_change >= 0 ? "good" : "bad"}>
-                  {p.last_skill_change > 0 ? "+" : ""}
-                  {fmtNum(p.last_skill_change, lang)}
+              {p.hideranking || today === null ? null : (
+                // Tooltip on hover, focus and tap (BanTips); screen readers get the text from the hidden span.
+                <em className={`p-today${today > 0 ? " good" : today < 0 ? " bad" : ""}`} tabIndex={0} data-tip={t.pointsToday}>
+                  <span className="sr-only">{t.pointsToday}: </span>
+                  {today > 0 ? "+" : ""}
+                  {fmtNum(today, lang)}
                 </em>
               )}
             </div>

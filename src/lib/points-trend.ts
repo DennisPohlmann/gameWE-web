@@ -39,3 +39,11 @@ export function pointsTrend(rows: TrendRow[], before: number | null, today: stri
 export function dayChanges(newestFirst: { skill: number; change: number }[], older: number | null): number[] {
   return newestFirst.map((r, i) => r.skill - (i + 1 < newestFirst.length ? newestFirst[i + 1].skill : (older ?? r.skill - r.change)));
 }
+
+// Today's change beside the points (profile, player API): today's bar of
+// pointsTrend, so both match the trend chart; null when the player has no
+// history row today (not played yet today), not 0 and not the last event's change.
+export function todayChange(rows: TrendRow[], before: number | null, today: string): number | null {
+  const d = pointsTrend(rows, before, today).find((x) => x.day === today);
+  return d?.played ? d.change : null;
+}
