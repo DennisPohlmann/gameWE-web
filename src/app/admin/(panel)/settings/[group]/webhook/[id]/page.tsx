@@ -151,15 +151,16 @@ export default async function WebhookPage({ params, searchParams }: { params: Pr
         </Section>
       ) : null}
       {hook ? (
-        <Section title={a.delete} className="danger-zone">
-          <form action={deleteWebhookAction} className="form">
-            <p className="muted">{a.deleteHint}</p>
-            <input type="hidden" name="id" value={hook.id} />
-            <ConfirmButton label={a.delete} title={fill(w.deleteTitle, { n: hook.name })} yes={a.deleteYes} text={{ cancel: a.confirmCancel }}>
-              <p>{w.deleteBody}</p>
-            </ConfirmButton>
-          </form>
-        </Section>
+        <form action={deleteWebhookAction} className="delete-row">
+          <input type="hidden" name="id" value={hook.id} />
+          <ConfirmButton
+            label={a.delete}
+            title={fill(w.deleteTitle, { n: hook.name })}
+            yes={a.delete}
+            typed={hook.name || hook.id}
+            text={{ cancel: a.confirmCancel, typeHint: a.confirmTyped }}
+          />
+        </form>
       ) : null}
     </>
   );

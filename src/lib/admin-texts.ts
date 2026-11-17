@@ -930,8 +930,7 @@ export const WEBHOOK_T = {
     lastOk: "Letzter Aufruf {t}: HTTP {c}, wie erwartet.",
     lastError: "Letzter Aufruf {t}: {e}",
     never: "Noch nicht aufgerufen.",
-    deleteTitle: "Webhook „{n}“ löschen?",
-    deleteBody: "Der Webhook wird danach nicht mehr aufgerufen. Das lässt sich nicht rückgängig machen.",
+    deleteTitle: "Möchtest du den Webhook „{n}“ wirklich löschen?",
   },
   en: {
     title: "Webhooks",
@@ -985,7 +984,6 @@ export const WEBHOOK_T = {
     lastError: "Last call {t}: {e}",
     never: "Not called yet.",
     deleteTitle: "Delete the webhook “{n}”?",
-    deleteBody: "The webhook is no longer called. This cannot be undone.",
   },
 };
 

@@ -47,7 +47,6 @@ export const WEBHOOK_TEXTS: Record<string, Record<string, string>> = {
     "Last call {t}: {e}": "Последний вызов {t}: {e}",
     "Not called yet.": "Ещё не вызывался.",
     "Delete the webhook “{n}”?": "Удалить вебхук «{n}»?",
-    "The webhook is no longer called. This cannot be undone.": "Вебхук больше не будет вызываться. Это нельзя отменить.",
   },
   "es": {
     "Webhook test call": "Llamada de prueba del webhook",
@@ -95,7 +94,6 @@ export const WEBHOOK_TEXTS: Record<string, Record<string, string>> = {
     "Last call {t}: {e}": "Última llamada {t}: {e}",
     "Not called yet.": "Aún no se ha llamado.",
     "Delete the webhook “{n}”?": "¿Eliminar el webhook «{n}»?",
-    "The webhook is no longer called. This cannot be undone.": "El webhook ya no se llamará. Esto no se puede deshacer.",
   },
   "fr": {
     "Webhook test call": "Appel de test du webhook",
@@ -143,7 +141,6 @@ export const WEBHOOK_TEXTS: Record<string, Record<string, string>> = {
     "Last call {t}: {e}": "Dernier appel {t} : {e}",
     "Not called yet.": "Pas encore appelé.",
     "Delete the webhook “{n}”?": "Supprimer le webhook « {n} » ?",
-    "The webhook is no longer called. This cannot be undone.": "Le webhook ne sera plus appelé. Cette action est irréversible.",
   },
   "pt": {
     "Webhook test call": "Chamada de teste do webhook",
@@ -191,7 +188,6 @@ export const WEBHOOK_TEXTS: Record<string, Record<string, string>> = {
     "Last call {t}: {e}": "Última chamada {t}: {e}",
     "Not called yet.": "Ainda não foi chamado.",
     "Delete the webhook “{n}”?": "Eliminar o webhook «{n}»?",
-    "The webhook is no longer called. This cannot be undone.": "O webhook deixa de ser chamado. Isto não pode ser anulado.",
   },
   "nl": {
     "Webhook test call": "Testaanroep van webhook",
@@ -239,7 +235,6 @@ export const WEBHOOK_TEXTS: Record<string, Record<string, string>> = {
     "Last call {t}: {e}": "Laatste aanroep {t}: {e}",
     "Not called yet.": "Nog niet aangeroepen.",
     "Delete the webhook “{n}”?": "Webhook ‘{n}’ verwijderen?",
-    "The webhook is no longer called. This cannot be undone.": "De webhook wordt niet meer aangeroepen. Dit kan niet ongedaan worden gemaakt.",
   },
   "da": {
     "Webhook test call": "Testkald af webhook",
@@ -287,7 +282,6 @@ export const WEBHOOK_TEXTS: Record<string, Record<string, string>> = {
     "Last call {t}: {e}": "Seneste kald {t}: {e}",
     "Not called yet.": "Endnu ikke kaldt.",
     "Delete the webhook “{n}”?": "Slet webhooken »{n}«?",
-    "The webhook is no longer called. This cannot be undone.": "Webhooken bliver ikke kaldt mere. Det kan ikke fortrydes.",
   },
   "pl": {
     "Webhook test call": "Wywołanie testowe webhooka",
@@ -335,7 +329,6 @@ export const WEBHOOK_TEXTS: Record<string, Record<string, string>> = {
     "Last call {t}: {e}": "Ostatnie wywołanie {t}: {e}",
     "Not called yet.": "Jeszcze nie wywołano.",
     "Delete the webhook “{n}”?": "Usunąć webhook „{n}”?",
-    "The webhook is no longer called. This cannot be undone.": "Webhook nie będzie już wywoływany. Tego nie można cofnąć.",
   },
   "pt-br": {
     "Webhook test call": "Chamada de teste do webhook",
@@ -383,7 +376,6 @@ export const WEBHOOK_TEXTS: Record<string, Record<string, string>> = {
     "Last call {t}: {e}": "Última chamada {t}: {e}",
     "Not called yet.": "Ainda não foi chamado.",
     "Delete the webhook “{n}”?": "Excluir o webhook “{n}”?",
-    "The webhook is no longer called. This cannot be undone.": "O webhook não será mais chamado. Isso não pode ser desfeito.",
   },
   "sr": {
     "Webhook test call": "Пробни позив вебхука",
@@ -431,7 +423,6 @@ export const WEBHOOK_TEXTS: Record<string, Record<string, string>> = {
     "Last call {t}: {e}": "Последњи позив {t}: {e}",
     "Not called yet.": "Још није позван.",
     "Delete the webhook “{n}”?": "Обрисати вебхук „{n}“?",
-    "The webhook is no longer called. This cannot be undone.": "Вебхук се више неће позивати. Ово се не може опозвати.",
   },
   "zh-tw": {
     "Webhook test call": "Webhook 測試呼叫",
@@ -479,7 +470,6 @@ export const WEBHOOK_TEXTS: Record<string, Record<string, string>> = {
     "Last call {t}: {e}": "最近一次呼叫 {t}：{e}",
     "Not called yet.": "尚未呼叫。",
     "Delete the webhook “{n}”?": "要刪除 Webhook「{n}」嗎？",
-    "The webhook is no longer called. This cannot be undone.": "此 Webhook 將不再被呼叫。此動作無法復原。",
   },
   "zh-cn": {
     "Webhook test call": "Webhook 测试调用",
@@ -527,7 +517,6 @@ export const WEBHOOK_TEXTS: Record<string, Record<string, string>> = {
     "Last call {t}: {e}": "最近一次调用 {t}：{e}",
     "Not called yet.": "尚未调用。",
     "Delete the webhook “{n}”?": "删除 Webhook“{n}”？",
-    "The webhook is no longer called. This cannot be undone.": "该 Webhook 将不再被调用。此操作无法撤销。",
   },
   "ja": {
     "Webhook test call": "Webhook のテスト呼び出し",
@@ -575,7 +564,6 @@ export const WEBHOOK_TEXTS: Record<string, Record<string, string>> = {
     "Last call {t}: {e}": "最後の呼び出し {t}：{e}",
     "Not called yet.": "まだ呼び出されていません。",
     "Delete the webhook “{n}”?": "Webhook「{n}」を削除しますか？",
-    "The webhook is no longer called. This cannot be undone.": "この Webhook は今後呼び出されません。元に戻せません。",
   },
   "ko": {
     "Webhook test call": "웹훅 테스트 호출",
@@ -623,7 +611,6 @@ export const WEBHOOK_TEXTS: Record<string, Record<string, string>> = {
     "Last call {t}: {e}": "마지막 호출 {t}: {e}",
     "Not called yet.": "아직 호출되지 않았습니다.",
     "Delete the webhook “{n}”?": "웹훅 “{n}”을(를) 삭제할까요?",
-    "The webhook is no longer called. This cannot be undone.": "이 웹훅은 더 이상 호출되지 않습니다. 되돌릴 수 없습니다.",
   },
   "ar": {
     "Webhook test call": "استدعاء تجريبي لخطاف الويب",
@@ -671,7 +658,6 @@ export const WEBHOOK_TEXTS: Record<string, Record<string, string>> = {
     "Last call {t}: {e}": "آخر استدعاء {t}: {e}",
     "Not called yet.": "لم يُستدعَ بعد.",
     "Delete the webhook “{n}”?": "حذف خطاف الويب «{n}»؟",
-    "The webhook is no longer called. This cannot be undone.": "لن يُستدعى خطاف الويب بعد الآن. لا يمكن التراجع عن ذلك.",
   },
   "tr": {
     "Webhook test call": "Webhook test çağrısı",
@@ -719,7 +705,6 @@ export const WEBHOOK_TEXTS: Record<string, Record<string, string>> = {
     "Last call {t}: {e}": "Son çağrı {t}: {e}",
     "Not called yet.": "Henüz çağrılmadı.",
     "Delete the webhook “{n}”?": "“{n}” webhook'u silinsin mi?",
-    "The webhook is no longer called. This cannot be undone.": "Webhook artık çağrılmayacak. Bu geri alınamaz.",
   },
   "it": {
     "Webhook test call": "Chiamata di prova del webhook",
@@ -767,7 +752,6 @@ export const WEBHOOK_TEXTS: Record<string, Record<string, string>> = {
     "Last call {t}: {e}": "Ultima chiamata {t}: {e}",
     "Not called yet.": "Non ancora chiamato.",
     "Delete the webhook “{n}”?": "Eliminare il webhook «{n}»?",
-    "The webhook is no longer called. This cannot be undone.": "Il webhook non verrà più chiamato. Non si può annullare.",
   },
   "uk": {
     "Webhook test call": "Тестовий виклик вебхука",
@@ -815,7 +799,6 @@ export const WEBHOOK_TEXTS: Record<string, Record<string, string>> = {
     "Last call {t}: {e}": "Останній виклик {t}: {e}",
     "Not called yet.": "Ще не викликався.",
     "Delete the webhook “{n}”?": "Видалити вебхук «{n}»?",
-    "The webhook is no longer called. This cannot be undone.": "Вебхук більше не викликатиметься. Це не можна скасувати.",
   },
   "cs": {
     "Webhook test call": "Testovací volání webhooku",
@@ -863,7 +846,6 @@ export const WEBHOOK_TEXTS: Record<string, Record<string, string>> = {
     "Last call {t}: {e}": "Poslední volání {t}: {e}",
     "Not called yet.": "Zatím nevoláno.",
     "Delete the webhook “{n}”?": "Smazat webhook „{n}“?",
-    "The webhook is no longer called. This cannot be undone.": "Webhook už nebude volán. Tuto akci nelze vrátit.",
   },
   "sv": {
     "Webhook test call": "Testanrop av webhook",
@@ -911,6 +893,5 @@ export const WEBHOOK_TEXTS: Record<string, Record<string, string>> = {
     "Last call {t}: {e}": "Senaste anrop {t}: {e}",
     "Not called yet.": "Inte anropad ännu.",
     "Delete the webhook “{n}”?": "Ta bort webhooken ”{n}”?",
-    "The webhook is no longer called. This cannot be undone.": "Webhooken anropas inte längre. Det går inte att ångra.",
   },
 };
