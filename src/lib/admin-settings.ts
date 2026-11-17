@@ -99,7 +99,7 @@ const same = (s: string): L => ({ de: s, en: s, all: Object.fromEntries(LANGUAGE
 // chooses their own under My account; here only the SMTP server all share.
 const notifyDefinitions: Setting[] = [
   { key: "gamewe_notify_smtp_host", section: { de: "E-Mail", en: "E-mail" }, label: { de: "SMTP-Server", en: "SMTP server" }, type: "text", def: "", minLevel: 100, help: { de: "Zum Beispiel smtp.example.org.", en: "For example smtp.example.org." } },
-  { key: "gamewe_notify_smtp_port", label: { de: "SMTP-Port", en: "SMTP port" }, type: "number", def: "587", min: 1, max: 65535, minLevel: 100, help: { de: "587 mit STARTTLS, 465 mit TLS.", en: "587 with STARTTLS, 465 with TLS." } },
+  { key: "gamewe_notify_smtp_port", label: { de: "SMTP-Port", en: "SMTP port" }, type: "number", def: "587", min: 1, max: 65535, minLevel: 100, help: { de: "587 mit STARTTLS, 465 mit TLS, 25 ohne Verschlüsselung (Keine).", en: "587 with STARTTLS, 465 with TLS, 25 without encryption (None)." } },
   {
     key: "gamewe_notify_smtp_security",
     label: { de: "Verschlüsselung", en: "Encryption" },
@@ -109,9 +109,9 @@ const notifyDefinitions: Setting[] = [
     choices: [
       ["starttls", same("STARTTLS")],
       ["tls", same("TLS")],
-      ["none", { de: "Keine (nur ein Server auf demselben Rechner)", en: "None (only a server on the same machine)" }],
+      ["none", { de: "Keine (Port 25, z. B. ein Mailserver auf demselben Rechner oder auf dem Docker-Host)", en: "None (port 25, e.g. a mail server on the same machine or on the Docker host)" }],
     ],
-    help: { de: "Ohne Verschlüsselung schickt der Collector keine Anmeldung, außer an localhost.", en: "Without encryption the collector sends no login, except to localhost." },
+    help: { de: "Ohne Verschlüsselung meldet sich der Collector nur bei localhost an. Für einen anderen Rechner, etwa den Docker-Host, lass den SMTP-Benutzer leer: Der Mailserver muss den Collector dann ohne Anmeldung annehmen.", en: "Without encryption the collector logs in only to localhost. For another machine, such as the Docker host, leave the SMTP user empty: the mail server must then accept the collector without a login." },
   },
   { key: "gamewe_notify_smtp_user", label: { de: "SMTP-Benutzer", en: "SMTP user" }, type: "text", def: "", minLevel: 100, help: { de: "Leer: ohne Anmeldung.", en: "Empty: no login." } },
   { key: "gamewe_notify_smtp_password", label: { de: "SMTP-Passwort", en: "SMTP password" }, type: "secret", def: "", minLevel: 100, help: MASKED },
