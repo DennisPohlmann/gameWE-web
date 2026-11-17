@@ -583,6 +583,43 @@ the outcome of the last message per admin and channel
 /api/v1/admin/me/notifications` (with `token` for Telegram and ntfy, and `lang`) and `POST
 /api/v1/admin/me/notifications/test` (every admin, their own).
 
+**Webhooks.** Besides each admin's own messages, Settings → Notifications →
+**Webhooks** (right `settings.protected`) holds webhooks for the whole site:
+an address the collector calls when an event happens, for example so that
+another service posts a new hall of fame. Each webhook is for one event
+(ranking reset, hall of fame stored, new version out) and has its own name,
+method (`POST`, `PUT`, `PATCH`, `GET` without a payload, `DELETE`), address
+(`http` or `https`, no user in the link), headers (the **+** button adds a
+row, e.g. `Authorization: Bearer …`, `Authorization: Basic …`,
+`Content-Type: application/json`; at most 20), expected status code (100–599,
+empty: any 2xx) and payload. Header values are never shown again: a header
+left empty keeps its stored value. The payload's placeholders are filled by
+the collector: for every event `{event}`, `{game}`, `{ranking}`, `{title}`
+and `{body}` (the message in the site's default language), `{url}` (the
+ranking's page or its hall of fame, with the site address), `{time}` and
+`{test}`; a reset also `{by}`; a hall of fame `{from}`, `{to}`, `{places}`
+and `{placeN_name}`, `{placeN_points}` for each stored place N; a new version
+`{component}`, `{version}`, `{current}` and `{release_url}`. With a
+`Content-Type` containing `json` the values are escaped for a JSON string
+(write `"{title}"` in quotes), with `application/x-www-form-urlencoded` they
+are URL-encoded, else inserted as they are. A scheduled reset with a hall of
+fame calls the hall of fame webhooks and the reset ones. The collector calls
+only public addresses unless **Allow internal addresses** is ticked (a service
+on its machine or network), follows no redirect, waits at most 20 seconds and
+sends and reads at most 64 KiB. **Send a test call** (or **Save and test**)
+queues a job `webhook-test`, which sends the payload with sample values
+(`{test}` is 1); the list and the webhook's page show the HTTP status of the
+last call. The table `hlstats_gamewe_webhooks` (collector with database
+version 32) cannot be read by the public web user. Admin API and MCP: `GET`/`POST
+/api/v1/admin/webhooks`, `PUT`/`DELETE /api/v1/admin/webhooks/{id}` and `POST
+/api/v1/admin/webhooks/{id}/test`; header values are never returned.
+
+Example payload for a hall of fame (`Content-Type: application/json`):
+
+```json
+{"text": "{title}\n{places}\n{url}", "ranking": "{ranking}", "winner": "{place1_name}", "points": {place1_points}}
+```
+
 A new user gets a first password
 when they are created; after that each user changes only their own password
 (My account, with the current one), in the admin area and in the API, and

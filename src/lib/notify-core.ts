@@ -150,3 +150,88 @@ export function parseStatus(raw: string | null | undefined): NotifyStatus {
   const m = /^(\d{1,12})\|(ok|error)(?:\|(.*))?$/s.exec((raw ?? "").trim());
   return m ? { at: Number(m[1]), ok: m[2] === "ok", error: m[3] ?? "" } : null;
 }
+
+// ---------------------------------------------------------------- webhooks
+// Webhooks for the whole site (Settings → Notifications, right
+// settings.protected): one row of hlstats_gamewe_webhooks per webhook and
+// event, which the collector calls (internal/notify webhook.go; keep the
+// checks in step). gamewe_web cannot read the table: the headers hold tokens.
+
+export const WEBHOOK_METHODS = ["POST", "PUT", "PATCH", "GET", "DELETE"] as const;
+export type WebhookMethod = (typeof WEBHOOK_METHODS)[number];
+export const MAX_WEBHOOK_URL = 2048;
+export const MAX_WEBHOOK_TEXT = 4000; // headers, payload
+export const MAX_WEBHOOK_HEADERS = 20;
+export const webhookIdOk = (v: string) => /^[0-9a-f]{16}$/.test(v);
+
+export type WebhookHeader = { name: string; value: string };
+export type Webhook = { id: string; name: string; event: NotifyEvent; enabled: boolean; method: WebhookMethod; url: string; headers: WebhookHeader[]; payload: string; expect: number; allowPrivate: boolean };
+
+const HEADER_NAME = /^[A-Za-z0-9!#$%&'*+.^_`|~-]{1,64}$/;
+// Set by the collector's HTTP client.
+const RESERVED_HEADERS = ["host", "content-length", "transfer-encoding", "connection", "upgrade", "te", "trailer", "keep-alive", "proxy-connection", "expect"];
+export const headerNameOk = (v: string) => HEADER_NAME.test(v) && !RESERVED_HEADERS.includes(v.toLowerCase());
+// No line break or other control character (header injection); a tab is fine.
+export const headerValueOk = (v: string) => !/[\u0000-\u0008\u000a-\u001f\u007f]/.test(v);
+
+export const headersValue = (h: WebhookHeader[]) => h.map((x) => `${x.name}: ${x.value}`).join("\n");
+export function parseHeaders(raw: string | null | undefined): WebhookHeader[] {
+  return (raw ?? "")
+    .split(/\r?\n/)
+    .filter((l) => l.includes(":"))
+    .map((l) => ({ name: l.slice(0, l.indexOf(":")).trim(), value: l.slice(l.indexOf(":") + 1).trim() }));
+}
+
+// The headers to store: a sent header with an empty value keeps the stored
+// value of the same name (the n-th of that name, if a name comes twice).
+export function keepHeaderValues(sent: WebhookHeader[], stored: WebhookHeader[]): WebhookHeader[] {
+  const seen = new Map<string, number>();
+  return sent
+    .filter((h) => h.name.trim())
+    .map((h) => {
+      const name = h.name.trim();
+      const key = name.toLowerCase();
+      const n = seen.get(key) ?? 0;
+      seen.set(key, n + 1);
+      return { name, value: h.value.trim() || stored.filter((s) => s.name.toLowerCase() === key)[n]?.value || "" };
+    });
+}
+
+export function webhookUrlOk(v: string): boolean {
+  if (v.length > MAX_WEBHOOK_URL || /\s/.test(v)) return false;
+  try {
+    const u = new URL(v);
+    return (u.protocol === "https:" || u.protocol === "http:") && !!u.hostname && !u.username && !u.password && !u.hash && !v.includes("#");
+  } catch {
+    return false;
+  }
+}
+
+// The first bad field of w (name, event, method, url, headers, payload,
+// expect), else null.
+export function badWebhook(w: Omit<Webhook, "id">): string | null {
+  if (!w.name.trim() || w.name.length > 64 || /[\u0000-\u001f]/.test(w.name)) return "name";
+  if (!isEvent(w.event)) return "event";
+  if (!(WEBHOOK_METHODS as readonly string[]).includes(w.method)) return "method";
+  if (!webhookUrlOk(w.url)) return "url";
+  if (w.headers.length > MAX_WEBHOOK_HEADERS || !w.headers.every((h) => headerNameOk(h.name) && headerValueOk(h.value)) || headersValue(w.headers).length > MAX_WEBHOOK_TEXT) return "headers";
+  if (w.payload.length > MAX_WEBHOOK_TEXT) return "payload";
+  if (!Number.isInteger(w.expect) || (w.expect !== 0 && (w.expect < 100 || w.expect > 599))) return "expect";
+  return null;
+}
+
+// The placeholders of a payload: those of every event, then the event's own
+// (hall of fame: placeN_name for each stored place N).
+export const WEBHOOK_VARS = ["event", "game", "ranking", "title", "body", "url", "time", "test"] as const;
+export const WEBHOOK_EVENT_VARS: Record<NotifyEvent, string[]> = {
+  reset: ["by"],
+  hof: ["from", "to", "places", "placeN_name", "placeN_points"], // N: 1, 2, 3 … for each stored place
+  update: ["component", "version", "current", "release_url"],
+};
+
+// last_status, written by the collector: "<unix>|ok|<HTTP status>" or "<unix>|error|<text>".
+export function parseWebhookStatus(raw: string | null | undefined): { at: number; ok: boolean; error: string; code: number } | null {
+  const s = parseStatus(raw);
+  if (!s) return null;
+  return s.ok ? { ...s, code: Number(s.error) || 0, error: "" } : { ...s, code: 0 };
+}

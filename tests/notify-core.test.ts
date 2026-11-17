@@ -57,3 +57,36 @@ test("the ntfy server and topic fields of My account", () => {
   assert.deepEqual(splitNtfy("https://push.example.org/ntfy/mine"), { server: "https://push.example.org/ntfy", topic: "mine" });
   assert.deepEqual(splitNtfy("mine"), { server: "", topic: "mine" });
 });
+
+test("webhooks: what the web lets through to the collector", async () => {
+  const { badWebhook, headerNameOk, headerValueOk, headersValue, parseHeaders, parseWebhookStatus, webhookUrlOk } = await import("../src/lib/notify-core.ts");
+  const ok = { name: "Social", event: "hof" as const, enabled: true, method: "POST" as const, url: "https://hooks.example.org/x?token=1", headers: [{ name: "Authorization", value: "Bearer abc" }], payload: '{"t":"{title}"}', expect: 201, allowPrivate: false };
+  assert.equal(badWebhook(ok), null);
+  assert.equal(badWebhook({ ...ok, expect: 0 }), null);
+  assert.equal(badWebhook({ ...ok, name: " " }), "name");
+  assert.equal(badWebhook({ ...ok, event: "nope" as "hof" }), "event");
+  assert.equal(badWebhook({ ...ok, method: "TRACE" as "POST" }), "method");
+  assert.equal(badWebhook({ ...ok, expect: 700 }), "expect");
+  assert.equal(badWebhook({ ...ok, expect: 99 }), "expect");
+  assert.equal(badWebhook({ ...ok, payload: "x".repeat(4001) }), "payload");
+  assert.equal(badWebhook({ ...ok, headers: [{ name: "X-A", value: "a\r\nX-B: b" }] }), "headers");
+  assert.equal(badWebhook({ ...ok, headers: [{ name: "Host", value: "evil.example" }] }), "headers");
+  for (const u of ["ftp://example.org/", "https://u:p@example.org/", "https://example.org/a b", "https://example.org/#x", "example.org", "javascript:alert(1)"]) assert.equal(webhookUrlOk(u), false, u);
+  assert.ok(webhookUrlOk("http://127.0.0.1:8080/hook"));
+  assert.ok(headerNameOk("X-Api-Key") && !headerNameOk("Bad Name") && !headerNameOk("content-length"));
+  assert.ok(headerValueOk("Basic dTpw\twith tab") && !headerValueOk("a\nb") && !headerValueOk("a\u0000b"));
+  const h = [{ name: "A", value: "x: y" }, { name: "B", value: "" }];
+  assert.deepEqual(parseHeaders(headersValue(h)), h);
+  assert.deepEqual(parseWebhookStatus("5|ok|201"), { at: 5, ok: true, error: "", code: 201 });
+  assert.deepEqual(parseWebhookStatus("5|error|webhook: HTTP 500, expected 2xx"), { at: 5, ok: false, error: "webhook: HTTP 500, expected 2xx", code: 0 });
+});
+
+test("webhooks: an empty header value keeps the stored one, also of a name that comes twice", async () => {
+  const { keepHeaderValues } = await import("../src/lib/notify-core.ts");
+  const stored = [{ name: "Authorization", value: "Bearer old" }, { name: "X-A", value: "1" }, { name: "x-a", value: "2" }];
+  assert.deepEqual(
+    keepHeaderValues([{ name: " authorization ", value: "" }, { name: "X-A", value: "" }, { name: "X-A", value: "" }, { name: "X-New", value: "" }, { name: "", value: "dropped" }, { name: "X-A", value: "" }], stored),
+    [{ name: "authorization", value: "Bearer old" }, { name: "X-A", value: "1" }, { name: "X-A", value: "2" }, { name: "X-New", value: "" }, { name: "X-A", value: "" }],
+  );
+  assert.deepEqual(keepHeaderValues([{ name: "Authorization", value: " Bearer new " }], stored), [{ name: "Authorization", value: "Bearer new" }]);
+});

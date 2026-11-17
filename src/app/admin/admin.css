@@ -760,3 +760,16 @@ form[data-dirty] .savebar .msg { display: none; }
 .notify-token { display: grid; gap: 4px; min-width: 0; }
 .notify-lang select { max-width: 360px; }
 .notify-own .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Webhooks (Settings → Notifications) */
+.webhook-headers { display: grid; gap: 8px; justify-items: start; }
+.webhook-header { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto; gap: 8px; width: 100%; }
+.webhook-payload { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; min-height: 160px; }
+.webhook-vars { font-size: 13px; font-weight: 400; color: var(--muted); margin: 4px 0 0; overflow-wrap: anywhere; }
+.webhook-vars code { white-space: nowrap; }
+.webhook-list td { overflow-wrap: anywhere; }
+@media (max-width: 720px) {
+  .webhook-header { grid-template-columns: minmax(0, 1fr) auto; }
+  .webhook-header input[name="header_value"] { grid-column: 1; }
+}
+.form .btns { display: flex; flex-wrap: wrap; gap: 8px; }

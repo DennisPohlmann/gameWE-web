@@ -128,8 +128,8 @@ export default async function JobsPage() {
     if (j.type === "notify-test") return j.mode;
     return "";
   };
-  // A test message's game is the admin's hash, no ranking.
-  const ranking = (j: Job) => (j.type === "notify-test" ? "" : j.game ? (names.get(j.game) ?? j.game) : t.allRankings);
+  // A test message's game is the admin's hash, a webhook test's the webhook's id: no ranking.
+  const ranking = (j: Job) => (j.type === "notify-test" || j.type === "webhook-test" ? "" : j.game ? (names.get(j.game) ?? j.game) : t.allRankings);
   const by = (j: Job) => (isAdmin || j.requestedBy === user.username ? j.requestedBy : t.anAdmin);
   const took = (j: Job) => (j.startedAt && j.finishedAt >= j.startedAt ? shortDuration(j.finishedAt - j.startedAt, lang) : "");
 

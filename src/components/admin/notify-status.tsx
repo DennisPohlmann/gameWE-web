@@ -1,10 +1,10 @@
 import { Icon } from "@/components/admin/icons";
 import type { TestJob } from "@/lib/admin-notify";
 import { localized } from "@/lib/admin-i18n";
-import { NOTIFY_T } from "@/lib/admin-texts";
+import { NOTIFY_T, WEBHOOK_T } from "@/lib/admin-texts";
 import { fmtDateTime } from "@/lib/format";
 import { fill, type Lang } from "@/lib/i18n";
-import type { NotifyStatus } from "@/lib/notify-core";
+import type { NotifyStatus, parseWebhookStatus } from "@/lib/notify-core";
 
 // The outcome of the last message to a target and its last test, whichever
 // is newer: waiting, failed (e.g. a collector without notifications), or
@@ -39,5 +39,39 @@ export function NotifyStatusLine({ status, test, lang }: { status: NotifyStatus;
       <Icon name="warn" />
       <span dir="auto">{fill(n.lastError, { t, e: status.error })}</span>
     </p>
+  );
+}
+
+// The same for a webhook: the last call with the HTTP status, or its test.
+export function WebhookStatusLine({ status, test, lang }: { status: ReturnType<typeof parseWebhookStatus>; test: TestJob | null; lang: Lang }) {
+  const w = localized(WEBHOOK_T, lang);
+  if (test && (test.status === "pending" || test.status === "running")) {
+    return (
+      <span className="notify-status wait" role="status">
+        <Icon name="clock" />
+        <span>{fill(w.testWaiting, { id: String(test.id) })}</span>
+      </span>
+    );
+  }
+  if (test && test.status === "failed" && (!status || status.at < test.at)) {
+    return (
+      <span className="notify-status bad">
+        <Icon name="warn" />
+        <span dir="auto">{fill(w.testFailed, { id: String(test.id), e: test.result })}</span>
+      </span>
+    );
+  }
+  if (!status) return <span className="notify-status">{w.never}</span>;
+  const t = fmtDateTime(status.at, lang);
+  return status.ok ? (
+    <span className="notify-status ok">
+      <Icon name="check" />
+      <span>{fill(w.lastOk, { t, c: String(status.code) })}</span>
+    </span>
+  ) : (
+    <span className="notify-status bad">
+      <Icon name="warn" />
+      <span dir="auto">{fill(w.lastError, { t, e: status.error })}</span>
+    </span>
   );
 }

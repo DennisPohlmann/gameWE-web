@@ -3,7 +3,7 @@ import { RAW_GROUP, settingGroups, type Setting } from "./admin-settings.ts";
 import { MAX_TOKENS_PER_USER, NAME_MAX } from "./api-token-core.ts";
 import { RESET_MODES } from "./reset-modes.ts";
 import { PERMS, ROLE_MAX, type Need } from "./admin-perms.ts";
-import { CHANNELS, EVENTS } from "./notify-core.ts";
+import { CHANNELS, EVENTS, MAX_WEBHOOK_HEADERS, MAX_WEBHOOK_TEXT, MAX_WEBHOOK_URL, WEBHOOK_METHODS } from "./notify-core.ts";
 
 // The admin API (/api/v1/admin/...): one entry per operation. The router in
 // lib/admin-api.ts serves exactly these (method, path, right, handler) and
@@ -355,6 +355,36 @@ const ownChannel = obj(
   { channel: channelSchema, ready: bool("The channel can send: e-mail once the site's SMTP server is set up, Telegram once your bot token is stored, ntfy always"), to: str("Own address, empty: none"), events: arr(eventSchema), token: bool("Telegram and ntfy: an own token is stored (never the token itself)"), status: notifyStatus, test: notifyTestJob },
   ["token"],
 );
+const webhookFields = {
+  name: str("Name for the overview", { maxLength: 64 }),
+  event: eventSchema,
+  enabled: bool("Called on the event; false: only its test"),
+  method: str("HTTP method; GET sends no payload", { enum: [...WEBHOOK_METHODS] }),
+  url: str("http(s) address without user or fragment", { maxLength: MAX_WEBHOOK_URL }),
+  payload: str("Body with placeholders such as {ranking}, {title}, {body}, {url}, {by}, {placeN_name}, {placeN_points}, {version} (docs/USAGE.md)", { maxLength: MAX_WEBHOOK_TEXT }),
+  expect: int("Expected HTTP status; 0: any 2xx", { minimum: 0, maximum: 599 }),
+  allowPrivate: bool("Also loopback and private addresses (a service on the collector's machine or network)"),
+};
+const webhookOut = obj(
+  {
+    id: str("ID"),
+    ...webhookFields,
+    headers: arr(obj({ name: str("Header name"), set: bool("A value is stored (never returned)") })),
+    status: nullable(obj({ at: unix("When"), ok: bool("Answered the expected status"), error: str("Error, empty if ok"), code: int("HTTP status, 0 on an error") }, [], "Last call, written by the collector; null: none yet")),
+    test: notifyTestJob,
+  },
+  [],
+);
+const webhookIn = (required: string[]) =>
+  obj(
+    {
+      ...webhookFields,
+      headers: arr(obj({ name: str("Header name, e.g. Authorization"), value: str("Value; empty: keep the stored value of this name") }), `At most ${MAX_WEBHOOK_HEADERS}; replaces all headers`),
+    },
+    [...Object.keys(webhookFields), "headers"].filter((k) => !required.includes(k)),
+  );
+const webhookParam: AdminParam = { name: "webhook", in: "path", required: true, description: "ID of the webhook", schema: str("", { pattern: "^[0-9a-f]{16}$" }), example: "0123456789abcdef" };
+const webhookEx = { id: "0123456789abcdef", name: "Hall of fame to Mastodon", event: "hof", enabled: true, method: "POST", url: "https://social.example.org/api/v1/statuses", payload: '{"status":"{title}\\n{body}"}', expect: 200, allowPrivate: false, headers: [{ name: "Authorization", set: true }, { name: "Content-Type", set: true }], status: null, test: null };
 const modeSchema = str("What a reset deletes: player-stats (player statistics), all-stats (also server statistics), all (also the players)", { enum: [...RESET_MODES] });
 const job = obj({
   id: int("Job ID"),
@@ -1072,6 +1102,81 @@ export const adminOps: AdminOp[] = [
   },
   {
     method: "GET",
+    path: "/admin/webhooks",
+    operationId: "adminListWebhooks",
+    tag: "Admin: settings",
+    summary: "List webhooks",
+    description: "The site's webhooks (Settings → Notifications): one per event, called by the collector. Header values are never returned.",
+    need: "settings.protected",
+    handler: "webhookList",
+    status: 200,
+    response: arr(webhookOut),
+    example: [webhookEx],
+    errors: [503],
+  },
+  {
+    method: "POST",
+    path: "/admin/webhooks",
+    operationId: "adminCreateWebhook",
+    tag: "Admin: settings",
+    summary: "Create a webhook",
+    description: "A new webhook for one event. Header values must not contain line breaks; Host, Content-Length and the like are set by the collector.",
+    need: "settings.protected",
+    handler: "webhookCreate",
+    body: webhookIn(["name", "event", "url"]),
+    bodyExample: { name: "Hall of fame to Mastodon", event: "hof", url: "https://social.example.org/api/v1/statuses", headers: [{ name: "Authorization", value: "Bearer abc123" }, { name: "Content-Type", value: "application/json" }], payload: '{"status":"{title}\\n{body}"}', expect: 200 },
+    status: 201,
+    response: webhookOut,
+    example: webhookEx,
+    errors: [400, 503],
+  },
+  {
+    method: "PUT",
+    path: "/admin/webhooks/{webhook}",
+    operationId: "adminUpdateWebhook",
+    tag: "Admin: settings",
+    summary: "Change a webhook",
+    description: "Replaces the webhook's fields; fields left out keep their value. A header sent with an empty value keeps its stored value; headers not sent are removed when `headers` is given.",
+    need: "settings.protected",
+    handler: "webhookUpdate",
+    params: [webhookParam],
+    body: webhookIn([]),
+    bodyExample: { enabled: false },
+    status: 200,
+    response: webhookOut,
+    example: { ...webhookEx, enabled: false },
+    errors: [400, 404],
+  },
+  {
+    method: "DELETE",
+    path: "/admin/webhooks/{webhook}",
+    operationId: "adminDeleteWebhook",
+    tag: "Admin: settings",
+    summary: "Delete a webhook",
+    description: "Deletes the webhook for good.",
+    need: "settings.protected",
+    handler: "webhookDelete",
+    params: [webhookParam],
+    status: 204,
+    errors: [404],
+  },
+  {
+    method: "POST",
+    path: "/admin/webhooks/{webhook}/test",
+    operationId: "adminWebhookTest",
+    tag: "Admin: settings",
+    summary: "Test call of a webhook",
+    description: "Queues a test call with sample values of the webhook's event (`{test}` is 1); the job's result is the HTTP status the service answered. A test still waiting is returned (`existing: true`).",
+    need: "settings.protected",
+    handler: "webhookTest",
+    params: [webhookParam],
+    status: 202,
+    response: obj({ job: int("Job ID"), existing: bool("A test was already waiting") }),
+    example: { job: 23, existing: false },
+    errors: [404, 503],
+  },
+  {
+    method: "GET",
     path: "/admin/privacy",
     operationId: "adminGetPrivacy",
     tag: "Admin: settings",
@@ -1230,6 +1335,7 @@ const PARAM_OK: Record<string, (s: string) => boolean> = {
   username: (s) => s.length >= 1 && s.length <= 128 && !/[\u0000-\u001f\u007f]/.test(s),
   group: (s) => /^[a-z0-9_-]{1,32}$/.test(s),
   role: (s) => /^[a-z0-9]{8}$/.test(s),
+  webhook: (s) => /^[0-9a-f]{16}$/.test(s),
 };
 
 // The operation for a path (segments below /api/v1/admin) and method. A

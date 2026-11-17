@@ -268,6 +268,12 @@ test("the rights of the operations are those of the admin pages", () => {
     ownNotifyGet: null,
     ownNotifySet: null,
     ownNotifyTest: null,
+    // webhooks reach the collector's network and hold tokens
+    webhookList: "settings.protected",
+    webhookCreate: "settings.protected",
+    webhookUpdate: "settings.protected",
+    webhookDelete: "settings.protected",
+    webhookTest: "settings.protected",
   };
   for (const [h, n] of Object.entries(need)) assert.equal(adminOps.find((o) => o.handler === h)?.need, n, h);
   for (const op of adminOps.filter((o) => o.path.startsWith("/admin/users"))) assert.equal(op.need, "admin", op.operationId);
@@ -296,6 +302,9 @@ test("every server action of the admin area has an API operation or is account-o
     saveRoleAction: ["roleCreate", "roleUpdate"],
     deleteRoleAction: ["roleDelete"],
     saveOwnNotifyAction: ["ownNotifySet", "ownNotifyTest"],
+    saveWebhookAction: ["webhookCreate", "webhookUpdate", "webhookTest"],
+    webhookTestAction: ["webhookTest"],
+    deleteWebhookAction: ["webhookDelete"],
   };
   // Sign-in, own password, own TOTP, own passkeys, own tokens, look of the admin area:
   // only signed in, never with a token.
@@ -324,4 +333,14 @@ test("a password is set only when an admin is created; afterwards only its owner
   const schema = (openApiDocument("1") as { components: { schemas: Record<string, { properties: Record<string, unknown> }> } }).components.schemas;
   assert.ok(!("password" in schema.AdminUserUpdate.properties));
   assert.ok("password" in schema.AdminUserCreate.properties);
+});
+
+test("the webhook operations are reachable by their paths", async () => {
+  const { matchOp } = await import("../src/lib/openapi-admin.ts");
+  const id = "0123456789abcdef";
+  for (const [path, method, handler] of [["webhooks", "GET", "webhookList"], ["webhooks", "POST", "webhookCreate"], [`webhooks/${id}`, "PUT", "webhookUpdate"], [`webhooks/${id}`, "DELETE", "webhookDelete"], [`webhooks/${id}/test`, "POST", "webhookTest"]]) {
+    const m = matchOp(path.split("/"), method);
+    assert.ok(m && "op" in m && m.op.handler === handler, `${method} ${path}`);
+  }
+  assert.ok(!matchOp(["webhooks", "x"], "PUT") || !("op" in matchOp(["webhooks", "x"], "PUT")!));
 });

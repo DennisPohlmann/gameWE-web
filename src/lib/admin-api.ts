@@ -61,7 +61,8 @@ import { clientIp } from "./client-ip";
 import { countChat, getChat } from "./data";
 import { adminQuery } from "./db";
 import { NOTIFY_LANGS, notifyState, queueNotifyTest, saveOwnNotify, type OwnTokens } from "./admin-notify";
-import { CHANNELS, EVENTS, isEvent, type Channel, type Own } from "./notify-core";
+import { CHANNELS, EVENTS, MAX_WEBHOOK_HEADERS, MAX_WEBHOOK_TEXT, MAX_WEBHOOK_URL, WEBHOOK_METHODS, isEvent, type Channel, type Own, type Webhook } from "./notify-core";
+import { deleteWebhook, getWebhook, listWebhooks, queueWebhookTest, saveWebhook, webhooksAvailable, type WebhookView } from "./admin-webhooks";
 import { scheduleValue } from "./hall-period";
 import { countIps, searchIps } from "./history";
 import { ADMIN_ENTITIES, ADMIN_PAGE_MAX, adminOps, matchOp, type AdminOp } from "./openapi-admin";
@@ -481,6 +482,42 @@ async function ownNotifyOut(user: string) {
   return { channels: s.own.map((o) => ({ channel: o.channel, ready: o.ready, to: o.to, events: o.events, ...(o.channel === "email" ? {} : { token: o.token }), status: o.status, test: o.test })), lang: s.lang, collectorRunning: s.collector, available: s.jobs };
 }
 
+async function webhookTable() {
+  if (!(await webhooksAvailable())) throw new OpError("table");
+}
+
+async function webhookOr404(id: string): Promise<WebhookView> {
+  await webhookTable();
+  const w = await getWebhook(id);
+  if (!w) throw new OpError("notfound");
+  return w;
+}
+
+const webhookJson = (w: WebhookView) => ({ id: w.id, name: w.name, event: w.event, enabled: w.enabled, method: w.method, url: w.url, payload: w.payload, expect: w.expect, allowPrivate: w.allowPrivate, headers: w.headers, status: w.status, test: w.test });
+
+// The body of a webhook; left-out fields keep those of cur (an update),
+// a header with an empty value its stored value (saveWebhook).
+function webhookBody(body: unknown, cur: WebhookView | null): Omit<Webhook, "id"> {
+  const keys = ["name", "event", "enabled", "method", "url", "headers", "payload", "expect", "allowPrivate"];
+  const b = onlyKeys(body, keys, cur ? [] : ["name", "event", "url"]);
+  const headers = b.headers === undefined ? (cur?.headers ?? []).map((h) => ({ name: h.name, value: "" })) : b.headers;
+  if (!Array.isArray(headers) || headers.length > MAX_WEBHOOK_HEADERS) throw new BodyError(400, "invalid_field", "headers", `headers must be an array of at most ${MAX_WEBHOOK_HEADERS} { name, value }`);
+  return {
+    name: b.name === undefined ? cur!.name : strField(b, "name", 64),
+    event: b.event === undefined ? cur!.event : enumField(b, "event", EVENTS),
+    enabled: b.enabled === undefined ? (cur?.enabled ?? true) : boolField(b, "enabled"),
+    method: b.method === undefined ? (cur?.method ?? "POST") : enumField(b, "method", WEBHOOK_METHODS),
+    url: b.url === undefined ? cur!.url : strField(b, "url", MAX_WEBHOOK_URL),
+    headers: headers.map((h: unknown) => {
+      const x = onlyKeys(h, ["name", "value"], ["value"]);
+      return { name: strField(x, "name", 64), value: x.value === undefined ? "" : strField(x, "value", MAX_WEBHOOK_TEXT) };
+    }),
+    payload: b.payload === undefined ? (cur?.payload ?? "") : strField(b, "payload", MAX_WEBHOOK_TEXT),
+    expect: b.expect === undefined ? (cur?.expect ?? 0) : intField(b, "expect", 0, 599),
+    allowPrivate: b.allowPrivate === undefined ? (cur?.allowPrivate ?? false) : boolField(b, "allowPrivate"),
+  };
+}
+
 // ---------------------------------------------------------------- handlers
 
 const handlers: Record<string, Handler> = {
@@ -706,6 +743,28 @@ const handlers: Record<string, Handler> = {
   async ownNotifyTest(c) {
     const b = onlyKeys(c.body, ["channel"], ["channel"]);
     const job = await queueNotifyTest(c.actor, enumField(b, "channel", CHANNELS));
+    return { body: { job: job.id, existing: job.existing } };
+  },
+  async webhookList() {
+    await webhookTable();
+    return { body: (await listWebhooks()).map(webhookJson) };
+  },
+  async webhookCreate(c) {
+    await webhookTable();
+    const id = await saveWebhook(c.actor, "new", webhookBody(c.body, null));
+    return { body: webhookJson((await getWebhook(id))!) };
+  },
+  async webhookUpdate(c) {
+    const cur = await webhookOr404(c.params.webhook);
+    const id = await saveWebhook(c.actor, cur.id, webhookBody(c.body, cur));
+    return { body: webhookJson((await getWebhook(id))!) };
+  },
+  async webhookDelete(c) {
+    await deleteWebhook(c.actor, (await webhookOr404(c.params.webhook)).id);
+    return {};
+  },
+  async webhookTest(c) {
+    const job = await queueWebhookTest(c.actor, (await webhookOr404(c.params.webhook)).id);
     return { body: { job: job.id, existing: job.existing } };
   },
   async reset(c) {

@@ -28,6 +28,7 @@ import { allSettings } from "@/lib/admin-settings";
 import { adminQuery } from "@/lib/db";
 import { ownFromForm, ownTokensFromForm, queueNotifyTest, saveOwnNotify } from "@/lib/admin-notify";
 import { isChannel } from "@/lib/notify-core";
+import { deleteWebhook, queueWebhookTest, saveWebhook, webhookFromForm } from "@/lib/admin-webhooks";
 import { secretOptions, secretsOf } from "@/lib/secret-options";
 
 export async function loginAction(form: FormData) {
@@ -652,3 +653,46 @@ export async function saveOwnNotifyAction(form: FormData) {
   redirect(`/admin/account/notifications?notify=test&job=${job.id}`);
 }
 
+// Settings → Notifications → Webhooks (right settings.protected: the
+// address and headers reach the collector's network and hold tokens).
+// "test" saves first, then queues a test call.
+const WEBHOOK_PAGE = "/admin/settings/notifications/webhook/";
+export async function saveWebhookAction(form: FormData) {
+  const user = await requirePerm("settings.protected");
+  const raw = String(form.get("id") ?? "");
+  let id: string;
+  try {
+    id = await saveWebhook({ user }, raw, webhookFromForm(form));
+  } catch (err) {
+    if (!(err instanceof OpError)) throw err;
+    if (err.code === "notfound") redirect("/admin/settings/notifications#webhooks");
+    redirect(`${WEBHOOK_PAGE}${encodeURIComponent(raw)}?bad=${encodeURIComponent(err.detail.field ?? "")}`);
+  }
+  if (form.get("test") !== "1") redirect(`${WEBHOOK_PAGE}${id}?saved=1`);
+  const job = await queueWebhookTest({ user }, id).catch((err) => {
+    if (err instanceof OpError && err.code === "nojobs") redirect(`${WEBHOOK_PAGE}${id}?nojobs=1`);
+    throw err;
+  });
+  redirect(`${WEBHOOK_PAGE}${id}?job=${job.id}#test`);
+}
+
+export async function webhookTestAction(form: FormData) {
+  const user = await requirePerm("settings.protected");
+  const id = String(form.get("id") ?? "");
+  const job = await queueWebhookTest({ user }, id).catch((err) => {
+    if (err instanceof OpError && err.code === "nojobs") redirect("/admin/settings/notifications?notify=nojobs#webhooks");
+    if (err instanceof OpError && err.code === "notfound") redirect("/admin/settings/notifications#webhooks");
+    throw err;
+  });
+  redirect(`/admin/settings/notifications?webhook=${encodeURIComponent(id)}&job=${job.id}#webhooks`);
+}
+
+export async function deleteWebhookAction(form: FormData) {
+  const user = await requirePerm("settings.protected");
+  const id = String(form.get("id") ?? "");
+  if (form.get("confirm") !== "1") redirect(`${WEBHOOK_PAGE}${encodeURIComponent(id)}`);
+  await deleteWebhook({ user }, id).catch((err) => {
+    if (!(err instanceof OpError)) throw err;
+  });
+  redirect("/admin/settings/notifications?webhook=deleted#webhooks");
+}

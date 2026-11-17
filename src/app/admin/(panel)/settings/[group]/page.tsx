@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { saveSettingsAction } from "../../../actions";
+import { saveSettingsAction, webhookTestAction } from "../../../actions";
+import { listWebhooks, webhooksAvailable, type WebhookView } from "@/lib/admin-webhooks";
+import { WebhookStatusLine } from "@/components/admin/notify-status";
+import { AutoRefresh } from "@/components/auto-refresh";
+import { notifyState } from "@/lib/admin-notify";
 import { Section } from "@/components/ui";
-import { NOTIFY_T } from "@/lib/admin-texts";
+import { NOTIFY_T, WEBHOOK_T } from "@/lib/admin-texts";
 import { Icon } from "@/components/admin/icons";
 import { PageHead } from "@/components/admin/page-head";
 import { HelpTip } from "@/components/admin/help-tip";
@@ -13,7 +17,7 @@ import { headerOrder } from "@/lib/header-links";
 import { dicts } from "@/translations";
 import { rawOptions } from "@/lib/admin-data";
 import { adminDict, localized, tr } from "@/lib/admin-i18n";
-import { RAW_GROUP, adminOnlyOption, rawOptionHelp, READONLY_OPTIONS, allSettings, settingGroups, settingsReader, type Setting } from "@/lib/admin-settings";
+import { NOTIFY_EVENT_LABELS, RAW_GROUP, adminOnlyOption, rawOptionHelp, READONLY_OPTIONS, allSettings, settingGroups, settingsReader, type Setting } from "@/lib/admin-settings";
 import { requirePerm } from "@/lib/auth";
 import { allowed } from "@/lib/admin-perms";
 import { PERM_T } from "@/lib/admin-texts";
@@ -54,11 +58,15 @@ export default async function SettingsPage({
   const u = a.ui;
   const sp = await searchParams;
   const items = group?.items ?? [];
-  const [rows, templates, raw] = await Promise.all([
+  const hooks = groupId === "notifications" && canProtected;
+  const [rows, templates, raw, notify, webhooks, webhookTable] = await Promise.all([
     // All settings: some pages show values of others (header links: SourceBans).
     adminQuery<{ keyname: string; value: string }>(`SELECT keyname, value FROM hlstats_Options WHERE keyname IN (?)`, [allSettings.map((s) => s.key)]),
     items.some((s) => s.type === "template") ? listTemplates() : Promise.resolve([]),
     isRaw ? rawOptions() : Promise.resolve([]),
+    groupId === "notifications" ? notifyState(user.username) : Promise.resolve(null),
+    hooks ? listWebhooks() : Promise.resolve([]),
+    hooks ? webhooksAvailable() : Promise.resolve(false),
   ]);
   const values: Record<string, string> = { ...Object.fromEntries(rows.map((r) => [r.keyname, r.value])), ...(await secretOptions()) };
   // Settings that older installations set in the environment (lib/config.ts):
@@ -151,6 +159,18 @@ export default async function SettingsPage({
         </fieldset>
       </form>
       {groupId === "notifications" ? <SmtpTestHint lang={lang} /> : null}
+      {notify ? (
+        <Webhooks
+          list={webhooks}
+          table={webhookTable}
+          allowed={canProtected}
+          collector={notify.collector}
+          jobs={notify.jobs}
+          lang={lang}
+          deleted={sp.webhook === "deleted"}
+          queued={sp.webhook && sp.webhook !== "deleted" && sp.job && /^\d+$/.test(sp.job) ? sp.job : undefined}
+        />
+      ) : null}
     </>
   );
 }
@@ -172,6 +192,94 @@ function SmtpTestHint({ lang }: { lang: Lang }) {
       </div>
     </Section>
   );
+}
+
+// The site's webhooks (only with settings.protected: the addresses may hold
+// tokens), each with its event, address, last call and a test button.
+function Webhooks({ list, table, allowed, collector, jobs, lang, deleted, queued }: { list: WebhookView[]; table: boolean; allowed: boolean; collector: boolean; jobs: boolean; lang: Lang; deleted: boolean; queued?: string }) {
+  const w = localized(WEBHOOK_T, lang);
+  const n = localized(NOTIFY_T, lang);
+  const events = Object.fromEntries(NOTIFY_EVENT_LABELS.map(([e, l]) => [e, tr(l, lang)]));
+  const waiting = list.some((h) => h.test && (h.test.status === "pending" || h.test.status === "running"));
+  return (
+    <Section
+      title={w.title}
+      id="webhooks"
+      className="notify-test"
+      aside={
+        allowed && table ? (
+          <Link prefetch={false} className="button" href="/admin/settings/notifications/webhook/new">
+            <Icon name="plus" />
+            {w.add}
+          </Link>
+        ) : null
+      }
+    >
+      <p className="muted">{w.intro}</p>
+      {!allowed ? <p className="notice">{w.needProtected}</p> : !table ? <p className="notice">{w.noTable}</p> : null}
+      {deleted ? <p className="notice">{w.deleted}</p> : null}
+      {queued ? <p className="notice" role="status">{fill(w.testQueued, { id: queued })}</p> : null}
+      {allowed && table && !collector ? <p className="notice">{n.noCollector}</p> : null}
+      {allowed && table && !jobs ? <p className="notice error">{n.noJobs}</p> : null}
+      {waiting && collector ? <AutoRefresh seconds={3} /> : null}
+      {allowed && table && !list.length ? <p className="muted">{w.none}</p> : null}
+      {list.length ? (
+        <div className="table-wrap">
+          <table className="cards stack webhook-list">
+            <thead>
+              <tr>
+                <th>{w.name}</th>
+                <th>{w.event}</th>
+                <th>{w.target}</th>
+                <th>{w.last}</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {list.map((h) => (
+                <tr key={h.id}>
+                  <td className="main">
+                    <Link prefetch={false} href={`/admin/settings/notifications/webhook/${h.id}`}>
+                      <bdi>{h.name}</bdi>
+                    </Link>
+                    {h.enabled ? null : <span className="pill subt">{w.off}</span>}
+                  </td>
+                  <td data-l={`${w.event}:`}>{events[h.event]}</td>
+                  <td data-l={`${w.target}:`}>
+                    <bdi dir="ltr">
+                      {h.method} {shortUrl(h.url)}
+                    </bdi>
+                  </td>
+                  <td>
+                    <WebhookStatusLine status={h.status} test={h.test} lang={lang} />
+                  </td>
+                  <td className="act">
+                    <form action={webhookTestAction}>
+                      <input type="hidden" name="id" value={h.id} />
+                      <button type="submit" className="button small" disabled={!jobs}>
+                        <Icon name="bell" />
+                        {w.test}
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+    </Section>
+  );
+}
+
+// Host and path of an address, without the query (it may hold a token).
+function shortUrl(v: string): string {
+  try {
+    const u = new URL(v);
+    return u.host + (u.pathname === "/" ? "" : u.pathname);
+  } catch {
+    return "";
+  }
 }
 
 function SettingField({
