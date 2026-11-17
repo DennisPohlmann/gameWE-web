@@ -5,6 +5,8 @@ import { Section } from "@/components/ui";
 import { NOTIFY_T } from "@/lib/admin-texts";
 import { Icon } from "@/components/admin/icons";
 import { PageHead } from "@/components/admin/page-head";
+import { HelpTip } from "@/components/admin/help-tip";
+import { HELP_T, SETTING_INFO } from "@/lib/admin-help";
 import { SecretControl } from "@/components/admin/secret-control";
 import { HeaderLinksEditor, type EditorRow, type HeaderLinksText } from "@/components/header-links-editor";
 import { headerOrder } from "@/lib/header-links";
@@ -256,6 +258,7 @@ function SettingField({
       <div className="l">
         <b>
           <label htmlFor={id}>{tr(s.label, lang)}</label>
+          {SETTING_INFO[s.key] ? <HelpTip text={tr(SETTING_INFO[s.key], lang)} label={fill(localized(HELP_T, lang).more, { f: tr(s.label, lang) })} /> : null}
         </b>
         {s.help ? <span>{tr(s.help, lang)}</span> : null}
         {fromEnv && s.type !== "secret" ? <span className="env-note">{fill(a.fromEnv, { v: fromEnv })}</span> : null}

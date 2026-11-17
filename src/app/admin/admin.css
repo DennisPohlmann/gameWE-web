@@ -380,6 +380,16 @@ select { padding-inline-end: 28px; }
 .field .l code { display: block; font-size: 11px; color: var(--muted); margin-top: 3px; }
 .field .l span.warn-text { color: var(--warn); margin-top: 6px; }
 .field .l span.env-note { color: var(--soft); border-inline-start: 3px solid var(--warn); padding-inline-start: 6px; margin-top: 4px; }
+/* "?" with a longer explanation (components/admin/help-tip.tsx). The doubled
+   selectors beat ".field .l span" of the label column. */
+.help-tip, .field .l .help-tip { position: relative; display: inline-block; vertical-align: 1px; margin: 0; margin-inline-start: 6px; color: inherit; font-size: inherit; }
+.help-tip > [role=button], .field .l .help-tip > [role=button] { display: inline-grid; margin: 0; place-items: center; width: 18px; height: 18px; padding: 0; border-radius: 50%; border: 1px solid var(--line-2); background: var(--panel-2); color: var(--soft); font-family: inherit; font-size: 11px; font-weight: 700; line-height: 1; cursor: help; }
+.help-tip > [role=button]:hover, .help-tip > [role=button]:focus-visible { border-color: var(--accent); color: var(--accent-text); outline: none; box-shadow: var(--focus); }
+/* A larger touch target than the 18px circle. */
+.help-tip > [role=button]::after { content: ""; position: absolute; inset: -8px; }
+.help-tip-bubble, .field .l .help-tip-bubble { position: absolute; z-index: 30; top: calc(100% + 8px); inset-inline-start: -10px; display: block; width: max-content; max-width: min(340px, calc(100vw - 16px)); margin: 0; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--panel); color: var(--text); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); font-size: 13px; font-weight: 400; line-height: 1.45; text-align: start; white-space: normal; overflow-wrap: anywhere; }
+.help-tip-bubble.up, .field .l .help-tip-bubble.up { top: auto; bottom: calc(100% + 8px); }
+.help-tip-bubble[hidden] { display: none !important; }
 .field .c { display: flex; flex-direction: column; gap: 6px; max-width: 640px; min-width: 0; }
 .field .c > input:not([type="number"]), .field .c > select { width: 100%; }
 .field .c > input[type="number"] { max-width: 160px; }

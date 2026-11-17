@@ -8,6 +8,7 @@ import * as entities from "../src/lib/admin-entities.ts";
 import { adminDict, localized, tr } from "../src/lib/admin-i18n.ts";
 import * as settings from "../src/lib/admin-settings.ts";
 import * as texts from "../src/lib/admin-texts.ts";
+import * as help from "../src/lib/admin-help.ts";
 import { ADMIN_TEXTS } from "../src/translations/admin/index.ts";
 import { LANGUAGES, baseLang } from "../src/translations/languages.ts";
 
@@ -31,7 +32,7 @@ function englishTexts(): Set<string> {
   };
   const seen = new Set<unknown>();
   strings(adminDict("en"));
-  for (const mod of [entities, settings, texts]) walk({ ...mod }, seen);
+  for (const mod of [entities, settings, texts, help]) walk({ ...mod }, seen);
   return out;
 }
 
