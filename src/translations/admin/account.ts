@@ -5,7 +5,7 @@
 export const ACCOUNT_TEXTS: Record<string, Record<string, string>> = {
   "ru": {
     "Like my admin language": "Как мой язык администрирования",
-    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under Name & password, else the site's default language.": "Язык ваших писем, сообщений Telegram и ntfy. Если не выбран: язык панели администратора, сохранённый в разделе «Название & Пароль», иначе язык сайта по умолчанию.",
+    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under My account → Settings, else the site's default language.": "Язык ваших писем, сообщений Telegram и ntfy. Если не выбран: язык панели администратора, сохранённый в разделе «Моя учётная запись → Настройки», иначе язык сайта по умолчанию.",
     "Test the SMTP server": "Проверить сервер SMTP",
     "Sends a test e-mail through the stored SMTP server to your own address from My account → Notifications. Save changes above first.": "Отправляет тестовое письмо через сохранённый сервер SMTP на ваш адрес из «Моя учётная запись → Уведомления». Сначала сохраните изменения выше.",
     "The test e-mail goes to {a}.": "Тестовое письмо уйдёт на {a}.",
@@ -21,7 +21,7 @@ export const ACCOUNT_TEXTS: Record<string, Record<string, string>> = {
   },
   "es": {
     "Like my admin language": "Como mi idioma de administración",
-    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under Name & password, else the site's default language.": "El idioma de tus correos y mensajes de Telegram y ntfy. Sin elección: el idioma del área de administración guardado en Nombre & Contraseña; si no, el idioma predeterminado del sitio.",
+    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under My account → Settings, else the site's default language.": "El idioma de tus correos y mensajes de Telegram y ntfy. Sin elección: el idioma del área de administración guardado en Mi cuenta → Ajustes; si no, el idioma predeterminado del sitio.",
     "Test the SMTP server": "Probar el servidor SMTP",
     "Sends a test e-mail through the stored SMTP server to your own address from My account → Notifications. Save changes above first.": "Envía un correo de prueba por el servidor SMTP guardado a tu propia dirección de Mi cuenta → Notificaciones. Guarda antes los cambios de arriba.",
     "The test e-mail goes to {a}.": "El correo de prueba va a {a}.",
@@ -37,7 +37,7 @@ export const ACCOUNT_TEXTS: Record<string, Record<string, string>> = {
   },
   "fr": {
     "Like my admin language": "Comme ma langue d’administration",
-    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under Name & password, else the site's default language.": "La langue de vos e-mails et de vos messages Telegram et ntfy. Sans choix : la langue de l’administration enregistrée sous Nom & Mot de passe, sinon la langue par défaut du site.",
+    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under My account → Settings, else the site's default language.": "La langue de vos e-mails et de vos messages Telegram et ntfy. Sans choix : la langue de l’administration enregistrée sous Mon compte → Paramètres, sinon la langue par défaut du site.",
     "Test the SMTP server": "Tester le serveur SMTP",
     "Sends a test e-mail through the stored SMTP server to your own address from My account → Notifications. Save changes above first.": "Envoie un e-mail de test via le serveur SMTP enregistré à votre propre adresse de Mon compte → Notifications. Enregistrez d’abord les modifications ci-dessus.",
     "The test e-mail goes to {a}.": "L’e-mail de test part à {a}.",
@@ -53,7 +53,7 @@ export const ACCOUNT_TEXTS: Record<string, Record<string, string>> = {
   },
   "pt": {
     "Like my admin language": "Como o meu idioma de administração",
-    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under Name & password, else the site's default language.": "O idioma dos seus e-mails e mensagens Telegram e ntfy. Sem escolha: o idioma da área de administração guardado em Nome & Palavra-passe, senão o idioma predefinido do site.",
+    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under My account → Settings, else the site's default language.": "O idioma dos seus e-mails e mensagens Telegram e ntfy. Sem escolha: o idioma da área de administração guardado em A minha conta → Definições, senão o idioma predefinido do site.",
     "Test the SMTP server": "Testar o servidor SMTP",
     "Sends a test e-mail through the stored SMTP server to your own address from My account → Notifications. Save changes above first.": "Envia um e-mail de teste pelo servidor SMTP guardado para o seu próprio endereço de A minha conta → Notificações. Guarde primeiro as alterações acima.",
     "The test e-mail goes to {a}.": "O e-mail de teste vai para {a}.",
@@ -69,7 +69,7 @@ export const ACCOUNT_TEXTS: Record<string, Record<string, string>> = {
   },
   "nl": {
     "Like my admin language": "Zoals mijn beheertaal",
-    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under Name & password, else the site's default language.": "De taal van je e-mails en Telegram- en ntfy-berichten. Zonder keuze: de beheertaal die je onder Naam & Wachtwoord hebt opgeslagen, anders de standaardtaal van de site.",
+    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under My account → Settings, else the site's default language.": "De taal van je e-mails en Telegram- en ntfy-berichten. Zonder keuze: de beheertaal die je onder Mijn account → Instellingen hebt opgeslagen, anders de standaardtaal van de site.",
     "Test the SMTP server": "SMTP-server testen",
     "Sends a test e-mail through the stored SMTP server to your own address from My account → Notifications. Save changes above first.": "Stuurt via de opgeslagen SMTP-server een test-e-mail naar je eigen adres uit Mijn account → Meldingen. Sla wijzigingen hierboven eerst op.",
     "The test e-mail goes to {a}.": "De test-e-mail gaat naar {a}.",
@@ -85,7 +85,7 @@ export const ACCOUNT_TEXTS: Record<string, Record<string, string>> = {
   },
   "da": {
     "Like my admin language": "Som mit administrationssprog",
-    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under Name & password, else the site's default language.": "Sproget i dine e-mails og Telegram- og ntfy-beskeder. Uden valg: det administrationssprog, du har gemt under Navn & Adgangskode, ellers sidens standardsprog.",
+    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under My account → Settings, else the site's default language.": "Sproget i dine e-mails og Telegram- og ntfy-beskeder. Uden valg: det administrationssprog, du har gemt under Min konto → Indstillinger, ellers sidens standardsprog.",
     "Test the SMTP server": "Test SMTP-serveren",
     "Sends a test e-mail through the stored SMTP server to your own address from My account → Notifications. Save changes above first.": "Sender en test-e-mail via den gemte SMTP-server til din egen adresse fra Min konto → Notifikationer. Gem ændringer ovenfor først.",
     "The test e-mail goes to {a}.": "Test-e-mailen går til {a}.",
@@ -101,7 +101,7 @@ export const ACCOUNT_TEXTS: Record<string, Record<string, string>> = {
   },
   "pl": {
     "Like my admin language": "Jak mój język administracji",
-    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under Name & password, else the site's default language.": "Język Twoich e-maili oraz wiadomości Telegram i ntfy. Bez wyboru: język panelu zapisany w sekcji Nazwa & Hasło, w przeciwnym razie domyślny język strony.",
+    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under My account → Settings, else the site's default language.": "Język Twoich e-maili oraz wiadomości Telegram i ntfy. Bez wyboru: język panelu zapisany w sekcji Moje konto → Ustawienia, w przeciwnym razie domyślny język strony.",
     "Test the SMTP server": "Przetestuj serwer SMTP",
     "Sends a test e-mail through the stored SMTP server to your own address from My account → Notifications. Save changes above first.": "Wysyła testowy e-mail przez zapisany serwer SMTP na Twój własny adres z Moje konto → Powiadomienia. Najpierw zapisz zmiany powyżej.",
     "The test e-mail goes to {a}.": "Testowy e-mail trafi na {a}.",
@@ -117,7 +117,7 @@ export const ACCOUNT_TEXTS: Record<string, Record<string, string>> = {
   },
   "pt-br": {
     "Like my admin language": "Como meu idioma de administração",
-    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under Name & password, else the site's default language.": "O idioma dos seus e-mails e mensagens do Telegram e ntfy. Sem escolha: o idioma da área de administração salvo em Nome & Senha, senão o idioma padrão do site.",
+    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under My account → Settings, else the site's default language.": "O idioma dos seus e-mails e mensagens do Telegram e ntfy. Sem escolha: o idioma da área de administração salvo em Minha conta → Configurações, senão o idioma padrão do site.",
     "Test the SMTP server": "Testar o servidor SMTP",
     "Sends a test e-mail through the stored SMTP server to your own address from My account → Notifications. Save changes above first.": "Envia um e-mail de teste pelo servidor SMTP salvo para o seu próprio endereço de Minha conta → Notificações. Salve antes as alterações acima.",
     "The test e-mail goes to {a}.": "O e-mail de teste vai para {a}.",
@@ -133,7 +133,7 @@ export const ACCOUNT_TEXTS: Record<string, Record<string, string>> = {
   },
   "sr": {
     "Like my admin language": "Као мој језик администрације",
-    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under Name & password, else the site's default language.": "Језик твојих имејлова и Telegram и ntfy порука. Без избора: језик администрације сачуван под Назив & Лозинка, иначе подразумевани језик сајта.",
+    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under My account → Settings, else the site's default language.": "Језик твојих имејлова и Telegram и ntfy порука. Без избора: језик администрације сачуван под Мој налог → Подешавања, иначе подразумевани језик сајта.",
     "Test the SMTP server": "Тестирај SMTP сервер",
     "Sends a test e-mail through the stored SMTP server to your own address from My account → Notifications. Save changes above first.": "Шаље тест имејл преко сачуваног SMTP сервера на твоју адресу из Мој налог → Обавештења. Прво сачувај измене изнад.",
     "The test e-mail goes to {a}.": "Тест имејл иде на {a}.",
@@ -149,7 +149,7 @@ export const ACCOUNT_TEXTS: Record<string, Record<string, string>> = {
   },
   "zh-tw": {
     "Like my admin language": "與我的管理語言相同",
-    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under Name & password, else the site's default language.": "你的電子郵件、Telegram 與 ntfy 訊息所用的語言。若未選擇：使用你在「名稱 & 密碼」中儲存的管理介面語言，否則為網站的預設語言。",
+    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under My account → Settings, else the site's default language.": "你的電子郵件、Telegram 與 ntfy 訊息所用的語言。若未選擇：使用你在「我的帳號 → 設定」中儲存的管理介面語言，否則為網站的預設語言。",
     "Test the SMTP server": "測試 SMTP 伺服器",
     "Sends a test e-mail through the stored SMTP server to your own address from My account → Notifications. Save changes above first.": "透過已儲存的 SMTP 伺服器，寄一封測試郵件到「我的帳號 → 通知」中你自己的地址。請先儲存上方的變更。",
     "The test e-mail goes to {a}.": "測試郵件將寄到 {a}。",
@@ -165,7 +165,7 @@ export const ACCOUNT_TEXTS: Record<string, Record<string, string>> = {
   },
   "zh-cn": {
     "Like my admin language": "与我的管理语言相同",
-    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under Name & password, else the site's default language.": "你的电子邮件、Telegram 和 ntfy 消息所用的语言。如未选择：使用你在“名称 & 密码”中保存的管理界面语言，否则为网站的默认语言。",
+    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under My account → Settings, else the site's default language.": "你的电子邮件、Telegram 和 ntfy 消息所用的语言。如未选择：使用你在“我的账户 → 设置”中保存的管理界面语言，否则为网站的默认语言。",
     "Test the SMTP server": "测试 SMTP 服务器",
     "Sends a test e-mail through the stored SMTP server to your own address from My account → Notifications. Save changes above first.": "通过已保存的 SMTP 服务器，向“我的账户 → 通知”中你自己的地址发送一封测试邮件。请先保存上方的更改。",
     "The test e-mail goes to {a}.": "测试邮件将发送到 {a}。",
@@ -181,7 +181,7 @@ export const ACCOUNT_TEXTS: Record<string, Record<string, string>> = {
   },
   "ja": {
     "Like my admin language": "管理画面の言語と同じ",
-    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under Name & password, else the site's default language.": "メール、Telegram、ntfy のメッセージの言語です。選ばない場合は「名前 & パスワード」で保存した管理画面の言語、なければサイトの既定の言語です。",
+    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under My account → Settings, else the site's default language.": "メール、Telegram、ntfy のメッセージの言語です。選ばない場合は「マイアカウント → 設定」で保存した管理画面の言語、なければサイトの既定の言語です。",
     "Test the SMTP server": "SMTP サーバーをテスト",
     "Sends a test e-mail through the stored SMTP server to your own address from My account → Notifications. Save changes above first.": "保存された SMTP サーバーを使い、「マイアカウント → 通知」にある自分のアドレスへテストメールを送ります。先に上の変更を保存してください。",
     "The test e-mail goes to {a}.": "テストメールの送信先は {a} です。",
@@ -197,7 +197,7 @@ export const ACCOUNT_TEXTS: Record<string, Record<string, string>> = {
   },
   "ko": {
     "Like my admin language": "내 관리 언어와 동일",
-    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under Name & password, else the site's default language.": "이메일, Telegram 및 ntfy 메시지의 언어입니다. 고르지 않으면 '이름 & 비밀번호'에 저장한 관리 화면 언어, 없으면 사이트의 기본 언어입니다.",
+    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under My account → Settings, else the site's default language.": "이메일, Telegram 및 ntfy 메시지의 언어입니다. 고르지 않으면 '내 계정 → 설정'에 저장한 관리 화면 언어, 없으면 사이트의 기본 언어입니다.",
     "Test the SMTP server": "SMTP 서버 테스트",
     "Sends a test e-mail through the stored SMTP server to your own address from My account → Notifications. Save changes above first.": "저장된 SMTP 서버를 통해 '내 계정 → 알림'의 내 주소로 테스트 메일을 보냅니다. 먼저 위의 변경 사항을 저장하세요.",
     "The test e-mail goes to {a}.": "테스트 메일은 {a}(으)로 갑니다.",
@@ -213,7 +213,7 @@ export const ACCOUNT_TEXTS: Record<string, Record<string, string>> = {
   },
   "ar": {
     "Like my admin language": "مثل لغة الإدارة الخاصة بي",
-    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under Name & password, else the site's default language.": "لغة رسائل البريد الإلكتروني ورسائل Telegram وntfy الخاصة بك. دون اختيار: لغة منطقة الإدارة التي حفظتها في «الاسم & كلمة المرور»، وإلا فاللغة الافتراضية للموقع.",
+    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under My account → Settings, else the site's default language.": "لغة رسائل البريد الإلكتروني ورسائل Telegram وntfy الخاصة بك. دون اختيار: لغة منطقة الإدارة التي حفظتها في «حسابي → الإعدادات»، وإلا فاللغة الافتراضية للموقع.",
     "Test the SMTP server": "اختبار خادم SMTP",
     "Sends a test e-mail through the stored SMTP server to your own address from My account → Notifications. Save changes above first.": "يرسل رسالة بريد اختبارية عبر خادم SMTP المحفوظ إلى عنوانك في «حسابي ← الإشعارات». احفظ التغييرات أعلاه أولًا.",
     "The test e-mail goes to {a}.": "تُرسل رسالة الاختبار إلى {a}.",
@@ -229,7 +229,7 @@ export const ACCOUNT_TEXTS: Record<string, Record<string, string>> = {
   },
   "tr": {
     "Like my admin language": "Yönetim dilimle aynı",
-    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under Name & password, else the site's default language.": "E-postalarının ve Telegram ile ntfy mesajlarının dili. Seçim yoksa: Ad & Parola altında kaydettiğin yönetim dili, o da yoksa sitenin varsayılan dili.",
+    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under My account → Settings, else the site's default language.": "E-postalarının ve Telegram ile ntfy mesajlarının dili. Seçim yoksa: Hesabım → Ayarlar altında kaydettiğin yönetim dili, o da yoksa sitenin varsayılan dili.",
     "Test the SMTP server": "SMTP sunucusunu test et",
     "Sends a test e-mail through the stored SMTP server to your own address from My account → Notifications. Save changes above first.": "Kayıtlı SMTP sunucusu üzerinden Hesabım → Bildirimler'deki kendi adresine bir test e-postası gönderir. Önce yukarıdaki değişiklikleri kaydet.",
     "The test e-mail goes to {a}.": "Test e-postası {a} adresine gider.",
@@ -245,7 +245,7 @@ export const ACCOUNT_TEXTS: Record<string, Record<string, string>> = {
   },
   "it": {
     "Like my admin language": "Come la mia lingua di amministrazione",
-    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under Name & password, else the site's default language.": "La lingua delle tue e-mail e dei messaggi Telegram e ntfy. Senza scelta: la lingua dell’amministrazione salvata in Nome & Password, altrimenti la lingua predefinita del sito.",
+    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under My account → Settings, else the site's default language.": "La lingua delle tue e-mail e dei messaggi Telegram e ntfy. Senza scelta: la lingua dell’amministrazione salvata in Il mio account → Impostazioni, altrimenti la lingua predefinita del sito.",
     "Test the SMTP server": "Prova il server SMTP",
     "Sends a test e-mail through the stored SMTP server to your own address from My account → Notifications. Save changes above first.": "Invia un’e-mail di prova tramite il server SMTP salvato al tuo indirizzo di Il mio account → Notifiche. Salva prima le modifiche qui sopra.",
     "The test e-mail goes to {a}.": "L’e-mail di prova va a {a}.",
@@ -261,7 +261,7 @@ export const ACCOUNT_TEXTS: Record<string, Record<string, string>> = {
   },
   "uk": {
     "Like my admin language": "Як моя мова адміністрування",
-    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under Name & password, else the site's default language.": "Мова ваших листів і повідомлень Telegram та ntfy. Без вибору: мова панелі, збережена в розділі «Назва & Пароль», інакше типова мова сайту.",
+    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under My account → Settings, else the site's default language.": "Мова ваших листів і повідомлень Telegram та ntfy. Без вибору: мова панелі, збережена в розділі «Мій обліковий запис → Налаштування», інакше типова мова сайту.",
     "Test the SMTP server": "Перевірити сервер SMTP",
     "Sends a test e-mail through the stored SMTP server to your own address from My account → Notifications. Save changes above first.": "Надсилає тестовий лист через збережений сервер SMTP на вашу адресу з «Мій обліковий запис → Сповіщення». Спершу збережіть зміни вище.",
     "The test e-mail goes to {a}.": "Тестовий лист піде на {a}.",
@@ -277,7 +277,7 @@ export const ACCOUNT_TEXTS: Record<string, Record<string, string>> = {
   },
   "cs": {
     "Like my admin language": "Jako můj jazyk administrace",
-    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under Name & password, else the site's default language.": "Jazyk tvých e-mailů a zpráv Telegram a ntfy. Bez volby: jazyk administrace uložený v části Název & Heslo, jinak výchozí jazyk webu.",
+    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under My account → Settings, else the site's default language.": "Jazyk tvých e-mailů a zpráv Telegram a ntfy. Bez volby: jazyk administrace uložený v části Můj účet → Nastavení, jinak výchozí jazyk webu.",
     "Test the SMTP server": "Otestovat server SMTP",
     "Sends a test e-mail through the stored SMTP server to your own address from My account → Notifications. Save changes above first.": "Pošle testovací e-mail přes uložený server SMTP na tvou adresu z Můj účet → Oznámení. Nejdřív ulož změny výše.",
     "The test e-mail goes to {a}.": "Testovací e-mail půjde na {a}.",
@@ -293,7 +293,7 @@ export const ACCOUNT_TEXTS: Record<string, Record<string, string>> = {
   },
   "sv": {
     "Like my admin language": "Som mitt administrationsspråk",
-    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under Name & password, else the site's default language.": "Språket i dina e-postmeddelanden och Telegram- och ntfy-meddelanden. Utan val: administrationsspråket du sparat under Namn & Lösenord, annars webbplatsens standardspråk.",
+    "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under My account → Settings, else the site's default language.": "Språket i dina e-postmeddelanden och Telegram- och ntfy-meddelanden. Utan val: administrationsspråket du sparat under Mitt konto → Inställningar, annars webbplatsens standardspråk.",
     "Test the SMTP server": "Testa SMTP-servern",
     "Sends a test e-mail through the stored SMTP server to your own address from My account → Notifications. Save changes above first.": "Skickar ett testmejl via den sparade SMTP-servern till din egen adress från Mitt konto → Aviseringar. Spara ändringar ovan först.",
     "The test e-mail goes to {a}.": "Testmejlet går till {a}.",

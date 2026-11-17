@@ -814,7 +814,7 @@ export const NOTIFY_T = {
     token: "Zugriffs-Token",
     lang: "Sprache der Nachrichten",
     langSite: "Wie meine Admin-Sprache",
-    langHint: "Die Sprache deiner E-Mails, Telegram- und ntfy-Nachrichten. Ohne Wahl: die Sprache der Admin-Oberfläche, die du unter Name & Passwort gespeichert hast, sonst die Standardsprache der Seite.",
+    langHint: "Die Sprache deiner E-Mails, Telegram- und ntfy-Nachrichten. Ohne Wahl: die Sprache der Admin-Oberfläche, die du unter Mein Konto → Einstellungen gespeichert hast, sonst die Standardsprache der Seite.",
     botToken: "Bot-Token",
     botTokenHint: "Von @BotFather. Der Bot muss Mitglied des Chats sein, in einem Kanal als Admin. Maskiert; leer lassen behält ihn.",
     server: "ntfy-Server",
@@ -855,7 +855,7 @@ export const NOTIFY_T = {
     token: "Access token",
     lang: "Language of the messages",
     langSite: "Like my admin language",
-    langHint: "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under Name & password, else the site's default language.",
+    langHint: "The language of your e-mails, Telegram and ntfy messages. Without a choice: the language of the admin area you stored under My account → Settings, else the site's default language.",
     botToken: "Bot token",
     botTokenHint: "From @BotFather. The bot must be a member of the chat, in a channel as an admin. Masked; leave empty to keep it.",
     server: "ntfy server",
@@ -883,7 +883,7 @@ export const NOTIFY_T = {
   },
 };
 
-// The admin's own language of the admin area (My account → Name & password).
+// The admin's own language of the admin area (My account → Settings).
 export const ADMIN_LANG_T = {
   de: {
     title: "Sprache der Admin-Oberfläche",

@@ -609,7 +609,7 @@ minutes.
 The admin area has its own design, independent of the templates of the
 public pages: light or dark (it follows the device; the user menu top right
 switches it and the language). The language each admin picks there, or
-under My account → Name & password ("Language of the admin area"), is
+under My account → Settings ("Language of the admin area"), is
 stored for their account (`gamewe_adminlang_<hash of the user name>`, hidden
 on the raw page, removed with the user) and wins in the admin area over the
 language cookie and the browser, on every device and after signing out;

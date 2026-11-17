@@ -62,6 +62,7 @@ export type NavText = Record<
   | "colServers"
   | "account"
   | "accName"
+  | "accPassword"
   | "accPasskeys"
   | "accSignIn"
   | "accTotp"
@@ -101,7 +102,8 @@ function useWhere() {
 
 // The parts of My account, each its own page (app/admin/(panel)/account).
 const ACCOUNT_PARTS: [string, IconName, keyof NavText][] = [
-  ["profile", "user", "accName"],
+  ["profile", "gear", "accName"],
+  ["password", "password", "accPassword"],
   ["passkeys", "key", "accPasskeys"],
   ["sign-in", "lock", "accSignIn"],
   ["totp", "shield", "accTotp"],

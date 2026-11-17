@@ -33,13 +33,13 @@ import { LANGUAGES } from "@/translations/languages";
 import { DEFAULT_NTFY, isChannel, splitNtfy } from "@/lib/notify-core";
 
 // The signed-in user's own account: /admin/account shows every part at a
-// glance, each part (display name and password, passkeys, how to sign in,
-// optional TOTP with its backup codes, API tokens, only a notice while the
-// API is off, notifications) has its own page /admin/account/<part>, listed
+// glance, each part (settings with display name and language, password,
+// passkeys, how to sign in, optional TOTP with its backup codes, API tokens,
+// only a notice while the API is off, notifications) has its own page /admin/account/<part>, listed
 // in the side menu (components/admin/nav.tsx, ACCOUNT_PARTS there too).
-const PARTS = ["profile", "passkeys", "sign-in", "totp", "api-tokens", "notifications"];
+const PARTS = ["profile", "password", "passkeys", "sign-in", "totp", "api-tokens", "notifications"];
 // Old links to a part of the one long page (/admin/account#totp).
-const OLD_HASHES: [string, string][] = [["name", "profile"], ["password", "profile"], ...PARTS.slice(1).map((p): [string, string] => [p, p])];
+const OLD_HASHES: [string, string][] = [["name", "profile"], ...PARTS.slice(1).map((p): [string, string] => [p, p])];
 
 export default async function AccountPage({ params, searchParams }: { params: Promise<{ part?: string[] }>; searchParams: Promise<{ lang?: string; error?: string; done?: string; pw?: string; token?: string; pk?: string; new?: string; notify?: string; field?: string; job?: string; name?: string }> }) {
   const user = await requireAdmin();
@@ -67,7 +67,7 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
   const pending = secret && active === null ? await readSecret(user.username, secret, true) : null;
   const backupLeft = active !== null ? await countBackupCodes(user.username) : 0;
   const issuer = (await getSettings()).siteName || "gameWE";
-  const titles: Record<string, string> = { profile: `${a.nameTitle} & ${a.password}`, passkeys: a.pkTitle, "sign-in": a.pkModeTitle, totp: a.totp, "api-tokens": a.tokTitle, notifications: nt.title };
+  const titles: Record<string, string> = { profile: a.settings, password: a.password, passkeys: a.pkTitle, "sign-in": a.pkModeTitle, totp: a.totp, "api-tokens": a.tokTitle, notifications: nt.title };
   const backupText = (hint: string, submit: string): BackupCodesText => ({
     code: a.totpCode,
     show: a.valueShow,
@@ -94,7 +94,7 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
           ))}
           {/* The state of every part at a glance; each tile opens its page. */}
           <nav className="grid kpis acc-glance" aria-label={a.accGlance}>
-            <Tile href="profile" icon="user" k={titles.profile} v={shown || user.username} s={user.username} text />
+            <Tile href="profile" icon="gear" k={titles.profile} v={shown || user.username} s={user.username} text />
             <Tile href="passkeys" icon="key" k={a.pkTitle} v={String(passkeys.length)} s={passkeys.length ? a.accPkSome : a.accPkNone} state={passkeys.length ? "ok" : undefined} />
             <Tile href="sign-in" icon="lock" k={a.pkModeTitle} v={only ? a.accModeOnly : a.accModeAny} s={a.accModeSub} text />
             <Tile href="totp" icon="shield" k={a.totp} v={active !== null ? a.accOn : a.accOff} s={a.accTotpSub} state={active !== null ? "ok" : undefined} text />
@@ -140,6 +140,10 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
           </button>
         </form>
       </Section>
+      </>
+      ) : null}
+      {part === "password" ? (
+      <>
       {pw === "saved" ? <p className="notice">{a.pwSaved}</p> : null}
       {pw && pw !== "saved" ? (
         <p className="notice error">{pw === "wrong" ? a.pwWrong : pw === "mismatch" ? a.pwMismatch : pw === "short" ? a.pwShort : a.pwBlocked}</p>
