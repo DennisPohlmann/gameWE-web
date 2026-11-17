@@ -628,7 +628,7 @@ version 32) cannot be read by the public web user. Admin API and MCP: `GET`/`POS
 /api/v1/admin/webhooks/{id}/test`; header values are never returned. The
 events are `events` (e.g. `["hof", "reset"]`); `event` (one, from web 1.22)
 is still read and returned as the first of them. Webhooks for several events
-need a collector newer than 1.18.0: an older one calls only those with one event.
+need collector 1.18.1 or newer: an older one calls only those with one event.
 
 Example payload for a hall of fame (`Content-Type: application/json`):
 
