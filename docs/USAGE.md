@@ -563,9 +563,14 @@ Notifications (right `settings.edit`; the server fields and the password need
 `settings.protected`) holds it. **Save and
 send a test message**, under every channel the site has set up, queues a job
 `notify-test` for the collector and shows its outcome (the page reloads
-itself while the test waits). **Send a test e-mail** on Settings →
-Notifications sends one through the stored SMTP server to the admin's own
-e-mail address from My account. The ntfy servers the admins enter are only reached at a public
+itself while the test waits). Settings → Notifications has no recipient and
+so no test button: its note sends each admin to My account → Notifications,
+where the test e-mail goes through the stored SMTP server to their own
+address. Encryption: STARTTLS (port 587, required), TLS (port 465) or none
+(port 25, e.g. a mail server on the same machine or on the Docker host); a
+login is sent only over TLS or to localhost, so without encryption to another
+machine leave the SMTP user empty and let the mail server accept the
+collector without one. The ntfy servers the admins enter are only reached at a public
 address. The tokens (`gamewe_notifyu_<hash>_telegram_token`,
 `gamewe_notifyu_<hash>_ntfy_token`) and the SMTP password are stored in
 `hlstats_gamewe_secrets`, never shown again and sent only with that admin's

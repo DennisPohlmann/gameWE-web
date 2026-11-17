@@ -650,14 +650,3 @@ export async function saveOwnNotifyAction(form: FormData) {
   redirect(`/admin/account/notifications?notify=test&job=${job.id}`);
 }
 
-// Settings → Notifications: a test e-mail through the shared SMTP server to
-// the admin's own address (only theirs, so no settings right is needed).
-export async function smtpTestAction() {
-  const user = await requireAdmin();
-  const job = await queueNotifyTest({ user }, "email").catch((err) => {
-    if (err instanceof OpError && err.code === "nojobs") redirect("/admin/settings/notifications?notify=nojobs#smtp-test");
-    throw err;
-  });
-  redirect(`/admin/settings/notifications?notify=test&job=${job.id}#smtp-test`);
-}
-

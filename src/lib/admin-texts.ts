@@ -797,7 +797,7 @@ export const PERM_T = {
   },
 };
 
-// Texts of the notifications (Mein Konto, the test on the settings page).
+// Texts of the notifications (Mein Konto, the test hint on the settings page).
 export const NOTIFY_T = {
   de: {
     title: "Benachrichtigungen",
@@ -833,12 +833,9 @@ export const NOTIFY_T = {
     noCollector: "Der Collector läuft gerade nicht. Nachrichten und Testnachrichten gehen erst raus, wenn er wieder läuft.",
     noJobs: "Testnachrichten brauchen die Auftragstabelle des Collectors (hlstats_gamewe_jobs).",
     tile: "Kanäle mit Benachrichtigungen für dich",
-    smtpTitle: "SMTP-Server testen",
-    smtpIntro: "Schickt über den gespeicherten SMTP-Server eine Testmail an deine eigene Adresse aus Mein Konto → Benachrichtigungen. Speichere Änderungen oben vorher.",
-    smtpTo: "Die Testmail geht an {a}.",
-    smtpNoAddress: "Trage zuerst unter Mein Konto → Benachrichtigungen deine E-Mail-Adresse ein.",
-    smtpNotReady: "Trage zuerst den SMTP-Server und den Absender ein und speichere.",
-    smtpTest: "Testmail senden",
+    smtpTitle: "Test-E-Mail",
+    smtpHint: "Hier gibt es keinen Empfänger, deshalb schickt sich jeder Admin die Test-E-Mail selbst: Unter Mein Konto → Benachrichtigungen trägst du deine E-Mail-Adresse ein und wählst „Speichern und Testnachricht senden“. Sie geht über den SMTP-Server, der hier gespeichert ist; speichere Änderungen hier also vorher.",
+    smtpLink: "Zu meinen Benachrichtigungen",
   },
   en: {
     title: "Notifications",
@@ -874,12 +871,9 @@ export const NOTIFY_T = {
     noCollector: "The collector is not running right now. Messages and test messages go out only once it runs again.",
     noJobs: "Test messages need the collector's job table (hlstats_gamewe_jobs).",
     tile: "Channels with notifications for you",
-    smtpTitle: "Test the SMTP server",
-    smtpIntro: "Sends a test e-mail through the stored SMTP server to your own address from My account → Notifications. Save changes above first.",
-    smtpTo: "The test e-mail goes to {a}.",
-    smtpNoAddress: "First enter your e-mail address under My account → Notifications.",
-    smtpNotReady: "Enter the SMTP server and the sender first and save.",
-    smtpTest: "Send a test e-mail",
+    smtpTitle: "Test e-mail",
+    smtpHint: "There is no recipient here, so every admin sends the test e-mail to themselves: under My account → Notifications, enter your e-mail address and choose “Save and send a test message”. It goes through the SMTP server stored here, so save your changes here first.",
+    smtpLink: "To my notifications",
   },
 };
 
