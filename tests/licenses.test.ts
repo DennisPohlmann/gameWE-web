@@ -39,3 +39,10 @@ test("the /licenses page shows no versions", () => {
   const page = readFileSync("src/app/(site)/licenses/page.tsx", "utf8");
   assert.doesNotMatch(page, /\.version\b|licVersion|\/v\/\$\{/);
 });
+
+test("scripts/vendor.mjs writes the license texts of the browser code, without versions", () => {
+  execFileSync(process.execPath, ["scripts/vendor.mjs"], { cwd: root, stdio: "pipe" });
+  const text = readFileSync("public/vendor/LICENSES.txt", "utf8");
+  for (const who of ["Vercel, Inc.", "Meta Platforms, Inc.", "Volodymyr Agafonkin", "Panayiotis Lipiridis", "Cole Bemis"]) assert.ok(text.includes(who), who);
+  for (const r of list) if (["next", "react", "react-dom", "leaflet"].includes(r.name)) assert.ok(!text.includes(r.version), `${r.name} ${r.version}`);
+});

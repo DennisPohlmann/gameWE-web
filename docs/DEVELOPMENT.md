@@ -75,7 +75,10 @@ npm run build
 
 `npm run dev` and `npm run build` first run `scripts/vendor.mjs`: it copies
 the Scalar browser bundle (devDependency `@scalar/api-reference`) to
-`public/vendor/scalar/` (git-ignored) for the `/api` page and stops when a
+`public/vendor/scalar/` (git-ignored) for the `/api` page, writes
+`public/vendor/LICENSES.txt` (the full license texts of the code and files
+the browser loads, linked on `/licenses`; add a package there when new code
+reaches the browser) and stops when a
 route under `src/app/api/v1` is missing in `src/lib/openapi.ts`. Then
 `scripts/licenses.mjs` writes `src/lib/npm-licenses.json` (every package of
 a production install with version and license, from `package-lock.json`;

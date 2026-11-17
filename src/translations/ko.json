@@ -575,6 +575,7 @@
   "apiIntro": "이 통계의 읽기 전용 JSON API: 로그인 불필요, 주소당 분당 120회 요청. 모든 엔드포인트에 대해 매개변수, 응답 예시, curl·PHP·Python·JavaScript용 바로 쓸 수 있는 코드를 제공합니다. 공개 부분 아래에는 관리자 API 토큰이 필요한 관리 API가 있습니다. 기계가 읽을 수 있는 설명:",
   "apiNoScript": "대화형 레퍼런스에는 JavaScript가 필요합니다. 위의 OpenAPI 설명은 JavaScript 없이도 작동합니다.",
   "licIntro": "gameWE는 GPL-3.0-or-later 라이선스를 따릅니다. 이 페이지는 우리가 사용하는 다른 사람의 소프트웨어, 데이터, 그래픽과 그 라이선스를 나열합니다.",
+  "licTexts": "브라우저가 불러오는 코드의 라이선스 전문",
   "licSoftware": "소프트웨어",
   "licData": "데이터와 지도",
   "licAssets": "그래픽과 글꼴",

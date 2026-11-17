@@ -130,7 +130,11 @@ export default async function LicensesPage() {
   return (
     <>
       <Section title={t.licenses}>
-        <p className="lead">{t.licIntro}</p>
+        <p className="lead">
+          {t.licIntro}{" "}
+          {/* Written by scripts/vendor.mjs before every build. */}
+          <a href={`${basePath}/vendor/LICENSES.txt`}>{t.licTexts}</a>
+        </p>
       </Section>
       <Section title={t.licSoftware}>{table(SOFTWARE)}</Section>
       <Section title={t.licData}>{table(data)}</Section>

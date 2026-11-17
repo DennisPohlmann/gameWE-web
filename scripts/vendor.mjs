@@ -2,6 +2,8 @@
 // 1. copies the Scalar API reference (MIT, a devDependency) to
 //    public/vendor/scalar/, so /api serves it from this site, no CDN;
 //    and the license texts of the self-hosted fonts to public/vendor/fonts/;
+//    and writes public/vendor/LICENSES.txt, the full license texts of all
+//    code and files the browser loads (linked on /licenses; no versions);
 // 2. fails when a route under src/app/api/v1 has no entry in
 //    src/lib/openapi.ts, so the documentation on /api stays complete.
 import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
@@ -32,6 +34,28 @@ for (const name of ["inter", "noto-sans"]) {
     writeFileSync(join(fonts, file), readFileSync(join(root, `node_modules/@fontsource/${name}/files/${file}`)));
   }
 }
+
+// MIT, BSD and Apache want the copyright and license text with every copy;
+// the minified chunks lose the comments, so /licenses links this file.
+// [what, used for, license file]
+const BROWSER = [
+  ["Next.js", "client runtime", "node_modules/next/license.md"],
+  ["React", "user interface", "node_modules/react/LICENSE"],
+  ["React DOM", "user interface", "node_modules/react-dom/LICENSE"],
+  ["scheduler", "part of React", "node_modules/scheduler/LICENSE"],
+  ["@swc/helpers", "part of the Next.js client runtime", "node_modules/@swc/helpers/LICENSE"],
+  ["Leaflet", "world map of the players", "node_modules/leaflet/LICENSE"],
+  ["Scalar API Reference", "API documentation on /api", "node_modules/@scalar/components/LICENSE"],
+  ["Inter", "font", "node_modules/@fontsource/inter/LICENSE"],
+  ["Noto Sans", "font", "node_modules/@fontsource/noto-sans/LICENSE"],
+  ["flag-icons", "country flags", "public/flags/LICENSE.txt"],
+  ["Feather Icons", "icons in the admin area", "src/components/admin/FEATHER-LICENSE.txt"],
+];
+writeFileSync(
+  join(root, "public/vendor/LICENSES.txt"),
+  "Third-party code and files your browser loads from this site, with their license texts.\n" +
+    BROWSER.map(([name, use, file]) => `\n${"=".repeat(72)}\n${name} (${use})\n${"=".repeat(72)}\n\n${readFileSync(join(root, file), "utf8").trim()}\n`).join(""),
+);
 
 const v1 = join(root, "src/app/api/v1");
 const routes = [];

@@ -575,6 +575,7 @@
   "apiIntro": "JSON API těchto statistik jen pro čtení: bez přihlášení, 120 požadavků za minutu z jedné adresy. Každý endpoint s parametry, ukázkovými odpověďmi a hotovým kódem pro curl, PHP, Python a JavaScript. Pod veřejnou částí: administrační API, které potřebuje API token administrátora. Strojově čitelný popis:",
   "apiNoScript": "Interaktivní reference potřebuje JavaScript; popis OpenAPI výše funguje i bez něj.",
   "licIntro": "gameWE je licencován pod GPL-3.0-or-later. Tato stránka uvádí software, data a grafiku jiných autorů, které používáme, s jejich licencemi.",
+  "licTexts": "Úplné licenční texty kódu, který načítá váš prohlížeč",
   "licSoftware": "Software",
   "licData": "Data a mapy",
   "licAssets": "Grafika a písma",

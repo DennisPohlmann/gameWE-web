@@ -575,6 +575,7 @@
   "apiIntro": "この統計の読み取り専用 JSON API: ログイン不要、アドレスごとに毎分120リクエスト。すべてのエンドポイントについて、パラメーター、応答例、curl・PHP・Python・JavaScript 用のすぐ使えるコード付き。公開部分の下に、管理者の API トークンが必要な管理 API があります。機械可読な説明:",
   "apiNoScript": "対話型リファレンスには JavaScript が必要です。上の OpenAPI 説明は JavaScript なしでも使えます。",
   "licIntro": "gameWE は GPL-3.0-or-later でライセンスされています。このページでは、私たちが使用している他者のソフトウェア、データ、グラフィックとそのライセンスを示します。",
+  "licTexts": "ブラウザーが読み込むコードのライセンス全文",
   "licSoftware": "ソフトウェア",
   "licData": "データと地図",
   "licAssets": "グラフィックとフォント",

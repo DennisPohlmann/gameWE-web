@@ -5,7 +5,9 @@ It ships or uses the third-party components below. The license texts are
 included in each package (`node_modules/<package>/LICENSE`, in the tar.gz
 and the container image under `node_modules/` of the standalone server) or
 linked here. The public page `/licenses` shows the same software, data and
-graphics for visitors, without version numbers.
+graphics for visitors, without version numbers, and links
+`/vendor/LICENSES.txt` with the full license texts of the code and files the
+browser loads (written by `scripts/vendor.mjs`).
 
 All licenses below are compatible with GPL-3.0-or-later.
 

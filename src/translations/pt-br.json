@@ -575,6 +575,7 @@
   "apiIntro": "API JSON somente leitura destas estatísticas: sem login, 120 requisições por minuto por endereço. Todos os endpoints com parâmetros, respostas de exemplo e código pronto para curl, PHP, Python e JavaScript. Abaixo da parte pública: a API de administração, que precisa do token de API de um administrador. A descrição legível por máquina:",
   "apiNoScript": "A referência interativa precisa de JavaScript; a descrição OpenAPI acima funciona sem ele.",
   "licIntro": "O gameWE é licenciado sob GPL-3.0-or-later. Esta página lista o software, os dados e os gráficos de terceiros que usamos, com suas licenças.",
+  "licTexts": "Textos completos das licenças do código que seu navegador carrega",
   "licSoftware": "Software",
   "licData": "Dados e mapas",
   "licAssets": "Gráficos e fontes",

@@ -575,6 +575,7 @@
   "apiIntro": "这些统计数据的只读 JSON API：无需登录，每个地址每分钟 120 次请求。每个端点都附有参数、示例响应以及 curl、PHP、Python 和 JavaScript 的现成代码。公开部分下方是管理 API，需要管理员的 API 令牌。机器可读的描述：",
   "apiNoScript": "交互式参考需要 JavaScript；上面的 OpenAPI 描述无需 JavaScript 也可使用。",
   "licIntro": "gameWE 以 GPL-3.0-or-later 许可发布。本页列出我们使用的第三方软件、数据和图形及其许可证。",
+  "licTexts": "浏览器加载的代码的完整许可证文本",
   "licSoftware": "软件",
   "licData": "数据和地图",
   "licAssets": "图形和字体",

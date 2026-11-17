@@ -575,6 +575,7 @@
   "apiIntro": "Alleen-lezen JSON-API van deze statistieken: zonder aanmelden, 120 verzoeken per minuut per adres. Alle endpoints met parameters, voorbeeldantwoorden en kant-en-klare code voor curl, PHP, Python en JavaScript. Onder het openbare deel: de beheer-API, waarvoor het API-token van een beheerder nodig is. De machineleesbare beschrijving:",
   "apiNoScript": "De interactieve referentie heeft JavaScript nodig; de OpenAPI-beschrijving hierboven werkt ook zonder.",
   "licIntro": "gameWE valt onder GPL-3.0-or-later. Deze pagina noemt de software, gegevens en afbeeldingen van anderen die we gebruiken, met hun licenties.",
+  "licTexts": "Volledige licentieteksten van de code die je browser laadt",
   "licSoftware": "Software",
   "licData": "Gegevens en kaarten",
   "licAssets": "Afbeeldingen en lettertypen",

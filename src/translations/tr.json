@@ -575,6 +575,7 @@
   "apiIntro": "Bu istatistiklerin salt okunur JSON API'si: oturum açma gerekmez, adres başına dakikada 120 istek. Her uç nokta için parametreler, örnek yanıtlar ve curl, PHP, Python ve JavaScript için kopyalamaya hazır kod. Herkese açık bölümün altında: bir yöneticinin API belirtecini gerektiren yönetim API'si. Makine tarafından okunabilir açıklama:",
   "apiNoScript": "Etkileşimli başvuru JavaScript gerektirir; yukarıdaki OpenAPI açıklaması onsuz da çalışır.",
   "licIntro": "gameWE, GPL-3.0-or-later ile lisanslanmıştır. Bu sayfa kullandığımız başkalarına ait yazılımları, verileri ve grafikleri lisanslarıyla birlikte listeler.",
+  "licTexts": "Tarayıcınızın yüklediği kodun tam lisans metinleri",
   "licSoftware": "Yazılım",
   "licData": "Veriler ve haritalar",
   "licAssets": "Grafikler ve yazı tipleri",

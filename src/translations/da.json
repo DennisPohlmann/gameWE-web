@@ -575,6 +575,7 @@
   "apiIntro": "Skrivebeskyttet JSON-API til denne statistik: uden login, 120 forespørgsler i minuttet pr. adresse. Alle endpoints med parametre, eksempelsvar og færdig kode til curl, PHP, Python og JavaScript. Under den offentlige del: admin-API’et, som kræver en admins API-token. Den maskinlæsbare beskrivelse:",
   "apiNoScript": "Den interaktive reference kræver JavaScript; OpenAPI-beskrivelsen ovenfor virker også uden.",
   "licIntro": "gameWE er licenseret under GPL-3.0-or-later. Denne side viser den software, de data og den grafik fra andre, som vi bruger, med deres licenser.",
+  "licTexts": "Fulde licenstekster for den kode, din browser indlæser",
   "licSoftware": "Software",
   "licData": "Data og kort",
   "licAssets": "Grafik og skrifttyper",
