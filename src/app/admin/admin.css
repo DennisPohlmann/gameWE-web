@@ -451,8 +451,9 @@ select { padding-inline-end: 28px; }
 .button.danger.solid:hover { filter: brightness(1.08); background: var(--bad); }
 .row-actions { display: inline-flex; gap: 6px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
 .row-actions form { display: contents; }
-.section.danger-zone, .card.danger-zone { border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); }
-.section.danger-zone > .section-head h2, .card.danger-zone > header h2 { color: var(--bad); }
+/* The delete button at the bottom of an edit page. */
+.delete-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 20px; }
+.delete-row form { display: contents; }
 .reset-result { white-space: pre-wrap; font-size: 0.9em; margin: 6px 0 0; max-height: 240px; overflow: auto; }
 .reset-result-cell { white-space: pre-wrap; min-width: 240px; font-size: 0.9em; }
 .job-result { white-space: pre-wrap; overflow-wrap: anywhere; min-width: 220px; font-size: 13px; color: var(--soft); }

@@ -69,15 +69,18 @@ export default async function RolePage({ params, searchParams }: { params: Promi
         </Section>
       ) : null}
       {role ? (
-        <Section title={a.delete} className="danger-zone">
-          <form action={deleteRoleAction} className="form">
-            <p className="muted">{role.admins.length ? pt.roleErrInuse : a.deleteHint}</p>
-            <input type="hidden" name="id" value={role.id} />
-            <ConfirmButton label={a.delete} title={fill(pt.roleDeleteTitle, { n: role.name })} yes={a.deleteYes} text={{ cancel: a.confirmCancel }} disabled={role.admins.length > 0}>
-              <p>{a.deleteBody}</p>
-            </ConfirmButton>
-          </form>
-        </Section>
+        <form action={deleteRoleAction} className="delete-row">
+          <input type="hidden" name="id" value={role.id} />
+          <ConfirmButton
+            label={a.delete}
+            title={fill(pt.roleDeleteTitle, { n: role.name })}
+            yes={a.delete}
+            typed={role.name}
+            text={{ cancel: a.confirmCancel, typeHint: a.confirmTyped }}
+            disabled={role.admins.length > 0}
+          />
+          {role.admins.length ? <small className="muted">{pt.roleErrInuse}</small> : null}
+        </form>
       ) : null}
     </>
   );

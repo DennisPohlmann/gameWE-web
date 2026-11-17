@@ -6,8 +6,7 @@ import { noAutofill } from "@/lib/autofill";
 // One way to confirm everywhere in the admin area: the button only opens a
 // small dialog ("Delete … for good?"), and only its confirm button submits
 // the surrounding form, with `name=value` (the confirmation the server action
-// checks). For what cannot be undone and hits much data (erasing a player,
-// resetting a ranking) `typed` asks to type a word first.
+// checks). `typed` asks to type a word first (deleting: the object's name).
 export type ConfirmText = { cancel: string; typeHint?: string };
 
 export function ConfirmButton({
@@ -31,7 +30,7 @@ export function ConfirmButton({
   children?: ReactNode; // what happens, below the title
   name?: string;
   value?: string;
-  typed?: string; // a word to type before the confirm button works
+  typed?: string; // a word to type before the confirm button works (case and outer spaces aside)
   className?: string;
   disabled?: boolean;
   check?: boolean; // check the form's own fields before the dialog opens
@@ -41,7 +40,7 @@ export function ConfirmButton({
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [input, setInput] = useState("");
-  const ok = !typed || input.trim().toLocaleLowerCase() === typed.toLocaleLowerCase();
+  const ok = !typed || input.trim().toLocaleLowerCase() === typed.trim().toLocaleLowerCase();
   const open = (e: React.MouseEvent<HTMLButtonElement>) => {
     const form = e.currentTarget.form;
     if (check && !form?.reportValidity()) return;
@@ -59,7 +58,7 @@ export function ConfirmButton({
         {children}
         {typed ? (
           <label className="confirm-typed">
-            {(text.typeHint ?? "").split("{w}").flatMap((p, i) => (i ? [<b key={i} dir="auto">{typed}</b>, p] : [p]))}
+            <span>{(text.typeHint ?? "").split("{w}").flatMap((p, i) => (i ? [<b key={i} dir="auto">{typed}</b>, p] : [p]))}</span>
             <input {...noAutofill} value={input} onChange={(e) => setInput(e.target.value)} autoComplete="off" spellCheck={false} dir="auto" />
           </label>
         ) : null}

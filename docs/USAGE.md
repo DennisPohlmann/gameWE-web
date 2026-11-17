@@ -382,10 +382,12 @@ Pictures of the admin area (dark look, demo data):
 <img src="screenshots/admin-phone-menu.png" alt="Admin menu on a phone (light look)" width="300">
 
 Everything that deletes or resets asks first in a small dialog ("Delete
-… for good?", Yes / Cancel): deleting a row (also right in the lists, next
+… for good?", Cancel / Delete): deleting a row (also right in the lists, next
 to Edit), revoking an API token, deleting a passkey, removing a hall of fame
-entry and saving a reset schedule. Erasing a player needs the word shown in
-the dialog typed (DELETE in English), resetting a ranking its code. Once a
+entry and saving a reset schedule. Deleting a row or a role and erasing a
+player need the name shown in the dialog typed first (case does not matter),
+resetting a ranking its code. An edit page has just the delete button at its
+bottom. Once a
 field of a form changes, a bar at the bottom says "Unsaved changes" and
 carries the form's own save button (Discard loads the stored values again);
 leaving the page then asks first. The settings pages mark their save bar the

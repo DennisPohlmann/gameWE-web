@@ -731,7 +731,7 @@ export const PERM_T = {
     roleErrDuplicate: "Eine Rolle mit diesem Namen gibt es schon.",
     roleErrLimit: "Es gibt schon 50 Rollen. Lösche zuerst eine.",
     roleErrInuse: "Diese Rolle haben noch Admins. Gib ihnen zuerst eine andere Rolle oder eigene Rechte.",
-    roleDeleteTitle: "Rolle „{n}“ löschen?",
+    roleDeleteTitle: "Möchtest du die Rolle „{n}“ wirklich löschen?",
     roleDeleted: "Die Rolle ist gelöscht.",
     access: "Rechte festlegen über",
     modeRole: "Eine Rolle",

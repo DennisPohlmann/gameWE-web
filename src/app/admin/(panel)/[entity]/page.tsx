@@ -74,6 +74,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
   const gameName = games.find(([v]) => v === game)?.[1];
   // The first list column is the row's name (a card title on phones).
   const mainCol = ["lastName", "name", "tag", "username", "code"].find((n) => cols.some((f) => f.name === n));
+  const rowName = (r: Record<string, unknown>) => String((mainCol ? r[mainCol] : null) ?? r.__pk);
   const statusOf = (v: unknown) => e.statusFilter?.find((f) => f.value === statusValue(v));
   const area = e.key === "users" ? u.areaSettings : u.areaRankings;
   const nfmt = (n: number) => n.toLocaleString(localeOf(lang));
@@ -227,13 +228,12 @@ export default async function EntityList({ params, searchParams }: { params: Pro
                               <ConfirmButton
                                 className="button small danger"
                                 label={a.delete}
-                                title={fill(a.deleteTitle, { n: String((mainCol ? r[mainCol] : null) ?? r.__pk) })}
-                                yes={a.deleteYes}
-                                text={{ cancel: a.confirmCancel }}
+                                title={fill(a.deleteTitle, { n: rowName(r) })}
+                                yes={a.delete}
+                                typed={rowName(r).trim() || String(r.__pk)}
+                                text={{ cancel: a.confirmCancel, typeHint: a.confirmTyped }}
                                 disabled={e.key === "users" && String(r.__pk) === user.username}
-                              >
-                                <p>{a.deleteBody}</p>
-                              </ConfirmButton>
+                              />
                             </form>
                           ) : null}
                         </span>

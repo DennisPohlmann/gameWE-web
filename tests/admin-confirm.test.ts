@@ -16,11 +16,13 @@ test("no confirmation checkbox left in the admin area", () => {
   }
 });
 
-test("deleting asks in a dialog, also right in the list", () => {
+test("deleting asks in a dialog for the name, also right in the list", () => {
   const edit = src("src/app/admin/(panel)/[entity]/[id]/page.tsx");
-  assert.match(edit, /<ConfirmButton[\s\S]*?typed=\{a\.confirmWord\}/);
+  // Erasing a player and deleting a row: both want the name typed.
+  assert.equal(edit.match(/typed=\{title\.trim\(\) \|\| id\}/g)?.length, 2);
   const list = src("src/app/admin/(panel)/[entity]/page.tsx");
-  assert.match(list, /<form action=\{deleteAction\}>[\s\S]*?<ConfirmButton/);
+  assert.match(list, /<form action=\{deleteAction\}>[\s\S]*?<ConfirmButton[\s\S]*?typed=\{rowName\(r\)\.trim\(\) \|\| String\(r\.__pk\)\}/);
+  assert.match(src("src/app/admin/(panel)/admin-roles/[id]/page.tsx"), /typed=\{role\.name\}/);
   // Nobody deletes their own account from the list.
   assert.match(list, /disabled=\{e\.key === "users" && String\(r\.__pk\) === user\.username\}/);
   const c = src("src/components/admin/confirm-button.tsx");

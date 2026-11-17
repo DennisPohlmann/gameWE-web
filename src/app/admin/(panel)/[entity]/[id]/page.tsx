@@ -56,6 +56,9 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
   const returnTo = safeReturnTo(sp.returnTo, e.key);
   const r0 = row as Record<string, unknown>;
   const title = String(r0.lastName ?? r0.name ?? r0.tag ?? r0.username ?? r0.code ?? id);
+  const canErase = e.key === "players" && allowed(user, "players.erase");
+  // Nobody deletes their own account (the server refuses it too).
+  const canDelete = e.canDelete && canEdit && !(e.key === "users" && id === user.username);
   const optionSets = Object.fromEntries(
     await Promise.all(
       [...new Set(e.fields.map((f) => f.options).filter((o): o is "games" | "clans" => typeof o === "string"))].map(
@@ -261,36 +264,36 @@ export default async function EntityEdit({ params, searchParams }: { params: Pro
           </fieldset>
         </form>
       </Section>
-      {!isNew && e.key === "players" && allowed(user, "players.erase") ? (
-        <Section title={a.deletePlayer} className="danger-zone">
-          <form action={deletePlayerAction} className="form">
-            <p className="muted">{a.deletePlayerHelp}</p>
-            <input type="hidden" name="id" value={id} />
-            <ConfirmButton
-              label={a.deletePlayer}
-              title={fill(a.deletePlayerTitle, { n: title })}
-              yes={a.deletePlayer}
-              typed={a.confirmWord}
-              text={{ cancel: a.confirmCancel, typeHint: a.confirmTyped }}
-            >
-              <p>{a.deleteBody}</p>
-            </ConfirmButton>
-          </form>
-        </Section>
-      ) : null}
-      {/* Nobody deletes their own account (the server refuses it too). */}
-      {!isNew && e.canDelete && canEdit && !(e.key === "users" && id === user.username) ? (
-        <Section title={a.delete} className="danger-zone">
-          <form action={deleteAction} className="form">
-            <p className="muted">{a.deleteHint}</p>
-            <input type="hidden" name="__entity" value={e.key} />
-            <input type="hidden" name="__id" value={id} />
-            <input type="hidden" name="__returnTo" value={returnTo} />
-            <ConfirmButton label={a.delete} title={fill(a.deleteTitle, { n: title })} yes={a.deleteYes} text={{ cancel: a.confirmCancel }}>
-              <p>{a.deleteBody}</p>
-            </ConfirmButton>
-          </form>
-        </Section>
+      {/* At the bottom just the button; the dialog asks for the name. */}
+      {!isNew && (canErase || canDelete) ? (
+        <div className="delete-row">
+          {canErase ? (
+            <form action={deletePlayerAction}>
+              <input type="hidden" name="id" value={id} />
+              <ConfirmButton
+                label={a.deletePlayer}
+                title={fill(a.deletePlayerTitle, { n: title })}
+                yes={a.deletePlayer}
+                typed={title.trim() || id}
+                text={{ cancel: a.confirmCancel, typeHint: a.confirmTyped }}
+              />
+            </form>
+          ) : null}
+          {canDelete ? (
+            <form action={deleteAction}>
+              <input type="hidden" name="__entity" value={e.key} />
+              <input type="hidden" name="__id" value={id} />
+              <input type="hidden" name="__returnTo" value={returnTo} />
+              <ConfirmButton
+                label={a.delete}
+                title={fill(a.deleteTitle, { n: title })}
+                yes={a.delete}
+                typed={title.trim() || id}
+                text={{ cancel: a.confirmCancel, typeHint: a.confirmTyped }}
+              />
+            </form>
+          ) : null}
+        </div>
       ) : null}
     </>
   );
