@@ -710,6 +710,7 @@
     "tpSteamApi": "플레이어의 이름, 프로필 사진 주소, VAC 상태",
     "tpDiscord": "Discord 서버의 이름과 온라인 인원",
     "tpTeamspeak": "TeamSpeak 서버에 있는 사람",
+    "tpVentrilo": "Ventrilo 서버의 이름과 온라인 인원",
     "tpSourcebans": "공개 차단 목록",
     "tpGithub": "새 gameWE 버전 확인 (관리 영역)",
     "dataSteamId": "플레이어의 Steam ID",

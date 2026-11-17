@@ -119,7 +119,7 @@ list by points after all others) and is not counted in `rankedPlayers`;
 | `/api/v1/search/players?q=<text>` | the search over all rankings (`in=names\|steamid`, `game`; a name at least 3 characters); at most 100 hits, active and inactive players (`hlstats_PlayersInactive`), hidden and banned players are not found |
 | `/api/v1/search/clans?q=<text>` | clan search by tag or name |
 | `/api/v1/points` | the help page's point rules and the bot settings per ranking |
-| `/api/v1/voice` | the voice server box (TeamSpeak or Discord) |
+| `/api/v1/voice` | the voice server box (TeamSpeak, Ventrilo or Discord) |
 | `/api/v1/voice/teamspeak` | the TeamSpeak page: server info, channel tree, people online (names only while shown); `passwordProtected`, and `password` only while "Allow showing the TeamSpeak password" is on (404 unless TeamSpeak is the voice server) |
 | `/api/v1/voice/teamspeak/banner` | the TeamSpeak banner as PNG (`?style=<template>`, `?size=`, `?layout=`, `?bg=`, `?lang=`; an unknown value is `400`) |
 | `/api/v1/banners/styles` | the styles (design templates) the banners take |

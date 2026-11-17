@@ -710,6 +710,7 @@
     "tpSteamApi": "Oyuncuların adları, profil resmi adresleri ve VAC durumu",
     "tpDiscord": "Discord sunucusunun adı ve çevrimiçi kişi sayısı",
     "tpTeamspeak": "TeamSpeak sunucusunda kimlerin olduğu",
+    "tpVentrilo": "Ventrilo sunucusunun adı ve çevrimiçi kişi sayısı",
     "tpSourcebans": "Herkese açık yasak listesi",
     "tpGithub": "Yeni gameWE sürümlerinin kontrolü (yönetim alanı)",
     "dataSteamId": "Oyuncuların Steam ID'leri",

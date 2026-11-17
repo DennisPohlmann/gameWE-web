@@ -710,6 +710,7 @@
     "tpSteamApi": "أسماء اللاعبين وعناوين صور ملفاتهم وحالة VAC",
     "tpDiscord": "اسم خادم Discord وعدد المتصلين فيه",
     "tpTeamspeak": "من على خادم TeamSpeak",
+    "tpVentrilo": "اسم خادم Ventrilo وعدد المتصلين فيه",
     "tpSourcebans": "قائمة الحظر العامة",
     "tpGithub": "التحقق من إصدارات gameWE الجديدة (منطقة الإدارة)",
     "dataSteamId": "معرّفات Steam للاعبين",

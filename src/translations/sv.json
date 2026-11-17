@@ -710,6 +710,7 @@
     "tpSteamApi": "Spelarnas namn, adresser till profilbilder och VAC-status",
     "tpDiscord": "Discord-serverns namn och antal personer online",
     "tpTeamspeak": "Vem som är på TeamSpeak-servern",
+    "tpVentrilo": "Ventrilo-serverns namn och antal personer online",
     "tpSourcebans": "Offentlig bannlista",
     "tpGithub": "Kontroll av nya gameWE-versioner (adminområdet)",
     "dataSteamId": "Spelarnas Steam-ID:n",

@@ -651,6 +651,7 @@
     "tpSteamApi": "Имена, адресе профилних слика и VAC статус играча",
     "tpDiscord": "Назив и број људи на мрежи Discord сервера",
     "tpTeamspeak": "Ко је на TeamSpeak серверу",
+    "tpVentrilo": "Назив и број људи на мрежи Ventrilo сервера",
     "tpSourcebans": "Јавна листа банова",
     "tpGithub": "Провера нових gameWE верзија (администрација)",
     "dataSteamId": "Steam ID играча",

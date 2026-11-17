@@ -651,6 +651,7 @@
     "tpSteamApi": "Navne, adresser på profilbilleder og VAC-status for spillerne",
     "tpDiscord": "Navn og antal online på Discord-serveren",
     "tpTeamspeak": "Hvem der er på TeamSpeak-serveren",
+    "tpVentrilo": "Navn og antal online på Ventrilo-serveren",
     "tpSourcebans": "Offentlig banliste",
     "tpGithub": "Søgning efter nye gameWE-versioner (administration)",
     "dataSteamId": "Spillernes Steam-ID'er",

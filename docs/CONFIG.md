@@ -276,7 +276,7 @@ the top, from `/<game>/players/<id>/events-feed?list=<type>`. "Async" and
 
 ## Voice server
 
-Under Admin → Settings → Voice server choose None, TeamSpeak or Discord;
+Under Admin → Settings → Voice server choose None, TeamSpeak, Discord or Ventrilo;
 only the fields of that kind are shown. TeamSpeak 3: address, port, password
 to show, ServerQuery port and login, and optionally an address shown
 instead of address:port (e.g. a DNS name with an SRV record) and a connect
@@ -287,12 +287,19 @@ before the name shows the server's country, chosen in "Flag of the
 TeamSpeak server": "No flag" (default: neither a flag nor a placeholder),
 "Automatic" (the GeoIP country the collector found for a game server on
 the same IP, else a neutral flag), or a country from the list. Discord:
-invite and server ID. A box at the top of the start page and of every
+invite and server ID. Ventrilo: address, port (default 3784) and
+optionally a display name. A box at the top of the start page and of every
 ranking page (`/<game>` and its subpages) then shows the TeamSpeak address
 with a connect link, the type (e.g. `TeamSpeak 3`, from the server version), a lock when the server has a password,
 the channel count and the players online, or the Discord
-link with its online count. Without a choice, a configured TeamSpeak is
-used, else Discord. The players are read via
+link with its online count, or the Ventrilo address with a
+`ventrilo://host:port/` link, the type (e.g. `Ventrilo 3`), a lock when the
+server needs a password, the channel count and the people online. Ventrilo
+is read over UDP on the server's own port every 60 seconds (the status
+request of Ventrilo 3, as GameQ and node-gamedig send it, without a status
+password); the web server must reach that port. Ventrilo has no detail page
+and no banner. Without a choice, a configured TeamSpeak is
+used, else Discord; Ventrilo only when chosen. The players are read via
 ServerQuery (`serverinfo`, every 60 seconds); without a query login the guest
 group needs the permission to see server info. The Discord count comes from
 the server widget, which must be enabled in the Discord server settings

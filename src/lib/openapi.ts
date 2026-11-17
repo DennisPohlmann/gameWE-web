@@ -1320,7 +1320,7 @@ export const endpoints: Endpoint[] = [
     tag: "Voice server",
     summary: "Voice server box",
     description:
-      "The voice server box of the start page: the TeamSpeak server (live from its ServerQuery, kept for a minute) or the Discord server (its public widget, kept for five minutes). Both null when the site has no voice server.",
+      "The voice server box of the start page: the TeamSpeak server (live from its ServerQuery, kept for a minute), the Ventrilo server (its UDP status, kept for a minute) or the Discord server (its public widget, kept for five minutes). All null when the site has no voice server.",
     schema: obj({
       teamspeak: nullable(
         obj({
@@ -1337,6 +1337,19 @@ export const endpoints: Endpoint[] = [
           uptime: nullable(int("Seconds since the server started")),
           detailsUrl: link("the TeamSpeak details"),
           bannerUrl: link("the TeamSpeak banner"),
+        }),
+      ),
+      ventrilo: nullable(
+        obj({
+          name: str("Server name"),
+          type: str("Server type, e.g. Ventrilo 3"),
+          address: str("Address to connect to"),
+          link: str("ventrilo:// link"),
+          passwordProtected: bool("The server needs a password (from its status)"),
+          clients: nullable(int("Users online; null while the status fails")),
+          maxClients: nullable(int("Slots")),
+          channels: nullable(int("Channels")),
+          uptime: nullable(int("Seconds since the server started")),
         }),
       ),
       discord: nullable(obj({ name: str("Server name"), invite: nullable(str("Invite link")), online: nullable(int("Members online; null when unknown")) })),
@@ -1357,6 +1370,7 @@ export const endpoints: Endpoint[] = [
         detailsUrl: v1("/voice/teamspeak"),
         bannerUrl: v1("/voice/teamspeak/banner"),
       },
+      ventrilo: null,
       discord: null,
     },
   },

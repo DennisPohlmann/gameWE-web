@@ -36,7 +36,7 @@ export type InventoryInput = {
   // Map boxes shown at all (Admin → Maps).
   maps: boolean;
   steamProfiles: boolean;
-  voice: "none" | "teamspeak" | "discord";
+  voice: "none" | "teamspeak" | "discord" | "ventrilo";
   sourcebans: boolean;
   // Picture addresses from the settings (logo, header logo, icons).
   images: string[];
@@ -112,6 +112,7 @@ export function serverThirdParties(i: InventoryInput): ThirdPartyRow[] {
   }
   if (i.voice === "discord") rows.push({ provider: "Discord", hosts: ["discord.com"], purpose: "tpDiscord", data: "dataNone", consent: null });
   if (i.voice === "teamspeak") rows.push({ provider: "TeamSpeak", hosts: [], purpose: "tpTeamspeak", data: "dataNone", consent: null });
+  if (i.voice === "ventrilo") rows.push({ provider: "Ventrilo", hosts: [], purpose: "tpVentrilo", data: "dataNone", consent: null });
   if (i.sourcebans) rows.push({ provider: "SourceBans", hosts: [], purpose: "tpSourcebans", data: "dataNone", consent: null });
   rows.push({ provider: "GitHub", hosts: ["api.github.com"], purpose: "tpGithub", data: "dataNone", consent: null });
   return rows;

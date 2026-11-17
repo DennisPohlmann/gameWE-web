@@ -449,7 +449,7 @@ export async function saveSettings(a: Actor, groupId: string, form: Form, only?:
       bad(s.key);
     } else if (v.length > 255) {
       bad(s.key);
-    } else if (s.key === "gamewe_ts_host" && v) {
+    } else if ((s.key === "gamewe_ts_host" || s.key === "gamewe_vent_host") && v) {
       const host = tsHost(v);
       if (!host) bad(s.key);
       values.push([s.key, host!]);

@@ -5,11 +5,12 @@ import { fmtNum } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
 import { getVoiceBox } from "@/lib/voice";
 
-// gameME's "Voiceserver" box: TeamSpeak and Discord with the people online.
+// gameME's "Voiceserver" box: TeamSpeak, Ventrilo or Discord with the people
+// online.
 // Shown on the start page and the pages of a ranking only.
 export async function VoiceBox() {
   const [box, { lang, t }] = await Promise.all([getVoiceBox(), getDict()]);
-  if (!box.ts && !box.discord) return null;
+  if (!box.ts && !box.discord && !box.vent) return null;
   const n = (v: number | null) => (v === null ? "–" : fmtNum(v, lang));
   return (
     <section className="block voice-box">
@@ -53,6 +54,31 @@ export async function VoiceBox() {
                 <td className="num">
                   {n(box.ts.clients)}
                   {box.ts.max !== null ? `/${fmtNum(box.ts.max, lang)}` : ""}
+                </td>
+              </tr>
+            ) : null}
+            {box.vent ? (
+              <tr>
+                <td title={box.vent.name}>
+                  <bdi>{box.vent.name}</bdi>
+                </td>
+                <td className="hide-sm">{box.vent.type}</td>
+                <td>
+                  <a href={box.vent.link}><bdi>{box.vent.address}</bdi></a>
+                  {box.vent.passwordProtected ? (
+                    <span className="voice-pw-sm">
+                      {" "}
+                      <TsPassword password="" passwordProtected t={t} />
+                    </span>
+                  ) : null}
+                </td>
+                <td className="hide-sm">
+                  <TsPassword password="" passwordProtected={box.vent.passwordProtected} t={t} />
+                </td>
+                <td className="num hide-sm">{n(box.vent.channels)}</td>
+                <td className="num">
+                  {n(box.vent.clients)}
+                  {box.vent.max !== null ? `/${fmtNum(box.vent.max, lang)}` : ""}
                 </td>
               </tr>
             ) : null}

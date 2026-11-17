@@ -65,6 +65,8 @@ const SOFTWARE: Row[] = [
   ["server-only", "https://www.npmjs.com/package/server-only", "MIT", "Schutz serverseitiger Module", "Guard for server-side modules"],
   ["HLstatsX: Community Edition", "https://github.com/NomisCZ/hlstatsx-community-edition", "GPL-2.0-or-later", "Grundlage des Datenbankschemas", "Basis of the database schema"],
   ["HLstatsX:CE mit CS2-Unterstützung (lovasatt)", "https://github.com/lovasatt/hlstatsx-community-edition", "GPL-2.0-or-later", "Vorlage für die Counter-Strike-2-Unterstützung", "Reference for the Counter-Strike 2 support"],
+  ["GameQ (Austin Bischoff)", "https://github.com/Austinb/GameQ", "LGPL-3.0-or-later", "Ventrilo-Statusprotokoll (Schlüsseltabellen, Anfrage)", "Ventrilo status protocol (key tables, request)"],
+  ["node-gamedig", "https://github.com/gamedig/node-gamedig", "MIT", "Ventrilo-Statusprotokoll (Schlüsseltabellen)", "Ventrilo status protocol (key tables)"],
 ];
 
 const ASSETS: Row[] = [

@@ -710,6 +710,7 @@
     "tpSteamApi": "Jména, adresy profilových obrázků a stav VAC hráčů",
     "tpDiscord": "Název a počet lidí online na serveru Discord",
     "tpTeamspeak": "Kdo je na serveru TeamSpeak",
+    "tpVentrilo": "Název a počet lidí online na serveru Ventrilo",
     "tpSourcebans": "Veřejný seznam banů",
     "tpGithub": "Kontrola nových verzí gameWE (administrace)",
     "dataSteamId": "Steam ID hráčů",

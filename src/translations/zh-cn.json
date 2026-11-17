@@ -651,6 +651,7 @@
     "tpSteamApi": "玩家的名称、头像地址和 VAC 状态",
     "tpDiscord": "Discord 服务器的名称和在线人数",
     "tpTeamspeak": "谁在 TeamSpeak 服务器上",
+    "tpVentrilo": "Ventrilo 服务器的名称和在线人数",
     "tpSourcebans": "公开封禁列表",
     "tpGithub": "检查 gameWE 新版本（管理后台）",
     "dataSteamId": "玩家的 Steam ID",

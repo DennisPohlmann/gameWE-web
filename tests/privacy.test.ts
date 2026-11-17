@@ -84,6 +84,7 @@ test("the lists follow the settings", () => {
   for (const mapStyle of ["osm-dark", "carto-dark", "topo"]) assert.deepEqual(hosts({ ...base, mapStyle, steamProfiles: false }), ["tile.openstreetmap.org"]);
   assert.deepEqual(hosts({ ...base, maps: false, steamProfiles: false }), []);
   assert.ok(serverThirdParties({ ...base, voice: "discord" }).some((r) => r.provider === "Discord"));
+  assert.ok(serverThirdParties({ ...base, voice: "ventrilo" }).some((r) => r.provider === "Ventrilo"));
   assert.ok(!serverThirdParties(base).some((r) => r.provider === "Discord"));
   assert.ok(serverThirdParties(base).every((r) => r.consent === null));
 });

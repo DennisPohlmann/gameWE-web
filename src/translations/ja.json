@@ -710,6 +710,7 @@
     "tpSteamApi": "プレイヤーの名前、プロフィール画像のアドレス、VAC の状態",
     "tpDiscord": "Discord サーバーの名前とオンライン人数",
     "tpTeamspeak": "TeamSpeak サーバーにいる人",
+    "tpVentrilo": "Ventrilo サーバーの名前とオンライン人数",
     "tpSourcebans": "公開 BAN リスト",
     "tpGithub": "gameWE の新しいバージョンの確認 (管理エリア)",
     "dataSteamId": "プレイヤーの Steam ID",

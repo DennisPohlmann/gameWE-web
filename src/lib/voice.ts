@@ -3,10 +3,11 @@ import { Socket } from "node:net";
 import { query } from "./db";
 import { secretOptions } from "./secret-options";
 import { FLAG_CODES } from "./flag-codes";
+import { ventQuery, ventType } from "./ventrilo";
 
-// Voice server box: either a TeamSpeak 3 server (people online read over its
-// ServerQuery interface) or a Discord server (invite link, people online
-// from its public widget). Set up under Administration → Settings → Voice
+// Voice server box: a TeamSpeak 3 server (people online read over its
+// ServerQuery interface), a Ventrilo server (its UDP status, lib/ventrilo.ts)
+// or a Discord server (invite link, people online from its public widget). Set up under Administration → Settings → Voice
 // server. The query login stays on the server; the page only gets the
 // numbers. Results are kept for a minute (Discord: five minutes).
 
@@ -37,6 +38,18 @@ export type VoiceBox = {
     uptime: number | null;
   } | null;
   discord: { name: string; type: string; invite: string; online: number | null } | null;
+  // Numbers null when the status could not be read.
+  vent: {
+    name: string;
+    type: string;
+    address: string;
+    link: string;
+    passwordProtected: boolean;
+    clients: number | null;
+    max: number | null;
+    channels: number | null;
+    uptime: number | null;
+  } | null;
 };
 
 const KEYS = [
@@ -55,6 +68,9 @@ const KEYS = [
   "gamewe_ts_country",
   "gamewe_discord_invite",
   "gamewe_discord_guild",
+  "gamewe_vent_host",
+  "gamewe_vent_port",
+  "gamewe_vent_name",
 ] as const;
 
 const HOST = /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$|^\d{1,3}(\.\d{1,3}){3}$/i;
@@ -125,13 +141,14 @@ export function discordGuild(v: string): string {
   return /^\d{17,20}$/.test(s) ? s : "";
 }
 
-export type VoiceType = "none" | "teamspeak" | "discord";
+export type VoiceType = "none" | "teamspeak" | "discord" | "ventrilo";
 
 // Which voice server the box shows. Without an explicit choice both may be
-// set: then a configured TeamSpeak wins, else Discord.
+// set: then a configured TeamSpeak wins, else Discord. Ventrilo only when
+// chosen.
 export function voiceType(o: Record<string, string | undefined>): VoiceType {
   const v = (o.gamewe_voice_type ?? "").trim();
-  if (v === "none" || v === "teamspeak" || v === "discord") return v;
+  if (v === "none" || v === "teamspeak" || v === "discord" || v === "ventrilo") return v;
   if (tsHost(o.gamewe_ts_host ?? "")) return "teamspeak";
   if (discordInvite(o.gamewe_discord_invite ?? "") || discordGuild(o.gamewe_discord_guild ?? "")) return "discord";
   return "none";
@@ -154,7 +171,7 @@ async function options(): Promise<Record<string, string> | null> {
 
 export async function getVoiceBox(): Promise<VoiceBox> {
   const o = await options();
-  if (!o) return { ts: null, discord: null };
+  if (!o) return { ts: null, discord: null, vent: null };
   const key = KEYS.map((k) => o[k] ?? "").join("\n");
   if (cache && cache.key === key && Date.now() - cache.at < 60_000) return cache.value;
   inflight ??= load(o).finally(() => (inflight = null));
@@ -173,11 +190,26 @@ async function load(o: Record<string, string>): Promise<VoiceBox> {
   const host = type === "teamspeak" ? tsHost(o.gamewe_ts_host ?? "") : "";
   const invite = type === "discord" ? discordInvite(o.gamewe_discord_invite ?? "") : "";
   const guild = type === "discord" ? discordGuild(o.gamewe_discord_guild ?? "") : "";
-  const [ts, discord] = await Promise.all([
+  const vent = type === "ventrilo" ? tsHost(o.gamewe_vent_host ?? "") : "";
+  const [ts, discord, ventBox] = await Promise.all([
     host ? loadTs(host, port(o.gamewe_ts_port, 9987), port(o.gamewe_ts_query_port, 10011), o) : null,
     invite || guild ? loadDiscord(guild).then((d) => ({ name: d?.name ?? "Discord", type: "Discord", invite, online: d?.online ?? null })) : null,
+    vent ? loadVent(vent, port(o.gamewe_vent_port, 3784), (o.gamewe_vent_name ?? "").trim()) : null,
   ]);
-  return { ts, discord };
+  return { ts, discord, vent: ventBox };
+}
+
+// GameQ's join link, ventrilo://host:port/.
+async function loadVent(host: string, voicePort: number, name: string): Promise<VoiceBox["vent"]> {
+  const address = voicePort === 3784 ? host : `${host}:${voicePort}`;
+  const base = { name: name || address, type: "Ventrilo", address, link: `ventrilo://${host}:${voicePort}/`, passwordProtected: false, clients: null, max: null, channels: null, uptime: null };
+  try {
+    const s = await ventQuery(host, voicePort);
+    return { ...base, name: name || s.name || address, type: ventType(s.version), passwordProtected: s.auth, clients: s.clients, max: s.max, channels: s.channels, uptime: s.uptime };
+  } catch (e) {
+    console.warn(`Ventrilo status: ${e instanceof Error ? e.message : e}`);
+    return base;
+  }
 }
 
 async function loadTs(host: string, voicePort: number, queryPort: number, o: Record<string, string>): Promise<VoiceBox["ts"]> {

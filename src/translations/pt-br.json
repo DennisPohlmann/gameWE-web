@@ -651,6 +651,7 @@
     "tpSteamApi": "Nomes, endereços das fotos de perfil e estado VAC dos jogadores",
     "tpDiscord": "Nome e número de pessoas online do servidor Discord",
     "tpTeamspeak": "Quem está no servidor TeamSpeak",
+    "tpVentrilo": "Nome e número de pessoas online do servidor Ventrilo",
     "tpSourcebans": "Lista pública de banimentos",
     "tpGithub": "Verificação de novas versões do gameWE (área de administração)",
     "dataSteamId": "Steam IDs dos jogadores",

@@ -87,6 +87,7 @@ function countryChoices(): [string, L][] {
     .sort((a, b) => a[1].de.localeCompare(b[1].de, "de"));
 }
 const DISCORD = { key: "gamewe_voice_type", value: "discord" };
+const VENT = { key: "gamewe_voice_type", value: "ventrilo" };
 
 
 // The events of the notifications with their names (also on My account).
@@ -479,8 +480,8 @@ const definitions: Omit<SettingGroup, "area">[] = [
     id: "voice",
     title: { de: "Voiceserver", en: "Voice server" },
     help: {
-      de: "Kasten oben auf jeder Seite mit dem TeamSpeak- oder Discord-Server der Community. Erst die Art wählen, dann erscheinen die passenden Felder. TeamSpeak: Die Personenzahl liest die Webseite jede Minute über die ServerQuery. Discord: Gezählt wird über das Server-Widget (Servereinstellungen → Widget → Server-Widget aktivieren).",
-      en: "Box at the top of every page with the community's TeamSpeak or Discord server. Choose the kind first, then the matching fields appear. TeamSpeak: the website reads the number of people every minute over the ServerQuery. Discord: counted through the server widget (Server settings → Widget → Enable server widget).",
+      de: "Kasten oben auf jeder Seite mit dem TeamSpeak-, Ventrilo- oder Discord-Server der Community. Erst die Art wählen, dann erscheinen die passenden Felder. TeamSpeak: Die Personenzahl liest die Webseite jede Minute über die ServerQuery. Ventrilo: gelesen jede Minute aus dem UDP-Status des Servers. Discord: Gezählt wird über das Server-Widget (Servereinstellungen → Widget → Server-Widget aktivieren).",
+      en: "Box at the top of every page with the community's TeamSpeak, Ventrilo or Discord server. Choose the kind first, then the matching fields appear. TeamSpeak: the website reads the number of people every minute over the ServerQuery. Ventrilo: read every minute from the server's UDP status. Discord: counted through the server widget (Server settings → Widget → Enable server widget).",
     },
     items: [
       {
@@ -492,6 +493,7 @@ const definitions: Omit<SettingGroup, "area">[] = [
           ["none", { de: "Keiner", en: "None" }],
           ["teamspeak", { de: "TeamSpeak", en: "TeamSpeak" }],
           ["discord", { de: "Discord", en: "Discord" }],
+          ["ventrilo", { de: "Ventrilo", en: "Ventrilo" }],
         ],
         help: { de: "Nach dem Wechsel speichern; die Felder der anderen Art bleiben gespeichert, werden aber nicht genutzt.", en: "Save after switching; the fields of the other kind stay stored but are not used." },
       },
@@ -562,6 +564,22 @@ const definitions: Omit<SettingGroup, "area">[] = [
         },
         show: TS,
       },
+      { key: "gamewe_vent_host", label: { de: "Ventrilo-Server (Adresse)", en: "Ventrilo server (address)" }, type: "text", def: "", minLevel: 100, help: { de: "z. B. vent.example.org", en: "e.g. vent.example.org" }, show: VENT },
+      {
+        key: "gamewe_vent_port",
+        label: { de: "Ventrilo-Port", en: "Ventrilo port" },
+        type: "number",
+        def: "3784",
+        minLevel: 100,
+        min: 1,
+        max: 65535,
+        help: {
+          de: "Der Port des Servers. Über ihn fragt die Webseite jede Minute per UDP den Status ab; er muss vom Webserver aus erreichbar sein.",
+          en: "The server's port. The website asks it for the status over UDP every minute; it must be reachable from the web server.",
+        },
+        show: VENT,
+      },
+      { key: "gamewe_vent_name", label: { de: "Ventrilo-Anzeigename", en: "Ventrilo display name" }, type: "text", def: "", help: { de: "Leer: Name aus dem Serverstatus.", en: "Empty: the name from the server status." }, show: VENT },
       { key: "gamewe_discord_invite", label: { de: "Discord-Einladung", en: "Discord invite" }, type: "text", def: "", help: { de: "z. B. https://discord.gg/abc123", en: "e.g. https://discord.gg/abc123" }, show: DISCORD },
       { key: "gamewe_discord_guild", label: { de: "Discord-Server-ID (für die Online-Zahl)", en: "Discord server ID (for the online count)" }, type: "text", def: "", help: { de: "Rechtsklick auf den Server → Server-ID kopieren (Entwicklermodus). Leer: nur der Link.", en: "Right-click the server → Copy Server ID (developer mode). Empty: link only." }, show: DISCORD },
     ],
