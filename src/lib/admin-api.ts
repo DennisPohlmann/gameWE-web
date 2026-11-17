@@ -18,6 +18,7 @@ import {
   settingsInput,
   strField,
   type Entries,
+  webhookEventsInput,
 } from "./admin-api-input";
 import { globalHall, hallEntries, hallSettings } from "./admin-hall";
 import { getAdminJob, jobsOverview, type Job } from "./admin-jobs";
@@ -493,18 +494,21 @@ async function webhookOr404(id: string): Promise<WebhookView> {
   return w;
 }
 
-const webhookJson = (w: WebhookView) => ({ id: w.id, name: w.name, event: w.event, enabled: w.enabled, method: w.method, url: w.url, payload: w.payload, expect: w.expect, allowPrivate: w.allowPrivate, headers: w.headers, status: w.status, test: w.test });
+// event: the first of events, for clients of web 1.22 (one event per webhook).
+const webhookJson = (w: WebhookView) => ({ id: w.id, name: w.name, events: w.events, event: w.events[0] ?? null, enabled: w.enabled, method: w.method, url: w.url, payload: w.payload, expect: w.expect, allowPrivate: w.allowPrivate, headers: w.headers, status: w.status, test: w.test });
 
 // The body of a webhook; left-out fields keep those of cur (an update),
-// a header with an empty value its stored value (saveWebhook).
+// a header with an empty value its stored value (saveWebhook). event (one)
+// is the older form of events.
 function webhookBody(body: unknown, cur: WebhookView | null): Omit<Webhook, "id"> {
-  const keys = ["name", "event", "enabled", "method", "url", "headers", "payload", "expect", "allowPrivate"];
-  const b = onlyKeys(body, keys, cur ? [] : ["name", "event", "url"]);
+  const keys = ["name", "events", "event", "enabled", "method", "url", "headers", "payload", "expect", "allowPrivate"];
+  const b = onlyKeys(body, keys, cur ? [] : ["name", "url"]);
+  const events = webhookEventsInput(b, cur?.events);
   const headers = b.headers === undefined ? (cur?.headers ?? []).map((h) => ({ name: h.name, value: "" })) : b.headers;
   if (!Array.isArray(headers) || headers.length > MAX_WEBHOOK_HEADERS) throw new BodyError(400, "invalid_field", "headers", `headers must be an array of at most ${MAX_WEBHOOK_HEADERS} { name, value }`);
   return {
     name: b.name === undefined ? cur!.name : strField(b, "name", 64),
-    event: b.event === undefined ? cur!.event : enumField(b, "event", EVENTS),
+    events,
     enabled: b.enabled === undefined ? (cur?.enabled ?? true) : boolField(b, "enabled"),
     method: b.method === undefined ? (cur?.method ?? "POST") : enumField(b, "method", WEBHOOK_METHODS),
     url: b.url === undefined ? cur!.url : strField(b, "url", MAX_WEBHOOK_URL),

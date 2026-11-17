@@ -153,8 +153,8 @@ export function parseStatus(raw: string | null | undefined): NotifyStatus {
 
 // ---------------------------------------------------------------- webhooks
 // Webhooks for the whole site (Settings → Notifications, right
-// settings.protected): one row of hlstats_gamewe_webhooks per webhook and
-// event, which the collector calls (internal/notify webhook.go; keep the
+// settings.protected): one row of hlstats_gamewe_webhooks per webhook, for
+// one or more events (column event: "hof,reset"), which the collector calls (internal/notify webhook.go; keep the
 // checks in step). gamewe_web cannot read the table: the headers hold tokens.
 
 export const WEBHOOK_METHODS = ["POST", "PUT", "PATCH", "GET", "DELETE"] as const;
@@ -164,8 +164,16 @@ export const MAX_WEBHOOK_TEXT = 4000; // headers, payload
 export const MAX_WEBHOOK_HEADERS = 20;
 export const webhookIdOk = (v: string) => /^[0-9a-f]{16}$/.test(v);
 
+// The column event: the known events of v, in the order of EVENTS
+// ("reset,hof,update" fits its 16 characters).
+export const parseEvents = (v: string | null | undefined): NotifyEvent[] => {
+  const got = (v ?? "").split(",").map((e) => e.trim());
+  return EVENTS.filter((e) => got.includes(e));
+};
+export const eventsValue = (events: readonly NotifyEvent[]) => EVENTS.filter((e) => events.includes(e)).join(",");
+
 export type WebhookHeader = { name: string; value: string };
-export type Webhook = { id: string; name: string; event: NotifyEvent; enabled: boolean; method: WebhookMethod; url: string; headers: WebhookHeader[]; payload: string; expect: number; allowPrivate: boolean };
+export type Webhook = { id: string; name: string; events: NotifyEvent[]; enabled: boolean; method: WebhookMethod; url: string; headers: WebhookHeader[]; payload: string; expect: number; allowPrivate: boolean };
 
 const HEADER_NAME = /^[A-Za-z0-9!#$%&'*+.^_`|~-]{1,64}$/;
 // Set by the collector's HTTP client.
@@ -207,11 +215,11 @@ export function webhookUrlOk(v: string): boolean {
   }
 }
 
-// The first bad field of w (name, event, method, url, headers, payload,
+// The first bad field of w (name, event: none or an unknown one, method, url, headers, payload,
 // expect), else null.
 export function badWebhook(w: Omit<Webhook, "id">): string | null {
   if (!w.name.trim() || w.name.length > 64 || /[\u0000-\u001f]/.test(w.name)) return "name";
-  if (!isEvent(w.event)) return "event";
+  if (!w.events.length || !w.events.every(isEvent)) return "event";
   if (!(WEBHOOK_METHODS as readonly string[]).includes(w.method)) return "method";
   if (!webhookUrlOk(w.url)) return "url";
   if (w.headers.length > MAX_WEBHOOK_HEADERS || !w.headers.every((h) => headerNameOk(h.name) && headerValueOk(h.value)) || headersValue(w.headers).length > MAX_WEBHOOK_TEXT) return "headers";
@@ -220,9 +228,11 @@ export function badWebhook(w: Omit<Webhook, "id">): string | null {
   return null;
 }
 
-// The placeholders of a payload: those of every event, then the event's own
-// (hall of fame: placeN_name for each stored place N).
-export const WEBHOOK_VARS = ["event", "game", "ranking", "title", "body", "url", "time", "test"] as const;
+// The placeholders of a payload: those of every event ({event}: reset, hof
+// or update, {event_label}: its name), then the event's own (hall of fame:
+// placeN_name for each stored place N), which are empty for the other
+// events of a webhook.
+export const WEBHOOK_VARS = ["event", "event_label", "game", "ranking", "title", "body", "url", "time", "test"] as const;
 export const WEBHOOK_EVENT_VARS: Record<NotifyEvent, string[]> = {
   reset: ["by"],
   hof: ["from", "to", "places", "placeN_name", "placeN_points"], // N: 1, 2, 3 … for each stored place

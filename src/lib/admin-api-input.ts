@@ -2,6 +2,7 @@ import type { Entity, Field } from "./admin-entities";
 import type { Setting } from "./admin-settings";
 import type { Schedule } from "./hall-period";
 import { headerOrder, parseHome, parseLink } from "./header-links";
+import { EVENTS, isEvent, type NotifyEvent } from "./notify-core";
 
 // The admin API's JSON bodies (lib/admin-api.ts): checked strictly (unknown
 // or read-only fields are refused, types must match) and turned into the
@@ -59,6 +60,17 @@ export function enumField<T extends string>(b: Record<string, unknown>, k: strin
   const v = b[k];
   if (typeof v !== "string" || !values.includes(v as T)) bad("invalid_field", k, `${k} must be one of ${values.join(", ")}`);
   return v as T;
+}
+
+// The events of a webhook body: events (one or more), or event (one, the
+// form of web 1.22), not both; neither keeps cur (an update).
+export function webhookEventsInput(b: Record<string, unknown>, cur: NotifyEvent[] | undefined): NotifyEvent[] {
+  if (b.events !== undefined && b.event !== undefined) bad("invalid_field", "events", "send events or event, not both");
+  if (b.event !== undefined) return [enumField(b, "event", EVENTS)];
+  const v = b.events ?? cur;
+  if (b.events === undefined && !v) bad("missing_field", "events", "events is required");
+  if (!Array.isArray(v) || !v.length || v.length > EVENTS.length || !v.every(isEvent)) bad("invalid_field", "events", `events must be a non-empty array of ${EVENTS.join(", ")}`);
+  return v as NotifyEvent[];
 }
 
 // ---------------------------------------------------------------- entities

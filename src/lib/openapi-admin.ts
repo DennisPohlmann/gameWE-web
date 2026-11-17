@@ -357,11 +357,12 @@ const ownChannel = obj(
 );
 const webhookFields = {
   name: str("Name for the overview", { maxLength: 64 }),
-  event: eventSchema,
-  enabled: bool("Called on the event; false: only its test"),
+  events: arr(eventSchema, "The events it is called for (at least one), all with the same payload: {event} and {event_label} name the one that happened"),
+  event: str("Deprecated (web 1.22): one event; the output gives the first of events, the input sets events to it. Do not send it with events", { enum: [...EVENTS] }),
+  enabled: bool("Called on its events; false: only its test"),
   method: str("HTTP method; GET sends no payload", { enum: [...WEBHOOK_METHODS] }),
   url: str("http(s) address without user or fragment", { maxLength: MAX_WEBHOOK_URL }),
-  payload: str("Body with placeholders such as {ranking}, {title}, {body}, {url}, {by}, {placeN_name}, {placeN_points}, {version} (docs/USAGE.md)", { maxLength: MAX_WEBHOOK_TEXT }),
+  payload: str("Body with placeholders such as {event}, {event_label}, {ranking}, {title}, {body}, {url}, {by}, {placeN_name}, {placeN_points}, {version}; those of another event are empty (docs/USAGE.md)", { maxLength: MAX_WEBHOOK_TEXT }),
   expect: int("Expected HTTP status; 0: any 2xx", { minimum: 0, maximum: 599 }),
   allowPrivate: bool("Also loopback and private addresses (a service on the collector's machine or network)"),
 };
@@ -384,7 +385,7 @@ const webhookIn = (required: string[]) =>
     [...Object.keys(webhookFields), "headers"].filter((k) => !required.includes(k)),
   );
 const webhookParam: AdminParam = { name: "webhook", in: "path", required: true, description: "ID of the webhook", schema: str("", { pattern: "^[0-9a-f]{16}$" }), example: "0123456789abcdef" };
-const webhookEx = { id: "0123456789abcdef", name: "Hall of fame to Mastodon", event: "hof", enabled: true, method: "POST", url: "https://social.example.org/api/v1/statuses", payload: '{"status":"{title}\\n{body}"}', expect: 200, allowPrivate: false, headers: [{ name: "Authorization", set: true }, { name: "Content-Type", set: true }], status: null, test: null };
+const webhookEx = { id: "0123456789abcdef", name: "Hall of fame to Mastodon", events: ["hof", "reset"], event: "hof", enabled: true, method: "POST", url: "https://social.example.org/api/v1/statuses", payload: '{"status":"{title}\\n{body}"}', expect: 200, allowPrivate: false, headers: [{ name: "Authorization", set: true }, { name: "Content-Type", set: true }], status: null, test: null };
 const modeSchema = str("What a reset deletes: player-stats (player statistics), all-stats (also server statistics), all (also the players)", { enum: [...RESET_MODES] });
 const job = obj({
   id: int("Job ID"),
@@ -1106,7 +1107,7 @@ export const adminOps: AdminOp[] = [
     operationId: "adminListWebhooks",
     tag: "Admin: settings",
     summary: "List webhooks",
-    description: "The site's webhooks (Settings → Notifications): one per event, called by the collector. Header values are never returned.",
+    description: "The site's webhooks (Settings → Notifications), each for one or more events, called by the collector. Header values are never returned.",
     need: "settings.protected",
     handler: "webhookList",
     status: 200,
@@ -1120,11 +1121,11 @@ export const adminOps: AdminOp[] = [
     operationId: "adminCreateWebhook",
     tag: "Admin: settings",
     summary: "Create a webhook",
-    description: "A new webhook for one event. Header values must not contain line breaks; Host, Content-Length and the like are set by the collector.",
+    description: "A new webhook for one or more events (`events`). Header values must not contain line breaks; Host, Content-Length and the like are set by the collector.",
     need: "settings.protected",
     handler: "webhookCreate",
-    body: webhookIn(["name", "event", "url"]),
-    bodyExample: { name: "Hall of fame to Mastodon", event: "hof", url: "https://social.example.org/api/v1/statuses", headers: [{ name: "Authorization", value: "Bearer abc123" }, { name: "Content-Type", value: "application/json" }], payload: '{"status":"{title}\\n{body}"}', expect: 200 },
+    body: webhookIn(["name", "events", "url"]),
+    bodyExample: { name: "Hall of fame to Mastodon", events: ["hof", "reset"], url: "https://social.example.org/api/v1/statuses", headers: [{ name: "Authorization", value: "Bearer abc123" }, { name: "Content-Type", value: "application/json" }], payload: '{"status":"{event_label}: {title}\\n{body}"}', expect: 200 },
     status: 201,
     response: webhookOut,
     example: webhookEx,

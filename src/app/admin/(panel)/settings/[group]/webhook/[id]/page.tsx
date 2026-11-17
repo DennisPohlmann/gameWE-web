@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { deleteWebhookAction, saveWebhookAction } from "../../../../../actions";
 import { AutoRefresh } from "@/components/auto-refresh";
+import { CheckAll } from "@/components/admin/check-all";
 import { ConfirmButton } from "@/components/admin/confirm-button";
 import { Icon } from "@/components/admin/icons";
 import { WebhookStatusLine } from "@/components/admin/notify-status";
@@ -18,7 +19,7 @@ import { noAutofill } from "@/lib/autofill";
 import { fill, getAdminLang } from "@/lib/i18n";
 import { EVENTS, MAX_WEBHOOK_HEADERS, MAX_WEBHOOK_TEXT, MAX_WEBHOOK_URL, WEBHOOK_EVENT_VARS, WEBHOOK_METHODS, WEBHOOK_VARS } from "@/lib/notify-core";
 
-// One webhook of Settings → Notifications (id "new": a new one): its event,
+// One webhook of Settings → Notifications (id "new": a new one): its events,
 // address, method, headers, expected status and payload, its last call and
 // a test, and deleting it. Only with settings.protected.
 export default async function WebhookPage({ params, searchParams }: { params: Promise<{ group: string; id: string }>; searchParams: Promise<Record<string, string | undefined>> }) {
@@ -33,14 +34,15 @@ export default async function WebhookPage({ params, searchParams }: { params: Pr
   const w = localized(WEBHOOK_T, lang);
   const n = localized(NOTIFY_T, lang);
   const sp = await searchParams;
-  const labels: Record<string, string> = { name: w.name, event: w.event, method: w.method, url: w.url, headers: w.headers, payload: w.payload, expect: w.expect };
+  const labels: Record<string, string> = { name: w.name, event: w.events, method: w.method, url: w.url, headers: w.headers, payload: w.payload, expect: w.expect };
   const title = hook?.name ?? w.newTitle;
   const waiting = run.running && hook?.test && (hook.test.status === "pending" || hook.test.status === "running");
-  const ev = hook?.event ?? "hof";
+  const evs = hook?.events ?? ["hof"];
   const code = (v: string) => <code key={v}>{`{${v}}`}</code>;
   const list = (vs: readonly string[]) => vs.flatMap((v, i) => (i ? [", ", code(v)] : [code(v)]));
-  // The placeholders of the chosen event, switched by CSS (no script needed).
-  const css = EVENTS.map((e) => `form:not(:has(select[name="event"] option[value="${e}"]:checked)) [data-ev="${e}"]{display:none}`).join("\n");
+  const label = Object.fromEntries(NOTIFY_EVENT_LABELS.map(([e, l]) => [e, tr(l, lang)]));
+  // The placeholders of the ticked events, switched by CSS (no script needed).
+  const css = EVENTS.map((e) => `form:not(:has(input[name="event"][value="${e}"]:checked)) [data-ev="${e}"]{display:none}`).join("\n");
   return (
     <>
       <PageHead
@@ -64,17 +66,16 @@ export default async function WebhookPage({ params, searchParams }: { params: Pr
             <input {...noAutofill} name="name" dir="auto" maxLength={64} required defaultValue={hook?.name ?? ""} aria-invalid={sp.bad === "name" || undefined} />
             <small>{w.nameHint}</small>
           </label>
-          <label>
-            {w.event}
-            <select name="event" defaultValue={ev}>
-              {NOTIFY_EVENT_LABELS.map(([e, l]) => (
-                <option key={e} value={e}>
-                  {tr(l, lang)}
-                </option>
-              ))}
-            </select>
-            <small>{w.eventHint}</small>
-          </label>
+          <fieldset className="form-field webhook-events" aria-invalid={sp.bad === "event" || undefined}>
+            <legend>{w.events}</legend>
+            {EVENTS.map((e) => (
+              <label key={e} className="check">
+                <input type="checkbox" name="event" value={e} defaultChecked={evs.includes(e)} /> {label[e]}
+              </label>
+            ))}
+            <CheckAll name="event" label={w.allEvents} />
+            <small className="muted">{w.eventHint}</small>
+          </fieldset>
           <label className="check">
             <input type="checkbox" name="enabled" value="1" defaultChecked={hook?.enabled ?? true} /> {w.enabled}
           </label>
@@ -118,11 +119,18 @@ export default async function WebhookPage({ params, searchParams }: { params: Pr
             </p>
             {EVENTS.map((e) => (
               <p key={e} className="webhook-vars" data-ev={e}>
-                {w.varsEvent}
+                {fill(w.varsOnly, { e: label[e] })}
                 {list(WEBHOOK_EVENT_VARS[e])}
                 {e === "hof" ? ` ${w.varsN}` : null}
               </p>
             ))}
+            <p className="webhook-vars">{w.varsEventHint}</p>
+            <p className="webhook-vars">
+              {w.varsExample} <code className="ex">{'{"text": "{event_label}: {title}", "by": "{by}"}'}</code>
+            </p>
+            <p className="webhook-vars">
+              {w.varsExampleOut} <code className="ex">{`{"text": "${label.hof}: …", "by": ""}`}</code>
+            </p>
           </div>
           <label className="check">
             <input type="checkbox" name="allow_private" value="1" defaultChecked={hook?.allowPrivate ?? false} /> {w.private}

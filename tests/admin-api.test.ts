@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { entities, getEntity } from "../src/lib/admin-entities.ts";
-import { BodyError, entityInput, entityRow, writableFields, rawInput, scheduleInput, scheduleOut, settingsInput } from "../src/lib/admin-api-input.ts";
+import { BodyError, webhookEventsInput, entityInput, entityRow, writableFields, rawInput, scheduleInput, scheduleOut, settingsInput } from "../src/lib/admin-api-input.ts";
 import { hiddenOption, rawKeyAllowed, settingGroups } from "../src/lib/admin-settings.ts";
 import {
   EXPIRY_DAYS,
@@ -343,4 +343,24 @@ test("the webhook operations are reachable by their paths", async () => {
     assert.ok(m && "op" in m && m.op.handler === handler, `${method} ${path}`);
   }
   assert.ok(!matchOp(["webhooks", "x"], "PUT") || !("op" in matchOp(["webhooks", "x"], "PUT")!));
+});
+
+test("webhook events: events, the older event, not both, never none", () => {
+  const code = (b: Record<string, unknown>, cur?: ("reset" | "hof" | "update")[]) => {
+    try {
+      return webhookEventsInput(b, cur);
+    } catch (e) {
+      return (e as BodyError).code + ":" + (e as BodyError).field;
+    }
+  };
+  assert.deepEqual(code({ events: ["hof", "reset"] }), ["hof", "reset"]);
+  assert.deepEqual(code({ event: "update" }, ["hof"]), ["update"]); // web 1.22 clients
+  assert.deepEqual(code({}, ["hof", "update"]), ["hof", "update"]); // an update keeps them
+  assert.equal(code({}), "missing_field:events");
+  assert.equal(code({ events: [] }, ["hof"]), "invalid_field:events");
+  assert.equal(code({ events: ["hof", "nope"] }), "invalid_field:events");
+  assert.equal(code({ events: "hof" }), "invalid_field:events");
+  assert.equal(code({ events: ["hof", "hof", "hof", "hof"] }), "invalid_field:events");
+  assert.equal(code({ events: ["hof"], event: "hof" }), "invalid_field:events");
+  assert.equal(code({ event: "nope" }), "invalid_field:event");
 });

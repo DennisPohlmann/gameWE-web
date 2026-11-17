@@ -59,12 +59,20 @@ test("the ntfy server and topic fields of My account", () => {
 });
 
 test("webhooks: what the web lets through to the collector", async () => {
-  const { badWebhook, headerNameOk, headerValueOk, headersValue, parseHeaders, parseWebhookStatus, webhookUrlOk } = await import("../src/lib/notify-core.ts");
-  const ok = { name: "Social", event: "hof" as const, enabled: true, method: "POST" as const, url: "https://hooks.example.org/x?token=1", headers: [{ name: "Authorization", value: "Bearer abc" }], payload: '{"t":"{title}"}', expect: 201, allowPrivate: false };
+  const { badWebhook, eventsValue, headerNameOk, headerValueOk, headersValue, parseEvents, parseHeaders, parseWebhookStatus, webhookUrlOk } = await import("../src/lib/notify-core.ts");
+  const ok = { name: "Social", events: ["hof" as const], enabled: true, method: "POST" as const, url: "https://hooks.example.org/x?token=1", headers: [{ name: "Authorization", value: "Bearer abc" }], payload: '{"t":"{title}"}', expect: 201, allowPrivate: false };
   assert.equal(badWebhook(ok), null);
   assert.equal(badWebhook({ ...ok, expect: 0 }), null);
   assert.equal(badWebhook({ ...ok, name: " " }), "name");
-  assert.equal(badWebhook({ ...ok, event: "nope" as "hof" }), "event");
+  assert.equal(badWebhook({ ...ok, events: ["hof", "nope" as "hof"] }), "event");
+  assert.equal(badWebhook({ ...ok, events: [] }), "event");
+  assert.equal(badWebhook({ ...ok, events: ["update", "hof", "reset"] }), null);
+  // The column event: one or more events in a fixed order, a webhook of web 1.22 (one event) reads the same.
+  assert.equal(eventsValue(["update", "hof", "reset", "hof"]), "reset,hof,update");
+  assert.ok(eventsValue(["update", "hof", "reset"]).length <= 16); // varchar(16)
+  assert.deepEqual(parseEvents("hof"), ["hof"]);
+  assert.deepEqual(parseEvents(" update ,hof,x,"), ["hof", "update"]);
+  assert.deepEqual(parseEvents(""), []);
   assert.equal(badWebhook({ ...ok, method: "TRACE" as "POST" }), "method");
   assert.equal(badWebhook({ ...ok, expect: 700 }), "expect");
   assert.equal(badWebhook({ ...ok, expect: 99 }), "expect");

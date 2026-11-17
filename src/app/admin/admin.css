@@ -768,6 +768,9 @@ form[data-dirty] .savebar .msg { display: none; }
 .webhook-payload { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; min-height: 160px; }
 .webhook-vars { font-size: 13px; font-weight: 400; color: var(--muted); margin: 4px 0 0; overflow-wrap: anywhere; }
 .webhook-vars code { white-space: nowrap; }
+.webhook-vars code.ex { white-space: normal; overflow-wrap: anywhere; }
+.webhook-events { border: 0; margin: 0; padding: 0; min-width: 0; }
+.webhook-events legend { padding: 0; margin-bottom: 4px; }
 .webhook-list td { overflow-wrap: anywhere; }
 @media (max-width: 720px) {
   .webhook-header { grid-template-columns: minmax(0, 1fr) auto; }

@@ -4,7 +4,7 @@ import { jobOriginColumns } from "./admin-jobs";
 import { OpError, who, type Actor } from "./admin-ops";
 import { adminExec, adminInsert, adminQuery } from "./db";
 import { webOriginDetail } from "./job-origin";
-import { badWebhook, headersValue, isEvent, keepHeaderValues, parseHeaders, parseWebhookStatus, webhookIdOk, WEBHOOK_METHODS, type Webhook, type WebhookHeader, type WebhookMethod } from "./notify-core";
+import { badWebhook, eventsValue, headersValue, keepHeaderValues, parseEvents, parseHeaders, parseWebhookStatus, webhookIdOk, WEBHOOK_METHODS, type Webhook, type WebhookHeader, type WebhookMethod } from "./notify-core";
 import { jobsAvailable } from "./reset";
 import type { TestJob } from "./admin-notify";
 
@@ -37,7 +37,7 @@ function view(r: Row, tests: Map<string, TestJob>): WebhookView {
   return {
     id: r.id,
     name: r.name,
-    event: isEvent(r.event) ? r.event : "reset",
+    events: parseEvents(r.event),
     enabled: Number(r.enabled) === 1,
     method: ((WEBHOOK_METHODS as readonly string[]).includes(r.method) ? r.method : "POST") as WebhookMethod,
     url: r.url,
@@ -63,7 +63,7 @@ async function lastTests(): Promise<Map<string, TestJob>> {
   return out;
 }
 
-// All webhooks, by event and name; [] without the table.
+// All webhooks, by events and name; [] without the table.
 export async function listWebhooks(): Promise<WebhookView[]> {
   if (!(await webhooksAvailable())) return [];
   const [rows, tests] = await Promise.all([adminQuery<Row>(`SELECT ${COLS} FROM hlstats_gamewe_webhooks ORDER BY event, name, id`), lastTests()]);
@@ -93,7 +93,7 @@ export async function saveWebhook(a: Actor, id: string, w: Omit<Webhook, "id">):
   if (bad) throw new OpError("field", { field: bad });
   const values = {
     name: w.name.trim(),
-    event: w.event,
+    event: eventsValue(w.events),
     enabled: w.enabled ? 1 : 0,
     method: w.method,
     url: w.url,
@@ -109,7 +109,7 @@ export async function saveWebhook(a: Actor, id: string, w: Omit<Webhook, "id">):
   } else {
     await adminExec(`UPDATE hlstats_gamewe_webhooks SET ${Object.keys(values).map((k) => `${k} = ?`).join(", ")} WHERE id = ?`, [...Object.values(values), id]);
   }
-  console.info(`gameWE: webhook ${id} (${w.event}) ${isNew ? "added" : "changed"} by ${who(a)}`);
+  console.info(`gameWE: webhook ${id} (${eventsValue(w.events)}) ${isNew ? "added" : "changed"} by ${who(a)}`);
   return id;
 }
 
@@ -135,7 +135,7 @@ export async function queueWebhookTest(a: Actor, id: string): Promise<{ id: numb
   return { id: job, existing: false };
 }
 
-// The webhook of a form: name, event, enabled, method, url, expect,
+// The webhook of a form: name, event (one checkbox per event), enabled, method, url, expect,
 // payload, allow_private and the header rows (header_name and
 // header_value, in order; an empty value keeps the stored one).
 export function webhookFromForm(form: Pick<FormData, "get" | "getAll">): Omit<Webhook, "id"> {
@@ -145,7 +145,7 @@ export function webhookFromForm(form: Pick<FormData, "get" | "getAll">): Omit<We
   const expect = field("expect").trim();
   return {
     name: field("name").trim(),
-    event: field("event") as Webhook["event"],
+    events: form.getAll("event").map(String) as Webhook["events"],
     enabled: form.get("enabled") === "1",
     method: field("method") as WebhookMethod,
     url: field("url").trim(),

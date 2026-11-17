@@ -229,7 +229,7 @@ function Webhooks({ list, table, allowed, collector, jobs, lang, deleted, queued
             <thead>
               <tr>
                 <th>{w.name}</th>
-                <th>{w.event}</th>
+                <th>{w.events}</th>
                 <th>{w.target}</th>
                 <th>{w.last}</th>
                 <th />
@@ -244,7 +244,7 @@ function Webhooks({ list, table, allowed, collector, jobs, lang, deleted, queued
                     </Link>
                     {h.enabled ? null : <span className="pill subt">{w.off}</span>}
                   </td>
-                  <td data-l={`${w.event}:`}>{events[h.event]}</td>
+                  <td data-l={`${w.events}:`}>{h.events.map((e) => events[e]).join(", ")}</td>
                   <td data-l={`${w.target}:`}>
                     <bdi dir="ltr">
                       {h.method} {shortUrl(h.url)}
