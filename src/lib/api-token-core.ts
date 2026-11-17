@@ -100,6 +100,11 @@ export function tokenScopes(v: unknown[]): Scope[] | null {
   return s;
 }
 
+// A token for the MCP server must expire (CIS MCP 3.1.2: AI clients keep it in
+// their configuration); older ones without expiry keep working, the list
+// marks them.
+export const mcpWithoutExpiry = (scopes: readonly string[], days: number) => days === 0 && scopes.includes("mcp");
+
 // GET (and HEAD) reads, everything else writes.
 export const scopeFor = (method: string): Scope => (method === "GET" || method === "HEAD" ? "read" : "write");
 

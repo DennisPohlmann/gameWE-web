@@ -28,10 +28,11 @@ export { RANKING_SORT_ALIASES } from "./sorts";
 const LIMIT = 120; // requests per IP and minute
 const buckets = new Map<string, Map<string, { n: number; until: number }>>();
 
-// Counts a request of the client in `bucket` (one per kind of endpoint);
-// over `limit` a minute: the seconds to wait, otherwise 0.
-export async function overLimit(bucket: string, limit: number): Promise<number> {
-  const ip = await clientIp();
+// Counts a request of the client (or of `key`, e.g. an API token) in
+// `bucket` (one per kind of endpoint); over `limit` a minute: the seconds to
+// wait, otherwise 0.
+export async function overLimit(bucket: string, limit: number, key?: string): Promise<number> {
+  const ip = key ?? (await clientIp());
   const now = Date.now();
   let hits = buckets.get(bucket);
   if (!hits) buckets.set(bucket, (hits = new Map()));

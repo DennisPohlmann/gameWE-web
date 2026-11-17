@@ -184,6 +184,8 @@ const texts: Record<string, string> = {
   "Please choose read, change or both.": "يرجى اختيار القراءة أو التغيير أو كليهما.",
   "You already have 20 tokens. Revoke one first.": "لديك 20 رمزًا بالفعل. أبطل واحدًا أولًا.",
   "Name and user name are too long together. Please choose a shorter name.": "الاسم واسم المستخدم معًا طويلان جدًا. يُرجى اختيار اسم أقصر.",
+  "A token for the MCP server needs an expiry: please choose one of the offered expiries.": "يحتاج رمز خادم MCP إلى مدة صلاحية: يرجى اختيار إحدى المدد المعروضة.",
+  "MCP without expiry: create a new token with an expiry and revoke this one.": "MCP بلا انتهاء صلاحية: أنشئ رمزًا جديدًا بمدة صلاحية وألغِ هذا الرمز.",
   "The API is turned off under Settings → API: no public API, no admin API, no documentation on /api and no API tokens. Existing tokens stay stored and are valid again once the API is on.": "الواجهة مغلقة ضمن الإعدادات ← API: لا واجهة عامة ولا واجهة إدارة ولا توثيق على /api ولا رموز API. تبقى الرموز الموجودة مخزّنة وتعود صالحة عند تشغيل الواجهة.",
   "Other keys (raw values)": "مفاتيح أخرى (قيم خام)",
   "All other rows of hlstats_Options that have no field above: own, old HLstatsX and obsolete keys. The value is stored as typed (at most 255 characters). The collector re-reads the values every minute and replaces invalid ones with the default.": "كل الصفوف الأخرى في hlstats_Options التي ليس لها حقل أعلاه: مفاتيح خاصة ومفاتيح HLstatsX قديمة ومفاتيح متقادمة. تُخزَّن القيمة كما كُتبت (255 حرفًا على الأكثر). يعيد المُجمِّع قراءة القيم كل دقيقة ويستبدل غير الصالحة بالقيمة الافتراضية.",

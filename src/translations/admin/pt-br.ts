@@ -179,6 +179,8 @@ const texts: Record<string, string> = {
   "Please choose read, change or both.": "Escolha ler, alterar ou ambos.",
   "You already have 20 tokens. Revoke one first.": "Você já tem 20 tokens. Revogue um primeiro.",
   "Name and user name are too long together. Please choose a shorter name.": "Nome e nome de usuário juntos são longos demais. Escolha um nome mais curto.",
+  "A token for the MCP server needs an expiry: please choose one of the offered expiries.": "Um token para o servidor MCP precisa de validade: escolha uma das validades oferecidas.",
+  "MCP without expiry: create a new token with an expiry and revoke this one.": "MCP sem validade: crie um novo token com validade e revogue este.",
   "The API is turned off under Settings → API: no public API, no admin API, no documentation on /api and no API tokens. Existing tokens stay stored and are valid again once the API is on.": "A API está desativada em Configurações → API: sem API pública, sem API de administração, sem documentação em /api e sem tokens de API. Os tokens existentes continuam armazenados e voltam a valer assim que a API for ativada.",
   "Other keys (raw values)": "Outras chaves (valores brutos)",
   "All other rows of hlstats_Options that have no field above: own, old HLstatsX and obsolete keys. The value is stored as typed (at most 255 characters). The collector re-reads the values every minute and replaces invalid ones with the default.": "Todas as outras linhas de hlstats_Options que não têm campo acima: chaves próprias, antigas do HLstatsX e obsoletas. O valor é salvo como digitado (no máximo 255 caracteres). O collector relê os valores a cada minuto e substitui os inválidos pelo padrão.",

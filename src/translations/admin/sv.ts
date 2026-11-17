@@ -184,6 +184,8 @@ const texts: Record<string, string> = {
   "Please choose read, change or both.": "Välj läsa, ändra eller båda.",
   "You already have 20 tokens. Revoke one first.": "Du har redan 20 tokens. Återkalla en först.",
   "Name and user name are too long together. Please choose a shorter name.": "Namn och användarnamn är för långa tillsammans. Välj ett kortare namn.",
+  "A token for the MCP server needs an expiry: please choose one of the offered expiries.": "En token för MCP-servern behöver en giltighetstid: välj en av de erbjudna giltighetstiderna.",
+  "MCP without expiry: create a new token with an expiry and revoke this one.": "MCP utan utgång: skapa en ny token med giltighetstid och återkalla den här.",
   "The API is turned off under Settings → API: no public API, no admin API, no documentation on /api and no API tokens. Existing tokens stay stored and are valid again once the API is on.": "API:t är avstängt under Inställningar → API: inget offentligt API, inget admin-API, ingen dokumentation på /api och inga API-tokens. Befintliga tokens sparas och blir giltiga igen när API:t slås på.",
   "Other keys (raw values)": "Övriga nycklar (råa värden)",
   "All other rows of hlstats_Options that have no field above: own, old HLstatsX and obsolete keys. The value is stored as typed (at most 255 characters). The collector re-reads the values every minute and replaces invalid ones with the default.": "Alla övriga rader i hlstats_Options som inte har något fält ovan: egna nycklar, gamla HLstatsX-nycklar och föråldrade nycklar. Värdet sparas som det skrivs (högst 255 tecken). Insamlaren läser om värdena varje minut och ersätter ogiltiga med standardvärdet.",

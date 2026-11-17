@@ -102,5 +102,5 @@ test("MCP off: 404 mcp_disabled, before any token is looked at", async () => {
   const body = src.slice(src.indexOf("export async function adminApi("));
   const guard = body.indexOf("if (isMcp && !(await mcpEnabled())) return apiDisabledResponse(MCP_DISABLED);");
   assert.ok(guard > 0 && guard < body.indexOf("bearerToken("));
-  assert.ok(guard < body.indexOf("return mcp("));
+  assert.ok(guard < body.indexOf("await mcp("));
 });

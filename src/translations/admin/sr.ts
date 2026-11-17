@@ -179,6 +179,8 @@ const texts: Record<string, string> = {
   "Please choose read, change or both.": "Izaberite čitanje, izmene ili oba.",
   "You already have 20 tokens. Revoke one first.": "Већ имате 20 токена. Прво опозовите један.",
   "Name and user name are too long together. Please choose a shorter name.": "Назив и корисничко име су заједно предугачки. Изаберите краћи назив.",
+  "A token for the MCP server needs an expiry: please choose one of the offered expiries.": "Токену за MCP сервер потребан је рок важења: изаберите један од понуђених рокова.",
+  "MCP without expiry: create a new token with an expiry and revoke this one.": "MCP без рока важења: направите нови токен са роком важења и опозовите овај.",
   "The API is turned off under Settings → API: no public API, no admin API, no documentation on /api and no API tokens. Existing tokens stay stored and are valid again once the API is on.": "API је искључен у Подешавања → API: нема јавног API-ја, admin API-ја, документације на /api ни API токена. Постојећи токени остају сачувани и поново важе чим се API укључи.",
   "Other keys (raw values)": "Остали кључеви (сирове вредности)",
   "All other rows of hlstats_Options that have no field above: own, old HLstatsX and obsolete keys. The value is stored as typed (at most 255 characters). The collector re-reads the values every minute and replaces invalid ones with the default.": "Сви остали редови hlstats_Options који немају поље изнад: сопствени, стари HLstatsX и застарели кључеви. Вредност се чува онако како је унета (највише 255 знакова). Колектор сваког минута поново чита вредности и неважеће замењује подразумеваном.",

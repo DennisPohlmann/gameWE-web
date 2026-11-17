@@ -184,6 +184,8 @@ const texts: Record<string, string> = {
   "Please choose read, change or both.": "읽기, 변경 또는 둘 다 선택하세요.",
   "You already have 20 tokens. Revoke one first.": "이미 토큰이 20개 있습니다. 먼저 하나를 폐기하세요.",
   "Name and user name are too long together. Please choose a shorter name.": "이름과 사용자 이름을 합치면 너무 깁니다. 더 짧은 이름을 고르세요.",
+  "A token for the MCP server needs an expiry: please choose one of the offered expiries.": "MCP 서버용 토큰에는 만료 기간이 필요합니다. 제공된 기간 중 하나를 선택하세요.",
+  "MCP without expiry: create a new token with an expiry and revoke this one.": "만료 없는 MCP: 만료 기간이 있는 새 토큰을 만들고 이 토큰을 취소하세요.",
   "The API is turned off under Settings → API: no public API, no admin API, no documentation on /api and no API tokens. Existing tokens stay stored and are valid again once the API is on.": "API가 설정 → API에서 꺼져 있습니다: 공개 API, 관리 API, /api의 문서, API 토큰이 모두 꺼집니다. 기존 토큰은 저장된 채로 남고 API를 켜면 다시 유효해집니다.",
   "Other keys (raw values)": "기타 키 (원시 값)",
   "All other rows of hlstats_Options that have no field above: own, old HLstatsX and obsolete keys. The value is stored as typed (at most 255 characters). The collector re-reads the values every minute and replaces invalid ones with the default.": "위에 필드가 없는 hlstats_Options의 나머지 행: 자체 키, 이전 HLstatsX 키, 더 이상 쓰지 않는 키. 값은 입력한 그대로 저장됩니다 (최대 255자). 콜렉터는 매분 값을 다시 읽고 잘못된 값은 기본값으로 바꿉니다.",

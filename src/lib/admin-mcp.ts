@@ -133,8 +133,7 @@ export function canonical(v: unknown): string {
 // The confirmation code of a writing call: "<expiry>.<HMAC>" over the token,
 // the tool and its exact arguments, keyed with ADMIN_SECRET, so it works on
 // every instance without stored state and fits no other call or token.
-// shortcut: a code can be used again until it expires (5 minutes), the same
-// change once more; store used codes if that ever matters.
+// A code works once: codeUnused below remembers it until it expires.
 export function confirmCode(secret: string, tokenId: string, tool: string, args: Record<string, unknown>, now: number): string {
   const exp = now + CONFIRM_SECONDS;
   return `${exp}.${createHmac("sha256", `gamewe-mcp-confirm:${secret}`).update(`${tokenId}\n${tool}\n${exp}\n${canonical(args)}`).digest("base64url")}`;
@@ -148,15 +147,27 @@ export function confirmOk(code: string, secret: string, tokenId: string, tool: s
   return got.length === want.length && timingSafeEqual(got, want);
 }
 
-// A cross-site page must not reach the server through the browser of an
-// admin on the same network (DNS rebinding): an Origin, if sent, must be
-// this site's (Host, or X-Forwarded-Host behind a proxy).
-export function originOk(origin: string | null, hosts: (string | null)[]): boolean {
-  if (origin === null) return true;
-  try {
-    const h = new URL(origin).host;
-    return hosts.some((x) => !!x && x.split(",")[0].trim() === h);
-  } catch {
-    return false;
-  }
+// A code is taken at most once (CIS MCP 5.6.1): true the first time, false
+// for a code seen before. Kept until it expires; the codes are signed, so
+// only a valid one is ever stored.
+// shortcut: in the process, like the rate limits (one instance, see the Helm
+// chart); a store in the database once several instances serve the admin API.
+const usedCodes = new Map<string, number>();
+export function codeUnused(code: string, now: number): boolean {
+  if (usedCodes.has(code)) return false;
+  if (usedCodes.size > 1000) for (const [c, exp] of usedCodes) if (exp < now) usedCodes.delete(c);
+  usedCodes.set(code, Number(code.split(".")[0]));
+  return true;
 }
+
+// No browser page may reach the server, neither another site's nor, through
+// DNS rebinding, one under a name that points here (its Host then matches its
+// Origin, so comparing with Host does not help): a request with an Origin is
+// refused (CIS MCP 2.5). MCP clients are programs and send none; a browser
+// could not use the server anyway (the Authorization header needs a CORS
+// preflight, and no answer carries Access-Control-Allow-Origin).
+export const originOk = (origin: string | null) => origin === null;
+
+// HTTP status of a JSON-RPC error: a message that is no valid request (or no
+// JSON) gets 400 (CIS MCP 7.1.2), errors of a valid request 200.
+export const rpcHttpStatus = (code: number) => (code === -32600 || code === -32700 ? 400 : 200);

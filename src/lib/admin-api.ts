@@ -54,7 +54,7 @@ import { overLimit } from "./api";
 import { MCP_DISABLED, apiDisabledResponse } from "./api-switch";
 import { apiEnabled, mcpEnabled } from "./settings";
 import { bearerToken, sameOwner, scopeFor } from "./api-token-core";
-import { CONFIRM_SECONDS, MCP_VERSIONS, RpcError, confirmCode, confirmOk, initializeResult, originOk, rpcError, rpcMessage, rpcResult, toolCall, tools } from "./admin-mcp";
+import { CONFIRM_SECONDS, MCP_VERSIONS, RpcError, codeUnused, confirmCode, confirmOk, initializeResult, originOk, rpcError, rpcHttpStatus, rpcMessage, rpcResult, toolCall, tools } from "./admin-mcp";
 import { authenticate } from "./api-tokens";
 import { adminSecret } from "./auth";
 import { allowed, effectivePerms, isFullAdmin, isPerm, isRoleId, normalizePerms, parsePerms, permsKey, roleOf, type Perm, type PermUser } from "./admin-perms";
@@ -77,7 +77,7 @@ import { ipSorts, type IpSort } from "./table-sort";
 // admin pages (lib/admin-ops.ts). Only "Authorization: Bearer"; cookies are
 // never read, so there is no CSRF surface, and answers are never cached.
 
-const RATE = 300; // requests per address and minute
+const RATE = 300; // requests per address and minute, and per token
 const FAIL_MAX = 20; // failed authentications per address ...
 const FAIL_MINUTES = 15; // ... and window; then blocked for the window
 const BODY_MAX = 64 * 1024;
@@ -141,13 +141,23 @@ export async function adminApi(req: Request, segments: string[]): Promise<Respon
   const auth = token ? await authenticate(token) : null;
   if (!auth) {
     fail(ip);
+    // Never the token itself; its first characters only when it has our shape.
+    console.warn(`gameWE: admin API authentication failed from ${ip} for ${isMcp ? "MCP" : "the API"} (${token ? (/^gwe_[A-Za-z0-9_-]{8}/.test(token) ? `token ${token.slice(0, 12)}` : "malformed token") : "no token"})`);
     return error(401, "unauthorized", "a valid API token is required (Authorization: Bearer gwe_...)", {}, { "www-authenticate": 'Bearer realm="gameWE admin API"' });
   }
-  const busy = await overLimit("admin-api", RATE);
+  const busy = (await overLimit("admin-api", RATE)) || (await overLimit("admin-api-token", RATE, auth.token.id));
   if (busy) return error(429, "rate_limited", `more than ${RATE} requests per minute`, {}, { "retry-after": String(busy) });
 
   const actor: Actor = { user: auth.user, via: auth.token.name };
-  if (isMcp) return mcp(req, method, actor, auth.token);
+  if (isMcp) {
+    // One JSON line per MCP request, reads too (CIS MCP 7.1): who, which
+    // message, which tool, and how it ended.
+    const log: McpLog = { time: new Date().toISOString(), event: "gameWE admin MCP", admin: auth.user.username, token: auth.token.name, prefix: auth.token.prefix, ip, protocol: req.headers.get("mcp-protocol-version") };
+    const res = await mcp(req, method, actor, auth.token, log);
+    log.status = res.status;
+    console.info(JSON.stringify(log));
+    return res;
+  }
   const path = `/admin/${segments.map(encodeURIComponent).join("/")}`;
   let status = 500;
   try {
@@ -175,11 +185,17 @@ export async function adminApi(req: Request, segments: string[]): Promise<Respon
   }
 }
 
+type McpLog = Record<string, unknown>;
+
 // The MCP server (lib/admin-mcp.ts): POST only, one JSON-RPC message, the
 // answer as JSON. Authentication, rate limit and failures are the API's.
-async function mcp(req: Request, method: string, actor: Actor, token: Ctx["token"]): Promise<Response> {
+// Fills log with what the request was (adminApi writes it).
+async function mcp(req: Request, method: string, actor: Actor, token: Ctx["token"], log: McpLog): Promise<Response> {
   if (!token.scopes.includes("mcp")) return error(403, "insufficient_scope", "this token lacks the scope mcp");
-  if (!originOk(req.headers.get("origin"), [req.headers.get("host"), req.headers.get("x-forwarded-host")])) return error(403, "forbidden_origin", "requests from other sites are refused");
+  if (!originOk(req.headers.get("origin"))) {
+    log.origin = req.headers.get("origin");
+    return error(403, "forbidden_origin", "requests from web pages are refused");
+  }
   if (method !== "POST") return error(405, "method_not_allowed", "use POST (stateless, no event stream)", {}, { allow: "POST" });
   const version = req.headers.get("mcp-protocol-version");
   if (version !== null && !MCP_VERSIONS.includes(version)) return error(400, "unsupported_protocol_version", `supported: ${MCP_VERSIONS.join(", ")}`);
@@ -190,27 +206,37 @@ async function mcp(req: Request, method: string, actor: Actor, token: Ctx["token
       throw err;
     }));
     // A notification (e.g. notifications/initialized) gets no answer.
+    log.method = msg.method;
     if (msg.id === undefined) return new Response(null, { status: 202, headers: { "cache-control": "no-store" } });
     id = msg.id;
+    log.id = id;
     const p = msg.params ?? {};
     switch (msg.method) {
       case "initialize":
+        log.protocol = typeof p.protocolVersion === "string" ? p.protocolVersion.slice(0, 20) : log.protocol;
+        log.client = clientInfo(p.clientInfo);
         return json(200, rpcResult(id, initializeResult(p.protocolVersion, process.env.APP_VERSION || "0")));
       case "ping":
         return json(200, rpcResult(id, {}));
       case "tools/list":
         return json(200, rpcResult(id, { tools: tools(actor.user, token.scopes) }));
       case "tools/call": {
+        log.tool = typeof p.name === "string" ? p.name.slice(0, 80) : null;
         const call = toolCall(p.name, p.arguments, actor.user, token.scopes);
-        const out = (isError: boolean, body: unknown) => json(200, rpcResult(id, { content: [{ type: "text", text: JSON.stringify(body) }], isError }));
+        const out = (isError: boolean, body: unknown) => {
+          log.isError = isError;
+          return json(200, rpcResult(id, { content: [{ type: "text", text: JSON.stringify(body) }], isError }));
+        };
         const what = `${call.op.method} /api/v1${call.op.path.replace(/\{(\w+)\}/g, (_, k: string) => call.params[k])}${call.query.size ? `?${call.query}` : ""}`;
         const writing = call.op.method !== "GET";
+        log.operation = what;
         if (writing) {
           // Never on the first call: what would happen, and a code for the second.
           const secret = adminSecret();
           if (!secret) throw new ApiFail(503, "not_available", "ADMIN_SECRET is not set");
           const now = Math.floor(Date.now() / 1000);
           if (call.confirmation === undefined) {
+            log.confirmation = "asked";
             return out(false, {
               confirmationRequired: true,
               tool: call.op.operationId,
@@ -223,30 +249,44 @@ async function mcp(req: Request, method: string, actor: Actor, token: Ctx["token
             });
           }
           if (!confirmOk(call.confirmation, secret, token.id, call.op.operationId, call.args, now)) {
+            log.confirmation = "invalid";
             return out(true, { error: "confirmation_invalid", message: "the confirmation is wrong, expired or for other arguments: call the tool without confirmation to get a new one, and ask the user again" });
           }
+          if (!codeUnused(call.confirmation, now)) {
+            log.confirmation = "used";
+            return out(true, { error: "confirmation_used", message: "this confirmation was used already: call the tool without confirmation to get a new one, and ask the user again" });
+          }
+          log.confirmation = "ok";
         }
-        let status = 500;
         try {
           const r = await handlers[call.op.handler]({ actor, token, op: call.op, params: call.params, query: call.query, body: call.body });
-          status = r.status ?? call.op.status;
+          log.result = r.status ?? call.op.status;
           return out(false, r.body ?? null);
         } catch (err) {
           // The REST error ({ error, message, field? }) for the model to read.
           const f = failure(err);
-          status = f.status;
+          log.result = f.status;
           return out(true, await f.json());
-        } finally {
-          if (writing) console.info(`gameWE: admin MCP ${what} -> ${status} by ${actor.user.username} via token "${token.name}" (${token.prefix})`);
         }
       }
       default:
         throw new RpcError(-32601, `unknown method ${msg.method}`);
     }
   } catch (err) {
-    if (err instanceof RpcError) return json(200, rpcError(id, err.code, err.message));
+    if (err instanceof RpcError) {
+      log.rpcError = err.code;
+      return json(rpcHttpStatus(err.code), rpcError(id, err.code, err.message));
+    }
     return failure(err);
   }
+}
+
+// The client's name and version from initialize, short, for the log.
+function clientInfo(v: unknown): { name: string; version: string } | null {
+  if (!v || typeof v !== "object") return null;
+  const c = v as Record<string, unknown>;
+  const s = (x: unknown) => (typeof x === "string" ? x.slice(0, 80) : "");
+  return { name: s(c.name), version: s(c.version) };
 }
 
 async function readBody(req: Request): Promise<unknown> {

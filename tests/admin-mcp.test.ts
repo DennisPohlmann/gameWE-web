@@ -6,8 +6,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { CONFIRM_SECONDS, MCP_VERSIONS, RpcError, canonical, confirmCode, confirmOk, initializeResult, originOk, rpcMessage, toolCall, tools } from "../src/lib/admin-mcp.ts";
-import { decodeRecord, encodeRecord, scopeFor, tokenScopes } from "../src/lib/api-token-core.ts";
+import { CONFIRM_SECONDS, MCP_VERSIONS, RpcError, canonical, codeUnused, confirmCode, confirmOk, initializeResult, originOk, rpcHttpStatus, rpcMessage, toolCall, tools } from "../src/lib/admin-mcp.ts";
+import { decodeRecord, encodeRecord, mcpWithoutExpiry, scopeFor, tokenScopes } from "../src/lib/api-token-core.ts";
 import { adminOps } from "../src/lib/openapi-admin.ts";
 import { LEVEL80_DEFAULT, allowed, type PermUser } from "../src/lib/admin-perms.ts";
 
@@ -52,13 +52,15 @@ test("the API checks the scope before the level, and MCP needs mcp", () => {
   const api = readFileSync("src/lib/admin-api.ts", "utf8");
   assert.ok(api.indexOf("insufficient_scope") < api.indexOf("needs admin level"), "scope checked first");
   assert.match(api, /if \(!token\.scopes\.includes\("mcp"\)\) return error\(403, "insufficient_scope"/);
-  // A writing tool runs only with a valid confirmation, and is logged.
+  // A writing tool runs only with a valid, unused confirmation.
   const call = api.slice(api.indexOf('case "tools/call"'), api.indexOf("default:", api.indexOf('case "tools/call"')));
-  assert.ok(call.indexOf("confirmOk(") > 0 && call.indexOf("confirmOk(") < call.indexOf("handlers[call.op.handler]"));
-  assert.match(call, /if \(call\.confirmation === undefined\) \{\s*return out\(false/);
-  assert.match(call, /admin MCP \$\{what\}/);
-  // MCP only after the token was authenticated and the rate limit counted.
-  assert.ok(api.indexOf("return mcp(") > api.indexOf('overLimit("admin-api"'));
+  const run = call.indexOf("handlers[call.op.handler]");
+  assert.ok(call.indexOf("confirmOk(") > 0 && call.indexOf("confirmOk(") < call.indexOf("codeUnused(") && call.indexOf("codeUnused(") < run);
+  assert.match(call, /if \(call\.confirmation === undefined\) \{\s*log\.confirmation = "asked";\s*return out\(false/);
+  // Every MCP request is logged, as one JSON line.
+  assert.match(api, /const res = await mcp\(req, method, actor, auth\.token, log\);\s*log\.status = res\.status;\s*console\.info\(JSON\.stringify\(log\)\);/);
+  // MCP only after the token was authenticated and both rate limits counted.
+  assert.ok(api.indexOf("await mcp(") > api.indexOf('overLimit("admin-api-token", RATE, auth.token.id)'));
 });
 
 test("mcp: one JSON-RPC 2.0 message, no batches", () => {
@@ -142,10 +144,32 @@ test("mcp: a confirmation fits only its token, tool and arguments, for 5 minutes
   assert.equal(canonical({ b: [1, { d: 1, c: 2 }], a: null }), '{"a":null,"b":[1,{"c":2,"d":1}]}');
 });
 
-test("mcp: requests from another site's page are refused", () => {
-  assert.ok(originOk(null, ["stats.example.org"]), "no Origin: not a browser");
-  assert.ok(originOk("https://stats.example.org", ["stats.example.org", null]));
-  assert.ok(originOk("https://stats.example.org", ["gamewe:3000", "stats.example.org"]), "behind a proxy");
-  assert.equal(originOk("https://evil.example", ["stats.example.org"]), false);
-  assert.equal(originOk("null", ["stats.example.org"]), false);
+test("mcp: requests from web pages are refused", () => {
+  assert.ok(originOk(null), "no Origin: not a browser");
+  assert.equal(originOk("https://evil.example"), false, "another site, or DNS rebinding with Host = evil.example");
+  assert.equal(originOk("https://stats.example.org"), false, "also this site's own pages");
+  assert.equal(originOk("null"), false);
+});
+
+test("mcp: a confirmation is taken only once", () => {
+  const secret = "0123456789abcdef0123456789abcdef-test-only";
+  const a = confirmCode(secret, "tok1", "adminDeleteServer", { id: 1 }, 5000);
+  const b = confirmCode(secret, "tok1", "adminDeleteServer", { id: 2 }, 5000);
+  assert.ok(codeUnused(a, 5000));
+  assert.equal(codeUnused(a, 5001), false, "a second time");
+  assert.ok(codeUnused(b, 5001), "another code still works");
+});
+
+test("mcp: an invalid JSON-RPC message gets HTTP 400, an error of a valid one 200", () => {
+  assert.equal(rpcHttpStatus(-32600), 400);
+  assert.equal(rpcHttpStatus(-32700), 400);
+  assert.equal(rpcHttpStatus(-32601), 200);
+  assert.equal(rpcHttpStatus(-32602), 200);
+  assert.equal(rpcCode(() => rpcMessage({ jsonrpc: "2.0", id: null, method: "ping" })), -32600, "id null");
+});
+
+test("tokens for MCP need an expiry", () => {
+  assert.ok(mcpWithoutExpiry(["read", "mcp"], 0));
+  assert.equal(mcpWithoutExpiry(["read", "mcp"], 30), false);
+  assert.equal(mcpWithoutExpiry(["read", "write"], 0), false, "without mcp: never stays possible");
 });

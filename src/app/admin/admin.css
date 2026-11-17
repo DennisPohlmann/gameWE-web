@@ -257,6 +257,8 @@ form.search select { max-width: 100%; }
 .pill.warn { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
 .pill.bad { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
 .pill.acc { background: var(--accent-soft); color: var(--accent-text); border-color: transparent; }
+/* A pill with a sentence (e.g. the API token list): wraps like text. */
+.pill.wrap { white-space: normal; border-radius: 10px; }
 .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 .todo { list-style: none; margin: 0; padding: 0; }
 .todo li { display: flex; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--line); align-items: flex-start; }

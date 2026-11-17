@@ -179,6 +179,8 @@ const texts: Record<string, string> = {
   "Please choose read, change or both.": "Kies lezen, wijzigen of beide.",
   "You already have 20 tokens. Revoke one first.": "Je hebt al 20 tokens. Trek er eerst een in.",
   "Name and user name are too long together. Please choose a shorter name.": "Naam en gebruikersnaam zijn samen te lang. Kies een kortere naam.",
+  "A token for the MCP server needs an expiry: please choose one of the offered expiries.": "Een token voor de MCP-server heeft een vervaltermijn nodig: kies een van de aangeboden termijnen.",
+  "MCP without expiry: create a new token with an expiry and revoke this one.": "MCP zonder vervaldatum: maak een nieuw token met vervaltermijn en trek dit in.",
   "The API is turned off under Settings → API: no public API, no admin API, no documentation on /api and no API tokens. Existing tokens stay stored and are valid again once the API is on.": "De API is uitgeschakeld onder Instellingen → API: geen openbare API, geen beheer-API, geen documentatie op /api en geen API-tokens. Bestaande tokens blijven opgeslagen en zijn weer geldig zodra de API aan staat.",
   "Other keys (raw values)": "Overige sleutels (ruwe waarden)",
   "All other rows of hlstats_Options that have no field above: own, old HLstatsX and obsolete keys. The value is stored as typed (at most 255 characters). The collector re-reads the values every minute and replaces invalid ones with the default.": "Alle andere rijen van hlstats_Options die hierboven geen veld hebben: eigen, oude HLstatsX- en verouderde sleutels. De waarde wordt opgeslagen zoals ingevoerd (maximaal 255 tekens). De collector leest de waarden elke minuut opnieuw en vervangt ongeldige door de standaardwaarde.",

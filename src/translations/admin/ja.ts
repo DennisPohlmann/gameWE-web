@@ -184,6 +184,8 @@ const texts: Record<string, string> = {
   "Please choose read, change or both.": "読み取り、変更、または両方を選んでください。",
   "You already have 20 tokens. Revoke one first.": "トークンはすでに20個あります。先に1つ無効化してください。",
   "Name and user name are too long together. Please choose a shorter name.": "名前とユーザー名を合わせると長すぎます。短い名前を選んでください。",
+  "A token for the MCP server needs an expiry: please choose one of the offered expiries.": "MCP サーバー用のトークンには有効期限が必要です。表示されている期限から選んでください。",
+  "MCP without expiry: create a new token with an expiry and revoke this one.": "有効期限のない MCP：有効期限付きの新しいトークンを作成し、このトークンを取り消してください。",
   "The API is turned off under Settings → API: no public API, no admin API, no documentation on /api and no API tokens. Existing tokens stay stored and are valid again once the API is on.": "API は設定 → API でオフになっています: 公開 API、管理 API、/api のドキュメント、API トークンはすべて無効です。既存のトークンは保存されたままで、API をオンにすると再び有効になります。",
   "Other keys (raw values)": "その他のキー (生の値)",
   "All other rows of hlstats_Options that have no field above: own, old HLstatsX and obsolete keys. The value is stored as typed (at most 255 characters). The collector re-reads the values every minute and replaces invalid ones with the default.": "上のフィールドにない hlstats_Options のその他すべての行: 独自のキー、古い HLstatsX のキー、廃止されたキー。値は入力どおりに保存されます (最大255文字)。コレクターは毎分値を読み直し、無効な値は既定値に置き換えます。",

@@ -8,7 +8,7 @@ import { getRow, keptValues, optionList, withColumns } from "@/lib/admin-data";
 import { OpError, assignServersTo, deleteEntity, deleteRole, saveRole, deletePlayer, moveServer, resetRanking, saveEntity, savePrivacy, saveSettings, setGlobalHall, setHallEntry, setRankingBots, setRankingFastdl, setRankingFastdlAccess, setRankingHall, setRankingVac } from "@/lib/admin-ops";
 import { ADMIN_THEME_COOKIE, isAdminTheme } from "@/lib/admin-theme";
 import { basePath } from "@/lib/base-path";
-import { expiryDays, tokenName, tokenScopes } from "@/lib/api-token-core";
+import { expiryDays, mcpWithoutExpiry, tokenName, tokenScopes } from "@/lib/api-token-core";
 import { createToken, purgeTokens, revokeToken } from "@/lib/api-tokens";
 import { adminSecret, brakedCode, confirmIdentity, cookieSecure, cancelPendingLogin, changePassword, login, loginCode, logout, newChallenge, passkeyHost, passkeyLogin, requireAdmin, requirePerm, setAdminLang, setDisplayName, takeChallenge } from "@/lib/auth";
 import { isLang } from "@/translations/languages";
@@ -418,7 +418,7 @@ export async function changePasswordAction(form: FormData) {
 // one needs the password and, with TOTP, the current code. The plain token
 // goes back to the form once (never into a URL, cookie or log). With
 // the API off both actions refuse, like the hidden section.
-export type TokenFormState = { token?: string; name?: string; error?: "name" | "scope" | "expiry" | "wrong" | "code" | "blocked" | "nosecret" | "limit" | "long" | "disabled"; at?: number };
+export type TokenFormState = { token?: string; name?: string; error?: "name" | "scope" | "expiry" | "mcpnever" | "wrong" | "code" | "blocked" | "nosecret" | "limit" | "long" | "disabled"; at?: number };
 
 export async function createApiTokenAction(_prev: TokenFormState, form: FormData): Promise<TokenFormState> {
   const user = await requireAdmin();
@@ -430,6 +430,7 @@ export async function createApiTokenAction(_prev: TokenFormState, form: FormData
   if (!scopes) return { error: "scope", at };
   const days = expiryDays(form.get("expiry"));
   if (days === null) return { error: "expiry", at };
+  if (mcpWithoutExpiry(scopes, days)) return { error: "mcpnever", at };
   const ok = await confirmIdentity(user.username, String(form.get("password") ?? ""), String(form.get("code") ?? ""));
   if (ok !== "ok") return { error: ok, at };
   const res = await createToken(user.username, name, scopes, days);

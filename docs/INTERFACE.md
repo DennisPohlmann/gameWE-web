@@ -196,20 +196,31 @@ are listed once in `src/lib/openapi-admin.ts`, and the router
   (`isError` with the API's `{ error, message }`). **A changing tool never
   acts on its first call:** it answers `confirmationRequired` with the
   operation, its arguments and a `confirmation` code, valid 5 minutes for
-  exactly this token, tool and arguments (an HMAC under `ADMIN_SECRET`, no
-  stored state); only the same call again with that code makes the change,
-  which is logged (`gameWE: admin MCP PATCH /api/v1/admin/servers/3 -> 200
-  by <admin> via token "<name>"`). Changing tools are marked
-  `destructiveHint`, so clients ask before each call as well. A request with an `Origin` header of another site gets `403
-  forbidden_origin` (DNS rebinding). Example client configuration:
+  exactly this token, tool and arguments (an HMAC under `ADMIN_SECRET`);
+  only the same call again with that code makes the change. A code works
+  once: used again it gets `isError` with `confirmation_used` (the server
+  keeps used codes in memory until they expire). Changing tools are marked
+  `destructiveHint`, so clients ask before each call as well. A request with
+  an `Origin` header gets `403 forbidden_origin`: MCP clients are programs,
+  and no web page may reach the server (also not through DNS rebinding).
+  A message that is no valid JSON-RPC request (e.g. `"id": null`, code
+  `-32600`) or no JSON (`-32700`) gets HTTP `400`, other JSON-RPC errors
+  `200`. Every MCP request is logged as one JSON line, reads too:
+  `{"time":"2026-11-17T16:00:00.000Z","event":"gameWE admin MCP","admin":"<admin>","token":"<name>","prefix":"gwe_AbCdEfGh","ip":"203.0.113.7","protocol":"2025-11-25","method":"tools/call","id":7,"tool":"adminUpdateServer","operation":"PATCH /api/v1/admin/servers/3","confirmation":"ok","result":200,"isError":false,"status":200}`
+  (`client` with name and version on `initialize`, `confirmation` `asked`,
+  `invalid`, `used` or `ok`, `rpcError` with the JSON-RPC code). Tokens
+  with `mcp` always expire (7 to 365 days); older ones without expiry keep
+  working and are marked in the list. Example client configuration:
   `{"type": "http", "url": "https://stats.example.org/api/v1/admin/mcp",
   "headers": {"Authorization": "Bearer gwe_..."}}`.
 - **Authentication:** only `Authorization: Bearer gwe_...`. Cookies and
   query parameters are never read, so there is no CSRF; answers have
   `Cache-Control: no-store` and no CORS header. A missing, wrong, expired or
   revoked token, or one whose admin was deleted or is below level 80, gets
-  `401` without details; 20 failed authentications from one address in 15
-  minutes block it for 15 minutes (`429`), and every address may make 300
+  `401` without details and is logged (`gameWE: admin API authentication
+  failed from <address> for MCP (token gwe_AbCdEfGh)`, never the whole
+  token); 20 failed authentications from one address in 15 minutes block it
+  for 15 minutes (`429`), and every address and every token may make 300
   requests a minute.
 - **Rights:** the token acts as its admin with their level and rights,
   re-read on every request: level 100 may do everything, level 80 only

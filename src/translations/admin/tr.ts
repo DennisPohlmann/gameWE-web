@@ -184,6 +184,8 @@ const texts: Record<string, string> = {
   "Please choose read, change or both.": "Okuma, değiştirme veya ikisini seçin.",
   "You already have 20 tokens. Revoke one first.": "Zaten 20 belirteciniz var. Önce birini iptal edin.",
   "Name and user name are too long together. Please choose a shorter name.": "Ad ve kullanıcı adı birlikte çok uzun. Lütfen daha kısa bir ad seçin.",
+  "A token for the MCP server needs an expiry: please choose one of the offered expiries.": "MCP sunucusu için bir belirtecin geçerlilik süresi olmalıdır: sunulan sürelerden birini seçin.",
+  "MCP without expiry: create a new token with an expiry and revoke this one.": "Süresiz MCP: süreli yeni bir belirteç oluşturun ve bunu iptal edin.",
   "The API is turned off under Settings → API: no public API, no admin API, no documentation on /api and no API tokens. Existing tokens stay stored and are valid again once the API is on.": "API, Ayarlar → API altında kapalı: herkese açık API, yönetim API'si, /api belgeleri ve API belirteçleri yok. Mevcut belirteçler saklanır ve API açıldığında yeniden geçerli olur.",
   "Other keys (raw values)": "Diğer anahtarlar (ham değerler)",
   "All other rows of hlstats_Options that have no field above: own, old HLstatsX and obsolete keys. The value is stored as typed (at most 255 characters). The collector re-reads the values every minute and replaces invalid ones with the default.": "hlstats_Options içinde yukarıda alanı olmayan diğer tüm satırlar: kendi anahtarlarınız, eski HLstatsX anahtarları ve kullanılmayanlar. Değer yazıldığı gibi saklanır (en fazla 255 karakter). Toplayıcı değerleri her dakika yeniden okur ve geçersiz olanları varsayılanla değiştirir.",

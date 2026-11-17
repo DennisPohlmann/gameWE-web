@@ -184,6 +184,8 @@ const texts: Record<string, string> = {
   "Please choose read, change or both.": "Zvolte čtení, změny nebo obojí.",
   "You already have 20 tokens. Revoke one first.": "Už máte 20 tokenů. Nejdřív jeden zneplatněte.",
   "Name and user name are too long together. Please choose a shorter name.": "Název a uživatelské jméno jsou dohromady příliš dlouhé. Zvolte kratší název.",
+  "A token for the MCP server needs an expiry: please choose one of the offered expiries.": "Token pro server MCP potřebuje platnost: vyberte jednu z nabízených dob platnosti.",
+  "MCP without expiry: create a new token with an expiry and revoke this one.": "MCP bez vypršení: vytvořte nový token s platností a tento zrušte.",
   "The API is turned off under Settings → API: no public API, no admin API, no documentation on /api and no API tokens. Existing tokens stay stored and are valid again once the API is on.": "API je vypnuté v Nastavení → API: žádné veřejné API, žádné administrační API, žádná dokumentace na /api a žádné API tokeny. Existující tokeny zůstanou uložené a po zapnutí API budou znovu platné.",
   "Other keys (raw values)": "Další klíče (surové hodnoty)",
   "All other rows of hlstats_Options that have no field above: own, old HLstatsX and obsolete keys. The value is stored as typed (at most 255 characters). The collector re-reads the values every minute and replaces invalid ones with the default.": "Všechny další řádky hlstats_Options, které nemají pole výše: vlastní klíče, staré klíče HLstatsX a zastaralé klíče. Hodnota se uloží tak, jak je zadaná (nejvýše 255 znaků). Kolektor hodnoty každou minutu znovu načítá a neplatné nahrazuje výchozími.",

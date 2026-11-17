@@ -12,7 +12,7 @@ import { ConfirmButton } from "@/components/admin/confirm-button";
 import { Icon, type IconName } from "@/components/admin/icons";
 import { TotpSetup } from "@/components/admin/totp-setup";
 import { Section } from "@/components/ui";
-import { EXPIRY_DAYS } from "@/lib/api-token-core";
+import { EXPIRY_DAYS, mcpWithoutExpiry } from "@/lib/api-token-core";
 import { listTokens } from "@/lib/api-tokens";
 import { adminLangOf, adminSecret, displayNames, requireAdmin } from "@/lib/auth";
 import { noAutofill } from "@/lib/autofill";
@@ -359,7 +359,15 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
                       <td data-l={`${a.tokCreated}:`}>{fmtDateTime(t.created, lang)}</td>
                       <td data-l={`${a.tokLastUsed}:`}>{t.lastUsed ? fmtDateTime(t.lastUsed, lang) : a.tokNotUsed}</td>
                       <td data-l={`${a.tokExpires}:`}>
-                        {!t.expires ? a.tokNever : t.expires <= now ? <span className="pill bad">{a.tokExpired}</span> : fmtDateTime(t.expires, lang)}
+                        {!t.expires ? (
+                          mcpWithoutExpiry(t.scopes, 0) ? (
+                            <>
+                              {a.tokNever} <span className="pill warn wrap">{a.tokMcpNever}</span>
+                            </>
+                          ) : (
+                            a.tokNever
+                          )
+                        ) : t.expires <= now ? <span className="pill bad">{a.tokExpired}</span> : fmtDateTime(t.expires, lang)}
                       </td>
                       <td className="end">
                         <form action={revokeApiTokenAction}>
@@ -405,6 +413,7 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
                   name: a.tokErrName,
                   scope: a.tokErrScope,
                   expiry: a.tokErrExpiry,
+                  mcpnever: a.tokErrMcpNever,
                   wrong: a.tokErrWrong,
                   code: a.tokErrCode,
                   blocked: a.pwBlocked,

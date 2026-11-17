@@ -486,7 +486,9 @@ https://<site>/api/v1/admin/mcp --header "Authorization: Bearer gwe_..."`)
 uses the admin area through `/api/v1/admin/mcp`, with the reading tools if
 read is ticked and the changing ones if change is ticked. Before every
 change the server answers only what it would do and a confirmation code;
-the AI client must ask you and call again with the code (valid 5 minutes).
+the AI client must ask you and call again with the code (valid 5 minutes,
+once). A token with MCP must expire (7 to 365 days); the list marks older
+MCP tokens without expiry, replace them with a new one.
 A request the token may not make gets `403 insufficient_scope`; tokens from
 before this choice can read and change, but not use MCP. Admin → Settings →
 API → Turn the MCP server on (level 100) switches the MCP server off for all

@@ -179,6 +179,8 @@ const texts: Record<string, string> = {
   "Please choose read, change or both.": "Выберите чтение, изменение или оба.",
   "You already have 20 tokens. Revoke one first.": "У вас уже 20 токенов. Сначала отзовите один.",
   "Name and user name are too long together. Please choose a shorter name.": "Название и имя пользователя вместе слишком длинные. Выберите название короче.",
+  "A token for the MCP server needs an expiry: please choose one of the offered expiries.": "Токену для сервера MCP нужен срок действия: выберите один из предложенных сроков.",
+  "MCP without expiry: create a new token with an expiry and revoke this one.": "MCP без срока действия: создайте новый токен со сроком действия и отзовите этот.",
   "The API is turned off under Settings → API: no public API, no admin API, no documentation on /api and no API tokens. Existing tokens stay stored and are valid again once the API is on.": "API отключён в разделе «Настройки → API»: нет публичного API, admin API, документации на /api и API-токенов. Существующие токены сохраняются и снова действуют, когда API включён.",
   "Other keys (raw values)": "Прочие ключи (сырые значения)",
   "All other rows of hlstats_Options that have no field above: own, old HLstatsX and obsolete keys. The value is stored as typed (at most 255 characters). The collector re-reads the values every minute and replaces invalid ones with the default.": "Все остальные строки hlstats_Options без поля выше: собственные, старые ключи HLstatsX и устаревшие. Значение сохраняется как введено (не более 255 символов). Коллектор перечитывает значения каждую минуту и заменяет недопустимые значением по умолчанию.",

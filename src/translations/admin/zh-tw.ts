@@ -179,6 +179,8 @@ const texts: Record<string, string> = {
   "Please choose read, change or both.": "請選擇讀取、變更或兩者。",
   "You already have 20 tokens. Revoke one first.": "你已有 20 個權杖。請先撤銷一個。",
   "Name and user name are too long together. Please choose a shorter name.": "名稱和使用者名稱合起來太長。請選擇較短的名稱。",
+  "A token for the MCP server needs an expiry: please choose one of the offered expiries.": "MCP 伺服器的權杖需要有效期限：請選擇所提供的期限之一。",
+  "MCP without expiry: create a new token with an expiry and revoke this one.": "MCP 無有效期限：請建立一個有有效期限的新權杖，並撤銷此權杖。",
   "The API is turned off under Settings → API: no public API, no admin API, no documentation on /api and no API tokens. Existing tokens stay stored and are valid again once the API is on.": "API 已在「設定 → API」中關閉：沒有公開 API、沒有管理 API、/api 上沒有文件，也沒有 API 權杖。現有權杖仍會保存，API 重新開啟後即再次有效。",
   "Other keys (raw values)": "其他鍵（原始值）",
   "All other rows of hlstats_Options that have no field above: own, old HLstatsX and obsolete keys. The value is stored as typed (at most 255 characters). The collector re-reads the values every minute and replaces invalid ones with the default.": "hlstats_Options 中所有在上方沒有對應欄位的其他列：自訂鍵、舊的 HLstatsX 鍵和已淘汰的鍵。值會依輸入原樣儲存（最多 255 個字元）。收集器每分鐘重新讀取這些值，並用預設值取代無效值。",
