@@ -48,7 +48,6 @@ export default async function PanelLayout({ children }: { children: ReactNode })
   const label = (key: string) => ((l) => (l ? tr(l, lang) : key))(entities.find((e) => e.key === key)?.label);
   const text: NavText = {
     ...Object.fromEntries(Object.entries(u).filter(([, v]) => typeof v === "string")),
-    toSite: a.toSite,
     logout: a.logout,
     servers: label("servers"),
     players: label("players"),
@@ -137,10 +136,6 @@ export default async function PanelLayout({ children }: { children: ReactNode })
               <Icon name="lock" />
               {u.myAccount}
             </Link>
-            <a href={`${basePath}/`} target="_blank" rel="noopener">
-              <Icon name="external" />
-              {a.toSite}
-            </a>
             <div className="adm-menu-row">
               <span>{u.theme}</span>
               <form action={adminThemeAction} className="adm-seg">

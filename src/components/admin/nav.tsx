@@ -45,7 +45,6 @@ export type NavText = Record<
   | "privacy"
   | "areas"
   | "start"
-  | "toSite"
   | "logout"
   | "servers"
   | "players"

@@ -614,9 +614,8 @@ stored for their account (`gamewe_adminlang_<hash of the user name>`, hidden
 on the raw page, removed with the user) and wins in the admin area over the
 language cookie and the browser, on every device and after signing out;
 "Automatic" removes it. Picked on a public page, the language menu only sets
-the cookie. "To the website" in the top bar and in the
-user menu opens the public pages in a new tab (on phones the top bar shows
-only its icon). The top bar has three areas, on phones a bar
+the cookie. "To the website" in the top bar opens the public pages in a
+new tab (on phones the top bar shows only its icon). The top bar has three areas, on phones a bar
 at the bottom; each area has its own side menu (on phones a drawer behind the
 menu button), and lists turn into cards on narrow screens:
 
