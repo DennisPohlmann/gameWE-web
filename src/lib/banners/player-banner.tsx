@@ -2,7 +2,7 @@ import "server-only";
 import { cachedBanner } from "./cache";
 import { bannerFonts } from "./fonts";
 import { Backdrop } from "./backdrop";
-import { htmlBanner, Linked, onColor, SideStrip, wideBanner } from "./wide-banner";
+import { htmlBanner, Linked, onColor, SideStrip, Stripe, wideBanner } from "./wide-banner";
 import { imageLang, optionsKey, type BannerOptions } from "./options";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -191,7 +191,8 @@ function drawA(d: Data) {
     </div>
   );
   return (
-    <div style={{ width: "100%", height: "100%", display: "flex", border: `1px solid ${th.frame}`, borderTop: th.stripe ? `3px solid ${th.stripe}` : `1px solid ${th.frame}`, fontFamily: "Inter" }}>
+    <div style={{ width: "100%", height: "100%", display: "flex", border: `1px solid ${th.frame}`, borderTop: th.stripe ? `3px solid ${th.stripe}` : `1px solid ${th.frame}`, position: "relative", fontFamily: "Inter" }}>
+      <Stripe th={th} />
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: 80, padding: "0 7px", background: th.side, borderRight: `1px solid ${th.border}` }}>
         {d.rank ? <RankBadge name={d.rank.name} size={46} plain /> : <div style={{ display: "flex", width: 46, height: 46 }} />}
         <div style={{ display: "flex", fontSize: 8, color: th.sideText, marginTop: 2, maxWidth: 66, overflow: "hidden", whiteSpace: "nowrap", justifyContent: "center" }}>{d.rank?.title ?? ""}</div>
@@ -433,7 +434,8 @@ function drawD(d: Data) {
     </span>
   );
   return (
-    <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", border: `1px solid ${th.frame}`, borderTop: th.stripe ? `3px solid ${th.stripe}` : `1px solid ${th.frame}`, fontFamily: "Inter" }}>
+    <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", border: `1px solid ${th.frame}`, borderTop: th.stripe ? `3px solid ${th.stripe}` : `1px solid ${th.frame}`, position: "relative", fontFamily: "Inter" }}>
+      <Stripe th={th} />
       <div style={{ display: "flex", flex: 1, padding: "6px 9px 0" }}>
         <div style={{ display: "flex", flexDirection: "column", width: 170, overflow: "hidden" }}>
           <div style={{ display: "flex", alignItems: "center" }}>

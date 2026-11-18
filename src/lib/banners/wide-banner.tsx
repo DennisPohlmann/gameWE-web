@@ -102,8 +102,15 @@ const frame = (th: ImageTheme, column = false) =>
     flexDirection: column ? "column" : "row",
     border: `1px solid ${th.frame}`,
     borderTop: th.stripe ? `3px solid ${th.stripe}` : `1px solid ${th.frame}`,
+    position: "relative",
     fontFamily: "Inter",
   }) as const;
+
+// The stripe again as the first child of a frame with the stripe on top, over
+// the ends of the side borders: Satori paints the corners in the side colour,
+// a light notch at both ends (and beside the side strip) on light frames.
+export const Stripe = ({ th }: { th: ImageTheme }) =>
+  th.stripe ? <div style={{ display: "flex", position: "absolute", top: -3, left: -1, right: -1, height: 3, background: th.stripe }} /> : null;
 
 function Flag({ src, h = 12 }: { src: string | null; h?: number }) {
   // eslint-disable-next-line @next/next/no-img-element
@@ -203,6 +210,7 @@ function drawA(w: Wide, side?: React.ReactNode) {
   const sideLabel = { display: "flex", fontSize: 8, fontWeight: 700, color: th.sideText, letterSpacing: 0.3, textTransform: "uppercase", whiteSpace: "nowrap" } as const;
   return (
     <div style={frame(th)}>
+      <Stripe th={th} />
       {side ? (
         <div style={{ display: "flex", flexDirection: "column", width: SIDE, padding: "4px 6px", background: th.side }}>{side}</div>
       ) : w.graph ? (
@@ -307,6 +315,7 @@ function drawB(w: Wide) {
   });
   return (
     <div style={frame(th)}>
+      <Stripe th={th} />
       <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
       <div style={{ display: "flex", flex: 1, alignItems: "center", padding: "0 12px" }}>
         <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
@@ -547,6 +556,7 @@ function drawTall(w: Wide) {
   const small = { display: "flex", fontSize: 8, color: th.muted, letterSpacing: 0.5, textTransform: "uppercase", whiteSpace: "nowrap" } as const;
   return (
     <div style={{ ...frame(th, true), padding: "8px 9px 7px" }}>
+      <Stripe th={th} />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={small}>{w.kind}</div>
         {w.game ? <GameValue g={w.game} h={14} size={12} color={th.text} /> : null}
@@ -621,6 +631,7 @@ function drawTallStrip(w: Wide) {
   return (
     <SideStrip th={th} label={w.game ? `${w.game.short} · ${w.name}` : w.name} href={w.href} height={400} big icon={w.game?.icon}>
       <div style={{ ...frame(th, true), padding: "6px 6px 5px" }}>
+        <Stripe th={th} />
         {sec(
           w.kind,
           <div style={{ display: "flex", alignItems: "center", fontSize: 9.5 }}>
