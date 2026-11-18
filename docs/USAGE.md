@@ -216,6 +216,13 @@ website therefore computes some things itself:
   `/api/v1/players/{id}`): the same difference for today (the site's `TZ`
   day), with the tooltip "Points today so far" on hover, focus or tap.
   Nothing is shown (`null`) while the player has not played today.
+- **Explanations in the profile header**: position, points, activity, the
+  key figures except deaths (kills with the starred number below them, the
+  kills of the last 14 days; K/D, HS/kill, kills per minute, longest kill
+  streak) and the labels of the favourites show what they mean in a tooltip
+  on hover, focus or tap (the same box as today's points; on a favourite only
+  the label, the name beside it is a link). The activity text names the
+  setting `MinActivity` in days.
 - **Sessions table**: "Wins" are the rounds won that day (`wins`; gameWE
   records no GunGame wins), "-" when there are none; "Accuracy" is "-" on days
   without weapon statistics (`shots` = 0, e.g. games or servers that do not

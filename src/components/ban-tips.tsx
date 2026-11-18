@@ -3,8 +3,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 // The badges and the "!" of ban-badges.tsx (rendered on the server), and
-// today's change under the points of the player page.
-const SEL = ".ban-type[data-tip], .ban-mark[data-tip], .p-today[data-tip]";
+// today's change under the points and the explained figures (p-tip) of the player page.
+const SEL = ".ban-type[data-tip], .ban-mark[data-tip], .p-today[data-tip], .p-tip[data-tip]";
 
 const banEl = (t: EventTarget | null) => (t instanceof Element ? t.closest(SEL) : null);
 

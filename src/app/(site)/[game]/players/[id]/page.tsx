@@ -264,12 +264,12 @@ export default async function PlayerPage({ params, searchParams }: Props) {
             </div>
           </div>
           <div className="p-big">
-            <div className="p-place">
+            <Tip className="p-place" tip={t.tipPosition}>
               <small>{t.position}</small>
               <b>{p.hideranking || p.inactive ? <i className="muted">{t.notListed}</i> : position ? `#${fmtNum(position, lang)}` : "-"}</b>
               {position && ranked ? <span>{fill(t.positionOf, { n: fmtNum(Math.max(ranked, Number(position)), lang) })}</span> : null}
-            </div>
-            <div>
+            </Tip>
+            <Tip tip={t.tipPoints}>
               <small>{t.points}</small>
               <b>{p.hideranking ? "–" : fmtNum(p.skill, lang)}</b>
               {p.hideranking || today === null ? null : (
@@ -280,42 +280,42 @@ export default async function PlayerPage({ params, searchParams }: Props) {
                   {fmtNum(today, lang)}
                 </em>
               )}
-            </div>
-            <div>
+            </Tip>
+            <Tip tip={fill(t.tipActivity, { days: settings.activityDays })}>
               <small>{t.activity}</small>
               <b>{ltrNumbers(`${activity(p.last_event, settings.activityDays)} %`)}</b>
               <span className="p-meter">
                 <span style={{ width: `${activity(p.last_event, settings.activityDays)}%` }} />
               </span>
-            </div>
+            </Tip>
           </div>
         </div>
         <div className="p-kpis">
-          <div className="p-card">
+          <Tip className="p-card" tip={t.tipKills}>
             <small>{t.kills}</small>
             <b>{fmtNum(p.kills, lang)}</b>
             <em>{ltrNumbers(`${fmtNum(kills14, lang)}*`)}</em>
-          </div>
+          </Tip>
           <div className="p-card">
             <small>{t.deaths}</small>
             <b>{fmtNum(p.deaths, lang)}</b>
           </div>
-          <div className="p-card">
+          <Tip className="p-card" tip={t.tipKpd}>
             <small>{t.kpdLong}</small>
             <b>{n2(kpd(p.kills, p.deaths))}</b>
-          </div>
-          <div className="p-card">
+          </Tip>
+          <Tip className="p-card" tip={t.tipHpk}>
             <small>{t.hpkLong}</small>
             <b>{ltrNumbers(pc(ratio(p.headshots, p.kills)))}</b>
-          </div>
-          <div className="p-card">
+          </Tip>
+          <Tip className="p-card" tip={t.tipKpm}>
             <small>{t.killsPerMin}</small>
             <b>{n2(kpm(p.kills, p.connection_time))}</b>
-          </div>
-          <div className="p-card">
+          </Tip>
+          <Tip className="p-card" tip={t.tipStreak}>
             <small>{t.killStreak}</small>
             <b>{fmtNum(p.kill_streak, lang)}</b>
-          </div>
+          </Tip>
         </div>
         {fav || maps.length || favTeam ? (
           <div className="p-card p-favs">
@@ -323,13 +323,17 @@ export default async function PlayerPage({ params, searchParams }: Props) {
             <div>
               {maps.length ? (
                 <div>
-                  <small>{t.favMap}</small>
+                  <Tip tip={t.tipFavMap}>
+                    <small>{t.favMap}</small>
+                  </Tip>
                   <MapLink game={game} id={maps[0].id} name={maps[0].map} />
                 </div>
               ) : null}
               {fav ? (
                 <div>
-                  <small>{t.favWeapon}</small>
+                  <Tip tip={t.tipFavWeapon}>
+                    <small>{t.favWeapon}</small>
+                  </Tip>
                   <Link prefetch={false} href={`/${game}/weapons/${encodeURIComponent(fav.code)}`}>
                     <bdi>{fav.name}</bdi>
                   </Link>
@@ -337,7 +341,9 @@ export default async function PlayerPage({ params, searchParams }: Props) {
               ) : null}
               {favTeam ? (
                 <div>
-                  <small>{t.favTeam}</small>
+                  <Tip tip={t.tipFavTeam}>
+                    <small>{t.favTeam}</small>
+                  </Tip>
                   <span><bdi>{favTeam.name}</bdi></span>
                 </div>
               ) : null}
@@ -978,6 +984,19 @@ function Row({ k, v }: { k: string; v: React.ReactNode }) {
       <td className="stats-key">{k}:</td>
       <td>{ltrNumbers(v)}</td>
     </tr>
+  );
+}
+
+// A head-card figure with its explanation (for a favourite only its label,
+// the name beside it is a link a tap would follow): tooltip on hover, focus
+// and tap (BanTips, class p-tip), the same text for screen readers in a
+// hidden span.
+function Tip({ tip, className, children }: { tip: string; className?: string; children: React.ReactNode }) {
+  return (
+    <div className={className ? `${className} p-tip` : "p-tip"} tabIndex={0} data-tip={tip}>
+      {children}
+      <span className="sr-only">{tip}</span>
+    </div>
   );
 }
 
