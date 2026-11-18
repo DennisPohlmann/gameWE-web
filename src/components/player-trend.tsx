@@ -6,7 +6,8 @@ import { dateFormat, localeOf } from "@/lib/format";
 import type { Lang } from "@/lib/i18n";
 
 // "Player trend" of the profile and the sessions page: points per day (line,
-// left axis) and the points gained or lost that day (bars, right axis).
+// left axis) and the points gained or lost that day (bars, right axis), only
+// on the days the player played; a bar is the step since the last such day.
 export function PlayerTrend({
   history,
   before,
@@ -26,7 +27,7 @@ export function PlayerTrend({
     history.map((h) => ({ day: String(h.eventTime).slice(0, 10), skill: Number(h.skill), change: Number(h.skill_change) })),
     before,
     siteDay(),
-  );
+  ).filter((d) => d.played);
   if (!trend.length) return <span className="muted">{t.noData}</span>;
   // Hover text of each day, e.g. "Sa., 25.10.2026".
   const dayTip = dateFormat(localeOf(locale), { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" });
@@ -45,7 +46,7 @@ export function PlayerTrend({
 }
 
 // Second chart of the sessions page: kills and deaths per day, over the same
-// calendar days as the player trend (0 on days without play).
+// played days as the player trend.
 export function PlayerKillsTrend({
   history,
   before,
@@ -62,7 +63,9 @@ export function PlayerKillsTrend({
     history.map((h) => ({ day: String(h.eventTime).slice(0, 10), skill: Number(h.skill), change: Number(h.skill_change) })),
     before,
     siteDay(),
-  ).map((d) => d.day);
+  )
+    .filter((d) => d.played)
+    .map((d) => d.day);
   if (!days.length) return <span className="muted">{t.noData}</span>;
   const val = (d: string, k: "kills" | "deaths") => Number(byDay.get(d)?.[k] ?? 0);
   return (
