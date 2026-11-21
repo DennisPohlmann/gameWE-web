@@ -14,7 +14,8 @@ radar picture of the heatmap.
   pictures, property of Valve Corporation; see `dods/LICENSE.txt`.
 - `hl2mp/`: the 7 stock maps of Half-Life 2 Deathmatch, the same kind of
   pictures, property of Valve Corporation; see `hl2mp/LICENSE.txt`.
-- `l4d/`: the 26 campaign maps of Left 4 Dead, the game's own map
+- `l4d/`: the 26 campaign maps of Left 4 Dead and their 20 versus versions
+  (`l4d_vs_<map>`, the same picture), the game's own map
   pictures, property of Valve Corporation; see `l4d/LICENSE.txt`.
 - `l4d2/`: the 57 campaign maps of Left 4 Dead 2 (c7 and c8 with the
   picture of the same Left 4 Dead map), the game's own map pictures,

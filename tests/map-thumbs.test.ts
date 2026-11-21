@@ -200,3 +200,20 @@ test("findThumbs takes Day of Defeat's manual pictures", () => {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+// Left 4 Dead's versus maps are the campaign maps: same picture.
+test("findThumbs gives l4d_vs_<map> the picture of l4d_<map>", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "thumbs-"));
+  try {
+    mkdirSync(path.join(root, "maps"), { recursive: true });
+    mkdirSync(path.join(root, "materials/vgui/maps"), { recursive: true });
+    writeFileSync(path.join(root, "maps/l4d_farm01_hilltop.bsp"), "x");
+    writeFileSync(path.join(root, "maps/l4d_vs_farm01_hilltop.bsp"), "x");
+    writeFileSync(path.join(root, "materials/vgui/maps/l4d_farm01_hilltop.vtf"), "hilltop");
+    const got = findThumbs([root]);
+    assert.equal(got.get("l4d_vs_farm01_hilltop")?.toString(), "hilltop");
+    assert.equal(got.get("l4d_farm01_hilltop")?.toString(), "hilltop");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

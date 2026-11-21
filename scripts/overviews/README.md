@@ -90,7 +90,8 @@ for other games each operator makes them from their own installation.
 npm run map-thumbs -- "<game folder, e.g. .../Counter-Strike Source/cstrike>" <game code, e.g. css> [<out folder>]
 ```
 
-Left 4 Dead 2 keeps its maps in several folders (its ports of the Left 4
+Left 4 Dead's versus maps (`l4d_vs_<map>`) get the picture of the campaign
+map. Left 4 Dead 2 keeps its maps in several folders (its ports of the Left 4
 Dead campaigns c7 and c8 get the picture of the same Left 4 Dead map): give them all in one
 argument, separated by `:` (Linux; `;` on Windows), a later folder wins:
 `".../Left 4 Dead 2/left4dead2:.../left4dead2_dlc1:.../left4dead2_dlc2:.../left4dead2_dlc3:.../update"`.
