@@ -3,8 +3,8 @@
 // materials/vgui/maps/<map>.vtf, taken only for a map of the game, there
 // are campaign and background pictures beside them; CS:GO: the screenshots
 // materials/panorama/images/map_icons/screenshots/360p/<map>.png, also only
-// for a map of the game, made 256 pixels wide), from the game's VPK
-// archives and loose files, as <out>/<game>/<map>.png for the website's
+// for a map of the game), from the game's VPK archives and loose files,
+// at most 256 pixels wide as <out>/<game>/<map>.webp for the website's
 // map-images folder (src/lib/map-images.ts), made from the operator's own
 // game installation; the built-in map-images/css came from it. See README.md.
 //
@@ -13,9 +13,8 @@
 // Several game folders (Left 4 Dead 2: left4dead2, its DLC folders and
 // update) go in one argument, separated by the path list separator
 // (":" on Linux, ";" on Windows); a later folder wins.
-import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, writeFileSync } from "node:fs";
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, readdirSync } from "node:fs";
 import path from "node:path";
-import { encodePng } from "./draw.ts";
 
 const THUMB = /^materials\/vgui\/maps\/(menu_thumb_)?([a-z0-9][a-z0-9_.+-]{0,63})\.vtf$/;
 const BSP = /^maps\/([a-z0-9][a-z0-9_.+-]{0,63})\.bsp$/;
@@ -207,28 +206,27 @@ async function main() {
   mkdirSync(outDir, { recursive: true });
   let made = 0;
   for (const [map, vtf] of findThumbs(gameDir.split(path.delimiter).filter(Boolean))) {
-    // A screenshot (PNG) becomes a WebP: as a PNG a photo is ten times the size.
-    const shot = vtf.subarray(0, 4).equals(PNG);
-    const out = path.join(outDir, `${map}.${shot ? "webp" : "png"}`);
+    // WebP: as a PNG a picture is about four times the size (ten for a photo).
+    const out = path.join(outDir, `${map}.webp`);
     // Pictures already there (your own) stay.
     if (["png", "webp", "jpg", "jpeg"].some((ext) => existsSync(path.join(outDir, `${map}.${ext}`)))) {
       console.log(`${map}: kept, a picture is there`);
       continue;
     }
     try {
-      if (shot) {
-        // 640x360 and more: the banner's box is 248x92, so 256 wide is plenty.
-        const sharp = (await import("sharp")).default;
-        const info = await sharp(vtf, { limitInputPixels: 50_000_000 }).resize({ width: 256, withoutEnlargement: true }).webp({ quality: 80 }).toFile(out);
-        made++;
-        console.log(`${map}: ${out} (${info.width}x${info.height})`);
-        continue;
+      const sharp = (await import("sharp")).default;
+      let img;
+      if (vtf.subarray(0, 4).equals(PNG)) {
+        img = sharp(vtf, { limitInputPixels: 50_000_000 });
+      } else {
+        const { width, height, rgba } = decodeVtf(vtf);
+        const h = contentHeight(rgba, width, height);
+        img = sharp(rgba.subarray(0, width * h * 4), { raw: { width, height: h, channels: 4 } });
       }
-      const { width, height, rgba } = decodeVtf(vtf);
-      const h = contentHeight(rgba, width, height);
-      writeFileSync(out, encodePng(rgba.subarray(0, width * h * 4), width, h));
+      // The banner's box is 248x92, so 256 wide is plenty (CS:GO's screenshots are 640x360).
+      const info = await img.resize({ width: 256, withoutEnlargement: true }).webp({ quality: 80 }).toFile(out);
       made++;
-      console.log(`${map}: ${out} (${width}x${h})`);
+      console.log(`${map}: ${out} (${info.width}x${info.height})`);
     } catch (e) {
       console.error(`${map}: ${(e as Error).message}`);
     }

@@ -1,12 +1,13 @@
 Map thumbnails: Day of Defeat: Source (dods)
 
-Files:   <map>.png for the 9 stock maps (dod_anzio, dod_argentan,
+Files:   <map>.webp for the 9 stock maps (dod_anzio, dod_argentan,
          dod_avalanche, dod_colmar, dod_donner, dod_flash, dod_jagd,
          dod_kalt, dod_palermo), 128 x 97
 Source:  the game's own menu pictures
          (materials/vgui/maps/menu_thumb_<map>.vtf in dod_pak_dir.vpk),
-         converted to PNG with scripts/overviews/thumbs.ts on 2026-11-13
-         (npm run map-thumbs), the empty rows at the bottom cut off
+         converted with scripts/overviews/thumbs.ts on 2026-11-13
+         (npm run map-thumbs), the empty rows at the bottom cut off;
+         WebP since 2026-11-21
 Owner:   Valve Corporation. Day of Defeat, Day of Defeat: Source and these
          pictures are the property of Valve Corporation.
 License: not covered by gameWE's license (GPL-3.0-or-later) and not licensed

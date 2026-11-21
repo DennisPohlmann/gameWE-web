@@ -69,9 +69,9 @@ pictures with a dark floor, 45 for the CS:GO pictures).
 `materials/vgui/maps/<map>.vtf`, only for a map of the game, its
 `maps/<map>.bsp`; CS:GO: the screenshots
 `materials/panorama/images/map_icons/screenshots/360p/<map>.png`, also only
-for a map of the game, written 256 pixels wide as WebP; from the `*_dir.vpk`
-archives and loose files) and writes them as PNG to the website's map-images folder
-(`<out>/<game>/<map>.png`, default `/var/lib/gamewe/web/map-images`, see
+for a map of the game; from the `*_dir.vpk` archives and loose files) and
+writes them at most 256 pixels wide as WebP to the website's map-images folder
+(`<out>/<game>/<map>.webp`, default `/var/lib/gamewe/web/map-images`, see
 [INSTALLATION.md](../../docs/INSTALLATION.md#5-own-templates-and-map-pictures)).
 It reads DXT1/3/5 and the plain RGB(A) formats, cuts the empty rows at the
 bottom (CS:S keeps its 128x96 pictures in 128x128 textures) and keeps

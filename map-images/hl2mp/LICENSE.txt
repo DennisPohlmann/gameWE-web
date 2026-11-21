@@ -1,12 +1,13 @@
 Map thumbnails: Half-Life 2 Deathmatch (hl2mp)
 
-Files:   <map>.png for the 7 stock maps (dm_lockdown, dm_overwatch,
+Files:   <map>.webp for the 7 stock maps (dm_lockdown, dm_overwatch,
          dm_powerhouse, dm_resistance, dm_runoff, dm_steamlab,
          dm_underpass), 128 x 96
 Source:  the game's own menu pictures
          (materials/vgui/maps/menu_thumb_<map>.vtf in hl2mp_pak_dir.vpk),
-         converted to PNG with scripts/overviews/thumbs.ts on 2026-11-13
-         (npm run map-thumbs), the empty rows at the bottom cut off
+         converted with scripts/overviews/thumbs.ts on 2026-11-13
+         (npm run map-thumbs), the empty rows at the bottom cut off;
+         WebP since 2026-11-21
 Owner:   Valve Corporation. Half-Life 2, Half-Life 2 Deathmatch and these
          pictures are the property of Valve Corporation.
 License: not covered by gameWE's license (GPL-3.0-or-later) and not licensed

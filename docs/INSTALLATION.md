@@ -572,7 +572,7 @@ HL2DM, L4D, L4D2 and ZPS (`map-images/css/`, `map-images/csgo/`,
 `map-images/l4d2/`, `map-images/zps/`, property of Valve and of the
 Zombie Panic! Team, see the `LICENSE.txt` in each); for other games, or
 to make them yourself, the script below writes them from your own
-installation into the map-images folder as `<game>/<map>.png`; pictures
+installation into the map-images folder as `<game>/<map>.webp`; pictures
 already there stay:
 
 ```bash

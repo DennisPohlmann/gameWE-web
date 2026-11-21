@@ -1,6 +1,6 @@
 Map thumbnails: Left 4 Dead (l4d)
 
-Files:   <map>.png for the 26 maps of the campaigns
+Files:   <map>.webp for the 26 maps of the campaigns
          (l4d_airport01_greenhouse, l4d_airport02_offices,
          l4d_airport03_garage, l4d_airport04_terminal,
          l4d_airport05_runway, l4d_farm01_hilltop,
@@ -16,7 +16,7 @@ Files:   <map>.png for the 26 maps of the campaigns
          l4d_smalltown05_houseboat, l4d_sv_lighthouse), 256 x 128
 Source:  the game's own map pictures
          (materials/vgui/maps/<map>.vtf in the pak01_dir.vpk of left4dead and left4dead_dlc3),
-         converted to PNG with scripts/overviews/thumbs.ts on 2026-11-21
+         converted to WebP with scripts/overviews/thumbs.ts on 2026-11-21
          (npm run map-thumbs); only pictures named like a map of the game
 Owner:   Valve Corporation. Left 4 Dead and these pictures are the property
          of Valve Corporation.

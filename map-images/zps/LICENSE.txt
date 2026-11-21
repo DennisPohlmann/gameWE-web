@@ -1,6 +1,6 @@
 Map thumbnails: Zombie Panic! Source (zps)
 
-Files:   <map>.png for 24 maps (zpo_aquatica, zpo_biotec, zpo_corpsington,
+Files:   <map>.webp for 24 maps (zpo_aquatica, zpo_biotec, zpo_corpsington,
          zpo_harvest, zpo_keretti, zpo_murksville,
          zpo_shreddingfield, zpo_subway, zpo_tanker, zps_asylum,
          zps_blackout, zps_cinema, zps_clubzombo, zps_corpsington,
@@ -9,7 +9,7 @@ Files:   <map>.png for 24 maps (zpo_aquatica, zpo_biotec, zpo_corpsington,
          zps_thrillvile, zps_town, zps_underground), 128 x 96
 Source:  the game's own menu pictures
          (materials/vgui/maps/menu_thumb_<map>.vtf in vpks/zps_content_dir.vpk),
-         converted to PNG with scripts/overviews/thumbs.ts on 2026-11-21
+         converted to WebP with scripts/overviews/thumbs.ts on 2026-11-21
          (npm run map-thumbs); zps_ruralpanic, zpo_frozenheart,
          zpo_zomboeing and zph_pithole ship no menu picture
 Owner:   Zombie Panic! Team. Zombie Panic! Source and these pictures are
