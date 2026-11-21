@@ -17,10 +17,13 @@
 // (":" on Linux, ";" on Windows); a later folder wins.
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, readdirSync } from "node:fs";
 import path from "node:path";
+import { encodePng } from "./draw.ts";
 
 const THUMB = /^materials\/vgui\/maps\/(menu_thumb_)?([a-z0-9][a-z0-9_.+-]{0,63})\.vtf$/;
 const BSP = /^maps\/([a-z0-9][a-z0-9_.+-]{0,63})\.(?:bsp|vpk)$/;
 // Finished pictures: CS:GO/CS2 screenshots, Day of Defeat's manual pictures (JPEG).
+// Condition Zero's wide map thumbnails (TGA) count as such too.
+const CZ_THUMB = /^gfx\/thumbnails\/maps_wide\/([a-z0-9][a-z0-9_.+-]{0,63})\.tga$/;
 const SHOT = /^(?:(?:materials\/)?panorama\/images\/map_icons\/screenshots\/360p\/([a-z0-9][a-z0-9_.+-]{0,63}?)(?:\.png|_png\.vtex_c)|manual\/manual_images\/map_images\/([a-z0-9][a-z0-9_.+-]{0,63})\.jpg)$/;
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 // Maps whose picture has another name: Left 4 Dead 2's ports of the Left 4
@@ -176,6 +179,11 @@ export function findThumbs(gameDirs: string[]): Map<string, Buffer> {
     if (bsp) maps.add(bsp[1]);
     const shot = SHOT.exec(file);
     if (shot) shots.set(shot[1] ?? shot[2], file.endsWith(".vtex_c") ? pngInside(body()) : body());
+    const cz = CZ_THUMB.exec(file);
+    if (cz) {
+      const { width, height, rgba } = decodeTga(body());
+      shots.set(cz[1], encodePng(rgba, width, height));
+    }
     const m = THUMB.exec(file);
     if (m && !m[2].startsWith("default")) (m[1] ? thumbs : plain).set(m[2], body());
   };
@@ -194,7 +202,7 @@ export function findThumbs(gameDirs: string[]): Map<string, Buffer> {
         );
       }
     }
-    for (const sub of ["maps", path.join("materials", "vgui", "maps"), path.join("materials", "panorama", "images", "map_icons", "screenshots", "360p"), path.join("panorama", "images", "map_icons", "screenshots", "360p"), path.join("manual", "manual_images", "map_images")]) {
+    for (const sub of ["maps", path.join("materials", "vgui", "maps"), path.join("materials", "panorama", "images", "map_icons", "screenshots", "360p"), path.join("panorama", "images", "map_icons", "screenshots", "360p"), path.join("manual", "manual_images", "map_images"), path.join("gfx", "thumbnails", "maps_wide")]) {
       const dir = path.join(gameDir, sub);
       if (!existsSync(dir)) continue;
       for (const n of readdirSync(dir)) add(`${sub.split(path.sep).join("/")}/${n.toLowerCase()}`, () => readFileSync(path.join(dir, n)));
@@ -208,6 +216,32 @@ export function findThumbs(gameDirs: string[]): Map<string, Buffer> {
     if (pic) out.set(map, pic);
   }
   return out;
+}
+
+/** An uncompressed true-colour TGA (type 2, 24 or 32 bit) as RGBA. */
+export function decodeTga(tga: Buffer): { width: number; height: number; rgba: Uint8Array } {
+  const [idLength, , type] = tga;
+  const width = tga.readUInt16LE(12);
+  const height = tga.readUInt16LE(14);
+  const bytes = tga[16] / 8;
+  if (type !== 2 || (bytes !== 3 && bytes !== 4)) throw new Error(`TGA type ${type}, ${tga[16]} bit`);
+  if (!width || !height || width > 4096 || height > 4096) throw new Error(`size ${width}x${height}`);
+  const start = 18 + idLength;
+  if (tga.length < start + width * height * bytes) throw new Error("TGA cut off");
+  const topDown = (tga[17] & 0x20) !== 0;
+  const rgba = new Uint8Array(width * height * 4);
+  for (let y = 0; y < height; y++) {
+    const row = start + (topDown ? y : height - 1 - y) * width * bytes;
+    for (let x = 0; x < width; x++) {
+      const p = row + x * bytes;
+      const o = (y * width + x) * 4;
+      rgba[o] = tga[p + 2];
+      rgba[o + 1] = tga[p + 1];
+      rgba[o + 2] = tga[p];
+      rgba[o + 3] = bytes === 4 ? tga[p + 3] : 255;
+    }
+  }
+  return { width, height, rgba };
 }
 
 /** The PNG a Source 2 texture (.vtex_c) of a panorama image carries, up to its

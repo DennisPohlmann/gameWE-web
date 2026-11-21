@@ -5,7 +5,7 @@ import { test } from "node:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { contentHeight, decodeDxt, decodeVtf, findThumbs, pngInside, readVpkDir } from "../scripts/overviews/thumbs.ts";
+import { contentHeight, decodeDxt, decodeTga, decodeVtf, findThumbs, pngInside, readVpkDir } from "../scripts/overviews/thumbs.ts";
 
 test("VPK directory: entries in the directory file and in numbered archives, names in lower case", () => {
   const z = (s: string) => Buffer.from(`${s}\0`, "latin1");
@@ -216,4 +216,18 @@ test("findThumbs gives l4d_vs_<map> the picture of l4d_<map>", () => {
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+// Condition Zero's wide thumbnails are uncompressed TGAs, stored bottom-up.
+test("decodeTga reads a bottom-up 24-bit TGA", () => {
+  const head = Buffer.alloc(18);
+  head[2] = 2;
+  head.writeUInt16LE(1, 12);
+  head.writeUInt16LE(2, 14);
+  head[16] = 24;
+  // Rows bottom-up, BGR: bottom pixel blue, top pixel red.
+  const tga = Buffer.concat([head, Buffer.from([255, 0, 0, 0, 0, 255])]);
+  assert.deepEqual([...decodeTga(tga).rgba], [255, 0, 0, 255, 0, 0, 255, 255]);
+  head[2] = 10;
+  assert.throws(() => decodeTga(Buffer.concat([head, Buffer.alloc(6)])), /TGA type 10/);
 });
