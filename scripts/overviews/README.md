@@ -83,8 +83,8 @@ It takes only pictures of a map of the folders (`maps/<map>.bsp` or
 at the bottom (one colour; CS:S and TF2 keep their 128x96 pictures in
 128x128 textures) and keeps
 pictures that are already there. The pictures belong to the game's maker;
-gameWE comes with those of CS 1.6, CS:S, CS:CZ, CS:GO, CS2, DoD, DoD:S, HL2DM, L4D, L4D2, NMRiH, TF2 and ZPS
-(`map-images/css/`, `csgo/`, `cs2/`, `cstrike/`, `czero/`, `dod/`, `dods/`, `hl2mp/`, `l4d/`, `l4d2/`, `nmrih/`, `tf/`, `zps/`, see their `LICENSE.txt`),
+gameWE comes with those of CS 1.6, CS:S, CS:CZ, CS:GO, CS2, DoD, DoD:S, FoF, HL2DM, L4D, L4D2, NMRiH, TF2 and ZPS
+(`map-images/css/`, `csgo/`, `cs2/`, `cstrike/`, `czero/`, `dod/`, `dods/`, `fof/`, `hl2mp/`, `l4d/`, `l4d2/`, `nmrih/`, `tf/`, `zps/`, see their `LICENSE.txt`),
 for other games each operator makes them from their own installation.
 
 ```

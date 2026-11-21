@@ -17,6 +17,8 @@ radar picture of the heatmap.
   property of Valve Corporation; see `dod/LICENSE.txt`.
 - `dods/`: the 9 stock maps of Day of Defeat: Source, the same kind of
   pictures, property of Valve Corporation; see `dods/LICENSE.txt`.
+- `fof/`: the 43 maps of Fistful of Frags, the game's own menu pictures,
+  property of its makers; see `fof/LICENSE.txt`.
 - `hl2mp/`: the 7 stock maps of Half-Life 2 Deathmatch, the same kind of
   pictures, property of Valve Corporation; see `hl2mp/LICENSE.txt`.
 - `l4d/`: the 26 campaign maps of Left 4 Dead and their 20 versus versions

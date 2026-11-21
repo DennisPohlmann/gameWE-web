@@ -1,0 +1,29 @@
+Map thumbnails: Fistful of Frags (fof)
+
+Files:   <map>.webp for the 43 maps the game ships (cm_forest,
+         cm_laststand, cm_mobile_cannon, cm_movement_tutorial,
+         cm_river_challenge, cm_weapon_course, fof_cripplecreek,
+         fof_depot, fof_desperados, fof_fistful, fof_impact,
+         fof_nest, fof_nest_12, fof_overtop, fof_revenge,
+         fof_robertlee, fof_robertlee_12, fof_sawmill_12,
+         fof_sweetwater, fof_sweetwater_12, fof_tortuga_12,
+         fof_tramonto_12, fof_winterlong, fofhr_coldblood,
+         fofhr_monumentvalley, fofhr_tramonto, gt_creepycreek,
+         gt_desperados, gt_nest, gt_overtop, tp_abandoned,
+         tp_assault, tp_coastal, tp_eliminator, tp_forest,
+         tp_loothill, tp_riobravo, tp_snowy, tp_station,
+         tp_yosemite, vs_desert, vs_forest, vs_river), mostly 256
+         x 192
+Source:  the game's own menu pictures
+         (materials/vgui/maps/menu_thumb_<map>.vtf in its VPK archives),
+         converted to WebP with scripts/overviews/thumbs.ts on 2026-11-21
+         (npm run map-thumbs)
+Owner:   Fistful of Frags Team. Fistful of Frags and these pictures are the
+         property of their makers.
+License: not covered by gameWE's license (GPL-3.0-or-later) and not licensed
+         by the makers to gameWE; included only so the banners can show
+         which map is running. They are removed on request of the rights
+         holder. Operators can delete this folder or put their own pictures
+         in /var/lib/gamewe/web/map-images, which are used first.
+
+gameWE is not affiliated with or endorsed by the makers of Fistful of Frags.
