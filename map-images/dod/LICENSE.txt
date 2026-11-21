@@ -1,0 +1,21 @@
+Map thumbnails: Day of Defeat (dod)
+
+Files:   <map>.webp for 18 maps (dod_anzio, dod_avalanche, dod_caen,
+         dod_charlie, dod_chemille, dod_donner, dod_escape,
+         dod_flash, dod_flugplatz, dod_forest, dod_glider,
+         dod_jagd, dod_kalt, dod_kraftstoff, dod_merderet,
+         dod_switch, dod_vicenza, dod_zalec), 200 x 150
+Source:  the pictures of the game's manual
+         (dod/manual/manual_images/map_images/<map>.jpg; dod_charlie:
+         dod_charlie1.jpg), converted to WebP with
+         scripts/overviews/thumbs.ts on 2026-11-21 (npm run map-thumbs);
+         dod_falaise, dod_northbound, dod_saints and dod_sturm have none
+Owner:   Valve Corporation. Day of Defeat and these pictures are the
+         property of Valve Corporation.
+License: not covered by gameWE's license (GPL-3.0-or-later) and not licensed
+         by Valve to gameWE; included only so the banners can show which map
+         is running. They are removed on request of the rights holder.
+         Operators can delete this folder or put their own pictures in
+         /var/lib/gamewe/web/map-images, which are used first.
+
+gameWE is not affiliated with or endorsed by Valve Corporation.

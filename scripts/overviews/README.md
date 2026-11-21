@@ -71,7 +71,9 @@ pictures with a dark floor, 45 for the CS:GO pictures).
 `materials/panorama/images/map_icons/screenshots/360p/<map>.png`, also only
 for a map of the game; CS2: the PNG inside
 `panorama/images/map_icons/screenshots/360p/<map>_png.vtex_c`, for a map
-`maps/<map>.vpk`; from the `*_dir.vpk` archives and loose files) and
+`maps/<map>.vpk`; Day of Defeat (GoldSrc): the pictures of its manual,
+`manual/manual_images/map_images/<map>.jpg`; from the `*_dir.vpk` archives
+and loose files) and
 writes them at most 256 pixels wide as WebP to the website's map-images folder
 (`<out>/<game>/<map>.webp`, default `/var/lib/gamewe/web/map-images`, see
 [INSTALLATION.md](../../docs/INSTALLATION.md#5-own-templates-and-map-pictures)).
@@ -80,8 +82,8 @@ It takes only pictures of a map of the folders (`maps/<map>.bsp` or
 at the bottom (one colour; CS:S and TF2 keep their 128x96 pictures in
 128x128 textures) and keeps
 pictures that are already there. The pictures belong to the game's maker;
-gameWE comes with those of CS:S, CS:GO, CS2, DoD:S, HL2DM, L4D, L4D2, NMRiH, TF2 and ZPS
-(`map-images/css/`, `csgo/`, `cs2/`, `dods/`, `hl2mp/`, `l4d/`, `l4d2/`, `nmrih/`, `tf/`, `zps/`, see their `LICENSE.txt`),
+gameWE comes with those of CS:S, CS:GO, CS2, DoD, DoD:S, HL2DM, L4D, L4D2, NMRiH, TF2 and ZPS
+(`map-images/css/`, `csgo/`, `cs2/`, `dod/`, `dods/`, `hl2mp/`, `l4d/`, `l4d2/`, `nmrih/`, `tf/`, `zps/`, see their `LICENSE.txt`),
 for other games each operator makes them from their own installation.
 
 ```

@@ -177,3 +177,26 @@ test("findThumbs takes the menu picture of the other name for pl_hoodoo_final", 
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+// Day of Defeat (GoldSrc) has no menu pictures, but its manual has a JPEG
+// of most maps; dod_charlie's is dod_charlie1.
+test("findThumbs takes Day of Defeat's manual pictures", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "thumbs-"));
+  try {
+    const put = (rel: string, body = "x") => {
+      mkdirSync(path.dirname(path.join(root, rel)), { recursive: true });
+      writeFileSync(path.join(root, rel), body);
+    };
+    put("maps/dod_anzio.bsp");
+    put("maps/dod_charlie.bsp");
+    put("maps/dod_saints.bsp");
+    put("manual/manual_images/map_images/dod_anzio.jpg", "anzio");
+    put("manual/manual_images/map_images/dod_charlie1.jpg", "charlie");
+    put("manual/manual_images/map_images/dod_switch.jpg", "no map here");
+    const got = findThumbs([root]);
+    assert.deepEqual([...got.keys()].sort(), ["dod_anzio", "dod_charlie"]);
+    assert.equal(got.get("dod_charlie")?.toString(), "charlie");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

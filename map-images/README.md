@@ -8,6 +8,8 @@ radar picture of the heatmap.
 
 - `css/`: the 18 stock maps of Counter-Strike: Source, the game's own menu
   pictures, property of Valve Corporation; see `css/LICENSE.txt`.
+- `dod/`: 18 maps of Day of Defeat, the pictures of the game's manual,
+  property of Valve Corporation; see `dod/LICENSE.txt`.
 - `dods/`: the 9 stock maps of Day of Defeat: Source, the same kind of
   pictures, property of Valve Corporation; see `dods/LICENSE.txt`.
 - `hl2mp/`: the 7 stock maps of Half-Life 2 Deathmatch, the same kind of

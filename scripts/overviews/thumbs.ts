@@ -20,13 +20,15 @@ import path from "node:path";
 
 const THUMB = /^materials\/vgui\/maps\/(menu_thumb_)?([a-z0-9][a-z0-9_.+-]{0,63})\.vtf$/;
 const BSP = /^maps\/([a-z0-9][a-z0-9_.+-]{0,63})\.(?:bsp|vpk)$/;
-const SHOT = /^(?:materials\/)?panorama\/images\/map_icons\/screenshots\/360p\/([a-z0-9][a-z0-9_.+-]{0,63}?)(?:\.png|_png\.vtex_c)$/;
+// Finished pictures: CS:GO/CS2 screenshots, Day of Defeat's manual pictures (JPEG).
+const SHOT = /^(?:(?:materials\/)?panorama\/images\/map_icons\/screenshots\/360p\/([a-z0-9][a-z0-9_.+-]{0,63}?)(?:\.png|_png\.vtex_c)|manual\/manual_images\/map_images\/([a-z0-9][a-z0-9_.+-]{0,63})\.jpg)$/;
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 // Maps whose picture has another name: Left 4 Dead 2's ports of the Left 4
 // Dead campaigns The Sacrifice (c7) and No Mercy (c8) ship only those of the
 // original maps; TF2's Hoodoo is pl_hoodoo_final, its picture pl_hoodoo.
 const SAME_MAP: Record<string, string> = {
   pl_hoodoo_final: "pl_hoodoo",
+  dod_charlie: "dod_charlie1", // Day of Defeat's manual has two pictures of it
   c7m1_docks: "l4d_river01_docks",
   c7m2_barge: "l4d_river02_barge",
   c7m3_port: "l4d_river03_port",
@@ -173,7 +175,7 @@ export function findThumbs(gameDirs: string[]): Map<string, Buffer> {
     const bsp = BSP.exec(file);
     if (bsp) maps.add(bsp[1]);
     const shot = SHOT.exec(file);
-    if (shot) shots.set(shot[1], file.endsWith(".vtex_c") ? pngInside(body()) : body());
+    if (shot) shots.set(shot[1] ?? shot[2], file.endsWith(".vtex_c") ? pngInside(body()) : body());
     const m = THUMB.exec(file);
     if (m && !m[2].startsWith("default")) (m[1] ? thumbs : plain).set(m[2], body());
   };
@@ -192,7 +194,7 @@ export function findThumbs(gameDirs: string[]): Map<string, Buffer> {
         );
       }
     }
-    for (const sub of ["maps", path.join("materials", "vgui", "maps"), path.join("materials", "panorama", "images", "map_icons", "screenshots", "360p"), path.join("panorama", "images", "map_icons", "screenshots", "360p")]) {
+    for (const sub of ["maps", path.join("materials", "vgui", "maps"), path.join("materials", "panorama", "images", "map_icons", "screenshots", "360p"), path.join("panorama", "images", "map_icons", "screenshots", "360p"), path.join("manual", "manual_images", "map_images")]) {
       const dir = path.join(gameDir, sub);
       if (!existsSync(dir)) continue;
       for (const n of readdirSync(dir)) add(`${sub.split(path.sep).join("/")}/${n.toLowerCase()}`, () => readFileSync(path.join(dir, n)));
@@ -201,7 +203,7 @@ export function findThumbs(gameDirs: string[]): Map<string, Buffer> {
   const out = new Map<string, Buffer>();
   for (const map of maps) {
     const same = SAME_MAP[map] ?? "";
-    const pic = [shots.get(map), thumbs.get(map), plain.get(map), thumbs.get(same), plain.get(same)].find((b) => b?.length);
+    const pic = [shots.get(map), thumbs.get(map), plain.get(map), shots.get(same), thumbs.get(same), plain.get(same)].find((b) => b?.length);
     if (pic) out.set(map, pic);
   }
   return out;
@@ -251,7 +253,7 @@ async function main() {
     try {
       const sharp = (await import("sharp")).default;
       let img;
-      if (vtf.subarray(0, 4).equals(PNG)) {
+      if (vtf.toString("latin1", 0, 4) !== "VTF\0") {
         img = sharp(vtf, { limitInputPixels: 50_000_000 });
       } else {
         const { width, height, rgba } = decodeVtf(vtf);
