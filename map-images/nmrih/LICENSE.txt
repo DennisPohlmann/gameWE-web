@@ -1,0 +1,26 @@
+Map thumbnails: No More Room in Hell (nmrih)
+
+Files:   <map>.webp for the 34 maps the game ships (nmo_anxiety,
+         nmo_asylum, nmo_boardwalk, nmo_broadway, nmo_broadway2,
+         nmo_brooklyn, nmo_cabin, nmo_chinatown, nmo_cleopas,
+         nmo_fema, nmo_junction, nmo_lakeside, nmo_quarantine,
+         nmo_rockpit, nmo_shelter, nmo_shoreline, nmo_suzhou,
+         nmo_toxteth, nmo_toxtethdark, nmo_underground,
+         nmo_zephyr, nms_arpley, nms_camilla, nms_campblood,
+         nms_drugstore, nms_favela, nms_flooded, nms_isolated,
+         nms_laundry, nms_midwest, nms_northway, nms_notld,
+         nms_ransack, nms_silence), 128 x 96
+Source:  the game's own menu pictures
+         (materials/vgui/maps/menu_thumb_<map>.vtf in nmrih_dir.vpk),
+         converted to WebP with scripts/overviews/thumbs.ts on 2026-11-21
+         (npm run map-thumbs)
+Owner:   No More Room in Hell Team. No More Room in Hell and these
+         pictures are the property of their makers.
+License: not covered by gameWE's license (GPL-3.0-or-later) and not licensed
+         by the makers to gameWE; included only so the banners can show
+         which map is running. They are removed on request of the rights
+         holder. Operators can delete this folder or put their own pictures
+         in /var/lib/gamewe/web/map-images, which are used first.
+
+gameWE is not affiliated with or endorsed by the makers of No More Room in
+Hell.
