@@ -231,3 +231,24 @@ test("decodeTga reads a bottom-up 24-bit TGA", () => {
   head[2] = 10;
   assert.throws(() => decodeTga(Buffer.concat([head, Buffer.alloc(6)])), /TGA type 10/);
 });
+
+// CS 1.6 has no pictures: given Condition Zero's folder too, de_dust2 takes
+// the picture of de_dust2_cz.
+test("findThumbs gives a CS 1.6 map the picture of its Condition Zero version", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "thumbs-"));
+  try {
+    const head = Buffer.alloc(18);
+    head[2] = 2;
+    head.writeUInt16LE(1, 12);
+    head.writeUInt16LE(1, 14);
+    head[16] = 24;
+    mkdirSync(path.join(root, "cstrike/maps"), { recursive: true });
+    mkdirSync(path.join(root, "czero/gfx/thumbnails/maps_wide"), { recursive: true });
+    writeFileSync(path.join(root, "cstrike/maps/de_dust2.bsp"), "x");
+    writeFileSync(path.join(root, "czero/gfx/thumbnails/maps_wide/de_dust2_cz.tga"), Buffer.concat([head, Buffer.from([0, 0, 255])]));
+    const got = findThumbs([path.join(root, "cstrike"), path.join(root, "czero")]);
+    assert.ok(got.get("de_dust2")?.subarray(1, 4).equals(Buffer.from("PNG")));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

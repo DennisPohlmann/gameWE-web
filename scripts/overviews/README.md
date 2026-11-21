@@ -83,8 +83,8 @@ It takes only pictures of a map of the folders (`maps/<map>.bsp` or
 at the bottom (one colour; CS:S and TF2 keep their 128x96 pictures in
 128x128 textures) and keeps
 pictures that are already there. The pictures belong to the game's maker;
-gameWE comes with those of CS:S, CS:CZ, CS:GO, CS2, DoD, DoD:S, HL2DM, L4D, L4D2, NMRiH, TF2 and ZPS
-(`map-images/css/`, `csgo/`, `cs2/`, `czero/`, `dod/`, `dods/`, `hl2mp/`, `l4d/`, `l4d2/`, `nmrih/`, `tf/`, `zps/`, see their `LICENSE.txt`),
+gameWE comes with those of CS 1.6, CS:S, CS:CZ, CS:GO, CS2, DoD, DoD:S, HL2DM, L4D, L4D2, NMRiH, TF2 and ZPS
+(`map-images/css/`, `csgo/`, `cs2/`, `cstrike/`, `czero/`, `dod/`, `dods/`, `hl2mp/`, `l4d/`, `l4d2/`, `nmrih/`, `tf/`, `zps/`, see their `LICENSE.txt`),
 for other games each operator makes them from their own installation.
 
 ```
@@ -97,5 +97,8 @@ Dead campaigns c7 and c8 get the picture of the same Left 4 Dead map): give them
 argument, separated by `:` (Linux; `;` on Windows), a later folder wins:
 `".../Left 4 Dead 2/left4dead2:.../left4dead2_dlc1:.../left4dead2_dlc2:.../left4dead2_dlc3:.../update"`.
 Counter-Strike 2: the folder `.../Counter-Strike Global Offensive/game/csgo`.
+Counter-Strike 1.6 has no map pictures: give its folder and Condition Zero's
+(`".../Half-Life/cstrike:.../Half-Life/czero"`), then a map takes the picture
+of its Condition Zero version `<map>_cz`.
 Zombie Panic! Source keeps its archives in `vpks` next to the game folder:
 `".../Zombie Panic Source/vpks:.../Zombie Panic Source/zps"`.

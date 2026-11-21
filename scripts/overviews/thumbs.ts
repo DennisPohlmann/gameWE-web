@@ -212,7 +212,9 @@ export function findThumbs(gameDirs: string[]): Map<string, Buffer> {
   for (const map of maps) {
     // Left 4 Dead's versus maps (l4d_vs_<map>) are the campaign maps.
     const same = SAME_MAP[map] ?? (map.startsWith("l4d_vs_") ? `l4d_${map.slice("l4d_vs_".length)}` : "");
-    const pic = [shots.get(map), thumbs.get(map), plain.get(map), shots.get(same), thumbs.get(same), plain.get(same)].find((b) => b?.length);
+    // CS 1.6 has no pictures: with Condition Zero's folder given too, a map
+    // takes the picture of its Condition Zero version <map>_cz.
+    const pic = [shots.get(map), thumbs.get(map), plain.get(map), shots.get(same), thumbs.get(same), plain.get(same), shots.get(`${map}_cz`)].find((b) => b?.length);
     if (pic) out.set(map, pic);
   }
   return out;

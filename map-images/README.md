@@ -8,6 +8,9 @@ radar picture of the heatmap.
 
 - `css/`: the 18 stock maps of Counter-Strike: Source, the game's own menu
   pictures, property of Valve Corporation; see `css/LICENSE.txt`.
+- `cstrike/`: 14 maps of Counter-Strike 1.6, which has no map pictures:
+  those of the same maps' Condition Zero versions, property of Valve
+  Corporation; see `cstrike/LICENSE.txt`.
 - `czero/`: 18 maps of Counter-Strike: Condition Zero, the game's own wide
   map thumbnails, property of Valve Corporation; see `czero/LICENSE.txt`.
 - `dod/`: 18 maps of Day of Defeat, the pictures of the game's manual,

@@ -1,0 +1,21 @@
+Map thumbnails: Counter-Strike 1.6 (cstrike)
+
+Files:   <map>.webp for 14 maps (cs_havana, cs_italy, cs_militia,
+         cs_office, de_airstrip, de_aztec, de_cbble, de_chateau,
+         de_dust, de_dust2, de_inferno, de_piranesi, de_prodigy,
+         de_torn), 256 x 110
+Source:  Counter-Strike 1.6 ships no map pictures; these are the wide map
+         thumbnails of the same maps' Condition Zero versions
+         (czero/gfx/thumbnails/maps_wide/<map>_cz.tga), converted to WebP
+         with scripts/overviews/thumbs.ts on 2026-11-21 (npm run
+         map-thumbs with the cstrike and czero folders); the other CS 1.6
+         maps have no Condition Zero version with a thumbnail
+Owner:   Valve Corporation. Counter-Strike, Counter-Strike: Condition Zero
+         and these pictures are the property of Valve Corporation.
+License: not covered by gameWE's license (GPL-3.0-or-later) and not licensed
+         by Valve to gameWE; included only so the banners can show which map
+         is running. They are removed on request of the rights holder.
+         Operators can delete this folder or put their own pictures in
+         /var/lib/gamewe/web/map-images, which are used first.
+
+gameWE is not affiliated with or endorsed by Valve Corporation.
