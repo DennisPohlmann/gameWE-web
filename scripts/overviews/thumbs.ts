@@ -3,7 +3,9 @@
 // materials/vgui/maps/<map>.vtf, taken only for a map of the game, there
 // are campaign and background pictures beside them; CS:GO: the screenshots
 // materials/panorama/images/map_icons/screenshots/360p/<map>.png, also only
-// for a map of the game), from the game's VPK archives and loose files,
+// for a map of the game; CS2: the same screenshots as the PNG inside
+// panorama/images/map_icons/screenshots/360p/<map>_png.vtex_c, for a map
+// maps/<map>.vpk), from the game's VPK archives and loose files,
 // at most 256 pixels wide as <out>/<game>/<map>.webp for the website's
 // map-images folder (src/lib/map-images.ts), made from the operator's own
 // game installation; the built-in map-images/css came from it. See README.md.
@@ -17,8 +19,8 @@ import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, rea
 import path from "node:path";
 
 const THUMB = /^materials\/vgui\/maps\/(menu_thumb_)?([a-z0-9][a-z0-9_.+-]{0,63})\.vtf$/;
-const BSP = /^maps\/([a-z0-9][a-z0-9_.+-]{0,63})\.bsp$/;
-const SHOT = /^materials\/panorama\/images\/map_icons\/screenshots\/360p\/([a-z0-9][a-z0-9_.+-]{0,63})\.png$/;
+const BSP = /^maps\/([a-z0-9][a-z0-9_.+-]{0,63})\.(?:bsp|vpk)$/;
+const SHOT = /^(?:materials\/)?panorama\/images\/map_icons\/screenshots\/360p\/([a-z0-9][a-z0-9_.+-]{0,63}?)(?:\.png|_png\.vtex_c)$/;
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 const GAME = /^[a-z0-9][a-z0-9_-]{0,31}$/;
 
@@ -150,7 +152,7 @@ export function findThumbs(gameDirs: string[]): Map<string, Buffer> {
     const bsp = BSP.exec(file);
     if (bsp) maps.add(bsp[1]);
     const shot = SHOT.exec(file);
-    if (shot) shots.set(shot[1], body());
+    if (shot) shots.set(shot[1], file.endsWith(".vtex_c") ? pngInside(body()) : body());
     const m = THUMB.exec(file);
     if (m && !m[2].startsWith("default")) (m[1] ? thumbs : plain).set(m[2], body());
   };
@@ -169,15 +171,23 @@ export function findThumbs(gameDirs: string[]): Map<string, Buffer> {
         );
       }
     }
-    for (const sub of ["maps", path.join("materials", "vgui", "maps"), path.join("materials", "panorama", "images", "map_icons", "screenshots", "360p")]) {
+    for (const sub of ["maps", path.join("materials", "vgui", "maps"), path.join("materials", "panorama", "images", "map_icons", "screenshots", "360p"), path.join("panorama", "images", "map_icons", "screenshots", "360p")]) {
       const dir = path.join(gameDir, sub);
       if (!existsSync(dir)) continue;
       for (const n of readdirSync(dir)) add(`${sub.split(path.sep).join("/")}/${n.toLowerCase()}`, () => readFileSync(path.join(dir, n)));
     }
   }
   for (const [map, vtf] of plain) if (maps.has(map) && !thumbs.has(map)) thumbs.set(map, vtf);
-  for (const [map, png] of shots) if (maps.has(map)) thumbs.set(map, png);
+  for (const [map, png] of shots) if (maps.has(map) && png.length) thumbs.set(map, png);
   return thumbs;
+}
+
+/** The PNG a Source 2 texture (.vtex_c) of a panorama image carries, up to its
+ * IEND chunk; empty when there is none. */
+export function pngInside(vtex: Buffer): Buffer {
+  const start = vtex.indexOf(PNG);
+  const end = vtex.indexOf("IEND", start);
+  return start < 0 || end < 0 ? Buffer.alloc(0) : vtex.subarray(start, end + 8);
 }
 
 // Only the entry's bytes: the archives are hundreds of MB.

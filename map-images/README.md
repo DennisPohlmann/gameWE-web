@@ -19,6 +19,8 @@ radar picture of the heatmap.
 - `csgo/`: the 37 maps of Counter-Strike: Global Offensive, the game's own
   map screenshots, property of Valve Corporation; see
   `csgo/LICENSE.txt`.
+- `cs2/`: the 22 maps of Counter-Strike 2, the game's own map screenshots,
+  property of Valve Corporation; see `cs2/LICENSE.txt`.
 - `zps/`: 24 maps of Zombie Panic! Source, the game's own menu pictures,
   property of the Zombie Panic! Team; see `zps/LICENSE.txt`.
 

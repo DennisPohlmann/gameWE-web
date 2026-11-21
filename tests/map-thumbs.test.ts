@@ -5,7 +5,7 @@ import { test } from "node:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { contentHeight, decodeDxt, decodeVtf, findThumbs, readVpkDir } from "../scripts/overviews/thumbs.ts";
+import { contentHeight, decodeDxt, decodeVtf, findThumbs, pngInside, readVpkDir } from "../scripts/overviews/thumbs.ts";
 
 test("VPK directory: entries in the directory file and in numbered archives, names in lower case", () => {
   const z = (s: string) => Buffer.from(`${s}\0`, "latin1");
@@ -97,6 +97,30 @@ test("findThumbs takes the CS:GO screenshots of the game's maps", () => {
     const got = findThumbs([root]);
     assert.deepEqual([...got.keys()], ["de_dust2"]);
     assert.deepEqual(got.get("de_dust2"), png);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// CS2: the screenshots are Source 2 textures (<map>_png.vtex_c) that carry
+// the PNG; a map is maps/<map>.vpk.
+test("findThumbs takes the PNG inside CS2's screenshot textures", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "thumbs-"));
+  try {
+    const put = (rel: string, body: string | Buffer = "x") => {
+      mkdirSync(path.dirname(path.join(root, rel)), { recursive: true });
+      writeFileSync(path.join(root, rel), body);
+    };
+    const png = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47]), Buffer.from("data"), Buffer.from("IEND"), Buffer.alloc(4)]);
+    const vtex = Buffer.concat([Buffer.from("RED2 header"), png, Buffer.from("trailing")]);
+    put("maps/de_dust2.vpk");
+    put("panorama/images/map_icons/screenshots/360p/de_dust2_png.vtex_c", vtex);
+    put("panorama/images/map_icons/screenshots/360p/random_png.vtex_c", vtex);
+    assert.deepEqual(pngInside(vtex), png);
+    const got = findThumbs([root]);
+    assert.deepEqual([...got.keys()], ["de_dust2"]);
+    assert.deepEqual(got.get("de_dust2"), png);
+    assert.equal(pngInside(Buffer.from("no picture")).length, 0);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

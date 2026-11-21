@@ -69,15 +69,17 @@ pictures with a dark floor, 45 for the CS:GO pictures).
 `materials/vgui/maps/<map>.vtf`, only for a map of the game, its
 `maps/<map>.bsp`; CS:GO: the screenshots
 `materials/panorama/images/map_icons/screenshots/360p/<map>.png`, also only
-for a map of the game; from the `*_dir.vpk` archives and loose files) and
+for a map of the game; CS2: the PNG inside
+`panorama/images/map_icons/screenshots/360p/<map>_png.vtex_c`, for a map
+`maps/<map>.vpk`; from the `*_dir.vpk` archives and loose files) and
 writes them at most 256 pixels wide as WebP to the website's map-images folder
 (`<out>/<game>/<map>.webp`, default `/var/lib/gamewe/web/map-images`, see
 [INSTALLATION.md](../../docs/INSTALLATION.md#5-own-templates-and-map-pictures)).
 It reads DXT1/3/5 and the plain RGB(A) formats, cuts the empty rows at the
 bottom (CS:S keeps its 128x96 pictures in 128x128 textures) and keeps
 pictures that are already there. The pictures belong to the game's maker;
-gameWE comes with those of CS:S, CS:GO, DoD:S, HL2DM, L4D, L4D2 and ZPS
-(`map-images/css/`, `csgo/`, `dods/`, `hl2mp/`, `l4d/`, `l4d2/`, `zps/`, see their `LICENSE.txt`),
+gameWE comes with those of CS:S, CS:GO, CS2, DoD:S, HL2DM, L4D, L4D2 and ZPS
+(`map-images/css/`, `csgo/`, `cs2/`, `dods/`, `hl2mp/`, `l4d/`, `l4d2/`, `zps/`, see their `LICENSE.txt`),
 for other games each operator makes them from their own installation.
 
 ```
@@ -87,5 +89,6 @@ npm run map-thumbs -- "<game folder, e.g. .../Counter-Strike Source/cstrike>" <g
 Left 4 Dead 2 keeps its maps in several folders: give them all in one
 argument, separated by `:` (Linux; `;` on Windows), a later folder wins:
 `".../Left 4 Dead 2/left4dead2:.../left4dead2_dlc1:.../left4dead2_dlc2:.../left4dead2_dlc3:.../update"`.
+Counter-Strike 2: the folder `.../Counter-Strike Global Offensive/game/csgo`.
 Zombie Panic! Source keeps its archives in `vpks` next to the game folder:
 `".../Zombie Panic Source/vpks:.../Zombie Panic Source/zps"`.
