@@ -65,17 +65,22 @@ pictures with a dark floor, 45 for the CS:GO pictures).
 ## Map thumbnails for the banners
 
 `thumbs.ts` takes the menu pictures of the maps out of a Source game
-(`materials/vgui/maps/menu_thumb_<map>.vtf`, from the `*_dir.vpk` archives
-and loose files) and writes them as PNG to the website's map-images folder
+(`materials/vgui/maps/menu_thumb_<map>.vtf`; Left 4 Dead 1 and 2:
+`materials/vgui/maps/<map>.vtf`, only for a map of the game, its
+`maps/<map>.bsp`; from the `*_dir.vpk` archives and loose files) and writes them as PNG to the website's map-images folder
 (`<out>/<game>/<map>.png`, default `/var/lib/gamewe/web/map-images`, see
 [INSTALLATION.md](../../docs/INSTALLATION.md#5-own-templates-and-map-pictures)).
 It reads DXT1/3/5 and the plain RGB(A) formats, cuts the empty rows at the
 bottom (CS:S keeps its 128x96 pictures in 128x128 textures) and keeps
 pictures that are already there. The pictures belong to the game's maker;
-gameWE comes with those of CS:S, DoD:S and HL2DM (`map-images/css/`,
-`dods/`, `hl2mp/`, see their `LICENSE.txt`),
+gameWE comes with those of CS:S, DoD:S, HL2DM, L4D and L4D2
+(`map-images/css/`, `dods/`, `hl2mp/`, `l4d/`, `l4d2/`, see their `LICENSE.txt`),
 for other games each operator makes them from their own installation.
 
 ```
 npm run map-thumbs -- "<game folder, e.g. .../Counter-Strike Source/cstrike>" <game code, e.g. css> [<out folder>]
 ```
+
+Left 4 Dead 2 keeps its maps in several folders: give them all in one
+argument, separated by `:` (Linux; `;` on Windows), a later folder wins:
+`".../Left 4 Dead 2/left4dead2:.../left4dead2_dlc1:.../left4dead2_dlc2:.../left4dead2_dlc3:.../update"`.

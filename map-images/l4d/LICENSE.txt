@@ -1,0 +1,29 @@
+Map thumbnails: Left 4 Dead (l4d)
+
+Files:   <map>.png for the 26 maps of the campaigns
+         (l4d_airport01_greenhouse, l4d_airport02_offices,
+         l4d_airport03_garage, l4d_airport04_terminal,
+         l4d_airport05_runway, l4d_farm01_hilltop,
+         l4d_farm02_traintunnel, l4d_farm03_bridge,
+         l4d_farm04_barn, l4d_farm05_cornfield,
+         l4d_garage01_alleys, l4d_garage02_lots,
+         l4d_hospital01_apartment, l4d_hospital02_subway,
+         l4d_hospital03_sewers, l4d_hospital04_interior,
+         l4d_hospital05_rooftop, l4d_river01_docks,
+         l4d_river02_barge, l4d_river03_port,
+         l4d_smalltown01_caves, l4d_smalltown02_drainage,
+         l4d_smalltown03_ranchhouse, l4d_smalltown04_mainstreet,
+         l4d_smalltown05_houseboat, l4d_sv_lighthouse), 256 x 128
+Source:  the game's own map pictures
+         (materials/vgui/maps/<map>.vtf in the pak01_dir.vpk of left4dead and left4dead_dlc3),
+         converted to PNG with scripts/overviews/thumbs.ts on 2026-11-21
+         (npm run map-thumbs); only pictures named like a map of the game
+Owner:   Valve Corporation. Left 4 Dead and these pictures are the property
+         of Valve Corporation.
+License: not covered by gameWE's license (GPL-3.0-or-later) and not licensed
+         by Valve to gameWE; included only so the banners can show which map
+         is running. They are removed on request of the rights holder.
+         Operators can delete this folder or put their own pictures in
+         /var/lib/gamewe/web/map-images, which are used first.
+
+gameWE is not affiliated with or endorsed by Valve Corporation.

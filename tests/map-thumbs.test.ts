@@ -2,7 +2,10 @@
 // directory, VTF pictures, DXT blocks. Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { contentHeight, decodeDxt, decodeVtf, readVpkDir } from "../scripts/overviews/thumbs.ts";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { contentHeight, decodeDxt, decodeVtf, findThumbs, readVpkDir } from "../scripts/overviews/thumbs.ts";
 
 test("VPK directory: entries in the directory file and in numbered archives, names in lower case", () => {
   const z = (s: string) => Buffer.from(`${s}\0`, "latin1");
@@ -49,4 +52,29 @@ test("VTF: the largest picture is the last one; BGR888 to RGBA; empty rows at th
   assert.equal(contentHeight(rgba, 2, 2), 1);
   head.writeInt32LE(99, 52);
   assert.throws(() => decodeVtf(Buffer.concat([head, pixels])), /picture format 99/);
+});
+
+// Left 4 Dead keeps its map pictures as materials/vgui/maps/<map>.vtf next
+// to campaign and background pictures: only those named like a map of the
+// folders count; menu_thumb_<map> always; a later folder wins.
+test("findThumbs takes plain pictures only for maps, over several folders", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "thumbs-"));
+  try {
+    const put = (rel: string, body = "x") => {
+      mkdirSync(path.dirname(path.join(root, rel)), { recursive: true });
+      writeFileSync(path.join(root, rel), body);
+    };
+    put("base/maps/c1m1_hotel.bsp");
+    put("base/materials/vgui/maps/c1m1_hotel.vtf", "old");
+    put("base/materials/vgui/maps/background01_exit.vtf");
+    put("base/materials/vgui/maps/menu_thumb_de_dust2.vtf");
+    put("dlc/maps/c9m1_alleys.bsp");
+    put("update/materials/vgui/maps/c9m1_alleys.vtf");
+    put("update/materials/vgui/maps/c1m1_hotel.vtf", "new");
+    const got = findThumbs(["base", "dlc", "update"].map((d) => path.join(root, d)));
+    assert.deepEqual([...got.keys()].sort(), ["c1m1_hotel", "c9m1_alleys", "de_dust2"]);
+    assert.equal(got.get("c1m1_hotel")?.toString(), "new");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });

@@ -1,15 +1,22 @@
 // Map thumbnails for the banners from a Source game's own files: the menu
-// pictures materials/vgui/maps/menu_thumb_<map>.vtf, from the game's VPK
+// pictures materials/vgui/maps/menu_thumb_<map>.vtf (Left 4 Dead 1 and 2:
+// materials/vgui/maps/<map>.vtf, taken only for a map of the game, there
+// are campaign and background pictures beside them), from the game's VPK
 // archives and loose files, as <out>/<game>/<map>.png for the website's
 // map-images folder (src/lib/map-images.ts), made from the operator's own
 // game installation; the built-in map-images/css came from it. See README.md.
 //
 //   npm run map-thumbs -- <game folder, e.g. .../Counter-Strike Source/cstrike> <game code, e.g. css> [<out folder>]
+//
+// Several game folders (Left 4 Dead 2: left4dead2, its DLC folders and
+// update) go in one argument, separated by the path list separator
+// (":" on Linux, ";" on Windows); a later folder wins.
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { encodePng } from "./draw.ts";
 
-const THUMB = /^materials\/vgui\/maps\/menu_thumb_([a-z0-9][a-z0-9_.+-]{0,63})\.vtf$/;
+const THUMB = /^materials\/vgui\/maps\/(menu_thumb_)?([a-z0-9][a-z0-9_.+-]{0,63})\.vtf$/;
+const BSP = /^maps\/([a-z0-9][a-z0-9_.+-]{0,63})\.bsp$/;
 const GAME = /^[a-z0-9][a-z0-9_-]{0,31}$/;
 
 export type VpkEntry = { archive: number; offset: number; length: number; preload: Buffer };
@@ -128,31 +135,42 @@ export function contentHeight(rgba: Uint8Array, width: number, height: number): 
   return h;
 }
 
-/** All menu_thumb_<map>.vtf of a game folder: VPK archives first, loose files win. */
-export function findThumbs(gameDir: string): Map<string, Buffer> {
-  const out = new Map<string, Buffer>();
-  for (const f of readdirSync(gameDir).filter((n) => n.endsWith("_dir.vpk")).sort()) {
-    const dirFile = path.join(gameDir, f);
-    const raw = readFileSync(dirFile);
-    const { entries, dataStart } = readVpkDir(raw);
-    for (const [file, e] of entries) {
-      const m = THUMB.exec(file);
-      if (!m || m[1].startsWith("default")) continue;
-      const body =
-        e.archive === 0x7fff
-          ? raw.subarray(dataStart + e.offset, dataStart + e.offset + e.length)
-          : readPart(path.join(gameDir, `${f.slice(0, -"_dir.vpk".length)}_${String(e.archive).padStart(3, "0")}.vpk`), e.offset, e.length);
-      out.set(m[1], Buffer.concat([e.preload, body]));
+/** The map pictures of game folders: menu_thumb_<map>.vtf, and <map>.vtf
+ * when a maps/<map>.bsp of the folders exists. VPK archives first, loose
+ * files win, a later folder wins. */
+export function findThumbs(gameDirs: string[]): Map<string, Buffer> {
+  const thumbs = new Map<string, Buffer>();
+  const plain = new Map<string, Buffer>();
+  const maps = new Set<string>();
+  const add = (file: string, body: () => Buffer) => {
+    const bsp = BSP.exec(file);
+    if (bsp) maps.add(bsp[1]);
+    const m = THUMB.exec(file);
+    if (m && !m[2].startsWith("default")) (m[1] ? thumbs : plain).set(m[2], body());
+  };
+  for (const gameDir of gameDirs) {
+    for (const f of readdirSync(gameDir).filter((n) => n.endsWith("_dir.vpk")).sort()) {
+      const raw = readFileSync(path.join(gameDir, f));
+      const { entries, dataStart } = readVpkDir(raw);
+      for (const [file, e] of entries) {
+        add(file, () =>
+          Buffer.concat([
+            e.preload,
+            e.archive === 0x7fff
+              ? raw.subarray(dataStart + e.offset, dataStart + e.offset + e.length)
+              : readPart(path.join(gameDir, `${f.slice(0, -"_dir.vpk".length)}_${String(e.archive).padStart(3, "0")}.vpk`), e.offset, e.length),
+          ]),
+        );
+      }
+    }
+    for (const sub of ["maps", path.join("materials", "vgui", "maps")]) {
+      const dir = path.join(gameDir, sub);
+      if (!existsSync(dir)) continue;
+      for (const n of readdirSync(dir)) add(`${sub.split(path.sep).join("/")}/${n.toLowerCase()}`, () => readFileSync(path.join(dir, n)));
     }
   }
-  const loose = path.join(gameDir, "materials", "vgui", "maps");
-  if (existsSync(loose)) {
-    for (const n of readdirSync(loose)) {
-      const m = THUMB.exec(`materials/vgui/maps/${n.toLowerCase()}`);
-      if (m && !m[1].startsWith("default")) out.set(m[1], readFileSync(path.join(loose, n)));
-    }
-  }
-  return out;
+  for (const [map, vtf] of plain) if (maps.has(map) && !thumbs.has(map)) thumbs.set(map, vtf);
+  return thumbs;
 }
 
 // Only the entry's bytes: the archives are hundreds of MB.
@@ -180,7 +198,7 @@ function main() {
   const outDir = path.join(outRoot, game);
   mkdirSync(outDir, { recursive: true });
   let made = 0;
-  for (const [map, vtf] of findThumbs(gameDir)) {
+  for (const [map, vtf] of findThumbs(gameDir.split(path.delimiter).filter(Boolean))) {
     const out = path.join(outDir, `${map}.png`);
     // Pictures already there (your own) stay.
     if (existsSync(out)) {
