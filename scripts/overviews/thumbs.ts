@@ -181,8 +181,12 @@ export function findThumbs(gameDirs: string[]): Map<string, Buffer> {
     if (shot) shots.set(shot[1] ?? shot[2], file.endsWith(".vtex_c") ? pngInside(body()) : body());
     const cz = CZ_THUMB.exec(file);
     if (cz) {
-      const { width, height, rgba } = decodeTga(body());
-      shots.set(cz[1], encodePng(rgba, width, height));
+      try {
+        const { width, height, rgba } = decodeTga(body());
+        shots.set(cz[1], encodePng(rgba, width, height));
+      } catch (e) {
+        console.error(`${cz[1]}: ${(e as Error).message}`); // one bad picture does not stop the others
+      }
     }
     const m = THUMB.exec(file);
     if (m && !m[2].startsWith("default")) (m[1] ? thumbs : plain).set(m[2], body());

@@ -246,8 +246,11 @@ test("findThumbs gives a CS 1.6 map the picture of its Condition Zero version", 
     mkdirSync(path.join(root, "czero/gfx/thumbnails/maps_wide"), { recursive: true });
     writeFileSync(path.join(root, "cstrike/maps/de_dust2.bsp"), "x");
     writeFileSync(path.join(root, "czero/gfx/thumbnails/maps_wide/de_dust2_cz.tga"), Buffer.concat([head, Buffer.from([0, 0, 255])]));
+    writeFileSync(path.join(root, "cstrike/maps/de_nuke.bsp"), "x");
+    writeFileSync(path.join(root, "czero/gfx/thumbnails/maps_wide/de_nuke_cz.tga"), "cut off"); // skipped, not fatal
     const got = findThumbs([path.join(root, "cstrike"), path.join(root, "czero")]);
     assert.ok(got.get("de_dust2")?.subarray(1, 4).equals(Buffer.from("PNG")));
+    assert.equal(got.has("de_nuke"), false);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
