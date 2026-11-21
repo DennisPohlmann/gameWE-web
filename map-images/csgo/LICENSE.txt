@@ -1,0 +1,25 @@
+Map thumbnails: Counter-Strike: Global Offensive (csgo)
+
+Files:   <map>.webp for the 37 maps the game ships (ar_baggage, ar_dizzy,
+         ar_lunacy, ar_monastery, ar_shoots, cs_agency,
+         cs_assault, cs_italy, cs_militia, cs_office, de_ancient,
+         de_anubis, de_bank, de_boyard, de_cache, de_canals,
+         de_cbble, de_chalice, de_dust2, de_inferno, de_lake,
+         de_mirage, de_nuke, de_overpass, de_safehouse,
+         de_shortdust, de_shortnuke, de_stmarc, de_sugarcane,
+         de_train, de_tuscan, de_vertigo, dz_blacksite, dz_ember,
+         dz_sirocco, dz_vineyard, gd_cbble), 256 x 144
+Source:  the game's own map screenshots
+         (materials/panorama/images/map_icons/screenshots/360p/<map>.png in
+         pak01_dir.vpk of the csgo legacy installation), made 256 pixels
+         wide as WebP with scripts/overviews/thumbs.ts on 2026-11-21
+         (npm run map-thumbs); only pictures named like a map of the game
+Owner:   Valve Corporation. Counter-Strike: Global Offensive and these
+         pictures are the property of Valve Corporation.
+License: not covered by gameWE's license (GPL-3.0-or-later) and not licensed
+         by Valve to gameWE; included only so the banners can show which map
+         is running. They are removed on request of the rights holder.
+         Operators can delete this folder or put their own pictures in
+         /var/lib/gamewe/web/map-images, which are used first.
+
+gameWE is not affiliated with or endorsed by Valve Corporation.

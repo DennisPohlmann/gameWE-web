@@ -78,3 +78,26 @@ test("findThumbs takes plain pictures only for maps, over several folders", () =
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+// CS:GO: the panorama screenshot of a map (a PNG) wins over its old
+// menu_thumb; screenshots of maps the game does not ship are left out.
+test("findThumbs takes the CS:GO screenshots of the game's maps", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "thumbs-"));
+  try {
+    const put = (rel: string, body: string | Buffer = "x") => {
+      mkdirSync(path.dirname(path.join(root, rel)), { recursive: true });
+      writeFileSync(path.join(root, rel), body);
+    };
+    const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 1]);
+    const shots = "materials/panorama/images/map_icons/screenshots/360p";
+    put("maps/de_dust2.bsp");
+    put("materials/vgui/maps/menu_thumb_de_dust2.vtf");
+    put(`${shots}/de_dust2.png`, png);
+    put(`${shots}/random.png`, png);
+    const got = findThumbs([root]);
+    assert.deepEqual([...got.keys()], ["de_dust2"]);
+    assert.deepEqual(got.get("de_dust2"), png);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

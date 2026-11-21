@@ -1,7 +1,9 @@
 // Map thumbnails for the banners from a Source game's own files: the menu
 // pictures materials/vgui/maps/menu_thumb_<map>.vtf (Left 4 Dead 1 and 2:
 // materials/vgui/maps/<map>.vtf, taken only for a map of the game, there
-// are campaign and background pictures beside them), from the game's VPK
+// are campaign and background pictures beside them; CS:GO: the screenshots
+// materials/panorama/images/map_icons/screenshots/360p/<map>.png, also only
+// for a map of the game, made 256 pixels wide), from the game's VPK
 // archives and loose files, as <out>/<game>/<map>.png for the website's
 // map-images folder (src/lib/map-images.ts), made from the operator's own
 // game installation; the built-in map-images/css came from it. See README.md.
@@ -17,6 +19,8 @@ import { encodePng } from "./draw.ts";
 
 const THUMB = /^materials\/vgui\/maps\/(menu_thumb_)?([a-z0-9][a-z0-9_.+-]{0,63})\.vtf$/;
 const BSP = /^maps\/([a-z0-9][a-z0-9_.+-]{0,63})\.bsp$/;
+const SHOT = /^materials\/panorama\/images\/map_icons\/screenshots\/360p\/([a-z0-9][a-z0-9_.+-]{0,63})\.png$/;
+const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 const GAME = /^[a-z0-9][a-z0-9_-]{0,31}$/;
 
 export type VpkEntry = { archive: number; offset: number; length: number; preload: Buffer };
@@ -136,15 +140,18 @@ export function contentHeight(rgba: Uint8Array, width: number, height: number): 
 }
 
 /** The map pictures of game folders: menu_thumb_<map>.vtf, and <map>.vtf
- * when a maps/<map>.bsp of the folders exists. VPK archives first, loose
- * files win, a later folder wins. */
+ * or the CS:GO screenshot <map>.png (PNG, it wins) when a maps/<map>.bsp of
+ * the folders exists. VPK archives first, loose files win, a later folder wins. */
 export function findThumbs(gameDirs: string[]): Map<string, Buffer> {
   const thumbs = new Map<string, Buffer>();
   const plain = new Map<string, Buffer>();
+  const shots = new Map<string, Buffer>();
   const maps = new Set<string>();
   const add = (file: string, body: () => Buffer) => {
     const bsp = BSP.exec(file);
     if (bsp) maps.add(bsp[1]);
+    const shot = SHOT.exec(file);
+    if (shot) shots.set(shot[1], body());
     const m = THUMB.exec(file);
     if (m && !m[2].startsWith("default")) (m[1] ? thumbs : plain).set(m[2], body());
   };
@@ -163,13 +170,14 @@ export function findThumbs(gameDirs: string[]): Map<string, Buffer> {
         );
       }
     }
-    for (const sub of ["maps", path.join("materials", "vgui", "maps")]) {
+    for (const sub of ["maps", path.join("materials", "vgui", "maps"), path.join("materials", "panorama", "images", "map_icons", "screenshots", "360p")]) {
       const dir = path.join(gameDir, sub);
       if (!existsSync(dir)) continue;
       for (const n of readdirSync(dir)) add(`${sub.split(path.sep).join("/")}/${n.toLowerCase()}`, () => readFileSync(path.join(dir, n)));
     }
   }
   for (const [map, vtf] of plain) if (maps.has(map) && !thumbs.has(map)) thumbs.set(map, vtf);
+  for (const [map, png] of shots) if (maps.has(map)) thumbs.set(map, png);
   return thumbs;
 }
 
@@ -185,7 +193,7 @@ function readPart(file: string, offset: number, length: number): Buffer {
   }
 }
 
-function main() {
+async function main() {
   const [gameDir, game, outRoot = "/var/lib/gamewe/web/map-images"] = process.argv.slice(2);
   if (!gameDir || !game) {
     console.error("usage: npm run map-thumbs -- <game folder, e.g. .../cstrike> <game code, e.g. css> [<out folder>]");
@@ -199,13 +207,23 @@ function main() {
   mkdirSync(outDir, { recursive: true });
   let made = 0;
   for (const [map, vtf] of findThumbs(gameDir.split(path.delimiter).filter(Boolean))) {
-    const out = path.join(outDir, `${map}.png`);
+    // A screenshot (PNG) becomes a WebP: as a PNG a photo is ten times the size.
+    const shot = vtf.subarray(0, 4).equals(PNG);
+    const out = path.join(outDir, `${map}.${shot ? "webp" : "png"}`);
     // Pictures already there (your own) stay.
-    if (existsSync(out)) {
-      console.log(`${map}: kept ${out}`);
+    if (["png", "webp", "jpg", "jpeg"].some((ext) => existsSync(path.join(outDir, `${map}.${ext}`)))) {
+      console.log(`${map}: kept, a picture is there`);
       continue;
     }
     try {
+      if (shot) {
+        // 640x360 and more: the banner's box is 248x92, so 256 wide is plenty.
+        const sharp = (await import("sharp")).default;
+        const info = await sharp(vtf, { limitInputPixels: 50_000_000 }).resize({ width: 256, withoutEnlargement: true }).webp({ quality: 80 }).toFile(out);
+        made++;
+        console.log(`${map}: ${out} (${info.width}x${info.height})`);
+        continue;
+      }
       const { width, height, rgba } = decodeVtf(vtf);
       const h = contentHeight(rgba, width, height);
       writeFileSync(out, encodePng(rgba.subarray(0, width * h * 4), width, h));
@@ -218,4 +236,4 @@ function main() {
   console.log(`${made} thumbnails written to ${outDir}`);
 }
 
-if (process.argv[1] && path.basename(process.argv[1]).startsWith("thumbs.")) main();
+if (process.argv[1] && path.basename(process.argv[1]).startsWith("thumbs.")) void main();

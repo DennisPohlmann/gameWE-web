@@ -67,14 +67,17 @@ pictures with a dark floor, 45 for the CS:GO pictures).
 `thumbs.ts` takes the menu pictures of the maps out of a Source game
 (`materials/vgui/maps/menu_thumb_<map>.vtf`; Left 4 Dead 1 and 2:
 `materials/vgui/maps/<map>.vtf`, only for a map of the game, its
-`maps/<map>.bsp`; from the `*_dir.vpk` archives and loose files) and writes them as PNG to the website's map-images folder
+`maps/<map>.bsp`; CS:GO: the screenshots
+`materials/panorama/images/map_icons/screenshots/360p/<map>.png`, also only
+for a map of the game, written 256 pixels wide as WebP; from the `*_dir.vpk`
+archives and loose files) and writes them as PNG to the website's map-images folder
 (`<out>/<game>/<map>.png`, default `/var/lib/gamewe/web/map-images`, see
 [INSTALLATION.md](../../docs/INSTALLATION.md#5-own-templates-and-map-pictures)).
 It reads DXT1/3/5 and the plain RGB(A) formats, cuts the empty rows at the
 bottom (CS:S keeps its 128x96 pictures in 128x128 textures) and keeps
 pictures that are already there. The pictures belong to the game's maker;
-gameWE comes with those of CS:S, DoD:S, HL2DM, L4D and L4D2
-(`map-images/css/`, `dods/`, `hl2mp/`, `l4d/`, `l4d2/`, see their `LICENSE.txt`),
+gameWE comes with those of CS:S, CS:GO, DoD:S, HL2DM, L4D and L4D2
+(`map-images/css/`, `csgo/`, `dods/`, `hl2mp/`, `l4d/`, `l4d2/`, see their `LICENSE.txt`),
 for other games each operator makes them from their own installation.
 
 ```
