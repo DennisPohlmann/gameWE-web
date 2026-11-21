@@ -1,0 +1,22 @@
+Map thumbnails: Team Fortress 2 (tf)
+
+Files:   <map>.webp for the 233 maps of the game that have a menu picture
+         (every maps/<map>.bsp of the installation except background01,
+         itemtest and cp_cloak, which have none, and pl_cactuscanyon and
+         rd_asteroid, whose picture is a "BETA" placeholder), mostly
+         128 x 96
+Source:  the game's own menu pictures
+         (materials/vgui/maps/menu_thumb_<map>.vtf in tf2_textures_dir.vpk;
+         pl_hoodoo_final: menu_thumb_pl_hoodoo), converted to WebP with
+         scripts/overviews/thumbs.ts on 2026-11-21 (npm run map-thumbs),
+         the filler rows at the bottom cut off
+Owner:   Valve Corporation. Team Fortress 2 and these pictures are the
+         property of Valve Corporation (community maps: made for Valve's
+         game by their authors).
+License: not covered by gameWE's license (GPL-3.0-or-later) and not licensed
+         by Valve to gameWE; included only so the banners can show which map
+         is running. They are removed on request of the rights holder.
+         Operators can delete this folder or put their own pictures in
+         /var/lib/gamewe/web/map-images, which are used first.
+
+gameWE is not affiliated with or endorsed by Valve Corporation.

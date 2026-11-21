@@ -50,6 +50,11 @@ test("VTF: the largest picture is the last one; BGR888 to RGBA; empty rows at th
   const { width, height, rgba } = decodeVtf(Buffer.concat([head, pixels]));
   assert.deepEqual([width, height, ...rgba.subarray(0, 8)], [2, 2, 0, 0, 255, 255, 0, 255, 0, 255]);
   assert.equal(contentHeight(rgba, 2, 2), 1);
+  // ABGR8888 (format 1, some TF2 pictures): one red pixel, alpha first.
+  head.writeInt32LE(1, 52);
+  head.writeUInt16LE(1, 16);
+  head.writeUInt16LE(1, 18);
+  assert.deepEqual([...decodeVtf(Buffer.concat([head, Buffer.from([200, 0, 0, 255])])).rgba], [255, 0, 0, 200]);
   head.writeInt32LE(99, 52);
   assert.throws(() => decodeVtf(Buffer.concat([head, pixels])), /picture format 99/);
 });
@@ -68,6 +73,8 @@ test("findThumbs takes plain pictures only for maps, over several folders", () =
     put("base/materials/vgui/maps/c1m1_hotel.vtf", "old");
     put("base/materials/vgui/maps/background01_exit.vtf");
     put("base/materials/vgui/maps/menu_thumb_de_dust2.vtf");
+    put("base/maps/de_dust2.bsp");
+    put("base/materials/vgui/maps/menu_thumb_missing.vtf"); // no map: left out
     put("dlc/maps/c9m1_alleys.bsp");
     put("update/materials/vgui/maps/c9m1_alleys.vtf");
     put("update/materials/vgui/maps/c1m1_hotel.vtf", "new");

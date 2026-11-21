@@ -75,11 +75,13 @@ for a map of the game; CS2: the PNG inside
 writes them at most 256 pixels wide as WebP to the website's map-images folder
 (`<out>/<game>/<map>.webp`, default `/var/lib/gamewe/web/map-images`, see
 [INSTALLATION.md](../../docs/INSTALLATION.md#5-own-templates-and-map-pictures)).
-It reads DXT1/3/5 and the plain RGB(A) formats, cuts the empty rows at the
-bottom (CS:S keeps its 128x96 pictures in 128x128 textures) and keeps
+It takes only pictures of a map of the folders (`maps/<map>.bsp` or
+`.vpk`), reads DXT1/3/5 and the plain RGB(A) formats, cuts the filler rows
+at the bottom (one colour; CS:S and TF2 keep their 128x96 pictures in
+128x128 textures) and keeps
 pictures that are already there. The pictures belong to the game's maker;
-gameWE comes with those of CS:S, CS:GO, CS2, DoD:S, HL2DM, L4D, L4D2 and ZPS
-(`map-images/css/`, `csgo/`, `cs2/`, `dods/`, `hl2mp/`, `l4d/`, `l4d2/`, `zps/`, see their `LICENSE.txt`),
+gameWE comes with those of CS:S, CS:GO, CS2, DoD:S, HL2DM, L4D, L4D2, TF2 and ZPS
+(`map-images/css/`, `csgo/`, `cs2/`, `dods/`, `hl2mp/`, `l4d/`, `l4d2/`, `tf/`, `zps/`, see their `LICENSE.txt`),
 for other games each operator makes them from their own installation.
 
 ```

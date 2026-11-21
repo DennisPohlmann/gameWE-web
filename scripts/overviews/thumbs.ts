@@ -22,9 +22,11 @@ const THUMB = /^materials\/vgui\/maps\/(menu_thumb_)?([a-z0-9][a-z0-9_.+-]{0,63}
 const BSP = /^maps\/([a-z0-9][a-z0-9_.+-]{0,63})\.(?:bsp|vpk)$/;
 const SHOT = /^(?:materials\/)?panorama\/images\/map_icons\/screenshots\/360p\/([a-z0-9][a-z0-9_.+-]{0,63}?)(?:\.png|_png\.vtex_c)$/;
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
-// Left 4 Dead 2's ports of the Left 4 Dead campaigns The Sacrifice (c7) and
-// No Mercy (c8) ship no picture of their own, only those of the original maps.
+// Maps whose picture has another name: Left 4 Dead 2's ports of the Left 4
+// Dead campaigns The Sacrifice (c7) and No Mercy (c8) ship only those of the
+// original maps; TF2's Hoodoo is pl_hoodoo_final, its picture pl_hoodoo.
 const SAME_MAP: Record<string, string> = {
+  pl_hoodoo_final: "pl_hoodoo",
   c7m1_docks: "l4d_river01_docks",
   c7m2_barge: "l4d_river02_barge",
   c7m3_port: "l4d_river03_port",
@@ -111,7 +113,7 @@ export function decodeDxt(data: Buffer, w: number, h: number, kind: 1 | 3 | 5): 
 }
 
 // VTF picture formats: bytes per pixel and channel order of the plain ones.
-const PLAIN: Record<number, [number, number[]]> = { 0: [4, [0, 1, 2, 3]], 2: [3, [0, 1, 2]], 3: [3, [2, 1, 0]], 12: [4, [2, 1, 0, 3]] };
+const PLAIN: Record<number, [number, number[]]> = { 0: [4, [0, 1, 2, 3]], 1: [4, [3, 2, 1, 0]], 2: [3, [0, 1, 2]], 3: [3, [2, 1, 0]], 12: [4, [2, 1, 0, 3]] };
 const DXT: Record<number, 1 | 3 | 5> = { 13: 1, 14: 3, 15: 5 };
 
 /** The largest picture of a VTF texture (the last one in the file) as RGBA. */
@@ -137,13 +139,18 @@ export function decodeVtf(vtf: Buffer): { width: number; height: number; rgba: U
   return { width, height, rgba };
 }
 
-/** Height without the empty rows at the bottom (white or transparent): CS:S
+/** Height without the empty filler rows at the bottom (one colour or transparent): CS:S
  * keeps its 128x96 pictures in a 128x128 texture. */
 export function contentHeight(rgba: Uint8Array, width: number, height: number): number {
+  // The filler is one colour (TF2: white, grey or black, the first row of it
+  // a little off-white): a row is empty when every pixel is transparent or
+  // close to the bottom row's first pixel.
+  const ref = (height - 1) * width * 4;
+  const near = (p: number) => Math.abs(rgba[p] - rgba[ref]) <= 24 && Math.abs(rgba[p + 1] - rgba[ref + 1]) <= 24 && Math.abs(rgba[p + 2] - rgba[ref + 2]) <= 24;
   const empty = (y: number) => {
     for (let x = 0; x < width; x++) {
       const p = (y * width + x) * 4;
-      if (rgba[p + 3] !== 0 && (rgba[p] < 250 || rgba[p + 1] < 250 || rgba[p + 2] < 250)) return false;
+      if (rgba[p + 3] !== 0 && !near(p)) return false;
     }
     return true;
   };
@@ -152,9 +159,11 @@ export function contentHeight(rgba: Uint8Array, width: number, height: number): 
   return h;
 }
 
-/** The map pictures of game folders: menu_thumb_<map>.vtf, and <map>.vtf
- * or the CS:GO screenshot <map>.png (PNG, it wins) when a maps/<map>.bsp of
- * the folders exists. VPK archives first, loose files win, a later folder wins. */
+/** The pictures of the maps of game folders (maps/<map>.bsp or .vpk): the
+ * CS:GO/CS2 screenshot (PNG), else menu_thumb_<map>.vtf, else <map>.vtf,
+ * else that of SAME_MAP. VPK archives first, loose files win, a later folder
+ * wins. Pictures without a map of the folders (removed maps, "missing") are
+ * left out. */
 export function findThumbs(gameDirs: string[]): Map<string, Buffer> {
   const thumbs = new Map<string, Buffer>();
   const plain = new Map<string, Buffer>();
@@ -189,13 +198,13 @@ export function findThumbs(gameDirs: string[]): Map<string, Buffer> {
       for (const n of readdirSync(dir)) add(`${sub.split(path.sep).join("/")}/${n.toLowerCase()}`, () => readFileSync(path.join(dir, n)));
     }
   }
-  for (const [map, vtf] of plain) if (maps.has(map) && !thumbs.has(map)) thumbs.set(map, vtf);
-  for (const [map, same] of Object.entries(SAME_MAP)) {
-    const vtf = plain.get(same);
-    if (vtf && maps.has(map) && !thumbs.has(map)) thumbs.set(map, vtf);
+  const out = new Map<string, Buffer>();
+  for (const map of maps) {
+    const same = SAME_MAP[map] ?? "";
+    const pic = [shots.get(map), thumbs.get(map), plain.get(map), thumbs.get(same), plain.get(same)].find((b) => b?.length);
+    if (pic) out.set(map, pic);
   }
-  for (const [map, png] of shots) if (maps.has(map) && png.length) thumbs.set(map, png);
-  return thumbs;
+  return out;
 }
 
 /** The PNG a Source 2 texture (.vtex_c) of a panorama image carries, up to its
