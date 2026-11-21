@@ -319,7 +319,7 @@
  },
  {
   "name": "@scalar/api-reference",
-  "version": "1.81.0",
+  "version": "1.82.1",
   "license": "MIT",
   "note": "browser bundle of /api (public/vendor/scalar)"
  },
@@ -330,7 +330,7 @@
  },
  {
   "name": "@tediousjs/connection-string",
-  "version": "1.1.0",
+  "version": "1.1.3",
   "license": "MIT"
  },
  {
@@ -586,7 +586,7 @@
  },
  {
   "name": "mssql",
-  "version": "12.7.14",
+  "version": "12.8.0",
   "license": "MIT"
  },
  {

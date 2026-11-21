@@ -80,7 +80,7 @@ carry the same licenses as their linux-x64 counterparts.
 | @azure/msal-browser | 5.29.1 | https://github.com/AzureAD/microsoft-authentication-library-for-js |
 | @azure/msal-common | 16.16.2 | https://github.com/AzureAD/microsoft-authentication-library-for-js |
 | @azure/msal-node | 7.2.2 | https://github.com/AzureAD/microsoft-authentication-library-for-js |
-| @tediousjs/connection-string | 1.1.0 | https://github.com/tediousjs/connection-string |
+| @tediousjs/connection-string | 1.1.3 | https://github.com/tediousjs/connection-string |
 | @types/readable-stream | 4.0.25 | https://github.com/DefinitelyTyped/DefinitelyTyped |
 | @typespec/ts-http-runtime | 0.3.10 | https://github.com/Azure/azure-sdk-for-js |
 | abort-controller | 3.0.0 | https://github.com/mysticatea/abort-controller |
@@ -114,7 +114,7 @@ carry the same licenses as their linux-x64 counterparts.
 | lodash.isstring | 4.0.1 | https://github.com/lodash/lodash |
 | lodash.once | 4.1.1 | https://github.com/lodash/lodash |
 | ms | 2.1.3 | https://github.com/vercel/ms |
-| mssql | 12.7.14 | https://github.com/tediousjs/node-mssql |
+| mssql | 12.8.0 | https://github.com/tediousjs/node-mssql |
 | native-duplexpair | 1.0.0 | https://github.com/tediousjs/native-duplexpair |
 | open | 11.0.4 | https://github.com/sindresorhus/open |
 | powershell-utils | 0.2.1 | https://github.com/sindresorhus/powershell-utils |
@@ -223,7 +223,7 @@ the links above.
 
 The page `/api` renders the OpenAPI description of the public API with the
 self-hosted browser bundle of **Scalar API Reference**
-(`@scalar/api-reference` 1.81.0, devDependency, https://github.com/scalar/scalar,
+(`@scalar/api-reference` 1.82.1, devDependency, https://github.com/scalar/scalar,
 MIT). `npm run build` copies `dist/browser/standalone.js` to
 `public/vendor/scalar/standalone.js` together with Scalar's MIT license text
 (`public/vendor/scalar/LICENSE.txt`); nothing is loaded from Scalar's
