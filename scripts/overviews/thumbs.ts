@@ -22,6 +22,18 @@ const THUMB = /^materials\/vgui\/maps\/(menu_thumb_)?([a-z0-9][a-z0-9_.+-]{0,63}
 const BSP = /^maps\/([a-z0-9][a-z0-9_.+-]{0,63})\.(?:bsp|vpk)$/;
 const SHOT = /^(?:materials\/)?panorama\/images\/map_icons\/screenshots\/360p\/([a-z0-9][a-z0-9_.+-]{0,63}?)(?:\.png|_png\.vtex_c)$/;
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
+// Left 4 Dead 2's ports of the Left 4 Dead campaigns The Sacrifice (c7) and
+// No Mercy (c8) ship no picture of their own, only those of the original maps.
+const SAME_MAP: Record<string, string> = {
+  c7m1_docks: "l4d_river01_docks",
+  c7m2_barge: "l4d_river02_barge",
+  c7m3_port: "l4d_river03_port",
+  c8m1_apartment: "l4d_hospital01_apartment",
+  c8m2_subway: "l4d_hospital02_subway",
+  c8m3_sewers: "l4d_hospital03_sewers",
+  c8m4_interior: "l4d_hospital04_interior",
+  c8m5_rooftop: "l4d_hospital05_rooftop",
+};
 const GAME = /^[a-z0-9][a-z0-9_-]{0,31}$/;
 
 export type VpkEntry = { archive: number; offset: number; length: number; preload: Buffer };
@@ -178,6 +190,10 @@ export function findThumbs(gameDirs: string[]): Map<string, Buffer> {
     }
   }
   for (const [map, vtf] of plain) if (maps.has(map) && !thumbs.has(map)) thumbs.set(map, vtf);
+  for (const [map, same] of Object.entries(SAME_MAP)) {
+    const vtf = plain.get(same);
+    if (vtf && maps.has(map) && !thumbs.has(map)) thumbs.set(map, vtf);
+  }
   for (const [map, png] of shots) if (maps.has(map) && png.length) thumbs.set(map, png);
   return thumbs;
 }

@@ -1,6 +1,6 @@
 Map thumbnails: Left 4 Dead 2 (l4d2)
 
-Files:   <map>.webp for the 49 maps of the campaigns (c10m1_caves,
+Files:   <map>.webp for the 57 maps of the campaigns (c10m1_caves,
          c10m2_drainage, c10m3_ranchhouse, c10m4_mainstreet,
          c10m5_houseboat, c11m1_greenhouse, c11m2_offices,
          c11m3_garage, c11m4_terminal, c11m5_runway,
@@ -15,12 +15,18 @@ Files:   <map>.webp for the 49 maps of the campaigns (c10m1_caves,
          c4m2_sugarmill_a, c4m3_sugarmill_b, c4m4_milltown_b,
          c4m5_milltown_escape, c5m1_waterfront, c5m2_park,
          c5m3_cemetery, c5m4_quarter, c5m5_bridge, c6m1_riverbank,
-         c6m2_bedlam, c6m3_port, c9m1_alleys, c9m2_lots), 256 x
-         128
+         c6m2_bedlam, c6m3_port, c7m1_docks, c7m2_barge,
+         c7m3_port, c8m1_apartment, c8m2_subway, c8m3_sewers,
+         c8m4_interior, c8m5_rooftop, c9m1_alleys, c9m2_lots), 256
+         x 128
 Source:  the game's own map pictures
-         (materials/vgui/maps/<map>.vtf in the pak01_dir.vpk of left4dead2, its DLC folders and update),
+         (materials/vgui/maps/<map>.vtf in the pak01_dir.vpk of left4dead2,
+         its DLC folders and update),
          converted to WebP with scripts/overviews/thumbs.ts on 2026-11-21
-         (npm run map-thumbs); only pictures named like a map of the game
+         (npm run map-thumbs); only pictures named like a map of the game;
+         the ports of The Sacrifice (c7) and No Mercy (c8) ship no picture
+         of their own and show the one of the same Left 4 Dead map
+         (l4d_river0N_*, l4d_hospital0N_*)
 Owner:   Valve Corporation. Left 4 Dead 2 and these pictures are the property
          of Valve Corporation.
 License: not covered by gameWE's license (GPL-3.0-or-later) and not licensed

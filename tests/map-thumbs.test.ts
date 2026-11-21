@@ -125,3 +125,24 @@ test("findThumbs takes the PNG inside CS2's screenshot textures", () => {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+// L4D2's ports of The Sacrifice (c7) and No Mercy (c8) ship no picture of
+// their own: they get the one of the same Left 4 Dead map.
+test("findThumbs gives L4D2's c7 and c8 maps the picture of the same L4D map", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "thumbs-"));
+  try {
+    const put = (rel: string, body = "x") => {
+      mkdirSync(path.dirname(path.join(root, rel)), { recursive: true });
+      writeFileSync(path.join(root, rel), body);
+    };
+    put("maps/c7m1_docks.bsp");
+    put("maps/c8m5_rooftop.bsp");
+    put("materials/vgui/maps/l4d_river01_docks.vtf", "docks");
+    put("materials/vgui/maps/l4d_hospital05_rooftop.vtf", "rooftop");
+    const got = findThumbs([root]);
+    assert.deepEqual([...got.keys()].sort(), ["c7m1_docks", "c8m5_rooftop"]);
+    assert.equal(got.get("c7m1_docks")?.toString(), "docks");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

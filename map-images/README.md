@@ -14,8 +14,9 @@ radar picture of the heatmap.
   pictures, property of Valve Corporation; see `hl2mp/LICENSE.txt`.
 - `l4d/`: the 26 campaign maps of Left 4 Dead, the game's own map
   pictures, property of Valve Corporation; see `l4d/LICENSE.txt`.
-- `l4d2/`: the 49 campaign maps of Left 4 Dead 2 that have a picture
-  of their own, property of Valve Corporation; see `l4d2/LICENSE.txt`.
+- `l4d2/`: the 57 campaign maps of Left 4 Dead 2 (c7 and c8 with the
+  picture of the same Left 4 Dead map), the game's own map pictures,
+  property of Valve Corporation; see `l4d2/LICENSE.txt`.
 - `csgo/`: the 37 maps of Counter-Strike: Global Offensive, the game's own
   map screenshots, property of Valve Corporation; see
   `csgo/LICENSE.txt`.
