@@ -153,3 +153,27 @@ test("findThumbs gives L4D2's c7 and c8 maps the picture of the same L4D map", (
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+// TF2 keeps its 128x96 pictures in 128x128 textures with a filler of one
+// colour, whose first row is a little off: the whole filler is cut, a row
+// of the picture is not.
+test("contentHeight cuts a grey filler with an off-colour first row", () => {
+  const w = 2;
+  const rows = [[200, 10, 10], [10, 200, 10], [130, 130, 130], [128, 128, 128], [128, 128, 128]];
+  const rgba = new Uint8Array(rows.flatMap((c) => [...c, 255, ...c, 255]));
+  assert.equal(contentHeight(rgba, w, rows.length), 2);
+});
+
+// TF2's pl_hoodoo_final shows its menu picture pl_hoodoo.
+test("findThumbs takes the menu picture of the other name for pl_hoodoo_final", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "thumbs-"));
+  try {
+    mkdirSync(path.join(root, "maps"), { recursive: true });
+    mkdirSync(path.join(root, "materials/vgui/maps"), { recursive: true });
+    writeFileSync(path.join(root, "maps/pl_hoodoo_final.bsp"), "x");
+    writeFileSync(path.join(root, "materials/vgui/maps/menu_thumb_pl_hoodoo.vtf"), "hoodoo");
+    assert.equal(findThumbs([root]).get("pl_hoodoo_final")?.toString(), "hoodoo");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
