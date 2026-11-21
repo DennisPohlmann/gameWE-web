@@ -104,8 +104,10 @@ ranking form keep the templates.
 `/api` fills its examples with the first ranking of the site.
 
 While a page loads after a click, the site shows it at once: the section links
-of a ranking (and the pages outside a ranking) show grey placeholder lines in
-place of the page (`loading.tsx`; a section link fetches that state ahead
+of a ranking show grey placeholder lines in place of the page, the pages
+outside a ranking (start page, search, help) a placeholder shaped like the
+start page's list, a block heading and a table with a grey line in each cell
+(`loading.tsx`; a section link fetches that state ahead
 when the pointer reaches it, a finger touches it or it gets focus, other links
 do not), a select that loads a new page dims its form with a busy
 cursor, and the pager arrows show a small

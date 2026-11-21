@@ -13,5 +13,7 @@ test("section links prefetch on pointer, touch and focus only", () => {
 
 // In a section, so it is as wide as the boxes above it, not the whole page.
 test("a ranking and the site have a loading state", () => {
-  for (const f of ["src/app/(site)/loading.tsx", "src/app/(site)/[game]/loading.tsx"]) assert.match(readFileSync(f, "utf8"), /<div className="section">\s*<Skeleton rows=\{\d+\} \/>/, f);
+  assert.match(readFileSync("src/app/(site)/[game]/loading.tsx", "utf8"), /<div className="section">\s*<Skeleton rows=\{\d+\} \/>/);
+  // Outside a ranking: shaped like the start page's list (block heading, table), not free grey lines.
+  assert.match(readFileSync("src/app/(site)/loading.tsx", "utf8"), /<section className="block">\s*<h3>&nbsp;<\/h3>\s*<div className="container">\s*<SkeletonTable rows=\{\d+\} cols=\{\d+\} \/>/);
 });

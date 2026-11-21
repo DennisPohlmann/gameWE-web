@@ -189,6 +189,24 @@ export function Skeleton({ rows = 4, chart = false, className }: { rows?: number
   );
 }
 
+// A loading table like the real lists: the skin's head row and cell
+// borders, a grey line in each cell (not free lines over the whole page).
+export function SkeletonTable({ rows, cols }: { rows: number; cols: number }) {
+  const cells = (tag: "th" | "td") => Array.from({ length: cols }, (_, i) => (tag === "th" ? <th key={i}>&nbsp;</th> : <td key={i}><span className="skel-line" /></td>));
+  return (
+    <table className="skeleton" aria-busy="true" aria-hidden="true">
+      <thead>
+        <tr>{cells("th")}</tr>
+      </thead>
+      <tbody>
+        {Array.from({ length: rows }, (_, i) => (
+          <tr key={i}>{cells("td")}</tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 export function TableWrap({ children }: { children: ReactNode }) {
   return <div className="table-wrap">{children}</div>;
 }
