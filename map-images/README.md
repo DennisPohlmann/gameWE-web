@@ -19,6 +19,8 @@ radar picture of the heatmap.
 - `csgo/`: the 37 maps of Counter-Strike: Global Offensive, the game's own
   map screenshots as WebP, property of Valve Corporation; see
   `csgo/LICENSE.txt`.
+- `zps/`: 24 maps of Zombie Panic! Source, the game's own menu pictures,
+  property of the Zombie Panic! Team; see `zps/LICENSE.txt`.
 
 Made with `npm run map-thumbs` from a game installation
 ([scripts/overviews/README.md](../scripts/overviews/README.md)).

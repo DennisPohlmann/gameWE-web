@@ -76,8 +76,8 @@ archives and loose files) and writes them as PNG to the website's map-images fol
 It reads DXT1/3/5 and the plain RGB(A) formats, cuts the empty rows at the
 bottom (CS:S keeps its 128x96 pictures in 128x128 textures) and keeps
 pictures that are already there. The pictures belong to the game's maker;
-gameWE comes with those of CS:S, CS:GO, DoD:S, HL2DM, L4D and L4D2
-(`map-images/css/`, `csgo/`, `dods/`, `hl2mp/`, `l4d/`, `l4d2/`, see their `LICENSE.txt`),
+gameWE comes with those of CS:S, CS:GO, DoD:S, HL2DM, L4D, L4D2 and ZPS
+(`map-images/css/`, `csgo/`, `dods/`, `hl2mp/`, `l4d/`, `l4d2/`, `zps/`, see their `LICENSE.txt`),
 for other games each operator makes them from their own installation.
 
 ```
@@ -87,3 +87,5 @@ npm run map-thumbs -- "<game folder, e.g. .../Counter-Strike Source/cstrike>" <g
 Left 4 Dead 2 keeps its maps in several folders: give them all in one
 argument, separated by `:` (Linux; `;` on Windows), a later folder wins:
 `".../Left 4 Dead 2/left4dead2:.../left4dead2_dlc1:.../left4dead2_dlc2:.../left4dead2_dlc3:.../update"`.
+Zombie Panic! Source keeps its archives in `vpks` next to the game folder:
+`".../Zombie Panic Source/vpks:.../Zombie Panic Source/zps"`.

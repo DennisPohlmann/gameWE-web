@@ -1,0 +1,23 @@
+Map thumbnails: Zombie Panic! Source (zps)
+
+Files:   <map>.png for 24 maps (zpo_aquatica, zpo_biotec, zpo_corpsington,
+         zpo_harvest, zpo_keretti, zpo_murksville,
+         zpo_shreddingfield, zpo_subway, zpo_tanker, zps_asylum,
+         zps_blackout, zps_cinema, zps_clubzombo, zps_corpsington,
+         zps_deadend, zps_haunted, zps_keretti, zps_nightmare,
+         zps_policestation, zps_sapidcerebrum, zps_silence,
+         zps_thrillvile, zps_town, zps_underground), 128 x 96
+Source:  the game's own menu pictures
+         (materials/vgui/maps/menu_thumb_<map>.vtf in vpks/zps_content_dir.vpk),
+         converted to PNG with scripts/overviews/thumbs.ts on 2026-11-21
+         (npm run map-thumbs); zps_ruralpanic, zpo_frozenheart,
+         zpo_zomboeing and zph_pithole ship no menu picture
+Owner:   Zombie Panic! Team. Zombie Panic! Source and these pictures are
+         the property of their makers.
+License: not covered by gameWE's license (GPL-3.0-or-later) and not licensed
+         by the makers to gameWE; included only so the banners can show
+         which map is running. They are removed on request of the rights
+         holder. Operators can delete this folder or put their own pictures
+         in /var/lib/gamewe/web/map-images, which are used first.
+
+gameWE is not affiliated with or endorsed by the Zombie Panic! Team.
